@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -112,7 +112,7 @@ public class CourseUpdateResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdateDTO);

@@ -19,4 +19,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @PreAuthorize("hasRole('INSTRUCTOR')")
 public @interface EnforceAtLeastInstructor {
 
+    /**
+     * Optional descriptive name for documentation generation.
+     * If not provided, the feature name will be auto-generated from the method name.
+     *
+     * @return the descriptive name for documentation, or empty string if not set
+     */
+    String docDescription() default "";
 }

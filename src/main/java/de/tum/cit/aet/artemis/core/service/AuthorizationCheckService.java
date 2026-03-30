@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseVisibleService;
 
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
@@ -45,9 +47,12 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, TeamRepository teamRepository) {
+    private final ProgrammingExerciseVisibleService programmingExerciseVisibleService;
+
+    public AuthorizationCheckService(UserRepository userRepository, TeamRepository teamRepository, ProgrammingExerciseVisibleService programmingExerciseVisibleService) {
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+        this.programmingExerciseVisibleService = programmingExerciseVisibleService;
     }
 
     /**
@@ -553,6 +558,10 @@ public class AuthorizationCheckService {
             throw new AccessForbiddenException();
         }
         user = loadUserIfNeeded(user);
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            return programmingExerciseVisibleService.isVisibleForUser(user, programmingExercise);
+        }
+        // Existing logic for other exercise types
         if (isAdmin(user)) {
             return true;
         }

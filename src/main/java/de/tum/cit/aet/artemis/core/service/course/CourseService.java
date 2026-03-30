@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.PolicyBasedCourseSpecs;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -87,11 +87,13 @@ public class CourseService {
 
     private final CourseVisibleService courseVisibleService;
 
+    private final PolicyBasedCourseSpecs policyBasedCourseSpecs;
+
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<CompetencyApi> competencyApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi,
             Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository,
-            CourseVisibleService courseVisibleService) {
+            CourseVisibleService courseVisibleService, PolicyBasedCourseSpecs policyBasedCourseSpecs) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -107,6 +109,7 @@ public class CourseService {
         this.prerequisitesApi = prerequisitesApi;
         this.faqRepository = faqRepository;
         this.courseVisibleService = courseVisibleService;
+        this.policyBasedCourseSpecs = policyBasedCourseSpecs;
     }
 
     /**
@@ -214,17 +217,21 @@ public class CourseService {
     }
 
     /**
-     * Get all courses for the given user
+     * Get all courses for the given user.
+     * Uses policy-based SQL query generation to filter courses at the database level.
      *
      * @param user the user entity
      * @return an unmodifiable set of all courses for the user
      */
     public Set<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+        // Use policy-based specification to generate SQL query that filters courses at the database level
+        var spec = policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
+        return Set.copyOf(courseRepository.findAll(spec));
     }
 
     /**
-     * Get all courses with exercises (filtered for given user)
+     * Get all courses with exercises (filtered for given user).
+     * Uses policy-based SQL query generation to filter courses at the database level.
      *
      * @param user the user entity
      * @return an unmodifiable list of all courses including exercises for the user
@@ -232,8 +239,9 @@ public class CourseService {
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
 
-        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        // Use policy-based specification to generate SQL query that filters courses at the database level
+        var spec = policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
+        var userVisibleCourses = Set.copyOf(courseRepository.findAll(spec));
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));

@@ -24,4 +24,12 @@ public @interface EnforceAtLeastStudentInExercise {
      */
     @AliasFor(annotation = EnforceRoleInExercise.class)
     String resourceIdFieldName() default "exerciseId";
+
+    /**
+     * Optional descriptive name for documentation generation.
+     * If not provided, the feature name will be auto-generated from the method name.
+     *
+     * @return the descriptive name for documentation, or empty string if not set
+     */
+    String docDescription() default "";
 }

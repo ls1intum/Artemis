@@ -26,9 +26,8 @@ import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
 import de.tum.cit.aet.artemis.core.service.course.CourseStatsService;
@@ -50,8 +49,6 @@ public class CourseStatsResource {
 
     private final CourseStatsService courseStatsService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -65,12 +62,11 @@ public class CourseStatsResource {
     private final CourseOverviewService courseOverviewService;
 
     public CourseStatsResource(UserRepository userRepository, CourseStatsService courseStatsService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, CourseForUserGroupService courseForUserGroupService, ExerciseRepository exerciseRepository,
-            GradingScaleRepository gradingScaleRepository, CourseOverviewService courseOverviewService) {
+            CourseForUserGroupService courseForUserGroupService, ExerciseRepository exerciseRepository, GradingScaleRepository gradingScaleRepository,
+            CourseOverviewService courseOverviewService) {
         this.courseStatsService = courseStatsService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseForUserGroupService = courseForUserGroupService;
         this.exerciseRepository = exerciseRepository;
@@ -110,10 +106,9 @@ public class CourseStatsResource {
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         StatsForDashboardDTO stats = courseStatsService.getStatsForDashboardDTO(course);
         return ResponseEntity.ok(stats);
     }
@@ -160,11 +155,10 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
             @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         var chartEndDate = courseStatsService.determineEndDateForActiveStudents(course);
         var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
@@ -180,10 +174,9 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         if (course.getStartDate() == null) {
             throw new IllegalArgumentException("Course does not contain start date");
@@ -201,10 +194,9 @@ public class CourseStatsResource {
      * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/management-detail")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
         var startTime = System.currentTimeMillis();
         CourseManagementDetailViewDTO managementDetailViewDTO = courseStatsService.getStatsForDetailView(course, gradingScale);

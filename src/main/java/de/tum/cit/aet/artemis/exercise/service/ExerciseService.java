@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseVisibleService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -144,6 +145,8 @@ public class ExerciseService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final ProgrammingExerciseVisibleService programmingExerciseVisibleService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -151,7 +154,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi,
+            ProgrammingExerciseVisibleService programmingExerciseVisibleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -177,6 +181,7 @@ public class ExerciseService {
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.programmingExerciseVisibleService = programmingExerciseVisibleService;
     }
 
     /**
@@ -204,7 +209,7 @@ public class ExerciseService {
         else if (authCheckService.isOnlyStudentInCourse(course, user)) {
             if (course.isOnlineCourse()) {
                 for (Exercise exercise : exercises) {
-                    if (!exercise.isVisibleToStudents()) {
+                    if (!isExerciseVisibleToStudent(exercise, user)) {
                         continue;
                     }
                     if (ltiApi.isPresent()) {
@@ -217,10 +222,25 @@ public class ExerciseService {
                 }
             }
             else {
-                exercisesUserIsAllowedToSee.addAll(exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet()));
+                exercisesUserIsAllowedToSee.addAll(exercises.stream().filter(exercise -> isExerciseVisibleToStudent(exercise, user)).collect(Collectors.toSet()));
             }
         }
         return exercisesUserIsAllowedToSee;
+    }
+
+    /**
+     * Checks if an exercise is visible to a student. For programming exercises, delegates to the policy engine
+     * via {@link ProgrammingExerciseVisibleService}. For other exercise types, uses the existing visibility check.
+     *
+     * @param exercise the exercise to check
+     * @param user     the student user
+     * @return true if the exercise is visible to the student
+     */
+    private boolean isExerciseVisibleToStudent(Exercise exercise, User user) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            return programmingExerciseVisibleService.isVisibleForUser(user, programmingExercise);
+        }
+        return exercise.isVisibleToStudents();
     }
 
     /**
