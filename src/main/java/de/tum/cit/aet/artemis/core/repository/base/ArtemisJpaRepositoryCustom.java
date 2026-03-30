@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.repository.base;
 import java.util.Optional;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.NoRepositoryBean;
 
 /**
  * Custom fragment interface for {@link ArtemisJpaRepository} that declares methods
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
  * @param <T>  the type of the entity
  * @param <ID> the type of the entity's identifier
  */
+@NoRepositoryBean
 public interface ArtemisJpaRepositoryCustom<T, ID> {
 
     /**

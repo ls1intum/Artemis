@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.core.config.NotRedisCondition;
 @Lazy
 @Conditional(NotRedisCondition.class)
 @Configuration
-@EnableAutoConfiguration(exclude = { org.redisson.spring.starter.RedissonAutoConfigurationV2.class,
+@EnableAutoConfiguration(exclude = { org.redisson.spring.starter.RedissonAutoConfigurationV2.class, org.redisson.spring.starter.RedissonAutoConfigurationV4.class,
         org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration.class,
         org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration.class,
         org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration.class })
