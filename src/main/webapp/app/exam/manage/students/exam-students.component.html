@@ -1,24 +1,10 @@
-<div>
-    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-        <div class="mb-0">
-            <h3>
-                <span jhiTranslate="artemisApp.examManagement.students"></span>
-                <span class="text-body-secondary">({{ exam().title }})</span>
-            </h3>
-        </div>
-        <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'"></span>:
-            <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers().length }}</span>
-            @if (filteredUsersSize() < allRegisteredUsers().length) {
-                <span class="text-body-secondary">
-                    (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'"></span>: {{ filteredUsersSize() }}
-                    )
-                </span>
-            }
-        </div>
-    </div>
+<div class="d-flex flex-column" style="min-height: 0">
+    <h3>
+        <span jhiTranslate="artemisApp.examManagement.students"></span>
+        <span class="text-body-secondary">({{ exam().title }})</span>
+    </h3>
 
-    <p-toolbar class="mb-3">
+    <p-toolbar class="mb-2">
         <ng-template #start>
             <jhi-exam-students-menu-button
                 [model]="manageStudentsMenuActions()"
@@ -44,9 +30,10 @@
         [globalFilterFields]="['login', 'name']"
         rowHover
         [scrollable]="true"
+        scrollHeight="flex"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} registered students"
         showCurrentPageReport
-        class="border border-1 rounded-4 overflow-hidden"
+        class="border border-1 rounded-4 overflow-hidden flex-grow-1 mb-4"
     >
         <ng-template #caption> Registered students </ng-template>
         <ng-template #header>
@@ -169,7 +156,9 @@
                             deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
                             deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
                             (delete)="removeFromExam(examUser, $event)"
-                            [additionalChecks]="{ deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission' }"
+                            [additionalChecks]="{
+                                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
+                            }"
                             [dialogError]="dialogError$"
                             [requireConfirmationOnlyForAdditionalChecks]="true"
                         >
@@ -181,9 +170,7 @@
         </ng-template>
     </p-table>
 
-    <hr />
-
-    <jhi-data-table
+    <!-- jhi-data-table
         [isLoading]="isLoading()"
         [isSearching]="isSearching()"
         [searchFailed]="searchFailed()"
@@ -398,7 +385,7 @@
                 }
             </ngx-datatable>
         </ng-template>
-    </jhi-data-table>
+    </jhi-data-table -->
 </div>
 
 <jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" />

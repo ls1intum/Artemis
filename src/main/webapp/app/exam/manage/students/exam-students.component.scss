@@ -1,5 +1,13 @@
+@import 'src/main/webapp/content/scss/artemis-mixins.scss';
+
 // only place declarations within this manual scope (otherwise other components could be affected)
 jhi-exam-students {
+    // override the height of the component to make the table not extend past visible area
+    @include dynamic-content-height(--header-height);
+
+    display: flex;
+    flex-direction: column;
+
     $dropdown-item: (
         active-color: var(--exam-students-dropdown-item-active),
         already-registered: (
