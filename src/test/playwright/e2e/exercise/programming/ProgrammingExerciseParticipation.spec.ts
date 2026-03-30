@@ -143,6 +143,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             );
             tutorUser = await (await userManagementAPIRequests.getUser(tutor.username)).json();
             const response = await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
+            expect(response.ok(), `Team creation failed: ${response.status()} ${response.statusText()}`).toBeTruthy();
             team = await response.json();
         });
 
