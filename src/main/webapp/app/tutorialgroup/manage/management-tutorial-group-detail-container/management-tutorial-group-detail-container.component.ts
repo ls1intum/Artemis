@@ -21,6 +21,8 @@ import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/ser
 import { AccountService } from 'app/core/auth/account.service';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -134,9 +136,9 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .updateSession(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => {
-                    // TODO: use response
-                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
+                next: (rawSession: RawTutorialGroupSession) => {
+                    const newSession = new TutorialGroupSession(rawSession);
+                    this.tutorialGroupCourseAndGroupService.insertNewSession(newSession);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -155,9 +157,9 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .createSession(courseId, tutorialGroupId, createTutorialGroupSessionDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => {
-                    // TODO: use response
-                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
+                next: (rawSession: RawTutorialGroupSession) => {
+                    const newSession = new TutorialGroupSession(rawSession);
+                    this.tutorialGroupCourseAndGroupService.insertNewSession(newSession);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -179,7 +181,10 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     return of(undefined);
                 }),
             )
-            .subscribe(() => {
+            .subscribe((response) => {
+                if (!response) {
+                    return;
+                }
                 this.router.navigate(['../'], { relativeTo: this.route });
                 this.isActionLoading.set(false);
             });

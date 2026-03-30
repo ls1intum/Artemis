@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { map } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -25,6 +26,26 @@ export class TutorialGroupCourseAndGroupService {
             return {
                 ...tutorialGroup,
                 sessions: tutorialGroup.sessions.map((session) => (session.id !== sessionId ? session : { ...session, isCancelled: !session.isCancelled })),
+            };
+        });
+    }
+
+    insertNewSession(newSession: TutorialGroupSession) {
+        this.tutorialGroup.update((tutorialGroup) => {
+            if (!tutorialGroup) return tutorialGroup;
+
+            const insertIndex = tutorialGroup.sessions.findIndex((session) => newSession.start.isBefore(session.start));
+            const sessions = [...tutorialGroup.sessions];
+
+            if (insertIndex === -1) {
+                sessions.push(newSession);
+            } else {
+                sessions.splice(insertIndex, 0, newSession);
+            }
+
+            return {
+                ...tutorialGroup,
+                sessions,
             };
         });
     }

@@ -11,6 +11,7 @@ import { TutorialGroupCourseAndGroupService } from './tutorial-group-course-and-
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 
 describe('TutorialGroupCourseAndGroupService', () => {
     setupTestBed({ zoneless: true });
@@ -49,7 +50,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
         vi.restoreAllMocks();
     });
 
-    function createRawTutorialGroupSessionDTO(id: number, start: string, end: string, isCancelled: boolean): RawTutorialGroupSession {
+    function createRawTutorialGroupSession(id: number, start: string, end: string, isCancelled: boolean): RawTutorialGroupSession {
         return {
             id,
             start,
@@ -83,8 +84,8 @@ describe('TutorialGroupCourseAndGroupService', () => {
     }
 
     it('should update the cancellation status of the matching session', () => {
-        const firstSession = createRawTutorialGroupSessionDTO(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
-        const secondSession = createRawTutorialGroupSessionDTO(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', true);
+        const firstSession = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
+        const secondSession = createRawTutorialGroupSession(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', true);
         const tutorialGroup = new TutorialGroupDetailDTO(createTutorialGroupDetail([firstSession, secondSession]));
         service.tutorialGroup.set(tutorialGroup);
 
@@ -102,8 +103,29 @@ describe('TutorialGroupCourseAndGroupService', () => {
         expect(service.tutorialGroup()).toBeUndefined();
     });
 
+    it('should insert a new session at the correct chronological index', () => {
+        const firstSession = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
+        const thirdSession = createRawTutorialGroupSession(3, '2026-04-22T10:15:00.000Z', '2026-04-22T11:45:00.000Z', false);
+        const insertedSession = new TutorialGroupSession(createRawTutorialGroupSession(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', false));
+        const tutorialGroup = new TutorialGroupDetailDTO(createTutorialGroupDetail([firstSession, thirdSession]));
+        service.tutorialGroup.set(tutorialGroup);
+
+        service.insertNewSession(insertedSession);
+
+        expect(service.tutorialGroup()?.sessions.map((session) => session.id)).toEqual([1, 2, 3]);
+        expect(service.tutorialGroup()?.sessions[1]).toBe(insertedSession);
+    });
+
+    it('should guard insertNewSession when no tutorial group is loaded', () => {
+        expect(service.tutorialGroup()).toBeUndefined();
+
+        service.insertNewSession(new TutorialGroupSession(createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false)));
+
+        expect(service.tutorialGroup()).toBeUndefined();
+    });
+
     it('should fetch tutorial group on success and clear loading state', () => {
-        const session = createRawTutorialGroupSessionDTO(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
+        const session = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
         const tutorialGroup = createTutorialGroupDetail([session]);
         tutorialGroupApiService.getTutorialGroup.mockReturnValue(of(tutorialGroup));
 
