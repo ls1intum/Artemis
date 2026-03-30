@@ -194,8 +194,9 @@ public class SecurityConfiguration {
      * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
      *         in securing methods based on security expressions.
      */
+    // In Spring Security 7, this bean must be named 'methodSecurityExpressionHandler' to be auto-detected by @EnableMethodSecurity
     @Bean
-    public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
+    public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy());
         return expressionHandler;

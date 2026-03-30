@@ -251,6 +251,24 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handles Spring Security access denied exceptions (including {@link org.springframework.security.authorization.AuthorizationDeniedException}
+     * from Spring Security 7's method-level authorization) and returns a 403 Forbidden response.
+     *
+     * @param ex      the access denied exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and HTTP 403 status
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        detail.setTitle("Forbidden");
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(MESSAGE_KEY, "error.http.403");
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(detail);
+    }
+
+    /**
      * Handles {@link PasskeyAuthenticationException} and returns a 403 Forbidden response.
      *
      * @param ex      the passkey authentication exception

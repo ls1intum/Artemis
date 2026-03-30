@@ -489,6 +489,8 @@ dependencies {
     // ---- TEST DEPENDENCIES ----
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
+    // Required for MockMvc + Spring Security integration in Spring Boot 4 (auto-applies springSecurity() to MockMvc)
+    testImplementation "org.springframework.boot:spring-boot-security-test:${spring_boot_version}"
     testImplementation "org.springframework.boot:spring-boot-webmvc-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:7.0.4"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"

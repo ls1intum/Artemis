@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;

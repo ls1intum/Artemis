@@ -17,6 +17,7 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
 
