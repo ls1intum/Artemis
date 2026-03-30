@@ -6,7 +6,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -26,6 +25,11 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+
+interface TutorialGroupApiServiceMock {
+    getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
+}
 
 describe('TutorialGroupsManagementComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,24 +37,26 @@ describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
     const configuration = generateExampleTutorialGroupsConfiguration({});
-    const course = { id: 1, title: 'Example', isAtLeastInstructor: true } as Course;
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true, isAtLeastEditor: true } as Course;
 
     let tutorialGroupTwo: TutorialGroup;
     let tutorialGroupOne: TutorialGroup;
 
-    let tutorialGroupsService: TutorialGroupsService;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let configurationService: TutorialGroupsConfigurationService;
-    let getAllOfCourseSpy: ReturnType<typeof vi.spyOn>;
     let getOneOfCourseSpy: ReturnType<typeof vi.spyOn>;
 
     const router = new MockRouter();
 
     beforeEach(async () => {
+        tutorialGroupApiServiceMock = {
+            getTutorialGroupsForCourse: vi.fn(),
+        };
         await TestBed.configureTestingModule({
             imports: [TutorialGroupsManagementComponent, OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                MockProvider(TutorialGroupsService),
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -73,8 +79,7 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
-        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        getAllOfCourseSpy = vi.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(
             of(
                 new HttpResponse({
                     body: [tutorialGroupOne, tutorialGroupTwo],
@@ -96,41 +101,41 @@ describe('TutorialGroupsManagementComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
-        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should get all tutorial groups for course', () => {
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should get all tutorial groups for course if import is done', () => {
-        getAllOfCourseSpy.mockClear();
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
-        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
         const tutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
         tutorialGroupImportButtonComponent.importFinished.emit();
-        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
     it('should complete export when export button is clicked', () => {
-        getAllOfCourseSpy.mockClear();
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
-        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
         const tutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
         tutorialGroupExportButtonComponent.exportFinished.emit();
-        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });

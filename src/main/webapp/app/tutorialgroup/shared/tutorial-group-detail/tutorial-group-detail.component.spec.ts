@@ -14,7 +14,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { CreateOrUpdateTutorialGroupSessionDTO, RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -24,6 +23,8 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
+import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
 import { ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
@@ -83,7 +84,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createRawTutorialGroupSessionDTO(overrides: Partial<RawTutorialGroupSessionDTO> = {}): RawTutorialGroupSessionDTO {
+    function createRawTutorialGroupSessionDTO(overrides: Partial<RawTutorialGroupSession> = {}): RawTutorialGroupSession {
         return {
             id: 1,
             start: dayjs('2025-01-15T13:00:00+01:00').toISOString(),
@@ -937,7 +938,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
         const createSessionEmitSpy = vi.spyOn(component.onCreateSession, 'emit');
         const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
-        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
+        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession = {
             date: '2025-01-20',
             startTime: '10:00',
             endTime: '12:00',

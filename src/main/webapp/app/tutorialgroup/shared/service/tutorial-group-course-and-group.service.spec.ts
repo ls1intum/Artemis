@@ -10,7 +10,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupCourseAndGroupService } from './tutorial-group-course-and-group.service';
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
-import { RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 
 describe('TutorialGroupCourseAndGroupService', () => {
     setupTestBed({ zoneless: true });
@@ -49,7 +49,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
         vi.restoreAllMocks();
     });
 
-    function createRawTutorialGroupSessionDTO(id: number, start: string, end: string, isCancelled: boolean): RawTutorialGroupSessionDTO {
+    function createRawTutorialGroupSessionDTO(id: number, start: string, end: string, isCancelled: boolean): RawTutorialGroupSession {
         return {
             id,
             start,
@@ -63,7 +63,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
         };
     }
 
-    function createTutorialGroupDetail(sessions: RawTutorialGroupSessionDTO[]): TutorialGroupDetail {
+    function createTutorialGroupDetail(sessions: RawTutorialGroupSession[]): TutorialGroupDetail {
         return {
             id: 17,
             title: 'TG Tue 13',

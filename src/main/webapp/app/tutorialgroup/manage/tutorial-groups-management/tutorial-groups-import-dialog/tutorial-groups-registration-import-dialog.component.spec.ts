@@ -5,16 +5,16 @@ import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgro
 import { MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { TutorialGroupImport } from 'app/openapi/model/tutorialGroupImport';
 import { Student } from 'app/openapi/model/student';
-import ErrorEnum = TutorialGroupRegistrationImport.ErrorEnum;
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import ErrorEnum = TutorialGroupImport.ErrorEnum;
 
 vi.mock('papaparse', async () => {
     const original = await vi.importActual<typeof import('papaparse')>('papaparse');
@@ -25,16 +25,28 @@ vi.mock('papaparse', async () => {
 });
 const mockedParse = parse as unknown as Mock<typeof parse>;
 
+interface TutorialGroupApiServiceMock {
+    importTutorialGroupsWithRegistrations: ReturnType<typeof vi.fn>;
+}
+
 describe('TutorialGroupsRegistrationImportDialog', () => {
     setupTestBed({ zoneless: true });
 
     let component: TutorialGroupsRegistrationImportDialogComponent;
     let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialogComponent>;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
 
     beforeEach(async () => {
+        tutorialGroupApiServiceMock = {
+            importTutorialGroupsWithRegistrations: vi.fn(),
+        };
         await TestBed.configureTestingModule({
             imports: [TutorialGroupsRegistrationImportDialogComponent, FormsModule, ReactiveFormsModule, FaIconComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), MockProvider(TutorialGroupsService)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupsRegistrationImportDialogComponent);
@@ -270,17 +282,15 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.isImportDone = false;
         fixture.componentRef.setInput('courseId', 1);
 
-        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
-
         const returnedDTOOne = { ...exampleOne, importSuccessful: true };
         const returnedDTOTwo = { ...exampleTwo, importSuccessful: false, errorMessage: 'error' };
 
-        const importSpy = vi.spyOn(tutorialGroupService, 'import').mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
+        tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations.mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
 
         component.import();
 
-        expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(1, [exampleOne, exampleTwo]);
+        expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledWith(1, [exampleOne, exampleTwo], 'response');
         expect(component.isImporting).toBe(false);
         expect(component.isImportDone).toBe(true);
         expect(component.importedRegistrations).toEqual([returnedDTOOne]);
@@ -335,7 +345,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(removeChildSpy).toHaveBeenCalledWith(link);
     });
 
-    async function validationTest(data: TutorialGroupRegistrationImport[], translationKey: string, errorAddition?: string) {
+    async function validationTest(data: TutorialGroupImport[], translationKey: string, errorAddition?: string) {
         // given
         const translateService = TestBed.inject(TranslateService);
         const instantSpy = vi.spyOn(translateService, 'instant').mockReturnValue('testError:');
@@ -383,7 +393,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         importSuccessful?: boolean,
         error?: ErrorEnum,
     ) => {
-        const dto = {} as TutorialGroupRegistrationImport;
+        const dto = {} as TutorialGroupImport;
         dto.title = title ?? 'Mo 12-13';
         dto.student = student ?? generateStudentDTO();
         dto.importSuccessful = importSuccessful ?? undefined;
@@ -405,7 +415,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         return dto;
     };
 
-    function mockParserWithDTOs(data: TutorialGroupRegistrationImport[], errors: ParseError[]) {
+    function mockParserWithDTOs(data: TutorialGroupImport[], errors: ParseError[]) {
         mockParserWithRawCSVRows(
             data.map((dto) => generateRowObjectFromDTO(dto)),
             errors,
@@ -437,7 +447,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         status?: string;
     }
 
-    const generateRowObjectFromDTO = (dto: TutorialGroupRegistrationImport, status?: string) => {
+    const generateRowObjectFromDTO = (dto: TutorialGroupImport, status?: string) => {
         return {
             group: dto.title,
             registrationnumber: dto.student!.registrationNumber,
