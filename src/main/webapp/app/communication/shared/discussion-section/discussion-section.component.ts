@@ -336,8 +336,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
-     * sorted on the server
+     * on receiving a new search term, updates the search text and triggers a post reload with the current filter context
      */
     onSearch(searchText: string): void {
         this.searchText = searchText;
