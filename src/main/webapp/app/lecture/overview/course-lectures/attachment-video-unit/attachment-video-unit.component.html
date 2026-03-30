@@ -82,7 +82,9 @@
             <div class="pdf-viewer-spacing">
                 @if (showPdfSpinner()) {
                     <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
-                        <p-progressSpinner ariaLabel="{{ 'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate }}" />
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">{{ 'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate }}</span>
+                        </div>
                     </div>
                 }
                 <jhi-pdf-viewer
