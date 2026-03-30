@@ -186,4 +186,93 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(document.activeElement).toBe(searchNextButton);
         vi.useRealTimers();
     });
+
+    it('should handle Escape key in fullscreen mode', () => {
+        component.isFullscreenMode.set(true);
+        const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+        window.dispatchEvent(event);
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
+    });
+
+    it('should not handle Escape key when not in fullscreen mode', () => {
+        component.isFullscreenMode.set(false);
+        postMessageSpy.mockClear();
+        const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+        window.dispatchEvent(event);
+        expect(postMessageSpy).not.toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
+    });
+
+    it('should perform search with query', () => {
+        const pdfNotificationService = TestBed.inject(PDFNotificationService);
+        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
+        (component as any).performSearch('test query');
+        expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
+            type: 'find',
+            query: 'test query',
+            caseSensitive: false,
+            entireWord: false,
+            highlightAll: true,
+            findPrevious: false,
+        });
+    });
+
+    it('should clear search when query is empty', () => {
+        const pdfNotificationService = TestBed.inject(PDFNotificationService);
+        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
+        (component as any).searchQuery.set('previous query');
+        (component as any).performSearch('   ');
+        expect((component as any).searchQuery()).toBe('');
+        expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
+            type: 'find',
+            query: '',
+            caseSensitive: false,
+            entireWord: false,
+            highlightAll: false,
+            findPrevious: false,
+        });
+    });
+
+    it('should update search matches count', () => {
+        component.onFindMatchesCountUpdate({ current: 2, total: 5 });
+        expect((component as any).searchMatchesCount()).toEqual({ current: 2, total: 5 });
+    });
+
+    it('should trigger download action', () => {
+        postMessageSpy.mockClear();
+        (component as any).triggerDownload();
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'download', data: {} }, window.location.origin);
+    });
+
+    it('should confirm valid page navigation', () => {
+        component.totalPages.set(10);
+        (component as any).pageInputValue.set(5);
+        (component as any).confirmPageNavigation();
+        expect(component.currentPage()).toBe(5);
+        expect((component as any).pageInputValue()).toBe(5);
+    });
+
+    it('should reset invalid page navigation to fallback', () => {
+        component.totalPages.set(10);
+        component.currentPage.set(3);
+        (component as any).pageInputValue.set(undefined);
+        (component as any).confirmPageNavigation();
+        expect((component as any).pageInputValue()).toBe(3);
+    });
+
+    it('should set fullscreen mode flag from loadPDF message', () => {
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc.pdf', viewerMode: 'fullscreen' } },
+                origin: window.location.origin,
+                source: window,
+            }),
+        );
+        expect(component.isFullscreenMode()).toBe(true);
+    });
+
+    it('should reset currentPage when out of bounds on pagesLoaded', () => {
+        component.currentPage.set(99);
+        component.onPagesLoaded({ pagesCount: 10, source: {} });
+        expect(component.currentPage()).toBe(1);
+    });
 });

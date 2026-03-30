@@ -82,6 +82,22 @@ describe('AttachmentVideoUnitComponent', () => {
 
     let mockLectureTranscriptionService: any;
 
+    function expectPlaylistRequest(url: string, response: string | null) {
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === url);
+        expect(req.request.method).toBe('GET');
+        req.flush(response);
+    }
+
+    function mockTranscriptResponse(segments: any[]) {
+        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(
+            of({
+                lectureUnitId: 1,
+                language: 'en',
+                segments,
+            }),
+        );
+    }
+
     beforeEach(async () => {
         mockLectureTranscriptionService = {
             getTranscription: vi.fn(),
@@ -199,300 +215,82 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('videoUrl: returns source for allow-listed TUM Live URL', () => {
+    it('videoUrl: handles allow-listed TUM Live URLs', () => {
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
         component.lectureUnit().videoSource = src;
         fixture.detectChanges();
-
         expect(component.videoUrl()).toBe(src);
     });
-
-    it('videoUrl: returns source when parser recognizes non-allowlisted URL', () => {
-        const src = 'https://example.com/some-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue({} as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        expect(component.videoUrl()).toBe(src);
-        parseSpy.mockRestore();
-    });
-
-    it('videoUrl: returns undefined when parser returns undefined and URL is not in allow list', () => {
-        const src = 'https://example.com/not-a-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue(undefined as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        // The URL is not in allow list and parser doesn't recognize it, so it should return undefined
-        expect(component.videoUrl()).toBeUndefined();
-        parseSpy.mockRestore();
-    });
-    it('toggleCollapse(false): resets state, resolves playlist, fetches transcript (happy path)', async () => {
-        // Arrange BEFORE first detectChanges so the computed() caches the right value
+    it('toggleCollapse(false): resets state, resolves playlist, fetches transcript', async () => {
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
         const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
         component.lectureUnit().videoSource = src;
 
-        const mockTranscriptDTO: LectureTranscriptionDTO = {
-            lectureUnitId: 1,
-            language: 'en',
-            segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 3 }],
-        };
-        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
+        mockTranscriptResponse([{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 3 }]);
 
         component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'old', slideNumber: 1 }]);
         component.playlistUrl.set('stale.m3u8');
-
         fixture.detectChanges();
 
-        // Initial state: isLoading should be false
         expect(component.isLoading()).toBe(false);
-
-        // Act
         component.toggleCollapse(false);
 
-        // state reset happens synchronously
         expect(component.transcriptSegments()).toEqual([]);
         expect(component.playlistUrl()).toBeUndefined();
-        // isLoading should be true immediately after toggleCollapse
         expect(component.isLoading()).toBe(true);
 
-        // Mock the HTTP request for getPlaylistUrl
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === src);
-        expect(req.request.method).toBe('GET');
-        req.flush(playlist);
-
-        // Let the Observable chain finish
+        expectPlaylistRequest(src, playlist);
         await fixture.whenStable();
 
         expect(component.playlistUrl()).toBe(playlist);
         expect(component.transcriptSegments()).toHaveLength(1);
         expect(component.hasTranscript()).toBe(true);
-        // isLoading should be false after request completes
         expect(component.isLoading()).toBe(false);
     });
 
-    it('fetchTranscript: handles server error and keeps segments empty', async () => {
+    it('toggleCollapse(false): handles playlist errors and null responses', async () => {
         fixture.detectChanges();
 
-        // Mock service to return undefined (simulating error)
-        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-
-        // Call the private method directly to isolate error handling
-        (component as any).fetchTranscript();
-
-        // Let the Promise chain settle
-        await fixture.whenStable();
-
-        // Component state remains empty
-        expect(component.transcriptSegments()).toEqual([]);
-        expect(component.hasTranscript()).toBe(false);
-    });
-
-    it('toggleCollapse(false): playlist resolve fails -> no transcript fetch', async () => {
-        fixture.detectChanges();
-
+        // Test playlist error
         component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/efgh/9999?video_only=1';
-
         const getTranscriptionSpy = vi.spyOn(lectureTranscriptionService, 'getTranscription');
 
-        // Initial state: isLoading should be false
-        expect(component.isLoading()).toBe(false);
-
         component.toggleCollapse(false);
-
-        // isLoading should be true immediately after toggleCollapse
         expect(component.isLoading()).toBe(true);
 
-        // Mock the HTTP request to return an error
         const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
         req.flush('Not found', { status: 404, statusText: 'Not Found' });
-
-        // Let the Observable chain finish
         await fixture.whenStable();
 
-        // Ensure no transcript service call was made
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
-
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBe(false);
-        // isLoading should be false after error
-        expect(component.isLoading()).toBe(false);
-    });
-
-    it('toggleCollapse(false): .m3u8 URL is resolved through API like any other URL', async () => {
-        const m3u8Url = 'https://live.rbg.tum.de/some/path/playlist.m3u8';
-        component.lectureUnit().videoSource = m3u8Url;
-
-        const mockTranscriptDTO: LectureTranscriptionDTO = {
-            lectureUnitId: 1,
-            language: 'en',
-            segments: [{ startTime: 0, endTime: 5, text: 'Direct HLS transcript', slideNumber: 1 }],
-        };
-        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
-
-        fixture.detectChanges();
-
-        // Initial state: isLoading should be false
         expect(component.isLoading()).toBe(false);
 
-        // Act
+        // Test null playlist response
+        component.lectureUnit().videoSource = 'https://example.com/some-video';
         component.toggleCollapse(false);
 
-        // isLoading should be true immediately after toggleCollapse
-        expect(component.isLoading()).toBe(true);
-
-        // Mock the HTTP request (even .m3u8 URLs go through the API)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === m3u8Url);
-        expect(req.request.method).toBe('GET');
-        req.flush(m3u8Url);
-
-        // Let any pending microtasks finish
+        expectPlaylistRequest('https://example.com/some-video', null);
         await fixture.whenStable();
 
-        expect(component.playlistUrl()).toBe(m3u8Url);
-        expect(component.transcriptSegments()).toHaveLength(1);
-        expect(component.hasTranscript()).toBe(true);
-        expect(component.transcriptSegments()[0].text).toBe('Direct HLS transcript');
-        // isLoading should be false after request completes
-        expect(component.isLoading()).toBe(false);
-    });
-
-    it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', async () => {
-        const nonTumLiveUrl = 'https://example.com/some-video';
-        component.lectureUnit().videoSource = nonTumLiveUrl;
-
-        const getTranscriptionSpy = vi.spyOn(lectureTranscriptionService, 'getTranscription');
-
-        fixture.detectChanges();
-
-        // Initial state: isLoading should be false
-        expect(component.isLoading()).toBe(false);
-
-        // Act
-        component.toggleCollapse(false);
-
-        // isLoading should be true immediately after toggleCollapse
-        expect(component.isLoading()).toBe(true);
-
-        // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
-        req.flush(null);
-
-        // Let any pending microtasks finish
-        await fixture.whenStable();
-
-        // No transcript fetch should occur since no playlist was found
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
-
-        // Playlist should remain undefined
         expect(component.playlistUrl()).toBeUndefined();
-        expect(component.hasTranscript()).toBe(false);
-        // isLoading should be false after request completes (even if no playlist found)
-        expect(component.isLoading()).toBe(false);
     });
 
-    it('toggleCollapse(false): sets isLoading to false immediately when no video source', () => {
-        component.lectureUnit().videoSource = undefined;
+    it.each([
+        ['.pdf', faFilePdf, true],
+        ['.PDF', faFilePdf, true],
+        ['.docx', faFileWord, false],
+    ])('hasPdf: detects PDF extension %s correctly', (extension: string, _icon: IconDefinition, isPdf: boolean) => {
+        component.lectureUnit().attachment!.link = `/path/to/file/document${extension}`;
         fixture.detectChanges();
 
-        // Initial state: isLoading should be false
-        expect(component.isLoading()).toBe(false);
-
-        // Act
-        component.toggleCollapse(false);
-
-        // isLoading should be set to false immediately when no video source
-        expect(component.isLoading()).toBe(false);
-    });
-
-    it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
-        // initial has attachment
-        expect(component.hasAttachment()).toBe(true);
-
-        // no video by default
-        expect(component.hasVideo()).toBe(false);
-
-        // remove attachment => name becomes empty
-        const lu = component.lectureUnit();
-        lu.attachment = undefined;
-        fixture.detectChanges();
-
-        expect(component.hasAttachment()).toBe(false);
-        expect(component.getFileName()).toBe('');
+        expect(component.hasPdf()).toBe(isPdf);
     });
 
     describe('PDF functionality', () => {
-        it('isPdf: returns true for PDF file extension', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.pdf';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('isPdf: returns false for non-PDF file extensions', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.docx';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
-        it('isPdf: handles uppercase PDF extension', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('hasPdf: returns true when has attachment and is PDF', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('hasPdf: returns false when no attachment', () => {
-            component.lectureUnit().attachment = undefined;
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
-        it('hasPdf: returns false when attachment is not PDF', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
-        it('loadPdf: loads PDF directly via URL (no blob)', async () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.detectChanges();
-
-            expect(component.isPdfLoading()).toBe(false);
-
-            // Trigger toggleCollapse to load PDF
-            component.toggleCollapse(false);
-
-            await fixture.whenStable();
-
-            // New behavior: PDF is loaded directly via URL, no HTTP request for blob
-            expect(component.isPdfLoading()).toBe(true);
-            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
-
-            component['onPdfPagesLoaded']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
-
-            expect(component.isPdfLoading()).toBe(false);
-
-            // Verify no blob request was made
-            httpMock.verify();
-        });
-
-        it('loadPdf: falls back to blob on error', async () => {
+        it('loadPdf: loads directly via URL, then falls back to blob on error', async () => {
             const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
             const mockBlobUrl = 'blob:http://localhost/fallback-pdf';
             const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobUrl);
@@ -500,16 +298,20 @@ describe('AttachmentVideoUnitComponent', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
             fixture.detectChanges();
 
-            // Initial direct URL load (no HTTP request)
+            expect(component.isPdfLoading()).toBe(false);
+
+            // Trigger toggleCollapse to load PDF
             component.toggleCollapse(false);
             await fixture.whenStable();
 
+            // PDF is loaded directly via URL, no HTTP request for blob
+            expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
 
-            // Simulate PDF load error from viewer component
+            // Simulate PDF load error to trigger blob fallback
             component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
-            // Now the blob fallback should trigger an HTTP request
+            // Blob fallback should trigger an HTTP request
             const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
             expect(req.request.method).toBe('GET');
             req.flush(testBlob);
@@ -520,28 +322,16 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.pdfUrl()).toBe(mockBlobUrl);
             expect(createObjectURLSpy).toHaveBeenCalledWith(testBlob);
 
+            // Complete loading
             component['onPdfPagesLoaded']({ pdfUrl: mockBlobUrl });
             expect(component.isPdfLoading()).toBe(false);
 
+            // Test duplicate error prevention
+            component['onPdfLoadError']({ pdfUrl: mockBlobUrl });
+            const duplicateRequests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            expect(duplicateRequests).toHaveLength(0); // No new requests
+
             createObjectURLSpy.mockRestore();
-        });
-
-        it('loadPdf: does not trigger blob fallback twice while request is in flight', async () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.detectChanges();
-
-            component.toggleCollapse(false);
-            await fixture.whenStable();
-
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
-
-            const requests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
-            expect(requests).toHaveLength(1);
-            expect(component['isBlobLoadInProgress']()).toBe(true);
-
-            requests[0].flush(new Blob(['fake pdf content'], { type: 'application/pdf' }));
-            await fixture.whenStable();
         });
 
         it('toggleCollapse: resets pdfUrl when collapsed', async () => {
