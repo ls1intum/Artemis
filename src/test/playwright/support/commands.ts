@@ -209,33 +209,24 @@ export class Commands {
         try {
             const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
             initialResultId = getLatestResultId(participation);
-            console.log(`[waitForParticipationBuildToFinish] Initial result ID for participation ${participationId}: ${initialResultId}`);
-        } catch (e) {
-            console.log(`[waitForParticipationBuildToFinish] Could not get initial results for participation ${participationId}: ${e}`);
+        } catch {
+            // ignore — we will poll until we see a new result ID
         }
 
-        console.log(`[waitForParticipationBuildToFinish] Waiting for build of participation ${participationId} to finish (timeout: ${timeout}ms)...`);
-        let pollCount = 0;
         while (Date.now() - startTime < timeout) {
             try {
                 const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
                 const currentResultId = getLatestResultId(participation);
-                pollCount++;
-
-                if (pollCount % 5 === 0) {
-                    console.log(`[waitForParticipationBuildToFinish] Poll #${pollCount}: current result ID = ${currentResultId}, initial = ${initialResultId}`);
-                }
 
                 // A new result has a different (higher) ID than the pre-build snapshot.
                 // Comparing IDs rather than counts avoids the race where the build finishes
                 // between makeSubmission() and the initial fetch above, leaving the count
                 // permanently stuck.
                 if (currentResultId !== undefined && currentResultId !== initialResultId) {
-                    console.log(`[waitForParticipationBuildToFinish] Build finished! New result ID: ${currentResultId} (was: ${initialResultId})`);
                     return participation;
                 }
-            } catch (e) {
-                console.log(`[waitForParticipationBuildToFinish] Poll failed: ${e}`);
+            } catch {
+                // ignore transient poll failures — we retry until timeout
             }
 
             await new Promise((resolve) => setTimeout(resolve, interval));
