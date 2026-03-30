@@ -76,7 +76,7 @@ class CompetencyMappingToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
                 sessionCacheService, atlasMLApi, authorizationCheckService, userRepository);
 

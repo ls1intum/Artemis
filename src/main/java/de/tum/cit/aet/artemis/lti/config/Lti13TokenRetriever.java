@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -90,7 +91,7 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
+            return new ObjectMapper().registerModule(new JavaTimeModule()).readTree(exchange.getBody()).get("access_token").asText();
         }
         catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

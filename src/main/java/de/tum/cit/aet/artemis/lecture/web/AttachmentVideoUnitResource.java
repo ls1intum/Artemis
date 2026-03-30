@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
@@ -244,7 +245,7 @@ public class AttachmentVideoUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
+            return ResponseEntity.ok().body(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);

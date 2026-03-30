@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -80,7 +81,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -192,7 +193,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Feedback objects representing the static code analysis findings
      */
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         List<Feedback> feedbackList = new ArrayList<>();
         for (final StaticCodeAnalysisReportDTO report : reports) {
             StaticCodeAnalysisTool tool = report.tool();

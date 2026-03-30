@@ -24,7 +24,7 @@ class GzipMessageConverterTest {
 
     private GzipMessageConverter converter;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @BeforeEach
     void setUp() {

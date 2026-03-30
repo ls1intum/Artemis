@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
@@ -29,7 +30,7 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
         @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) implements BuildResultNotification {
 
     public static TestResultsDTO convert(Object someResult) {
-        return new ObjectMapper().convertValue(someResult, TestResultsDTO.class);
+        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
     }
 
     @Override

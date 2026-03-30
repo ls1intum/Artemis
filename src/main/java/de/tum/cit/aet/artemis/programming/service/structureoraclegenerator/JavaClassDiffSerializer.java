@@ -5,6 +5,7 @@ import java.util.HashSet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -18,7 +19,7 @@ import com.thoughtworks.qdox.model.JavaMethod;
  */
 record JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     /**
      * This method is used to serialize the class properties of each type defined in the types diff into a JSON object containing the following information:

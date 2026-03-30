@@ -267,7 +267,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
@@ -295,7 +295,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });

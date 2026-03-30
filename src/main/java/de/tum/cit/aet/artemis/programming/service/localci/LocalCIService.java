@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
@@ -76,7 +77,7 @@ public class LocalCIService implements ContinuousIntegrationService {
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(script);
-        buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        buildConfig.setBuildPlanConfiguration(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

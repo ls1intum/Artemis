@@ -56,7 +56,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
         var request = mockHttpRequestWithHeaders();
 
         // Create the json returned by the response
-        var objectMapper = new ObjectMapper();
+        var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ObjectNode crumbJson = objectMapper.createObjectNode();
         crumbJson.put("crumb", "some-crumb");
         var responseBody = objectMapper.writeValueAsString(crumbJson);

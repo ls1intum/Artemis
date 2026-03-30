@@ -10,11 +10,12 @@ import jakarta.persistence.Converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Converter
 public class LectureTranscriptionSegmentConverter implements AttributeConverter<List<LectureTranscriptionSegment>, String> {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Override
     public String convertToDatabaseColumn(List<LectureTranscriptionSegment> transcriptionSegments) {

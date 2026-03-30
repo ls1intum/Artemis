@@ -80,7 +80,8 @@ class HyperionChecklistServiceTest {
 
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper(), llmTokenUsageService, userRepository);
+                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper().registerModule(new JavaTimeModule()), llmTokenUsageService,
+                userRepository);
     }
 
     @Test

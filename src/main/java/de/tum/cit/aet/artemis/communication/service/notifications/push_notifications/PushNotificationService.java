@@ -34,6 +34,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
@@ -51,7 +52,7 @@ public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    protected final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 

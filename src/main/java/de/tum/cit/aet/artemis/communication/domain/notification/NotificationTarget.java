@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * This helper class is used to store transient information related to the notification,
@@ -157,7 +158,7 @@ public class NotificationTarget {
     public String toJsonString() {
         String result = null;
         try {
-            result = new ObjectMapper().writeValueAsString(this);
+            result = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(this);
         }
         catch (JsonProcessingException exception) {
             log.error(exception.getMessage(), exception);

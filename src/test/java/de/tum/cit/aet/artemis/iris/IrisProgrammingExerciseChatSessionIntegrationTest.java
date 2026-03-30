@@ -106,7 +106,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     private IrisJsonMessageContent createMockJsonContent() {
         var jsonMap = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
-        JsonNode jsonNode = new ObjectMapper().valueToTree(jsonMap);
+        JsonNode jsonNode = new ObjectMapper().registerModule(new JavaTimeModule()).valueToTree(jsonMap);
         return new IrisJsonMessageContent(jsonNode);
     }
 

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
@@ -258,7 +259,7 @@ public class JenkinsBuildPlanService {
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
          */
         if (nameParams.length != 4) {
-            var requestBodyString = new ObjectMapper().writeValueAsString(testResultsDTO);
+            var requestBodyString = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(testResultsDTO);
             log.error("Can't extract planKey from requestBody! Not a test notification result!: {}", requestBodyString);
             throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + requestBodyString);
         }

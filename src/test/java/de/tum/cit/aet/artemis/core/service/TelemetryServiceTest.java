@@ -43,7 +43,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private TelemetryService telemetryServiceSpy;
 

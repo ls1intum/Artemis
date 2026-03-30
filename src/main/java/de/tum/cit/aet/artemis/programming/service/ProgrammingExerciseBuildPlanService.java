@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -86,7 +87,7 @@ public class ProgrammingExerciseBuildPlanService {
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(windfile));
             programmingExercise.getBuildConfig().setBuildScript(script);
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
@@ -108,7 +109,7 @@ public class ProgrammingExerciseBuildPlanService {
         if (aeolusTemplateService.isPresent() && programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
-                programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(windfile));
                 programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
             }
             else {

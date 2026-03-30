@@ -68,7 +68,7 @@ public class SharingPlatformMockProvider {
      */
     private static final String sharingApiKey = "someSecretlySharedKey1234";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     /**
      * Simulates a connection request from the Sharing Platform to Artemis.

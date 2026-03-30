@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -91,7 +92,7 @@ public class AtlasAgentService {
 
     private final double temperature;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();

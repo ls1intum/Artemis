@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
@@ -71,7 +72,7 @@ public class ModelingSubmission extends Submission {
      */
     @Override
     public boolean isEmpty() {
-        return isEmpty(new ObjectMapper());
+        return isEmpty(new ObjectMapper().registerModule(new JavaTimeModule()));
     }
 
     /**

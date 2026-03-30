@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -127,7 +128,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(new ObjectMapper().writeValueAsString(jsonResponse));
+        writer.print(new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(jsonResponse));
         writer.flush();
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -216,7 +217,7 @@ public class TutorParticipationService {
                 return Stream.empty();
             }
 
-            var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            var objectWriter = new ObjectMapper().registerModule(new JavaTimeModule()).writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
                 // TODO: I think we should let Spring automatically convert it to Json

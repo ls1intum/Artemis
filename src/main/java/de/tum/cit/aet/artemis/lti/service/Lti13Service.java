@@ -32,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -292,7 +293,7 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.put("userId", userId);
         requestBody.put("timestamp", new DateTime().toString());
@@ -301,7 +302,7 @@ public class Lti13Service {
         requestBody.put("comment", comment);
         requestBody.put("scoreGiven", score);
         requestBody.put("scoreMaximum", 100D);
-        return new ObjectMapper().writeValueAsString(requestBody);
+        return objectMapper.writeValueAsString(requestBody);
     }
 
     /**

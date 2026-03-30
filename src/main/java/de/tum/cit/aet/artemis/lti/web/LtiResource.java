@@ -28,6 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -183,7 +184,7 @@ public class LtiResource {
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
         };
 
-        ObjectNode json = new ObjectMapper().createObjectNode();
+        ObjectNode json = new ObjectMapper().registerModule(new JavaTimeModule()).createObjectNode();
         json.put("targetLinkUri", targetLink);
         return ResponseEntity.ok(json.toString());
     }

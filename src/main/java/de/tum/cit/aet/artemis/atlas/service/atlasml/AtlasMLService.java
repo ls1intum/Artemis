@@ -20,6 +20,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
@@ -139,7 +140,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -178,7 +179,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {

@@ -56,7 +56,7 @@ class CompetencyExpertToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, sessionCacheService);
 
         // Setup test course

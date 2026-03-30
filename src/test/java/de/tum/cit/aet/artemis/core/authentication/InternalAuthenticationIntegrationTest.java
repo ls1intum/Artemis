@@ -120,7 +120,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
 
-        var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        var responseBody = new ObjectMapper().registerModule(new JavaTimeModule()).readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
     }

@@ -405,7 +405,7 @@ public class JenkinsRequestMockProvider {
         }
 
         URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
-        final var body = new ObjectMapper().writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
+        final var body = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
         final var status = failToGetLastBuild ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(status).body(body).contentType(MediaType.APPLICATION_JSON));
     }

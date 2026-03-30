@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
@@ -29,7 +30,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
         }
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
             JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
             JsonNode scopes = agsClaimJson.get("scope");

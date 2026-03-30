@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
@@ -17,7 +18,7 @@ public final class CustomFeedbackParser {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFeedbackParser.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     // Default value, will be overridden when customized below in setMaxFeedbackLength
     private static int maxFeedbackLength = 20_000;

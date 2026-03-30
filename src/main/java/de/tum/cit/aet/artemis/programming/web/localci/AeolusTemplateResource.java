@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -128,7 +129,7 @@ public class AeolusTemplateResource {
             }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-            String json = new ObjectMapper().writeValueAsString(windfile);
+            String json = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(windfile);
             return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {

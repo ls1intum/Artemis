@@ -46,7 +46,7 @@ class HyperionFaqRewriteServiceTest {
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         var observationRegistry = ObservationRegistry.create();
-        var objectMapper = new ObjectMapper();
+        var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, chatClient, templateService, observationRegistry, objectMapper);
 
         existingFaq = new Faq();

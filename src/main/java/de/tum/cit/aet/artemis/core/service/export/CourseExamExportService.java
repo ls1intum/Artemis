@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -563,7 +564,7 @@ public class CourseExamExportService {
         payload.put("message", String.join("\n", messages));
         payload.put("subMessage", subMessage);
 
-        var mapper = new ObjectMapper();
+        var mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         try {
             websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
         }

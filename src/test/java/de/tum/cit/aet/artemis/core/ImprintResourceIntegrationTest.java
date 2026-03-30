@@ -220,7 +220,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", "test");
         requestBody.put("language", "FRENCH");
-        request.put("/api/core/admin/imprint", new ObjectMapper().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/imprint", new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
     }
 
     @Test

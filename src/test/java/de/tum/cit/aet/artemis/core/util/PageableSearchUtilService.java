@@ -143,7 +143,7 @@ public class PageableSearchUtilService {
      * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search, String parentKey) {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         try {
             // Serialize the DTO into a JSON string and then deserialize it into a Map
             final String json = objectMapper.writeValueAsString(search);

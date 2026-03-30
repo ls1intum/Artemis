@@ -25,7 +25,7 @@ class StaticCodeAnalysisParserUnitTest {
 
     private static final Path REPORTS_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private void testParserWithFile(String toolGeneratedReportFileName, String expectedJSONReportFileName) throws IOException {
         testParserWithFileNamed(toolGeneratedReportFileName, toolGeneratedReportFileName, expectedJSONReportFileName);

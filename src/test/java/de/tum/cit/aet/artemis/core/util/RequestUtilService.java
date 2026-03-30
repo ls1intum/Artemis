@@ -197,7 +197,7 @@ public class RequestUtilService {
     }
 
     public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
-        final var mapper = new ObjectMapper();
+        final var mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();
@@ -208,7 +208,7 @@ public class RequestUtilService {
     }
 
     public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
-        final var mapper = new ObjectMapper();
+        final var mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();

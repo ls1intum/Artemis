@@ -380,7 +380,7 @@ public class ModelingExerciseUtilService {
      * @param sentModel   The model that should have been stored
      */
     public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         JsonNode sentModelNode = objectMapper.readTree(sentModel);
         JsonNode storedModelNode = objectMapper.readTree(storedModel);
         assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);

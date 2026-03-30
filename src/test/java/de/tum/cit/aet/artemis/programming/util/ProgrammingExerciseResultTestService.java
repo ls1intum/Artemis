@@ -243,7 +243,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         return mapper.convertValue(requestBodyMap, Object.class);
     }
 
