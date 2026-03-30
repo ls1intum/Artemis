@@ -916,7 +916,7 @@ public class TutorialGroupService {
     /**
      * Identifies users who should be notified about changes in a tutorial group.
      * This method collects a set of users who need to be notified, including:
-     * - All instructors registered to the tutorial group
+     * - All students registered to the group
      * - The teaching assistant of the group (if one exists)
      * Only users with a valid email address are included in the final set.
      *
