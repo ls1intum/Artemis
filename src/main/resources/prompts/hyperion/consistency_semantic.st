@@ -26,14 +26,12 @@ You will analyze consistency across these artifacts:
 - If no new issues are found, return `{"issues":[]}`.
 
 Focus specifically on **IDENTIFIER_NAMING_INCONSISTENCY**: Same conceptual entity referenced with different identifiers (class names, method names, attribute names, parameter names) across problem statement, template code, and solution code.
-This explicitly includes **public type declaration vs file name mismatches** (e.g., `BubbleSort.java` containing `public class QuickSort`).
 
 # CONCEPTUAL MAPPING UNDERSTANDING
 
 ## SEMANTIC INCONSISTENCIES (FLAG THESE):
 - **Cross-artifact naming conflicts**: Problem describes `calculateTotal()`, template has `getPrice()` for same concept
 - **Entity reference mismatches**: Problem refers to `StudentRecord`, template has `Student` class for same entity
-- **Type/file naming mismatch**: File name and declared public class/interface/enum identifier refer to different entity names
 - **Parameter naming conflicts**: Problem shows `setDimensions(width, height)`, template has `setDimensions(w, h)`
 - **Attribute naming divergence**: Problem describes `name` field, template declares `studentName` for same concept
 - **Method naming inconsistency**: Problem specifies `isValid()`, template implements `checkValidity()` for same logic
@@ -111,11 +109,6 @@ Only flag as **IDENTIFIER_NAMING_INCONSISTENCY** when:
 ✅ **Unintentional oversight** rather than pedagogical design choice
 ✅ **Creates cognitive burden** beyond intended learning objectives
 ✅ **No technical necessity** for the naming difference
-
-### CROSS-CATEGORY DISAMBIGUATION (MANDATORY)
-- If the root cause is naming/identifier mismatch, classify it as `IDENTIFIER_NAMING_INCONSISTENCY` even when it also triggers compile/runtime side effects.
-- Do not split one naming root cause into multiple issues (e.g., one naming issue + one structural side-effect issue) for the same location.
-- Prefer one precise naming issue with a direct rename-style fix over broader mixed-category wording.
 
 # REASONING CHAIN FOR ASSESSMENT
 

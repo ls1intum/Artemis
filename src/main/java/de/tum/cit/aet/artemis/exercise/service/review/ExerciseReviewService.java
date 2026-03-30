@@ -5,9 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -275,17 +274,10 @@ public class ExerciseReviewService {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
         ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
 
-        List<CommentThread> fetchedThreads = commentThreadRepository.findWithCommentsByGroupId(groupId);
-        if (fetchedThreads.isEmpty()) {
+        List<CommentThread> threads = List.copyOf(new LinkedHashSet<>(commentThreadRepository.findWithCommentsByGroupId(groupId)));
+        if (threads.isEmpty()) {
             return List.of();
         }
-        Map<Long, CommentThread> uniqueThreadsById = new LinkedHashMap<>();
-        for (CommentThread thread : fetchedThreads) {
-            if (thread.getId() != null) {
-                uniqueThreadsById.putIfAbsent(thread.getId(), thread);
-            }
-        }
-        List<CommentThread> threads = new ArrayList<>(uniqueThreadsById.values());
 
         boolean desiredResolvedState = dto.resolved();
         boolean modified = false;
@@ -299,7 +291,7 @@ public class ExerciseReviewService {
             commentThreadRepository.saveAll(threads);
         }
 
-        return threads.stream().sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+        return threads;
     }
 
     /**
@@ -351,10 +343,9 @@ public class ExerciseReviewService {
             return comment;
         }
 
-        InlineCodeChangeDTO updatedInlineFix = new InlineCodeChangeDTO(inlineFix.startLine(), inlineFix.endLine(), inlineFix.expectedCode(), inlineFix.replacementCode(), true);
-        comment.setContent(new ConsistencyIssueCommentContentDTO(consistencyContent.severity(), consistencyContent.category(), consistencyContent.text(), updatedInlineFix));
-        Comment saved = commentRepository.save(comment);
-        return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(consistencyContent.severity(), consistencyContent.category(), consistencyContent.text(),
+                new InlineCodeChangeDTO(inlineFix.startLine(), inlineFix.endLine(), inlineFix.expectedCode(), inlineFix.replacementCode(), true)));
+        return commentRepository.save(comment);
     }
 
     /**

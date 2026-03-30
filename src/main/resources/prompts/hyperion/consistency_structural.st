@@ -18,7 +18,6 @@ You will analyze consistency across these artifacts:
 **ONLY flag unintentional structural inconsistencies that create student confusion or implementation barriers.**
 **DO NOT flag intentional pedagogical gaps (missing method bodies, incomplete implementations, etc.)**
 **DO NOT return issues that already exist in the provided review threads (including semantically equivalent duplicates).**
-**DO NOT classify identifier/name mismatches (including public type name vs file name mismatches) as structural issues; those belong to semantic `IDENTIFIER_NAMING_INCONSISTENCY`.**
 
 # NEW-ISSUE-ONLY RULES (MANDATORY)
 - Treat all provided review threads as already known findings/discussion.
@@ -53,12 +52,6 @@ This includes:
 - **Template-Solution structural conflicts**: Template structure incompatible with solution design
 - **Solution contradicts specification**: Solution implements different structure than problem describes
 
-## CLASSIFICATION BOUNDARY (MANDATORY)
-- If the root cause is primarily an identifier/name mismatch (class, interface, enum, method, field, parameter, or file/type-name mismatch), do **not** report it here.
-- In particular, a mismatch between a declared public type name and its file/entity name is a naming inconsistency (semantic), not an `ATTRIBUTE_TYPE_MISMATCH`.
-- Only report structural type-category issues when the mismatch is about **types/signatures/visibility**, not names.
-- If a naming mismatch causes secondary structural symptoms (e.g., compile errors), still avoid structural duplicate reporting for that same root cause.
-
 # ANALYSIS FRAMEWORK
 
 ## STEP 1: Educational Context Analysis
@@ -91,9 +84,6 @@ Check for these specific inconsistencies:
 - Example: Problem states `List<String> names`, template declares `String[] names`
 - Example: Template has `String[] names`, solution has `List<String> names`
 - Example: Problem statement describes same field as both `int` and `String` in different sections
-- This category is strictly about **data type** differences, not identifier names.
-- Not flagged: Declared public type identifier differs from file/entity identifier (name mismatch, semantic category)
-- Not flagged: Different identifiers for the same concept where the mismatch is naming-only (semantic category)
 - Not flagged: Uninitialized fields in template
 
 **VISIBILITY_MISMATCH**: Method/attribute visibility conflicts between specification, template, and/or solution
