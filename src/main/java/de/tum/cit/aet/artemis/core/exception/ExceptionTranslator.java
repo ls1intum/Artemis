@@ -285,4 +285,34 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         postProcess(detail, request);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(detail);
     }
+
+    /**
+     * Catch-all handler for any unhandled exceptions that are not covered by more specific handlers.
+     * This replaces the generic exception handling previously provided by the Zalando problem-spring-web library.
+     * Respects {@link ResponseStatus} annotations on exception classes to determine the HTTP status code.
+     *
+     * @param ex      the unhandled exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and the appropriate HTTP status
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleGenericException(Exception ex, NativeWebRequest request) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
+        if (responseStatus != null) {
+            status = responseStatus.value();
+        }
+        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
+            log.error("Unhandled exception occurred: {}", ex.getMessage(), ex);
+        }
+        else {
+            log.warn("Exception with status {}: {}", status.value(), ex.getMessage());
+        }
+        ProblemDetail detail = ProblemDetail.forStatus(status);
+        detail.setTitle(status.getReasonPhrase());
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(MESSAGE_KEY, "error.http." + status.value());
+        postProcess(detail, request);
+        return ResponseEntity.status(status).body(detail);
+    }
 }

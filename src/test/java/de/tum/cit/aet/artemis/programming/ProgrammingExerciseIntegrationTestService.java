@@ -636,7 +636,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
@@ -681,12 +681,12 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
@@ -696,12 +696,12 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
