@@ -304,9 +304,9 @@ public class PyrisPipelineService {
                 new PyrisCourseDTO(course),
                 programmingExerciseDTO,
                 submissionDTO.orElse(null),
-                0, // TODO: load these values from exercise settings
-                0,
-                0
+                1, // TODO: load these values from exercise settings
+                2,
+                1
             ),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error, eventVariant.orElse(null))
         );

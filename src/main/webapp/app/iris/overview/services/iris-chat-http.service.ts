@@ -160,4 +160,8 @@ export class IrisChatHttpService {
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
+
+    startPromptingMode<T extends IrisSession>(identifier: string): Response<T> {
+        return this.httpClient.patch<T>(`${this.apiPrefix}/${identifier}/sessions/current/prompting`, null, { observe: 'response' });
+    }
 }

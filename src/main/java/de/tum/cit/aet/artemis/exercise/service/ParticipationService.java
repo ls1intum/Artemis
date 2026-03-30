@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -1120,4 +1121,49 @@ public class ParticipationService {
             }).filter(Objects::nonNull).toList();
         }
     }
+
+    public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdict) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
+                .orElseThrow();
+
+        String verdictString = verdict.verdict();
+        participation.setIrisVerdict(verdictString);
+
+        switch (verdictString) {
+            case "suspicious":
+                // TODO: inform instructor
+                break;
+            case "unsuspicious":
+                updateVerifiedScore(participation);
+                break;
+            default:
+                throw new Error("unknown verdict: " + verdict);
+        }
+
+        addReasoningInternal(participation, verdict.reasoning());
+        programmingExerciseStudentParticipationRepository.save(participation);
+    }
+
+    public void addReasoning(User user, Exercise exercise, String reasoning) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
+                .orElseThrow();
+        addReasoningInternal(participation, reasoning);
+        programmingExerciseStudentParticipationRepository.save(participation);
+    }
+
+    private void addReasoningInternal(ProgrammingExerciseStudentParticipation participation, String reasoning) {
+        var reasonings = participation.getIrisReasoning() == null ? new ArrayList<String>() : participation.getIrisReasoning();
+
+        reasonings.add(reasoning);
+        participation.setIrisReasoning(reasonings);
+    }
+
+    private void updateVerifiedScore(ProgrammingExerciseStudentParticipation participation) {
+
+        Double recentScore = participation.findLatestResult().getScore();
+        if (participation.getIrisVerifiedScore() == null || recentScore > participation.getIrisVerifiedScore()) {
+            participation.setIrisVerifiedScore(recentScore);
+        }
+    }
+
 }

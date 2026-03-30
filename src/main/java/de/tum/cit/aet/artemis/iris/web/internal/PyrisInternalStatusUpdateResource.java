@@ -57,6 +57,7 @@ public class PyrisInternalStatusUpdateResource {
 
     /**
      * POST internal/pipelines/chat/runs/:runId/status : Set the status of any Iris chat job (exercise, text exercise, course, lecture or prompt user)
+     * POST internal/pipelines/prompt-user/runs/:runId/status : Set the status of a prompt user job
      * <p>
      * Uses custom token based authentication.
      *
@@ -67,7 +68,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/chat/runs/{runId}/status")
+    @PostMapping({"pipelines/chat/runs/{runId}/status", "pipelines/prompt-user/runs/{runId}/status"})
     @Internal
     public ResponseEntity<Void> setStatusOfChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class);

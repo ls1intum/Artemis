@@ -51,6 +51,7 @@
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
                 "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!",
                 "aiUsageDeclined": "Du hast der Verwendung von AI explizit widersprochen. Stimme der Verwendung von AI-Tools in den Einstellungen zu, um Iris nutzen zu können."
+                "startPromptingFailed": "Die Verständnisüberprüfung konnte nicht gestartet werden."
             },
             "disclaimer": "Iris kann Fehler machen. Überprüfe wichtige Informationen.",
             "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",

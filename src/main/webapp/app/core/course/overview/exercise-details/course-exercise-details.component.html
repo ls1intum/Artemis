@@ -45,13 +45,16 @@
 
         <div class="row">
             <div class="col flex-grow-1">
-                <div class="mb-3">
+                <div class="mb-3 d-flex align-items-center gap-2">
                     <jhi-exercise-headers-information
                         [exercise]="exercise"
                         [studentParticipation]="gradedStudentParticipation"
                         [submissionPolicy]="submissionPolicy"
                         [course]="exercise.course"
                     />
+                    @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisPromptUserSettings?.enabled) {
+                        <jhi-start-prompting-button [exercise]="exercise" [smallButtons]="false" />
+                    }
                 </div>
                 <!-- RESULTS START -->
                 @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.numberOfPracticeResults) {
@@ -185,12 +188,12 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
-                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup) {
-                    @if (
-                        irisSettings?.irisProgrammingExerciseChatSettings?.enabled || (irisSettings?.irisPromptUserSettings?.enabled && latestEvent === EventType.BUILD_WITH_POINTS)
-                    ) {
-                        <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
-                    }
+                @if (
+                    exercise.type === PROGRAMMING &&
+                    !exercise.exerciseGroup &&
+                    (irisSettings?.irisProgrammingExerciseChatSettings?.enabled || (irisSettings?.irisPromptUserSettings?.enabled && latestEvent === EventType.BUILD_WITH_POINTS))
+                ) {
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">

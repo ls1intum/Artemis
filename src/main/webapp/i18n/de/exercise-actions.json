@@ -78,7 +78,8 @@
             "mode": {
                 "practice": "Übung",
                 "graded": "Bewertet"
-            }
+            },
+            "startPrompting": "Verständnis prüfen"
         }
     }
 }

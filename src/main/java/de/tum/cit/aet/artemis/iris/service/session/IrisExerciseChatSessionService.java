@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -42,7 +43,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -84,12 +87,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final UserRepository userRepository;
 
+    private final ParticipationService participationService;
+
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
-            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository) {
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, ParticipationService participationService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
@@ -103,6 +108,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
+        this.participationService = participationService;
     }
 
     /**
@@ -271,7 +277,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
         // Check if prompt user pipeline needs to be informed
-        if (checkIfStartPrompting(studentParticipation, latestSubmission)) {
+        if (checkIfExplainPromptingMode(studentParticipation, latestSubmission)) {
             return;
         }
 
@@ -320,7 +326,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     /**
      * Informs Iris prompting pipeline when new points were achieved in the latest build.
      */
-    private boolean checkIfStartPrompting(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
+    private boolean checkIfExplainPromptingMode(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
         var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(studentParticipation.getProgrammingExercise(), false);
         var settings = combinedSettings.irisPromptUserSettings();
         if (!settings.enabled()) {
@@ -329,7 +335,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         // Check if new highest number of points were achieved
         boolean newUnverifiedScore = latestSubmission.getLatestResult() != null
-                && latestSubmission.getLatestResult().getScore() > 0 /* TODO: load verifiedScore value from studentParticipation (make this a new column in table) */;
+                && (studentParticipation.getIrisVerifiedScore() == null || latestSubmission.getLatestResult().getScore() > studentParticipation.getIrisVerifiedScore());
 
         if (newUnverifiedScore) {
             log.info("User {} has achieved a new high score which now must be verified", studentParticipation.getParticipant().getName());
@@ -342,8 +348,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             catch (Exception e) {
                 log.error("Error while sending build with points message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
             }
-            session.setInPromptingModePipeline(true);
-            irisExerciseChatSessionRepository.save(session);
         }
         else {
             log.info("Submission did not achieve new highest score of points for user {}", studentParticipation.getParticipant().getName());
@@ -460,6 +464,30 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
     }
 
+    public IrisProgrammingExerciseChatSession startPromptingModeForCurrentSession(ProgrammingExercise exercise, User user) {
+        user.hasAcceptedExternalLLMUsageElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        checkIfExamExercise(exercise);
+
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
+        session.setInPromptingModePipeline(true);
+        irisExerciseChatSessionRepository.save(session);
+
+        try {
+            // Run async to allow the session to be returned immediately
+            CompletableFuture.runAsync(() -> {
+                requestAndHandleResponsePromptUser(session, Optional.of("user_initiates_prompting"), Optional.empty(), Optional.empty());
+                requestAndHandleResponsePromptUser(session, Optional.of("first_question"), Optional.empty(), Optional.empty());
+            });
+        }
+        catch (Exception e) {
+            log.error("Error while sending user_initiates_prompting message to Iris for user {}", user.getName(), e);
+        }
+
+        return session;
+    }
+
     /**
      * Checks if either exercise chat or prompting mode is enabled for the exercise.
      *
@@ -470,6 +498,60 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 || irisSettingsService.isEnabledFor(IrisSubSettingsType.PROMPT_USER, exercise))) {
             throw new AccessForbiddenAlertException("The Iris PROGRAMMING_EXERCISE_CHAT and PROMPT_USER features are both disabled for this exercise.", "Iris",
                     "iris.programming_exercise_chat_and_prompt_userDisabled");
+        }
+    }
+
+    @Override
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        // only handle events when sent with pipeline results
+        if (statusUpdate.result() != null) {
+            handleEventFromIris(job, statusUpdate);
+        }
+        return super.handleStatusUpdate(job, statusUpdate);
+    }
+
+    private void handleEventFromIris(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        if (statusUpdate.event() == null) {
+            return;
+        }
+
+        var session = irisExerciseChatSessionRepository.findByIdElseThrow(job.sessionId());
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        Exercise exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
+        user.hasAcceptedExternalLLMUsageElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        checkIfExamExercise(exercise);
+
+        switch (statusUpdate.event()) {
+            case "prompting_finished":
+                irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+                session.setInPromptingModePipeline(false);
+                irisExerciseChatSessionRepository.save(session);
+
+                try {
+                    if (statusUpdate.verdict() == null) {
+                        throw new Error("Prompting finished without verdict");
+                    }
+                    participationService.saveAndHandleVerdict(user, exercise, statusUpdate.verdict());
+                }
+                catch (Exception e) {
+                    log.error("Error while processing prompting mode verdict and reasoning {}", statusUpdate.verdict(), e);
+                }
+                break;
+            case "next_question":
+                try {
+                    irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+                    if (statusUpdate.verdict() == null) {
+                        throw new Error("Prompting finished without verdict");
+                    }
+                    participationService.addReasoning(user, exercise, statusUpdate.verdict().reasoning());
+                }
+                catch (Exception e) {
+                    log.error("Error while processing prompting mode reasoning {}", statusUpdate.verdict(), e);
+                }
+                break;
+            default:
+                break;
         }
     }
 }

@@ -78,7 +78,8 @@
             "mode": {
                 "practice": "Practice",
                 "graded": "Graded"
-            }
+            },
+            "startPrompting": "Assess understanding"
         }
     }
 }

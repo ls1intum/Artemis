@@ -58,6 +58,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { UnderstandingAssessmentButtonComponent } from 'app/core/course/overview/exercise-details/understanding-assessment-button/understanding-assessment-button.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -95,6 +96,7 @@ interface InstructorActionItem {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
+        UnderstandingAssessmentButtonComponent,
     ],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
@@ -425,7 +427,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest iris event transmitted by websocket.
      */
     get latestEvent(): EventType | undefined {
-        return this.irisChatService.latestEvent;
+        return this.irisChatService.latestEvent.getValue();
     }
 
     private onError(error: string) {

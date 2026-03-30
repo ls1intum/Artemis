@@ -1,7 +1,13 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.annotation.Nullable;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Size;
 
@@ -28,6 +34,19 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Column(name = "branch")
     private String branch;
+
+    @Nullable
+    @Column(name = "iris_verdict")
+    private String irisVerdict;
+
+    @Nullable
+    @Column(name = "iris_verified_score")
+    private Double irisVerifiedScore;
+
+    @ElementCollection
+    @CollectionTable(name = "participation_iris_reasoning", joinColumns = @JoinColumn(name = "participation_id"))
+    @Column(name = "reason")
+    private List<String> irisReasoning = new ArrayList<>();
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -72,6 +91,33 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setBranch(String branch) {
         this.branch = branch;
+    }
+
+    @Nullable
+    public List<String> getIrisReasoning() {
+        return irisReasoning;
+    }
+
+    public void setIrisReasoning(@Nullable List<String> irisReasoning) {
+        this.irisReasoning = irisReasoning;
+    }
+
+    @Nullable
+    public String getIrisVerdict() {
+        return irisVerdict;
+    }
+
+    public void setIrisVerdict(@Nullable String irisVerdict) {
+        this.irisVerdict = irisVerdict;
+    }
+
+    @Nullable
+    public Double getIrisVerifiedScore() {
+        return irisVerifiedScore;
+    }
+
+    public void setIrisVerifiedScore(@Nullable Double irisVerifiedScore) {
+        this.irisVerifiedScore = irisVerifiedScore;
     }
 
     @Override

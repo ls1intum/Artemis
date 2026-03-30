@@ -88,7 +88,7 @@ export class IrisChatService implements OnDestroy {
     liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
-    latestEvent: EventType | undefined = undefined;
+    latestEvent: BehaviorSubject<EventType | undefined> = new BehaviorSubject(undefined);
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers
@@ -136,6 +136,7 @@ export class IrisChatService implements OnDestroy {
         return !info.runId || !this.answeredRunIds().has(info.runId);
     });
 
+    private sessionHttpIdentifier?: string;
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
@@ -628,6 +629,24 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
+    public clearChat(): Promise<void> {
+        this.close();
+        return new Promise((resolve) => {
+            this.createNewSession().subscribe({
+                next: (session) => {
+                    this.handleNewSession().next?.(session);
+                },
+                error: (err) => {
+                    this.handleNewSession().error?.(err);
+                },
+                complete: () => {
+                    this.loadChatSessions();
+                    resolve();
+                },
+            });
+        });
+    }
+
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
             this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
@@ -1067,6 +1086,30 @@ export class IrisChatService implements OnDestroy {
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
+    }
+
+    public currentLatestEvent(): Observable<EventType | undefined> {
+        return this.latestEvent.asObservable();
+    }
+
+    public startPromptingMode(): Observable<IrisExerciseChatSession> {
+        return from(this.clearChat()).pipe(
+            switchMap(() => {
+                if (!this.sessionHttpIdentifier) {
+                    throw new Error('Session http identifier not set');
+                }
+
+                return this.http.startPromptingMode(this.sessionHttpIdentifier);
+            }),
+            map((response: HttpResponse<IrisExerciseChatSession>) => {
+                if (response.body) {
+                    return response.body;
+                } else {
+                    throw new Error(IrisErrorMessageKey.START_PROMPTING_FAILED);
+                }
+            }),
+            catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
+        );
     }
 
     /**

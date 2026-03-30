@@ -117,6 +117,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 // Interval (in ms) for client-side streamed draft reveal.
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
+import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -330,6 +331,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
+
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
@@ -753,6 +755,28 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect(() => {
             if (!this.newMessageTextContent()) {
                 untracked(() => this.isChipTextApplied.set(false));
+            }
+        });
+        this.latestEventSubscription = this.chatService.currentLatestEvent().subscribe((event) => {
+            switch (event) {
+                case EventType.USER_INITIATES_PROMPTING:
+                    this.inPromptingMode = true;
+                    break;
+
+                case EventType.FIRST_QUESTION:
+                    this.startTimer();
+                    this.startDefocusDetection();
+                    break;
+
+                case EventType.PROMPTING_FINISHED:
+                    this.inPromptingMode = false;
+
+                    this.stopTimer();
+                    this.stopDefocusDetection();
+                    break;
+
+                default:
+                    break;
             }
         });
 
@@ -1543,4 +1567,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 return undefined;
         }
     }
+
+    private startTimer() {}
+
+    private stopTimer() {}
+
+    private startDefocusDetection() {}
+
+    private stopDefocusDetection() {}
 }

@@ -1,0 +1,14 @@
+<ng-container>
+    <button
+        (click)="startPromptingMode()"
+        jhi-exercise-action-button
+        [id]="'start-prompting-' + exercise.id!"
+        [buttonIcon]="faBrain"
+        class="start-prompting"
+        [jhiFeatureToggle]="FeatureToggle.PromptingMode"
+        [buttonLabel]="'artemisApp.exerciseActions.startPrompting' | artemisTranslate"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="hideLabelMobile"
+        [overwriteDisabled]="!isEnabled"
+    ></button>
+</ng-container>

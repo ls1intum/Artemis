@@ -33,6 +33,7 @@ export enum IrisChatWebsocketPayloadType {
 
 export enum EventType {
     BUILD_WITH_POINTS = 'build_with_points',
-    STARTED_PROMPTING = 'started_prompting',
-    FINISHED_PROMPTING = 'finished_prompting',
+    USER_INITIATES_PROMPTING = 'user_initiates_prompting',
+    FIRST_QUESTION = 'first_question',
+    PROMPTING_FINISHED = 'prompting_finished',
 }

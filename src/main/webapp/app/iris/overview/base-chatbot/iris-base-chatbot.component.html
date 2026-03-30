@@ -206,7 +206,7 @@
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
-                        @if (!isChatHistoryAvailable() && messages().length >= 1) {
+                        @if (!isChatHistoryAvailable() && messages().length >= 1 && !this.inPromptingMode) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
