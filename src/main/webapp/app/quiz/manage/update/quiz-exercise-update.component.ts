@@ -743,6 +743,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
         question.text = generatedQuestion.questionText;
         question.hint = generatedQuestion.hint;
+        question.explanation = generatedQuestion.explanation;
         question.points = 1;
         question.randomizeOrder = true;
         question.scoringType = ScoringType.ALL_OR_NOTHING;
