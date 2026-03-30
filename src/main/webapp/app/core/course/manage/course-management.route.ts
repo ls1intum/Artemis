@@ -30,6 +30,18 @@ export const courseManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },
     {
+        path: ':courseId/onboarding',
+        loadComponent: () => import('./onboarding/course-onboarding.component').then((m) => m.CourseOnboardingComponent),
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.course.onboarding.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: '',
         loadComponent: () => import('app/core/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
         children: [
