@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, viewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -28,7 +28,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
 
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroup>();
-    tutorialGroupSession = input.required<TutorialGroupSession>();
+    tutorialGroupSession = input.required<TutorialGroupSessionDTO>();
 
     readonly tutorialGroupSessionDeleted = output<void>();
     readonly tutorialGroupEdited = output<void>();

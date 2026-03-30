@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output } from '@angular/core';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -7,6 +7,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionRowComponent } from './tutorial-group-session-row/tutorial-group-session-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { entityToTutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule-dto.model';
+import { entityToTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 @Component({
     selector: 'jhi-tutorial-group-sessions-table',
@@ -24,7 +26,7 @@ export class TutorialGroupSessionsTableComponent {
 
     readonly tutorialGroup = input.required<TutorialGroup>();
 
-    readonly sessions = input<TutorialGroupSession[]>([]);
+    readonly sessions = input<TutorialGroupSessionDTO[]>([]);
 
     readonly timeZone = input<string>();
 
@@ -36,10 +38,10 @@ export class TutorialGroupSessionsTableComponent {
 
     readonly attendanceUpdated = output<void>();
 
-    upcomingSessions: TutorialGroupSession[] = [];
-    pastSessions: TutorialGroupSession[] = [];
+    upcomingSessions: TutorialGroupSessionDTO[] = [];
+    pastSessions: TutorialGroupSessionDTO[] = [];
 
-    nextSession: TutorialGroupSession | undefined = undefined;
+    nextSession: TutorialGroupSessionDTO | undefined = undefined;
 
     isCollapsed = true;
 
@@ -63,8 +65,20 @@ export class TutorialGroupSessionsTableComponent {
         // Effect to handle tutorialGroup changes
         effect(() => {
             const group = this.tutorialGroup();
-            if (group) {
-                this.nextSession = group.nextSession;
+            if (group?.nextSession && group.nextSession.start && group.nextSession.end) {
+                this.nextSession = {
+                    id: group.nextSession.id!,
+                    start: group.nextSession.start.toISOString(),
+                    end: group.nextSession.end.toISOString(),
+                    location: group.nextSession.location ?? '',
+                    statusExplanation: group.nextSession.statusExplanation,
+                    status: group.nextSession.status,
+                    attendanceCount: group.nextSession.attendanceCount,
+                    freePeriod: entityToTutorialGroupFreePeriodDTO(group.nextSession.tutorialGroupFreePeriod),
+                    schedule: entityToTutorialGroupScheduleDTO(group.nextSession.tutorialGroupSchedule),
+                };
+            } else {
+                this.nextSession = undefined;
             }
         });
     }
@@ -84,17 +98,19 @@ export class TutorialGroupSessionsTableComponent {
         return dayjs();
     }
 
-    public trackSession(index: number, item: TutorialGroupSession): string {
+    public trackSession(index: number, item: TutorialGroupSessionDTO): string {
         return `${item.id}`;
     }
 
-    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {
-        const upcoming: TutorialGroupSession[] = [];
-        const past: TutorialGroupSession[] = [];
+    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSessionDTO[]) {
+        const upcoming: TutorialGroupSessionDTO[] = [];
+        const past: TutorialGroupSessionDTO[] = [];
         const now = this.getCurrentDate();
 
         for (const session of sessions) {
-            if (session.end!.isBefore(now)) {
+            const tz = this.timeZone() ?? this.timeZoneUsedForDisplay;
+            const end = session.end ? dayjs.tz(session.end, tz) : undefined;
+            if (end?.isBefore(now)) {
                 past.push(session);
             } else {
                 upcoming.push(session);
@@ -104,7 +120,7 @@ export class TutorialGroupSessionsTableComponent {
         this.pastSessions = past;
     }
 
-    onAttendanceChanged(session: TutorialGroupSession) {
+    onAttendanceChanged(session: TutorialGroupSessionDTO) {
         // Note: We synchronize the attendance of upcoming or past sessions with the next session and vice versa
         if (session.id === this.nextSession?.id) {
             this.nextSession = session;

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, viewChild, viewChildren } from '@angular/core';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -21,7 +21,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tu
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
-    tutorialGroupSession = input<TutorialGroupSession>();
+    tutorialGroupSession = input<TutorialGroupSessionDTO>();
 }
 
 @Component({
@@ -37,7 +37,7 @@ class MockExtraColumnComponent {
 })
 class MockWrapperComponent {
     readonly tutorialGroup = input.required<TutorialGroup>();
-    readonly sessions = input.required<TutorialGroupSession[]>();
+    readonly sessions = input.required<TutorialGroupSessionDTO[]>();
     readonly timeZone = input.required<string>();
 
     sessionTableInstance = viewChild.required(TutorialGroupSessionsTableComponent);
@@ -52,8 +52,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupSessionsTableComponent;
     let mockExtraColumns: MockExtraColumnComponent[];
-    let sessionOne: TutorialGroupSession;
-    let sessionTwo: TutorialGroupSession;
+    let sessionOne: TutorialGroupSessionDTO;
+    let sessionTwo: TutorialGroupSessionDTO;
     let tutorialGroup: TutorialGroup;
 
     beforeEach(() => {
@@ -74,8 +74,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 tutorialGroup = generateExampleTutorialGroup({});
-                sessionOne = generateExampleTutorialGroupSession({ id: 1 });
-                sessionTwo = generateExampleTutorialGroupSession({ id: 2 });
+                sessionOne = generateExampleTutorialGroupSessionDTO({ id: 1 });
+                sessionTwo = generateExampleTutorialGroupSessionDTO({ id: 2 });
                 fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
                 fixture.componentRef.setInput('sessions', [sessionOne, sessionTwo]);
@@ -109,8 +109,8 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     let fixture: ComponentFixture<TutorialGroupSessionsTableComponent>;
     let component: TutorialGroupSessionsTableComponent;
-    let pastSession: TutorialGroupSession;
-    let upcomingSession: TutorialGroupSession;
+    let pastSession: TutorialGroupSessionDTO;
+    let upcomingSession: TutorialGroupSessionDTO;
     let tutorialGroup: TutorialGroup;
     const timeZone = 'Europe/Berlin';
     const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
@@ -131,20 +131,27 @@ describe('TutorialGroupSessionTableComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupSessionsTableComponent);
                 component = fixture.componentInstance;
 
-                pastSession = generateExampleTutorialGroupSession({
+                pastSession = generateExampleTutorialGroupSessionDTO({
                     id: 1,
-                    start: dayjs('2021-01-01T12:00:00.000Z').tz('Europe/Berlin'),
-                    end: dayjs('2021-01-01T13:00:00.000Z').tz('Europe/Berlin'),
+                    start: '2021-01-01T12:00:00.000Z',
+                    end: '2021-01-01T13:00:00.000Z',
                     location: 'Room 1',
                 });
-                upcomingSession = generateExampleTutorialGroupSession({
+                upcomingSession = generateExampleTutorialGroupSessionDTO({
                     id: 2,
-                    start: dayjs('2021-01-03T12:00:00.000Z').tz('Europe/Berlin'),
-                    end: dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
+                    start: '2021-01-03T12:00:00.000Z',
+                    end: '2021-01-03T13:00:00.000Z',
                     location: 'Room 1',
                 });
                 tutorialGroup = generateExampleTutorialGroup({});
-                tutorialGroup.nextSession = upcomingSession;
+                tutorialGroup.nextSession = {
+                    id: 2,
+                    start: dayjs('2021-01-03T12:00:00.000Z'),
+                    end: dayjs('2021-01-03T13:00:00.000Z'),
+                    location: 'Room 1',
+                    status: TutorialGroupSessionStatus.ACTIVE,
+                    attendanceCount: undefined,
+                };
 
                 fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
@@ -166,7 +173,7 @@ describe('TutorialGroupSessionTableComponent', () => {
         // Effects run automatically when inputs change via setInput
         fixture.detectChanges();
 
-        const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
+        const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSessionDTO;
         component.onAttendanceChanged(sessionWithAttendanceData);
         fixture.detectChanges();
         expect(component.nextSession).toEqual(sessionWithAttendanceData);
@@ -176,10 +183,20 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     it('should sync next session and past sessions when attendance changed', () => {
         // Create a new object to trigger the signal change
-        fixture.componentRef.setInput('tutorialGroup', { ...tutorialGroup, nextSession: pastSession });
+        fixture.componentRef.setInput('tutorialGroup', {
+            ...tutorialGroup,
+            nextSession: {
+                id: pastSession.id,
+                start: dayjs(pastSession.start),
+                end: dayjs(pastSession.end),
+                location: pastSession.location,
+                status: pastSession.status,
+                attendanceCount: pastSession.attendanceCount,
+            },
+        });
         fixture.detectChanges();
 
-        const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
+        const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSessionDTO;
         component.onAttendanceChanged(sessionWithAttendanceData);
         fixture.detectChanges();
         expect(component.nextSession).toEqual(sessionWithAttendanceData);

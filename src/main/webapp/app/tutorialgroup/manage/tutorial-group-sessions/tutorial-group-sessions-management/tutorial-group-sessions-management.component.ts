@@ -8,7 +8,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, entityToTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -58,7 +58,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     readonly tutorialGroupId = input.required<number>();
     readonly course = input.required<Course>();
     tutorialGroup: TutorialGroup;
-    sessions: TutorialGroupSession[] = [];
+    sessions: TutorialGroupSessionDTO[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
     attendanceUpdated = false;
 
@@ -92,7 +92,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                 next: (tutorialGroup) => {
                     if (tutorialGroup) {
                         this.tutorialGroup = tutorialGroup;
-                        this.sessions = tutorialGroup.tutorialGroupSessions ?? [];
+                        this.sessions = tutorialGroup.tutorialGroupSessions?.map(entityToTutorialGroupSessionDTO) ?? [];
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }

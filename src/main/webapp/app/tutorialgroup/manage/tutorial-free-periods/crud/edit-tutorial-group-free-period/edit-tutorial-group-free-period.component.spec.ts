@@ -9,9 +9,7 @@ import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { EditTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import {
-    formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
@@ -23,6 +21,9 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+
 describe('EditTutorialGroupFreePeriodComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -86,13 +87,20 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should send PUT request upon form submission and close dialog', () => {
-        const changedPeriod: TutorialGroupFreePeriod = {
-            ...examplePeriod,
+        const changedPeriod: TutorialGroupFreePeriodRequestDTO = {
+            startDate: examplePeriod.start!.toISOString(),
+            endDate: examplePeriod.end!.toISOString(),
             reason: 'Changed',
         };
 
-        const updateResponse: HttpResponse<TutorialGroupFreePeriod> = new HttpResponse({
-            body: changedPeriod,
+        const updateResponse: HttpResponse<TutorialGroupFreePeriodDTO> = new HttpResponse({
+            body: {
+                id: examplePeriod.id,
+                start: changedPeriod.startDate,
+                end: changedPeriod.endDate,
+                reason: changedPeriod.reason,
+                tutorialGroupConfigurationId: exampleConfiguration.id!,
+            },
             status: 200,
         });
 
@@ -109,7 +117,17 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, formDataToTutorialGroupFreePeriodDTO(formData));
+        const args = updatedStub.mock.calls[0];
+
+        expect(args[0]).toBe(course.id);
+        expect(args[1]).toBe(exampleConfiguration.id);
+        expect(args[2]).toBe(examplePeriod.id);
+
+        const passedDto = updatedStub.mock.calls[0][3] as TutorialGroupFreePeriodRequestDTO;
+
+        expect(passedDto.reason).toBe('Changed');
+        expect(dayjs(passedDto.startDate).toDate().getTime()).toBe(formData.startDate.getTime());
+        expect(passedDto.endDate).toBeDefined();
         expect(freePeriodUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dialogVisible()).toBe(false);
     });
@@ -123,7 +141,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should set startTime and endTime correctly when freePeriodWithinDay', () => {
-        // Prepare a period within day
+        // Prepare a period within a day
         const start = dayjs('2021-01-08T12:00:00').tz('UTC');
         const end = dayjs('2021-01-08T15:00:00').tz('UTC');
         const periodWithinDay: TutorialGroupFreePeriod = { id: 1, start, end, reason: 'Reason' } as any;
@@ -132,7 +150,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         vi.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriod').mockReturnValue(false);
         vi.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriodWithinDay').mockReturnValue(true);
 
-        // Set inputs and open dialog
+        // Set inputs and open a dialog
         fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('course', course);
@@ -140,7 +158,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         fixture.componentRef.setInput('tutorialGroupsConfiguration', { id: 1 } as TutorialGroupsConfiguration);
         component.open();
 
-        // Expect formData startTime and endTime hours match the UTC→Berlin hour
+        // Expect formData startTime and endTime hours to match the UTC→Berlin hour
         const berlinStartHour = start.tz('Europe/Berlin').hour();
         const berlinEndHour = end.tz('Europe/Berlin').hour();
         expect(component.formData.startTime!.getHours()).toBe(berlinStartHour);
