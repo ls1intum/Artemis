@@ -1,6 +1,6 @@
 // Shared types for PDF viewer iframe communication.
 
-export type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError' | 'download' | 'openFullscreen';
+export type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError' | 'download' | 'openFullscreen' | 'closeFullscreen';
 
 export interface IframeMessageData {
     page?: number;

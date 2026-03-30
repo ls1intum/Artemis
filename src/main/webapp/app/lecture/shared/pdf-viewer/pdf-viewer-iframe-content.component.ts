@@ -83,6 +83,14 @@ export class PdfViewerIframeContentComponent implements OnInit {
         this.handleParentMessage(event);
     }
 
+    @HostListener('window:keydown', ['$event'])
+    protected onKeyDown(event: KeyboardEvent): void {
+        if (event.key === 'Escape' && this.isFullscreenMode()) {
+            event.preventDefault();
+            this.postMessageToParent('closeFullscreen', {});
+        }
+    }
+
     /** Handles valid parent messages and updates URL, page, and theme state. */
     private handleParentMessage(event: MessageEvent<IframeMessage>): void {
         if (event.origin !== window.location.origin || event.source !== window.parent) {

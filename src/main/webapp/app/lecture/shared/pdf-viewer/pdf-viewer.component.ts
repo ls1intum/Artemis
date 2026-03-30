@@ -40,6 +40,7 @@ export class PdfViewerComponent {
 
     // Shared state
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
+    readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
     readonly iframeReady = signal(false);
 
     // Services
@@ -114,11 +115,22 @@ export class PdfViewerComponent {
 
             wasFullscreenOpen = isOpen;
         });
+
+        // Auto-focus fullscreen window when opened (for ESC key to work)
+        effect(() => {
+            if (this.mode() === 'fullscreen' && this.fullscreenMetadata().isOpen) {
+                const windowElement = this.fullscreenWindow()?.nativeElement;
+                if (windowElement) {
+                    // Use setTimeout to ensure the element is fully rendered
+                    setTimeout(() => windowElement.focus(), 0);
+                }
+            }
+        });
     }
 
     // Close method (fullscreen mode only)
     close(): void {
-        if (this.mode() === 'fullscreen' && this.fullscreenService.fullscreenMetadata().isOpen) {
+        if (this.mode() === 'fullscreen') {
             this.fullscreenService.close();
             this.iframeReady.set(false);
         }
@@ -127,6 +139,15 @@ export class PdfViewerComponent {
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    protected onEscapeKey(event: KeyboardEvent): void {
+        // Only close if fullscreen is actually visible (not just mode='fullscreen')
+        if (event.key === 'Escape' && this.mode() === 'fullscreen' && this.fullscreenWindow()?.nativeElement) {
+            event.preventDefault();
+            this.close();
+        }
     }
 
     /** Handles iframe messages and ignores messages from invalid origins/sources. */
@@ -161,6 +182,11 @@ export class PdfViewerComponent {
             } else {
                 this.fullscreenService.updateCurrentPage(data.page);
             }
+            return;
+        }
+
+        if (type === 'closeFullscreen') {
+            this.close();
             return;
         }
 

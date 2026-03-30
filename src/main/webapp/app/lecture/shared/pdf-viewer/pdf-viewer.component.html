@@ -2,7 +2,7 @@
 @if (mode() === 'fullscreen') {
     @if (fullscreenMetadata().isOpen) {
         <div class="pdf-fullscreen-overlay" (click)="close()">
-            <div class="pdf-fullscreen-window" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+            <div #fullscreenWindow class="pdf-fullscreen-window" role="dialog" aria-modal="true" tabindex="0" (click)="$event.stopPropagation()" (keydown.escape)="close()">
                 <button
                     class="pdf-fullscreen-close"
                     type="button"
