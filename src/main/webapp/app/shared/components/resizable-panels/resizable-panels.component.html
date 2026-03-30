@@ -2,7 +2,7 @@
     <!-- ── Wide mode: resizable split ─────────────────────────────────── -->
     <div class="d-flex w-100 h-100 overflow-hidden">
         @if (leftPanel()) {
-            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
                 <p-tabs [value]="0" class="flex-shrink-0">
                     <p-tablist>
                         <p-tab [value]="0">
@@ -22,7 +22,7 @@
         }
 
         @if (rightPanels().length > 0) {
-            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
                 <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
                     <p-tablist>
                         @for (panel of rightPanels(); track panel; let i = $index) {
@@ -47,7 +47,7 @@
     </div>
 } @else {
     <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
-    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg border">
+    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
         <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
             <p-tablist>
                 @for (panel of panels(); track panel; let i = $index) {
