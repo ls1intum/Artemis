@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.programming.service.ci;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
+
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
@@ -11,6 +15,13 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTrig
  * Abstract service for managing entities related to continuous integration.
  */
 public interface StatelessCIService {
+
+    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/'
+    String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
+
+    String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
+
+    Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
 
     enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
