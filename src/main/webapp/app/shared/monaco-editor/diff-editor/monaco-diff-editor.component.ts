@@ -126,8 +126,9 @@ export class MonacoDiffEditorComponent implements OnDestroy {
      * @param modified The content of the modified file, if available.
      * @param originalFileName The name of the original file, if available.
      * @param modifiedFileName The name of the modified file, if available.
+     * @param languageId The language ID to use for syntax highlighting. If omitted, it will be inferred from the file extension.
      */
-    setFileContents(original?: string, modified?: string, originalFileName?: string, modifiedFileName?: string): void {
+    setFileContents(original?: string, modified?: string, originalFileName?: string, modifiedFileName?: string, languageId?: string): void {
         // Reset ready state and clear line changes when loading new content
         this.onReadyForDisplayChange.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
 
@@ -139,8 +140,8 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         originalModel.setValue(original ?? '');
         modifiedModel.setValue(modified ?? '');
 
-        monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
-        monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
+        monaco.editor.setModelLanguage(originalModel, languageId !== undefined ? languageId : originalModel.getLanguageId());
+        monaco.editor.setModelLanguage(modifiedModel, languageId !== undefined ? languageId : modifiedModel.getLanguageId());
 
         const newModel = {
             original: originalModel,

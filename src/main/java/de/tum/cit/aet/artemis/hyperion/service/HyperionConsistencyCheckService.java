@@ -426,7 +426,7 @@ public class HyperionConsistencyCheckService {
         private record SemanticConsistencyIssue(String severity, SemanticConsistencyIssueCategory category, String description, String suggestedFix,
                 List<ArtifactLocation> relatedLocations) {
         }
-        
+
         /** Unified schema covering all 6 categories — used exclusively by the verifier. */
         private static class UnifiedConsistencyIssues {
 

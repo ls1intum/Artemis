@@ -49,13 +49,7 @@
                 <div class="monaco-review-comment-header">
                     <div class="monaco-review-comment-title">
                         @if (isConsistencyCheckComment(commentVm.comment)) {
-                            {{
-                                'artemisApp.review.requestedBy'
-                                    | artemisTranslate
-                                        : {
-                                              name: commentVm.authorName || ('artemisApp.review.systemAuthor' | artemisTranslate),
-                                          }
-                            }}
+                            {{ 'artemisApp.review.hyperionAiAuthor' | artemisTranslate }}
                         } @else if (commentVm.authorName) {
                             {{ commentVm.authorName }}
                         } @else {
@@ -213,7 +207,7 @@
                             {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                         }
                     </button>
-                    @if (canResolveGroup()) {
+                    @if (resolveGroupMenuItems.length > 0) {
                         <button
                             pButton
                             type="button"

@@ -32,6 +32,7 @@ import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -74,6 +75,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     nonUserCommentMenuItems: MenuItem[] = [];
     resolveGroupMenuItems: MenuItem[] = [];
     readonly commentMenus = viewChildren<Menu>('commentMenu');
+    readonly resolveGroupMenu = viewChild<Menu>('resolveGroupMenu');
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
@@ -113,6 +115,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }
         return this.reviewCommentService.threads().some((thread) => thread.groupId === groupId && !thread.resolved);
     });
+    readonly canUnresolveGroup = computed(() => {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return false;
+        }
+        return this.reviewCommentService.threads().some((thread) => thread.groupId === groupId && thread.resolved);
+    });
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
         // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
@@ -144,6 +153,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         effect(() => {
             const inlineFix = this.consistencySuggestedInlineFix();
             const diffEditor = this.suggestedInlineFixDiffEditor();
+            const thread = this.thread();
             if (!inlineFix || !diffEditor) {
                 return;
             }
@@ -151,9 +161,17 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             diffEditor.setFileContents(
                 inlineFix.expectedCode,
                 inlineFix.replacementCode,
-                `current-${inlineFix.startLine}-${inlineFix.endLine}`,
-                `suggested-${inlineFix.startLine}-${inlineFix.endLine}`,
+                this.getInlineFixDiffFileName(thread),
+                this.getInlineFixDiffFileName(thread),
+                this.getInlineFixDiffLanguageId(thread),
             );
+        });
+
+        effect(() => {
+            this.canResolveGroup();
+            this.canUnresolveGroup();
+            this.languageVersion();
+            this.updateMenuItems();
         });
     }
 
@@ -247,6 +265,17 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Reopens all threads in the current thread group.
+     */
+    unresolveGroup(): void {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return;
+        }
+        this.reviewCommentService.toggleGroupResolvedInContext(groupId, false);
+    }
+
+    /**
      * Toggles the thread body and emits the collapsed state.
      */
     toggleThreadBody(): void {
@@ -277,6 +306,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.showThreadBody.set(!this.initialCollapsed());
         this.updateMenuItems();
+        document.addEventListener('scroll', this.hideOpenMenus, true);
         this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => {
             this.updateMenuItems();
             this.languageVersion.update((version) => version + 1);
@@ -285,6 +315,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        document.removeEventListener('scroll', this.hideOpenMenus, true);
         this.destroyed$.next();
         this.destroyed$.complete();
     }
@@ -355,6 +386,10 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     handleResolveGroupMenuAction(actionId: string | undefined): void {
         if (actionId === 'resolve-group') {
             this.resolveGroup();
+            return;
+        }
+        if (actionId === 'unresolve-group') {
+            this.unresolveGroup();
         }
     }
 
@@ -385,6 +420,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         for (const menu of this.commentMenus()) {
             menu.hide();
         }
+        this.resolveGroupMenu()?.hide();
     }
 
     /**
@@ -413,8 +449,19 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ];
         this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
-        this.resolveGroupMenuItems = [{ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') }];
+        const resolveGroupMenuItems: MenuItem[] = [];
+        if (this.canResolveGroup()) {
+            resolveGroupMenuItems.push({ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') });
+        }
+        if (this.canUnresolveGroup()) {
+            resolveGroupMenuItems.push({ id: 'unresolve-group', label: this.translateService.instant('artemisApp.review.unresolveThreadGroup') });
+        }
+        this.resolveGroupMenuItems = resolveGroupMenuItems;
     }
+
+    private readonly hideOpenMenus = (): void => {
+        this.hideAllCommentMenus();
+    };
 
     private getThreadLocationLabel(thread: CommentThread): string | undefined {
         const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
@@ -450,5 +497,21 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             default:
                 return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
         }
+    }
+
+    private getInlineFixDiffFileName(thread: CommentThread): string {
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return 'problem_statement.md';
+        }
+
+        return thread.filePath ?? thread.initialFilePath ?? 'inline-fix.txt';
+    }
+
+    private getInlineFixDiffLanguageId(thread: CommentThread): string | undefined {
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return CUSTOM_MARKDOWN_LANGUAGE_ID;
+        }
+
+        return undefined;
     }
 }
