@@ -3,10 +3,12 @@
 // only place declarations within this manual scope (otherwise other components could be affected)
 jhi-exam-students {
     // override the height of the component to make the table not extend past visible area
-    @include dynamic-content-height(--header-height);
+    --exam-students-extra-offset: 32px;
+    @include dynamic-content-height(--header-height, --exam-students-extra-offset);
 
     display: flex;
     flex-direction: column;
+    min-height: 0;
 
     $dropdown-item: (
         active-color: var(--exam-students-dropdown-item-active),
