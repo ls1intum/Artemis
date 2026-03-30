@@ -35,7 +35,6 @@ export class TutorialCreateContainerComponent {
                 this.tutorialGroupTutorService.loadTutors(courseId);
             }
         });
-        effect(() => {});
     }
 
     createTutorialGroup(createTutorialGroupEvent: CreateTutorialGroupEvent) {
