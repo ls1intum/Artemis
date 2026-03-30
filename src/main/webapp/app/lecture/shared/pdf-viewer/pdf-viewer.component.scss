@@ -19,6 +19,7 @@
 
 .pdf-fullscreen-window {
     --pdf-fullscreen-margin: 2rem;
+
     position: fixed;
     top: calc(2 * var(--pdf-fullscreen-margin));
     right: var(--pdf-fullscreen-margin);
