@@ -344,7 +344,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             }
         }
 
-        if (currentCourse?.faqEnabled) {
+        if ((currentCourse?.numberOfAcceptedFaqs ?? 0) > 0) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
