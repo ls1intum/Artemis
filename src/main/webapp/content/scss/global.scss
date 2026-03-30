@@ -1471,6 +1471,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 // Override Bootstrap's default popover max-width for AI feedback popover.
 .ai-feedback-popover {
     max-width: 500px;
+}
 
 // Compact metadata layout for the narrow left panel in Iris split view
 .iris-split-left .result-metadata {
