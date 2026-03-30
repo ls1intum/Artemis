@@ -2,7 +2,6 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
 import { SEED_COURSES } from '../../support/seedData';
 import { generateUUID } from '../../support/utils';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
