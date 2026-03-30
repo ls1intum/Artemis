@@ -97,7 +97,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
         await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        // Use a permissive glob so Angular sub-path routing (e.g. /exams/{id}/start)
+        // does not cause waitForURL to time out.
+        await this.page.waitForURL(`**/exams/${exam.id}**`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
