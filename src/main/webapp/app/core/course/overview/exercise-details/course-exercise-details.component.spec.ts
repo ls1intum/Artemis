@@ -274,6 +274,7 @@ describe('CourseExerciseDetailsComponent', () => {
         result.completionDate = dayjs();
         const submission = new TextSubmission();
         submission.results = [result];
+        submission.participation = studentParticipation;
         studentParticipation.submissions = [submission];
         studentParticipation.type = ParticipationType.STUDENT;
         studentParticipation.id = 42;

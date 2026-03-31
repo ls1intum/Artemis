@@ -194,7 +194,7 @@ describe('DiscussionSectionComponent', () => {
         expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const searchInput = getElement(fixture.debugElement, 'input#search');
         expect(searchInput.textContent).toBe('');
         vi.advanceTimersByTime(0);
     });
@@ -234,7 +234,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const searchInput = getElement(fixture.debugElement, 'input#search');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
@@ -249,7 +249,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const searchInput = getElement(fixture.debugElement, 'input#search');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');

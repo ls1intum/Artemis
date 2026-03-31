@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, effect, inject, input, output, signal,
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
@@ -44,7 +44,7 @@ export class ResultHistoryDropdownComponent {
     studentParticipation = input<StudentParticipation>();
     showUngradedResults = input<boolean>(false);
 
-    displayedResults = computed(() => this.sortedHistoryResults());
+    displayedResults = computed(() => [...this.sortedHistoryResults()].reverse());
 
     private readonly selectedResultId = signal<number | undefined>(undefined);
 
@@ -53,7 +53,11 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return undefined;
         }
-        return getLatestResultOfStudentParticipation(participation, this.showUngradedResults())?.id;
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        if (!results.length) {
+            return undefined;
+        }
+        return results.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
     });
 
     activeResultId = computed(() => {
@@ -162,8 +166,8 @@ export class ResultHistoryDropdownComponent {
     }
 
     getBadge(result: Result): Badge {
-        const participation = result.submission?.participation!;
-        return ResultService.evaluateBadge(participation, result);
+        const participation = result.submission?.participation ?? this.studentParticipation();
+        return ResultService.evaluateBadge(participation!, result);
     }
 
     getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {

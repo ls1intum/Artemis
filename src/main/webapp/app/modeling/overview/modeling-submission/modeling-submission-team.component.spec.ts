@@ -274,6 +274,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // GIVEN
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.examMode = true;
 
         // WHEN
         comp.isLoading = false;
@@ -282,7 +283,7 @@ describe('ModelingSubmissionComponent', () => {
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
         expect(comp.isActive).toBe(true);
@@ -294,11 +295,12 @@ describe('ModelingSubmissionComponent', () => {
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.examMode = true;
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(true);
     });
@@ -310,12 +312,13 @@ describe('ModelingSubmissionComponent', () => {
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
         submission.submitted = false;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.examMode = true;
 
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(comp.isLate).toBe(true);
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
         submission.submitted = true;
@@ -326,11 +329,12 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.result = result;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        comp.examMode = true;
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(true);
     });

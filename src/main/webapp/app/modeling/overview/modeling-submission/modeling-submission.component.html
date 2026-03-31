@@ -27,6 +27,7 @@
                 }
                 @if (!this.isFeedbackView) {
                     <jhi-exercise-submit-button
+                        id="submit"
                         class="submission-button"
                         [exercise]="modelingExercise"
                         [disabled]="(!isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"

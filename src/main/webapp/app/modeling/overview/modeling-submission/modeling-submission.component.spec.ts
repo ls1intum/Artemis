@@ -350,7 +350,7 @@ describe('ModelingSubmissionComponent', () => {
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
         expect(comp.isActive).toBe(true);
@@ -366,7 +366,7 @@ describe('ModelingSubmissionComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(true);
     });
@@ -383,7 +383,7 @@ describe('ModelingSubmissionComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isLate).toBe(true);
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
         submission.submitted = true;
@@ -398,7 +398,7 @@ describe('ModelingSubmissionComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(true);
     });

@@ -1,30 +1,32 @@
-@if (athenaEnabled && hasUserAcceptedLLMUsage) {
-    @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
-        <button
+@if (!isExamExercise) {
+    @if (athenaEnabled && hasUserAcceptedLLMUsage) {
+        @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
+            <button
+                class="btn btn-primary"
+                (click)="requestAIFeedback()"
+                [class.btn-sm]="smallButtons()"
+                [disabled]="!isSubmitted() || isGeneratingFeedback()"
+                [id]="'request-feedback-' + exercise().id"
+            >
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            </button>
+        } @else {
+            <button class="btn btn-primary" (click)="requestAIFeedback()" [class.btn-sm]="smallButtons()" [id]="'request-feedback-' + exercise().id">
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            </button>
+        }
+    } @else {
+        <a
             class="btn btn-primary"
-            (click)="requestAIFeedback()"
+            (click)="requestFeedback()"
             [class.btn-sm]="smallButtons()"
-            [disabled]="isGeneratingFeedback()"
             [id]="'request-feedback-' + exercise().id"
+            [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-        </button>
-    } @else {
-        <button class="btn btn-primary" (click)="requestAIFeedback()" [class.btn-sm]="smallButtons()" [id]="'request-feedback-' + exercise().id">
-            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-        </button>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback"></span>
+        </a>
     }
-} @else {
-    <a
-        class="btn btn-primary"
-        (click)="requestFeedback()"
-        [class.btn-sm]="smallButtons()"
-        [id]="'request-feedback-' + exercise().id"
-        [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
-    >
-        <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback"></span>
-    </a>
 }
