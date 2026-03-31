@@ -79,14 +79,11 @@ export type Path<T, D extends number = 3> = [D] extends [never]
       ? {
             [K in keyof T & string]: NonNullable<T[K]> extends StopTypes // If it's a Date/Function, stop here and just return the key.
                 ? K
-                : // If it's an Array, unpack it and decrement depth.
-                  NonNullable<T[K]> extends (infer U)[]
+                : NonNullable<T[K]> extends (infer U)[] // If it's an Array, unpack it and decrement depth.
                   ? K | `${K}.${Path<U, Prev[D]>}`
-                  : // If it's an Object, unpack it and decrement depth.
-                    NonNullable<T[K]> extends object
+                  : NonNullable<T[K]> extends object // If it's an Object, unpack it and decrement depth.
                     ? K | `${K}.${Path<NonNullable<T[K]>, Prev[D]>}`
-                    : // Base case (primitives like string, number, boolean)
-                      K;
+                    : K; // Base case (primitives like string, number, boolean)
         }[keyof T & string]
       : never;
 
