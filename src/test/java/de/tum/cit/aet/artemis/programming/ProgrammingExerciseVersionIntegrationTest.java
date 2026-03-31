@@ -88,12 +88,17 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         auxiliaryRepository.setName("extra");
         auxiliaryRepository.setCheckoutDirectory("extra");
         newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        // The factory windfile has empty actions, which produces empty phases after conversion.
+        // Override with a windfile containing one action so that the build plan has valid phases.
+        newExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[{\"name\":\"test\",\"script\":\"echo test\"}]}");
         // Act: Create the exercise via setup endpoint
         this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
         assertThat(programmingExercise.getId()).isNotNull();
+        // Reload from DB so the test object includes the build config generated during creation.
+        this.programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         // wait for solution/template/test to build and generate git commits
         await().untilAsserted(() -> {
             ExerciseVersion exerciseVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

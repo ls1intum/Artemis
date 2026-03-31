@@ -44,8 +44,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @AfterEach
     void tearDown() {
         // Delete answer posts first to avoid FK constraint violations when conversations
-        // cascade-delete their posts.
-        answerPostRepository.deleteAllInBatch();
+        // cascade-delete their posts. Use course-scoped deletion to maintain test isolation.
+        answerPostRepository.deleteAllByCourseId(exampleCourseId);
         // Do not use conversationMessageRepository.deleteAll() here:
         // In Hibernate 6.6, loading all Post entities and removing them directly causes
         // TransientObjectException during flush, because the parent Conversation entities
