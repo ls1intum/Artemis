@@ -94,6 +94,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         modalService = TestBed.inject(NgbModal);
         themeService = TestBed.inject(ThemeService);
 
+        window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
         subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
         openModalStub = jest.spyOn(modalService, 'open');
         getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
