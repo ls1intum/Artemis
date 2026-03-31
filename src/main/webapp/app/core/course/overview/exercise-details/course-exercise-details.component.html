@@ -12,6 +12,7 @@
             [participationMode]="participationMode()"
             [athenaEnabled]="true"
             (participationModeChange)="participationMode.set($event)"
+            (newParticipation)="onNewParticipation($event)"
         />
 
         <jhi-exercise-split-panel

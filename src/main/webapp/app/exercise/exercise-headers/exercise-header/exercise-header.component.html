@@ -17,6 +17,7 @@
             [onContinueExercise]="onContinueExercise()"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
+            (newParticipation)="newParticipation.emit($event)"
         />
     </div>
 
