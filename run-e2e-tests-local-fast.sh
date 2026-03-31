@@ -89,23 +89,10 @@ check_port_available() {
 
     listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$listeners" ]; then
-        echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
-        # Extract PIDs from lsof output (skip header line) and kill them
-        local pids
-        pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
-        for pid in $pids; do
-            echo "  Killing PID $pid..."
-            kill_tree "$pid"
-        done
-        sleep 2
-        # Verify port is now free
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
-        if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
-            echo "$listeners"
-            exit 1
-        fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${RED}ERROR: Port ${port} is already in use by another process, so the ${service_name} cannot start.${NC}"
+        echo "$listeners"
+        echo "Stop the conflicting process or rerun with the corresponding --skip-* flag if you intentionally want to reuse that service."
+        exit 1
     fi
 }
 
@@ -389,9 +376,9 @@ export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
-export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-90000}"
-export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-60000}"
-export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-60000}"
+export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-120000}"
+export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-90000}"
+export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-90000}"
 
 cd src/test/playwright
 

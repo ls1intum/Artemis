@@ -61,6 +61,7 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
 
             // Make sure text exercise is shown in exercises list
             await page.goto(`/course-management/${course.id}/exercises`);
+            await page.waitForLoadState('networkidle');
             await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
         });
 
