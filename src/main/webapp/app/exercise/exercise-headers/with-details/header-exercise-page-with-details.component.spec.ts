@@ -185,36 +185,32 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.dueDate).toBeUndefined();
     });
 
-    it.each(
+    it.each([
+        [[] as Submission[], 0],
+        [[{ type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 1],
+        [[{ type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 0],
         [
-            [[] as Submission[], 0],
-            [[{ type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 1],
-            [[{ type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 0],
             [
-                [
-                    { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
-                    { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
-                ] as Submission[],
-                1,
-            ],
-            [
-                [
-                    { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
-                    { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission,
-                ] as Submission[],
-                2,
-            ],
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+            ] as Submission[],
+            1,
         ],
-        'should count number of submissions correctly',
-        (submissions: Submission[], expectedNumber: number) => {
-            participation.submissions = submissions;
-            component.studentParticipation = participation;
-            component.submissionPolicy = new LockRepositoryPolicy();
-            component.submissionPolicy.active = true;
+        [
+            [
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission,
+            ] as Submission[],
+            2,
+        ],
+    ])('should count number of submissions correctly', (submissions: Submission[], expectedNumber: number) => {
+        participation.submissions = submissions;
+        component.studentParticipation = participation;
+        component.submissionPolicy = new LockRepositoryPolicy();
+        component.submissionPolicy.active = true;
 
-            component.ngOnChanges();
+        component.ngOnChanges();
 
-            expect(component.numberOfSubmissions).toBe(expectedNumber);
-        },
-    );
+        expect(component.numberOfSubmissions).toBe(expectedNumber);
+    });
 });
