@@ -100,6 +100,7 @@
                         [(ngModel)]="capacity"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
                         [min]="1"
+                        [max]="5000"
                         [showButtons]="true"
                     />
                 </p-inputgroup>
@@ -110,6 +111,7 @@
             <div class="label-and-input">
                 <label for="additional-information-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
                 <p-inputgroup>
+                    @let additionalInformationValidation = additionalInformationValidationResult();
                     <input
                         id="additional-information-input"
                         type="text"
@@ -117,6 +119,11 @@
                         pInputText
                         [(ngModel)]="additionalInformation"
                     />
+                    @if (additionalInformationValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="additionalInformationValidation.message | artemisTranslate" tooltipPosition="left">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
                 </p-inputgroup>
             </div>
             <div class="spacer"></div>
@@ -184,6 +191,7 @@
                             [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
                             [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
                             [min]="1"
+                            [max]="48"
                             [showButtons]="true"
                         />
                     </p-inputgroup>

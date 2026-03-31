@@ -91,6 +91,7 @@ export class TutorialCreateOrEditComponent {
     campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
     capacity = signal<number | undefined>(undefined);
     additionalInformation = signal('');
+    additionalInformationValidationResult = computed<Validation>(() => this.computeAdditionalInformationValidation());
 
     configureSessionPlan = signal(false);
     firstSessionStart = signal<Date | undefined>(undefined);
@@ -195,14 +196,14 @@ export class TutorialCreateOrEditComponent {
               }
             : undefined;
         return {
-            title: this.title(),
+            title: this.title().trim(),
             tutorId: this.selectedTutorId()!,
-            language: this.selectedLanguage(),
+            language: this.selectedLanguage().trim(),
             isOnline: this.selectedMode() === Mode.ONLINE,
-            campus: this.campus() || undefined,
+            campus: this.campus().trim() || undefined,
             capacity: this.capacity(),
-            additionalInformation: this.additionalInformation() || undefined,
-            tutorialGroupScheduleDTO: tutorialGroupSchedule,
+            additionalInformation: this.additionalInformation().trim() || undefined,
+            tutorialGroupSchedule: tutorialGroupSchedule,
         };
     }
 
@@ -241,6 +242,17 @@ export class TutorialCreateOrEditComponent {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.campusLength',
+            };
+        }
+        return { status: ValidationStatus.VALID };
+    }
+
+    private computeAdditionalInformationValidation(): Validation {
+        const trimmedAdditionalInformation = this.additionalInformation().trim();
+        if (trimmedAdditionalInformation && trimmedAdditionalInformation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.additionalInformationLength',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -299,6 +311,12 @@ export class TutorialCreateOrEditComponent {
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
             };
         }
+        if (firstSessionStart && teachingPeriodEnd > dayjs(firstSessionStart).add(2, 'year').toDate()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
+            };
+        }
         const firstSessionEnd = this.firstSessionEnd();
         if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
             return {
@@ -310,11 +328,17 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeLocationValidation(): Validation {
-        const location = this.location();
-        if (!location) {
+        const trimmedLocation = this.location().trim();
+        if (!trimmedLocation) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+            };
+        }
+        if (trimmedLocation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationLength',
             };
         }
         return { status: ValidationStatus.VALID };

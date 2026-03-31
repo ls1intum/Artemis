@@ -242,6 +242,21 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.campusValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
+    it('should expose the correct additional information validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+
+        component.additionalInformation.set('a'.repeat(256));
+        expect(component.additionalInformationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.additionalInformationLength',
+        });
+
+        component.additionalInformation.set('Bring worksheet');
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
     it('should expose the correct first session start validation state', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
@@ -302,7 +317,13 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
         });
 
-        component.tutorialPeriodEnd.set(new Date(2026, 6, 20));
+        component.tutorialPeriodEnd.set(new Date(2028, 3, 21));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
+        });
+
+        component.tutorialPeriodEnd.set(new Date(2028, 3, 20));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -314,8 +335,19 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
         });
 
-        component.location.set('Room 101');
+        component.location.set('   ');
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+        });
 
+        component.location.set('a'.repeat(256));
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationLength',
+        });
+
+        component.location.set('Room 101');
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -375,7 +407,7 @@ describe('TutorialCreateOrEditComponent', () => {
                 campus: 'Garching',
                 capacity: 20,
                 additionalInformation: 'Bring worksheet',
-                tutorialGroupScheduleDTO: {
+                tutorialGroupSchedule: {
                     firstSessionStart: '2026-04-20T10:15:00',
                     firstSessionEnd: '2026-04-20T11:45:00',
                     repetitionFrequency: 2,
@@ -414,7 +446,7 @@ describe('TutorialCreateOrEditComponent', () => {
                 campus: 'Garching',
                 capacity: 15,
                 additionalInformation: 'Bring laptop',
-                tutorialGroupScheduleDTO: undefined,
+                tutorialGroupSchedule: undefined,
             },
         });
     });
@@ -456,7 +488,7 @@ describe('TutorialCreateOrEditComponent', () => {
                 campus: 'Garching',
                 capacity: 15,
                 additionalInformation: 'Bring laptop',
-                tutorialGroupScheduleDTO: {
+                tutorialGroupSchedule: {
                     firstSessionStart: '2026-04-20T10:15:00',
                     firstSessionEnd: '2026-04-20T11:45:00',
                     repetitionFrequency: 2,

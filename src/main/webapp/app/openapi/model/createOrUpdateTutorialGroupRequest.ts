@@ -18,6 +18,6 @@ export interface CreateOrUpdateTutorialGroupRequest {
     campus?: string;
     capacity?: number;
     additionalInformation?: string;
-    tutorialGroupScheduleDTO?: TutorialGroupSchedule;
+    tutorialGroupSchedule?: TutorialGroupSchedule;
 }
 

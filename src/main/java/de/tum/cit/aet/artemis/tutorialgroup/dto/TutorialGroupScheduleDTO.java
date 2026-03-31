@@ -7,16 +7,27 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.BadRequestException;
+
+import org.hibernate.validator.constraints.Range;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd, @NotNull @Min(1) Integer repetitionFrequency,
-        @NotNull LocalDate tutorialPeriodEnd, @NotNull String location) {
+public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd,
+        @NotNull @Range(min = 1, max = 48) Integer repetitionFrequency, @NotNull LocalDate tutorialPeriodEnd, @NotNull @Size(min = 1, max = 255) String location) {
+
+    public void validateMaximumTutorialPeriodLength() {
+        if (firstSessionStart == null || tutorialPeriodEnd == null)
+            return;
+        if (tutorialPeriodEnd.isAfter(firstSessionStart.toLocalDate().plusYears(2))) {
+            throw new BadRequestException("The end of the teaching period must be at most 2 years after the first session's start.");
+        }
+    }
 
     /**
      * Converts a {@link TutorialGroupScheduleDTO} into a {@link TutorialGroupSchedule} entity instance.

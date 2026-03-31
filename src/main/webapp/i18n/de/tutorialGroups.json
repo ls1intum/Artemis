@@ -187,15 +187,18 @@
                     "campusLength": "Campus darf eine maximale Länge von 255 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
                     "languageRequired": "Bitte wähle eine Sprache.",
                     "languageLength": "Sprache darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "additionalInformationLength": "Zusätzliche Information darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
                     "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
                     "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
                     "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
                     "firstSessionEndNotOnSameDayAsStart": "Das Ende der ersten Session muss am selben Tag sein wie der Anfang.",
                     "teachingPeriodRequired": "Bitte wähle ein Zeitpunkt.",
                     "teachingPeriodNotAfterFirstSessionStart": "Das Ende der Tutoriumsperiode muss nach dem Anfang der ersten Session liegen.",
+                    "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "Das Ende der Tutoriumsperiode darf höchstens 2 Jahre nach dem Beginn der ersten Session liegen.",
                     "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
                     "tutorRequired": "Bitte wähle ein Tutor.",
-                    "locationRequired": "Bitte wähle einen Ort."
+                    "locationRequired": "Bitte wähle einen Ort.",
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
                 },
                 "networkError": {
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",

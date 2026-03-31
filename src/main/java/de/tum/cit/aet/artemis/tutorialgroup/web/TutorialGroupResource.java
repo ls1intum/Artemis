@@ -225,6 +225,10 @@ public class TutorialGroupResource {
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Long> createTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid CreateOrUpdateTutorialGroupRequestDTO createTutorialGroupRequestDTO) {
+        TutorialGroupScheduleDTO tutorialGroupScheduleDTO = createTutorialGroupRequestDTO.tutorialGroupSchedule();
+        if (tutorialGroupScheduleDTO != null) {
+            tutorialGroupScheduleDTO.validateMaximumTutorialPeriodLength();
+        }
         log.debug("REST request to create TutorialGroup: {} in course: {}", createTutorialGroupRequestDTO, courseId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -254,7 +258,6 @@ public class TutorialGroupResource {
         tutorialGroup.setAdditionalInformation(createTutorialGroupRequestDTO.additionalInformation());
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
-        TutorialGroupScheduleDTO tutorialGroupScheduleDTO = createTutorialGroupRequestDTO.tutorialGroupScheduleDTO();
         if (tutorialGroupScheduleDTO != null) {
             TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
             tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, schedule);
@@ -287,7 +290,12 @@ public class TutorialGroupResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updateTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupRequestDTO updateTutorialGroupRequestDTO) {
+        TutorialGroupScheduleDTO tutorialGroupScheduleDTO = updateTutorialGroupRequestDTO.tutorialGroupSchedule();
+        if (tutorialGroupScheduleDTO != null) {
+            tutorialGroupScheduleDTO.validateMaximumTutorialPeriodLength();
+        }
         log.debug("REST request to update TutorialGroup : {}", updateTutorialGroupRequestDTO);
+
         TutorialGroup tutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
 
@@ -333,7 +341,6 @@ public class TutorialGroupResource {
         tutorialGroup.setCampus(updateTutorialGroupRequestDTO.campus());
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
-        TutorialGroupScheduleDTO tutorialGroupScheduleDTO = updateTutorialGroupRequestDTO.tutorialGroupScheduleDTO();
         TutorialGroupSchedule oldSchedule = tutorialGroup.getTutorialGroupSchedule();
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleAndSessionsIfChanged(course, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));

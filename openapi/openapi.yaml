@@ -906,12 +906,12 @@ components:
       properties:
         title: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9: -]{0,19}$'}
         tutorId: {type: integer, format: int64}
-        language: {type: string}
+        language: {type: string, maxLength: 255, minLength: 1}
         isOnline: {type: boolean}
-        campus: {type: string}
-        capacity: {type: integer, format: int32, minimum: 1}
-        additionalInformation: {type: string}
-        tutorialGroupScheduleDTO: {$ref: '#/components/schemas/TutorialGroupSchedule'}
+        campus: {type: string, maxLength: 255, minLength: 1}
+        capacity: {type: integer, format: int32}
+        additionalInformation: {type: string, maxLength: 255, minLength: 1}
+        tutorialGroupSchedule: {$ref: '#/components/schemas/TutorialGroupSchedule'}
       required: [language, title]
     ProblemStatementTargetedRefinementRequest:
       type: object
@@ -1359,9 +1359,9 @@ components:
       properties:
         firstSessionStart: {type: string, format: date-time}
         firstSessionEnd: {type: string, format: date-time}
-        repetitionFrequency: {type: integer, format: int32, minimum: 1}
+        repetitionFrequency: {type: integer, format: int32}
         tutorialPeriodEnd: {type: string, format: date}
-        location: {type: string}
+        location: {type: string, maxLength: 255, minLength: 1}
       required: [firstSessionEnd, firstSessionStart, location, repetitionFrequency,
         tutorialPeriodEnd]
     CreateOrUpdateTutorialGroupSessionRequest:

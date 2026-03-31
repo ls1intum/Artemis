@@ -187,15 +187,18 @@
                     "campusLength": "Campus must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "languageRequired": "Please choose a language.",
                     "languageLength": "Language must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
+                    "additionalInformationLength": "Additional information must contain at most 255 characters. The system automatically removes leading/trailing whitespaces.",
                     "firstSessionStartRequired": "Please choose a date.",
                     "firstSessionEndRequired": "Please choose a date.",
                     "firstSessionEndNotAfterStart": "The end of the first session must be after its start.",
                     "firstSessionEndNotOnSameDayAsStart": "The end of the first session must be on the same day as its start.",
                     "teachingPeriodRequired": "Please choose a date.",
                     "teachingPeriodNotAfterFirstSessionStart": "The end of the teaching period must be after the first session's start.",
+                    "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "The end of the teaching period must be at most 2 years after the first session's start.",
                     "teachingPeriodNotAfterFirstSessionEnd": "The end of the teaching period must be after the first session's end.",
                     "tutorRequired": "Please choose a tutor.",
-                    "locationRequired": "Please choose a location."
+                    "locationRequired": "Please choose a location.",
+                    "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
                 },
                 "networkError": {
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
