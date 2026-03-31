@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -35,6 +35,7 @@ describe('AboutIrisModalComponent', () => {
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: IrisChatService, useValue: chatService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
