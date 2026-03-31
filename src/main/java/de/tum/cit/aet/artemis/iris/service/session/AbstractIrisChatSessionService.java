@@ -274,6 +274,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
         while (matcher.find()) {
             int jsonStart = matcher.start();
+            // Skip matches that fall inside an already-extracted JSON block
+            // (e.g. inner {"type":"mcq",...} objects inside an mcq-set)
+            if (jsonStart < lastEnd) {
+                continue;
+            }
             String jsonCandidate = extractJsonObject(trimmed, jsonStart);
             if (jsonCandidate == null) {
                 continue;
