@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
@@ -222,6 +223,24 @@ public class ParticipationRetrievalResource {
 
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations/names : get participant names for all participations of the given exercise.
+     *
+     * @param exerciseId the exercise to query
+     * @return list of {@link ParticipationNameExportDTO}, one entry per participation
+     */
+    @GetMapping("exercises/{exerciseId}/participations/names")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<ParticipationNameExportDTO>> getParticipationNamesForExport(@PathVariable Long exerciseId) {
+        log.debug("REST request to export participation names for Exercise {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
+        return ResponseEntity.ok(result);
     }
 
     /**

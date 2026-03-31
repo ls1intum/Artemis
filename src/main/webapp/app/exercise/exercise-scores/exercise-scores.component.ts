@@ -338,24 +338,26 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Exports the names of exercise participants as a csv file
+     * Exports the names of all exercise participants as a CSV file.
      */
     exportNames() {
-        const participations = this.participations();
-        if (participations.length) {
+        const ex = this.exercise();
+        if (!ex?.id) return;
+        this.participationService.getParticipationNamesForExport(ex.id).subscribe((participations) => {
+            if (!participations.length) return;
             const rows: string[] = [];
             participations.forEach((dto, index) => {
-                if (dto.teamId) {
+                if (dto.teamStudentNames !== undefined) {
                     if (index === 0) {
                         rows.push('Team Name,Team Short Name,Students');
                     }
-                    rows.push(dto.participantName ?? '');
+                    rows.push(`${dto.participantName ?? ''},${dto.participantIdentifier ?? ''},"${dto.teamStudentNames.join(', ')}"`);
                 } else {
                     rows.push(dto.participantName ?? '');
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
-        }
+        });
     }
 
     /**

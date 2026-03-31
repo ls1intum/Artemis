@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
@@ -1011,5 +1012,33 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun);
+    }
+
+    /**
+     * Returns participant identity data for all participations in the given exercise.
+     *
+     * @param exercise the exercise to query
+     * @return list of {@link ParticipationNameExportDTO}, one per participation
+     */
+    public List<ParticipationNameExportDTO> getParticipationNamesForExport(Exercise exercise) {
+        if (exercise.isTeamMode()) {
+            return studentParticipationRepository.findWithTeamInformationByExerciseId(exercise.getId()).stream().map(p -> {
+                Team team = p.getTeam().orElse(null);
+                if (team == null) {
+                    return null;
+                }
+                List<String> studentNames = team.getStudents() != null ? team.getStudents().stream().map(User::getName).filter(Objects::nonNull).sorted().toList() : List.of();
+                return new ParticipationNameExportDTO(team.getName(), team.getShortName(), studentNames);
+            }).filter(Objects::nonNull).toList();
+        }
+        else {
+            return studentParticipationRepository.findWithStudentByExerciseId(exercise.getId()).stream().map(p -> {
+                User student = p.getStudent().orElse(null);
+                if (student == null) {
+                    return null;
+                }
+                return new ParticipationNameExportDTO(student.getName(), student.getLogin(), null);
+            }).filter(Objects::nonNull).toList();
+        }
     }
 }

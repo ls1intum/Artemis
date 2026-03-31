@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/shared/table/pageable-table';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -158,6 +159,10 @@ export class ParticipationService {
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );
+    }
+
+    getParticipationNamesForExport(exerciseId: number): Observable<ParticipationNameExportDTO[]> {
+        return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
