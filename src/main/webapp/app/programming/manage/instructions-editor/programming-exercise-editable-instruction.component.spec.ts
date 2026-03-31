@@ -483,6 +483,24 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(problemStatementSavedSpy).toHaveBeenCalledOnce();
     });
 
+    it('should prefer current editor content when saving the problem statement', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('live editor value'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+    });
+
     it('should log an error on save', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');

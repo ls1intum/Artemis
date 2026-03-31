@@ -340,4 +340,52 @@ describe('ReviewCommentWidgetManager', () => {
         expect(threadRef.instance.setInlineFixOutdatedWarning).toHaveBeenCalledWith(true);
         expect(onApplyInlineFix).not.toHaveBeenCalled();
     });
+
+    it('should not persist inline fix when the editor model is unavailable', () => {
+        const editor = createEditorMock();
+        editor.getModel.mockReturnValue(undefined);
+        const vcRef = createViewContainerRefMock();
+        const threads: CommentThread[] = [{ id: 17, lineNumber: 2, resolved: false } as any];
+        const onApplyInlineFix = vi.fn();
+        const config = createConfig({ getThreads: () => threads, onApplyInlineFix });
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.renderWidgets();
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onApplyInlineFix)?.value;
+        threadRef.instance._onApplyInlineFix({
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        });
+
+        expect(threadRef.instance.setInlineFixOutdatedWarning).toHaveBeenCalledWith(false);
+        expect(editor.getActiveEditor().executeEdits).not.toHaveBeenCalled();
+        expect(onApplyInlineFix).not.toHaveBeenCalled();
+    });
+
+    it('should not persist inline fix when the target range is invalid', () => {
+        const editor = createEditorMock();
+        editor.setModelLines(['class Example {']);
+        const vcRef = createViewContainerRefMock();
+        const threads: CommentThread[] = [{ id: 18, lineNumber: 1, resolved: false } as any];
+        const onApplyInlineFix = vi.fn();
+        const config = createConfig({ getThreads: () => threads, onApplyInlineFix });
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.renderWidgets();
+        const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onApplyInlineFix)?.value;
+        threadRef.instance._onApplyInlineFix({
+            startLine: 2,
+            endLine: 2,
+            expectedCode: 'foo',
+            replacementCode: 'bar',
+            applied: false,
+        });
+
+        expect(threadRef.instance.setInlineFixOutdatedWarning).toHaveBeenCalledWith(false);
+        expect(editor.getActiveEditor().executeEdits).not.toHaveBeenCalled();
+        expect(onApplyInlineFix).not.toHaveBeenCalled();
+    });
 });

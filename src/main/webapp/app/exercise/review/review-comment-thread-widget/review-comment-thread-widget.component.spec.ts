@@ -200,6 +200,22 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(reviewCommentService.toggleGroupResolvedInContext).not.toHaveBeenCalled();
     });
 
+    it('should unresolve all threads in the group', () => {
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: true, comments: [] } as any);
+
+        comp.unresolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, false);
+    });
+
+    it('should handle unresolve-group menu action', () => {
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: true, comments: [] } as any);
+
+        comp.handleResolveGroupMenuAction('unresolve-group');
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, false);
+    });
+
     it('should detect edited comments', () => {
         const comment = {
             createdDate: '2024-01-01T00:00:00Z',
