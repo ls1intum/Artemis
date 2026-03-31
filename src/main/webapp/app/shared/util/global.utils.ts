@@ -58,3 +58,38 @@ export function getCurrentLocaleSignal(translateService: TranslateService): Sign
         initialValue: translateService.getCurrentLang(),
     });
 }
+
+/**
+ * Generates dot-notation string literal types for all property paths of an object `T`, up to a specified depth `D`.
+ * Automatically unwraps arrays and optional properties, and prevents infinite loops by stopping at specific types (e.g., `Date`).
+ *
+ * @example
+ * interface User {
+ *     login?: string;
+ *     orders: { id: number }[];
+ * }
+ * type UserPath = Path<User, 1>; // "login" | "orders" | "orders.id"
+ *
+ * // Angular Usage:
+ * globalFilterFields: Path<ExamUser, 1>[] = ['id', 'user.login', 'exam.title'];
+ */
+export type Path<T, D extends number = 3> = [D] extends [never]
+    ? never // We hit the depth limit, stop recursing.
+    : T extends object
+      ? {
+            [K in keyof T & string]: NonNullable<T[K]> extends StopTypes // If it's a Date/Function, stop here and just return the key.
+                ? K
+                : // If it's an Array, unpack it and decrement depth.
+                  NonNullable<T[K]> extends (infer U)[]
+                  ? K | `${K}.${Path<U, Prev[D]>}`
+                  : // If it's an Object, unpack it and decrement depth.
+                    NonNullable<T[K]> extends object
+                    ? K | `${K}.${Path<NonNullable<T[K]>, Prev[D]>}`
+                    : // Base case (primitives like string, number, boolean)
+                      K;
+        }[keyof T & string]
+      : never;
+
+type Prev = [never, 0, 1, 2, 3, 4, 5];
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+type StopTypes = Date | Function | RegExp;

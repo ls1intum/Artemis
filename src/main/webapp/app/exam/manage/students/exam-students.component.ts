@@ -15,7 +15,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faChair, faCheck, faTimes, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChair, faCheck, faTimes, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -41,6 +41,7 @@ import { ButtonDirective } from 'primeng/button';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { InputText } from 'primeng/inputtext';
+import { Path } from 'app/shared/util/global.utils';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -145,8 +146,9 @@ export class ExamStudentsComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    readonly filterFields: Path<ExamUser, 1>[] = ['user.login', 'user.name', 'user.email', 'user.visibleRegistrationNumber'] as const;
+
     // Icons
-    protected readonly faUserSlash = faUserSlash;
     protected readonly faUserTimes = faUserTimes;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
