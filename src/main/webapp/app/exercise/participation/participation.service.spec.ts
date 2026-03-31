@@ -15,6 +15,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { SortingOrder } from 'app/shared/table/pageable-table';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
@@ -232,6 +234,135 @@ describe('Participation Service', () => {
 
         expect(resultGetBuildJobId).toEqual(expected);
     }));
+
+    describe('searchParticipations', () => {
+        const baseSearch = {
+            page: 0,
+            pageSize: 50,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'participationId',
+            searchTerm: '',
+        };
+
+        it('should GET paginated participations and convert date fields', fakeAsync(() => {
+            const isoDate = '2024-06-01T10:00:00Z';
+            const serverDto = { participationId: 1, initializationDate: isoDate, individualDueDate: isoDate };
+
+            let result: any;
+            service.searchParticipations(42, baseSearch).subscribe((r) => (result = r));
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/42/participations/page');
+            expect(req.request.method).toBe('GET');
+            req.flush([serverDto], { headers: { 'X-Total-Count': '1' } });
+            tick();
+
+            expect(result.totalElements).toBe(1);
+            expect(dayjs.isDayjs(result.content[0].initializationDate)).toBeTrue();
+            expect(dayjs.isDayjs(result.content[0].individualDueDate)).toBeTrue();
+        }));
+
+        it('should include filterProp in params when provided', fakeAsync(() => {
+            service.searchParticipations(1, { ...baseSearch, filterProp: 'Failed' }).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
+            expect(req.request.params.get('filterProp')).toBe('Failed');
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+            tick();
+        }));
+
+        it('should not include filterProp in params when absent', fakeAsync(() => {
+            service.searchParticipations(1, baseSearch).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
+            expect(req.request.params.has('filterProp')).toBeFalse();
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+            tick();
+        }));
+    });
+
+    describe('searchParticipationScores', () => {
+        const baseSearch = {
+            page: 0,
+            pageSize: 50,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'score',
+            searchTerm: '',
+        };
+
+        it('should GET paginated scores and read X-Total-Count header', fakeAsync(() => {
+            const serverDto = { participationId: 1, score: 80, participantName: 'Alice', participantIdentifier: 'alice', successful: false, testRun: false };
+
+            let result: any;
+            service.searchParticipationScores(7, baseSearch).subscribe((r) => (result = r));
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/7/participations/scores');
+            expect(req.request.method).toBe('GET');
+            req.flush([serverDto], { headers: { 'X-Total-Count': '5' } });
+            tick();
+
+            expect(result.totalElements).toBe(5);
+            expect(result.content[0].score).toBe(80);
+        }));
+
+        it('should include filterProp and scoreRange params when provided', fakeAsync(() => {
+            service.searchParticipationScores(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
+            expect(req.request.params.get('filterProp')).toBe('Successful');
+            expect(req.request.params.get('scoreRangeLower')).toBe('60');
+            expect(req.request.params.get('scoreRangeUpper')).toBe('80');
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+            tick();
+        }));
+
+        it('should not include scoreRange params when undefined', fakeAsync(() => {
+            service.searchParticipationScores(1, baseSearch).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
+            expect(req.request.params.has('scoreRangeLower')).toBeFalse();
+            expect(req.request.params.has('scoreRangeUpper')).toBeFalse();
+            req.flush([], { headers: { 'X-Total-Count': '0' } });
+            tick();
+        }));
+    });
+
+    describe('getParticipationNamesForExport', () => {
+        it('should GET participation names for export', fakeAsync(() => {
+            const exportDto = { participantName: 'Alice', participantIdentifier: 'alice' };
+
+            let result: any;
+            service.getParticipationNamesForExport(3).subscribe((r) => (result = r));
+
+            const req = httpMock.expectOne('api/exercise/exercises/3/participations/names');
+            expect(req.request.method).toBe('GET');
+            req.flush([exportDto]);
+            tick();
+
+            expect(result).toEqual([exportDto]);
+        }));
+    });
+
+    describe('updateIndividualDueDates', () => {
+        it('should PUT individual due dates as DTOs', fakeAsync(() => {
+            const exercise: Exercise = {
+                id: 5,
+                type: ExerciseType.TEXT,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const participation: StudentParticipation = { id: 10, individualDueDate: dayjs('2024-12-31') };
+
+            service.updateIndividualDueDates(exercise, [participation]).subscribe();
+
+            const req = httpMock.expectOne('api/exercise/exercises/5/participations/update-individual-due-date');
+            expect(req.request.method).toBe('PUT');
+            expect(req.request.body[0].id).toBe(10);
+            expect(req.request.body[0].exerciseId).toBe(5);
+            req.flush([]);
+            tick();
+        }));
+    });
 
     afterEach(() => {
         httpMock.verify();

@@ -1,5 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -12,6 +14,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Range } from 'app/shared/util/utils';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { Subscription, of } from 'rxjs';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
@@ -20,8 +23,11 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('Exercise Scores Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;
@@ -57,18 +63,6 @@ describe('Exercise Scores Component', () => {
 
     const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
     let dtosToFilter: ParticipationScoreDTO[];
-    const filterRanges = [
-        new Range(0, 10),
-        new Range(10, 20),
-        new Range(20, 30),
-        new Range(30, 40),
-        new Range(40, 50),
-        new Range(50, 60),
-        new Range(60, 70),
-        new Range(70, 80),
-        new Range(80, 90),
-        new Range(90, 100),
-    ];
 
     const route = {
         data: of({ courseId: 1 }),
@@ -112,178 +106,272 @@ describe('Exercise Scores Component', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 component.exercise.set(exercise);
-                jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
+                vi.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
                 component.paramSub = new Subscription();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should be correctly set onInit', fakeAsync(() => {
-        const findCourseSpy = jest.spyOn(courseService, 'find');
-        const findExerciseSpy = jest.spyOn(exerciseService, 'find');
+    describe('Initialization', () => {
+        it('should be correctly set onInit', () => {
+            const findCourseSpy = vi.spyOn(courseService, 'find');
+            const findExerciseSpy = vi.spyOn(exerciseService, 'find');
 
-        component.ngOnInit();
-        tick();
+            component.ngOnInit();
 
-        expect(findCourseSpy).toHaveBeenCalledOnce();
-        expect(findCourseSpy).toHaveBeenCalledWith(1);
-        expect(findExerciseSpy).toHaveBeenCalledOnce();
-        expect(findExerciseSpy).toHaveBeenCalledWith(2);
-    }));
-
-    it('should load page on lazy load event', fakeAsync(() => {
-        const searchSpy = jest.spyOn(participationService, 'searchParticipationScores').mockReturnValue(
-            of({
-                content: dtosToFilter,
-                totalElements: dtosToFilter.length,
-            }),
-        );
-
-        component.exercise.set(exercise);
-        component.onLazyLoad({ first: 0, rows: 50 });
-        tick();
-
-        expect(searchSpy).toHaveBeenCalledOnce();
-        expect(component.participations()).toEqual(dtosToFilter);
-        expect(component.totalRows()).toBe(dtosToFilter.length);
-        expect(component.isLoading()).toBeFalse();
-    }));
-
-    it('should get exercise participation link for exercise without an exercise group', () => {
-        const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
-        component.course.set(course);
-
-        const returnedLink = component.getExerciseParticipationsLink(1);
-
-        expect(returnedLink).toEqual(expectedLink);
+            expect(findCourseSpy).toHaveBeenCalledOnce();
+            expect(findCourseSpy).toHaveBeenCalledWith(1);
+            expect(findExerciseSpy).toHaveBeenCalledOnce();
+            expect(findExerciseSpy).toHaveBeenCalledWith(2);
+        });
     });
 
-    it('should get exercise participation link for exercise with an exercise group', () => {
-        const expectedLink = [
-            '/course-management',
-            course.id!.toString(),
-            'exams',
-            '1',
-            'exercise-groups',
-            '1',
-            'programming-exercises',
-            exercise.id!.toString(),
-            'participations',
-            '2',
-        ];
-        component.course.set(course);
-        component.exercise.set({
-            ...exercise,
-            exerciseGroup: {
-                id: 1,
-                exam: {
-                    id: 1,
-                },
-            },
+    describe('Pagination / lazy loading', () => {
+        it('should load page on lazy load event', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(
+                of({
+                    content: dtosToFilter,
+                    totalElements: dtosToFilter.length,
+                }),
+            );
+
+            component.exercise.set(exercise);
+            component.onLazyLoad({ first: 0, rows: 50 });
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(component.participations()).toEqual(dtosToFilter);
+            expect(component.totalRows()).toBe(dtosToFilter.length);
+            expect(component.isLoading()).toBeFalse();
         });
 
-        const returnedLink = component.getExerciseParticipationsLink(2);
+        it('should update result filter and reload', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-        expect(returnedLink).toEqual(expectedLink);
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchSpy.mockClear();
+
+            component.updateParticipationFilter(component.FilterProp.MANUAL);
+
+            expect(component.activeFilter()).toBe(component.FilterProp.MANUAL);
+            expect(searchSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should refresh properly', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+
+            component.onLazyLoad({ first: 0, rows: 50 });
+            searchSpy.mockClear();
+
+            component.refresh();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(component.participations()).toEqual([sampleDto]);
+            expect(component.isLoading()).toBeFalse();
+        });
+
+        it('should reset filter options and reload', () => {
+            const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.onLazyLoad({ first: 0, rows: 50 });
+            component.rangeFilter.set(new Range(0, 10));
+            component.activeFilter.set(FilterProp.SUCCESSFUL);
+            searchSpy.mockClear();
+
+            component.resetFilterOptions();
+
+            expect(component.rangeFilter()).toBeUndefined();
+            expect(component.activeFilter()).toBe(FilterProp.ALL);
+            expect(searchSpy).toHaveBeenCalledOnce();
+        });
     });
 
-    it('should update result filter and reload', () => {
-        const searchSpy = jest.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
+    describe('Navigation links', () => {
+        it('should get exercise participation link for exercise without an exercise group', () => {
+            const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
+            component.course.set(course);
 
-        // Set up a lastLazyEvent so loadPage can work
-        component.onLazyLoad({ first: 0, rows: 50 });
-        searchSpy.mockClear();
+            const returnedLink = component.getExerciseParticipationsLink(1);
 
-        component.updateParticipationFilter(component.FilterProp.MANUAL);
+            expect(returnedLink).toEqual(expectedLink);
+        });
 
-        expect(component.activeFilter()).toBe(component.FilterProp.MANUAL);
-        expect(searchSpy).toHaveBeenCalledOnce();
+        it('should get exercise participation link for exercise with an exercise group', () => {
+            const expectedLink = [
+                '/course-management',
+                course.id!.toString(),
+                'exams',
+                '1',
+                'exercise-groups',
+                '1',
+                'programming-exercises',
+                exercise.id!.toString(),
+                'participations',
+                '2',
+            ];
+            component.course.set(course);
+            component.exercise.set({
+                ...exercise,
+                exerciseGroup: {
+                    id: 1,
+                    exam: {
+                        id: 1,
+                    },
+                },
+            });
+
+            const returnedLink = component.getExerciseParticipationsLink(2);
+
+            expect(returnedLink).toEqual(expectedLink);
+        });
     });
 
-    it.each([
-        [FilterProp.ALL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
-        [FilterProp.ALL, { type: ExerciseType.TEXT }, true, true],
-        [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
-        [FilterProp.SUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
-        [FilterProp.UNSUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
-        [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
-        [FilterProp.BUILD_FAILED, { type: ExerciseType.PROGRAMMING }, false, true],
-        [FilterProp.BUILD_FAILED, { type: ExerciseType.TEXT }, true, false],
-        [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
-        [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
-        [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
-        [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
-        [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
-        [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
-        [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
-        [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
-        [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
-    ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, ex: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
-        component.exercise.set(ex);
-        component.newManualResultAllowed.set(newManualResultsAllowed);
-        expect(component.isFilterRelevantForConfiguration(filter)).toBe(expected);
+    describe('Relevant filters', () => {
+        it.each([
+            [FilterProp.ALL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
+            [FilterProp.ALL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
+            [FilterProp.SUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.UNSUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
+            [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.BUILD_FAILED, { type: ExerciseType.PROGRAMMING }, false, true],
+            [FilterProp.BUILD_FAILED, { type: ExerciseType.TEXT }, true, false],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+            [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
+            [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
+            [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+        ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, ex: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
+            component.exercise.set(ex);
+            component.newManualResultAllowed.set(newManualResultsAllowed);
+            expect(component.relevantFilters().includes(filter)).toBe(expected);
+        });
     });
 
-    it('should return build plan id', () => {
-        expect(component.buildPlanId(sampleDto)).toBe('1');
+    describe('DTO accessors', () => {
+        it('should return build plan id', () => {
+            expect(component.buildPlanId(sampleDto)).toBe('1');
+        });
+
+        it('should return project key', () => {
+            component.exercise.set({
+                type: ExerciseType.PROGRAMMING,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                projectKey: 'key',
+            } as ProgrammingExercise);
+
+            expect(component.projectKey()).toBe('key');
+        });
+
+        it('should return repository link', () => {
+            expect(component.getRepositoryLink(sampleDto)).toBe('url');
+        });
     });
 
-    it('should return project key', () => {
-        component.exercise.set({
-            type: ExerciseType.PROGRAMMING,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            projectKey: 'key',
-        } as ProgrammingExercise);
+    describe('toResult', () => {
+        it('should return undefined when dto has no resultId', () => {
+            const dto: ParticipationScoreDTO = { ...sampleDto, resultId: undefined };
+            expect(component.toResult(dto)).toBeUndefined();
+        });
 
-        expect(component.projectKey()).toBe('key');
+        it('should build a Result from dto fields', () => {
+            const dto: ParticipationScoreDTO = {
+                ...sampleDto,
+                resultId: 42,
+                score: 75,
+                successful: true,
+                assessmentType: AssessmentType.AUTOMATIC,
+            };
+
+            const result = component.toResult(dto);
+
+            expect(result).toBeDefined();
+            expect(result!.id).toBe(42);
+            expect(result!.score).toBe(75);
+            expect(result!.successful).toBeTrue();
+            expect(result!.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        });
     });
 
-    it('should return repository link', () => {
-        expect(component.getRepositoryLink(sampleDto)).toBe('url');
+    describe('toParticipation', () => {
+        it('should build a Participation with submissions when submissionId and resultId are present', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            const dto: ParticipationScoreDTO = {
+                ...sampleDto,
+                participationId: 10,
+                submissionId: 20,
+                resultId: 30,
+                score: 90,
+                successful: true,
+                assessmentType: AssessmentType.MANUAL,
+            };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.id).toBe(10);
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0].id).toBe(20);
+            expect(participation.submissions![0].results).toHaveLength(1);
+            expect(participation.submissions![0].results![0].id).toBe(30);
+        });
+
+        it('should build a Participation with empty submissions when no submissionId', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
+            const dto: ParticipationScoreDTO = { ...sampleDto, submissionId: undefined, resultId: undefined };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.type).toBe(ParticipationType.STUDENT);
+            expect(participation.submissions).toHaveLength(0);
+        });
     });
 
-    it('should export names correctly', () => {
-        component.participations.set([sampleDto]);
-        const rows = ['participantName'];
-        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+    describe('Export names', () => {
+        it('should export names correctly for individual students', () => {
+            const exportDto: ParticipationNameExportDTO = { participantName: 'participantName', participantIdentifier: 'login1' };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
 
-        component.exportNames();
+            component.exportNames();
 
-        expect(resultServiceStub).toHaveBeenCalledOnce();
-        expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
-    });
+            expect(resultServiceStub).toHaveBeenCalledOnce();
+            expect(resultServiceStub).toHaveBeenCalledWith(['participantName'], 'results-names.csv');
+        });
 
-    it('should refresh properly', () => {
-        const searchSpy = jest.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+        it('should export names with team students format', () => {
+            const exportDto: ParticipationNameExportDTO = {
+                participantName: 'Team A',
+                participantIdentifier: 'team-a',
+                teamStudentNames: ['Alice', 'Bob'],
+            };
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([exportDto]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
 
-        // Set up a lastLazyEvent so loadPage can work
-        component.onLazyLoad({ first: 0, rows: 50 });
-        searchSpy.mockClear();
+            component.exportNames();
 
-        component.refresh();
+            expect(resultServiceStub).toHaveBeenCalledOnce();
+            const rows: string[] = resultServiceStub.mock.calls[0][0];
+            expect(rows[0]).toBe('Team Name,Team Short Name,Students');
+            expect(rows[1]).toContain('Team A');
+            expect(rows[1]).toContain('Alice');
+        });
 
-        expect(searchSpy).toHaveBeenCalledOnce();
-        expect(component.participations()).toEqual([sampleDto]);
-        expect(component.isLoading()).toBeFalse();
-    });
+        it('should not export when participant list is empty', () => {
+            vi.spyOn(participationService, 'getParticipationNamesForExport').mockReturnValue(of([]));
+            const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
 
-    it('should reset filter options and reload', () => {
-        const searchSpy = jest.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
+            component.exportNames();
 
-        component.onLazyLoad({ first: 0, rows: 50 });
-        component.rangeFilter.set(new Range(0, 10));
-        component.activeFilter.set(FilterProp.SUCCESSFUL);
-        searchSpy.mockClear();
-
-        component.resetFilterOptions();
-
-        expect(component.rangeFilter()).toBeUndefined();
-        expect(component.activeFilter()).toBe(FilterProp.ALL);
-        expect(searchSpy).toHaveBeenCalledOnce();
+            expect(resultServiceStub).not.toHaveBeenCalled();
+        });
     });
 });

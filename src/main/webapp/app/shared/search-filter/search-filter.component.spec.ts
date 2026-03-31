@@ -1,55 +1,59 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { MockModule } from 'ng-mocks';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { By } from '@angular/platform-browser';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SearchFilterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: SearchFilterComponent;
     let fixture: ComponentFixture<SearchFilterComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule), FaIconComponent],
-            declarations: [SearchFilterComponent],
+            imports: [SearchFilterComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(SearchFilterComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(SearchFilterComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call resetSearchValue when the reset icon is clicked', () => {
-        component.filterForm.controls['searchFilter'].setValue('test search');
-        fixture.changeDetectorRef.detectChanges();
-        jest.spyOn(component, 'resetSearchValue');
+    it('should set searchValue signal and emit on setSearchValue', () => {
+        const emitSpy = vi.spyOn(component.newSearchEvent, 'emit');
 
-        const resetIcon = fixture.debugElement.query(By.css('#test-fa-times')).nativeElement;
-        resetIcon.click();
-        fixture.changeDetectorRef.detectChanges();
+        component.setSearchValue('hello');
 
-        expect(component.resetSearchValue).toHaveBeenCalled();
-        expect(component.filterForm.value.searchFilter).toBeNull();
+        expect(component.searchValue()).toBe('hello');
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith('hello');
     });
 
-    it('should emit the search value on input', () => {
-        jest.spyOn(component.newSearchEvent, 'emit');
+    it('should reset searchValue signal and emit empty string on resetSearchValue', () => {
+        component.setSearchValue('some text');
+        const emitSpy = vi.spyOn(component.newSearchEvent, 'emit');
 
-        const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
-        inputElement.dispatchEvent(new Event('input'));
-        fixture.changeDetectorRef.detectChanges();
+        component.resetSearchValue();
 
-        expect(component.newSearchEvent.emit).toHaveBeenCalled();
+        expect(component.searchValue()).toBe('');
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith('');
+    });
+
+    it('should use default placeholder key', () => {
+        expect(component.placeholderKey()).toBe('artemisApp.course.exercise.search.searchPlaceholder');
     });
 });
