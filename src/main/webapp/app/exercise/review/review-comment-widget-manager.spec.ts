@@ -28,7 +28,7 @@ describe('ReviewCommentWidgetManager', () => {
             addLineWidget: vi.fn(),
             disposeWidgetsByPrefix: vi.fn(),
             getEditor: vi.fn(() => monacoEditorMock),
-            getModel: vi.fn(() => model),
+            getModel: vi.fn<() => typeof model | undefined>(() => model),
             getActiveEditor: vi.fn(() => activeEditor),
             triggerScroll: () => onDidScrollChangeCallback?.(),
             setModelLines: (lines: string[]) => {
