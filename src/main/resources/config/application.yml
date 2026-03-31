@@ -275,7 +275,6 @@ spring: #disabled by default, you must enable it
             hibernate.cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
             hibernate.javax.cache.provider: com.hazelcast.cache.HazelcastMemberCachingProvider
-            hibernate.javax.cache.uri: hazelcast://Artemis
             # Still needed by HazelcastConfiguration for the Hazelcast instance name
             hibernate.cache.hazelcast.instance_name: Artemis
             # modify batch size as necessary
