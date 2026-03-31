@@ -30,6 +30,7 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -51,8 +52,9 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 40;
 const RETRY_DELAY: number = 3000;
+// Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
+const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -775,9 +777,6 @@ export class ExerciseAPIRequests {
      * completes before the solution build, resulting in score=0.
      */
     async waitForSolutionBuild(exerciseId: number) {
-        const MAX_RETRIES = 20;
-        const RETRY_DELAY = 3000;
-
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
             const testCases = await response.json();

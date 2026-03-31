@@ -18,6 +18,7 @@ test.describe('Quiz Exercise Assessment', { tag: '@fast' }, () => {
             await exerciseAPIRequests.startExerciseParticipation(quizExercise.id!);
             await exerciseAPIRequests.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             await page.goto(`/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.waitForLoadState('networkidle');
             await exerciseResult.shouldShowScore(50);
         });
     });
@@ -33,6 +34,7 @@ test.describe('Quiz Exercise Assessment', { tag: '@fast' }, () => {
             await exerciseAPIRequests.startExerciseParticipation(quizExercise.id!);
             await exerciseAPIRequests.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             await page.goto(`/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.waitForLoadState('networkidle');
             await exerciseResult.shouldShowScore(66.7);
         });
     });
