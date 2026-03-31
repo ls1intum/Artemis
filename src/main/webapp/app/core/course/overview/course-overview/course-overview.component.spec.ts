@@ -40,7 +40,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
@@ -352,8 +352,8 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[4].title).toContain('Learning Path');
     });
 
-    it('should create faq item when faqs are enabled', () => {
-        component.course.set({ id: 123, faqEnabled: true });
+    it('should create faq item when accepted faqs exist', () => {
+        component.course.set({ id: 123, numberOfAcceptedFaqs: 3 });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems[3].title).toContain('FAQs');
     });
