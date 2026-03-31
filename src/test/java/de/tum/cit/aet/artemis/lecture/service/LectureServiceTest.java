@@ -64,16 +64,6 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
                 .orElseThrow();
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // Lecture hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
-        // Set one lecture only visible in the future for filtering tests
-        // ZonedDateTime future = ZonedDateTime.now().plusDays(3);
-        // hiddenLecture.setVisibleDate(future);
-        // hiddenLecture.setStartDate(future.plusDays(1));
-        // hiddenLecture.setEndDate(future.plusWeeks(1));
-        // lectureRepository.save(hiddenLecture);
-
         // Add a custom attachment for filtering tests
         testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         lecture.addAttachments(testAttachment);

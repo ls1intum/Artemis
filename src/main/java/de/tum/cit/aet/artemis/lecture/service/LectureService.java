@@ -136,11 +136,7 @@ public class LectureService {
 
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the commented out code OR comment back in */
-            // if (lecture.isVisibleToStudents()) {
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-            // }
         }
         return lecturesWithFilteredAttachments;
     }
@@ -294,8 +290,8 @@ public class LectureService {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
         List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
         List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
-        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.getVisibleDate(),
-                lecture.isTutorialLecture(), courseDTO, lectureUnits, attachments);
+        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                courseDTO, lectureUnits, attachments);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
@@ -390,13 +386,6 @@ public class LectureService {
         if (noDatesAvailable) {
             throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
         }
-
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // boolean lectureIsInvisible = userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate());
-        // if (lectureIsInvisible) {
-        // return Set.of();
-        // }
 
         boolean onlyEndDateAvailable = startDate == null && endDate != null;
         if (onlyEndDateAvailable) {
