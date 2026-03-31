@@ -193,7 +193,10 @@
                 (ngModelChange)="setPendingDueDate(cell.data.participationId, $event)"
                 [shouldDisplayTimeZoneWarning]="false"
                 [min]="exercise()!.dueDate!"
+                [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
                 [disabled]="isSaving()"
+                [labelName]="'artemisApp.participation.individualDueDate' | artemisTranslate"
+                [hideLabelName]="true"
             />
             <button class="btn btn-outline-success btn-sm" [disabled]="isSaving()" (click)="saveIndividualDueDate(cell.data)" title="Save">
                 <fa-icon [icon]="faCheck" />

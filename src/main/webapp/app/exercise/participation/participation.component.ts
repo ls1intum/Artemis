@@ -204,21 +204,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         ];
 
         if (ex.type === ExerciseType.PROGRAMMING) {
-            cols.push(
-                {
-                    headerKey: 'artemisApp.participation.repository',
-                    width: '80px',
-                    sort: false,
-                    templateRef: this.repositoryCellTemplate(),
-                },
-                {
-                    headerKey: 'artemisApp.participation.buildPlanId',
-                    field: 'buildPlanId',
-                    width: '120px',
-                    sort: true,
-                    templateRef: this.buildPlanCellTemplate(),
-                },
-            );
+            cols.push({
+                headerKey: 'artemisApp.participation.repository',
+                width: '80px',
+                sort: false,
+                templateRef: this.repositoryCellTemplate(),
+            });
         }
 
         cols.push(

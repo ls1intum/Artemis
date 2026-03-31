@@ -457,6 +457,14 @@ public class StudentParticipationSpecs {
                     Subquery<ZonedDateTime> dateSub = buildLatestResultFieldSubquery(root, query, cb, Result_.COMPLETION_DATE, ZonedDateTime.class);
                     orders.add(asc ? cb.asc(dateSub) : cb.desc(dateSub));
                 }
+                case "assessmentType" -> {
+                    Subquery<AssessmentType> typeSub = buildLatestResultFieldSubquery(root, query, cb, Result_.ASSESSMENT_TYPE, AssessmentType.class);
+                    orders.add(asc ? cb.asc(typeSub) : cb.desc(typeSub));
+                }
+                case "testRun" -> {
+                    Expression<?> expr = root.get(Participation_.TEST_RUN);
+                    orders.add(asc ? cb.asc(expr) : cb.desc(expr));
+                }
                 default -> {
                     // no custom ordering
                 }
