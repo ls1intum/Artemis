@@ -7,7 +7,6 @@
                     {{ exercise().title }}
                 </h5>
             }
-            <jhi-participation-mode-toggle [mode]="participationMode()" (modeChange)="participationMode.set($event)" [hasPractice]="hasPractice()" />
         </div>
         <jhi-exercise-header-actions
             class="w-auto"
@@ -22,14 +21,18 @@
 
     <hr class="my-2" />
 
-    <jhi-exercise-headers-information
-        [exercise]="exercise()"
-        [studentParticipation]="activeParticipation()"
-        [submissionPolicy]="submissionPolicy()"
-        [course]="exercise().course"
-        [isPractice]="participationMode() === 'practice'"
-        [athenaEnabled]="athenaEnabled()"
-        [feedbackRequestLimit]="feedbackRequestLimit()"
-        (viewingSubmissionChange)="isViewingSubmission.set($event)"
-    />
+    <div class="d-flex align-items-center gap-2">
+        <jhi-exercise-headers-information
+            class="flex-grow-1 min-w-0"
+            [exercise]="exercise()"
+            [studentParticipation]="activeParticipation()"
+            [submissionPolicy]="submissionPolicy()"
+            [course]="exercise().course"
+            [isPractice]="participationMode() === 'practice'"
+            [athenaEnabled]="athenaEnabled()"
+            [feedbackRequestLimit]="feedbackRequestLimit()"
+            (viewingSubmissionChange)="isViewingSubmission.set($event)"
+        />
+        <jhi-participation-mode-toggle class="ms-auto flex-shrink-0" [mode]="participationMode()" (modeChange)="participationMode.set($event)" [hasPractice]="hasPractice()" />
+    </div>
 </div>
