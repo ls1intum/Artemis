@@ -9,6 +9,7 @@ export interface FeatureCard {
     categoryKey: string;
     descriptionKey: string;
     imageSrc: string;
+    imageSrcDark?: string;
     imageAltKey: string;
 }
 
@@ -67,42 +68,49 @@ export const FEATURE_CARDS: FeatureCard[] = [
         categoryKey: 'landing.features.cards.tutorials.category',
         descriptionKey: 'landing.features.cards.tutorials.description',
         imageSrc: 'content/images/landing/tutorials.png',
+        imageSrcDark: 'content/images/landing/tutorials-dark.png',
         imageAltKey: 'landing.features.cards.tutorials.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.lectures.category',
         descriptionKey: 'landing.features.cards.lectures.description',
         imageSrc: 'content/images/landing/lectures.png',
+        imageSrcDark: 'content/images/landing/lectures-dark.png',
         imageAltKey: 'landing.features.cards.lectures.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.examMode.category',
         descriptionKey: 'landing.features.cards.examMode.description',
         imageSrc: 'content/images/landing/exam-mode.png',
+        imageSrcDark: 'content/images/landing/exam-mode-dark.png',
         imageAltKey: 'landing.features.cards.examMode.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.communication.category',
         descriptionKey: 'landing.features.cards.communication.description',
         imageSrc: 'content/images/landing/communication.png',
+        imageSrcDark: 'content/images/landing/communication-dark.png',
         imageAltKey: 'landing.features.cards.communication.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.faq.category',
         descriptionKey: 'landing.features.cards.faq.description',
         imageSrc: 'content/images/landing/faq-feature.png',
+        imageSrcDark: 'content/images/landing/faq-feature-dark.png',
         imageAltKey: 'landing.features.cards.faq.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.iris.category',
         descriptionKey: 'landing.features.cards.iris.description',
         imageSrc: 'content/images/landing/iris.png',
+        imageSrcDark: 'content/images/landing/iris-dark.png',
         imageAltKey: 'landing.features.cards.iris.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.mobileApps.category',
         descriptionKey: 'landing.features.cards.mobileApps.description',
         imageSrc: 'content/images/landing/mobile-phone.png',
+        imageSrcDark: 'content/images/landing/mobile-phone-dark.png',
         imageAltKey: 'landing.features.cards.mobileApps.imageAlt',
     },
 ];

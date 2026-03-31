@@ -267,7 +267,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
             <div class="footer-links">
                 <div class="footer-logo-section">
                     <div class="footer-logo">
-                        <img src="public/images/logo.png" alt="" />
+                        <img src="public/images/logo.png" alt="Artemis Logo" />
                         <span class="footer-logo-text">Artemis</span>
                     </div>
                     <p class="footer-description">{{ 'landing.footer.description' | artemisTranslate }}</p>

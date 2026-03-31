@@ -158,6 +158,10 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 export class LandingFaqComponent {
     faqItems = FAQ_ITEMS;
 
+    /**
+     * Wraps the docs URL in an anchor tag for the documentation FAQ answer.
+     * Used with [innerHTML] — Angular's built-in sanitizer keeps safe tags like <a> intact.
+     */
     formatAnswer(questionKey: string, translatedAnswer: string): string {
         if (questionKey !== 'landing.faq.items.docs.question') {
             return translatedAnswer;

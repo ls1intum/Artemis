@@ -196,7 +196,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                         (ended)="onVideoEnded()"
                     ></video>
                 } @else {
-                    <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey" />
+                    <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey | artemisTranslate" />
                 }
             </div>
         </section>

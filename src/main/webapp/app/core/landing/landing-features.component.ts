@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FEATURE_CARDS } from 'app/core/landing/landing-data';
+import { FEATURE_CARDS, FeatureCard } from 'app/core/landing/landing-data';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 @Component({
     selector: 'jhi-landing-features',
@@ -128,7 +129,7 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
                             <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
                         <div class="card-assets">
-                            <img class="card-image" [src]="card.imageSrc" [alt]="card.imageAltKey | artemisTranslate" />
+                            <img class="card-image" [src]="cardImageSrc(card)" [alt]="card.imageAltKey | artemisTranslate" />
                         </div>
                     </div>
                 }
@@ -137,5 +138,12 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
     `,
 })
 export class LandingFeaturesComponent {
+    private themeService = inject(ThemeService);
+    private isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
+
     cards = FEATURE_CARDS;
+
+    cardImageSrc(card: FeatureCard): string {
+        return this.isDark() && card.imageSrcDark ? card.imageSrcDark : card.imageSrc;
+    }
 }
