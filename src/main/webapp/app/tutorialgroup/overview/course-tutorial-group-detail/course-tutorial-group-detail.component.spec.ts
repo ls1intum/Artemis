@@ -12,7 +12,7 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { RawTutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
@@ -83,15 +83,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -109,15 +109,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -135,15 +135,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: undefined,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const groupChannelLink = fixture.debugElement.query(By.css('[data-testid="group-channel-link"]'));
@@ -157,15 +157,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -181,15 +181,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: undefined,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
@@ -203,15 +203,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupLanguage()).toBe(testTutorialGroup.language);
@@ -224,15 +224,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('10');
@@ -245,15 +245,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('-');
@@ -266,15 +266,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: true,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.online');
@@ -287,15 +287,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.offline');
@@ -308,15 +308,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe(testTutorialGroup.campus);
@@ -329,15 +329,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe('-');
@@ -382,15 +382,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -417,15 +417,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const nextSession = component.nextSession();
@@ -471,15 +471,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -526,15 +526,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -580,15 +580,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -634,15 +634,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -688,15 +688,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -750,15 +750,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -809,15 +809,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession, secondSession, thirdSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -848,15 +848,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -885,15 +885,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -922,15 +922,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -959,15 +959,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -996,15 +996,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1033,15 +1033,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [firstSession],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1058,15 +1058,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1083,15 +1083,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1106,15 +1106,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1131,15 +1131,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
             groupChannelId: undefined,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1154,15 +1154,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1177,15 +1177,15 @@ describe('CourseTutorialGroupDetailComponent', () => {
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
