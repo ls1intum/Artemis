@@ -97,8 +97,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
         assertThat(programmingExercise.getId()).isNotNull();
-        // Reload from DB so the test object includes the build config generated during creation.
-        this.programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        // Reload from DB so the test object includes the build config and all collections needed for versioning assertions.
+        this.programmingExercise = programmingExerciseRepository.findForVersioningById(programmingExercise.getId()).orElseThrow();
         // wait for solution/template/test to build and generate git commits
         await().untilAsserted(() -> {
             ExerciseVersion exerciseVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

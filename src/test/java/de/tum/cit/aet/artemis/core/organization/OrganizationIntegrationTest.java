@@ -705,6 +705,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         organization = organizationRepo.save(organization);
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
+        // Clear collections before PUT to avoid Jackson deserialization issues with Hibernate-managed proxies
+        organization.setUsers(new HashSet<>());
+        organization.setCourses(new HashSet<>());
 
         Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + updatedOrganization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
