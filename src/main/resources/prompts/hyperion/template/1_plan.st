@@ -21,7 +21,7 @@ Your task is to create a detailed plan for generating template code that provide
 
 If the selected fix batch payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
 
-If there are no issues listed above, skip the following steps.
+If both the consistency issues section and the selected fix batch review threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which requirements, files, and repository artifacts each issue touches.
 2. Explain the likely root cause or mismatch implied by the issue.
