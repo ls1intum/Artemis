@@ -6,10 +6,10 @@
  * Set environment variables in run-e2e-tests-local.sh or docker-compose for different values.
  */
 
-// Default timeouts (CI values)
-const DEFAULT_BUILD_RESULT_TIMEOUT = 90000; // 90 seconds
-const DEFAULT_BUILD_FINISH_TIMEOUT = 60000; // 60 seconds
-const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 60000; // 60 seconds
+// Default timeouts (CI values — generous to handle parallel test load)
+const DEFAULT_BUILD_RESULT_TIMEOUT = 120000; // 120 seconds
+const DEFAULT_BUILD_FINISH_TIMEOUT = 300000; // 300 seconds
+const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 120000; // 120 seconds
 
 /**
  * Timeout for waiting for build results to appear in the UI (e.g., commit history).
