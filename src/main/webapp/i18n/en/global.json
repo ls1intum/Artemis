@@ -82,7 +82,13 @@
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
-            "searchFailed": "Search failed. Please try again."
+            "searchFailed": "Search failed. Please try again.",
+            "askIris": "Ask Iris AI",
+            "askIrisDescription": "Get an AI-generated answer from your lecture content",
+            "irisAnswerTitle": "Iris AI Answer",
+            "irisAnswerSources": "Sources",
+            "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
+            "continueInIris": "Continue conversation in Iris"
         },
         "menu": {
             "home": "Home",
@@ -399,8 +405,10 @@
             "show": "Show",
             "addExercise": "Add exercise",
             "addLecture": "Add lecture",
-            "addFaq": "Add FAQ",
+            "addTutorial": "Add tutorial",
             "addExam": "Add exam",
+            "addCompetency": "Add competency",
+            "addFaq": "Add FAQ",
             "addStudent": "Add student",
             "addTutor": "Add tutor",
             "addEditor": "Add editor",

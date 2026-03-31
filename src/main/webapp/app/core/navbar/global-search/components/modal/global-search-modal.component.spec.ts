@@ -519,4 +519,131 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).selectedIndex()).toBe(-1);
         });
     });
+
+    describe('Iris navigation', () => {
+        it('should set irisSourceView to current view when navigating to Iris for the first time', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+
+            (component as any).navigateTo(SearchView.Iris);
+
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).currentView()).toBe(SearchView.Iris);
+        });
+
+        it('should do nothing when navigateTo(Iris) is called while already on Iris', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).irisSourceView.set(SearchView.Lecture);
+
+            (component as any).navigateTo(SearchView.Iris);
+
+            // irisSourceView must not be overwritten
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).currentView()).toBe(SearchView.Iris);
+        });
+
+        it('should update irisSourceView and reset selectedIndex via updateIrisSource', () => {
+            (component as any).selectedIndex.set(3);
+
+            (component as any).updateIrisSource(SearchView.Lecture);
+
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+    });
+
+    describe('Split panel navigation', () => {
+        beforeEach(() => {
+            mockSearchOverlayService.isOpen.set(true);
+            (component as any).currentView.set(SearchView.Iris);
+            fixture.detectChanges();
+            // Set selectedIndex after detectChanges so the scroll effect sees the rendered items
+            (component as any).selectedIndex.set(0);
+        });
+
+        it('should switch to right panel on ArrowRight when on Iris left panel with a selection', () => {
+            (component as any).activeSplitPanel.set('left');
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('right');
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should switch to left panel on ArrowLeft when on Iris right panel', () => {
+            (component as any).activeSplitPanel.set('right');
+            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should not switch panel on ArrowRight when selectedIndex is -1', () => {
+            (component as any).activeSplitPanel.set('left');
+            (component as any).selectedIndex.set(-1);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+        });
+
+        it('should not switch panel on ArrowRight when not on Iris view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+        });
+    });
+
+    describe('Input keydown handler', () => {
+        it('should prevent ArrowRight default when on Iris left panel with a selection', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).activeSplitPanel.set('left');
+            (component as any).selectedIndex.set(0);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).toHaveBeenCalled();
+        });
+
+        it('should prevent ArrowLeft default when on Iris right panel with a selection', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).activeSplitPanel.set('right');
+            (component as any).selectedIndex.set(0);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).toHaveBeenCalled();
+        });
+
+        it('should not prevent default when not on Iris view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not prevent default when selectedIndex is -1 (cursor navigation mode)', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).selectedIndex.set(-1);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).not.toHaveBeenCalled();
+        });
+    });
 });
