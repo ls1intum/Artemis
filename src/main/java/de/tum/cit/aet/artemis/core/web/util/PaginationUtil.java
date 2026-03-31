@@ -30,9 +30,10 @@ public final class PaginationUtil {
 
         int pageNumber = page.getNumber();
         int pageSize = page.getSize();
+        int totalPages = page.getTotalPages();
         StringBuilder link = new StringBuilder();
 
-        if (pageNumber < page.getTotalPages() - 1) {
+        if (pageNumber < totalPages - 1) {
             link.append(prepareLink(uriBuilder, pageNumber + 1, pageSize, "next"));
         }
         if (pageNumber > 0) {
@@ -44,7 +45,9 @@ public final class PaginationUtil {
         if (!link.isEmpty()) {
             link.append(",");
         }
-        link.append(prepareLink(uriBuilder, page.getTotalPages() - 1, pageSize, "last"));
+        // Guard against empty results where totalPages is 0
+        int lastPage = Math.max(0, totalPages - 1);
+        link.append(prepareLink(uriBuilder, lastPage, pageSize, "last"));
         link.append(",");
         link.append(prepareLink(uriBuilder, 0, pageSize, "first"));
 
@@ -53,6 +56,7 @@ public final class PaginationUtil {
     }
 
     private static String prepareLink(UriComponentsBuilder uriBuilder, int pageNumber, int pageSize, String relType) {
-        return "<" + uriBuilder.replaceQueryParam("page", pageNumber).replaceQueryParam("size", pageSize).toUriString() + ">; rel=\"" + relType + "\"";
+        // Clone the builder to avoid mutating the caller's instance
+        return "<" + uriBuilder.cloneBuilder().replaceQueryParam("page", pageNumber).replaceQueryParam("size", pageSize).toUriString() + ">; rel=\"" + relType + "\"";
     }
 }

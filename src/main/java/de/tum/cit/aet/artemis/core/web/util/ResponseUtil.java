@@ -19,7 +19,21 @@ public interface ResponseUtil {
         return wrapOrNotFound(maybeResponse, null);
     }
 
+    /**
+     * Wraps an Optional result into a ResponseEntity, returning 404 if empty.
+     *
+     * @param <X>           the response body type
+     * @param maybeResponse the optional result
+     * @param header        optional HTTP headers to include (may be null)
+     * @return a ResponseEntity with status 200 and the body, or throws 404
+     */
     static <X> ResponseEntity<X> wrapOrNotFound(Optional<X> maybeResponse, HttpHeaders header) {
-        return maybeResponse.map(response -> ResponseEntity.ok().headers(header).body(response)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return maybeResponse.map(response -> {
+            var builder = ResponseEntity.ok();
+            if (header != null) {
+                builder.headers(header);
+            }
+            return builder.body(response);
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 }

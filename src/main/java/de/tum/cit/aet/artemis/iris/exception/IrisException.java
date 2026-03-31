@@ -15,7 +15,7 @@ public class IrisException extends HttpStatusException {
     protected final Map<String, Object> translationParams;
 
     public IrisException(String translationKey, Map<String, Object> translationParams) {
-        super(ErrorConstants.DEFAULT_TYPE, "An error within Iris has occured", HttpStatus.INTERNAL_SERVER_ERROR, "Iris", translationKey,
+        super(ErrorConstants.DEFAULT_TYPE, "An error within Iris has occurred", HttpStatus.INTERNAL_SERVER_ERROR, "Iris", translationKey,
                 getAlertParameters(translationKey, translationParams));
         this.translationKey = translationKey;
         this.translationParams = translationParams;
