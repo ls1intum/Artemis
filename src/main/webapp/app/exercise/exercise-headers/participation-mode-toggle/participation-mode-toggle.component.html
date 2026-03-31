@@ -8,7 +8,7 @@
                 (click)="selectMode('practice')"
             >
                 <fa-icon [icon]="faBook" />
-                <span jhiTranslate="artemisApp.exerciseActions.practice"></span>
+                <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
             </button>
             <button
                 class="segmented-control__button"
@@ -17,7 +17,7 @@
                 (click)="selectMode('graded')"
             >
                 <fa-icon [icon]="faGraduationCap" />
-                <span>Graded</span>
+                <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
             </button>
         </div>
     } @else {
@@ -29,9 +29,9 @@
             >
                 <fa-icon [icon]="mode() === 'practice' ? faBook : faGraduationCap" />
                 @if (mode() === 'practice') {
-                    <span jhiTranslate="artemisApp.exerciseActions.practice"></span>
+                    <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
                 } @else {
-                    <span>Graded</span>
+                    <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
                 }
             </span>
         </div>

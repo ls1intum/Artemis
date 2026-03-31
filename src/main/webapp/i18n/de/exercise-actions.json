@@ -71,6 +71,10 @@
             "aiExperienceConfirmation": {
                 "popUpLabel": "Bestätigung der KI-Verwendung",
                 "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, verarbeitet werden dürfen. Deine Daten werden nicht in der Cloud gespeichert."
+            },
+            "mode": {
+                "practice": "Übung",
+                "graded": "Bewertet"
             }
         }
     }
