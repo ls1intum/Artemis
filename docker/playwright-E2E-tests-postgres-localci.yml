@@ -55,12 +55,13 @@ services:
         environment:
             PLAYWRIGHT_DB_TYPE: 'Postgres'
             # Pass through configurable timeouts from host (defaults are CI values)
-            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-90000}
-            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-60000}
+            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-120000}
+            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-90000}
             EXAM_DASHBOARD_TIMEOUT_MS: ${EXAM_DASHBOARD_TIMEOUT_MS:-60000}
             # Pass through Playwright test timeouts
             TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-300}
             FAST_TEST_TIMEOUT_SECONDS: ${FAST_TEST_TIMEOUT_SECONDS:-60}
+            SLOW_TEST_TIMEOUT_SECONDS: ${SLOW_TEST_TIMEOUT_SECONDS:-300}
         network_mode: service:artemis-app
 
 networks:
