@@ -105,7 +105,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             }
             this.updateStaticCodeAnalysisItem();
         }
-        if (this.athenaEnabled) {
+        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
             this.updateAiFeedbackItem();
         }
     }
@@ -355,7 +355,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addAiFeedbackItem() {
-        if (this.athenaEnabled) {
+        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
             this.countAiFeedbackRequests();
             this.informationBoxItems.push(this.getAiFeedbackItem());
         }

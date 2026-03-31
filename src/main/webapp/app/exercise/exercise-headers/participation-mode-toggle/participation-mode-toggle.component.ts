@@ -14,6 +14,7 @@ export type ParticipationMode = 'practice' | 'graded';
 export class ParticipationModeToggleComponent {
     readonly mode = model.required<ParticipationMode>();
     readonly hasPractice = input(false);
+    readonly hasBoth = input(false);
 
     faBook = faBook;
     faGraduationCap = faGraduationCap;

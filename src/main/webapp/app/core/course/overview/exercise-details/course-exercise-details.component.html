@@ -10,7 +10,7 @@
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
-            [athenaEnabled]="true"
+            [athenaEnabled]="athenaEnabled"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
         />

@@ -34,6 +34,12 @@
             [feedbackRequestLimit]="feedbackRequestLimit()"
             (viewingSubmissionChange)="isViewingSubmission.set($event)"
         />
-        <jhi-participation-mode-toggle class="ms-auto flex-shrink-0" [mode]="participationMode()" (modeChange)="participationMode.set($event)" [hasPractice]="hasPractice()" />
+        <jhi-participation-mode-toggle
+            class="ms-auto flex-shrink-0"
+            [mode]="participationMode()"
+            (modeChange)="participationMode.set($event)"
+            [hasPractice]="hasParticipation()"
+            [hasBoth]="hasBothParticipations()"
+        />
     </div>
 </div>

@@ -1,6 +1,5 @@
 import { Component, computed, input, model, output, signal, viewChild } from '@angular/core';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -32,12 +31,12 @@ export class ExerciseHeaderComponent {
         return exercise.type ? getIcon(exercise.type) : undefined;
     });
 
-    readonly hasPractice = computed(() => {
-        const exercise = this.exercise();
-        if (exercise.type === ExerciseType.QUIZ) {
-            return !!(exercise as QuizExercise).quizEnded;
-        }
-        return !!this.practiceParticipation();
+    readonly hasParticipation = computed(() => {
+        return !!this.studentParticipation() || !!this.practiceParticipation();
+    });
+
+    readonly hasBothParticipations = computed(() => {
+        return !!this.studentParticipation() && !!this.practiceParticipation();
     });
 
     readonly activeParticipation = computed(() => {

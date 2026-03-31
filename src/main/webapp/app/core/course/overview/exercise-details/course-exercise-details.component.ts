@@ -31,7 +31,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -71,6 +71,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
+
+    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
