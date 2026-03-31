@@ -137,7 +137,12 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "Wie kann ich Dir helfen?"
+                "helpOffer": "Wie kann ich Dir helfen?",
+                "suggestions": {
+                    "explainConcept": "Erkläre mir ein Konzept",
+                    "testUnderstanding": "Teste mein Verständnis",
+                    "whereToStart": "Wo soll ich anfangen?"
+                }
             },
             "mcq": {
                 "submit": "Antwort abschicken",

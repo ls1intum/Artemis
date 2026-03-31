@@ -1499,4 +1499,261 @@ describe('IrisBaseChatbotComponent', () => {
             expect(userContent.textContent).toBe(userText);
         });
     });
+
+    describe('suggestion chips', () => {
+        it('should render suggestion chips on empty general state', () => {
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(3);
+        });
+
+        it('should not render suggestion chips when isEmbeddedChat is true', () => {
+            fixture.componentRef.setInput('isEmbeddedChat', true);
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips when messages exist', () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+            chatService.switchTo(ChatServiceMode.COURSE, 456);
+            fixture.detectChanges();
+
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should call applyChipText with correct translation key when chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[0].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.explainConcept');
+        });
+
+        it('should set textarea content and focus when applyChipText is called', async () => {
+            fixture.detectChanges();
+            const translationKey = 'artemisApp.iris.chat.suggestions.explainConcept';
+            component.applyChipText(translationKey);
+            expect(component.newMessageTextContent()).toBe(translationKey);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            const textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeTruthy();
+        });
+    });
+
+    describe('Cycling placeholder labels and ghost text', () => {
+        const exerciseSession: IrisSessionDTO = {
+            id: 10,
+            title: 'Help with recursion',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Sorting Arrays',
+        };
+        const lectureSession: IrisSessionDTO = {
+            id: 20,
+            title: 'Lecture question',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 55,
+            entityName: 'Data Structures',
+        };
+
+        describe('exercise mode', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should detect exercise mode', () => {
+                expect(component.isExerciseOrLectureMode()).toBeTruthy();
+            });
+
+            it('should resolve entity name from session', () => {
+                expect(component.entityName()).toBe('Sorting Arrays');
+            });
+
+            it('should interpolate exercise labels with entity name', () => {
+                const labels = component.interpolatedLabels();
+                expect(labels).toHaveLength(6);
+                expect(labels[0]).toBe('Help me understand Sorting Arrays');
+                expect(labels[2]).toBe('What should I focus on next in Sorting Arrays?');
+            });
+
+            it('should provide a current placeholder', () => {
+                expect(component.currentPlaceholder()).toBe('Help me understand Sorting Arrays');
+            });
+
+            it('should hide suggestion chips on exercise screen', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(0);
+            });
+
+            it('should advance placeholder index on blur with empty input', () => {
+                expect(component.placeholderIndex()).toBe(0);
+
+                // Simulate focus then blur to advance index
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                expect(component.placeholderIndex()).toBe(1);
+            });
+
+            it('should track focus state and advance index on blur', () => {
+                component.onTextareaFocus();
+                expect(component.isFocused()).toBeTruthy();
+                const indexAtFocus = component.placeholderIndex();
+
+                // Blur with empty input resumes from next label
+                component.onTextareaBlur();
+                expect(component.isFocused()).toBeFalsy();
+                expect(component.placeholderIndex()).toBe((indexAtFocus + 1) % 6);
+            });
+
+            it('should not advance index on blur when input has text', () => {
+                component.newMessageTextContent.set('some text');
+                component.onTextareaFocus();
+                const indexAtFocus = component.placeholderIndex();
+
+                component.onTextareaBlur();
+                expect(component.placeholderIndex()).toBe(indexAtFocus);
+            });
+        });
+
+        describe('lecture mode', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should interpolate lecture labels with entity name', () => {
+                const labels = component.interpolatedLabels();
+                expect(labels).toHaveLength(7);
+                expect(labels[0]).toBe('Explain a concept from Data Structures');
+                expect(labels[1]).toBe('What are the key points I should know from Data Structures?');
+            });
+
+            it('should hide suggestion chips on lecture screen', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(0);
+            });
+        });
+
+        describe('course mode (no cycling)', () => {
+            it('should not be in exercise or lecture mode', () => {
+                expect(component.isExerciseOrLectureMode()).toBeFalsy();
+            });
+
+            it('should return empty interpolated labels', () => {
+                expect(component.interpolatedLabels()).toHaveLength(0);
+            });
+
+            it('should show suggestion chips on course screen', () => {
+                fixture.detectChanges();
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips.length).toBeGreaterThan(0);
+            });
+        });
+
+        describe('ghost text', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show ghost text when input matches a label prefix', () => {
+                component.newMessageTextContent.set('Help me');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+            });
+
+            it('should clear ghost text when input does not match any label', () => {
+                component.newMessageTextContent.set('Something random');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should be case insensitive', () => {
+                component.newMessageTextContent.set('help me');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+            });
+
+            it('should clear ghost text when input is empty', () => {
+                component.newMessageTextContent.set('');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should accept ghost text on Tab key', () => {
+                component.newMessageTextContent.set('Help me');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+
+                const event = new KeyboardEvent('keydown', { key: 'Tab' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe('Help me understand Sorting Arrays');
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should accept ghost text on ArrowRight key', () => {
+                component.newMessageTextContent.set('Why are');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(' my tests failing?');
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe('Why are my tests failing?');
+            });
+
+            it('should not show ghost text on course screen', () => {
+                // Recreate with course mode
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                component.newMessageTextContent.set('Help me');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+        });
+    });
 });
