@@ -64,7 +64,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
                     partialFetch = partialFetch.fetch(partialFetchPath, JoinType.LEFT);
                 }
             }
-            return null;
+            return criteriaBuilder.conjunction();
         };
     }
 }

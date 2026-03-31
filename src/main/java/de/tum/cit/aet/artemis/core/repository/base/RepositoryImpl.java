@@ -156,7 +156,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements
     @NonNull
     public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {
         Optional<T> optional = findOneById(spec, id);
-        return optional.orElseThrow();
+        return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), String.valueOf(id)));
     }
 
     /**
@@ -168,6 +168,6 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements
     @NonNull
     public T findOneBySpecOrElseThrow(Specification<T> spec) {
         Optional<T> optional = findOneBySpec(spec);
-        return optional.orElseThrow();
+        return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName()));
     }
 }

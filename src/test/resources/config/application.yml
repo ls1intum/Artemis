@@ -177,7 +177,6 @@ spring:
         properties:
             hibernate.format_sql: false
             hibernate.use_sql_comments: false
-            hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: false
             hibernate.connection.autocommit: false
             hibernate.generate_statistics: false

@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -33,10 +34,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -155,7 +158,7 @@ public class SecurityConfiguration {
      */
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
-        return new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED);
+        return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
     }
 
     /**
@@ -166,7 +169,7 @@ public class SecurityConfiguration {
      * @return the access denied handler
      */
     @Bean
-    public AccessDeniedHandler accessDeniedHandler(@Qualifier("handlerExceptionResolver") org.springframework.web.servlet.HandlerExceptionResolver resolver) {
+    public AccessDeniedHandler accessDeniedHandler(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         return (request, response, accessDeniedException) -> resolver.resolveException(request, response, null, accessDeniedException);
     }
 
@@ -187,7 +190,7 @@ public class SecurityConfiguration {
      * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
      *         in securing methods based on security expressions.
      */
-    // In Spring Security 7, this bean must be named 'methodSecurityExpressionHandler' to be auto-detected by @EnableMethodSecurity
+    // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();

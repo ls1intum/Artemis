@@ -160,8 +160,7 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleConflictException(ConflictException ex, NativeWebRequest request) {
-        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        detail.setProperty(MESSAGE_KEY, ex.getBody().getTitle());
+        ProblemDetail detail = ex.getBody();
         detail.setProperty("X-" + applicationName + "-error", "error." + ex.getErrorKey());
         detail.setProperty("X-" + applicationName + "-params", ex.getEntityName());
         postProcess(detail, request);
