@@ -154,10 +154,10 @@ import { MenuItem } from 'primeng/api';
     `,
     template: `
         <nav class="landing-navbar">
-            <div class="logo" (click)="scrollToTop()">
+            <button type="button" class="logo" (click)="scrollToTop()">
                 <img src="public/images/logo.png" alt="Artemis Logo" />
                 <span class="logo-text">Artemis</span>
-            </div>
+            </button>
 
             <div class="right-section">
                 <jhi-theme-switch [popoverPlacement]="'bottom-right'" />

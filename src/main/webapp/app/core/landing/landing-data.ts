@@ -62,6 +62,7 @@ export const FEATURE_CARDS: FeatureCard[] = [
         categoryKey: 'landing.features.cards.assessment.category',
         descriptionKey: 'landing.features.cards.assessment.description',
         imageSrc: 'content/images/landing/assessment.png',
+        imageSrcDark: 'content/images/landing/assessment-dark.png',
         imageAltKey: 'landing.features.cards.assessment.imageAlt',
     },
     {
@@ -181,7 +182,7 @@ export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
     {
         titleKey: 'landing.footer.links.resources.title',
         links: [
-            { labelKey: 'landing.footer.links.resources.documentation', href: 'https://docs.artemis.cit.tum.de' },
+            { labelKey: 'landing.footer.links.resources.documentation', href: 'https://docs.artemis.tum.de' },
             { labelKey: 'landing.footer.links.resources.publication', href: 'https://docs.artemis.tum.de/publications' },
         ],
     },
