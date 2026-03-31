@@ -28,8 +28,9 @@ export abstract class ModelingComponent implements OnDestroy {
 
     protected setupInteract(): void {
         const resizeOptions = this.resizeOptions();
-        if (resizeOptions) {
-            this.interactable = interact('.resizable')
+        const resizeContainer = this.resizeContainer()?.nativeElement;
+        if (resizeOptions && resizeContainer) {
+            this.interactable = interact(resizeContainer)
                 .resizable({
                     edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize, top: false },
                     modifiers: [

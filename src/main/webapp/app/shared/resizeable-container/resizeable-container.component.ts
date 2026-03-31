@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, HostListener, Input, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -42,6 +42,8 @@ export class ResizeableContainerComponent implements AfterViewInit, OnDestroy {
      */
     @Input() expandProblemStatement = false;
 
+    @ViewChild('expandedPanel') expandedPanel: ElementRef<HTMLElement> | undefined;
+
     interactResizable: Interactable | undefined;
 
     // Icons
@@ -58,7 +60,10 @@ export class ResizeableContainerComponent implements AfterViewInit, OnDestroy {
      * Handles the resizable layout with collapsible panel on the right-hand side.
      */
     ngAfterViewInit() {
-        this.interactResizable = interact('.expanded')
+        if (!this.expandedPanel) {
+            return;
+        }
+        this.interactResizable = interact(this.expandedPanel.nativeElement)
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
