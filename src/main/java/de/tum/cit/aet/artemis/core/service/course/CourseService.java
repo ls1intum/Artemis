@@ -80,12 +80,14 @@ public class CourseService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final FaqRepository faqRepository;
+
     private final CourseVisibleService courseVisibleService;
 
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, CourseVisibleService courseVisibleService) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -98,6 +100,7 @@ public class CourseService {
         this.tutorialGroupApi = tutorialGroupApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.prerequisitesApi = prerequisitesApi;
+        this.faqRepository = faqRepository;
         this.courseVisibleService = courseVisibleService;
     }
 
