@@ -33,17 +33,19 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDetailGroupDTO {
+export class TutorialGroupDetailDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
     sessions: TutorialGroupDetailSessionDTO[];
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
-    teachingAssistantImageUrl?: string;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
 
@@ -53,9 +55,10 @@ export class TutorialGroupDetailGroupDTO {
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map((rawSessionDto) => new TutorialGroupDetailSessionDTO(rawSessionDto));
-        this.teachingAssistantName = rawDto.teachingAssistantName;
-        this.teachingAssistantLogin = rawDto.teachingAssistantLogin;
-        this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
+        this.tutorName = rawDto.tutorName;
+        this.tutorLogin = rawDto.tutorLogin;
+        this.tutorId = 1; // temporary compatibility solution -> does not break anything, will fix on main PR
+        this.tutorImageUrl = rawDto.tutorImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;
         this.groupChannelId = rawDto.groupChannelId;
@@ -68,10 +71,10 @@ export class RawTutorialGroupDetailGroupDTO {
     title: string;
     language: string;
     isOnline: boolean;
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
+    tutorName: string;
+    tutorLogin: string;
     sessions: RawTutorialGroupDetailSessionDTO[] | undefined;
-    teachingAssistantImageUrl?: string;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
     groupChannelId?: number;
@@ -91,3 +94,27 @@ export type TutorialGroupRegisterStudentDTO =
     | { login: undefined; registrationNumber: string }
     | { login: string; registrationNumber: undefined }
     | { login: string; registrationNumber: string };
+
+export interface TutorialGroupTutorDTO {
+    id: number;
+    nameAndLogin: string;
+}
+
+export interface CreateOrUpdateTutorialGroupDTO {
+    title: string;
+    tutorId: number;
+    language: string;
+    isOnline: boolean;
+    campus?: string;
+    capacity?: number;
+    additionalInformation?: string;
+    tutorialGroupScheduleDTO?: TutorialGroupScheduleDTO;
+}
+
+export interface TutorialGroupScheduleDTO {
+    firstSessionStart: string;
+    firstSessionEnd: string;
+    repetitionFrequency: number;
+    tutorialPeriodEnd: string;
+    location: string;
+}
