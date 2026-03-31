@@ -390,12 +390,12 @@ public class FileResource {
      */
     @GetMapping("files/templates/code-of-conduct")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
+    public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
         // TODO: store a Constant
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
         var resource = resourceLoaderService.getResource(templatePath);
-        return ResponseEntity.ok(resource.getInputStream().readAllBytes());
+        return ResponseEntity.ok(new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**

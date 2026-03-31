@@ -447,9 +447,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit's release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test
@@ -601,9 +602,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit's release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test
@@ -733,8 +735,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit's release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 }

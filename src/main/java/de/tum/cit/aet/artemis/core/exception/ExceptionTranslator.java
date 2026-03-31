@@ -71,6 +71,21 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return detail;
     }
 
+    /**
+     * Override the internal exception handler to ensure all responses from the parent {@link ResponseEntityExceptionHandler}
+     * (e.g. for {@link org.springframework.http.converter.HttpMessageNotReadableException}) also include the
+     * {@code message} property in the ProblemDetail body.
+     */
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(@NonNull Exception ex, @Nullable Object body, @NonNull HttpHeaders headers, @NonNull HttpStatusCode statusCode,
+            @NonNull WebRequest request) {
+        ResponseEntity<Object> response = super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        if (response != null && response.getBody() instanceof ProblemDetail detail && request instanceof NativeWebRequest nativeWebRequest) {
+            postProcess(detail, nativeWebRequest);
+        }
+        return response;
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex, @NonNull HttpHeaders headers, @NonNull HttpStatusCode status,
             @NonNull WebRequest request) {

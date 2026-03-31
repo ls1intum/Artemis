@@ -762,7 +762,11 @@ public class MetricsBean {
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {
-        dataSource.setMetricRegistry(meterRegistry);
+        // Only set the metric registry if no metrics tracker factory is already configured,
+        // as HikariCP does not allow both to be set simultaneously (Spring Boot may auto-configure one).
+        if (dataSource.getMetricsTrackerFactory() == null) {
+            dataSource.setMetricRegistry(meterRegistry);
+        }
     }
 
     /**
