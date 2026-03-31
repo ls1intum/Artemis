@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement, ViewChild } from '@angular/core';
+import { Component, DebugElement, viewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
@@ -16,20 +16,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
-    template: `
-        <jhi-course-users-selector
-            [disabled]="disabled"
-            [courseId]="courseId"
-            [rolesToAllowSearchingIn]="rolesToAllowSearchingIn"
-            [multiSelect]="multiSelect"
-            [showUserList]="showUserList"
-        />
-    `,
+    template: ` <jhi-course-users-selector [courseId]="courseId" [rolesToAllowSearchingIn]="rolesToAllowSearchingIn" [multiSelect]="multiSelect" [showUserList]="showUserList" />`,
     imports: [CourseUsersSelectorComponent],
 })
 class WrapperComponent {
-    @ViewChild(CourseUsersSelectorComponent)
-    courseUsersSelectorComponent: CourseUsersSelectorComponent;
+    readonly courseUsersSelectorComponent = viewChild(CourseUsersSelectorComponent);
     searchInput = '';
     disabled = false;
     courseId = 1;
