@@ -82,9 +82,11 @@
                 display: flex;
                 margin-top: 2rem;
                 padding: 0 0 0 4rem;
+                gap: 1rem;
 
                 .info-stack {
                     flex: 1;
+                    min-width: 0;
                     display: flex;
                     flex-direction: column;
                     gap: 2rem;
@@ -96,6 +98,13 @@
 
                         .info-label {
                             color: var(--secondary);
+                        }
+
+                        .info-value {
+                            flex: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
                         }
                     }
                 }

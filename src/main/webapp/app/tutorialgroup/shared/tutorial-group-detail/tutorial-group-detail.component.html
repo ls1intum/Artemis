@@ -91,24 +91,24 @@
                     <div class="info-item" role="listitem" aria-labelledby="language-label" aria-describedby="language-value">
                         <fa-icon [icon]="faFlag" aria-hidden="true" />
                         <span class="info-label" id="date-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.language"></span>
-                        <span id="language-value">{{ tutorialGroupLanguage() }}</span>
+                        <span class="info-value" id="language-value">{{ tutorialGroupLanguage() }}</span>
                     </div>
                     <div class="info-item" role="listitem" aria-labelledby="capacity-label" aria-describedby="capacity-value">
                         <fa-icon [icon]="faUsers" aria-hidden="true" />
                         <span class="info-label" id="capacity-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.capacity"></span>
-                        <span id="capacity-value">{{ tutorialGroupCapacity() }}</span>
+                        <span class="info-value" id="capacity-value">{{ tutorialGroupCapacity() }}</span>
                     </div>
                 </div>
                 <div class="info-stack">
                     <div class="info-item" role="listitem" aria-labelledby="mode-label" aria-describedby="mode-value">
                         <fa-icon [icon]="faTag" aria-hidden="true" />
                         <span class="info-label" id="mode-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.mode"></span>
-                        <span jhiTranslate="{{ tutorialGroupMode() }}" id="mode-value"></span>
+                        <span class="info-value" jhiTranslate="{{ tutorialGroupMode() }}" id="mode-value"></span>
                     </div>
                     <div class="info-item" role="listitem" aria-labelledby="campus-label" aria-describedby="campus-value">
                         <fa-icon [icon]="faBuildingColumns" aria-hidden="true" />
                         <span class="info-label" id="campus-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.campus"></span>
-                        <span id="campus-value">{{ tutorialGroupCampus() }}</span>
+                        <span class="info-value" id="campus-value">{{ tutorialGroupCampus() }}</span>
                     </div>
                 </div>
             </div>
