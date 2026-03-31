@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import tools.jackson.core.JacksonException;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -182,7 +183,9 @@ public abstract class HyperionCodeGenerationService {
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof JsonProcessingException) {
+            // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
+            // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
+            if (current instanceof JsonProcessingException || current instanceof JacksonException) {
                 return true;
             }
             current = current.getCause();
