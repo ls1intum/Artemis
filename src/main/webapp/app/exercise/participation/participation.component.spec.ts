@@ -111,7 +111,7 @@ describe('ParticipationComponent', () => {
             expect(searchStub).toHaveBeenCalledOnce();
             expect(component.participations()).toEqual([sampleDto]);
             expect(component.totalRows()).toBe(1);
-            expect(component.isLoading()).toBeFalse();
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should update active filter and reload on filter change', () => {
@@ -182,10 +182,10 @@ describe('ParticipationComponent', () => {
                 presentationScoreEnabled: true,
                 course: { ...course, presentationScore: 1 },
             });
-            expect(component.basicPresentationEnabled()).toBeTrue();
+            expect(component.basicPresentationEnabled()).toBe(true);
 
             component.exercise.set({ ...exercise, presentationScoreEnabled: false, course });
-            expect(component.basicPresentationEnabled()).toBeFalse();
+            expect(component.basicPresentationEnabled()).toBe(false);
         });
 
         it('should compute gradedPresentationEnabled correctly', () => {
@@ -195,22 +195,22 @@ describe('ParticipationComponent', () => {
                 presentationScoreEnabled: true,
                 course,
             });
-            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any });
+            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
 
-            expect(component.gradedPresentationEnabled()).toBeTrue();
+            expect(component.gradedPresentationEnabled()).toBe(true);
 
-            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any });
-            expect(component.gradedPresentationEnabled()).toBeFalse();
+            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            expect(component.gradedPresentationEnabled()).toBe(false);
         });
     });
 
     describe('Individual due date', () => {
         it('should track individual due date editing lifecycle', () => {
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeFalse();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
 
             component.startEditDueDate(sampleDto);
 
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeTrue();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(true);
             expect(component.getPendingDueDate(sampleDto.participationId)).toEqual(sampleDto.individualDueDate);
 
             const newDate = dayjs().add(1, 'day');
@@ -219,7 +219,7 @@ describe('ParticipationComponent', () => {
 
             component.cancelEditDueDate(sampleDto);
 
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeFalse();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
             expect(component.getPendingDueDate(sampleDto.participationId)).toBeUndefined();
         });
 
@@ -237,8 +237,8 @@ describe('ParticipationComponent', () => {
 
             expect(updateStub).toHaveBeenCalledOnce();
             expect(sampleDto.individualDueDate).toEqual(newDate);
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeFalse();
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
+            expect(component.isSaving()).toBe(false);
             expect(searchStub).toHaveBeenCalledOnce();
         });
 
@@ -250,7 +250,7 @@ describe('ParticipationComponent', () => {
             component.saveIndividualDueDate(sampleDto);
 
             expect(errorSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving()).toBeFalse();
+            expect(component.isSaving()).toBe(false);
         });
     });
 
@@ -274,13 +274,13 @@ describe('ParticipationComponent', () => {
             component.startEditDueDate(sampleDto);
             component.changeGradedPresentation(sampleDto);
 
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeTrue();
-            expect(component.hasGradedPresentationChanged(sampleDto)).toBeTrue();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(true);
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(true);
 
             component.deleteParticipation(sampleDto.participationId);
 
-            expect(component.isEditingDueDate(sampleDto.participationId)).toBeFalse();
-            expect(component.hasGradedPresentationChanged(sampleDto)).toBeFalse();
+            expect(component.isEditingDueDate(sampleDto.participationId)).toBe(false);
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(false);
         });
     });
 
@@ -300,11 +300,11 @@ describe('ParticipationComponent', () => {
 
     describe('Graded presentation tracking', () => {
         it('should track graded presentation changes', () => {
-            expect(component.hasGradedPresentationChanged(sampleDto)).toBeFalse();
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(false);
 
             component.changeGradedPresentation(sampleDto);
 
-            expect(component.hasGradedPresentationChanged(sampleDto)).toBeTrue();
+            expect(component.hasGradedPresentationChanged(sampleDto)).toBe(true);
         });
     });
 
@@ -361,7 +361,7 @@ describe('ParticipationComponent', () => {
 
         beforeEach(() => {
             component.exercise.set(gradedExercise);
-            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any });
+            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
         });
 
         it('should call update and reload on success', () => {
@@ -375,7 +375,7 @@ describe('ParticipationComponent', () => {
             component.addGradedPresentation(dto);
 
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(component.hasGradedPresentationChanged(dto)).toBeFalse();
+            expect(component.hasGradedPresentationChanged(dto)).toBe(false);
             expect(searchStub).toHaveBeenCalledOnce();
         });
 
@@ -425,7 +425,7 @@ describe('ParticipationComponent', () => {
         });
 
         it('should not call update when gradedPresentationEnabled is false', () => {
-            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any });
+            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
             const updateStub = vi.spyOn(participationService, 'update');
 
             component.addGradedPresentation({ ...sampleDto, presentationScore: 50 });

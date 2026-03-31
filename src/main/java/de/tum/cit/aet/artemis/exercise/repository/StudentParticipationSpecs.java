@@ -51,6 +51,7 @@ public class StudentParticipationSpecs {
      * Matches participations belonging to the given exercise.
      *
      * @param exerciseId the exercise ID
+     * @return specification matching participations for the given exercise
      */
     @NonNull
     public static Specification<StudentParticipation> forExercise(long exerciseId) {
@@ -60,6 +61,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations that have a student (individual mode).
      *
+     * @return specification matching participations with a student
      */
     @NonNull
     public static Specification<StudentParticipation> hasStudent() {
@@ -69,6 +71,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations that have a team (team mode).
      *
+     * @return specification matching participations with a team
      */
     @NonNull
     public static Specification<StudentParticipation> hasTeam() {
@@ -79,6 +82,7 @@ public class StudentParticipationSpecs {
      * Matches participations by student or team based on team mode.
      *
      * @param teamMode whether the exercise uses teams
+     * @return specification matching participations for the given mode
      */
     @NonNull
     public static Specification<StudentParticipation> forMode(boolean teamMode) {
@@ -223,6 +227,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest result is successful.
      *
+     * @return specification matching participations with a successful latest result
      */
     @NonNull
     public static Specification<StudentParticipation> isSuccessful() {
@@ -232,6 +237,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest result is NOT successful.
      *
+     * @return specification matching participations without a successful latest result
      */
     @NonNull
     public static Specification<StudentParticipation> isUnsuccessful() {
@@ -241,6 +247,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest submission is a ProgrammingSubmission with buildFailed = true.
      *
+     * @return specification matching participations with a failed build
      */
     @NonNull
     public static Specification<StudentParticipation> isBuildFailed() {
@@ -258,6 +265,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest result has a manual or semi-automatic assessment type.
      *
+     * @return specification matching participations with a manual or semi-automatic latest result
      */
     @NonNull
     public static Specification<StudentParticipation> hasManualAssessment() {
@@ -267,6 +275,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest result has an automatic assessment type.
      *
+     * @return specification matching participations with an automatic latest result
      */
     @NonNull
     public static Specification<StudentParticipation> hasAutomaticAssessment() {
@@ -276,6 +285,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations whose latest result has no completion date (i.e. is locked).
      *
+     * @return specification matching participations with a locked latest result
      */
     @NonNull
     public static Specification<StudentParticipation> isLocked() {
@@ -332,6 +342,7 @@ public class StudentParticipationSpecs {
      * Matches participations whose latest submission has no result and was submitted before the cutoff (stuck build).
      *
      * @param stuckBuildCutoff the cutoff timestamp
+     * @return specification matching participations with a stuck/failed build
      */
     @NonNull
     public static Specification<StudentParticipation> hasFailedBuild(@Nullable ZonedDateTime stuckBuildCutoff) {
@@ -359,6 +370,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations that have no submissions.
      *
+     * @return specification matching participations with no submissions
      */
     @NonNull
     public static Specification<StudentParticipation> hasNoSubmissions() {
@@ -374,6 +386,7 @@ public class StudentParticipationSpecs {
     /**
      * Matches participations that are not in practice mode (testRun is null or false).
      *
+     * @return specification matching participations not in practice mode
      */
     @NonNull
     public static Specification<StudentParticipation> isNotPracticeMode() {

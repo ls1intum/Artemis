@@ -144,7 +144,7 @@ describe('Exercise Scores Component', () => {
             expect(searchSpy).toHaveBeenCalledOnce();
             expect(component.participations()).toEqual(dtosToFilter);
             expect(component.totalRows()).toBe(dtosToFilter.length);
-            expect(component.isLoading()).toBeFalse();
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should update result filter and reload', () => {
@@ -169,7 +169,7 @@ describe('Exercise Scores Component', () => {
 
             expect(searchSpy).toHaveBeenCalledOnce();
             expect(component.participations()).toEqual([sampleDto]);
-            expect(component.isLoading()).toBeFalse();
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should reset filter options and reload', () => {
@@ -296,7 +296,7 @@ describe('Exercise Scores Component', () => {
             expect(result).toBeDefined();
             expect(result!.id).toBe(42);
             expect(result!.score).toBe(75);
-            expect(result!.successful).toBeTrue();
+            expect(result!.successful).toBe(true);
             expect(result!.assessmentType).toBe(AssessmentType.AUTOMATIC);
         });
     });

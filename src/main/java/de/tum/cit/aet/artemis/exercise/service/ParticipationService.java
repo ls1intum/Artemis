@@ -812,7 +812,6 @@ public class ParticipationService {
      * @return a page of ParticipationManagementDTO
      */
     public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
-
         SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize());
         boolean teamMode = exercise.isTeamMode();
@@ -843,7 +842,6 @@ public class ParticipationService {
     }
 
     private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap) {
-
         String participantName;
         String participantIdentifier;
         Long studentId = null;
@@ -912,7 +910,6 @@ public class ParticipationService {
      * @return a page of ParticipationScoreDTO
      */
     public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
-
         SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize());
         boolean teamMode = exercise.isTeamMode();
@@ -920,7 +917,6 @@ public class ParticipationService {
         // Step 1: Get paginated participation IDs with filters
         Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
                 search.getScoreRangeLower(), search.getScoreRangeUpper(), pageable, sortOrder, search.getSortedColumn());
-
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
@@ -932,7 +928,6 @@ public class ParticipationService {
 
         // Load latest results with assessment notes
         Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-
         Map<Long, Result> resultBySubmissionId = Map.of();
         if (!submissionIds.isEmpty()) {
             Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
@@ -951,7 +946,6 @@ public class ParticipationService {
     }
 
     private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId) {
-
         // Participant info
         String participantName;
         String participantIdentifier;

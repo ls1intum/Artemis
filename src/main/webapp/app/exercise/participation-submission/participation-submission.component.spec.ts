@@ -117,7 +117,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isLoading()).toBeFalse();
+        expect(comp.isLoading()).toBe(false);
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation()).toEqual(participation);
         expect(comp.submissions()).toEqual(submissions);
@@ -150,7 +150,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isLoading()).toBeFalse();
+        expect(comp.isLoading()).toBe(false);
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.exercise()).toEqual(programmingExercise);
         expect(comp.participation()).toEqual(templateParticipation);
@@ -183,7 +183,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isLoading()).toBeFalse();
+        expect(comp.isLoading()).toBe(false);
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation()).toEqual(solutionParticipation);
         expect(comp.submissions()).toEqual(solutionParticipation.submissions);
@@ -191,10 +191,10 @@ describe('ParticipationSubmissionComponent', () => {
 
     describe('should delete', () => {
         beforeEach(() => {
-            vi.spyOn(fileUploadAssessmentService, 'deleteAssessment').mockReturnValue(of({}));
-            vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(of({}));
-            vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(of({}));
-            vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(of({}));
+            vi.spyOn(fileUploadAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
+            vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
+            vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
+            vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults] }));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
             vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
