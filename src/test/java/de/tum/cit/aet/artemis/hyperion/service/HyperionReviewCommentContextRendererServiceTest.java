@@ -82,6 +82,20 @@ class HyperionReviewCommentContextRendererServiceTest {
         assertThat(payload.path("threads").get(0).path("comments")).hasSize(maxSerializedComments);
     }
 
+    @Test
+    void renderCodeGenerationFixBatch_keepsNewestCommentsWithinBudgetInChronologicalOrder() throws Exception {
+        int maxSerializedComments = (int) ReflectionTestUtils.getField(HyperionReviewCommentContextRendererService.class, "MAX_SERIALIZED_COMMENTS");
+        CommentThread thread = createThread(13L, CommentThreadLocationType.SOLUTION_REPO, maxSerializedComments + 2);
+        when(commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(10L, List.of(13L))).thenReturn(List.of(thread));
+
+        String result = contextRendererService.renderCodeGenerationFixBatch(10L, RepositoryType.SOLUTION, List.of(13L));
+
+        JsonNode comments = OBJECT_MAPPER.readTree(result).path("threads").get(0).path("comments");
+        assertThat(comments).hasSize(maxSerializedComments);
+        assertThat(comments.get(0).path("text").asText()).isEqualTo("comment-13-2");
+        assertThat(comments.get(maxSerializedComments - 1).path("text").asText()).isEqualTo("comment-13-" + (maxSerializedComments + 1));
+    }
+
     private CommentThread createThread(long threadId, CommentThreadLocationType targetType, int commentCount) {
         CommentThread thread = new CommentThread();
         thread.setId(threadId);

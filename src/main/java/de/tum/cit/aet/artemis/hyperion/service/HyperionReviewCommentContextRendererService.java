@@ -223,9 +223,13 @@ public class HyperionReviewCommentContextRendererService {
             return null;
         }
 
-        List<Map<String, Object>> serializedComments = thread.getComments().stream().sorted(Comparator
-                .comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .limit(remainingSerializedComments[0]).map(comment -> {
+        Comparator<Comment> chronologicalCommentOrder = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
+                Comparator.nullsLast(Comparator.naturalOrder()));
+        Comparator<Comment> newestFirstCommentOrder = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(Comment::getId,
+                Comparator.nullsLast(Comparator.reverseOrder()));
+
+        List<Map<String, Object>> serializedComments = thread.getComments().stream().sorted(newestFirstCommentOrder).limit(remainingSerializedComments[0])
+                .sorted(chronologicalCommentOrder).map(comment -> {
                     Map<String, Object> serializedComment = new LinkedHashMap<>();
                     serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
                     serializedComment.put("text", extractCommentText(comment.getContent()));
