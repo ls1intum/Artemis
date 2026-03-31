@@ -31,26 +31,40 @@
         rowHover
         [scrollable]="true"
         scrollHeight="flex"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} registered students"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} students"
         showCurrentPageReport
-        class="border border-1 rounded-4 overflow-hidden flex-grow-1 mb-4"
+        class="border border-1 rounded-4 overflow-hidden flex-grow-1"
     >
-        <ng-template #caption> Registered students </ng-template>
+        <ng-template #caption>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h5 class="m-0">Registered Students</h5>
+                <p-icon-field style="width: 33%">
+                    <p-inputicon class="pi pi-search" />
+                    <input
+                        #globalFilterInput
+                        pInputText
+                        type="text"
+                        (input)="dt.filterGlobal(globalFilterInput.value, 'contains')"
+                        placeholder="Search for registered students"
+                        class="w-100"
+                    />
+                </p-icon-field>
+            </div>
+        </ng-template>
         <ng-template #header>
             <tr>
                 <th style="min-width: 3rem"></th>
                 <th pSortableColumn="name-and-login" style="min-width: 8rem">
                     <div class="d-flex align-items-center gap-2">
                         <div class="d-flex gap-1">
-                            <span> Name </span>
-                            <span class="text-secondary"> (Login) </span>
+                            <span> Student details </span>
                         </div>
                         <p-sortIcon field="name-and-login" />
                     </div>
                 </th>
                 <th style="min-width: 6rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Matr. number </span>
+                        <span> Matriculation number </span>
                     </div>
                 </th>
                 <th style="min-width: 2rem">
@@ -63,11 +77,13 @@
                         <span> Seat </span>
                     </div>
                 </th>
-                <th style="min-width: 2rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span> Status </span>
-                    </div>
-                </th>
+                @if (hasExamEnded()) {
+                    <th style="min-width: 2rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span> Status </span>
+                        </div>
+                    </th>
+                }
                 <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
                     <span class="d-flex align-items-center gap-2">Actions</span>
                 </th>
@@ -85,8 +101,20 @@
                     />
                 </td>
                 <td>
-                    <span>{{ examUser.user?.name }}</span>
-                    <span class="text-secondary">({{ examUser.user?.login }})</span>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex align-items-center gap-1 mb-1">
+                            <i class="pi pi-id-card"></i>
+                            <span>{{ examUser.user?.name }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 text-secondary">
+                            <i class="pi pi-sign-in"></i>
+                            <span>{{ examUser.user?.login }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 text-secondary">
+                            <i class="pi pi-envelope"></i>
+                            <span>{{ examUser.user?.email }}</span>
+                        </div>
+                    </div>
                 </td>
                 <td>
                     <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
@@ -115,21 +143,23 @@
                         </div>
                     }
                 </td>
-                <td>
-                    @if (attendanceCheckFailed(examUser)) {
-                        <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
-                            <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
-                        </div>
-                    } @else if (attendanceCheckPassed(examUser)) {
-                        <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
-                            <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
-                        </div>
-                    } @else if (didAttendExam(examUser)) {
-                        <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
-                            <fa-icon [icon]="faUserTimes" class="fa-2x" />
-                        </div>
-                    }
-                </td>
+                @if (hasExamEnded()) {
+                    <td>
+                        @if (attendanceCheckFailed(examUser)) {
+                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
+                                <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+                            </div>
+                        } @else if (attendanceCheckPassed(examUser)) {
+                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
+                                <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
+                            </div>
+                        } @else if (didAttendExam(examUser)) {
+                            <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
+                                <fa-icon [icon]="faUserTimes" class="fa-2x" />
+                            </div>
+                        }
+                    </td>
+                }
                 <td alignFrozen="right" pFrozenColumn>
                     <div class="d-flex gap-1">
                         <button

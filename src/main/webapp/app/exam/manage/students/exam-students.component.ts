@@ -38,6 +38,9 @@ import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-stu
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TableModule } from 'primeng/table';
 import { ButtonDirective } from 'primeng/button';
+import { IconField } from 'primeng/iconfield';
+import { InputIcon } from 'primeng/inputicon';
+import { InputText } from 'primeng/inputtext';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -66,6 +69,9 @@ const cssClasses = {
         ExamAddStudentsDialogComponent,
         TableModule,
         ButtonDirective,
+        IconField,
+        InputIcon,
+        InputText,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
