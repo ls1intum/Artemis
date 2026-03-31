@@ -33,7 +33,10 @@ export class IrisMcqCarouselComponent {
     showScore = signal(false);
     answers = signal<ReadonlyMap<number, { selectedIndex: number; submitted: boolean }>>(new Map());
 
+    private static readonly DOT_THRESHOLD = 10;
+
     totalQuestions = computed(() => this.mcqSetData().questions.length);
+    useDots = computed(() => this.totalQuestions() <= IrisMcqCarouselComponent.DOT_THRESHOLD);
 
     answeredCount = computed(() => {
         let count = 0;

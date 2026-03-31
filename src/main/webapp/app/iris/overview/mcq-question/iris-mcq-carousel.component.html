@@ -17,17 +17,21 @@
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
-            <div class="carousel-dots">
-                @for (q of mcqSetData().questions; track $index) {
-                    <button
-                        class="dot"
-                        [class.active]="currentIndex() === $index"
-                        [class.correct]="isQuestionCorrect($index)"
-                        [class.incorrect]="isQuestionIncorrect($index)"
-                        (click)="goToQuestion($index)"
-                    ></button>
-                }
-            </div>
+            @if (useDots()) {
+                <div class="carousel-dots">
+                    @for (q of mcqSetData().questions; track $index) {
+                        <button
+                            class="dot"
+                            [class.active]="currentIndex() === $index"
+                            [class.correct]="isQuestionCorrect($index)"
+                            [class.incorrect]="isQuestionIncorrect($index)"
+                            (click)="goToQuestion($index)"
+                        ></button>
+                    }
+                </div>
+            } @else {
+                <span class="carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
+            }
 
             <button class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
                 <fa-icon [icon]="faChevronRight" />
@@ -45,16 +49,18 @@
             </div>
             <div class="score-label" jhiTranslate="artemisApp.iris.mcq.score"></div>
 
-            <div class="carousel-dots score-dots">
-                @for (q of mcqSetData().questions; track $index) {
-                    <button
-                        class="dot"
-                        [class.correct]="isQuestionCorrect($index)"
-                        [class.incorrect]="isQuestionIncorrect($index)"
-                        (click)="showScore.set(false); goToQuestion($index)"
-                    ></button>
-                }
-            </div>
+            @if (useDots()) {
+                <div class="carousel-dots score-dots">
+                    @for (q of mcqSetData().questions; track $index) {
+                        <button
+                            class="dot"
+                            [class.correct]="isQuestionCorrect($index)"
+                            [class.incorrect]="isQuestionIncorrect($index)"
+                            (click)="showScore.set(false); goToQuestion($index)"
+                        ></button>
+                    }
+                </div>
+            }
 
             <button class="review-btn" (click)="showScore.set(false)" jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></button>
         </div>

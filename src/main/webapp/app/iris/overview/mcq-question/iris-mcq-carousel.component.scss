@@ -17,6 +17,14 @@
     margin-top: 0.75rem;
 }
 
+.carousel-counter {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--body-color);
+    min-width: 3rem;
+    text-align: center;
+}
+
 .nav-btn {
     display: flex;
     align-items: center;
