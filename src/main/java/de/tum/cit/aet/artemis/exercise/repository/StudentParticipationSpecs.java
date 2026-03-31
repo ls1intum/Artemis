@@ -305,12 +305,12 @@ public class StudentParticipationSpecs {
     /**
      * Returns the filter specification for the scores view based on filter name.
      *
-     * @param filterProp filter name (All, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
-     * @return specification, or null for "All"
+     * @param filterProp filter name (Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
+     * @return specification, or null for unrecognized filterProp
      */
     @Nullable
     public static Specification<StudentParticipation> scoresFilter(@Nullable String filterProp) {
-        if (filterProp == null || "All".equals(filterProp)) {
+        if (filterProp == null) {
             return null;
         }
         return switch (filterProp) {
@@ -383,13 +383,13 @@ public class StudentParticipationSpecs {
     /**
      * Returns the filter specification for the management view based on filter name.
      *
-     * @param filterProp       filter name (All, Failed, NoSubmissions, NoPracticeMode)
+     * @param filterProp       filter name (Failed, NoSubmissions, NoPracticeMode)
      * @param stuckBuildCutoff cutoff timestamp for the Failed filter
-     * @return specification, or null for "All"
+     * @return specification, or null for unrecognized filterProp
      */
     @Nullable
     public static Specification<StudentParticipation> managementFilter(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
-        if (filterProp == null || "All".equals(filterProp)) {
+        if (filterProp == null) {
             return null;
         }
         return switch (filterProp) {

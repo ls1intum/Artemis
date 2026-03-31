@@ -231,7 +231,7 @@
             "showManual": "Manual",
             "showAutomatic": "Automatic",
             "showLocked": "Locked Assessments",
-            "showAll": "None",
+            "showAll": "All",
             "showFailed": "Latest Submission without Result",
             "showNoSubmissions": "No Submissions",
             "showNoPracticeMode": "Only graded participations",

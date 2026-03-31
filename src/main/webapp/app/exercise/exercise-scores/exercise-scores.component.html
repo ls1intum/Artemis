@@ -2,12 +2,10 @@
     <div class="d-flex flex-column h-100">
         <div class="d-flex justify-content-between mb-2">
             <h2>
-                @if (exercise()!.course) {
-                    <span>{{ exercise()!.title }}</span>
-                }
                 @if (exercise()!.exerciseGroup) {
-                    <span>{{ exercise()!.exerciseGroup?.exam?.title }} - {{ exercise()!.title }}</span>
+                    <span>{{ exercise()!.exerciseGroup?.exam?.title }} - </span>
                 }
+                <span>{{ exercise()!.title }}</span>
             </h2>
             <div class="d-flex align-items-start gap-2">
                 @if (!exercise()!.exerciseGroup) {
@@ -103,9 +101,7 @@
 
 <!-- Filter dropdown rendered in the table caption bar -->
 <ng-template #filterDropdownTemplate>
-    <div class="d-flex align-items-center gap-2">
-        <jhi-filter-dropdown [filters]="relevantFilters()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
-    </div>
+    <jhi-filter-dropdown [filters]="relevantFilters()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
 <!-- Cell templates -->
@@ -163,15 +159,13 @@
 </ng-template>
 
 <ng-template #submissionCountTemplate let-cell>
-    <div class="w-100 text-center">
-        @if (exercise()!.isAtLeastInstructor) {
-            <a [routerLink]="getExerciseParticipationsLink(cell.data.participationId)">
-                {{ cell.data.submissionCount }}
-            </a>
-        } @else {
+    @if (exercise()!.isAtLeastInstructor) {
+        <a [routerLink]="getExerciseParticipationsLink(cell.data.participationId)">
             {{ cell.data.submissionCount }}
-        }
-    </div>
+        </a>
+    } @else {
+        {{ cell.data.submissionCount }}
+    }
 </ng-template>
 
 <ng-template #durationTemplate let-cell>
