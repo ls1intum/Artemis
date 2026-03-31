@@ -105,6 +105,9 @@ describe('AdminContainerComponent', () => {
             .compileComponents();
 
         profileService = TestBed.inject(ProfileService);
+        // Mock ProfileService methods used by the component (null-safe access introduced for Spring Boot 4 compatibility)
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
         fixture = TestBed.createComponent(AdminContainerComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
