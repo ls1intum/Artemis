@@ -291,7 +291,9 @@ public class ProgrammingExerciseValidationService {
         }
         BuildPlanPhasesDTO buildPlanPhases = buildPlanPhasesOptional.orElseThrow();
         if (buildPlanPhases.phases() == null || buildPlanPhases.phases().isEmpty()) {
-            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
+            // Empty phases list means no custom build phases are configured (e.g. converted
+            // from a Windfile with no script actions). Nothing to validate in that case.
+            return;
         }
 
         Set<String> normalizedNames = new HashSet<>();
