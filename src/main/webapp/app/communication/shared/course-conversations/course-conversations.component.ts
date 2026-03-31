@@ -300,20 +300,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.updateQueryParameters();
                 this.prepareSidebarData();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
+                if (!this.isServiceSetUp) {
+                    outputToObservable(this.channelActions$)
+                        .pipe(
+                            debounceTime(500),
+                            distinctUntilChanged(
+                                (prev, curr) =>
+                                    curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
+                            ),
+                            takeUntil(this.ngUnsubscribe),
+                        )
+                        .subscribe((channelAction) => {
+                            this.performChannelAction(channelAction);
+                        });
+                }
                 this.isServiceSetUp = true;
                 this.isLoading = false;
-                outputToObservable(this.channelActions$)
-                    .pipe(
-                        debounceTime(500),
-                        distinctUntilChanged(
-                            (prev, curr) =>
-                                curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
-                        ),
-                        takeUntil(this.ngUnsubscribe),
-                    )
-                    .subscribe((channelAction) => {
-                        this.performChannelAction(channelAction);
-                    });
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
