@@ -19,6 +19,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -31,7 +35,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -51,6 +54,8 @@ public abstract class HyperionCodeGenerationService {
      */
     private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
 
+    private static final String DEFAULT_FIX_BATCH_REVIEW_THREADS = "{\"threads\":[]}";
+
     private static final int MAX_FIX_BATCH_REVIEW_THREADS_LENGTH = 12000;
 
     /**
@@ -61,7 +66,7 @@ public abstract class HyperionCodeGenerationService {
 
     private static final String FIX_BATCH_REVIEW_THREADS_TEMPLATE_VARIABLE = "fixBatchReviewThreads";
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final ChatClient chatClient;
 
@@ -69,9 +74,7 @@ public abstract class HyperionCodeGenerationService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    public HyperionCodeGenerationService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
-            HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    public HyperionCodeGenerationService(@Autowired(required = false) ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -133,13 +136,81 @@ public abstract class HyperionCodeGenerationService {
         }
         String trimmed = fixBatchReviewThreads.trim();
         if (trimmed.isEmpty()) {
-            return "{\"threads\":[]}";
+            return DEFAULT_FIX_BATCH_REVIEW_THREADS;
         }
         String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
         if (sanitized.length() > MAX_FIX_BATCH_REVIEW_THREADS_LENGTH) {
-            return sanitized.substring(0, MAX_FIX_BATCH_REVIEW_THREADS_LENGTH);
+            return truncateFixBatchReviewThreadsSafely(sanitized);
         }
         return sanitized;
+    }
+
+    private String truncateFixBatchReviewThreadsSafely(String sanitized) {
+        String normalizedJson = tryTrimParsedFixBatchReviewThreads(sanitized);
+        if (normalizedJson != null) {
+            return normalizedJson;
+        }
+        return truncateFixBatchReviewThreadsToValidatedObject(sanitized);
+    }
+
+    private String tryTrimParsedFixBatchReviewThreads(String sanitized) {
+        try {
+            JsonNode parsed = OBJECT_MAPPER.readTree(sanitized);
+            if (!(parsed instanceof ObjectNode payload)) {
+                return DEFAULT_FIX_BATCH_REVIEW_THREADS;
+            }
+            JsonNode threadsNode = payload.get("threads");
+            if (!(threadsNode instanceof ArrayNode threads)) {
+                return DEFAULT_FIX_BATCH_REVIEW_THREADS;
+            }
+
+            ObjectNode limitedPayload = payload.deepCopy();
+            ArrayNode limitedThreads = threads.deepCopy();
+            limitedPayload.set("threads", limitedThreads);
+
+            while (true) {
+                String serialized = serializeIfWithinFixBatchReviewThreadsLimit(limitedPayload);
+                if (serialized != null) {
+                    return serialized;
+                }
+                if (limitedThreads.isEmpty()) {
+                    return DEFAULT_FIX_BATCH_REVIEW_THREADS;
+                }
+                limitedThreads.remove(limitedThreads.size() - 1);
+            }
+        }
+        catch (JsonProcessingException ignored) {
+            return null;
+        }
+    }
+
+    private String truncateFixBatchReviewThreadsToValidatedObject(String sanitized) {
+        int searchIndex = Math.min(sanitized.length(), MAX_FIX_BATCH_REVIEW_THREADS_LENGTH) - 1;
+        while (searchIndex >= 0) {
+            int closingBraceIndex = sanitized.lastIndexOf('}', searchIndex);
+            if (closingBraceIndex < 0) {
+                break;
+            }
+
+            String candidate = sanitized.substring(0, closingBraceIndex + 1).trim();
+            try {
+                JsonNode parsed = OBJECT_MAPPER.readTree(candidate);
+                String serialized = serializeIfWithinFixBatchReviewThreadsLimit(parsed);
+                if (serialized != null) {
+                    return serialized;
+                }
+            }
+            catch (JsonProcessingException ignored) {
+                // Keep scanning backward for an earlier complete JSON object.
+            }
+            searchIndex = closingBraceIndex - 1;
+        }
+        return DEFAULT_FIX_BATCH_REVIEW_THREADS;
+    }
+
+    private String serializeIfWithinFixBatchReviewThreadsLimit(JsonNode payload) throws JsonProcessingException {
+        String serialized = OBJECT_MAPPER.writeValueAsString(payload);
+        return serialized.length() <= MAX_FIX_BATCH_REVIEW_THREADS_LENGTH ? serialized : null;
     }
 
     protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues, String fixBatchReviewThreads) {

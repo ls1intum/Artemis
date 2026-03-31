@@ -57,6 +57,12 @@ public class HyperionReviewCommentContextRendererService {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a renderer for deterministic review-thread prompt context serialization.
+     *
+     * @param commentThreadRepository repository used to load review threads with comments
+     * @param objectMapper            mapper used to serialize prompt payloads as JSON
+     */
     public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, ObjectMapper objectMapper) {
         this.commentThreadRepository = commentThreadRepository;
         this.objectMapper = objectMapper;
@@ -152,7 +158,7 @@ public class HyperionReviewCommentContextRendererService {
             return serializePayload(payload, exerciseId);
         }
 
-        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().toList();
+        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FIX_BATCH_THREADS).toList();
         if (orderedThreadIds.isEmpty()) {
             payload.put("threads", List.of());
             return serializePayload(payload, exerciseId);
@@ -163,10 +169,20 @@ public class HyperionReviewCommentContextRendererService {
             threadOrder.put(orderedThreadIds.get(index), index);
         }
 
-        List<Map<String, Object>> serializedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
+        int[] remainingSerializedComments = { MAX_SERIALIZED_COMMENTS };
+        List<Map<String, Object>> serializedThreads = new ArrayList<>();
+        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
                 .filter(thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated())
-                .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).limit(MAX_SELECTED_FIX_BATCH_THREADS)
-                .map(this::serializeSelectedFixBatchThread).filter(Objects::nonNull).toList();
+                .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
+        for (CommentThread thread : selectedThreads) {
+            if (remainingSerializedComments[0] <= 0) {
+                break;
+            }
+            Map<String, Object> serializedThread = serializeSelectedFixBatchThread(thread, remainingSerializedComments);
+            if (serializedThread != null) {
+                serializedThreads.add(serializedThread);
+            }
+        }
 
         payload.put("threads", serializedThreads);
         return serializePayload(payload, exerciseId);
@@ -194,14 +210,22 @@ public class HyperionReviewCommentContextRendererService {
         return truncateText(sanitizeAndNormalizeText(content.toString()));
     }
 
-    private Map<String, Object> serializeSelectedFixBatchThread(CommentThread thread) {
-        if (thread == null || thread.getComments() == null || thread.getComments().isEmpty()) {
+    /**
+     * Serializes one explicitly selected fix-batch thread while consuming from the shared global comment budget.
+     *
+     * @param thread                      the selected review thread
+     * @param remainingSerializedComments mutable single-element array holding the remaining global comment budget
+     * @return serialized thread payload, or {@code null} when the thread contributes no serializable comments
+     */
+    private Map<String, Object> serializeSelectedFixBatchThread(CommentThread thread, int[] remainingSerializedComments) {
+        if (thread == null || remainingSerializedComments == null || remainingSerializedComments.length == 0 || remainingSerializedComments[0] <= 0 || thread.getComments() == null
+                || thread.getComments().isEmpty()) {
             return null;
         }
 
         List<Map<String, Object>> serializedComments = thread.getComments().stream().sorted(Comparator
                 .comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .limit(MAX_SERIALIZED_COMMENTS).map(comment -> {
+                .limit(remainingSerializedComments[0]).map(comment -> {
                     Map<String, Object> serializedComment = new LinkedHashMap<>();
                     serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
                     serializedComment.put("text", extractCommentText(comment.getContent()));
@@ -211,6 +235,7 @@ public class HyperionReviewCommentContextRendererService {
         if (serializedComments.isEmpty()) {
             return null;
         }
+        remainingSerializedComments[0] -= serializedComments.size();
 
         Map<String, Object> serializedThread = new LinkedHashMap<>();
         serializedThread.put("id", thread.getId());
@@ -221,6 +246,12 @@ public class HyperionReviewCommentContextRendererService {
         return serializedThread;
     }
 
+    /**
+     * Maps a code-generation repository type to the corresponding review-thread location type.
+     *
+     * @param repositoryType the repository currently being generated
+     * @return matching thread location type, or {@code null} when the repository type has no review-thread mapping
+     */
     private CommentThreadLocationType mapRepositoryTypeToThreadLocationType(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> CommentThreadLocationType.TEMPLATE_REPO;
@@ -230,6 +261,13 @@ public class HyperionReviewCommentContextRendererService {
         };
     }
 
+    /**
+     * Serializes a review-thread payload and falls back to an empty-thread JSON object on serialization failure.
+     *
+     * @param payload    the payload to serialize
+     * @param exerciseId the exercise id used for diagnostic logging
+     * @return serialized JSON payload, or {@code "{\"threads\":[]}" } when serialization fails
+     */
     private String serializePayload(Map<String, Object> payload, long exerciseId) {
         try {
             return objectMapper.writeValueAsString(payload);

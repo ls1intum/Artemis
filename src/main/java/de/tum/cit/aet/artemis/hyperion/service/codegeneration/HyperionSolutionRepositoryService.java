@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Code generation strategy for creating solution code for programming exercises.
@@ -27,9 +26,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Conditional(HyperionEnabled.class)
 public class HyperionSolutionRepositoryService extends HyperionCodeGenerationService {
 
-    public HyperionSolutionRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            LLMTokenUsageService llmTokenUsageService) {
-        super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+    public HyperionSolutionRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
+        super(chatClient, templates, llmTokenUsageService);
     }
 
     /**

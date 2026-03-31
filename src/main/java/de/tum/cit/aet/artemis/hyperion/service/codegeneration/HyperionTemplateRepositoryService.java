@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContex
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
@@ -40,16 +39,15 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
     /**
      * Creates a new TemplateRepository with required dependencies.
      *
-     * @param programmingExerciseRepository repository for accessing programming exercise data
-     * @param chatClient                    AI chat client for generating template code
-     * @param templates                     service for rendering prompt templates
-     * @param gitService                    service for Git operations to read solution code
-     * @param contextRenderer               service for rendering programming exercise context
-     * @param llmTokenUsageService          service for persisting LLM token usage telemetry
+     * @param chatClient           AI chat client for generating template code
+     * @param templates            service for rendering prompt templates
+     * @param gitService           service for Git operations to read solution code
+     * @param contextRenderer      service for rendering programming exercise context
+     * @param llmTokenUsageService service for persisting LLM token usage telemetry
      */
-    public HyperionTemplateRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            GitService gitService, HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
-        super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+    public HyperionTemplateRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+            HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
+        super(chatClient, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }

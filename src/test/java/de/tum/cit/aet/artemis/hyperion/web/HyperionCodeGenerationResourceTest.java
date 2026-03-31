@@ -151,6 +151,16 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
+    void validateGenerationRequest_withTooManyFixBatchThreadIds_throwsException() {
+        int maxFixBatchThreadIds = (int) ReflectionTestUtils.getField(HyperionCodeGenerationResource.class, "MAX_FIX_BATCH_THREAD_IDS");
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false,
+                java.util.stream.LongStream.rangeClosed(1, maxFixBatchThreadIds + 1L).boxed().toList());
+
+        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Too many fix-batch thread ids");
+    }
+
+    @Test
     void isSupportedRepositoryType_withSolutionType_returnsTrue() {
         boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(resource, "isSupportedRepositoryType", RepositoryType.SOLUTION));
         assertThat(result).isTrue();

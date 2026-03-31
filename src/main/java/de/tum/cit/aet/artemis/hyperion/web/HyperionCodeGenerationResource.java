@@ -44,6 +44,8 @@ public class HyperionCodeGenerationResource {
 
     private static final String ENTITY_NAME = "hyperionCodeGeneration";
 
+    private static final int MAX_FIX_BATCH_THREAD_IDS = 25;
+
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -125,6 +127,9 @@ public class HyperionCodeGenerationResource {
     private void validateFixBatchThreadIds(List<Long> hyperionFixBatchThreadIds) {
         if (hyperionFixBatchThreadIds == null) {
             return;
+        }
+        if (hyperionFixBatchThreadIds.size() > MAX_FIX_BATCH_THREAD_IDS) {
+            throw new BadRequestAlertException("Too many fix-batch thread ids", ENTITY_NAME, "tooManyFixBatchThreadIds");
         }
         boolean hasInvalidThreadId = hyperionFixBatchThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
         if (hasInvalidThreadId) {

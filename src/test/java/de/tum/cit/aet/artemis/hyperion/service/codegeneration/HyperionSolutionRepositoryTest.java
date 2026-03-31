@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,14 +31,10 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionSolutionRepositoryServiceTest {
 
     private static final String EMPTY_FIX_BATCH_REVIEW_THREADS = "{\"threads\":[]}";
-
-    @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private ChatModel chatModel;
@@ -58,7 +55,7 @@ class HyperionSolutionRepositoryServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.solutionRepository = new HyperionSolutionRepositoryService(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -117,7 +114,7 @@ class HyperionSolutionRepositoryServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("void sort()");
-        verify(chatModel, org.mockito.Mockito.times(2)).call(any(Prompt.class));
+        verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -135,7 +132,7 @@ class HyperionSolutionRepositoryServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("implementation");
-        verify(chatModel, org.mockito.Mockito.times(3)).call(any(Prompt.class));
+        verify(chatModel, times(3)).call(any(Prompt.class));
     }
 
     @Test
