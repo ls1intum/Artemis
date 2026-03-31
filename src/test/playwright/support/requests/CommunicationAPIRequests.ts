@@ -241,6 +241,22 @@ export class CommunicationAPIRequests {
      * @param content - The content of the post.
      * @returns Promise<Post> representing the course lecture post created.
      */
+    async createCourseLecturePost(course: Course, lecture: Lecture, title: string, content: string) {
+        const data = {
+            content,
+            displayPriority: 'NONE',
+            lecture: {
+                id: lecture.id,
+                title: lecture.title,
+            },
+            tags: [],
+            title,
+            visibleForStudents: true,
+        };
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
+        return response.json();
+    }
+
     /**
      * Creates a one-to-one chat (DM) with the specified partner.
      *
@@ -272,22 +288,6 @@ export class CommunicationAPIRequests {
         if (!response.ok()) {
             throw new Error(`addReactionToPost failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
-        return response.json();
-    }
-
-    async createCourseLecturePost(course: Course, lecture: Lecture, title: string, content: string) {
-        const data = {
-            content,
-            displayPriority: 'NONE',
-            lecture: {
-                id: lecture.id,
-                title: lecture.title,
-            },
-            tags: [],
-            title,
-            visibleForStudents: true,
-        };
-        const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
         return response.json();
     }
 }

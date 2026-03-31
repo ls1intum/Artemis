@@ -4,6 +4,7 @@ import { GroupChat } from 'app/communication/shared/entities/conversation/group-
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
+import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
 import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
@@ -248,8 +249,8 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         course: Course,
-        communicationAPIRequests,
-    ): Channel {
+        communicationAPIRequests: CommunicationAPIRequests,
+    ): Promise<Channel> {
         await login(user, `/courses/${course.id}/communication`);
         await this.acceptCodeOfConductButton();
         const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
@@ -270,7 +271,7 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         courseId: number,
-        channelId: string,
+        channelId: number,
         messageText: string,
     ) {
         await login(user, `/courses/${courseId}/communication?conversationId=${channelId}`);

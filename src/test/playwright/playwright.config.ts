@@ -27,9 +27,9 @@ export default defineConfig({
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
         ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
-            ? [
+            ? ([
                   [
-                      'monocart-reporter' as const,
+                      'monocart-reporter',
                       {
                           outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                           coverage: {
@@ -43,7 +43,7 @@ export default defineConfig({
                           },
                       },
                   ],
-              ]
+              ] as const)
             : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),

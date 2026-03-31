@@ -17,9 +17,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import {
-    Exercise,
     ExerciseMode,
-    ExerciseType,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
@@ -36,7 +34,6 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -539,7 +536,7 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (Object.hasOwn(body, 'course')) {
+        if ('course' in body) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
             const dates = {
                 releaseDate: dayjsToString(releaseDate),
@@ -721,25 +718,6 @@ export class ExerciseAPIRequests {
         }
 
         return await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${programmingExerciseId}/update-test-cases`, { data: updatedTestCaseSettings });
-    }
-
-    private async updateExercise(exercise: Exercise, type: ExerciseType) {
-        let url: string;
-        switch (type) {
-            case ExerciseType.PROGRAMMING:
-                url = PROGRAMMING_EXERCISE_BASE;
-                break;
-            case ExerciseType.TEXT:
-                url = TEXT_EXERCISE_BASE;
-                break;
-            case ExerciseType.MODELING:
-                url = MODELING_EXERCISE_BASE;
-                break;
-            case ExerciseType.QUIZ:
-            default:
-                throw new Error(`Exercise type '${type}' is not supported yet!`);
-        }
-        return await this.page.request.put(url, { data: exercise });
     }
 
     /**

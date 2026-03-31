@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { admin, instructor, studentOne, tutor } from '../../support/users';
+import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
@@ -230,7 +230,6 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             const threadSidebar = page.locator('.expanded-thread');
             const replyLocator = threadSidebar.locator(`#item-${reply.id!}`);
             // The button exists but should not have clickable behavior (no .clickable class or icon hidden)
-            const resolveButton = replyLocator.locator('#toggleElement');
             // For non-author students, the resolve icon should not be visible at all
             await expect(replyLocator.locator('.notResolved')).toHaveCount(0, { timeout: 5000 });
         });
