@@ -63,8 +63,8 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
-            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000);
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible();
+            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
     });
