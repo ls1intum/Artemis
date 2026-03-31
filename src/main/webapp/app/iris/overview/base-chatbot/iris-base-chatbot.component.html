@@ -266,7 +266,7 @@
                                                     (answerChanged)="onMcqAnswerChanged(message, $event)"
                                                 />
                                             } @else if (content.type === IrisMessageContentType.TEXT) {
-                                                <div class="bubble-left">
+                                                <div [class]="messageHasMcq(message) ? 'mcq-intro-text' : 'bubble-left'">
                                                     <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
                                                     @if (hasMemories(message)) {
                                                         <div class="bubble-meta bubble-meta-left">

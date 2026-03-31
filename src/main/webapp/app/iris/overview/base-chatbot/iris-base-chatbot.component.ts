@@ -184,6 +184,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly isMcqSetContent = isMcqSetContent;
     protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
     protected readonly getMcqSetData = (content: IrisMessageContent): McqSetData | undefined => getMcqSetData(content);
+    protected messageHasMcq(message: IrisMessage): boolean {
+        return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
+    }
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
