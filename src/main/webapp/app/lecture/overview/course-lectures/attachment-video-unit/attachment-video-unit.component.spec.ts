@@ -309,8 +309,11 @@ describe('AttachmentVideoUnitComponent', () => {
             // Simulate PDF load error to trigger blob fallback
             component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
-            // Blob fallback should trigger an HTTP request
-            const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            // Blob fallback should trigger only one HTTP request even if the direct-load error fires twice
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            const requests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            expect(requests).toHaveLength(1);
+            const [req] = requests;
             expect(req.request.method).toBe('GET');
             req.flush(testBlob);
 
@@ -323,11 +326,6 @@ describe('AttachmentVideoUnitComponent', () => {
             // Complete loading
             component['onPdfPagesLoaded']({ pdfUrl: mockBlobUrl });
             expect(component.isPdfLoading()).toBe(false);
-
-            // Test duplicate error prevention
-            component['onPdfLoadError']({ pdfUrl: mockBlobUrl });
-            const duplicateRequests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
-            expect(duplicateRequests).toHaveLength(0); // No new requests
 
             createObjectURLSpy.mockRestore();
         });

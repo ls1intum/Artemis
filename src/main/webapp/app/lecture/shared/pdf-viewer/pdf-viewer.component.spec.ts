@@ -96,7 +96,7 @@ describe('PdfViewerComponent', () => {
         });
 
         it('should load PDF when iframe ready', async () => {
-            const expectedPage = mode === 'embedded' ? 5 : 5;
+            const expectedPage = 5;
             const expectedUrl = 'test.pdf';
 
             if (mode === 'embedded') {

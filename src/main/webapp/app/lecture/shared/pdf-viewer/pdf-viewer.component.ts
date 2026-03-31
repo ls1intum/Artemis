@@ -197,12 +197,12 @@ export class PdfViewerComponent {
         switch (type) {
             case 'pagesLoaded':
                 this.pagesLoaded.emit({
-                    pdfUrl: data?.url ?? this.pdfUrl()!,
+                    pdfUrl: data?.url ?? this.pdfUrl() ?? '',
                     pagesCount: data?.pagesCount ?? 0,
                 });
                 break;
             case 'pdfLoadError':
-                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl()! });
+                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
                 break;
             case 'download':
                 this.downloadRequested.emit();
