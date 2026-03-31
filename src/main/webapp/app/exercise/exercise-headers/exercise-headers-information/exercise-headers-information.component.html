@@ -5,7 +5,7 @@
                 <div
                     [attr.role]="sortedHistoryResults.length ? 'button' : undefined"
                     [class.pe-auto]="sortedHistoryResults.length"
-                    [ngbTooltip]="sortedHistoryResults.length ? 'Click to see all your results' : ''"
+                    [ngbTooltip]="sortedHistoryResults.length ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
                     (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
                 >
                     <jhi-information-box [informationBoxData]="informationBoxItem">

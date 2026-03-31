@@ -7,9 +7,11 @@
     <div class="d-flex align-items-center justify-content-between px-3 bg-light border-bottom" style="height: 40px">
         <div class="d-flex align-items-center gap-2">
             <fa-icon [icon]="faClock" class="text-body-tertiary" style="font-size: 14px" />
-            <span class="fw-medium text-body-secondary" style="font-size: 13px">Result History</span>
+            <span class="fw-medium text-body-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
         </div>
-        <span class="text-body-tertiary" style="font-size: 12px">{{ sortedHistoryResults().length }} results</span>
+        <span class="text-body-tertiary" style="font-size: 12px">{{
+            'artemisApp.result.progressString.resultsCount' | artemisTranslate: { count: sortedHistoryResults().length }
+        }}</span>
     </div>
     <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
         @for (result of displayedResults(); track result; let i = $index; let last = $last) {
@@ -33,7 +35,13 @@
                     </div>
                 </div>
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
-                    <p-button label="Feedback" [outlined]="true" size="small" class="flex-shrink-0" (onClick)="showFeedback(result, $event)" />
+                    <p-button
+                        [label]="'artemisApp.result.progressString.feedbackButton' | artemisTranslate"
+                        [outlined]="true"
+                        size="small"
+                        class="flex-shrink-0"
+                        (onClick)="showFeedback(result, $event)"
+                    />
                 }
             </div>
         }

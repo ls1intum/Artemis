@@ -67,16 +67,16 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('displayedResults', () => {
-        it('should reverse the sorted history results', () => {
+        it('should return the sorted history results', () => {
             const results = [createResult(1, 50), createResult(2, 75), createResult(3, 100)];
             fixture.componentRef.setInput('sortedHistoryResults', results);
             fixture.detectChanges();
 
             const displayed = component.displayedResults();
             expect(displayed).toHaveLength(3);
-            expect(displayed[0].id).toBe(3);
+            expect(displayed[0].id).toBe(1);
             expect(displayed[1].id).toBe(2);
-            expect(displayed[2].id).toBe(1);
+            expect(displayed[2].id).toBe(3);
         });
 
         it('should return empty array when no results', () => {
@@ -117,7 +117,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result)).toBe('Your build failed!');
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
 
         it('should return goal reached message for 100% score', () => {
@@ -125,7 +125,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result)).toBe('Goal reached! Excellent work.');
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.goalReached');
         });
 
         it('should return progress message for first result (index 0)', () => {
@@ -133,7 +133,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result)).toBe("Nice progress! You're getting closer.");
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.niceProgress');
         });
 
         it('should return progress message when score increased', () => {
@@ -142,7 +142,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result2)).toBe("Nice progress! You're getting closer.");
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.niceProgress');
         });
 
         it('should return score dropped message when score decreased', () => {
@@ -151,7 +151,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result2)).toBe('Oops, your score dropped. Try a different path!');
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.scoreDrop');
         });
 
         it('should return stuck message when score stayed the same', () => {
@@ -160,7 +160,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result2)).toBe('Stuck? Try a new approach.');
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.stuck');
         });
 
         it('should prioritize build failed over score 100', () => {
@@ -170,7 +170,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            expect(component.getResultFeedbackMessage(result)).toBe('Your build failed!');
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
     });
 

@@ -16,6 +16,7 @@ import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
@@ -34,6 +35,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
         ExerciseCategoriesComponent,
         ArtemisDatePipe,
         ArtemisTimeAgoPipe,
+        ArtemisTranslatePipe,
         CommonModule,
         ResultHistoryDropdownComponent,
         NgbTooltip,
