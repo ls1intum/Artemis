@@ -13,7 +13,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
@@ -49,11 +49,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
@@ -97,8 +93,6 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: any;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -141,7 +135,6 @@ describe('TextEditorComponent', () => {
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -166,8 +159,6 @@ describe('TextEditorComponent', () => {
         comp = fixture.componentInstance;
         textService = TestBed.inject(TextEditorService);
         textSubmissionService = TestBed.inject(TextSubmissionService);
-        profileService = TestBed.inject(ProfileService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
         getTextForParticipationStub = vi.spyOn(textService, 'get');
     });
 
@@ -532,65 +523,5 @@ describe('TextEditorComponent', () => {
         vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
-    });
-
-    it('should load Iris settings when Iris module feature is active and not in exam mode', async () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-
-        // Set up course with ID
-        comp.course = { id: 123 } as any;
-
-        const mockIrisSettings = {
-            courseId: 123,
-            settings: {
-                enabled: true,
-                customInstructions: '',
-                variant: 'default',
-                rateLimit: { requests: 100, timeframeHours: 24 },
-            },
-            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
-            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        } as IrisCourseSettingsWithRateLimitDTO;
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
-
-        route.params = of({ exerciseId: '456' });
-
-        comp.examMode = false;
-
-        comp['loadIrisSettings']();
-        await fixture.whenStable();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
-        expect(comp.irisSettings).toEqual(mockIrisSettings);
-    });
-
-    it('should not load Iris settings when in exam mode', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
-
-        // Set up exercise and exam mode
-        comp.textExercise = textExercise;
-        comp.examMode = true;
-
-        comp['loadIrisSettings']();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
-        expect(comp.irisSettings).toBeUndefined();
-    });
-
-    it('should not load Iris settings when Iris module feature is not active', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
-
-        comp.textExercise = textExercise;
-        comp.examMode = false;
-
-        comp['loadIrisSettings']();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
-        expect(comp.irisSettings).toBeUndefined();
     });
 });

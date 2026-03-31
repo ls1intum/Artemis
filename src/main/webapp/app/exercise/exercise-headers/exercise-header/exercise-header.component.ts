@@ -1,4 +1,4 @@
-import { Component, computed, input, model, signal, viewChild } from '@angular/core';
+import { Component, computed, input, model, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -25,6 +25,7 @@ export class ExerciseHeaderComponent {
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(10);
+    readonly newParticipation = output<StudentParticipation>();
 
     readonly exerciseIcon = computed(() => {
         const exercise = this.exercise();

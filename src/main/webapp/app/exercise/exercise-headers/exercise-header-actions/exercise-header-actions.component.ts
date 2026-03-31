@@ -118,6 +118,7 @@ export class ExerciseHeaderActionsComponent {
     readonly participationMode = input<ParticipationMode>('graded');
 
     readonly generatingFeedback = output<void>();
+    readonly newParticipation = output<StudentParticipation>();
 
     // Instructor actions
     private readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.OPEN_FOR_PRACTICE];
@@ -236,6 +237,7 @@ export class ExerciseHeaderActionsComponent {
         }
         this._studentParticipations.set(updatedParticipations);
         this.updateParticipations();
+        this.newParticipation.emit(newParticipation);
     }
 
     updateParticipations() {
@@ -304,12 +306,7 @@ export class ExerciseHeaderActionsComponent {
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
-                        const currentParticipations = this._studentParticipations();
-                        const replacedIndex = currentParticipations.indexOf(participation!);
-                        const updatedParticipations = [...currentParticipations];
-                        updatedParticipations[replacedIndex] = resumedParticipation;
-                        this._studentParticipations.set(updatedParticipations);
-                        this.updateParticipations();
+                        this.receiveNewParticipation(resumedParticipation);
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
