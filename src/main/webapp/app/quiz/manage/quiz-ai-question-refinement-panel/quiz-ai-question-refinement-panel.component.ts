@@ -38,7 +38,7 @@ export class QuizAiQuestionRefinementPanelComponent {
     question = input.required<QuizQuestion>();
     courseId = input.required<number>();
     isOpen = input(false);
-    isCollapsed = input(false);
+    isRefinementPanelCollapsed = input(false);
 
     questionRefined = output<MultipleChoiceQuestion>();
 

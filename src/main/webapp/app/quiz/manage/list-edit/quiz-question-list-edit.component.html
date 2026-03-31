@@ -23,7 +23,7 @@
                         [question]="quizQuestion"
                         [courseId]="courseId()"
                         [isOpen]="openRefinementQuestions().has(quizQuestion)"
-                        [isCollapsed]="collapsedQuestions().has(quizQuestion)"
+                        [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
                         (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
                     />
                 }
