@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CreateOrUpdateTutorialGroupSessionDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime,
+public record CreateOrUpdateTutorialGroupSessionRequestDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime,
         @NotNull @Size(min = 1, max = 2000) String location, @Nullable Integer attendance) {
 
     public void validityCheck() {

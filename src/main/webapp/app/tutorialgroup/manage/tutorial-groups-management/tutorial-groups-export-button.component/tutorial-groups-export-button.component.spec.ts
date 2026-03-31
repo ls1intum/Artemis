@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
 
 interface TutorialGroupApiServiceMock {
     exportTutorialGroupsToCSV: ReturnType<typeof vi.fn>;
@@ -35,7 +35,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
 
         mockTutorialGroupApiService = {
             exportTutorialGroupsToCSV: vi.fn().mockReturnValue(of(new Blob(['dummy data'], { type: 'text/csv' }))),
-            exportTutorialGroupsToJSON: vi.fn().mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExport[])),
+            exportTutorialGroupsToJSON: vi.fn().mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExportData[])),
         };
 
         mockAlertService = {
@@ -121,7 +121,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
     });
 
     it('should export JSON successfully', () => {
-        mockTutorialGroupApiService.exportTutorialGroupsToJSON.mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExport[]));
+        mockTutorialGroupApiService.exportTutorialGroupsToJSON.mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExportData[]));
 
         component.dialogVisible.set(true);
         component.exportJSON();

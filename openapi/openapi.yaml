@@ -24,7 +24,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupDetail'}
+              schema: {$ref: '#/components/schemas/TutorialGroupDetailData'}
     put:
       tags: [tutorial-group]
       operationId: updateTutorialGroup
@@ -40,7 +40,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CreateAndUpdateTutorialGroup'}
+            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupRequest'}
         required: true
       responses:
         '200': {description: OK}
@@ -78,7 +78,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupSession'}
+            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupSessionRequest'}
         required: true
       responses:
         '200':
@@ -222,7 +222,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CreateAndUpdateTutorialGroup'}
+            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupRequest'}
         required: true
       responses:
         '200':
@@ -246,7 +246,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupSession'}
+            schema: {$ref: '#/components/schemas/CreateOrUpdateTutorialGroupSessionRequest'}
         required: true
       responses:
         '200':
@@ -272,7 +272,7 @@ paths:
           application/json:
             schema:
               type: array
-              items: {$ref: '#/components/schemas/TutorialGroupRegistrationsImport'}
+              items: {$ref: '#/components/schemas/TutorialGroupStudentImportData'}
         required: true
       responses:
         '200':
@@ -281,7 +281,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/TutorialGroupRegistrationsImport'}
+                items: {$ref: '#/components/schemas/TutorialGroupStudentImportData'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/batch-register:
     post:
       tags: [tutorial-group]
@@ -318,7 +318,7 @@ paths:
           application/json:
             schema:
               type: array
-              items: {$ref: '#/components/schemas/TutorialGroupImport'}
+              items: {$ref: '#/components/schemas/TutorialGroupImportData'}
               uniqueItems: true
         required: true
       responses:
@@ -328,7 +328,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/TutorialGroupImport'}
+                items: {$ref: '#/components/schemas/TutorialGroupImportData'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
     get:
       tags: [tutorial-groups-configuration]
@@ -783,7 +783,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/TutorialGroupExport'}
+                items: {$ref: '#/components/schemas/TutorialGroupExportData'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/csv:
     get:
       tags: [tutorial-group]
@@ -826,26 +826,11 @@ paths:
         '200': {description: OK}
 components:
   schemas:
-    TutorialGroupDetail:
+    TutorialGroupStudentImportData:
       type: object
       properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        language: {type: string}
-        isOnline: {type: boolean}
-        tutorName: {type: string}
-        tutorLogin: {type: string}
-        tutorId: {type: integer, format: int64}
-        tutorImageUrl: {type: string}
-        capacity: {type: integer, format: int32}
-        campus: {type: string}
-        additionalInformation: {type: string}
-        groupChannelId: {type: integer, format: int64}
-        tutorChatId: {type: integer, format: int64}
-        sessions:
-          type: array
-          items: {$ref: '#/components/schemas/TutorialGroupSession'}
-      required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+        login: {type: string, maxLength: 50, minLength: 0}
+        registrationNumber: {type: string, maxLength: 10, minLength: 0}
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
@@ -916,6 +901,18 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
+    CreateOrUpdateTutorialGroupRequest:
+      type: object
+      properties:
+        title: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9: -]{0,19}$'}
+        tutorId: {type: integer, format: int64}
+        language: {type: string}
+        isOnline: {type: boolean}
+        campus: {type: string}
+        capacity: {type: integer, format: int32, minimum: 1}
+        additionalInformation: {type: string}
+        tutorialGroupScheduleDTO: {$ref: '#/components/schemas/TutorialGroupSchedule'}
+      required: [language, title]
     ProblemStatementTargetedRefinementRequest:
       type: object
       description: Request to refine a problem statement using targeted selection-based
@@ -936,6 +933,23 @@ components:
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
       required: [endLine, instruction, problemStatementText, startLine]
+    TutorialGroupExportData:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        dayOfWeek: {type: string}
+        startTime: {type: string}
+        endTime: {type: string}
+        location: {type: string}
+        campus: {type: string}
+        language: {type: string}
+        additionalInformation: {type: string}
+        capacity: {type: integer, format: int32}
+        isOnline: {type: boolean}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/StudentExport'}
     BloomRadar:
       type: object
       description: Bloom's taxonomy radar distribution with normalized proportions
@@ -957,15 +971,6 @@ components:
       type: object
       properties:
         jobId: {type: string}
-    CreateOrUpdateTutorialGroupSession:
-      type: object
-      properties:
-        date: {type: string, format: date}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string, maxLength: 2000, minLength: 1}
-        attendance: {type: integer, format: int32}
-      required: [date, endTime, location, startTime]
     ConsistencyIssue:
       type: object
       description: Individual consistency issue details
@@ -1086,6 +1091,26 @@ components:
         email: {type: string}
         registrationNumber: {type: string}
       required: [id, login]
+    TutorialGroupDetailData:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        language: {type: string}
+        isOnline: {type: boolean}
+        tutorName: {type: string}
+        tutorLogin: {type: string}
+        tutorId: {type: integer, format: int64}
+        tutorImageUrl: {type: string}
+        capacity: {type: integer, format: int32}
+        campus: {type: string}
+        additionalInformation: {type: string}
+        groupChannelId: {type: integer, format: int64}
+        tutorChatId: {type: integer, format: int64}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupSession'}
+      required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
     QualityIssueLocation:
       type: object
       description: Location of a quality issue within the problem statement
@@ -1128,23 +1153,6 @@ components:
           items: {type: string}
         improvement: {type: string}
       required: [improvement, inconsistencies, rewrittenText, suggestions]
-    TutorialGroupExport:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        dayOfWeek: {type: string}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string}
-        campus: {type: string}
-        language: {type: string}
-        additionalInformation: {type: string}
-        capacity: {type: integer, format: int32}
-        isOnline: {type: boolean}
-        students:
-          type: array
-          items: {$ref: '#/components/schemas/StudentExport'}
     Timing:
       type: object
       description: Response containing consistency check timing
@@ -1190,18 +1198,6 @@ components:
             in EUR, example: '0.016513'}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: '0.027738'}
-    CreateAndUpdateTutorialGroup:
-      type: object
-      properties:
-        title: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9: -]{0,19}$'}
-        tutorId: {type: integer, format: int64}
-        language: {type: string}
-        isOnline: {type: boolean}
-        campus: {type: string}
-        capacity: {type: integer, format: int32, minimum: 1}
-        additionalInformation: {type: string}
-        tutorialGroupScheduleDTO: {$ref: '#/components/schemas/TutorialGroupSchedule'}
-      required: [language, title]
     TutorialGroupConfiguration:
       type: object
       properties:
@@ -1329,7 +1325,7 @@ components:
         suggestedFix: {type: string, description: Concrete suggestion to fix the issue}
         impactOnLearners: {type: string, description: How this issue increases extraneous
             cognitive load}
-    TutorialGroupImport:
+    TutorialGroupImportData:
       type: object
       properties:
         title: {type: string}
@@ -1368,6 +1364,15 @@ components:
         location: {type: string}
       required: [firstSessionEnd, firstSessionStart, location, repetitionFrequency,
         tutorialPeriodEnd]
+    CreateOrUpdateTutorialGroupSessionRequest:
+      type: object
+      properties:
+        date: {type: string, format: date}
+        startTime: {type: string}
+        endTime: {type: string}
+        location: {type: string, maxLength: 2000, minLength: 1}
+        attendance: {type: integer, format: int32}
+      required: [date, endTime, location, startTime]
     TutorialGroupSession:
       type: object
       properties:
@@ -1382,11 +1387,6 @@ components:
         attendanceCount: {type: integer, format: int32}
       required: [dateChanged, end, id, isCancelled, location, locationChanged, start,
         timeChanged]
-    TutorialGroupRegistrationsImport:
-      type: object
-      properties:
-        login: {type: string, maxLength: 50, minLength: 0}
-        registrationNumber: {type: string, maxLength: 10, minLength: 0}
     ConversationUser:
       type: object
       properties:

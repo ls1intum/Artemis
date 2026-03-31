@@ -10,7 +10,7 @@
 import { TutorialGroupSchedule } from './tutorialGroupSchedule';
 
 
-export interface CreateAndUpdateTutorialGroup { 
+export interface CreateOrUpdateTutorialGroupRequest { 
     title: string;
     tutorId?: number;
     language: string;

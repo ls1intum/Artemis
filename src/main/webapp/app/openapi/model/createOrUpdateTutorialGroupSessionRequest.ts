@@ -9,7 +9,7 @@
  */
 
 
-export interface CreateOrUpdateTutorialGroupSession { 
+export interface CreateOrUpdateTutorialGroupSessionRequest { 
     date: string;
     startTime: string;
     endTime: string;

@@ -10,7 +10,7 @@
 import { StudentExport } from './studentExport';
 
 
-export interface TutorialGroupExport { 
+export interface TutorialGroupExportData { 
     id?: number;
     title?: string;
     dayOfWeek?: string;

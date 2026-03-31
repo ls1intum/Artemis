@@ -10,13 +10,14 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 import { TutorialEditContainerComponent } from 'app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component';
 import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
-import { TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
 
 describe('TutorialEditContainerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -29,12 +30,12 @@ describe('TutorialEditContainerComponent', () => {
         getTutorialGroupSchedule: ReturnType<typeof vi.fn>;
     };
     let tutorialGroupCourseAndGroupService: {
-        tutorialGroup: ReturnType<typeof signal<TutorialGroupDetailDTO | undefined>>;
+        tutorialGroup: ReturnType<typeof signal<TutorialGroupDetailData | undefined>>;
         isTutorialGroupLoading: ReturnType<typeof signal<boolean>>;
         fetchTutorialGroup: ReturnType<typeof vi.fn>;
     };
     let tutorialGroupTutorsService: {
-        tutors: ReturnType<typeof signal<TutorialGroupTutorDTO[]>>;
+        tutors: ReturnType<typeof signal<TutorialGroupTutor[]>>;
         isLoading: ReturnType<typeof signal<boolean>>;
         loadTutors: ReturnType<typeof vi.fn>;
     };
@@ -47,12 +48,12 @@ describe('TutorialEditContainerComponent', () => {
             getTutorialGroupSchedule: vi.fn(),
         };
         tutorialGroupCourseAndGroupService = {
-            tutorialGroup: signal<TutorialGroupDetailDTO | undefined>(undefined),
+            tutorialGroup: signal<TutorialGroupDetailData | undefined>(undefined),
             isTutorialGroupLoading: signal(false),
             fetchTutorialGroup: vi.fn(),
         };
         tutorialGroupTutorsService = {
-            tutors: signal<TutorialGroupTutorDTO[]>([]),
+            tutors: signal<TutorialGroupTutor[]>([]),
             isLoading: signal(false),
             loadTutors: vi.fn(),
         };
@@ -88,8 +89,8 @@ describe('TutorialEditContainerComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroup(): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroup(): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 17,
             title: 'TG 1',
             language: 'English',
@@ -107,7 +108,7 @@ describe('TutorialEditContainerComponent', () => {
         });
     }
 
-    function createSchedule(): TutorialGroupScheduleDTO {
+    function createSchedule(): TutorialGroupSchedule {
         return {
             firstSessionStart: '2026-04-20T10:15:00',
             firstSessionEnd: '2026-04-20T11:45:00',
@@ -140,7 +141,7 @@ describe('TutorialEditContainerComponent', () => {
     }
 
     it('should load tutors, fetch the tutorial group when missing, and load the schedule on init', () => {
-        const schedule$ = new Subject<TutorialGroupScheduleDTO>();
+        const schedule$ = new Subject<TutorialGroupSchedule>();
         const schedule = createSchedule();
         tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(schedule$.asObservable());
 
@@ -174,7 +175,7 @@ describe('TutorialEditContainerComponent', () => {
     });
 
     it('should show an error alert when loading the schedule fails on init', () => {
-        const schedule$ = new Subject<TutorialGroupScheduleDTO>();
+        const schedule$ = new Subject<TutorialGroupSchedule>();
         tutorialGroupApiService.getTutorialGroupSchedule.mockReturnValue(schedule$.asObservable());
 
         createComponent();

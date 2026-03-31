@@ -11,13 +11,14 @@ import { User } from 'app/core/user/user.model';
 import { TutorialRegistrationsContainerComponent } from 'app/tutorialgroup/manage/tutorial-registrations-container/tutorial-registrations-container.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
-import { TutorialGroupDetailDTO, TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTutorialGroupCourseAndGroupService } from 'test/helpers/mocks/service/mock-tutorial-group-course-and-group.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 describe('TutorialRegistrationsContainerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -27,7 +28,7 @@ describe('TutorialRegistrationsContainerComponent', () => {
 
     let tutorialGroupCourseAndGroupService: MockTutorialGroupCourseAndGroupService;
     let tutorialGroupRegisteredStudentsService: {
-        registeredStudents: ReturnType<typeof signal<TutorialGroupRegisteredStudentDTO[]>>;
+        registeredStudents: ReturnType<typeof signal<TutorialGroupStudent[]>>;
         isLoading: ReturnType<typeof signal<boolean>>;
         fetchRegisteredStudents: ReturnType<typeof vi.fn>;
     };
@@ -37,7 +38,7 @@ describe('TutorialRegistrationsContainerComponent', () => {
     beforeEach(async () => {
         tutorialGroupCourseAndGroupService = new MockTutorialGroupCourseAndGroupService();
         tutorialGroupRegisteredStudentsService = {
-            registeredStudents: signal<TutorialGroupRegisteredStudentDTO[]>([]),
+            registeredStudents: signal<TutorialGroupStudent[]>([]),
             isLoading: signal(false),
             fetchRegisteredStudents: vi.fn(),
         };
@@ -70,8 +71,8 @@ describe('TutorialRegistrationsContainerComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroup(tutorLogin = 'grace'): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroup(tutorLogin = 'grace'): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 17,
             title: 'TG 1',
             language: 'English',
@@ -97,7 +98,7 @@ describe('TutorialRegistrationsContainerComponent', () => {
         return course;
     }
 
-    function createRegisteredStudents(): TutorialGroupRegisteredStudentDTO[] {
+    function createRegisteredStudents(): TutorialGroupStudent[] {
         return [
             {
                 id: 1,
@@ -153,7 +154,7 @@ describe('TutorialRegistrationsContainerComponent', () => {
         const child = fixture.debugElement.query(By.directive(TutorialRegistrationsComponent)).componentInstance as TutorialRegistrationsComponent & {
             courseId: number;
             tutorialGroupId: number;
-            registeredStudents: TutorialGroupRegisteredStudentDTO[];
+            registeredStudents: TutorialGroupStudent[];
             loggedInUserIsAtLeastTutorOfGroup: boolean;
             loggedInUserIsAtLeastInstructorInCourse: boolean;
         };

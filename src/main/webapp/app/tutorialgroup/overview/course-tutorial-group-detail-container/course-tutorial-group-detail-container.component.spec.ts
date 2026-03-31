@@ -5,7 +5,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/course/s
 import { CourseTutorialGroupDetailContainerComponent } from './course-tutorial-group-detail-container.component';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 import { MockTutorialGroupCourseAndGroupService } from 'test/helpers/mocks/service/mock-tutorial-group-course-and-group.service';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
@@ -43,8 +43,8 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroupDetailDTO(): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroupDetailData(): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 1,
             title: 'TG Tue 13',
             language: 'Polish',
@@ -63,7 +63,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
     }
 
     it('should fetch and expose the tutorial group when courseId and tutorialGroupId are available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
             tutorialGroupCourseAndGroupService.tutorialGroup.set(tutorialGroup);
         });
@@ -84,7 +84,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
     });
 
     it('should fetch the course for the courseId and compute messaging availability from it', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         const course = new Course();
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
@@ -108,7 +108,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         const course = new Course();
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         tutorialGroupCourseAndGroupService.fetchTutorialGroup.mockImplementation(() => {
-            tutorialGroupCourseAndGroupService.tutorialGroup.set(createTutorialGroupDetailDTO());
+            tutorialGroupCourseAndGroupService.tutorialGroup.set(createTutorialGroupDetailData());
         });
         tutorialGroupCourseAndGroupService.fetchCourse.mockImplementation(() => {
             tutorialGroupCourseAndGroupService.course.set(course);

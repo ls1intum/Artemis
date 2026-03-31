@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { map } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -16,7 +16,7 @@ export class TutorialGroupCourseAndGroupService {
     private alertService = inject(AlertService);
 
     isTutorialGroupLoading = signal(false);
-    tutorialGroup = signal<TutorialGroupDetailDTO | undefined>(undefined);
+    tutorialGroup = signal<TutorialGroupDetailData | undefined>(undefined);
     isCourseLoading = signal(false);
     course = signal<Course | undefined>(undefined);
 
@@ -54,7 +54,7 @@ export class TutorialGroupCourseAndGroupService {
         this.isTutorialGroupLoading.set(true);
         this.tutorialGroupApiService
             .getTutorialGroup(courseId, tutorialGroupId)
-            .pipe(map((tutorialGroupDetail) => new TutorialGroupDetailDTO(tutorialGroupDetail)))
+            .pipe(map((tutorialGroupDetail) => new TutorialGroupDetailData(tutorialGroupDetail)))
             .subscribe({
                 next: (dto) => {
                     this.tutorialGroup.set(dto);

@@ -9,7 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialRegistrationsImportModalTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 import { ImportFlowStep, TutorialRegistrationsImportModalComponent } from './tutorial-registrations-import-modal.component';
@@ -52,9 +52,9 @@ describe('TutorialRegistrationsImportModalComponent', () => {
     const firstParsedStudent: StudentDTO = { login: 'ada', registrationNumber: 'R001', firstName: '', lastName: '', email: '' };
     const secondParsedStudent: StudentDTO = { login: 'alan', registrationNumber: 'R002', firstName: '', lastName: '', email: '' };
     const thirdParsedStudent: StudentDTO = { login: '', registrationNumber: 'R003', firstName: '', lastName: '', email: '' };
-    const firstStudent: TutorialGroupRegisterStudentDTO = { login: 'ada', registrationNumber: 'R001' };
-    const secondStudent: TutorialGroupRegisterStudentDTO = { login: 'alan', registrationNumber: 'R002' };
-    const thirdStudent: TutorialGroupRegisterStudentDTO = { login: '', registrationNumber: 'R003' };
+    const firstStudent: TutorialGroupRegisterStudentRequest = { login: 'ada', registrationNumber: 'R001' };
+    const secondStudent: TutorialGroupRegisterStudentRequest = { login: 'alan', registrationNumber: 'R002' };
+    const thirdStudent: TutorialGroupRegisterStudentRequest = { login: '', registrationNumber: 'R003' };
     const exampleRows: TutorialRegistrationsImportModalTableRow[] = [
         { login: 'user_1', registrationNumber: undefined, markFilledCells: false },
         { login: undefined, registrationNumber: 'ge86vox', markFilledCells: false },
@@ -352,7 +352,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        const response$ = new Subject<HttpResponse<TutorialGroupRegisterStudentDTO[]>>();
+        const response$ = new Subject<HttpResponse<TutorialGroupRegisterStudentRequest[]>>();
         tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(response$.asObservable());
 
         component.open();

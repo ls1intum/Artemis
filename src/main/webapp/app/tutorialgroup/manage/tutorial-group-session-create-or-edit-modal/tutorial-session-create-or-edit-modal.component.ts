@@ -15,11 +15,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession;
+    updateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
 }
 
 @Component({
@@ -65,7 +65,7 @@ export class TutorialSessionCreateOrEditModalComponent {
     attendance = signal<number | null>(null);
     header = computed(() => this.computeHeader());
     onUpdate = output<UpdateTutorialGroupSessionData>();
-    onCreate = output<CreateOrUpdateTutorialGroupSession>();
+    onCreate = output<CreateOrUpdateTutorialGroupSessionRequest>();
 
     open(session?: TutorialGroupSession) {
         if (session) {
@@ -109,21 +109,21 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     private createSession() {
-        const createTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSession();
-        this.onCreate.emit(createTutorialGroupSessionDTO);
+        const createTutorialGroupSessionRequest = this.constructCreateOrUpdateTutorialGroupSessionRequest();
+        this.onCreate.emit(createTutorialGroupSessionRequest);
     }
 
     private updateSession(session: TutorialGroupSession) {
         const tutorialGroupSessionId = session.id;
-        const updateTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSession();
+        const updateTutorialGroupSessionRequest = this.constructCreateOrUpdateTutorialGroupSessionRequest();
         const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
             tutorialGroupSessionId: tutorialGroupSessionId,
-            updateTutorialGroupSessionDTO: updateTutorialGroupSessionDTO,
+            updateTutorialGroupSessionRequest: updateTutorialGroupSessionRequest,
         };
         this.onUpdate.emit(updateTutorialGroupSessionData);
     }
 
-    private constructCreateOrUpdateTutorialGroupSession(): CreateOrUpdateTutorialGroupSession {
+    private constructCreateOrUpdateTutorialGroupSessionRequest(): CreateOrUpdateTutorialGroupSessionRequest {
         return {
             date: dayjs(this.date()).format('YYYY-MM-DD'),
             startTime: dayjs(this.startTime()).format('HH:mm'),

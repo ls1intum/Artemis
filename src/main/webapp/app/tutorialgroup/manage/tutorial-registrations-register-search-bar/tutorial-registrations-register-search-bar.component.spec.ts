@@ -5,10 +5,10 @@ import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialRegistrationsRegisterSearchBarComponent } from './tutorial-registrations-register-search-bar.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 interface TutorialGroupApiServiceMock {
     searchUnregisteredStudents: ReturnType<typeof vi.fn>;
@@ -23,7 +23,7 @@ function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
     expect(value).not.toBeUndefined();
 }
 
-function createStudent(id: number): TutorialGroupRegisteredStudentDTO {
+function createStudent(id: number): TutorialGroupStudent {
     return {
         id,
         login: `student${id}`,
@@ -34,7 +34,7 @@ function createStudent(id: number): TutorialGroupRegisteredStudentDTO {
     };
 }
 
-function createPageOfStudents(): TutorialGroupRegisteredStudentDTO[] {
+function createPageOfStudents(): TutorialGroupStudent[] {
     return Array.from({ length: 25 }, (_, index) => createStudent(index + 1));
 }
 
@@ -55,7 +55,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     let alertServiceMock: AlertServiceMock;
     let overlayContainer: OverlayContainer;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -64,7 +64,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',
@@ -139,7 +139,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     it('should load the next page when the suggestions viewport is scrolled near the bottom', async () => {
         const firstPageStudents = createPageOfStudents();
-        const nextPageStudent: TutorialGroupRegisteredStudentDTO = {
+        const nextPageStudent: TutorialGroupStudent = {
             id: 99,
             login: 'grace',
             name: 'Grace Hopper',

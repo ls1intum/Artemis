@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -44,7 +44,7 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -68,13 +68,13 @@ export interface UpdateTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession;
+    updateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
 }
 
 export interface CreateTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
-    createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession;
+    createTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest;
 }
 
 export interface DeleteTutorialGroupEvent {
@@ -152,7 +152,7 @@ export class TutorialGroupDetailComponent {
 
     activatedRoute = inject(ActivatedRoute);
     pieChart = viewChild(PieChartComponent);
-    tutorialGroup = input.required<TutorialGroupDetailDTO>();
+    tutorialGroup = input.required<TutorialGroupDetailData>();
     courseId = input.required<number>();
     isMessagingEnabled = input.required<boolean>();
     loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
@@ -290,19 +290,19 @@ export class TutorialGroupDetailComponent {
             courseId: courseId,
             tutorialGroupId: tutorialGroupId,
             tutorialGroupSessionId: updateTutorialGroupSessionData.tutorialGroupSessionId,
-            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionDTO,
+            updateTutorialGroupSessionRequest: updateTutorialGroupSessionData.updateTutorialGroupSessionRequest,
         };
         this.onUpdateSession.emit(updateTutorialGroupSessionEvent);
     }
 
-    createTutorialGroupSession(createTutorialGroupSession: CreateOrUpdateTutorialGroupSession) {
+    createTutorialGroupSession(createTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest) {
         const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         const createTutorialGroupSessionEvent: CreateTutorialGroupSessionEvent = {
             courseId: courseId,
             tutorialGroupId: tutorialGroupId,
-            createTutorialGroupSessionDTO: createTutorialGroupSession,
+            createTutorialGroupSessionRequest: createTutorialGroupSessionRequest,
         };
         this.onCreateSession.emit(createTutorialGroupSessionEvent);
     }

@@ -13,7 +13,7 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -22,9 +22,9 @@ import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
-import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 import { ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
@@ -99,8 +99,8 @@ describe('CourseTutorialGroupDetailComponent', () => {
         };
     }
 
-    function createTutorialGroupDetailDTO(overrides: Partial<TutorialGroupDetail> = {}): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroupDetailData(overrides: Partial<RawTutorialGroupDetailData> = {}): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -123,7 +123,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
     it('should display no conversation links if messaging disabled', () => {
         fixture.componentRef.setInput('isMessagingEnabled', false);
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -135,7 +135,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display conversation links if tutorChatId and groupChannelId available and messaging enabled', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ groupChannelId: 2, tutorChatId: 3 });
+        const tutorialGroup = createTutorialGroupDetailData({ groupChannelId: 2, tutorChatId: 3 });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -147,7 +147,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should not display group channel link if groupChannelId not available and messaging enabled', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const groupChannelLink = fixture.debugElement.query(By.css('[data-testid="group-channel-link"]'));
@@ -155,7 +155,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display tutorial chat button if tutorChatId not available and messaging enabled', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -165,7 +165,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display current lesson button if currentTutorialLectureId available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
@@ -174,7 +174,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
     it('should not display any management action if access level is STUDENT', () => {
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -191,7 +191,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display no other management actions than registrations link if access level is TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -208,7 +208,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display no other management actions than registrations link and session actions if access level is TUTOR_OF_GROUP', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -225,7 +225,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display all management actions except delete group button if access level is EDITOR_OF_GROUP', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.EDITOR_OF_GROUP);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -242,7 +242,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display all management actions if access level is INSTRUCTOR_OF_GROUP_OR_ADMIN', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -259,7 +259,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display edit session button if session is not cancelled', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -269,7 +269,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should not display edit session button if session is cancelled', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO({ isCancelled: true });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -279,7 +279,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display cancel session button but not activate session button if session is not cancelled', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -290,7 +290,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should display activate session button but not cancel session button if session is cancelled', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO({ isCancelled: true });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -301,7 +301,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     // tests validating conversion and exposure of input data
 
     it('should expose tutorChatLink if tutorChatId available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ tutorChatId: 3 });
+        const tutorialGroup = createTutorialGroupDetailData({ tutorChatId: 3 });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -312,7 +312,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -321,7 +321,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose groupChannelLink if groupChannelId available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ groupChannelId: 2 });
+        const tutorialGroup = createTutorialGroupDetailData({ groupChannelId: 2 });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -332,7 +332,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no groupChannelLink if groupChannelId is unavailable', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -341,49 +341,49 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct language', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupLanguage()).toBe(tutorialGroup.language);
     });
 
     it('should expose correct capacity', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ capacity: 10 });
+        const tutorialGroup = createTutorialGroupDetailData({ capacity: 10 });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('10');
     });
 
     it('should expose placeholder if capacity not available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('-');
     });
 
     it('should expose correct mode key if group is online', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ isOnline: true });
+        const tutorialGroup = createTutorialGroupDetailData({ isOnline: true });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.online');
     });
 
     it('should expose correct mode key if group is offline', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.offline');
     });
 
     it('should expose correct campus', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ campus: 'Garching' });
+        const tutorialGroup = createTutorialGroupDetailData({ campus: 'Garching' });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe(tutorialGroup.campus);
     });
 
     it('should expose placeholder if campus not available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe('-');
@@ -407,7 +407,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [firstSession, secondSession, thirdSession] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [firstSession, secondSession, thirdSession] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -426,7 +426,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no nextSession if no sessions available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
         const nextSession = component.nextSession();
@@ -451,7 +451,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: referenceStart.subtract(1, 'week').toISOString(),
             end: referenceEnd.subtract(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [firstSession, secondSession, thirdSession] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [firstSession, secondSession, thirdSession] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -460,7 +460,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display no upcoming session disclaimer if no nextSession available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -487,7 +487,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession, secondSession, thirdSession],
             capacity: 10,
         });
@@ -515,7 +515,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession, secondSession, thirdSession],
             capacity: 10,
         });
@@ -546,7 +546,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.add(1, 'week').toISOString(),
             attendanceCount: undefined,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [firstSession, secondSession, thirdSession] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [firstSession, secondSession, thirdSession] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -572,7 +572,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession, secondSession, thirdSession],
             capacity: 10,
         });
@@ -609,7 +609,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [firstSession, secondSession, thirdSession] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [firstSession, secondSession, thirdSession] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -639,7 +639,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession, secondSession, thirdSession],
             capacity: 10,
         });
@@ -663,7 +663,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             attendanceCount: 6,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession],
             capacity: 10,
         });
@@ -685,7 +685,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             attendanceCount: 7,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession],
             capacity: 10,
         });
@@ -707,7 +707,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             attendanceCount: 8,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession],
             capacity: 10,
         });
@@ -729,7 +729,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             attendanceCount: 9,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession],
             capacity: 10,
         });
@@ -751,7 +751,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             attendanceCount: 9,
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [firstSession] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [firstSession] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -769,7 +769,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
         });
-        const tutorialGroup = createTutorialGroupDetailDTO({
+        const tutorialGroup = createTutorialGroupDetailData({
             sessions: [firstSession],
             capacity: 10,
         });
@@ -783,7 +783,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display no data available disclaimer if no average attendance available', () => {
-        const tutorialGroup = createTutorialGroupDetailDTO({ campus: 'Garching' });
+        const tutorialGroup = createTutorialGroupDetailData({ campus: 'Garching' });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -797,7 +797,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const oneToOneChatService = TestBed.inject(OneToOneChatService);
         const createSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } as OneToOneChatDTO })));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -816,7 +816,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const createSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(throwError(() => new Error('network error')));
         const addErrorAlertSpy = vi.spyOn(alertService, 'addErrorAlert');
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -833,7 +833,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should confirm tutorial group deletion and emit delete group event on accept', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -853,7 +853,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should confirm session deletion and emit delete session event on accept', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -873,7 +873,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should emit cancel session event when cancel session button is clicked', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -887,7 +887,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should emit activate session event when activate session button is clicked', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO({ isCancelled: true });
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -901,7 +901,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     it('should emit update session event after edit session flow', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
@@ -909,7 +909,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
         const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
             tutorialGroupSessionId: 1,
-            updateTutorialGroupSessionDTO: {
+            updateTutorialGroupSessionRequest: {
                 date: '2025-01-20',
                 startTime: '10:00',
                 endTime: '12:00',
@@ -925,20 +925,20 @@ describe('CourseTutorialGroupDetailComponent', () => {
             courseId: 1,
             tutorialGroupId: 1,
             tutorialGroupSessionId: 1,
-            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionDTO,
+            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionRequest,
         });
     });
 
     it('should emit create session event after new session flow', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailDTO({ sessions: [session] });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
         const createSessionEmitSpy = vi.spyOn(component.onCreateSession, 'emit');
         const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
-        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession = {
+        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionRequest = {
             date: '2025-01-20',
             startTime: '10:00',
             endTime: '12:00',

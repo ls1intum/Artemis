@@ -10,7 +10,7 @@
 import { TutorialGroupSession } from './tutorialGroupSession';
 
 
-export interface TutorialGroupDetail { 
+export interface TutorialGroupDetailData { 
     id: number;
     title: string;
     language: string;

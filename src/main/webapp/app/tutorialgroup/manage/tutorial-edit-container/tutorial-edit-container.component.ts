@@ -1,5 +1,4 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { TutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,6 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -32,7 +32,7 @@ export class TutorialEditContainerComponent {
     isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
     tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     isScheduleLoading = signal(false);
-    schedule = signal<TutorialGroupScheduleDTO | undefined>(undefined);
+    schedule = signal<TutorialGroupSchedule | undefined>(undefined);
     isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading() || this.isScheduleLoading());
 
     constructor() {

@@ -10,7 +10,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 import { TutorialCreateContainerComponent } from 'app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
-import { TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -27,7 +27,7 @@ describe('TutorialCreateContainerComponent', () => {
         createTutorialGroup: ReturnType<typeof vi.fn>;
     };
     let tutorialGroupTutorsService: {
-        tutors: ReturnType<typeof signal<TutorialGroupTutorDTO[]>>;
+        tutors: ReturnType<typeof signal<TutorialGroupTutor[]>>;
         isLoading: ReturnType<typeof signal<boolean>>;
         loadTutors: ReturnType<typeof vi.fn>;
     };
@@ -39,7 +39,7 @@ describe('TutorialCreateContainerComponent', () => {
             createTutorialGroup: vi.fn(),
         };
         tutorialGroupTutorsService = {
-            tutors: signal<TutorialGroupTutorDTO[]>([
+            tutors: signal<TutorialGroupTutor[]>([
                 { id: 11, nameAndLogin: 'Ada Lovelace (ada)' },
                 { id: 12, nameAndLogin: 'Grace Hopper (grace)' },
             ]),

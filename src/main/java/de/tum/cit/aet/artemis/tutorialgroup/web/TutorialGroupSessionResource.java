@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
@@ -95,16 +95,16 @@ public class TutorialGroupSessionResource {
     /**
      * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
      *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
+     * @param courseId                             the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                      the id of the tutorial group to which the session belongs to
+     * @param createTutorialGroupSessionRequestDTO DTO containing the new tutorial group session
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSessionDTO> createSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
-        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
+            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionRequestDTO createTutorialGroupSessionRequestDTO) {
+        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", createTutorialGroupSessionRequestDTO, tutorialGroupId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
         boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
@@ -113,10 +113,10 @@ public class TutorialGroupSessionResource {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can create sessions.");
         }
 
-        tutorialGroupSessionDTO.validityCheck();
+        createTutorialGroupSessionRequestDTO.validityCheck();
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
+        TutorialGroupSession newSession = createTutorialGroupSessionRequestDTO.toEntity(configuration);
         newSession.setTutorialGroup(tutorialGroup);
         checkIfSessionMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         checkForOverlapWithOtherSessions(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
@@ -132,16 +132,16 @@ public class TutorialGroupSessionResource {
     /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
      *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param sessionId               the id of the session to update
-     * @param tutorialGroupSessionDTO DTO containing the updated tutorial group session
+     * @param courseId                             the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                      the id of the tutorial group to which the session belongs to
+     * @param sessionId                            the id of the session to update
+     * @param updateTutorialGroupSessionRequestDTO DTO containing the updated tutorial group session
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSessionDTO> updateSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
+            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionRequestDTO updateTutorialGroupSessionRequestDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
@@ -151,13 +151,13 @@ public class TutorialGroupSessionResource {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can update sessions.");
         }
 
-        tutorialGroupSessionDTO.validityCheck();
+        updateTutorialGroupSessionRequestDTO.validityCheck();
 
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkIfSessionMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
+        var updatedSession = updateTutorialGroupSessionRequestDTO.toEntity(configuration);
         sessionToUpdate.setStart(updatedSession.getStart());
         sessionToUpdate.setEnd(updatedSession.getEnd());
         sessionToUpdate.setLocation(updatedSession.getLocation());

@@ -10,7 +10,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/course/s
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
-import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
@@ -22,7 +22,7 @@ import {
     TutorialGroupDetailComponent,
     UpdateTutorialGroupSessionEvent,
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { ManagementTutorialGroupDetailContainerComponent } from './management-tutorial-group-detail-container.component';
@@ -50,7 +50,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
     let component: ManagementTutorialGroupDetailContainerComponent;
 
     let tutorialGroupCourseAndGroupService: {
-        tutorialGroup: ReturnType<typeof signal<TutorialGroupDetailDTO | undefined>>;
+        tutorialGroup: ReturnType<typeof signal<TutorialGroupDetailData | undefined>>;
         course: ReturnType<typeof signal<Course | undefined>>;
         isTutorialGroupLoading: ReturnType<typeof signal<boolean>>;
         fetchTutorialGroup: ReturnType<typeof vi.fn>;
@@ -73,7 +73,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
 
     beforeEach(async () => {
         tutorialGroupCourseAndGroupService = {
-            tutorialGroup: signal<TutorialGroupDetailDTO | undefined>(undefined),
+            tutorialGroup: signal<TutorialGroupDetailData | undefined>(undefined),
             course: signal<Course | undefined>(undefined),
             isTutorialGroupLoading: signal(false),
             fetchTutorialGroup: vi.fn(),
@@ -170,8 +170,8 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         };
     }
 
-    function createTutorialGroup(): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroup(): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 17,
             title: 'TG 1',
             language: 'English',
@@ -193,7 +193,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         return { courseId: 2, tutorialGroupId: 17, tutorialGroupSessionId: sessionId };
     }
 
-    function createSessionDto(): CreateOrUpdateTutorialGroupSession {
+    function createCreateOrUpdateTutorialGroupSessionRequest(): CreateOrUpdateTutorialGroupSessionRequest {
         return {
             date: '2026-04-27',
             startTime: '10:15',
@@ -208,7 +208,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
             courseId: 2,
             tutorialGroupId: 17,
             tutorialGroupSessionId: sessionId,
-            updateTutorialGroupSessionDTO: createSessionDto(),
+            updateTutorialGroupSessionRequest: createCreateOrUpdateTutorialGroupSessionRequest(),
         };
     }
 
@@ -216,7 +216,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         return {
             courseId: 2,
             tutorialGroupId: 17,
-            createTutorialGroupSessionDTO: createSessionDto(),
+            createTutorialGroupSessionRequest: createCreateOrUpdateTutorialGroupSessionRequest(),
         };
     }
 

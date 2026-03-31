@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -100,7 +100,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     exportJSON() {
         this.tutorialGroupApiService
             .exportTutorialGroupsToJSON(this.courseId(), this.selectedFields)
-            .pipe(map((data: TutorialGroupExport[]) => JSON.stringify(data)))
+            .pipe(map((data: TutorialGroupExportData[]) => JSON.stringify(data)))
             .subscribe({
                 next: (response) => {
                     const blob = new Blob([response], { type: 'application/json' });

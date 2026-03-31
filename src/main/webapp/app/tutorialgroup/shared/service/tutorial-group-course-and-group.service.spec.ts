@@ -8,10 +8,10 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupCourseAndGroupService } from './tutorial-group-course-and-group.service';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 describe('TutorialGroupCourseAndGroupService', () => {
     setupTestBed({ zoneless: true });
@@ -64,7 +64,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
         };
     }
 
-    function createTutorialGroupDetail(sessions: RawTutorialGroupSession[]): TutorialGroupDetail {
+    function createTutorialGroupDetailData(sessions: RawTutorialGroupSession[]): RawTutorialGroupDetailData {
         return {
             id: 17,
             title: 'TG Tue 13',
@@ -86,7 +86,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
     it('should update the cancellation status of the matching session', () => {
         const firstSession = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
         const secondSession = createRawTutorialGroupSession(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', true);
-        const tutorialGroup = new TutorialGroupDetailDTO(createTutorialGroupDetail([firstSession, secondSession]));
+        const tutorialGroup = new TutorialGroupDetailData(createTutorialGroupDetailData([firstSession, secondSession]));
         service.tutorialGroup.set(tutorialGroup);
 
         service.toggleCancellationStatusOfSession(1);
@@ -107,7 +107,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
         const firstSession = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
         const thirdSession = createRawTutorialGroupSession(3, '2026-04-22T10:15:00.000Z', '2026-04-22T11:45:00.000Z', false);
         const insertedSession = new TutorialGroupSession(createRawTutorialGroupSession(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', false));
-        const tutorialGroup = new TutorialGroupDetailDTO(createTutorialGroupDetail([firstSession, thirdSession]));
+        const tutorialGroup = new TutorialGroupDetailData(createTutorialGroupDetailData([firstSession, thirdSession]));
         service.tutorialGroup.set(tutorialGroup);
 
         service.insertNewSession(insertedSession);
@@ -126,13 +126,13 @@ describe('TutorialGroupCourseAndGroupService', () => {
 
     it('should fetch tutorial group on success and clear loading state', () => {
         const session = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
-        const tutorialGroup = createTutorialGroupDetail([session]);
+        const tutorialGroup = createTutorialGroupDetailData([session]);
         tutorialGroupApiService.getTutorialGroup.mockReturnValue(of(tutorialGroup));
 
         service.fetchTutorialGroup(2, 17);
 
         expect(tutorialGroupApiService.getTutorialGroup).toHaveBeenCalledWith(2, 17);
-        expect(service.tutorialGroup()).toEqual(new TutorialGroupDetailDTO(tutorialGroup));
+        expect(service.tutorialGroup()).toEqual(new TutorialGroupDetailData(tutorialGroup));
         expect(service.isTutorialGroupLoading()).toBe(false);
     });
 

@@ -13,14 +13,14 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
  * DTO used for client-server communication in the import of tutorial groups and student registrations from csv files
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful, @Nullable TutorialGroupImportErrors error,
+public record TutorialGroupImportDataDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful, @Nullable TutorialGroupImportErrors error,
         @Nullable String campus, @Nullable Integer capacity, @Nullable String language, @Nullable String additionalInformation, @Nullable Boolean isOnline) {
 
-    public TutorialGroupImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
-        return new TutorialGroupImportDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation(), isOnline());
+    public TutorialGroupImportDataDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
+        return new TutorialGroupImportDataDTO(title(), student(), importSuccessful, error, campus(), capacity(), language(), additionalInformation(), isOnline());
     }
 
-    public TutorialGroupImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable String campus, @Nullable Integer capacity, @Nullable String language,
+    public TutorialGroupImportDataDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable String campus, @Nullable Integer capacity, @Nullable String language,
             @Nullable String additionalInformation, @Nullable Boolean isOnline) {
         this(title, student, null, null, campus, capacity, language, additionalInformation, isOnline);
     }
@@ -34,7 +34,7 @@ public record TutorialGroupImportDTO(@Nullable String title, @Nullable StudentDT
             return false;
         }
 
-        TutorialGroupImportDTO that = (TutorialGroupImportDTO) object;
+        TutorialGroupImportDataDTO that = (TutorialGroupImportDataDTO) object;
 
         if (!Objects.equals(title, that.title)) {
             return false;

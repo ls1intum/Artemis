@@ -5,7 +5,6 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -14,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -41,14 +41,14 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     tutorialGroupId = input.required<number>();
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
     searchString = signal<string>('');
-    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    suggestedStudents = signal<TutorialGroupStudent[]>([]);
     firstSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageIndex = signal(0);
     hasMorePages = signal(true);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
     inputIsFocused = signal(false);
-    onStudentSelected = output<TutorialGroupRegisteredStudentDTO>();
+    onStudentSelected = output<TutorialGroupStudent>();
 
     constructor() {
         effect(() => {
@@ -154,7 +154,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         this.searchInput()?.nativeElement.focus();
     }
 
-    trackStudentById(index: number, student: TutorialGroupRegisteredStudentDTO): number {
+    trackStudentById(index: number, student: TutorialGroupStudent): number {
         return student.id;
     }
 

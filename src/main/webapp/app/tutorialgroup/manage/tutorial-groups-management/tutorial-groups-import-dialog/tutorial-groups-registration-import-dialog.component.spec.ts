@@ -11,10 +11,10 @@ import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupImport } from 'app/openapi/model/tutorialGroupImport';
+import { TutorialGroupImportData } from 'app/openapi/model/tutorialGroupImportData';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import ErrorEnum = TutorialGroupImport.ErrorEnum;
+import ErrorEnum = TutorialGroupImportData.ErrorEnum;
 
 vi.mock('papaparse', async () => {
     const original = await vi.importActual<typeof import('papaparse')>('papaparse');
@@ -345,7 +345,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(removeChildSpy).toHaveBeenCalledWith(link);
     });
 
-    async function validationTest(data: TutorialGroupImport[], translationKey: string, errorAddition?: string) {
+    async function validationTest(data: TutorialGroupImportData[], translationKey: string, errorAddition?: string) {
         // given
         const translateService = TestBed.inject(TranslateService);
         const instantSpy = vi.spyOn(translateService, 'instant').mockReturnValue('testError:');
@@ -393,7 +393,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         importSuccessful?: boolean,
         error?: ErrorEnum,
     ) => {
-        const dto = {} as TutorialGroupImport;
+        const dto = {} as TutorialGroupImportData;
         dto.title = title ?? 'Mo 12-13';
         dto.student = student ?? generateStudentDTO();
         dto.importSuccessful = importSuccessful ?? undefined;
@@ -415,7 +415,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         return dto;
     };
 
-    function mockParserWithDTOs(data: TutorialGroupImport[], errors: ParseError[]) {
+    function mockParserWithDTOs(data: TutorialGroupImportData[], errors: ParseError[]) {
         mockParserWithRawCSVRows(
             data.map((dto) => generateRowObjectFromDTO(dto)),
             errors,
@@ -447,7 +447,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         status?: string;
     }
 
-    const generateRowObjectFromDTO = (dto: TutorialGroupImport, status?: string) => {
+    const generateRowObjectFromDTO = (dto: TutorialGroupImportData, status?: string) => {
         return {
             group: dto.title,
             registrationnumber: dto.student!.registrationNumber,

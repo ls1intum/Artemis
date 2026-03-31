@@ -131,9 +131,9 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const courseId = updateEvent.courseId;
         const tutorialGroupId = updateEvent.tutorialGroupId;
         const tutorialGroupSessionId = updateEvent.tutorialGroupSessionId;
-        const updateTutorialGroupSessionDTO = updateEvent.updateTutorialGroupSessionDTO;
+        const updateTutorialGroupSessionRequest = updateEvent.updateTutorialGroupSessionRequest;
         this.tutorialGroupSessionApiService
-            .updateSession(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
+            .updateSession(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionRequest)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (rawSession: RawTutorialGroupSession) => {
@@ -152,9 +152,9 @@ export class ManagementTutorialGroupDetailContainerComponent {
         this.isActionLoading.set(true);
         const courseId = createEvent.courseId;
         const tutorialGroupId = createEvent.tutorialGroupId;
-        const createTutorialGroupSessionDTO = createEvent.createTutorialGroupSessionDTO;
+        const createTutorialGroupSessionRequest = createEvent.createTutorialGroupSessionRequest;
         this.tutorialGroupSessionApiService
-            .createSession(courseId, tutorialGroupId, createTutorialGroupSessionDTO)
+            .createSession(courseId, tutorialGroupId, createTutorialGroupSessionRequest)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (rawSession: RawTutorialGroupSession) => {

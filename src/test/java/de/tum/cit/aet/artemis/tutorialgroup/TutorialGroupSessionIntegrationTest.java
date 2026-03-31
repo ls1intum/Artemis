@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
@@ -71,7 +71,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/-1/sessions", tutorialGroupSessionDTO, HttpStatus.NOT_FOUND);
         }
@@ -79,7 +79,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR2_LOGIN, roles = "TA")
         void createSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.FORBIDDEN);
@@ -88,7 +88,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void createSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.FORBIDDEN);
@@ -97,7 +97,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithSessionWithStartNotBeforeEnd_shouldReturnBadRequest() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_END_12_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_END_12_00,
                     SESSION_START_10_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -106,7 +106,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutConfiguration_shouldReturnBadRequest() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -119,7 +119,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             course.setTimeZone(null);
             courseRepository.save(course);
 
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -128,7 +128,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -137,7 +137,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithNonMatchingTutorialGroup_shouldReturnBadRequest() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -146,7 +146,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithOverlappingSession_shouldReturnBadRequest() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_AUGUST_MONDAY, LocalTime.of(13, 30),
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_AUGUST_MONDAY, LocalTime.of(13, 30),
                     LocalTime.of(14, 30), SESSION_LOCATION, null);
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -155,7 +155,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutOverlappingFreePeriod_shouldReturnCreated() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             TutorialGroupSessionDTO sessionDTO = request.postWithResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions", tutorialGroupSessionDTO,
@@ -176,7 +176,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithOverlappingFreePeriod_shouldReturnCreated() throws Exception {
             tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_SEPTEMBER_MONDAY_10_00, FIRST_SEPTEMBER_MONDAY_12_00, "Holiday");
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             TutorialGroupSessionDTO sessionDTO = request.postWithResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions", tutorialGroupSessionDTO,
@@ -201,7 +201,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/-1/sessions/" + session.getId(), tutorialGroupSessionDTO,
                     HttpStatus.NOT_FOUND);
@@ -211,7 +211,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR2_LOGIN, roles = "TA")
         void updateSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -222,7 +222,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void updateSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -232,7 +232,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithoutExistingSession_shouldReturnNotFound() throws Exception {
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/-1",
                     tutorialGroupSessionDTO, HttpStatus.NOT_FOUND);
@@ -242,7 +242,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -253,7 +253,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -264,8 +264,8 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithoutConfiguration_shouldReturnBadRequest() throws Exception {
             var session = secondCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_AUGUST_MONDAY, SESSION_START_10_00, SESSION_END_12_00,
-                    SESSION_LOCATION, null);
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_AUGUST_MONDAY, SESSION_START_10_00,
+                    SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
@@ -279,7 +279,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             course.setTimeZone(null);
             courseRepository.save(course);
 
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -291,7 +291,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void updateSession_asTutorOfGroupWithOverlappingSession_shouldReturnBadRequest() throws Exception {
             var firstSession = firstCourseTutorialGroup1Sessions.getFirst();
             var secondSession = firstCourseTutorialGroup1Sessions.get(1);
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(secondSession.getStart().toLocalDate(),
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(secondSession.getStart().toLocalDate(),
                     secondSession.getStart().toLocalTime(), secondSession.getEnd().toLocalTime(), secondSession.getLocation(), null);
             request.putWithoutResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + firstSession.getId(),
@@ -302,7 +302,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void updateSession_asTutorOfGroupWithoutOverlappingFreePeriod_shouldReturnOk() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             TutorialGroupSessionDTO sessionDTO = request.putWithResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
@@ -324,7 +324,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void updateSession_asTutorOfGroupWithOverlappingFreePeriod_shouldReturnOk() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_SEPTEMBER_MONDAY_10_00, FIRST_SEPTEMBER_MONDAY_12_00, "Holiday");
-            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             TutorialGroupSessionDTO sessionDTO = request.putWithResponseBody(
                     "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),

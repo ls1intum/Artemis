@@ -18,10 +18,11 @@ import {
     TutorialCreateOrEditComponent,
     UpdateTutorialGroupEvent,
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
-import { TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 
 describe('TutorialCreateOrEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,7 +34,7 @@ describe('TutorialCreateOrEditComponent', () => {
     let alertService: { addErrorAlert: ReturnType<typeof vi.fn> };
 
     const mockTranslateService = new MockTranslateService();
-    const tutors: TutorialGroupTutorDTO[] = [
+    const tutors: TutorialGroupTutor[] = [
         { id: 11, nameAndLogin: 'Ada Lovelace (ada)' },
         { id: 12, nameAndLogin: 'Grace Hopper (grace)' },
     ];
@@ -67,8 +68,8 @@ describe('TutorialCreateOrEditComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroupDetailDTO(overrides: Partial<TutorialGroupDetail> = {}): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroupDetailData(overrides: Partial<RawTutorialGroupDetailData> = {}): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 17,
             title: 'TG 1',
             language: 'English',
@@ -87,7 +88,7 @@ describe('TutorialCreateOrEditComponent', () => {
         });
     }
 
-    function createTutorialGroupScheduleDTO(overrides: Partial<TutorialGroupScheduleDTO> = {}): TutorialGroupScheduleDTO {
+    function createTutorialGroupSchedule(overrides: Partial<TutorialGroupSchedule> = {}): TutorialGroupSchedule {
         return {
             firstSessionStart: '2026-04-20T10:15:00',
             firstSessionEnd: '2026-04-20T11:45:00',
@@ -150,8 +151,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
 
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.componentRef.setInput('schedule', schedule);
@@ -336,8 +337,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should disable the save button in edit mode until something changes', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
 
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.componentRef.setInput('schedule', schedule);
@@ -388,7 +389,7 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should emit onUpdate directly when saving an edited tutorial group without schedule overwrite confirmation', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
         component.onUpdate.subscribe(onUpdateSpy);
 
@@ -421,8 +422,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should confirm schedule-overwriting update and emit on accept', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
         const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
         component.onUpdate.subscribe(onUpdateSpy);
 

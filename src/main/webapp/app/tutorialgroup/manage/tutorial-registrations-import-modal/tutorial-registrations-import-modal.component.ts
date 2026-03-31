@@ -11,7 +11,7 @@ import {
     TutorialRegistrationsImportModalTableComponent,
     TutorialRegistrationsImportModalTableRow,
 } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
-import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -23,7 +23,7 @@ export enum ImportFlowStep {
 }
 
 interface ImportResult {
-    student: TutorialGroupRegisterStudentDTO;
+    student: TutorialGroupRegisterStudentRequest;
     exists: boolean;
 }
 
@@ -41,7 +41,7 @@ export class TutorialRegistrationsImportModalComponent {
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
-    private parsedStudents = signal<TutorialGroupRegisterStudentDTO[]>([]);
+    private parsedStudents = signal<TutorialGroupRegisterStudentRequest[]>([]);
     private importResults = signal<ImportResult[]>([]);
 
     courseId = input.required<number>();
@@ -87,7 +87,7 @@ export class TutorialRegistrationsImportModalComponent {
                 return;
             }
 
-            const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
+            const parsedStudents: TutorialGroupRegisterStudentRequest[] = result.students.map((student) => {
                 return { login: student.login, registrationNumber: student.registrationNumber };
             });
             if (parsedStudents.length === 0) {
@@ -107,7 +107,7 @@ export class TutorialRegistrationsImportModalComponent {
     importParsedStudents() {
         this.isLoading.set(true);
         this.tutorialGroupApiService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents(), 'response').subscribe({
-            next: (response: HttpResponse<Array<TutorialGroupRegisterStudentDTO>>) => {
+            next: (response: HttpResponse<Array<TutorialGroupRegisterStudentRequest>>) => {
                 const nonExistingStudents = response.body || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {
                     return {

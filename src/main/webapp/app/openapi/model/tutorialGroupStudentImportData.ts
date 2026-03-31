@@ -9,7 +9,7 @@
  */
 
 
-export interface TutorialGroupRegistrationsImport { 
+export interface TutorialGroupStudentImportData { 
     login?: string;
     registrationNumber?: string;
 }

@@ -5,7 +5,7 @@ import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutoria
 import { LegacyTutorialGroupSession, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;
@@ -34,7 +34,7 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDetailDTO {
+export class TutorialGroupDetailData {
     id: number;
     title: string;
     language: string;
@@ -50,58 +50,30 @@ export class TutorialGroupDetailDTO {
     groupChannelId?: number;
     tutorChatId?: number;
 
-    constructor(tutorialGroupDetail: TutorialGroupDetail) {
-        this.id = tutorialGroupDetail.id;
-        this.title = tutorialGroupDetail.title;
-        this.language = tutorialGroupDetail.language;
-        this.isOnline = tutorialGroupDetail.isOnline;
-        this.sessions = (tutorialGroupDetail.sessions ?? []).map((rawSessionDto) => new TutorialGroupSession(rawSessionDto));
-        this.tutorName = tutorialGroupDetail.tutorName;
-        this.tutorLogin = tutorialGroupDetail.tutorLogin;
-        this.tutorId = tutorialGroupDetail.tutorId;
-        this.tutorImageUrl = tutorialGroupDetail.tutorImageUrl;
-        this.capacity = tutorialGroupDetail.capacity;
-        this.campus = tutorialGroupDetail.campus;
-        this.additionalInformation = tutorialGroupDetail.additionalInformation;
-        this.groupChannelId = tutorialGroupDetail.groupChannelId;
-        this.tutorChatId = tutorialGroupDetail.tutorChatId;
+    constructor(rawTutorialGroupDetailData: RawTutorialGroupDetailData) {
+        this.id = rawTutorialGroupDetailData.id;
+        this.title = rawTutorialGroupDetailData.title;
+        this.language = rawTutorialGroupDetailData.language;
+        this.isOnline = rawTutorialGroupDetailData.isOnline;
+        this.sessions = (rawTutorialGroupDetailData.sessions ?? []).map((rawSessionDto) => new TutorialGroupSession(rawSessionDto));
+        this.tutorName = rawTutorialGroupDetailData.tutorName;
+        this.tutorLogin = rawTutorialGroupDetailData.tutorLogin;
+        this.tutorId = rawTutorialGroupDetailData.tutorId;
+        this.tutorImageUrl = rawTutorialGroupDetailData.tutorImageUrl;
+        this.capacity = rawTutorialGroupDetailData.capacity;
+        this.campus = rawTutorialGroupDetailData.campus;
+        this.additionalInformation = rawTutorialGroupDetailData.additionalInformation;
+        this.groupChannelId = rawTutorialGroupDetailData.groupChannelId;
+        this.tutorChatId = rawTutorialGroupDetailData.tutorChatId;
     }
 }
 
-export interface TutorialGroupRegisteredStudentDTO {
-    id: number;
-    name?: string;
-    profilePictureUrl?: string;
-    login: string;
-    email?: string;
-    registrationNumber?: string;
-}
-
-export type TutorialGroupRegisterStudentDTO =
+export type TutorialGroupRegisterStudentRequest =
     | { login: undefined; registrationNumber: string }
     | { login: string; registrationNumber: undefined }
     | { login: string; registrationNumber: string };
 
-export interface TutorialGroupTutorDTO {
+export interface TutorialGroupTutor {
     id: number;
     nameAndLogin: string;
-}
-
-export interface CreateOrUpdateTutorialGroupDTO {
-    title: string;
-    tutorId: number;
-    language: string;
-    isOnline: boolean;
-    campus?: string;
-    capacity?: number;
-    additionalInformation?: string;
-    tutorialGroupScheduleDTO?: TutorialGroupScheduleDTO;
-}
-
-export interface TutorialGroupScheduleDTO {
-    firstSessionStart: string;
-    firstSessionEnd: string;
-    repetitionFrequency: number;
-    tutorialPeriodEnd: string;
-    location: string;
 }

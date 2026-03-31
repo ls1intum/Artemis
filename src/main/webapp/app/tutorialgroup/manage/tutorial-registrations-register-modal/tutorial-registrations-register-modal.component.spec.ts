@@ -8,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Dialog } from 'primeng/dialog';
 import { PrimeNgDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
 import { TutorialRegistrationsRegisterModalComponent } from './tutorial-registrations-register-modal.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
 import { TutorialRegistrationsRegisterSearchBarStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-register-search-bar-stub.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
@@ -17,6 +16,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 interface TutorialGroupApiServiceMock {
     batchRegisterStudents: ReturnType<typeof vi.fn>;
@@ -40,7 +40,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
     let alertServiceMock: AlertServiceMock;
     let tutorialGroupRegisteredStudentsServiceMock: TutorialGroupRegisteredStudentsServiceMock;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -49,7 +49,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Injectable({
     providedIn: 'root',
@@ -9,7 +9,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 export class TutorialGroupRegisteredStudentsService {
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
-    private registeredStudentsInternal = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    private registeredStudentsInternal = signal<TutorialGroupStudent[]>([]);
 
     isLoading = signal(false);
     registeredStudents = this.registeredStudentsInternal.asReadonly();
@@ -44,10 +44,10 @@ export class TutorialGroupRegisteredStudentsService {
         });
     }
 
-    addStudentsToRegisteredStudentsState(students: TutorialGroupRegisteredStudentDTO[]) {
+    addStudentsToRegisteredStudentsState(students: TutorialGroupStudent[]) {
         this.registeredStudentsInternal.update((registeredStudents) => {
             const existingStudentIds = new Set(registeredStudents.map((student) => student.id));
-            const newStudents: TutorialGroupRegisteredStudentDTO[] = students.filter((student) => {
+            const newStudents: TutorialGroupStudent[] = students.filter((student) => {
                 if (existingStudentIds.has(student.id)) {
                     return false;
                 }

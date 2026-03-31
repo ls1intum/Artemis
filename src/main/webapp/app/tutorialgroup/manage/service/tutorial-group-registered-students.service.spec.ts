@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRegisteredStudentsService } from './tutorial-group-registered-students.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 interface TutorialGroupApiServiceMock {
     deregisterStudent: ReturnType<typeof vi.fn>;
@@ -16,7 +16,7 @@ interface AlertServiceMock {
     addErrorAlert: ReturnType<typeof vi.fn>;
 }
 
-function createRegisteredStudent(id: number, login: string): TutorialGroupRegisteredStudentDTO {
+function createRegisteredStudent(id: number, login: string): TutorialGroupStudent {
     return {
         id,
         login,
@@ -75,7 +75,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
 
     it('should fetch registered students and update loading state', () => {
         const registeredStudents = [createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')];
-        const response$ = new Subject<TutorialGroupRegisteredStudentDTO[]>();
+        const response$ = new Subject<TutorialGroupStudent[]>();
         tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(response$);
 
         service.fetchRegisteredStudents(courseId, tutorialGroupId);
