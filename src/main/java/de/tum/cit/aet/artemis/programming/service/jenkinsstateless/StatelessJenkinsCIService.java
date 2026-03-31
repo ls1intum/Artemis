@@ -35,7 +35,7 @@ public class StatelessJenkinsCIService implements StatelessCIService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${artemis.jenkins-connector.url:http://localhost:8081}")
+    @Value("${artemis.continuous-integration.url:http://localhost:8081}")
     private String jenkinsConnectorBaseUrl;
 
     public StatelessJenkinsCIService(RestTemplate restTemplate) {
