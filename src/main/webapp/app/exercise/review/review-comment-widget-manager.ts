@@ -26,6 +26,12 @@ export type ReviewCommentWidgetManagerConfig = {
     showLocationWarning: () => boolean;
 };
 
+enum InlineFixApplyResult {
+    APPLIED,
+    OUTDATED,
+    INVALID,
+}
+
 export class ReviewCommentWidgetManager {
     private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
@@ -216,9 +222,9 @@ export class ReviewCommentWidgetManager {
                 createdWidgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
                 createdWidgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
                 createdWidgetRef.instance.onApplyInlineFix.subscribe((inlineFix) => {
-                    const isOutdated = this.applyInlineFixToActiveEditor(inlineFix);
-                    createdWidgetRef.instance.setInlineFixOutdatedWarning(isOutdated);
-                    if (!isOutdated) {
+                    const applyResult = this.applyInlineFixToActiveEditor(inlineFix);
+                    createdWidgetRef.instance.setInlineFixOutdatedWarning(applyResult === InlineFixApplyResult.OUTDATED);
+                    if (applyResult === InlineFixApplyResult.APPLIED) {
                         const currentThread = this.config.getThreads().find((candidate) => candidate.id === thread.id) ?? thread;
                         this.config.onApplyInlineFix?.({ thread: currentThread, inlineFix });
                     }
@@ -366,18 +372,18 @@ export class ReviewCommentWidgetManager {
      * still matches the expected snapshot from consistency-check creation time.
      *
      * @param inlineFix The inline fix payload to apply.
-     * @returns True if the fix is out of date and should show a warning.
+     * @returns Whether the fix was applied, is outdated, or could not be applied because the editor state is invalid.
      */
-    private applyInlineFixToActiveEditor(inlineFix: InlineCodeChange): boolean {
+    private applyInlineFixToActiveEditor(inlineFix: InlineCodeChange): InlineFixApplyResult {
         const model = this.editor.getModel();
         if (!model) {
-            return false;
+            return InlineFixApplyResult.INVALID;
         }
 
         const startLine = inlineFix.startLine;
         const endLine = inlineFix.endLine;
         if (startLine < 1 || endLine < startLine || endLine > model.getLineCount()) {
-            return false;
+            return InlineFixApplyResult.INVALID;
         }
 
         const endColumn = model.getLineMaxColumn(endLine);
@@ -388,7 +394,7 @@ export class ReviewCommentWidgetManager {
             endColumn,
         });
         if (currentCode !== inlineFix.expectedCode) {
-            return true;
+            return InlineFixApplyResult.OUTDATED;
         }
 
         this.editor.getActiveEditor().executeEdits('ReviewCommentWidgetManager::applyInlineFix', [
@@ -403,6 +409,6 @@ export class ReviewCommentWidgetManager {
                 forceMoveMarkers: true,
             },
         ]);
-        return false;
+        return InlineFixApplyResult.APPLIED;
     }
 }

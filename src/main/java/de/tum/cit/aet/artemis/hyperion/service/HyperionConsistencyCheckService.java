@@ -356,8 +356,8 @@ public class HyperionConsistencyCheckService {
             default -> Severity.MEDIUM;
         };
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
-                : issue.relatedLocations().stream().map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(),
-                        loc.startLine(), loc.endLine(), loc.suggestedInlineFix())).toList();
+                : issue.relatedLocations().stream().filter(Objects::nonNull).map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(),
+                        loc.filePath(), loc.startLine(), loc.endLine(), loc.suggestedInlineFix())).toList();
         ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }

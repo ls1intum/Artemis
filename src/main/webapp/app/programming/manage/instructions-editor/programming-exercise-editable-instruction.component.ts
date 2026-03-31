@@ -250,7 +250,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     private persistProblemStatement(): Observable<void> {
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
+        const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
+        const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
             tap(() => {
                 this.unsavedChanges = false;

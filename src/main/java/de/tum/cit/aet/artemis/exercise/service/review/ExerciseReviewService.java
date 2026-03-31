@@ -566,12 +566,12 @@ public class ExerciseReviewService {
     private InlineCodeChangeDTO buildInlineSuggestedFix(CommentThread thread, ConsistencyThreadLocation location, Exercise exercise,
             ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
         String replacementCode = location.suggestedInlineFix();
-        if (replacementCode == null || replacementCode.isBlank()) {
+        if (replacementCode == null) {
             return null;
         }
 
         String expectedCode = resolveExpectedCodeForLocation(thread, location, exercise, repositoryUrisByTarget, exerciseId);
-        if (expectedCode == null || expectedCode.isBlank()) {
+        if (expectedCode == null) {
             log.warn("Skipping inline suggested fix for exercise {} at {}:{} because expected code could not be resolved", exerciseId, thread.getTargetType(),
                     thread.getLineNumber());
             return null;

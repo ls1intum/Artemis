@@ -365,9 +365,24 @@ public class ExerciseReviewVersionChangeService {
             }
             catch (Exception ex) {
                 log.warn("Could not prepare repository line mapping for diff {}: {}", entry.getKey(), ex.getMessage());
+                filePlansByRepoDiff.put(entry.getKey(), createUnmappableFilePlans(entry.getValue()));
             }
         }
         return filePlansByRepoDiff;
+    }
+
+    /**
+     * Creates unmappable plans for all tracked file paths of one repository diff.
+     *
+     * @param requiredFilePaths repository-relative file paths that need mapping
+     * @return mapping plans that conservatively mark every path as unmappable
+     */
+    private Map<String, FileMappingPlan> createUnmappableFilePlans(Set<String> requiredFilePaths) {
+        Map<String, FileMappingPlan> filePlans = new HashMap<>();
+        for (String requiredFilePath : requiredFilePaths) {
+            filePlans.put(requiredFilePath, FileMappingPlan.unmappable());
+        }
+        return filePlans;
     }
 
     /**
