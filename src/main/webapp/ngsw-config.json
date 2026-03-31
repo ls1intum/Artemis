@@ -16,6 +16,19 @@
             "resources": {
                 "files": ["/content/**", "/*.(eot|svg|cur|jpg|png|webp|gif|otf|ttf|woff|woff2|ani)", "/*.js"]
             }
+        },
+        {
+            "name": "pdf-viewer",
+            "installMode": "lazy",
+            "updateMode": "prefetch",
+            "resources": {
+                "files": ["/assets/ngx-extended-pdf-viewer/**/*.min.mjs", "/assets/ngx-extended-pdf-viewer/**/*.min.css", "/assets/ngx-extended-pdf-viewer/images/**/*"]
+            },
+            "cacheConfig": {
+                "maxSize": 10,
+                "maxAge": "30d",
+                "strategy": "performance"
+            }
         }
     ],
     "navigationUrls": ["!/**/*.*", "!/api/**", "!/login/**", "!/management/**", "!/public/**", "!/saml2/**", "!/v2/**", "!/websocket/**"]

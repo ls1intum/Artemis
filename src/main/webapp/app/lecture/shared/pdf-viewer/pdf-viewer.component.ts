@@ -46,7 +46,7 @@ export class PdfViewerComponent {
     // Services
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
-    private readonly fullscreenService = inject(PdfFullscreenOverlayService);
+    protected readonly fullscreenService = inject(PdfFullscreenOverlayService);
 
     // Internal state (embedded mode only)
     private readonly currentPage = signal(1);
@@ -103,12 +103,14 @@ export class PdfViewerComponent {
         effect(() => {
             if (this.mode() !== 'embedded') return;
 
-            const isOpen = this.fullscreenService.fullscreenMetadata().isOpen;
+            const { isOpen, pdfUrl: fullscreenPdfUrl } = this.fullscreenService.fullscreenMetadata();
 
             if (wasFullscreenOpen && !isOpen) {
                 const page = this.fullscreenService.currentPage();
                 const pdfUrl = this.pdfUrl();
-                if (this.iframeReady() && pdfUrl) {
+                // Only restore if this viewer's PDF matches the one that was opened in fullscreen
+                if (this.iframeReady() && pdfUrl && pdfUrl === fullscreenPdfUrl) {
+                    this.currentPage.set(page);
                     this.loadPdf(pdfUrl, page);
                 }
             }
@@ -173,6 +175,9 @@ export class PdfViewerComponent {
         // Common handlers
         if (type === 'ready') {
             this.iframeReady.set(true);
+            if (mode === 'fullscreen') {
+                this.fullscreenService.setIframeLoading(false);
+            }
             return;
         }
 

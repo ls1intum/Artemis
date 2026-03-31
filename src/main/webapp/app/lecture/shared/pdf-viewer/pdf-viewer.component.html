@@ -13,6 +13,14 @@
                     <fa-icon [icon]="faXmark" />
                 </button>
 
+                @if (fullscreenService.iframeLoading()) {
+                    <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">{{ 'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate }}</span>
+                        </div>
+                    </div>
+                }
+
                 <iframe
                     #pdfIframe
                     [src]="iframeSrc() | safeResourceUrl"
