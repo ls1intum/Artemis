@@ -123,9 +123,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
     @WithMockUser(value = "student1", roles = "USER")
     void oidcFlowFails_noRequestCached() throws Exception {
         String ltiLaunchUri = "/api/lti/public/lti13/auth-login?id_token=some-token&state=some-state";
-        // With Spring Security 7, the LTI13 configurer (which requires AntPathRequestMatcher) is not active,
-        // so the auth-login filter is not registered and the endpoint returns 404 instead of 500.
-        request.get(ltiLaunchUri, HttpStatus.NOT_FOUND, Object.class);
+        request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
     }
 
     private void validateRedirect(URI locationHeader, String token) {

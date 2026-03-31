@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
@@ -73,8 +72,6 @@ public class SecurityConfiguration {
 
     private final PasswordService passwordService;
 
-    private final ProfileService profileService;
-
     private final TokenProvider tokenProvider;
 
     private final ModuleFeatureService moduleFeatureService;
@@ -100,13 +97,11 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService,
-            ModuleFeatureService moduleFeatureService) {
+            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
-        this.profileService = profileService;
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.moduleFeatureService = moduleFeatureService;
@@ -137,7 +132,7 @@ public class SecurityConfiguration {
     @Bean
     @Primary
     public AuthenticationManager authenticationManager(HttpSecurity http, ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider,
-            @Qualifier("ldapAuthenticationProvider") Optional<AuthenticationProvider> externalUserAuthenticationProvider) throws Exception {
+            @Qualifier("ldapAuthenticationProvider") Optional<AuthenticationProvider> externalUserAuthenticationProvider) {
         var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
 
         // External provider (e.g., LDAP) is added first - it will be tried first and skip internal users by returning null
@@ -336,15 +331,9 @@ public class SecurityConfiguration {
 
         // Conditionally adds configuration for LTI if it is enabled.
         if (moduleFeatureService.isLtiEnabled()) {
-            if (customLti13Configurer.isPresent()) {
-                log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
-                http.with(customLti13Configurer.get(), configurer -> configurer.configure(http));
-            }
-            else {
-                // spring-security-lti13 0.3.4 uses AntPathRequestMatcher which was removed in Spring Security 7.
-                log.warn("LTI is enabled but the CustomLti13Configurer bean is not available. "
-                        + "The spring-security-lti13 library needs to be updated for Spring Security 7 compatibility.");
-            }
+            // Activates the LTI endpoints and filters.
+            log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
+            http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
         }
 
         // Builds and returns the SecurityFilterChain.
