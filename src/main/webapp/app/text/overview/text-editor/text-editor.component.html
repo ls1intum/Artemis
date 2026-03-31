@@ -26,6 +26,7 @@
                     }
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-exercise-submit-button
+                            id="submit"
                             [exercise]="textExercise"
                             [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                             (onSubmit)="submit()"

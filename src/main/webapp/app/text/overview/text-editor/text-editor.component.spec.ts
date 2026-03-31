@@ -494,10 +494,11 @@ describe('TextEditorComponent', () => {
         expect(submitButton).toBeFalsy();
     });
 
-    it('should render the submit button when isReadOnlyWithShowResult is false', () => {
+    it('should render the submit button when isReadOnlyWithShowResult is false and in exam mode', () => {
         comp.isOwnerOfParticipation = true;
         comp.isReadOnlyWithShowResult = false;
         comp.isAlwaysActive = true;
+        comp.examMode = true;
         comp.textExercise = textExercise;
         comp.submission = { id: 5, submitted: true };
 
