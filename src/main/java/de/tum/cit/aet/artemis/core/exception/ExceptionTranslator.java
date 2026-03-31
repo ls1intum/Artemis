@@ -48,8 +48,6 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
 
     private static final String PATH_KEY = "path";
 
-    private static final String VIOLATIONS_KEY = "violations";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -325,7 +323,13 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         }
         ProblemDetail detail = ProblemDetail.forStatus(status);
         detail.setTitle(status.getReasonPhrase());
-        detail.setDetail(ex.getMessage());
+        // Only include exception message for client errors (4xx); never leak internal details for server errors (5xx)
+        if (status.is4xxClientError()) {
+            detail.setDetail(ex.getMessage());
+        }
+        else {
+            detail.setDetail("An internal server error occurred");
+        }
         detail.setProperty(MESSAGE_KEY, "error.http." + status.value());
         postProcess(detail, request);
         return ResponseEntity.status(status).body(detail);

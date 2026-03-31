@@ -86,7 +86,7 @@ public class UserSpecs {
             // Match all authorities
             return getAllUsersMatchingAuthorities(authorities);
         }
-        return (root, query, criteriaBuilder) -> null;
+        return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
     }
 
     /**
@@ -99,7 +99,7 @@ public class UserSpecs {
     @NonNull
     public static Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         if (!internal && !external) {
-            return (root, query, criteriaBuilder) -> null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {
@@ -121,7 +121,7 @@ public class UserSpecs {
     @NonNull
     public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
         if (!noRegistrationNumber && !withRegistrationNumber) {
-            return (root, query, criteriaBuilder) -> null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {
@@ -147,7 +147,7 @@ public class UserSpecs {
     @NonNull
     public static Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         if (!activated && !deactivated) {
-            return (root, query, criteriaBuilder) -> null;
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
         else {
             return (root, query, criteriaBuilder) -> {

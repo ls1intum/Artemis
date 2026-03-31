@@ -319,6 +319,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
     // Use hibernate7 variant for Hibernate 7.x compatibility
+    // NOTE: version pinned because the Spring Boot BOM does not include the hibernate7 variant.
+    // Must be kept in sync with the Jackson 2.x version managed by the BOM.
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.2"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
