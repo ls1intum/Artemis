@@ -207,7 +207,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (this.newManualResultAllowed() || ex.allowComplaintsForAutomaticAssessments) {
             cols.push({
                 headerKey: 'artemisApp.exercise.type',
+                field: 'assessmentType',
                 width: '140px',
+                sort: true,
                 templateRef: this.assessmentTypeTemplate(),
             });
         }
@@ -223,7 +225,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
             cols.push({
                 headerKey: 'artemisApp.participation.practice',
+                field: 'testRun',
                 width: '110px',
+                sort: true,
                 templateRef: this.practiceTemplate(),
             });
         }

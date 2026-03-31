@@ -56,6 +56,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
             'src/main/webapp/app/exercise/participation/participation.component.spec.ts', // include participation component tests
+            'src/main/webapp/app/exercise/participation-submission/participation-submission.component.spec.ts', // include participation-submission component tests
             'src/main/webapp/app/exercise/exercise-scores/exercise-scores.component.spec.ts', // include exercise-scores component tests
             'src/main/webapp/app/shared/search-filter/search-filter.component.spec.ts', // include search-filter component tests
         ],
@@ -102,6 +103,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
                 'src/main/webapp/app/exercise/participation/participation.component.spec.ts', // include participation component for code coverage
+                'src/main/webapp/app/exercise/participation-submission/participation-submission.component.spec.ts', // include participation-submission component for code coverage
                 'src/main/webapp/app/exercise/exercise-scores/exercise-scores.component.spec.ts', // include exercise-scores component for code coverage
                 'src/main/webapp/app/shared/search-filter/search-filter.component.spec.ts', // include search-filter component for code coverage
             ],
