@@ -216,10 +216,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
         return active?.chatMessage;
     });
-    readonly sessionBuckets = computed(() => [
-        { labelKey: 'artemisApp.iris.chatHistory.today', sessions: this.todaySessions() },
-        { labelKey: 'artemisApp.iris.chatHistory.older', sessions: this.olderSessions() },
-    ]);
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();

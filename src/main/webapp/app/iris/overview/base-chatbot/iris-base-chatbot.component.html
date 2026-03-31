@@ -250,7 +250,7 @@
                                     </div>
                                 }
                                 @if (message.sender === IrisSender.LLM) {
-                                    <div style="width: fit-content; position: relative">
+                                    <div class="llm-message-wrapper">
                                         @for (content of message.content; track content.id ?? $index) {
                                             @if (isMcqSetContent(content)) {
                                                 <jhi-iris-mcq-carousel
@@ -334,7 +334,7 @@
                             </div>
                         }
                         @if (activeChatMessage()) {
-                            <div style="width: fit-content; position: relative">
+                            <div class="llm-message-wrapper">
                                 <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
                             </div>
                         }
