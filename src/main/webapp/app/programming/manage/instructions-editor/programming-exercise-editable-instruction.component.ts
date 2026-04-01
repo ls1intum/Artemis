@@ -529,7 +529,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.teardownProblemStatementSync();
         this.suppressUnsavedForNextProblemStatementChange = false;
         this.dirtySignalSuppressedDuringInitialSync = false;
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const normalizedText = this.normalizeLineEndings(initialText);
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        model.setValue('');
+        this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
         this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
             ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
@@ -544,11 +549,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
             this.suppressUnsavedForNextProblemStatementChange = true;
-            model.setValue(syncState.text.toString());
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
         });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
     }
 
     /**
