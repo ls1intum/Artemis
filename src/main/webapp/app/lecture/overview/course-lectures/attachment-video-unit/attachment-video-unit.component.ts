@@ -38,7 +38,6 @@ import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MessageModule } from 'primeng/message';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
@@ -51,7 +50,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         PdfViewerComponent,
         FaIconComponent,
         MessageModule,
-        ProgressSpinnerModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',

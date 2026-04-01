@@ -304,10 +304,10 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('fetchTranscript: handles server error and keeps segments empty', async () => {
+    it('fetchTranscript: handles empty transcription response and keeps segments empty', async () => {
         fixture.detectChanges();
 
-        // Mock service to return undefined (simulating error)
+        // Mock service to return undefined (empty response)
         vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
 
         // Call the private method directly to isolate error handling

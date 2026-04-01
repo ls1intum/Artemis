@@ -106,6 +106,8 @@ public class FileResource {
 
     private static final int DAYS_TO_CACHE = 1;
 
+    private static final int MAX_PDF_RANGE_BYTES = 16 * 1024 * 1024;
+
     private final FileService fileService;
 
     private final FileUploadService fileUploadService;
@@ -682,7 +684,7 @@ public class FileResource {
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, false, requestHeaders.getRange());
+                downloadFilename, 0, requestHeaders.getRange());
     }
 
     private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
@@ -691,10 +693,6 @@ public class FileResource {
 
     private ResponseEntity<?> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
         return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
-    }
-
-    private ResponseEntity<?> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
-        return buildAttachmentFileResponse(path, filename, replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
     }
 
     private ResponseEntity<?> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
@@ -717,16 +715,12 @@ public class FileResource {
             if (ranges == null || ranges.isEmpty()) {
                 var response = ResponseEntity.ok().headers(headers).contentType(mediaType).header("filename", filename).contentLength(fileSize);
                 if (cacheDays > 0) {
-                    var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
-                    response = response.cacheControl(cacheControl);
+                    response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
                 }
                 return response.body(resource);
             }
-
-            // PDF.js sends single byte ranges; if multiple are requested, we serve the first range.
             HttpRange range = ranges.getFirst();
-            long start;
-            long end;
+            long start, end;
             try {
                 start = range.getRangeStart(fileSize);
                 end = range.getRangeEnd(fileSize);
@@ -735,11 +729,11 @@ public class FileResource {
                 return buildRangeNotSatisfiableResponse(headers, fileSize);
             }
 
-            if (start < 0 || end < start || end >= fileSize) {
+            long rangeLength = end - start + 1;
+            if (start < 0 || end < start || end >= fileSize || rangeLength > MAX_PDF_RANGE_BYTES) {
                 return buildRangeNotSatisfiableResponse(headers, fileSize);
             }
 
-            long rangeLength = end - start + 1;
             byte[] rangeBytes = readFileRangeBytes(actualPath, start, rangeLength);
             long actualRangeLength = rangeBytes.length;
             if (actualRangeLength == 0) {
@@ -750,8 +744,7 @@ public class FileResource {
             var response = ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(headers).contentType(mediaType)
                     .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + actualEnd + "/" + fileSize).header("filename", filename).contentLength(actualRangeLength);
             if (cacheDays > 0) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
-                response = response.cacheControl(cacheControl);
+                response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
             }
             return response.body(rangeBytes);
         }
@@ -773,10 +766,8 @@ public class FileResource {
         HttpHeaders headers = new HttpHeaders();
 
         // attachment will force the user to download the file
-        String lowerCaseFilename = filename.toLowerCase();
-        String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
-                ? "attachment"
-                : "inline";
+        String contentType = filename.toLowerCase().endsWith("htm") || filename.toLowerCase().endsWith("html") || filename.toLowerCase().endsWith("svg")
+                || filename.toLowerCase().endsWith("svgz") ? "attachment" : "inline";
         String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
         headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
         headers.set("Filename", headerFilename);
@@ -785,12 +776,8 @@ public class FileResource {
     }
 
     private byte[] readFileRangeBytes(Path actualPath, long start, long rangeLength) throws IOException {
-        if (rangeLength <= 0) {
+        if (rangeLength <= 0 || rangeLength > Integer.MAX_VALUE) {
             return new byte[0];
-        }
-
-        if (rangeLength > Integer.MAX_VALUE) {
-            throw new IOException("Requested range is too large: " + rangeLength);
         }
 
         byte[] buffer = new byte[(int) rangeLength];

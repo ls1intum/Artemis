@@ -70,13 +70,7 @@
         }
         @if (pdfLoadError()) {
             <p-message severity="error" styleClass="m-3">
-                <div class="d-flex align-items-start gap-2">
-                    <fa-icon [icon]="faFileLines" />
-                    <div>
-                        <div class="fw-bold" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></div>
-                        <div jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></div>
-                    </div>
-                </div>
+                <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
             </p-message>
         } @else if (pdfUrl()) {
             <div class="pdf-viewer-spacing">
