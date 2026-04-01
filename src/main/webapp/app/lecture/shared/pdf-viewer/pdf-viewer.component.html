@@ -1,46 +1,27 @@
 <!-- Fullscreen mode: Overlay wrapper -->
-@if (mode() === 'fullscreen') {
-    @if (fullscreenMetadata().isOpen) {
-        <div class="pdf-fullscreen-overlay" (click)="close()">
-            <div #fullscreenWindow class="pdf-fullscreen-window" role="dialog" aria-modal="true" tabindex="0" (click)="$event.stopPropagation()" (keydown.escape)="close()">
-                <button
-                    class="pdf-fullscreen-close"
-                    type="button"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
-                    [title]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
-                    (click)="close()"
-                >
-                    <fa-icon [icon]="faXmark" />
-                </button>
+@if (mode() === 'fullscreen' && fullscreenMetadata().isOpen) {
+    <jhi-pdf-fullscreen-wrapper [isLoading]="isLoading()" (closeFullscreen)="close()">
+        <iframe
+            #pdfIframe
+            [src]="iframeSrc() | safeResourceUrl"
+            class="pdf-iframe"
+            [class.pdf-iframe--loading]="isLoading()"
+            [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"
+        ></iframe>
 
-                @if (fullscreenService.iframeLoading()) {
-                    <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">{{ 'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate }}</span>
-                        </div>
-                    </div>
-                }
-
-                <iframe
-                    #pdfIframe
-                    [src]="iframeSrc() | safeResourceUrl"
-                    class="pdf-iframe"
-                    [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"
-                ></iframe>
-
-                <ng-container *ngTemplateOutlet="footerTemplate" />
-            </div>
-        </div>
-    }
+        @if (!isLoading()) {
+            <ng-container *ngTemplateOutlet="footerTemplate" />
+        }
+    </jhi-pdf-fullscreen-wrapper>
 }
 
 <!-- Embedded mode: Inline wrapper -->
 @if (mode() === 'embedded') {
-    <div class="pdf-iframe-wrapper">
+    <jhi-pdf-embedded-wrapper>
         <iframe #pdfIframe [src]="iframeSrc() | safeResourceUrl" class="pdf-iframe" [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"></iframe>
 
         <ng-container *ngTemplateOutlet="footerTemplate" />
-    </div>
+    </jhi-pdf-embedded-wrapper>
 }
 
 <ng-template #footerTemplate>

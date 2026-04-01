@@ -1,0 +1,41 @@
+.pdf-fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.pdf-fullscreen-window {
+    --pdf-fullscreen-margin: 2rem;
+
+    position: fixed;
+    top: calc(2 * var(--pdf-fullscreen-margin));
+    right: var(--pdf-fullscreen-margin);
+    bottom: var(--pdf-fullscreen-margin);
+    left: var(--pdf-fullscreen-margin);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.4rem;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
+    outline: none;
+}
+
+.pdf-fullscreen-close {
+    position: absolute;
+    right: 0.1rem;
+    z-index: 2;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    background-color: transparent;
+    color: var(--body-color);
+    font-size: 1.75rem;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

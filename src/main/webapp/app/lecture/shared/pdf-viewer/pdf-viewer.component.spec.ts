@@ -153,6 +153,14 @@ describe('PdfViewerComponent', () => {
                 fullscreenService.open('test.pdf', 1, uploadDate, 3);
                 fixture.detectChanges();
 
+                // Footer should be hidden while loading
+                expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeFalsy();
+
+                // Simulate PDF loading completion
+                fullscreenService.setIframeLoading(false);
+                fixture.detectChanges();
+
+                // Footer should now be visible
                 const footer = fixture.nativeElement.querySelector('.pdf-viewer-footer');
                 expect(footer).toBeTruthy();
                 expect(footer.textContent).toContain('3');

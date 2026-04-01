@@ -8,8 +8,8 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { PdfFullscreenWrapperComponent } from './pdf-fullscreen-wrapper.component';
+import { PdfEmbeddedWrapperComponent } from './pdf-embedded-wrapper.component';
 
 /**
  * Unified PDF viewer component that supports both embedded and fullscreen modes.
@@ -18,7 +18,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, FaIconComponent, NgTemplateOutlet],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet, PdfFullscreenWrapperComponent, PdfEmbeddedWrapperComponent],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,7 +40,6 @@ export class PdfViewerComponent {
 
     // Shared state
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
-    readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
     readonly iframeReady = signal(false);
 
     // Services
@@ -59,11 +58,11 @@ export class PdfViewerComponent {
 
     readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
 
+    // Unified loading state
+    protected readonly isLoading = computed(() => (this.mode() === 'fullscreen' ? this.fullscreenService.iframeLoading() : false));
+
     // For fullscreen mode
     readonly fullscreenMetadata = this.fullscreenService.fullscreenMetadata;
-
-    // Icons (for fullscreen mode)
-    protected readonly faXmark = faXmark;
 
     constructor() {
         let wasFullscreenOpen = false;
@@ -126,17 +125,6 @@ export class PdfViewerComponent {
 
             wasFullscreenOpen = isOpen;
         });
-
-        // Auto-focus fullscreen window when opened (for ESC key to work)
-        effect(() => {
-            if (this.mode() === 'fullscreen' && this.fullscreenMetadata().isOpen) {
-                const windowElement = this.fullscreenWindow()?.nativeElement;
-                if (windowElement) {
-                    // Use setTimeout to ensure the element is fully rendered
-                    setTimeout(() => windowElement.focus(), 0);
-                }
-            }
-        });
     }
 
     // Close method (fullscreen mode only)
@@ -150,15 +138,6 @@ export class PdfViewerComponent {
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);
-    }
-
-    @HostListener('window:keydown', ['$event'])
-    protected onEscapeKey(event: KeyboardEvent): void {
-        // Only close if fullscreen is actually visible (not just mode='fullscreen')
-        if (event.key === 'Escape' && this.mode() === 'fullscreen' && this.fullscreenWindow()?.nativeElement) {
-            event.preventDefault();
-            this.close();
-        }
     }
 
     /** Handles iframe messages and ignores messages from invalid origins/sources. */
@@ -189,11 +168,8 @@ export class PdfViewerComponent {
         }
 
         if (type === 'pageChange' && typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
-            if (mode === 'embedded') {
-                this.currentPage.set(data.page);
-            } else {
-                this.fullscreenService.updateCurrentPage(data.page);
-            }
+            // Unified page tracking: Update current page based on mode
+            this.setCurrentPage(data.page);
             return;
         }
 
@@ -216,13 +192,14 @@ export class PdfViewerComponent {
             return;
         }
 
-        // Handle pdfLoadError - hide spinner on error in both modes
+        // Handle pdfLoadError
         if (type === 'pdfLoadError') {
             if (mode === 'embedded') {
                 this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
+            } else {
+                // Fullscreen mode: hide spinner on error
+                this.fullscreenService.setIframeLoading(false);
             }
-            // Both modes: hide spinner on error
-            this.fullscreenService.setIframeLoading(false);
             return;
         }
 
@@ -249,6 +226,15 @@ export class PdfViewerComponent {
 
         const currentPage = this.currentPage() || this.initialPage() || 1;
         this.fullscreenService.open(pdfUrl, currentPage, this.uploadDate(), this.version());
+    }
+
+    /** Unified page tracking: Set current page based on mode */
+    private setCurrentPage(page: number): void {
+        if (this.mode() === 'embedded') {
+            this.currentPage.set(page);
+        } else {
+            this.fullscreenService.updateCurrentPage(page);
+        }
     }
 
     private loadPdf(url: string, page: number): void {

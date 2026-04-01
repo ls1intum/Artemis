@@ -36,6 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.RangeRequestService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -129,10 +131,13 @@ public class FileResource {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
+    private final RangeRequestService rangeRequestService;
+
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi,
+            RangeRequestService rangeRequestService) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
@@ -147,6 +152,7 @@ public class FileResource {
         this.courseRepository = courseRepository;
         this.lectureUnitApi = lectureUnitApi;
         this.fileUploadApi = fileUploadApi;
+        this.rangeRequestService = rangeRequestService;
     }
 
     /**
@@ -439,11 +445,13 @@ public class FileResource {
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
      * @param attachmentName the filename of the file
+     * @param rangeHeader    Range header for partial content requests (optional)
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) {
+    public ResponseEntity<byte[]> getLectureAttachment(@RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader, @PathVariable Long lectureId,
+            @PathVariable String attachmentName) throws IOException {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -458,7 +466,15 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
+        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT);
+        MediaType mediaType = getMediaTypeFromFilename(attachmentName);
+
+        // Use RangeRequestService for PDF files
+        if (MediaType.APPLICATION_PDF.equals(mediaType)) {
+            return rangeRequestService.handleRangeRequest(actualPath, rangeHeader, mediaType);
+        }
+
+        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -510,11 +526,13 @@ public class FileResource {
      * Accesses to this endpoint are created by the server itself in the FilePathService
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
+     * @param rangeHeader           Range header for partial content requests (optional)
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
     @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader,
+            @PathVariable Long attachmentVideoUnitId) throws IOException {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -526,7 +544,17 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
+
+        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT);
+        String filename = attachment.getLink().substring(attachment.getLink().lastIndexOf('/') + 1);
+        MediaType mediaType = getMediaTypeFromFilename(filename);
+
+        // Use RangeRequestService for PDF files
+        if (MediaType.APPLICATION_PDF.equals(mediaType)) {
+            return rangeRequestService.handleRangeRequest(actualPath, rangeHeader, mediaType);
+        }
+
+        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -535,11 +563,13 @@ public class FileResource {
      *
      * @param courseId              The ID of the course that the Attachment belongs to
      * @param attachmentVideoUnitId the ID of the attachment to retrieve
+     * @param rangeHeader           Range header for partial content requests (optional)
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader, @PathVariable Long courseId,
+            @PathVariable Long attachmentVideoUnitId) throws IOException {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
@@ -547,7 +577,16 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
+        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT);
+        String filename = attachment.getLink().substring(attachment.getLink().lastIndexOf('/') + 1);
+        MediaType mediaType = getMediaTypeFromFilename(filename);
+
+        // Use RangeRequestService for PDF files
+        if (MediaType.APPLICATION_PDF.equals(mediaType)) {
+            return rangeRequestService.handleRangeRequest(actualPath, rangeHeader, mediaType);
+        }
+
+        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -556,18 +595,29 @@ public class FileResource {
      *
      * @param courseId     The ID of the course that the Attachment belongs to
      * @param attachmentId the ID of the attachment to retrieve
+     * @param rangeHeader  Range header for partial content requests (optional)
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
+    public ResponseEntity<byte[]> getAttachmentFile(@RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader, @PathVariable Long courseId,
+            @PathVariable Long attachmentId) throws IOException {
         log.debug("REST request to get attachment file : {}", attachmentId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
+        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT);
+        String filename = attachment.getLink().substring(attachment.getLink().lastIndexOf('/') + 1);
+        MediaType mediaType = getMediaTypeFromFilename(filename);
+
+        // Use RangeRequestService for PDF files
+        if (MediaType.APPLICATION_PDF.equals(mediaType)) {
+            return rangeRequestService.handleRangeRequest(actualPath, rangeHeader, mediaType);
+        }
+
+        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -644,11 +694,13 @@ public class FileResource {
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
+     * @param rangeHeader           Range header for partial content requests (optional)
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader,
+            @PathVariable long attachmentVideoUnitId) throws IOException {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -660,11 +712,28 @@ public class FileResource {
         Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
+        Path actualPath;
+        String fileName;
+
+        if (studentVersion == null) {
+            actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT);
+            fileName = attachment.getLink().substring(attachment.getLink().lastIndexOf('/') + 1);
+        }
+        else {
+            fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
+            actualPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student", fileName));
+        }
+
+        MediaType mediaType = getMediaTypeFromFilename(fileName);
+
+        // Use RangeRequestService for PDF files
+        if (MediaType.APPLICATION_PDF.equals(mediaType)) {
+            return rangeRequestService.handleRangeRequest(actualPath, rangeHeader, mediaType);
+        }
+
         if (studentVersion == null) {
             return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename);
         }
-
-        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
                 downloadFilename, false);
