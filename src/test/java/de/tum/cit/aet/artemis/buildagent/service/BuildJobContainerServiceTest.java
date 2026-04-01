@@ -27,6 +27,8 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
@@ -92,6 +94,13 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
             callback.onComplete();
             return null;
         });
+
+        // Mock inspectExecCmd to return exit code 0 (success) by default
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(buildAgentConfiguration.getDockerClient().inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
     }
 
     private HostConfig captureHostConfig() {
@@ -152,7 +161,10 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     @Test
     void testRunScriptInContainerExecutesSynchronously() {
-        buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
+        int exitCode = buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
+
+        // Verify the exit code is returned from the mocked inspect response
+        assertThat(exitCode).isZero();
 
         // Verify that the exec command attaches stdout and stderr for synchronous output capture
         verify(execCreateCmd).withAttachStdout(true);
@@ -182,7 +194,9 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     @Test
     void testSynchronousExecNeverUsesDetachedMode() {
-        buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
+        int exitCode = buildJobContainerService.runScriptInContainer(DUMMY_CONTAINER_ID, "build-job-1");
+
+        assertThat(exitCode).isZero();
 
         // Verify that withDetach(true) is never called for synchronous commands.
         // This guards against regression: previously, setup commands accidentally used detached mode.
