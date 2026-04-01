@@ -153,11 +153,11 @@
     text-align: center;
 }
 
-/* Support Badge Colors */
+/* Support Badge Colors — WCAG AA contrast ≥ 4.5:1 on white/light-gray backgrounds */
 :root {
-    --lms-support-color: #4a8c00;
-    --lms-partial-color: #c47a20;
-    --lms-none-color: #999;
+    --lms-support-color: #357a00;
+    --lms-partial-color: #9a6018;
+    --lms-none-color: #6e6e6e;
 }
 
 /* Support Badge */
@@ -203,7 +203,7 @@
 :global([data-theme='dark']) :root {
     --lms-support-color: #8bbe3a;
     --lms-partial-color: #e5a04d;
-    --lms-none-color: #777;
+    --lms-none-color: #9a9a9a;
 }
 
 /* Responsive */
