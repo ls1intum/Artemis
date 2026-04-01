@@ -223,7 +223,11 @@ jobs:
             // <!-- OVERALL --> is a placeholder that the report-results job replaces
             // with Phase 2 notes (if any) and the final overall status line.
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -431,7 +435,11 @@ jobs:
               body += `${phase2Row}\n`;
               body += flakinessTable;
               body += `<!-- OVERALL -->\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+              }
+              body += `\n`;
               body += `<!-- E2E Test Results -->`;
 
               await github.rest.issues.createComment({
@@ -599,7 +607,11 @@ jobs:
             body += flakinessTable;
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-all)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -834,7 +846,11 @@ jobs:
               const marker = '<!-- E2E Test Results -->';
               let body = `## End-to-End Test Results\n\n`;
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              }
+              body += `\n`;
               body += marker;
 
               await github.rest.issues.createComment({
