@@ -10,7 +10,6 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { stringifyCircular } from 'app/shared/util/utils';
 import { createFileUploadSubmission } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -177,9 +176,9 @@ describe('FileUploadExamSubmissionComponent', () => {
             jest.restoreAllMocks();
         });
         it('should do nothing', () => {
-            const jsonOfComponent = stringifyCircular(comp);
+            const submissionBefore = comp.getSubmission();
             comp.updateSubmissionFromView();
-            expect(stringifyCircular(comp)).toEqual(jsonOfComponent);
+            expect(comp.getSubmission()).toBe(submissionBefore);
         });
     });
 

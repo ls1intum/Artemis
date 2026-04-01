@@ -24,7 +24,7 @@
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         } @else {
-            <div class="expanded right" [style.width]="isBeingPrinted ? 'fit-content' : '30vw'">
+            <div #expandedPanel class="expanded right" [style.width]="isBeingPrinted ? 'fit-content' : '30vw'">
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
