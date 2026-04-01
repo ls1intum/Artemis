@@ -236,6 +236,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     ngOnDestroy(): void {
         this.conflictSubscription?.unsubscribe();
+        this.interactResizable?.unset();
     }
 
     /**
