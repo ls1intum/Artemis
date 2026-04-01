@@ -164,7 +164,6 @@ public class IrisSessionService {
      * @throws BadRequestException If the session type is unknown
      * @return The Iris subsystem for the session
      */
-    // TODO: Überarbeiten
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
@@ -191,6 +190,9 @@ public class IrisSessionService {
             return List.of();
         }
 
+        // TODO: REFACTORING ASLAN
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
+                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.lastActivityDate(), dao.session().getMode())).toList();
         return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
                 dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode(), dao.session().getExerciseId(), dao.session().getLectureId()))
                 .toList();

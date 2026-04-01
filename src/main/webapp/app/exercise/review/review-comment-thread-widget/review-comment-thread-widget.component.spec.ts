@@ -1,17 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ConfirmationService } from 'primeng/api';
+import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
     let reviewCommentService: any;
+    let confirmationService: ConfirmationService;
 
     beforeEach(async () => {
         reviewCommentService = {
@@ -19,6 +24,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            threads: signal([]),
         };
 
         await TestBed.configureTestingModule({
@@ -31,6 +37,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         fixture = TestBed.createComponent(ReviewCommentThreadWidgetComponent);
         comp = fixture.componentInstance;
+        confirmationService = fixture.debugElement.injector.get(ConfirmationService);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
     });
 
@@ -45,9 +52,41 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.showThreadBody()).toBe(false);
     });
 
-    it('should emit delete on deleteComment', () => {
+    it('should request confirmation dialog on deleteComment', () => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
         comp.deleteComment(5);
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
+    });
+
+    it('should delete comment when deletion is confirmed', () => {
+        let acceptCallback: (() => void) | undefined;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+            acceptCallback = confirmation.accept;
+            return confirmationService;
+        });
+
+        comp.deleteComment(5);
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
+
+        acceptCallback?.();
+
         expect(reviewCommentService.deleteCommentInContext).toHaveBeenCalledWith(5);
+    });
+
+    it('should not delete comment when deletion is dismissed', () => {
+        let rejectCallback: (() => void) | undefined;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { reject?: () => void }) => {
+            rejectCallback = confirmation.reject;
+            return confirmationService;
+        });
+
+        comp.deleteComment(5);
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
+
+        rejectCallback?.();
+
+        expect(reviewCommentService.deleteCommentInContext).not.toHaveBeenCalled();
     });
 
     it('should update comment on saveEditing and clear editing state', () => {
@@ -57,7 +96,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.editText.set('  updated  ');
         comp.saveEditing();
 
-        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
+        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: CommentContentType.USER, text: 'updated' }, expect.any(Function));
         expect(comp.editingCommentId()).toBeUndefined();
         expect(comp.editText()).toBe('');
     });
@@ -85,7 +124,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.replyText.set('  reply  ');
         comp.submitReply();
 
-        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
+        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: CommentContentType.USER, text: 'reply' }, expect.any(Function));
         expect(comp.replyText()).toBe('');
     });
 
@@ -103,7 +142,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         comp.saveEditing();
 
-        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: 'USER', text: 'updated' }, expect.any(Function));
+        expect(reviewCommentService.updateCommentInContext).toHaveBeenCalledWith(7, { contentType: CommentContentType.USER, text: 'updated' }, expect.any(Function));
         expect(comp.editingCommentId()).toBe(7);
         expect(comp.editText()).toBe('updated');
     });
@@ -113,7 +152,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         comp.submitReply();
 
-        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: 'USER', text: 'reply' }, expect.any(Function));
+        expect(reviewCommentService.createReplyInContext).toHaveBeenCalledWith(1, { contentType: CommentContentType.USER, text: 'reply' }, expect.any(Function));
         expect(comp.replyText()).toBe('reply');
     });
 
@@ -165,21 +204,55 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should format user and non-user comment content', () => {
         const userComment = {
-            content: { contentType: 'USER', text: 'hello' },
+            content: { contentType: CommentContentType.USER, text: 'hello' },
         } as any;
         const nonUserComment = {
-            content: { contentType: 'CONSISTENCY_CHECK', severity: 'ERROR', category: 'CODE', text: 'msg' },
+            content: {
+                contentType: CommentContentType.CONSISTENCY_CHECK,
+                severity: ConsistencyIssue.SeverityEnum.High,
+                category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                text: 'msg',
+            },
         } as any;
 
         expect(comp.formatReviewCommentText(userComment)).toBe('hello');
-        expect(comp.formatReviewCommentText(nonUserComment)).toBe('ERROR - CODE - msg');
+        expect(comp.formatReviewCommentText(nonUserComment)).toBe('msg');
+    });
+
+    it('should detect consistency-issue thread based on first comment', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                    },
+                },
+                {
+                    id: 4,
+                    type: CommentType.USER,
+                    createdDate: '2024-01-02T00:00:00Z',
+                    content: { contentType: CommentContentType.USER, text: 'reply' },
+                },
+            ],
+        } as any);
+
+        expect(comp.isConsistencyIssueThread()).toBe(true);
+        expect(comp.firstConsistencyIssueContent()?.text).toBe('issue');
     });
 
     it('should set edit text when starting editing', () => {
         const comment = {
             id: 1,
-            type: 'USER',
-            content: { contentType: 'USER', text: 'note' },
+            type: CommentType.USER,
+            content: { contentType: CommentContentType.USER, text: 'note' },
         } as any;
 
         comp.startEditing(comment);
@@ -190,8 +263,13 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('should ignore startEditing for non-user comments', () => {
         const comment = {
             id: 2,
-            type: 'CONSISTENCY_CHECK',
-            content: { contentType: 'CONSISTENCY_CHECK', text: 'system note' },
+            type: CommentType.CONSISTENCY_CHECK,
+            content: {
+                contentType: CommentContentType.CONSISTENCY_CHECK,
+                severity: ConsistencyIssue.SeverityEnum.Low,
+                category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
+                text: 'system note',
+            },
         } as any;
 
         comp.startEditing(comment);

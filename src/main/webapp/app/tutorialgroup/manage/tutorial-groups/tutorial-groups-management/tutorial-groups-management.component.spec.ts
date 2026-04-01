@@ -16,7 +16,7 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -25,6 +25,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
+import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('TutorialGroupsManagementComponent', () => {
     setupTestBed({ zoneless: true });
@@ -82,7 +83,9 @@ describe('TutorialGroupsManagementComponent', () => {
             ),
         );
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        getOneOfCourseSpy = vi
+            .spyOn(configurationService, 'getOneOfCourse')
+            .mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
         fixture.detectChanges();
     });
 

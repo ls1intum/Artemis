@@ -1,21 +1,26 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
-import { Exercise, ExerciseMode } from '../../../support/constants';
+import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.programmingManagement.id } as any;
 
 test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-    });
-
     test.describe('Programming exercise creation', () => {
+        let createdExerciseId: number | undefined;
+
+        test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {
+            if (createdExerciseId) {
+                await login(admin);
+                await exerciseAPIRequests.deleteProgrammingExercise(createdExerciseId);
+                createdExerciseId = undefined;
+            }
+        });
+
         test('Creates a new programming exercise', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
@@ -24,13 +29,14 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await page.waitForURL('**/programming-exercises/new**');
             const exerciseTitle = 'Programming exercise ' + generateUUID();
             await programmingExerciseCreation.changeEditMode();
+            await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.C);
             await programmingExerciseCreation.setTitle(exerciseTitle);
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
-            await programmingExerciseCreation.setPackageName('de.test');
             await programmingExerciseCreation.setPoints(100);
             await programmingExerciseCreation.checkAllowOnlineEditor();
             const response = await programmingExerciseCreation.generate();
             const exercise: Exercise = await response.json();
+            createdExerciseId = exercise.id;
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });
@@ -48,6 +54,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await page.waitForLoadState('networkidle');
             await programmingExerciseCreation.changeEditMode();
 
             const firstSectionHeadline = 'General';
@@ -72,45 +79,45 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
 
         test.beforeEach('Create programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin, '/');
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course });
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
         test('Deletes an existing programming exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
+            // The beforeEach creates a C exercise (triggers builds). Under CI load,
+            // the setup + deletion + verification exceeds the 60s fast-test timeout.
+            test.setTimeout(180000);
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.deleteProgrammingExercise(exercise);
-            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached();
+            // Deletion of a C programming exercise can take > 30s under CI parallel load
+            // (LocalCI must process pending builds and clean up repositories).
+            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 90000 });
         });
     });
 
     test.describe('Programming exercise team creation', () => {
         let exercise: ProgrammingExercise;
 
-        test.beforeEach('Add course participants', async ({ login, courseManagementAPIRequests }) => {
-            await login(admin);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-            await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        });
+        // Users are pre-enrolled via seed data (user_groups.csv)
 
         test.beforeEach('Setup team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
             const teamAssignmentConfig = { minTeamSize: 2, maxTeamSize: 3 };
             exercise = await exerciseAPIRequests.createProgrammingExercise({
                 course,
+                programmingLanguage: ProgrammingLanguage.C,
                 mode: ExerciseMode.TEAM,
                 teamAssignmentConfig,
             });
         });
 
-        test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExercisesOfCourse(course.id!);
+        test('Create an exercise team', async ({ login, page, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
+            // The beforeEach creates a C programming exercise (triggers builds).
+            // Under CI parallel load, the combined setup + team creation + verification
+            // can exceed the 60s fast-test timeout.
+            test.setTimeout(600000);
+            await login(instructor, `/course-management/${course.id}/exercises`);
             await courseManagementExercises.openExerciseTeams(exercise.id!);
             await page.getByRole('table').waitFor({ state: 'visible' });
             await exerciseTeams.createTeam();
@@ -142,7 +149,5 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

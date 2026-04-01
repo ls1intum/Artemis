@@ -20,7 +20,7 @@ export class GitExerciseParticipation {
         sshAlgorithm: SshEncryptionAlgorithm = SshEncryptionAlgorithm.ed25519,
     ) {
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
-        let repoUrl = await programmingExerciseOverview.copyCloneUrl();
+        let repoUrl = await programmingExerciseOverview.copyCloneUrl(cloneMethod);
         await programmingExerciseOverview.getCodeButton().click();
 
         if (cloneMethod === GitCloneMethod.https) {

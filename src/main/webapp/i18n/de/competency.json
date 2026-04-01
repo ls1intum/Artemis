@@ -40,6 +40,8 @@
             },
             "manage": {
                 "title": "Kompetenzmanagement",
+                "search": "Kompetenzen suchen",
+                "noSearchResults": "Keine Kompetenzen entsprechen deiner Suche",
                 "importButton": "Kompetenzen importieren",
                 "importFromCoursesButton": "Aus anderen Kursen importieren",
                 "importAllButton": "Alle Kompetenzen eines Kurses importieren",
@@ -142,7 +144,6 @@
                 "connectedLectureUnits": "Verbundene Vorlesungsinhalte",
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungsinhalte sind mit der Kompetenz verbunden:",
                 "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Fortschritt)",
-                "ringsTooltipHideProgress": "Du hast dein Verständnis dieser Kompetenz noch nicht bewertet. Bitte bewerte es, um deinen Fortschritt zu sehen.",
                 "exerciseNote": "Bitte beachte, dass bei Aufgaben immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
                 "delete": {
                     "question": "Willst du wirklich die Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
@@ -371,6 +372,8 @@
                     "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
                 },
+                "search": "Voraussetzungen suchen",
+                "noSearchResults": "Keine Voraussetzungen entsprechen deiner Suche",
                 "importAllButton": "Alle Voraussetzungen eines Kurses importieren",
                 "importStandardizedButton": "Standardisierte Kompetenzen importieren",
                 "empty": "Es existieren keine Voraussetzungen für diesen Kurs"

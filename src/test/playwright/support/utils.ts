@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, TIME_FORMAT } from './constants';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -10,8 +10,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
-import { CoursesPage } from './pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from './pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from './pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from './pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -21,7 +19,7 @@ import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
 import { admin, studentOne } from './users';
-import javaPartiallySuccessful from '../fixtures/exercise/programming/java/partially_successful/submission.json';
+import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from './pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from './pageobjects/assessment/ExerciseAssessmentDashboardPage';
@@ -359,7 +357,7 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
     return await context.newPage();
 }
 
@@ -393,8 +391,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
-    const courseList = new CoursesPage(page);
-    const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
     const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
@@ -402,8 +398,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
     const examParticipation = new ExamParticipationPage(
-        courseList,
-        courseOverview,
         examNavigation,
         examStartEnd,
         modelingExerciseEditor,
@@ -421,7 +415,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
         examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
         gracePeriod: 10,
     };
@@ -430,8 +424,9 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     switch (exerciseType) {
         case ExerciseType.PROGRAMMING:
             additionalData = {
-                submission: javaPartiallySuccessful,
+                submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                programmingLanguage: ProgrammingLanguage.C,
             };
             break;
         case ExerciseType.TEXT:
@@ -463,7 +458,7 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
 }
@@ -476,7 +471,7 @@ export async function makeExamSubmission(
  */
 export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
     if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
         console.log(`Waiting ${timeToWait}ms for exam to end...`);
         await page.waitForTimeout(timeToWait);
     }
@@ -493,7 +488,7 @@ export async function startAssessing(
     isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton();
+    await courseAssessment.clickExerciseDashboardButton(0, timeout);
     if (toggleSecondRound) {
         await exerciseAssessment.toggleSecondCorrectionRound();
     }

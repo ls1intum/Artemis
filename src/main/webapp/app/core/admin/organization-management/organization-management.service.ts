@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/core/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
@@ -15,18 +17,32 @@ export class OrganizationManagementService {
     public adminResourceUrl = 'api/core/admin/organizations';
 
     /**
-     * Send GET request to retrieve all organizations
+     * Send GET request to retrieve a paginated and filtered list of organizations
+     * @param params     the search and pagination parameters including search term, page, and page size
+     * @param withCounts whether to include aggregated user/course counts (default: false);
+     *                   pass true to include user/course count data
+     * @returns an observable emitting a pageable result containing the matching organizations and total element count
      */
-    getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.adminResourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
-    }
-
-    /**
-     * Send GET request to retrieve the number of users and courses of
-     * all organizations
-     */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
-        return this.http.get<OrganizationCountDto[]>(this.adminResourceUrl + '/count-all');
+    getOrganizations(params: SearchTermPageableSearch, withCounts = false): Observable<PageableResult<Organization>> {
+        return this.http
+            .get<Organization[]>(this.adminResourceUrl, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                    withCounts,
+                },
+                observe: 'response',
+            })
+            .pipe(
+                tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+                map((res) => ({
+                    content: res.body ?? [],
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
     }
 
     /**
@@ -35,15 +51,6 @@ export class OrganizationManagementService {
      */
     getOrganizationById(organizationId: number): Observable<Organization> {
         return this.http.get(`${this.adminResourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
-    }
-
-    /**
-     * Send GET request to retrieve an organization by Id with
-     * its list of users and courses
-     * @param organizationId
-     */
-    getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.adminResourceUrl}/${organizationId}/full`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -102,6 +109,48 @@ export class OrganizationManagementService {
      */
     addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Send GET request to retrieve a paginated list of users belonging to an organization
+     * @param organizationId the id of the organization
+     * @param params         the search and pagination parameters
+     * @returns an observable emitting a pageable result containing the matching users and total element count
+     */
+    getOrganizationUsers(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<User>> {
+        return this.http
+            .get<User[]>(`${this.adminResourceUrl}/${organizationId}/users`, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                },
+                observe: 'response',
+            })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * Send GET request to retrieve a paginated list of courses belonging to an organization
+     * @param organizationId the id of the organization
+     * @param params         the search and pagination parameters
+     * @returns an observable emitting a pageable result containing the matching courses and total element count
+     */
+    getOrganizationCourses(organizationId: number, params: SearchTermPageableSearch): Observable<PageableResult<Course>> {
+        return this.http
+            .get<Course[]>(`${this.adminResourceUrl}/${organizationId}/courses`, {
+                params: {
+                    page: params.page,
+                    pageSize: params.pageSize,
+                    sortingOrder: params.sortingOrder,
+                    sortedColumn: params.sortedColumn,
+                    searchTerm: params.searchTerm,
+                },
+                observe: 'response',
+            })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

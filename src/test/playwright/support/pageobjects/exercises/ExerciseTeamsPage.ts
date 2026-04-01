@@ -35,14 +35,107 @@ export class ExerciseTeamsPage {
     }
 
     /**
+     * Searches for a tutor via the owner typeahead.
+     *
+     * The tutor typeahead (team-owner-search) uses switchMap WITHOUT debounce.
+     * Every keystroke cancels the previous in-flight HTTP. Under heavy parallel
+     * test load, the server can take 10-30s to respond, so the final HTTP from
+     * the last keystroke may not complete within the test timeout.
+     *
+     * Solution: pre-fetch the tutor list via Playwright's request API (a single
+     * HTTP call not subject to switchMap cancellation), then install a page.route()
+     * intercept that serves the cached response instantly to all typeahead requests.
+     * This makes the typeahead popup appear immediately after typing.
+     */
+    private async searchTutor(inputLocator: ReturnType<Page['locator']>, username: string) {
+        const listbox = this.page.getByRole('listbox');
+
+        // Pre-fetch tutor data and install route intercept for instant responses
+        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
+        const courseId = courseIdMatch?.[1];
+        let routeInstalled = false;
+
+        if (courseId) {
+            try {
+                const apiResponse = await this.page.request.get(`api/core/courses/${courseId}/tutors`);
+                if (apiResponse.ok()) {
+                    const body = await apiResponse.body();
+                    const routePattern = `**/api/core/courses/${courseId}/tutors`;
+                    await this.page.route(routePattern, (route) => route.fulfill({ status: 200, contentType: 'application/json', body }));
+                    routeInstalled = true;
+                }
+            } catch {
+                // Pre-fetch failed; fall through to normal typeahead behavior
+            }
+        }
+
+        try {
+            // Retry with different input strategies — fill() can fail to trigger
+            // Angular's typeahead if change detection doesn't pick up the event.
+            for (let attempt = 0; attempt < 3; attempt++) {
+                if (attempt > 0) {
+                    await this.page.waitForTimeout(500);
+                    await inputLocator.clear();
+                }
+                // First attempt: fill() (fast). Subsequent: pressSequentially (reliable).
+                if (attempt === 0) {
+                    await inputLocator.fill(username);
+                } else {
+                    await inputLocator.click();
+                    await inputLocator.pressSequentially(username, { delay: 50 });
+                }
+                try {
+                    await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                    const option = listbox.getByText(new RegExp(username, 'i')).first();
+                    await option.waitFor({ state: 'visible', timeout: 5000 });
+                    await option.click();
+                    break;
+                } catch {
+                    if (attempt === 2) throw new Error(`Tutor search autocomplete did not appear after 3 attempts for '${username}'`);
+                }
+            }
+        } finally {
+            if (routeInstalled && courseId) {
+                await this.page.unroute(`**/api/core/courses/${courseId}/tutors`);
+            }
+        }
+    }
+
+    /**
+     * Searches for a student via the student typeahead.
+     * The student typeahead uses debounceTime(200) which coalesces keystrokes
+     * into a single HTTP request after typing stops, so pressSequentially is safe.
+     */
+    private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
+        const listbox = this.page.getByRole('listbox');
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) {
+                await this.page.waitForTimeout(500);
+            }
+
+            await inputLocator.click();
+            await inputLocator.fill('');
+            await this.page.waitForTimeout(300);
+            await inputLocator.pressSequentially(username, { delay: 100 });
+
+            try {
+                await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                const option = listbox.getByText(new RegExp(username, 'i')).first();
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`Student search autocomplete did not appear after 3 attempts for '${username}'`);
+            }
+        }
+    }
+
+    /**
      * Sets the team owner/tutor.
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        const tutorSearchInput = this.page.locator('#owner-search-input');
-        await tutorSearchInput.fill(username);
-        await this.page.getByRole('listbox').waitFor({ state: 'visible' });
-        await tutorSearchInput.press('Enter');
+        await this.searchTutor(this.page.locator('#owner-search-input'), username);
     }
 
     /**
@@ -50,10 +143,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        const studentSearchInput = this.page.locator('#student-search-input');
-        await studentSearchInput.fill(username);
-        await this.page.getByRole('listbox').waitFor({ state: 'visible' });
-        await studentSearchInput.press('Enter');
+        await this.searchStudent(this.page.locator('#student-search-input'), username);
     }
 
     /**

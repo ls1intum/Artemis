@@ -22,7 +22,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupsTableComponent } from 'app/tutorialgroup/shared/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -111,7 +112,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                     });
                     this.tutorialGroups = tutorialGroups;
 
-                    this.configuration = configurationRes.body!;
+                    this.configuration = tutorialGroupsConfigurationEntityFromDto(configurationRes.body!);
                     if (this.configuration.tutorialGroupFreePeriods) {
                         this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
                     }

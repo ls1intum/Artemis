@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLExerciseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToExerciseRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
@@ -58,8 +59,9 @@ class AtlasMLDtoTest {
         assertThat(back.getDescription()).isEqualTo("d");
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
-    void testAtlasMLCompetencyDTO_nullMapping() throws JsonProcessingException {
+    void testAtlasMLCompetencyDTO_nullMapping() {
         AtlasMLCompetencyDTO fromNull = AtlasMLCompetencyDTO.fromDomain(null);
         assertThat(fromNull).isNull();
 
@@ -103,6 +105,7 @@ class AtlasMLDtoTest {
         assertThat(mapped.getType()).isEqualTo(RelationType.EXTENDS);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     void testAtlasMLCompetencyRelationDTO_defaultsAndInvalids() {
         // fromDomain null
@@ -165,11 +168,21 @@ class AtlasMLDtoTest {
         SuggestCompetencyResponseDTO resp = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "t", "d", 2L)));
         List<Competency> comps = resp.toDomainCompetencies();
         assertThat(comps).hasSize(1);
-        assertThat(comps.get(0).getTitle()).isEqualTo("t");
+        assertThat(comps.getFirst().getTitle()).isEqualTo("t");
 
         SuggestCompetencyRelationsResponseDTO rels = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
         List<CompetencyRelation> mapped = rels.toDomainRelations();
         assertThat(mapped).hasSize(1);
-        assertThat(mapped.get(0).getType()).isEqualTo(RelationType.ASSUMES);
+        assertThat(mapped.getFirst().getType()).isEqualTo(RelationType.ASSUMES);
+    }
+
+    @Test
+    void testMapCompetencyToExerciseRequestDTO_jsonRoundTrip() throws JsonProcessingException {
+        MapCompetencyToExerciseRequestDTO dto = new MapCompetencyToExerciseRequestDTO(10L, 5L);
+        String json = objectMapper.writeValueAsString(dto);
+        assertThat(json).contains("exercise_id").contains("competency_id");
+        MapCompetencyToExerciseRequestDTO back = objectMapper.readValue(json, MapCompetencyToExerciseRequestDTO.class);
+        assertThat(back.exerciseId()).isEqualTo(10L);
+        assertThat(back.competencyId()).isEqualTo(5L);
     }
 }

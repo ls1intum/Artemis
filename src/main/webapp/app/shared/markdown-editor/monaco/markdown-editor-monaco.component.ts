@@ -21,8 +21,10 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
@@ -37,7 +39,7 @@ import {
     NgbNavOutlet,
     NgbTooltip,
 } from '@ng-bootstrap/ng-bootstrap';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorAction, TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
@@ -77,6 +79,7 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Tag } from 'primeng/tag';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -84,11 +87,7 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
@@ -105,6 +104,7 @@ export enum MarkdownEditorHeight {
 }
 
 interface MarkdownActionsByGroup {
+    style: TextStyleTextEditorAction[];
     standard: TextEditorAction[];
     header: HeadingAction[];
     color?: ColorAction;
@@ -169,11 +169,11 @@ const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
@@ -280,7 +280,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
@@ -330,6 +329,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
@@ -361,6 +361,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
+        style: [],
         standard: [],
         header: [],
         color: undefined,
@@ -369,6 +370,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -452,19 +455,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Renders consistency issues inside the editor.
+     * Renders review comment widgets inside the editor.
      */
     protected renderEditorWidgets() {
-        const issues = this.consistencyIssues();
-
         // Bail out until the editor is ready
         if (!this.monacoEditor) {
             return;
         }
 
-        // Keep review comment widgets stable while refreshing consistency issue widgets.
-        this.monacoEditor.disposeWidgetsByPrefix('comment-');
-        addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
         if (this.enableExerciseReviewComments()) {
             // Avoid tracking UI-only signals (e.g. showLocationWarning) as rerender dependencies.
             untracked(() => this.getReviewCommentManager()?.renderWidgets());
@@ -480,7 +478,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            standard: this.filterDisplayedActions(this.defaultActions),
+            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
@@ -560,8 +559,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        // Set up selection change listener for inline comments/refinement
+
+        if (this.isInCommunication()) {
+            this.showTextStyleActions.set(false);
+        }
+
+        // Set up selection change listener for inline comments/refinement and hiding/showing actions in communication mode
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (this.isInCommunication()) {
+                this.updateEditorActionsVisibility(selection);
+            }
             if (selection) {
                 // Get selected text for inline refinement
                 const model = this.monacoEditor.getModel();
@@ -668,6 +675,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Hides actions that are not applicable in the given context, and shows actions that can be used.
+     * @param selection Currently selected text
+     */
+    updateEditorActionsVisibility(selection: EditorRange | undefined): void {
+        const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
+        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+            return;
+        }
+        this.showTextStyleActions.set(!isEmpty);
+        this.showNonTextStyleActions.set(isEmpty);
+    }
+
+    /**
      * Called when the user moves the resize handle.
      * @param event The drag event caused by the user moving the resize handle.
      */
@@ -730,6 +750,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Called when a nav tab is shown. Adjusts editor dimensions and focuses the editor if the edit tab is active.
+     */
+    onTabShown(): void {
+        if (this.inEditMode) {
+            this.adjustEditorDimensions();
+            this.monacoEditor.focus();
+        }
+    }
+
+    /**
      * Called when the user changes the active tab. If the preview tab is selected, emits the onPreviewSelect event.
      * @param event The event that contains the new active tab.
      */
@@ -738,8 +768,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inVisualMode = event.nextId === this.TAB_VISUAL;
         this.inEditMode = event.nextId === this.TAB_EDIT;
         if (this.inEditMode) {
-            this.adjustEditorDimensions();
-            this.monacoEditor.focus();
             this.onEditSelect.emit();
         } else if (this.inPreviewMode) {
             this.onPreviewSelect.emit();
@@ -935,6 +963,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 filterThread: (thread) => this.isProblemStatementThread(thread),
                 getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
             });
         }

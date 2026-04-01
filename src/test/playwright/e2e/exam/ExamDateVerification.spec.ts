@@ -1,20 +1,27 @@
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam date verification', { tag: '@fast' }, () => {
-    let course: Course;
     let examTitle: string;
+    let exam: any;
 
-    test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
+    test.beforeEach(async ({ login }) => {
         await login(admin);
         examTitle = 'exam' + generateUUID();
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+    });
+
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        if (exam) {
+            await examAPIRequests.deleteExam(exam);
+            exam = undefined;
+        }
     });
 
     test.describe('Exam timing', () => {
@@ -26,11 +33,13 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().add(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             await login(studentOne);
             await page.goto(`/courses`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(examTitle)).not.toBeVisible();
             await page.goto(`/courses/${course.id}`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(examTitle)).not.toBeVisible();
         });
 
@@ -42,10 +51,11 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().add(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
+            await page.waitForLoadState('networkidle');
             await courseOverview.openExamsTab();
             await page.waitForURL(`**/exams/${exam.id}`);
         });
@@ -67,16 +77,13 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().subtract(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
-            await login(studentOne);
-            await page.goto(`/courses/${course.id}/exams`);
-            await courseOverview.openExamsTab();
-            await courseOverview.openExam(exam.title!);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
@@ -97,7 +104,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
-            const examEnd = dayjs().add(10, 'seconds');
+            const examEnd = dayjs().add(15, 'seconds');
             const examConfig = {
                 course,
                 title: examTitle,
@@ -105,7 +112,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().subtract(2, 'days'),
                 endDate: examEnd,
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
@@ -113,6 +120,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+            await page.waitForLoadState('networkidle');
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
@@ -122,14 +130,10 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             if (examEnd.isAfter(dayjs())) {
-                await page.waitForTimeout(examEnd.diff(dayjs()));
+                await page.waitForTimeout(examEnd.diff(dayjs()) + 2000);
             }
             await examParticipation.checkExamFinishedTitle(exam.title!);
             await examStartEnd.finishExam();
         });
-    });
-
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

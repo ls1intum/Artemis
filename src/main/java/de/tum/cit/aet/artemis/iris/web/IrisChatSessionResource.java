@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
+// TODO: REFACTORING ASLAN
 /**
  * REST controller for managing {@link IrisChatSession}.
  * Provides endpoints for session CRUD operations, chat history sidebar, and user-global operations.
@@ -176,7 +178,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
+    public ResponseEntity<IrisChatSessionResponseDTO> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
 
         if (irisSession == null) {
@@ -188,6 +190,8 @@ public class IrisChatSessionResource {
         boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
+            irisSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(irisSession.getMessages()));
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages((IrisChatSession) irisSession));
             if (!(irisSession instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Session is not a chat session");
             }
