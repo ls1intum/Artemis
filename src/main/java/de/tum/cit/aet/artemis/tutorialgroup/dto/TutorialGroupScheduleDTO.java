@@ -21,6 +21,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd,
         @NotNull @Range(min = 1, max = 48) Integer repetitionFrequency, @NotNull LocalDate tutorialPeriodEnd, @NotNull @Size(min = 1, max = 255) String location) {
 
+    /**
+     * Validates that the tutorial period end is at most 2 years after the first session start.
+     *
+     * @throws BadRequestException if the tutorial period end is more than 2 years after the first session start
+     */
     public void validateMaximumTutorialPeriodLength() {
         if (firstSessionStart == null || tutorialPeriodEnd == null)
             return;
