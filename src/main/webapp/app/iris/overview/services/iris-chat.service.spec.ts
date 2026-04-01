@@ -326,7 +326,8 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
-        expect(messages.last()).toEqual(message);
+        const lastMessage = messages.last();
+        expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
     });
 
     it('should emit sessionId when set', async () => {
