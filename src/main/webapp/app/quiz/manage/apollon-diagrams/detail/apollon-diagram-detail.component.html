@@ -22,7 +22,7 @@
     @if (apollonDiagram()) {
         <div class="form-group mb-3">
             <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title"></label>
-            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram().title" />
+            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram()!.title" />
         </div>
     }
     <div #editorContainer style="width: 100%; height: calc(100vh - 400px); display: flex; flex: 1"></div>
