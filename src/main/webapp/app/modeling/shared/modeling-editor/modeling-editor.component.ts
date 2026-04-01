@@ -32,6 +32,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     showHelpButton = input(true);
     withExplanation = input(false);
+    scrollLock = input(false);
     savedStatus = input<{
         isChanged?: boolean;
         isSaving?: boolean;
@@ -118,7 +119,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 model: umlModel,
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly(),
-                scrollLock: true,
+                scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
             });

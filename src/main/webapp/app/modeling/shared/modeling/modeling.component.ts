@@ -32,7 +32,7 @@ export abstract class ModelingComponent implements OnDestroy {
         if (resizeOptions && resizeContainer) {
             this.interactable = interact(resizeContainer)
                 .resizable({
-                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize, top: false },
+                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize && '.draggable-bottom', top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
                             min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
