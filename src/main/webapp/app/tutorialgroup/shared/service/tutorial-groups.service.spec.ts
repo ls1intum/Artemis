@@ -73,9 +73,9 @@ describe('TutorialGroupService', () => {
             title: 'Tutorial 1',
             language: 'English',
             isOnline: false,
-            teachingAssistantName: 'Ada Lovelace',
-            teachingAssistantLogin: 'ada',
-            teachingAssistantImageUrl: 'https://example.org/ada.png',
+            tutorName: 'Ada Lovelace',
+            tutorLogin: 'ada',
+            tutorImageUrl: 'https://example.org/ada.png',
             capacity: 15,
             campus: 'Garching',
             groupChannelId: 21,
@@ -104,9 +104,9 @@ describe('TutorialGroupService', () => {
             title: returnedFromService.title,
             language: returnedFromService.language,
             isOnline: returnedFromService.isOnline,
-            teachingAssistantName: returnedFromService.teachingAssistantName,
-            teachingAssistantLogin: returnedFromService.teachingAssistantLogin,
-            teachingAssistantImageUrl: returnedFromService.teachingAssistantImageUrl,
+            tutorName: returnedFromService.tutorName,
+            tutorLogin: returnedFromService.tutorLogin,
+            tutorImageUrl: returnedFromService.tutorImageUrl,
             capacity: returnedFromService.capacity,
             campus: returnedFromService.campus,
             groupChannelId: returnedFromService.groupChannelId,
@@ -215,7 +215,7 @@ describe('TutorialGroupService', () => {
         let result: any;
 
         service
-            .registerMultipleStudents(1, 1, [returnedFromService])
+            .importRegistrations(1, 1, [returnedFromService])
             .pipe(
                 take(1),
                 map((resp) => resp.body),

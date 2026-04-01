@@ -1,25 +1,26 @@
-<!-- Action buttons: Only show when no filter is active -->
-@if (!showResults()) {
-    <!-- Action button: Ask Iris (index 0) - Placeholder -->
+<!-- Action button: Ask Iris AI (visible when iris enabled and split view not already open, index 0) -->
+@if (irisEnabled && !irisOpen()) {
     <div #selectableItem>
         <jhi-global-search-action-item
-            [title]="'global.search.actions.askIrisTitle' | artemisTranslate"
-            [description]="'global.search.actions.askIrisDescription' | artemisTranslate"
+            [title]="'global.search.askIris' | artemisTranslate"
+            [description]="'global.search.askIrisDescription' | artemisTranslate"
             [selected]="selectedIndex() === 0"
-            accentColor="var(--bs-primary)"
-            secondaryAccentColor="var(--bs-info)"
+            accentColor="var(--global-search-iris-accent)"
+            secondaryAccentColor="var(--global-search-iris-accent-secondary)"
             (clicked)="viewSelected.emit(SearchView.Iris)"
         >
-            <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
+            <jhi-iris-logo slot="icon" [size]="IrisLogoSize.TEXT" aria-hidden="true" />
         </jhi-global-search-action-item>
     </div>
+}
 
-    <!-- Action button: Search Lecture Content (index 1) - Placeholder -->
+<!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
+@if (irisEnabled && showLectureButton()) {
     <div #selectableItem>
         <jhi-global-search-action-item
             [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
             [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
-            [selected]="selectedIndex() === 1"
+            [selected]="selectedIndex() === (irisOpen() ? 0 : 1)"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
             (clicked)="viewSelected.emit(SearchView.Lecture)"
@@ -45,7 +46,7 @@
                     <jhi-global-search-result-item
                         [result]="result"
                         [icon]="getIconForType(result.type, result.badge)"
-                        [isSelected]="selectedIndex() === i"
+                        [isSelected]="selectedIndex() === actionButtonCount() + i"
                         (resultClick)="navigateToResult($event)"
                     />
                 </div>
@@ -82,7 +83,7 @@
     <div class="entity-list mt-3">
         @for (entity of searchableEntities; track entity.id; let i = $index) {
             <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === NAV_ACTION_COUNT + i" (entityClick)="onEntityItemClick($event)" />
+                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === actionButtonCount() + i" (entityClick)="onEntityItemClick($event)" />
             </div>
         }
     </div>

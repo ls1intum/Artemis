@@ -63,7 +63,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         UpdateFaqDTO update = new UpdateFaqDTO(faq.getId(), "t", "a", Set.of("TestForbidden"), FaqState.PROPOSED);
         request.putWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + update.id(), update, FaqDTO.class, HttpStatus.FORBIDDEN);
         request.delete("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
-        request.put("/api/communication/courses/" + course1.getId() + "/faqs/enable", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -239,15 +238,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testEnableFaq() throws Exception {
-        disableFaq(course1);
-        enableFaqRESTCall(course1);
-        Course updatedCourse = courseRepository.findByIdElseThrow(course1.getId());
-        assertThat(updatedCourse.isFaqEnabled()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getFaqs_shouldReturnFaqsSortedByCreationDateDescending() throws Exception {
         Faq faq1 = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "SortTest1", "answer1");
         faqRepository.save(faq1);
@@ -269,16 +259,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdFaqs.get(0).questionTitle()).isEqualTo("SortTest3"); // Newest
         assertThat(createdFaqs.get(1).questionTitle()).isEqualTo("SortTest2");
         assertThat(createdFaqs.get(2).questionTitle()).isEqualTo("SortTest1"); // Oldest
-    }
-
-    private void disableFaq(Course course) {
-        course = courseRepository.findByIdElseThrow(course.getId());
-        course.setFaqEnabled(false);
-        courseRepository.save(course);
-    }
-
-    private void enableFaqRESTCall(Course course) throws Exception {
-        request.put("/api/communication/courses/" + course.getId() + "/faqs/enable", null, HttpStatus.OK);
     }
 
 }
