@@ -6,8 +6,8 @@
     <!-- Migrate ILLEGAL submission types to OTHER before removing the enum value -->
     <changeSet id="20260330120000-1" author="artemis">
         <update tableName="submission">
-            <column name="submission_type" value="OTHER"/>
-            <where>submission_type = 'ILLEGAL'</where>
+            <column name="jhi_type" value="OTHER"/>
+            <where>jhi_type = 'ILLEGAL'</where>
         </update>
     </changeSet>
 
