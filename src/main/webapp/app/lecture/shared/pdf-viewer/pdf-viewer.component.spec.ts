@@ -113,7 +113,9 @@ describe('PdfViewerComponent', () => {
                 expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeFalsy();
 
                 // Simulate PDF loading completion
-                fullscreenService.setIframeLoading(false);
+                sendIframeMessage('ready');
+                fixture.detectChanges();
+                sendIframeMessage('pagesLoaded', { pagesCount: 10, url: 'test.pdf' });
                 fixture.detectChanges();
 
                 // Footer should now be visible
@@ -185,27 +187,23 @@ describe('PdfViewerComponent', () => {
         });
 
         it('should keep loading spinner visible until PDF is loaded in fullscreen mode', () => {
-            const setLoadingSpy = vi.spyOn(fullscreenService, 'setIframeLoading');
-
             // Open fullscreen → spinner visible
             fullscreenService.open('test.pdf', 1, undefined, undefined);
             fixture.detectChanges();
-            expect(fullscreenService.iframeLoading()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
 
             // Iframe sends 'ready' → spinner should STILL be visible
             sendIframeMessage('ready');
             fixture.detectChanges();
 
             expect(component.iframeReady()).toBe(true);
-            expect(setLoadingSpy).not.toHaveBeenCalledWith(false); // Spinner not hidden yet
-            expect(fullscreenService.iframeLoading()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
 
             // PDF loads, iframe sends 'pagesLoaded' → NOW spinner should hide
             sendIframeMessage('pagesLoaded', { pagesCount: 10, url: 'test.pdf' });
             fixture.detectChanges();
 
-            expect(setLoadingSpy).toHaveBeenCalledWith(false);
-            expect(fullscreenService.iframeLoading()).toBe(false);
+            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
         });
     });
 });

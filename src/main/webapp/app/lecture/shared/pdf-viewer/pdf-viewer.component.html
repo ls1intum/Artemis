@@ -28,13 +28,7 @@
                 </div>
             }
 
-            <iframe
-                #pdfIframe
-                [src]="iframeSrc() | safeResourceUrl"
-                class="pdf-iframe"
-                [class.pdf-iframe--loading]="isLoading()"
-                [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"
-            ></iframe>
+            <iframe #pdfIframe [src]="iframeSrc() | safeResourceUrl" class="pdf-iframe" [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"></iframe>
 
             @if (!isLoading()) {
                 <ng-container *ngTemplateOutlet="footerTemplate" />

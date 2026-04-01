@@ -444,6 +444,7 @@ public class FileResource {
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
      * @param attachmentName the filename of the file
+     * @param requestHeaders request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
@@ -516,6 +517,7 @@ public class FileResource {
      * Accesses to this endpoint are created by the server itself in the FilePathService
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
@@ -542,6 +544,7 @@ public class FileResource {
      *
      * @param courseId              The ID of the course that the Attachment belongs to
      * @param attachmentVideoUnitId the ID of the attachment to retrieve
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
@@ -562,8 +565,9 @@ public class FileResource {
      * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
      * given attachment ID as a downloadable resource
      *
-     * @param courseId     The ID of the course that the Attachment belongs to
-     * @param attachmentId the ID of the attachment to retrieve
+     * @param courseId       The ID of the course that the Attachment belongs to
+     * @param attachmentId   the ID of the attachment to retrieve
+     * @param requestHeaders request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
@@ -653,6 +657,7 @@ public class FileResource {
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
@@ -748,9 +753,11 @@ public class FileResource {
             return response.body(rangeBytes);
         }
         catch (IOException ex) {
+            log.error("Failed to serve PDF range request", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         catch (RuntimeException ex) {
+            log.warn("Range request failed, falling back to full response", ex);
             return buildFileResponse(path, filename, replaceFilename, cacheDays);
         }
     }

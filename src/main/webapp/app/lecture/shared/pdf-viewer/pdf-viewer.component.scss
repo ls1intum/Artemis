@@ -71,12 +71,6 @@
     .pdf-fullscreen-window & {
         flex: 1;
     }
-
-    // Hide iframe while loading in fullscreen mode (keep in DOM for postMessage)
-    &.pdf-iframe--loading {
-        opacity: 0;
-        pointer-events: none;
-    }
 }
 
 .pdf-viewer-footer {

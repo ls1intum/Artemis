@@ -26,7 +26,7 @@ export class CourseNotificationWebsocketService implements OnDestroy {
 
     private courseWebsocketSubscriptions: Record<number, Subscription> = {};
     private websocketNotificationSubject = new Subject<CourseNotification>();
-    private userSubscription: Subscription;
+    private userSubscription: Subscription | undefined;
     private coursesSubscription: Subscription | undefined = undefined;
 
     private currentUser: User | undefined;
@@ -34,6 +34,10 @@ export class CourseNotificationWebsocketService implements OnDestroy {
     public websocketNotification$ = this.websocketNotificationSubject.asObservable();
 
     constructor() {
+        if (window.location.pathname.includes('/pdf-viewer-iframe')) {
+            return;
+        }
+
         this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
             if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
                 this.currentUser = user;
@@ -49,7 +53,7 @@ export class CourseNotificationWebsocketService implements OnDestroy {
      */
     ngOnDestroy(): void {
         this.cleanupSubscriptions();
-        this.userSubscription.unsubscribe();
+        this.userSubscription?.unsubscribe();
     }
 
     /**

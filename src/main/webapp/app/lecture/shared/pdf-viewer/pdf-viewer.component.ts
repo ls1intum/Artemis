@@ -76,8 +76,8 @@ export class PdfViewerComponent {
 
     readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
 
-    // Unified loading state
-    protected readonly isLoading = computed(() => (this.mode() === 'fullscreen' ? this.fullscreenService.iframeLoading() : false));
+    // Shared loading state for both modes
+    protected readonly isLoading = signal(false);
 
     // For fullscreen mode
     readonly fullscreenMetadata = this.fullscreenService.fullscreenMetadata;
@@ -116,6 +116,18 @@ export class PdfViewerComponent {
             const pdfUrl = this.pdfUrl();
             if (pdfUrl) {
                 this.loadPdf(pdfUrl, this.initialPage() ?? 1);
+            }
+        });
+
+        // Show loading state whenever a fullscreen PDF is opened.
+        effect(() => {
+            if (this.mode() !== 'fullscreen') {
+                return;
+            }
+
+            const { isOpen, pdfUrl } = this.fullscreenService.fullscreenMetadata();
+            if (isOpen && pdfUrl) {
+                this.isLoading.set(true);
             }
         });
 
@@ -172,6 +184,7 @@ export class PdfViewerComponent {
         if (this.mode() === 'fullscreen') {
             this.fullscreenService.close();
             this.iframeReady.set(false);
+            this.isLoading.set(false);
         }
     }
 
@@ -232,25 +245,21 @@ export class PdfViewerComponent {
 
         // Handle pagesLoaded - both modes need this to hide the loading spinner
         if (type === 'pagesLoaded') {
+            this.isLoading.set(false);
             if (mode === 'embedded') {
                 this.pagesLoaded.emit({
                     pdfUrl: data?.url ?? this.pdfUrl() ?? '',
                     pagesCount: data?.pagesCount ?? 0,
                 });
-            } else {
-                // Fullscreen mode: hide spinner when PDF is loaded
-                this.fullscreenService.setIframeLoading(false);
             }
             return;
         }
 
         // Handle pdfLoadError
         if (type === 'pdfLoadError') {
+            this.isLoading.set(false);
             if (mode === 'embedded') {
                 this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
-            } else {
-                // Fullscreen mode: hide spinner on error
-                this.fullscreenService.setIframeLoading(false);
             }
             return;
         }
@@ -291,6 +300,7 @@ export class PdfViewerComponent {
 
     private loadPdf(url: string, page: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
+        this.isLoading.set(true);
 
         this.postMessageToIframe('loadPDF', {
             url,
