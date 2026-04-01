@@ -44,7 +44,7 @@ export default function ComparePage(): ReactNode {
             <main className={styles.compareMain}>
                 <HeroSection />
                 <HighlightCards cards={highlightCards} />
-                <div ref={sentinelRef} aria-hidden="true" />
+                <div ref={sentinelRef} aria-hidden="true" style={{ height: '1px', marginTop: '-1px' }} />
                 <PlatformSelector selected={selected} onChange={handlePlatformChange} isSticky={isSticky} />
                 <ComparisonTable platforms={visiblePlatforms} categories={featureCategories} />
             </main>

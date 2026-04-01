@@ -1,6 +1,6 @@
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, #0065bd 0%, #003359 100%);
+    background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-darker) 100%);
     color: white;
     padding: 40px 32px;
     text-align: center;
@@ -86,7 +86,7 @@
 .artemisName {
     font-weight: 700;
     font-size: 16px;
-    color: #0065bd;
+    color: var(--ifm-color-primary);
 }
 
 .platformSelect {
@@ -153,6 +153,13 @@
     text-align: center;
 }
 
+/* Support Badge Colors */
+:root {
+    --lms-support-color: #4a8c00;
+    --lms-partial-color: #c47a20;
+    --lms-none-color: #999;
+}
+
 /* Support Badge */
 .badge {
     display: inline-flex;
@@ -166,15 +173,15 @@
 }
 
 .supportSupported {
-    color: #4a8c00;
+    color: var(--lms-support-color);
 }
 
 .supportPartial {
-    color: #c47a20;
+    color: var(--lms-partial-color);
 }
 
 .supportNone {
-    color: #999;
+    color: var(--lms-none-color);
 }
 
 /* Legend */
@@ -189,32 +196,14 @@
 }
 
 /* Dark Mode */
-:global([data-theme='dark']) .hero {
-    background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
-}
-
-:global([data-theme='dark']) .heroTitle {
-    color: white;
-}
-
-:global([data-theme='dark']) .artemisName {
-    color: #5a9ed6;
-}
-
 :global([data-theme='dark']) .selectorSticky {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-:global([data-theme='dark']) .supportSupported {
-    color: #8bbe3a;
-}
-
-:global([data-theme='dark']) .supportPartial {
-    color: #e5a04d;
-}
-
-:global([data-theme='dark']) .supportNone {
-    color: #777;
+:global([data-theme='dark']) :root {
+    --lms-support-color: #8bbe3a;
+    --lms-partial-color: #e5a04d;
+    --lms-none-color: #777;
 }
 
 /* Responsive */

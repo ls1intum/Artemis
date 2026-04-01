@@ -19,10 +19,12 @@ interface SupportBadgeProps {
 export default function SupportBadge({ level, note }: SupportBadgeProps): ReactNode {
     const { icon, label, className } = config[level];
 
+    const displayText = note ?? label;
+
     return (
-        <span className={`${styles.badge} ${className}`} title={note}>
-            <FontAwesomeIcon icon={icon} />
-            <span className={styles.badgeLabel}>{note ?? label}</span>
+        <span className={`${styles.badge} ${className}`} title={note} aria-label={note ? `${label}: ${note}` : label}>
+            <FontAwesomeIcon icon={icon} aria-hidden="true" />
+            <span className={styles.badgeLabel}>{displayText}</span>
         </span>
     );
 }
