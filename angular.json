@@ -121,22 +121,7 @@
                 "output": "vs"
               },
               {
-                "glob": "*.min.mjs",
-                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
-                "output": "assets/ngx-extended-pdf-viewer"
-              },
-              {
-                "glob": "*.min.css",
-                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
-                "output": "assets/ngx-extended-pdf-viewer"
-              },
-              {
-                "glob": "locale/{en,de}/**/*",
-                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
-                "output": "assets/ngx-extended-pdf-viewer"
-              },
-              {
-                "glob": "images/**/*",
+                "glob": "**/*",
                 "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
                 "output": "assets/ngx-extended-pdf-viewer"
               }

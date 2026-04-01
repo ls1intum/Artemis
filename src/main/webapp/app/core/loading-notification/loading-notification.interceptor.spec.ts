@@ -295,4 +295,140 @@ describe('LoadingNotificationInterceptor', () => {
             });
         });
     });
+
+    describe('intercept - file and PDF requests', () => {
+        it('should not track PDF file requests', () => {
+            const request = new HttpRequest('GET', '/api/core/files/courses/1/attachments/123');
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should not track attachment requests', () => {
+            const request = new HttpRequest('GET', '/api/lecture/files/attachments/attachment-unit/456/file.pdf');
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should not track blob requests', () => {
+            const request = new HttpRequest('GET', '/api/some-endpoint', { responseType: 'blob' });
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should not track arraybuffer requests', () => {
+            const request = new HttpRequest('GET', '/api/some-endpoint', { responseType: 'arraybuffer' });
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should still track regular API requests after file request detection is added', () => {
+            const request = new HttpRequest('GET', '/api/courses/1');
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).toHaveBeenCalledOnce();
+            expect(loadingNotificationServiceMock.stopLoading).toHaveBeenCalledOnce();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should not affect activeRequests counter when mixing file and non-file requests', () => {
+            const regularRequest = new HttpRequest('GET', '/api/courses/1');
+            const fileRequest = new HttpRequest('GET', '/api/core/files/courses/1/attachments/123');
+            let completeRegularRequest: () => void = () => {};
+
+            const mockHandler1: HttpHandler = {
+                handle: () =>
+                    new Observable((observer) => {
+                        completeRegularRequest = () => {
+                            observer.next(new HttpResponse({ status: 200 }));
+                            observer.complete();
+                        };
+                    }),
+            };
+            const mockHandler2: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            // Start regular request
+            interceptor.intercept(regularRequest, mockHandler1).subscribe();
+            expect(interceptor.activeRequests).toBe(1);
+
+            // File request should not increment counter
+            interceptor.intercept(fileRequest, mockHandler2).subscribe();
+            expect(interceptor.activeRequests).toBe(1);
+
+            // Complete regular request
+            completeRegularRequest();
+            expect(interceptor.activeRequests).toBe(0);
+            expect(loadingNotificationServiceMock.stopLoading).toHaveBeenCalledOnce();
+        });
+
+        it('should handle file request errors without affecting activeRequests', () => {
+            const fileRequest = new HttpRequest('GET', '/api/core/files/courses/1/attachments/123');
+            const mockHandler: HttpHandler = {
+                handle: () => throwError(() => new Error('File not found')),
+            };
+
+            interceptor.intercept(fileRequest, mockHandler).subscribe({
+                error: () => {
+                    // Expected error
+                },
+            });
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(loadingNotificationServiceMock.stopLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should detect file requests by /files/ in URL', () => {
+            const request = new HttpRequest('GET', '/api/public/files/lectures/123/document.pdf');
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+
+        it('should detect file requests by /attachments/ in URL', () => {
+            const request = new HttpRequest('GET', '/api/attachments/789/download');
+            const mockHandler: HttpHandler = {
+                handle: () => of(new HttpResponse({ status: 200 })),
+            };
+
+            interceptor.intercept(request, mockHandler).subscribe();
+
+            expect(loadingNotificationServiceMock.startLoading).not.toHaveBeenCalled();
+            expect(interceptor.activeRequests).toBe(0);
+        });
+    });
 });

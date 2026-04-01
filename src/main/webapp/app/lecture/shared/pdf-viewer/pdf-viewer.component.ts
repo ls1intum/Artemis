@@ -1,5 +1,5 @@
 import { Location, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -46,6 +46,7 @@ export class PdfViewerComponent {
     // Services
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
+    private readonly destroyRef = inject(DestroyRef);
     protected readonly fullscreenService = inject(PdfFullscreenOverlayService);
 
     // Internal state (embedded mode only)
@@ -66,6 +67,14 @@ export class PdfViewerComponent {
 
     constructor() {
         let wasFullscreenOpen = false;
+
+        // Cleanup handler to prevent memory leaks when component is destroyed
+        this.destroyRef.onDestroy(() => {
+            if (this.mode() === 'fullscreen') {
+                this.fullscreenService.close();
+                this.iframeReady.set(false);
+            }
+        });
 
         // Load PDF when iframe ready
         effect(() => {
@@ -175,9 +184,7 @@ export class PdfViewerComponent {
         // Common handlers
         if (type === 'ready') {
             this.iframeReady.set(true);
-            if (mode === 'fullscreen') {
-                this.fullscreenService.setIframeLoading(false);
-            }
+            // Don't hide spinner yet - wait for PDF to load
             return;
         }
 
@@ -195,20 +202,36 @@ export class PdfViewerComponent {
             return;
         }
 
+        // Handle pagesLoaded - both modes need this to hide the loading spinner
+        if (type === 'pagesLoaded') {
+            if (mode === 'embedded') {
+                this.pagesLoaded.emit({
+                    pdfUrl: data?.url ?? this.pdfUrl() ?? '',
+                    pagesCount: data?.pagesCount ?? 0,
+                });
+            } else {
+                // Fullscreen mode: hide spinner when PDF is loaded
+                this.fullscreenService.setIframeLoading(false);
+            }
+            return;
+        }
+
+        // Handle pdfLoadError - hide spinner on error in both modes
+        if (type === 'pdfLoadError') {
+            if (mode === 'embedded') {
+                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
+            }
+            // Both modes: hide spinner on error
+            this.fullscreenService.setIframeLoading(false);
+            return;
+        }
+
+        // Embedded-mode-only handlers
         if (mode !== 'embedded') {
             return;
         }
 
         switch (type) {
-            case 'pagesLoaded':
-                this.pagesLoaded.emit({
-                    pdfUrl: data?.url ?? this.pdfUrl() ?? '',
-                    pagesCount: data?.pagesCount ?? 0,
-                });
-                break;
-            case 'pdfLoadError':
-                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
-                break;
             case 'download':
                 this.downloadRequested.emit();
                 break;

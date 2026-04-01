@@ -275,5 +275,43 @@ describe('PdfViewerComponent', () => {
 
             expect(closeSpy).not.toHaveBeenCalled();
         });
+
+        it('should keep loading spinner visible until PDF is loaded in fullscreen mode', () => {
+            const setLoadingSpy = vi.spyOn(fullscreenService, 'setIframeLoading');
+
+            // Open fullscreen → spinner visible
+            fullscreenService.open('test.pdf', 1, undefined, undefined);
+            fixture.detectChanges();
+            expect(fullscreenService.iframeLoading()).toBe(true);
+
+            // Iframe sends 'ready' → spinner should STILL be visible
+            sendIframeMessage('ready');
+            fixture.detectChanges();
+
+            expect(component.iframeReady()).toBe(true);
+            expect(setLoadingSpy).not.toHaveBeenCalledWith(false); // Spinner not hidden yet
+            expect(fullscreenService.iframeLoading()).toBe(true);
+
+            // PDF loads, iframe sends 'pagesLoaded' → NOW spinner should hide
+            sendIframeMessage('pagesLoaded', { pagesCount: 10, url: 'test.pdf' });
+            fixture.detectChanges();
+
+            expect(setLoadingSpy).toHaveBeenCalledWith(false);
+            expect(fullscreenService.iframeLoading()).toBe(false);
+        });
+
+        it('should hide loading spinner on PDF load error in fullscreen mode', () => {
+            const setLoadingSpy = vi.spyOn(fullscreenService, 'setIframeLoading');
+
+            fullscreenService.open('test.pdf', 1, undefined, undefined);
+            fixture.detectChanges();
+
+            sendIframeMessage('ready');
+            sendIframeMessage('pdfLoadError', { url: 'test.pdf' });
+            fixture.detectChanges();
+
+            expect(setLoadingSpy).toHaveBeenCalledWith(false);
+            expect(fullscreenService.iframeLoading()).toBe(false);
+        });
     });
 });
