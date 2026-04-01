@@ -103,7 +103,7 @@
                     "invalidUnitType": "Invalid lecture unit type for processing",
                     "transcriptionFailed": "Transcription generation failed after multiple attempts",
                     "ingestionFailed": "Content indexing failed after multiple attempts",
-                    "noPlaylist": "Video playlist is no longer available",
+                    "noVideoSource": "No supported video source available for transcription",
                     "timeout": "Processing timed out after multiple attempts"
                 }
             },

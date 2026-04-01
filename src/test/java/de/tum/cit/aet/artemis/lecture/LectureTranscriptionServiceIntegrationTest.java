@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -85,7 +86,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         irisRequestMockProvider.mockTranscriptionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
         NebulaTranscriptionRequestDTO requestDTO = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", unit.getId(), lecture.getId(), course.getId(),
-                course.getTitle(), lecture.getTitle(), unit.getName(), null);
+                course.getTitle(), lecture.getTitle(), unit.getName(), VideoSourceType.TUM_LIVE, null);
 
         String jobToken = lectureTranscriptionService.startNebulaTranscription(lecture.getId(), unit.getId(), requestDTO);
 
@@ -109,7 +110,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         irisRequestMockProvider.mockTranscriptionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
         NebulaTranscriptionRequestDTO requestDTO = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", unit.getId(), lecture.getId(), course.getId(),
-                course.getTitle(), lecture.getTitle(), unit.getName(), null);
+                course.getTitle(), lecture.getTitle(), unit.getName(), VideoSourceType.TUM_LIVE, null);
 
         String jobToken = lectureTranscriptionService.startNebulaTranscription(lecture.getId(), unit.getId(), requestDTO);
 

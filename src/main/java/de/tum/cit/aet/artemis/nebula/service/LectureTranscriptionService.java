@@ -137,7 +137,7 @@ public class LectureTranscriptionService {
             NebulaTranscriptionRequestDTO.NebulaTranscriptionSettingsDTO settings = new NebulaTranscriptionRequestDTO.NebulaTranscriptionSettingsDTO(jobToken, artemisBaseUrl);
 
             NebulaTranscriptionRequestDTO fullRequest = new NebulaTranscriptionRequestDTO(request.videoUrl(), request.lectureUnitId(), request.lectureId(), request.courseId(),
-                    request.courseName(), request.lectureName(), request.lectureUnitName(), settings);
+                    request.courseName(), request.lectureName(), request.lectureUnitName(), request.videoSourceType(), settings);
 
             // Use pyrisRestTemplate for Pyris webhook endpoint (has correct auth interceptor)
             RestTemplate templateToUse = pyrisRestTemplate.orElseThrow(() -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Pyris REST template not available"));

@@ -364,13 +364,23 @@ The secret can be any string. For more detailed instructions on how to set it up
 
 Nebula provides AI-powered processing pipelines for lecture videos. Artemis currently integrates with the **Transcriber** service to automatically generate lecture transcripts (including slide-number alignment) for attachment video units.
 
+#### Supported Video Sources
+
+Nebula can transcribe videos from the following sources:
+
+- **TUM-Live (GoCast):** Artemis resolves the public video URL to an HLS playlist via the TUM-Live API. Nebula downloads the audio from the playlist and transcribes it.
+- **YouTube (public and unlisted):** Artemis passes the YouTube video URL directly to Nebula, which downloads the audio track using `yt-dlp` and transcribes it. **Private YouTube videos are not supported** because Nebula cannot authenticate with YouTube to access them.
+
+When Artemis sends a transcription request to Nebula, it includes a `videoSourceType` field (`TUM_LIVE` or `YOUTUBE`) so that Nebula knows which download strategy to use.
+
 ### Artemis Configuration
 
 #### Prerequisites
 
 - A running Artemis instance with the `scheduling` Spring profile enabled. The scheduler polls Nebula every 30 seconds for finished jobs.
 - A shared secret that will be used both in Artemis and in the Nebula gateway.
-- A running instance of <a href="https://github.com/TUM-Dev/gocast">GoCast (TUM-Live)</a> where the lecture recordings are hosted in a public course.
+- *(For TUM-Live videos)* A running instance of <a href="https://github.com/TUM-Dev/gocast">GoCast (TUM-Live)</a> where the lecture recordings are hosted in a public course.
+- *(For YouTube videos)* Nebula workers must have outbound HTTPS access to `*.youtube.com` and `*.googlevideo.com`. No YouTube API key is required.
 
 #### Enable the Nebula module
 
@@ -437,7 +447,7 @@ If Artemis reports unauthorized or internal errors when starting a job, double-c
 - The Artemis secret token equals the key configured in Nginx (`map $http_authorization $api_key_valid`)
 - Nebula can reach its configured Whisper and GPT-5 endpoints (inspect the transcriber logs for HTTP 401/429/500 responses)
 
-With those pieces in place, instructors can automatically transcribe lecture recordings stored on TUM-Live without manual copy/paste workflows.
+With those pieces in place, instructors can automatically transcribe lecture recordings from TUM-Live and YouTube without manual copy/paste workflows.
 
 ---
 

@@ -29,11 +29,13 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.nebula.api.LectureTranscriptionApi;
 import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
+import de.tum.cit.aet.artemis.nebula.api.YouTubeApi;
 
 /**
  * Service that orchestrates the automated lecture content processing pipeline.
@@ -62,6 +64,8 @@ public class LectureContentProcessingService {
 
     private final Optional<TumLiveApi> tumLiveApi;
 
+    private final Optional<YouTubeApi> youTubeApi;
+
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final FeatureToggleService featureToggleService;
@@ -69,15 +73,22 @@ public class LectureContentProcessingService {
     private final ProcessingStateCallbackService processingStateCallbackService;
 
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi, FeatureToggleService featureToggleService,
-            ProcessingStateCallbackService processingStateCallbackService) {
+            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<YouTubeApi> youTubeApi, Optional<IrisLectureApi> irisLectureApi,
+            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.transcriptionApi = transcriptionApi;
         this.tumLiveApi = tumLiveApi;
+        this.youTubeApi = youTubeApi;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
         this.processingStateCallbackService = processingStateCallbackService;
+    }
+
+    /**
+     * Holds a resolved video URL together with its source type for transcription.
+     */
+    private record ResolvedVideoSource(String videoUrl, VideoSourceType videoSourceType) {
     }
 
     /**
@@ -87,7 +98,7 @@ public class LectureContentProcessingService {
      * @return true if either transcription or ingestion is possible
      */
     public boolean hasProcessingCapabilities() {
-        boolean canTranscribe = transcriptionApi.isPresent() && tumLiveApi.isPresent();
+        boolean canTranscribe = transcriptionApi.isPresent() && (tumLiveApi.isPresent() || youTubeApi.isPresent());
         boolean canIngest = irisLectureApi.isPresent();
         return canTranscribe || canIngest;
     }
@@ -150,7 +161,7 @@ public class LectureContentProcessingService {
         }
 
         // Check service availability
-        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent();
+        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && (tumLiveApi.isPresent() || youTubeApi.isPresent());
         boolean canIngest = irisLectureApi.isPresent() && (hasPdf || canTranscribe);
 
         if (!canTranscribe && !canIngest) {
@@ -273,7 +284,7 @@ public class LectureContentProcessingService {
         // Processing couldn't start (e.g., no playlist available for video)
         // Create a FAILED state to provide feedback to the user
         var failedState = new LectureUnitProcessingState(lectureUnit);
-        failedState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+        failedState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noVideoSource");
         return processingStateRepository.save(failedState);
     }
 
@@ -327,16 +338,16 @@ public class LectureContentProcessingService {
             return;
         }
 
-        if (hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent()) {
-            // Try to get playlist URL and start transcription
-            Optional<String> playlistUrl = fetchPlaylistUrl(unit);
+        if (hasVideo && transcriptionApi.isPresent()) {
+            // Try to resolve video URL for transcription (TUM Live playlist or YouTube URL)
+            Optional<ResolvedVideoSource> resolvedSource = resolveVideoSource(unit);
 
-            if (playlistUrl.isPresent()) {
-                startTranscription(unit, state, playlistUrl.get());
+            if (resolvedSource.isPresent()) {
+                startTranscription(unit, state, resolvedSource.get());
                 return;
             }
             else {
-                log.debug("No playlist URL available for unit {}", unit.getId());
+                log.debug("No transcribable video source available for unit {}", unit.getId());
             }
         }
 
@@ -364,16 +375,17 @@ public class LectureContentProcessingService {
 
     // -------------------- Phase Handlers --------------------
 
-    private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
+    private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, ResolvedVideoSource resolvedSource) {
         try {
-            NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl, unit.getId(), unit.getLecture().getId(), unit.getLecture().getCourse().getId(),
-                    unit.getLecture().getCourse().getTitle(), unit.getLecture().getTitle(), unit.getName(), null  // settings will be added by LectureTranscriptionService
+            NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(resolvedSource.videoUrl(), unit.getId(), unit.getLecture().getId(),
+                    unit.getLecture().getCourse().getId(), unit.getLecture().getCourse().getTitle(), unit.getLecture().getTitle(), unit.getName(), resolvedSource.videoSourceType(),
+                    null  // settings will be added by LectureTranscriptionService
             );
             transcriptionApi.get().startNebulaTranscription(unit.getLecture().getId(), unit.getId(), request);
             // Transition AFTER successful API call
             state.transitionTo(ProcessingPhase.TRANSCRIBING);
             processingStateRepository.save(state);
-            log.info("Transcription job started for unit {}", unit.getId());
+            log.info("Transcription job started for unit {} (source: {})", unit.getId(), resolvedSource.videoSourceType());
         }
         catch (Exception e) {
             // Transition to TRANSCRIBING so scheduler can find and retry it
@@ -400,20 +412,22 @@ public class LectureContentProcessingService {
         // Clear retry eligibility - we're starting the retry now
         state.clearRetryEligibility();
 
-        // Refetch playlist URL
-        Optional<String> playlistUrl = fetchPlaylistUrl(attachmentUnit);
+        // Resolve video URL (TUM Live playlist or YouTube URL)
+        Optional<ResolvedVideoSource> resolvedSource = resolveVideoSource(attachmentUnit);
 
-        if (playlistUrl.isPresent()) {
-            log.info("Retrying transcription for unit {} (attempt {}/{})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+        if (resolvedSource.isPresent()) {
+            log.info("Retrying transcription for unit {} (attempt {}/{}, source: {})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES,
+                    resolvedSource.get().videoSourceType());
             // Update timestamps to mark retry start
             state.setStartedAt(ZonedDateTime.now());
             state.setLastUpdated(ZonedDateTime.now());
             processingStateRepository.save(state);
 
             try {
-                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), attachmentUnit.getId(), attachmentUnit.getLecture().getId(),
-                        attachmentUnit.getLecture().getCourse().getId(), attachmentUnit.getLecture().getCourse().getTitle(), attachmentUnit.getLecture().getTitle(),
-                        attachmentUnit.getName(), null  // settings will be added by LectureTranscriptionService
+                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(resolvedSource.get().videoUrl(), attachmentUnit.getId(),
+                        attachmentUnit.getLecture().getId(), attachmentUnit.getLecture().getCourse().getId(), attachmentUnit.getLecture().getCourse().getTitle(),
+                        attachmentUnit.getLecture().getTitle(), attachmentUnit.getName(), resolvedSource.get().videoSourceType(), null  // settings will be added by
+                                                                                                                                        // LectureTranscriptionService
                 );
                 transcriptionApi.get().startNebulaTranscription(attachmentUnit.getLecture().getId(), attachmentUnit.getId(), request);
                 log.info("Transcription retry job started for unit {}", unit.getId());
@@ -424,16 +438,16 @@ public class LectureContentProcessingService {
             }
         }
         else {
-            // No playlist available anymore - try PDF fallback
+            // No video source available anymore - try PDF fallback
             boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
                     && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
             if (hasPdf && irisLectureApi.isPresent()) {
-                log.info("Playlist no longer available, falling back to PDF-only for unit {}", unit.getId());
+                log.info("Video source no longer available, falling back to PDF-only for unit {}", unit.getId());
                 state.resetRetryCount();
                 processingStateCallbackService.startIngestion(state);
             }
             else {
-                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.noVideoSource");
                 processingStateRepository.save(state);
             }
         }
@@ -452,20 +466,35 @@ public class LectureContentProcessingService {
     // -------------------- Helper Methods --------------------
 
     /**
-     * Fetch playlist URL from TUM Live API.
+     * Resolve the video source URL for transcription.
+     * Tries TUM Live first (resolves to HLS playlist URL), then YouTube (uses the video URL directly).
      */
-    private Optional<String> fetchPlaylistUrl(AttachmentVideoUnit unit) {
-        if (tumLiveApi.isEmpty()) {
+    private Optional<ResolvedVideoSource> resolveVideoSource(AttachmentVideoUnit unit) {
+        String videoSource = unit.getVideoSource();
+        if (videoSource == null || videoSource.isBlank()) {
             return Optional.empty();
         }
 
-        try {
-            return tumLiveApi.get().getTumLivePlaylistLink(unit.getVideoSource());
+        // Try TUM Live first
+        if (tumLiveApi.isPresent()) {
+            try {
+                Optional<String> playlistUrl = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
+                if (playlistUrl.isPresent()) {
+                    return Optional.of(new ResolvedVideoSource(playlistUrl.get(), VideoSourceType.TUM_LIVE));
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to fetch TUM Live playlist URL for unit {}: {}", unit.getId(), e.getMessage());
+            }
         }
-        catch (Exception e) {
-            log.error("Failed to fetch playlist URL for unit {}: {}", unit.getId(), e.getMessage());
-            return Optional.empty();
+
+        // Try YouTube
+        if (youTubeApi.isPresent() && youTubeApi.get().isYouTubeUrl(videoSource)) {
+            log.debug("Resolved YouTube video source for unit {}", unit.getId());
+            return Optional.of(new ResolvedVideoSource(videoSource, VideoSourceType.YOUTUBE));
         }
+
+        return Optional.empty();
     }
 
     /**

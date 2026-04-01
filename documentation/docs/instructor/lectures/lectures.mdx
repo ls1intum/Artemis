@@ -104,14 +104,30 @@ Students complete this unit when they watch the video for at least five minutes 
 
 <Image src={createAttachmentVideoUnit} alt="Create Attachment Video Unit" size={ImageSize.large} caption={"Create Attachment Video Unit"}></Image>
 
-#### Generating Transcriptions with Nebula
+#### Automatic Video Transcription
 
-If your Artemis instance is connected to Nebula, you can generate transcriptions directly in the editor:
+When automatic transcription is enabled for your Artemis instance, videos from supported sources are transcribed automatically.
 
-1. Create or edit the attachment video unit and paste the public TUM-Live link into the **Transform into embeddable format** helper.
-2. Click the arrow button. When Artemis resolves the playlist successfully, the **Generate transcript after saving** checkbox appears.
-3. Enable the checkbox and save the lecture unit. Artemis sends the job to Nebula and shows a toast confirming that processing started.
-4. Nebula processes the lecture asynchronously. Once finished, the transcription is attached to the unit and becomes visible the next time you open the editor.
+To add a video with automatic transcription:
+
+1. Create or edit an attachment video unit.
+2. Paste the video link into the **Transform into embeddable format** helper field on the right and click the arrow button. Artemis converts it to an embeddable URL.
+3. Save the unit. Artemis automatically starts generating a transcript in the background — no additional steps are required.
+4. On the lecture management page, status badges show the current progress (e.g. *Transcribing*, *Processing complete*, *Transcription complete*).
+5. Once complete, the transcript is attached to the unit and becomes available to students.
+
+##### Supported Video Sources
+
+Automatic transcription is available for the following video platforms:
+
+- **TUM-Live:** Paste the public TUM-Live video link (e.g. `https://live.rbg.tum.de/w/course/12345`).
+- **YouTube:** Paste a standard YouTube link (e.g. `https://www.youtube.com/watch?v=...`, `https://youtu.be/...`, or embed URLs).
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>YouTube visibility:</strong> Only <strong>public</strong> and <strong>unlisted</strong> YouTube videos can be transcribed. Private YouTube videos cannot be accessed by the transcription service and will fail with an error. If you want to use automatic transcription, make sure your YouTube video is set to <em>public</em> or <em>unlisted</em>.</p>
+</Callout>
+
+Videos from other platforms (e.g. Vimeo) can still be embedded as attachment video units, but transcripts for these must be added manually.
 
 #### Iris Integration
 

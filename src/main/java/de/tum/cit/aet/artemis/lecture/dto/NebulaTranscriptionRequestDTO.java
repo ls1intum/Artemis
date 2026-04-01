@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NebulaTranscriptionRequestDTO(@NotNull String videoUrl, @NotNull Long lectureUnitId, @NotNull Long lectureId, @NotNull Long courseId, String courseName,
-        String lectureName, String lectureUnitName, NebulaTranscriptionSettingsDTO settings) {
+        String lectureName, String lectureUnitName, @NotNull VideoSourceType videoSourceType, NebulaTranscriptionSettingsDTO settings) {
 
     /**
      * Settings for the transcription callback.

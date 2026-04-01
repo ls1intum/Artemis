@@ -103,7 +103,7 @@
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
                     "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
-                    "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
+                    "noVideoSource": "Keine unterstützte Videoquelle für Transkription verfügbar",
                     "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
                 }
             },

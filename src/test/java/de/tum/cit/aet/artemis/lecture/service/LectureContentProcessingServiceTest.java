@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.nebula.api.LectureTranscriptionApi;
 import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
+import de.tum.cit.aet.artemis.nebula.api.YouTubeApi;
 
 /**
  * Unit tests for {@link LectureContentProcessingService}.
@@ -61,6 +62,8 @@ class LectureContentProcessingServiceTest {
 
     private TumLiveApi tumLiveApi;
 
+    private YouTubeApi youTubeApi;
+
     private IrisLectureApi irisLectureApi;
 
     private FeatureToggleService featureToggleService;
@@ -77,6 +80,7 @@ class LectureContentProcessingServiceTest {
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
         transcriptionApi = mock(LectureTranscriptionApi.class);
         tumLiveApi = mock(TumLiveApi.class);
+        youTubeApi = mock(YouTubeApi.class);
         irisLectureApi = mock(IrisLectureApi.class);
         featureToggleService = mock(FeatureToggleService.class);
 
@@ -87,7 +91,7 @@ class LectureContentProcessingServiceTest {
         processingStateCallbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
 
         service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                Optional.of(irisLectureApi), featureToggleService, processingStateCallbackService);
+                Optional.of(youTubeApi), Optional.of(irisLectureApi), featureToggleService, processingStateCallbackService);
 
         // Set up test data
         Course testCourse = new Course();
@@ -739,7 +743,7 @@ class LectureContentProcessingServiceTest {
             // Then: Should return failed state
             assertThat(result).isNotNull();
             assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noVideoSource");
         }
 
         @Test
@@ -945,7 +949,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service created without transcription API
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
+                    Optional.of(tumLiveApi), Optional.of(youTubeApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -969,7 +973,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service created without TUM Live API
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), // No TUM Live API
-                    Optional.of(irisLectureApi), featureToggleService, callbackService);
+                    Optional.of(youTubeApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -992,7 +996,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service created WITHOUT Iris API but WITH Nebula (transcription only deployment)
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty(), featureToggleService, callbackService); // No Iris API
+                    Optional.of(youTubeApi), Optional.empty(), featureToggleService, callbackService); // No Iris API
 
             // Unit has video (can transcribe) - transcription should still happen
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
@@ -1012,7 +1016,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service with NO Iris and NO Nebula (no processing possible)
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No Nebula
-                    Optional.of(tumLiveApi), Optional.empty(), featureToggleService, callbackService); // No Iris
+                    Optional.of(tumLiveApi), Optional.of(youTubeApi), Optional.empty(), featureToggleService, callbackService); // No Iris
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -1031,7 +1035,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service WITHOUT Iris, unit has only PDF (no video)
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty());
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty(), featureToggleService, callbackService); // No Iris API
+                    Optional.of(youTubeApi), Optional.empty(), featureToggleService, callbackService); // No Iris API
 
             testUnit.setVideoSource(null); // No video
             Attachment pdfAttachment = new Attachment();
@@ -1051,7 +1055,7 @@ class LectureContentProcessingServiceTest {
             // Given: Service without Nebula, unit has video but no PDF
             ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
+                    Optional.of(tumLiveApi), Optional.of(youTubeApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
 
             testUnit.setAttachment(null); // No PDF
 
@@ -1065,6 +1069,98 @@ class LectureContentProcessingServiceTest {
             // Then: Should go to IDLE (not FAILED) since Nebula is intentionally unavailable
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(testState.getErrorKey()).isNull(); // Not an error, just nothing to do
+        }
+    }
+
+    // ==================== YouTube Video Source ====================
+
+    @Nested
+    class YouTubeVideoSource {
+
+        @Test
+        void shouldStartTranscriptionForYouTubeVideoWhenTumLiveReturnsEmpty() {
+            // Given: Unit with YouTube URL, TUM Live returns empty
+            testUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+            when(youTubeApi.isYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).thenReturn(true);
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("yt-job-123");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should start transcription with YouTube URL directly
+            ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
+            verify(transcriptionApi).startNebulaTranscription(eq(testLecture.getId()), eq(testUnit.getId()), requestCaptor.capture());
+
+            NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
+            assertThat(capturedRequest.videoUrl()).isEqualTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.YOUTUBE);
+        }
+
+        @Test
+        void shouldPreferTumLiveOverYouTube() {
+            // Given: TUM Live URL that returns a playlist
+            testUnit.setVideoSource("https://live.rbg.tum.de/w/course/12345");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("tl-job-123");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should use TUM Live playlist URL, not the original URL
+            ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
+            verify(transcriptionApi).startNebulaTranscription(eq(testLecture.getId()), eq(testUnit.getId()), requestCaptor.capture());
+
+            NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
+            assertThat(capturedRequest.videoUrl()).isEqualTo("https://playlist.m3u8");
+            assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.TUM_LIVE);
+        }
+
+        @Test
+        void shouldFallBackToYouTubeWhenTumLiveApiThrows() {
+            // Given: YouTube URL, TUM Live API throws exception
+            testUnit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
+            when(youTubeApi.isYouTubeUrl("https://youtu.be/dQw4w9WgXcQ")).thenReturn(true);
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("yt-job-456");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should fall back to YouTube
+            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldFallBackToPdfWhenVideoIsUnsupported() {
+            // Given: Video URL is neither TUM Live nor YouTube, but unit has PDF
+            testUnit.setVideoSource("https://vimeo.com/123456789");
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+            when(youTubeApi.isYouTubeUrl("https://vimeo.com/123456789")).thenReturn(false);
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should skip transcription and go to PDF ingestion
+            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
         }
     }
 }
