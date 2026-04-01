@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Injector, OnInit, ViewEncapsulation, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    Injector,
+    OnInit,
+    ViewEncapsulation,
+    afterNextRender,
+    effect,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -52,6 +66,7 @@ interface FindMatchesCount {
 export class PdfViewerIframeContentComponent implements OnInit {
     private readonly pdfNotificationService = inject(PDFNotificationService);
     private readonly injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly pdfUrl = signal('');
     readonly currentPage = signal(1);
@@ -62,6 +77,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly searchNextButtonElement = viewChild<ElementRef<HTMLButtonElement>>('searchNextButton');
+    readonly toolbarCenterElement = viewChild<ElementRef<HTMLDivElement>>('toolbarCenter');
 
     protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
     protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
@@ -75,9 +91,38 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
     protected searchQuery = signal('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
+    protected readonly isToolbarWrapped = signal(false);
+
+    private resizeObserver?: ResizeObserver;
+
+    constructor() {
+        effect(() => {
+            this.searchQuery();
+            this.totalPages();
+            this.isFullscreenMode();
+
+            afterNextRender(
+                () => {
+                    this.updateToolbarWrapMode();
+                },
+                { injector: this.injector },
+            );
+        });
+
+        this.destroyRef.onDestroy(() => {
+            this.resizeObserver?.disconnect();
+        });
+    }
 
     ngOnInit(): void {
         this.postMessageToParent('ready', {});
+        afterNextRender(
+            () => {
+                this.initializeToolbarResizeObserver();
+                this.updateToolbarWrapMode();
+            },
+            { injector: this.injector },
+        );
     }
 
     @HostListener('window:message', ['$event'])
@@ -297,6 +342,42 @@ export class PdfViewerIframeContentComponent implements OnInit {
     private updateDarkMode(isDarkMode?: boolean): void {
         if (typeof isDarkMode === 'boolean' && isDarkMode !== this.isDarkMode()) {
             this.isDarkMode.set(isDarkMode);
+        }
+    }
+
+    private initializeToolbarResizeObserver(): void {
+        const toolbarCenterElement = this.toolbarCenterElement()?.nativeElement;
+        if (!toolbarCenterElement || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = new ResizeObserver(() => {
+            this.updateToolbarWrapMode();
+        });
+        this.resizeObserver.observe(toolbarCenterElement);
+    }
+
+    private updateToolbarWrapMode(): void {
+        const toolbarCenterElement = this.toolbarCenterElement()?.nativeElement;
+        if (!toolbarCenterElement || toolbarCenterElement.clientWidth === 0) {
+            return;
+        }
+        const wasWrapped = this.isToolbarWrapped();
+        const wrappedClassName = 'artemis-pdf-toolbar__center--wrapped';
+
+        if (wasWrapped) {
+            toolbarCenterElement.classList.remove(wrappedClassName);
+        }
+
+        const shouldWrap = toolbarCenterElement.scrollWidth > toolbarCenterElement.clientWidth;
+
+        if (wasWrapped) {
+            toolbarCenterElement.classList.add(wrappedClassName);
+        }
+
+        if (shouldWrap !== wasWrapped) {
+            this.isToolbarWrapped.set(shouldWrap);
         }
     }
 }

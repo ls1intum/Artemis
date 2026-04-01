@@ -89,10 +89,7 @@ export class PdfViewerComponent {
 
         // Cleanup handler to prevent memory leaks when component is destroyed
         this.destroyRef.onDestroy(() => {
-            if (this.mode() === 'fullscreen') {
-                this.fullscreenService.close();
-                this.iframeReady.set(false);
-            }
+            this.close();
         });
 
         // Load PDF when iframe ready
@@ -191,18 +188,6 @@ export class PdfViewerComponent {
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);
-    }
-
-    protected onFullscreenOverlayClick(): void {
-        this.close();
-    }
-
-    protected onFullscreenCloseClick(): void {
-        this.close();
-    }
-
-    protected onFullscreenEscapeKey(): void {
-        this.close();
     }
 
     /** Handles iframe messages and ignores messages from invalid origins/sources. */

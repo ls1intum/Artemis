@@ -191,4 +191,31 @@ describe('PdfViewerIframeContentComponent', () => {
         component.onPagesLoaded({ pagesCount: 10, source: {} });
         expect(component.currentPage()).toBe(1);
     });
+
+    it('should enable wrapped toolbar layout when controls overflow', () => {
+        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
+        Object.defineProperty(toolbarCenter, 'clientWidth', { configurable: true, get: () => 320 });
+        Object.defineProperty(toolbarCenter, 'scrollWidth', { configurable: true, get: () => 640 });
+
+        (component as any).updateToolbarWrapMode();
+        fixture.detectChanges();
+
+        expect((component as any).isToolbarWrapped()).toBe(true);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--wrapped')).toBe(true);
+    });
+
+    it('should disable wrapped toolbar layout when controls fit in one row', () => {
+        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
+        (component as any).isToolbarWrapped.set(true);
+        fixture.detectChanges();
+
+        Object.defineProperty(toolbarCenter, 'clientWidth', { configurable: true, get: () => 640 });
+        Object.defineProperty(toolbarCenter, 'scrollWidth', { configurable: true, get: () => 320 });
+
+        (component as any).updateToolbarWrapMode();
+        fixture.detectChanges();
+
+        expect((component as any).isToolbarWrapped()).toBe(false);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--wrapped')).toBe(false);
+    });
 });

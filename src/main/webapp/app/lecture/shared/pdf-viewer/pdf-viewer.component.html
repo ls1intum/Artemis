@@ -1,21 +1,13 @@
 <!-- Fullscreen mode: Overlay wrapper -->
 @if (mode() === 'fullscreen' && fullscreenMetadata().isOpen) {
-    <div class="pdf-fullscreen-overlay" (click)="onFullscreenOverlayClick()">
-        <div
-            #fullscreenWindow
-            class="pdf-fullscreen-window"
-            role="dialog"
-            aria-modal="true"
-            tabindex="0"
-            (click)="$event.stopPropagation()"
-            (keydown.escape)="onFullscreenEscapeKey()"
-        >
+    <div class="pdf-fullscreen-overlay" (click)="close()">
+        <div #fullscreenWindow class="pdf-fullscreen-window" role="dialog" aria-modal="true" tabindex="0" (click)="$event.stopPropagation()" (keydown.escape)="close()">
             <button
                 class="pdf-fullscreen-close"
                 type="button"
                 [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
-                (click)="onFullscreenCloseClick()"
+                (click)="close()"
             >
                 <fa-icon [icon]="faXmark" />
             </button>
