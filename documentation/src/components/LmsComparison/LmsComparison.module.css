@@ -1,0 +1,277 @@
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #0065bd 0%, #003359 100%);
+    color: white;
+    padding: 40px 32px;
+    text-align: center;
+}
+
+.heroTitle {
+    color: white;
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+.heroSubtitle {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 16px;
+}
+
+/* Highlight Cards */
+.highlightGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 28px 32px;
+}
+
+.highlightCard {
+    padding: 18px;
+    background: var(--ifm-color-emphasis-100);
+    border-radius: 8px;
+    border-left: 3px solid;
+}
+
+.highlightTitle {
+    margin: 0 0 6px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.highlightIcon {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.highlightDesc {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ifm-color-emphasis-700);
+}
+
+/* Platform Selector (Sticky Header) */
+.selectorRow {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 4px;
+    padding: 16px 32px;
+    background: var(--ifm-color-emphasis-100);
+    border-top: 2px solid var(--ifm-color-emphasis-200);
+    border-bottom: 1px solid var(--ifm-color-emphasis-200);
+    position: sticky;
+    top: var(--ifm-navbar-height);
+    z-index: 100;
+    transition: box-shadow 0.2s ease;
+}
+
+.selectorSticky {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selectorLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ifm-color-emphasis-600);
+    padding-top: 4px;
+}
+
+.selectorPlatform {
+    text-align: center;
+}
+
+.artemisName {
+    font-weight: 700;
+    font-size: 16px;
+    color: #0065bd;
+}
+
+.platformSelect {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    font-size: 15px;
+    background: var(--ifm-background-color);
+    color: var(--ifm-font-color-base);
+    cursor: pointer;
+    max-width: 100%;
+}
+
+/* Comparison Table */
+.tableContainer {
+    padding: 0 32px;
+}
+
+.table {
+    width: 100%;
+}
+
+.categoryHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 17px;
+    padding: 16px 0 10px;
+    border-top: 2px solid var(--ifm-color-emphasis-200);
+    color: var(--ifm-color-emphasis-800);
+}
+
+.categoryHeader:first-child {
+    border-top: none;
+}
+
+.categoryIcon {
+    font-size: 15px;
+    opacity: 0.7;
+}
+
+/* Feature Rows */
+.featureRow {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 4px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ifm-color-emphasis-100);
+    font-size: 15px;
+    align-items: center;
+}
+
+.featureRowEven {
+    background: var(--ifm-color-emphasis-50);
+    border-radius: 4px;
+}
+
+.featureName {
+    color: var(--ifm-color-emphasis-800);
+}
+
+.featureCell {
+    text-align: center;
+}
+
+/* Support Badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.badgeLabel {
+    font-size: 13px;
+}
+
+.supportSupported {
+    color: #4a8c00;
+}
+
+.supportPartial {
+    color: #c47a20;
+}
+
+.supportNone {
+    color: #999;
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    padding: 16px 0;
+    margin-top: 8px;
+    border-top: 1px solid var(--ifm-color-emphasis-200);
+    font-size: 14px;
+}
+
+/* Dark Mode */
+:global([data-theme='dark']) .hero {
+    background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
+}
+
+:global([data-theme='dark']) .heroTitle {
+    color: white;
+}
+
+:global([data-theme='dark']) .artemisName {
+    color: #5a9ed6;
+}
+
+:global([data-theme='dark']) .selectorSticky {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+:global([data-theme='dark']) .supportSupported {
+    color: #8bbe3a;
+}
+
+:global([data-theme='dark']) .supportPartial {
+    color: #e5a04d;
+}
+
+:global([data-theme='dark']) .supportNone {
+    color: #777;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .highlightGrid {
+        grid-template-columns: 1fr 1fr;
+        padding: 20px 16px;
+        gap: 12px;
+    }
+
+    .selectorRow {
+        padding: 12px 16px;
+        gap: 4px;
+    }
+
+    .tableContainer {
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        min-width: 600px;
+    }
+
+    .featureName {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--ifm-background-color);
+        min-width: 140px;
+        padding-right: 8px;
+    }
+
+    .featureRowEven .featureName {
+        background: var(--ifm-color-emphasis-50);
+    }
+
+    .badgeLabel {
+        display: none;
+    }
+
+    .hero {
+        padding: 28px 16px;
+    }
+
+    .heroTitle {
+        font-size: 22px;
+    }
+
+    .heroSubtitle {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .highlightGrid {
+        grid-template-columns: 1fr;
+    }
+}
