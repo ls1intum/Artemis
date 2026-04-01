@@ -443,7 +443,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) throws IOException {
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -458,9 +458,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT);
-
-        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -516,7 +514,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
     @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId) throws IOException {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -528,10 +526,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-
-        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT);
-
-        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -544,7 +539,7 @@ public class FileResource {
      */
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId) throws IOException {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId) {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
@@ -552,9 +547,7 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT);
-
-        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -567,16 +560,14 @@ public class FileResource {
      */
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) throws IOException {
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
         log.debug("REST request to get attachment file : {}", attachmentId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        Path actualPath = getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT);
-
-        return buildFileResponse(actualPath, retrieveDownloadFilename(attachment));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -657,7 +648,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) throws IOException {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -669,12 +660,12 @@ public class FileResource {
         Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
-
         if (studentVersion == null) {
             return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
+
         return buildFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
                 downloadFilename, false);
     }
