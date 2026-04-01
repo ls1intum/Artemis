@@ -41,8 +41,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentImportDataDTO;
 
-// TODO: check what happens if 'channels enabled' changes -> is the logic in create/update implemented correctly for all scenarios?
-
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroup";
