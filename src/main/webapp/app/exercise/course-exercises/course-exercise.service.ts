@@ -113,8 +113,10 @@ export class CourseExerciseService {
         );
     }
 
-    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/request-feedback`, {}).pipe(map((participation: StudentParticipation) => participation));
+    requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation> {
+        return this.http
+            .put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`, {})
+            .pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**
