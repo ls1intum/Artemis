@@ -331,7 +331,9 @@
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 </div>
             }
-            <jhi-chat-status-bar [stages]="stages()" />
+            @if (shouldShowStatusBar()) {
+                <jhi-chat-status-bar [stages]="stages()" />
+            }
             @if (!userAccepted()) {
                 <div class="p-chat">
                     <div class="message-text" jhiTranslate="artemisApp.exerciseActions.aiExperienceConfirmation.popUpMessage"></div>
