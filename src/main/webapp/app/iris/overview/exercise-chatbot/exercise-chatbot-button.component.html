@@ -1,19 +1,20 @@
 @if (!chatOpen()) {
-    <div
-        #chatBubble
-        class="message-bubble"
-        (click)="handleButtonClick()"
-        [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
-    >
-        @if (newIrisMessage()) {
-            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
-            @if (isOverflowing()) {
-                <div class="read-more">
-                    <fa-icon [icon]="faArrowRight" class="read-more-icon" />
-                </div>
-            }
-        }
-    </div>
+    @if (newIrisMessage()) {
+        <button type="button" class="message-bubble" (click)="handleButtonClick()">
+            <span class="preview-text">{{ newIrisMessage() }}</span>
+        </button>
+    }
+    @if (isProcessing() && !newIrisMessage()) {
+        <button type="button" class="status-indicator" (click)="handleButtonClick()">
+            <span class="visually-hidden" role="status" aria-live="polite">{{ displayName() }}</span>
+            <span class="status-label" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ displayName() }}</span>
+            <div class="typing-dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </button>
+    }
     <div class="chatbot-button">
         <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
         @if (hasNewMessages()) {

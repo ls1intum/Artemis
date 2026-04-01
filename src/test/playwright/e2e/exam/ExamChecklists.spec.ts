@@ -291,6 +291,7 @@ async function createExam(course: any, page: Page, customConfig?: any) {
 
 async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
     await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+    await page.waitForLoadState('networkidle');
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {
