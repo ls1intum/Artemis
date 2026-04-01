@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostBinding, HostListener, Input, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, HostListener, Input, OnDestroy, effect, viewChild } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -22,7 +22,7 @@ import { NgTemplateOutlet } from '@angular/common';
     styleUrls: ['./resizeable-container.component.scss'],
     imports: [FaIconComponent, NgTemplateOutlet],
 })
-export class ResizeableContainerComponent implements AfterViewInit, OnDestroy {
+export class ResizeableContainerComponent implements OnDestroy {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
@@ -42,28 +42,33 @@ export class ResizeableContainerComponent implements AfterViewInit, OnDestroy {
      */
     @Input() expandProblemStatement = false;
 
-    @ViewChild('expandedPanel') expandedPanel: ElementRef<HTMLElement> | undefined;
+    readonly expandedPanel = viewChild<ElementRef<HTMLElement>>('expandedPanel');
 
-    interactResizable: Interactable | undefined;
+    private interactResizable: Interactable | undefined;
 
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
 
+    constructor() {
+        effect(() => {
+            this.interactResizable?.unset();
+            const panel = this.expandedPanel();
+            if (!panel) {
+                this.interactResizable = undefined;
+                return;
+            }
+            this.interactResizable = this.initializeResizable(panel.nativeElement);
+        });
+    }
+
     ngOnDestroy(): void {
         this.interactResizable?.unset();
     }
 
-    /**
-     * Performed after full initialization of the view.
-     * Handles the resizable layout with collapsible panel on the right-hand side.
-     */
-    ngAfterViewInit() {
-        if (!this.expandedPanel) {
-            return;
-        }
-        this.interactResizable = interact(this.expandedPanel.nativeElement)
+    private initializeResizable(panelElement: HTMLElement): Interactable {
+        return interact(panelElement)
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
