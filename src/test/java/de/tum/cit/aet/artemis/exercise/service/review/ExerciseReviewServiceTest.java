@@ -326,6 +326,26 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReturnOnlyPersistedConsistencyCheckThreadsWithIds() throws Exception {
+        createExerciseVersion();
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-returned-ids");
+        pushFileToRepository(templateRepo, "src/A.java", "class A {}");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Grouped issue", "Fix grouped issue",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/A.java", 3, 3), new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2)));
+
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        assertThat(createdThreads).hasSize(2).allSatisfy(thread -> assertThat(thread.getId()).isNotNull());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSkipConsistencyIssueWhenRepositoryFileDoesNotExist() {
         ConsistencyIssueDTO issue = buildConsistencyIssue("Missing file issue", ArtifactType.TEMPLATE_REPOSITORY, "src/DoesNotExist.java", 3);
 
