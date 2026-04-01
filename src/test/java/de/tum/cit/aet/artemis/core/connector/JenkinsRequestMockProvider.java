@@ -30,8 +30,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
@@ -406,7 +406,7 @@ public class JenkinsRequestMockProvider {
         }
 
         URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
-        final var body = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
+        final var body = JsonObjectMapper.get().writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
         final var status = failToGetLastBuild ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(status).body(body).contentType(MediaType.APPLICATION_JSON));
     }

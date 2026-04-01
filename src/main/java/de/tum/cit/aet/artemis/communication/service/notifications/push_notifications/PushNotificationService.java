@@ -34,7 +34,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Wraps the sending of iOS and Android Notifications to the Relay Service
@@ -52,7 +52,7 @@ public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
-    protected final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    protected final ObjectMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 

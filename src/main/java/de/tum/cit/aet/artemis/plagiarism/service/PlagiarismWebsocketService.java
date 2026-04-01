@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -27,8 +26,11 @@ public class PlagiarismWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    private final ObjectMapper objectMapper;
+
+    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, ObjectMapper objectMapper) {
         this.websocketMessagingService = websocketMessagingService;
+        this.objectMapper = objectMapper;
     }
 
     /***
@@ -43,9 +45,8 @@ public class PlagiarismWebsocketService {
         payload.put("state", plagiarismCheckState.toString());
         payload.put("messages", String.join("\n", messages));
 
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
+            websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
         catch (IOException e) {
             log.info("Couldn't notify the user about the plagiarism state for topic {}: {}", topic, e.getMessage());

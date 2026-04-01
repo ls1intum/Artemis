@@ -11,7 +11,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
@@ -144,7 +143,7 @@ public class PageableSearchUtilService {
      * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search, String parentKey) {
-        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        final ObjectMapper objectMapper = JsonObjectMapper.get();
         try {
             // Serialize the DTO into a JSON string and then deserialize it into a Map
             final String json = objectMapper.writeValueAsString(search);

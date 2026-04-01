@@ -23,10 +23,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 
 class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
@@ -57,7 +56,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
         var request = mockHttpRequestWithHeaders();
 
         // Create the json returned by the response
-        var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        var objectMapper = JsonObjectMapper.get();
         ObjectNode crumbJson = objectMapper.createObjectNode();
         crumbJson.put("crumb", "some-crumb");
         var responseBody = objectMapper.writeValueAsString(crumbJson);

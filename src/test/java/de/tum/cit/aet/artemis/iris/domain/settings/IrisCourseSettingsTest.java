@@ -6,11 +6,12 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 class IrisCourseSettingsTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Test
     void of_trimsBlankInstructionsAndDefaultsVariant() {

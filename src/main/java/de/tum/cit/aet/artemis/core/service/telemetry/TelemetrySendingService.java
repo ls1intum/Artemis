@@ -21,7 +21,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
@@ -43,10 +42,13 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
+    private final ObjectMapper objectMapper;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, ObjectMapper objectMapper) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
+        this.objectMapper = objectMapper;
     }
 
     @Value("${artemis.version}")
@@ -94,7 +96,7 @@ public class TelemetrySendingService {
 
         try {
             var telemetryData = buildTelemetryData(sendAdminDetails);
-            String telemetryJson = new ObjectMapper().registerModule(new JavaTimeModule()).writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
+            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);

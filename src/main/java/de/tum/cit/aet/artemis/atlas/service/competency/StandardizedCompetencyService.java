@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 @Service
 public class StandardizedCompetencyService {
 
-    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final ObjectMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyService.class);
 

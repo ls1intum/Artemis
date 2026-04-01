@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -93,11 +92,13 @@ public class CourseExamExportService {
 
     private final CourseOperationProgressService progressService;
 
+    private final ObjectMapper objectMapper;
+
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             Optional<TextSubmissionExportApi> textSubmissionExportApi, Optional<FileSubmissionExportApi> fileSubmissionExportApi,
             Optional<ModelingSubmissionExportApi> modelingSubmissionExportApi, QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService,
             WebsocketMessagingService websocketMessagingService, Optional<ExamRepositoryApi> examRepositoryApi, CourseStudentDataExportService courseStudentDataExportService,
-            CourseOperationProgressService progressService) {
+            CourseOperationProgressService progressService, ObjectMapper objectMapper) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileSubmissionExportApi = fileSubmissionExportApi;
@@ -109,6 +110,7 @@ public class CourseExamExportService {
         this.examRepositoryApi = examRepositoryApi;
         this.courseStudentDataExportService = courseStudentDataExportService;
         this.progressService = progressService;
+        this.objectMapper = objectMapper;
     }
 
     private static final int TOTAL_ARCHIVE_STEPS = 4;
@@ -564,9 +566,8 @@ public class CourseExamExportService {
         payload.put("message", String.join("\n", messages));
         payload.put("subMessage", subMessage);
 
-        var mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
+            websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
         catch (IOException e) {
             log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());

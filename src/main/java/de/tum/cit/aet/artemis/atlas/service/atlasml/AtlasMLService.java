@@ -20,7 +20,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -140,7 +140,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
-                ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = JsonObjectMapper.get();
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -179,7 +179,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
-            ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+            ObjectMapper objectMapper = JsonObjectMapper.get();
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {
