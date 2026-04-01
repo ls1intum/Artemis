@@ -64,9 +64,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
     test.describe('Handle existing lecture', () => {
         let lecture: Lecture;
 
-        test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-            await login(instructor, `/course-management/${course.id}/lectures`);
+        test.beforeEach(async ({ login, page, courseManagementAPIRequests }) => {
+            await login(instructor);
             lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
+            await page.goto(`/course-management/${course.id}/lectures`);
+            await page.waitForLoadState('networkidle');
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {
