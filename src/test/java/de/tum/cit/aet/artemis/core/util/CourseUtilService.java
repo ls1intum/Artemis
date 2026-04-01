@@ -263,7 +263,7 @@ public class CourseUtilService {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExercise);
 
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         course.addLectures(lecture);
 
         CompetencyUtilService service = competencyUtilService.orElseThrow();

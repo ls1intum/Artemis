@@ -229,23 +229,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         assertThat(channelsOfUser).hasSize(6);
     }
 
-    /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-    /* TODO: #11479 - remove the commented out code OR comment back in */
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    // void shouldNotReturnChannelIfExerciseOrLectureOrExamHidden_asStudent() throws Exception {
-    // Course course = courseUtilService.createCourseWithMessagingEnabled();
-    // createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
-    // List<Long> visibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
-    //
-    // List<ConversationDTO> channelsOfUser = request.getList("/api/communication/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
-    //
-    // assertThat(channelsOfUser).hasSize(3);
-    // channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleChannelIds));
-    // }
-
-    /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-    /* TODO: #11479 - leave as is OR remove this alternative test case */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotReturnChannelIfExerciseOrExamHidden_asStudent() throws Exception {
@@ -627,7 +610,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         Channel examChannel = examUtilService.addExamChannel(exam, "test");
         addUsersToConversation(examChannel.getId(), userLoginWithoutPrefix);
 
-        Lecture lecture = lectureUtilService.createLecture(course, visibleFrom);
+        Lecture lecture = lectureUtilService.createLecture(course);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
         addUsersToConversation(lectureChannel.getId(), userLoginWithoutPrefix);
 

@@ -13,6 +13,9 @@
 
     <!-- Drop the deprecated visible_date column from the lecture table -->
     <changeSet id="20260330120000-2" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lecture" columnName="visible_date"/>
+        </preConditions>
         <dropColumn tableName="lecture" columnName="visible_date"/>
     </changeSet>
 </databaseChangeLog>

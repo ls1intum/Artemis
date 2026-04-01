@@ -116,11 +116,10 @@ public class LectureUtilService {
     /**
      * Creates and saves a Lecture for the given Course. The Lecture is empty as it does not contain any LectureUnits.
      *
-     * @param course        The Course the Lecture belongs to
-     * @param ignoredUnused Unused parameter, kept for backward compatibility
+     * @param course The Course the Lecture belongs to
      * @return The created Lecture
      */
-    public Lecture createLecture(Course course, ZonedDateTime ignoredUnused) {
+    public Lecture createLecture(Course course) {
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
@@ -131,13 +130,12 @@ public class LectureUtilService {
     /**
      * Creates and saves a Lecture for the given Course. The Lecture is empty as it does not contain any LectureUnits.
      *
-     * @param course        The Course the Lecture belongs to
-     * @param ignoredUnused Unused parameter, kept for backward compatibility
-     * @param startDate     The start date of the Lecture
-     * @param endDate       The end date of the Lecture
+     * @param course    The Course the Lecture belongs to
+     * @param startDate The start date of the Lecture
+     * @param endDate   The end date of the Lecture
      * @return The created Lecture
      */
-    public Lecture createLecture(Course course, ZonedDateTime ignoredUnused, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public Lecture createLecture(Course course, ZonedDateTime startDate, ZonedDateTime endDate) {
         Lecture lecture = new Lecture();
         lecture.setTitle("Test Lecture");
         lecture.setCourse(course);

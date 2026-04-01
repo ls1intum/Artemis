@@ -82,9 +82,9 @@ public class CourseLoadService {
         ZonedDateTime now = ZonedDateTime.now();
         Course course = courseRepository.findByIdElseThrow(courseId);
         Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
-        Set<Lecture> visibleLectures = new HashSet<>();
+        Set<Lecture> lectures = new HashSet<>();
         if (lectureRepositoryApi.isPresent()) {
-            visibleLectures = lectureRepositoryApi.orElseThrow().findAllByCourseIdWithEagerLectureUnits(courseId);
+            lectures = lectureRepositoryApi.orElseThrow().findAllByCourseIdWithEagerLectureUnits(courseId);
         }
         Set<Competency> competencies = new HashSet<>();
         if (competencyRepositoryApi.isPresent()) {
@@ -95,7 +95,7 @@ public class CourseLoadService {
             prerequisites = prerequisitesApi.orElseThrow().findAllByCourseId(courseId);
         }
         course.setExercises(releasedExercises);
-        course.setLectures(visibleLectures);
+        course.setLectures(lectures);
         course.setCompetencies(competencies);
         course.setPrerequisites(prerequisites);
         return course;

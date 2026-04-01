@@ -129,7 +129,7 @@ public class LectureService {
      * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return lecturesWithAttachments;
         }
@@ -356,10 +356,9 @@ public class LectureService {
 
     /**
      * Retrieves a {@link LectureCalendarEventDTO} for each {@link Lecture} associated to the given courseId.
-     * Each DTO encapsulates the visibleDate, startDate and endDate of the respective lecture.
+     * Each DTO encapsulates the startDate and endDate of the respective lecture.
      * <p>
-     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
-     * depends on the visibleDate and whether the logged-in user is a student of the {@link Course})
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs.
      *
      * @param courseId the ID of the course
      * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
