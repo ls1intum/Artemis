@@ -8,7 +8,6 @@ import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.compone
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -19,7 +18,7 @@ import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
@@ -41,7 +40,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     onModelChanged = output<UMLModel>();
     onModelPatch = output<string>();
 
-    private modelSubscription: number;
+    private modelSubscription: number | undefined;
     private isDestroyed = false;
 
     readonlyApollonDiagram?: SVG;
@@ -101,7 +100,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private initializeApollonEditor(): void {
         if (this.apollonEditor) {
-            this.apollonEditor.unsubscribe(this.modelSubscription);
+            if (this.modelSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelSubscription);
+            }
             this.apollonEditor.destroy();
         }
 
@@ -134,6 +135,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             });
 
             this.apollonEditor.sendBroadcastMessage((patch) => {
+                if (this.isDestroyed) {
+                    return;
+                }
                 this.onModelPatch.emit(patch);
             });
         }
@@ -144,7 +148,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private destroyApollonEditor(): void {
         if (this.apollonEditor) {
-            if (this.modelSubscription) {
+            if (this.modelSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.modelSubscription);
             }
             this.apollonEditor.destroy();

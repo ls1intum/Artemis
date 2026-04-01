@@ -226,7 +226,7 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
-        '^@tumaet/apollon$': '<rootDir>/node_modules/@tumaet/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
-        '^@tumaet/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@tumaet/apollon/lib/es6/$1',
+        '^@tumaet/apollon$': '<rootDir>/node_modules/@tumaet/apollon/dist/index.js',
+        '^@tumaet/apollon/(.*)': '<rootDir>/node_modules/@tumaet/apollon/$1',
     },
 };

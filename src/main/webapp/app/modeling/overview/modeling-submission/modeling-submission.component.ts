@@ -864,7 +864,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     private modelHasUnsavedChanges(model: UMLModel): boolean {
         if (!this.submission || !this.submission.model) {
-            return Object.values(model.nodes).length > 0 && JSON.stringify(model) !== '';
+            return model.nodes.length > 0 && JSON.stringify(model) !== '';
         } else if (this.submission && this.submission.model) {
             const currentModel = JSON.parse(this.submission.model);
             const versionMatch = currentModel.version === model.version;

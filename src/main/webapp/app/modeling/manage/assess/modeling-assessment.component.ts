@@ -254,14 +254,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         if (this.apollonEditor != undefined) {
             const model: UMLModel = this.apollonEditor.model;
-            for (const node of Object.values(model.nodes)) {
+            for (const node of model.nodes) {
                 const highlight = newElements.get(node.id);
                 (node as any).highlight = highlight;
                 if (node.data) {
                     (node.data as Record<string, unknown>).highlight = highlight;
                 }
             }
-            for (const edge of Object.values(model.edges)) {
+            for (const edge of model.edges) {
                 const highlight = newElements.get(edge.id);
                 (edge as any).highlight = highlight;
                 if (edge.data) {
@@ -288,10 +288,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         if (this.apollonEditor != undefined) {
             const model: UMLModel = this.apollonEditor.model;
-            for (const node of Object.values(model.nodes)) {
+            for (const node of model.nodes) {
                 node.data.assessmentNote = this.calculateNote(elementCountMap.get(node.id));
             }
-            for (const edge of Object.values(model.edges)) {
+            for (const edge of model.edges) {
                 edge.data.assessmentNote = this.calculateNote(elementCountMap.get(edge.id));
             }
             this.apollonEditor.model = model;

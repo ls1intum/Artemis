@@ -25,14 +25,14 @@ import { cloneDeep } from 'lodash-es';
  */
 function createV4ModelWithNodes(): UMLModel {
     const v3Model = cloneDeep(testClassDiagram as any);
-    const nodes: Record<string, any> = {};
-    const edges: Record<string, any> = {};
+    const nodes: any[] = [];
+    const edges: any[] = [];
 
     for (const [id, element] of Object.entries(v3Model.elements || {})) {
-        nodes[id] = { ...(element as any), data: {} };
+        nodes.push({ ...(element as any), id, data: {} });
     }
     for (const [id, rel] of Object.entries(v3Model.relationships || {})) {
-        edges[id] = { ...(rel as any), data: {} };
+        edges.push({ ...(rel as any), id, data: {} });
     }
 
     return {
@@ -44,6 +44,11 @@ function createV4ModelWithNodes(): UMLModel {
         edges,
         assessments: v3Model.assessments || {},
     } as unknown as UMLModel;
+}
+
+/** Helper to find a node or edge by ID in a v4 array-based model */
+function findElementById(elements: any[], id: string): any {
+    return elements.find((el: any) => el.id === id);
 }
 
 /**
@@ -232,13 +237,15 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
         fixture.detectChanges();
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
-        expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
-        expect((Object.values(mockModel.assessments)[0] as any).dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
 
-        // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
-        expect(spy).toHaveBeenCalledTimes(5);
+        // In v2, calculateDropInfo returns the GradingInstruction directly as dropInfo
+        // (Apollon stores dropInfo flat, not nested under dropInfo.instruction)
+        expect((Object.values(mockModel.assessments)[0] as any).dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+
+        // calculateLabel() always calls translate twice (first/second correction round text)
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffFirst');
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffSecond');
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should update element counts', async () => {
@@ -282,12 +289,12 @@ describe('ModelingAssessmentComponent', () => {
 
         // Verify the assessmentNote was actually set on the nodes with the translated text
         const updatedModel = getCapturedModel();
-        expect((updatedModel.nodes as any)[ELEMENT_ID_1].data.assessmentNote).toBe('Warning: 5 other submissions');
-        expect((updatedModel.nodes as any)[ELEMENT_ID_2].data.assessmentNote).toBe('Warning: 3 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).data.assessmentNote).toBe('Warning: 5 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).data.assessmentNote).toBe('Warning: 3 other submissions');
 
         // Verify nodes not in elementCounts don't have assessmentNote set
         const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6'; // Class In Package
-        expect((updatedModel.nodes as any)[otherNodeId].data.assessmentNote).toBeUndefined();
+        expect(findElementById(updatedModel.nodes as any[], otherNodeId).data.assessmentNote).toBeUndefined();
     });
 
     it('should generate feedback from assessment', () => {
@@ -325,11 +332,11 @@ describe('ModelingAssessmentComponent', () => {
 
         // Verify the highlight property was actually set on the model elements
         const updatedModel = getCapturedModel();
-        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBe('red');
-        expect((updatedModel.edges as any)[RELATIONSHIP_ID].highlight).toBe('blue');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
+        expect(findElementById(updatedModel.edges as any[], RELATIONSHIP_ID).highlight).toBe('blue');
 
         // Verify elements not in highlightedElements don't have highlight set
-        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBeUndefined();
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBeUndefined();
     });
 
     it('should update model', async () => {
@@ -384,8 +391,8 @@ describe('ModelingAssessmentComponent', () => {
         await (comp as any).updateHighlightedElements(initialHighlights);
 
         let updatedModel = getCapturedModel();
-        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBe('red');
-        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBe('blue');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('blue');
 
         // Now update with different highlights - only ELEMENT_ID_2 should be green
         const newHighlights = new Map<string, string>();
@@ -395,9 +402,9 @@ describe('ModelingAssessmentComponent', () => {
 
         updatedModel = getCapturedModel();
         // ELEMENT_ID_1 should now have undefined highlight (removed)
-        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBeUndefined();
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBeUndefined();
         // ELEMENT_ID_2 should have green highlight (updated)
-        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBe('green');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {

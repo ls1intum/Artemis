@@ -1,4 +1,4 @@
-import { UMLModel } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -96,7 +96,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         if (this.studentSubmission()) {
             if (this.studentSubmission()!.model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = JSON.parse(this.studentSubmission()!.model!);
+                this.umlModel = importDiagram(JSON.parse(this.studentSubmission()!.model!));
             }
             // Updates explanation text with the latest submission
             this.explanationText = this.studentSubmission()!.explanationText ?? '';
@@ -163,7 +163,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // if we do not wait here for apollon, the redux store might be undefined
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(model);
+            this.umlModel = importDiagram(JSON.parse(model));
             // same as above regarding the string operations
             const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
             this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';

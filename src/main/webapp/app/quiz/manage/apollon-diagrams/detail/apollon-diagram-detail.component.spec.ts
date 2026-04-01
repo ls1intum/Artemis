@@ -98,6 +98,10 @@ describe('ApollonDiagramDetail Component', () => {
             .compileComponents();
 
         fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
+        // Set required inputs before any change detection
+        fixture.componentRef.setInput('courseId', course.id);
+        fixture.componentRef.setInput('apollonDiagramId', diagram.id);
+
         apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
         courseService = fixture.debugElement.injector.get(CourseManagementService);
         alertService = fixture.debugElement.injector.get(AlertService);
@@ -264,25 +268,12 @@ describe('ApollonDiagramDetail Component', () => {
     // hasSelection TESTS
     // ===========================================
     describe('hasSelection', () => {
-        it('should return true when nodes are selected', async () => {
+        it('should return true when elements are selected', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
             fixture.componentInstance.apollonDiagram.set(diagram);
             await fixture.componentInstance.initializeApollonEditor(v3Model);
 
-            vi.spyOn(ApollonEditor.prototype, 'getNodes').mockReturnValue({ 'node-1': true } as any);
-            vi.spyOn(ApollonEditor.prototype, 'getEdges').mockReturnValue({} as any);
-
-            expect(fixture.componentInstance.hasSelection).toBe(true);
-            fixture.componentInstance.ngOnDestroy();
-        });
-
-        it('should return true when edges are selected', async () => {
-            vi.spyOn(console, 'error').mockImplementation(() => {});
-            fixture.componentInstance.apollonDiagram.set(diagram);
-            await fixture.componentInstance.initializeApollonEditor(v3Model);
-
-            vi.spyOn(ApollonEditor.prototype, 'getNodes').mockReturnValue({} as any);
-            vi.spyOn(ApollonEditor.prototype, 'getEdges').mockReturnValue({ 'edge-1': true } as any);
+            vi.spyOn(ApollonEditor.prototype, 'getSelectedElements').mockReturnValue(['node-1']);
 
             expect(fixture.componentInstance.hasSelection).toBe(true);
             fixture.componentInstance.ngOnDestroy();
@@ -293,8 +284,7 @@ describe('ApollonDiagramDetail Component', () => {
             fixture.componentInstance.apollonDiagram.set(diagram);
             await fixture.componentInstance.initializeApollonEditor(v3Model);
 
-            vi.spyOn(ApollonEditor.prototype, 'getNodes').mockReturnValue({} as any);
-            vi.spyOn(ApollonEditor.prototype, 'getEdges').mockReturnValue({} as any);
+            vi.spyOn(ApollonEditor.prototype, 'getSelectedElements').mockReturnValue([]);
 
             expect(fixture.componentInstance.hasSelection).toBe(false);
             fixture.componentInstance.ngOnDestroy();
@@ -435,8 +425,7 @@ describe('ApollonDiagramDetail Component', () => {
     describe('downloadSelection', () => {
         it('should download PNG when elements are selected', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
-            vi.spyOn(ApollonEditor.prototype, 'getNodes').mockReturnValue({ 'node-1': true } as any);
-            vi.spyOn(ApollonEditor.prototype, 'getEdges').mockReturnValue({} as any);
+            vi.spyOn(ApollonEditor.prototype, 'getSelectedElements').mockReturnValue(['node-1']);
             vi.spyOn(ApollonEditor.prototype, 'exportAsSVG').mockResolvedValue({
                 svg: '<svg></svg>',
                 clip: { x: 0, y: 0, width: 100, height: 100 },
@@ -453,8 +442,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         it('should not download when nothing is selected', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
-            vi.spyOn(ApollonEditor.prototype, 'getNodes').mockReturnValue({} as any);
-            vi.spyOn(ApollonEditor.prototype, 'getEdges').mockReturnValue({} as any);
+            vi.spyOn(ApollonEditor.prototype, 'getSelectedElements').mockReturnValue([]);
 
             fixture.componentInstance.apollonDiagram.set(diagram);
             await fixture.componentInstance.initializeApollonEditor(v3Model);
@@ -562,11 +550,15 @@ describe('ApollonDiagramDetail Component', () => {
             fixture.componentInstance.apollonDiagram.set(diagram);
             await fixture.componentInstance.initializeApollonEditor(v3Model);
 
+            // Simulate that autoSaveTimer was started (normally done via ngOnInit -> setAutoSaveTimer)
+            const fakeInterval = setInterval(() => {}, 60000);
+            fixture.componentInstance.autoSaveInterval = fakeInterval;
+
             const destroySpy = vi.spyOn(fixture.componentInstance.apollonEditor!, 'destroy');
 
             fixture.componentInstance.ngOnDestroy();
 
-            expect(clearIntervalSpy).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
+            expect(clearIntervalSpy).toHaveBeenCalledWith(fakeInterval);
             expect(destroySpy).toHaveBeenCalledOnce();
         });
 

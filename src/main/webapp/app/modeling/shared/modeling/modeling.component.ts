@@ -16,7 +16,7 @@ export abstract class ModelingComponent {
     resizeOptions = input<{
         horizontalResize?: boolean;
         verticalResize?: boolean;
-    }>(undefined!);
+    }>();
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     explanation = model<string>('');
@@ -47,10 +47,10 @@ export abstract class ModelingComponent {
                 .on('resizemove', (event: any) => {
                     const target = event.target;
                     const resizeOptionsValue = this.resizeOptions();
-                    if (resizeOptionsValue.horizontalResize) {
+                    if (resizeOptionsValue?.horizontalResize) {
                         target.style.width = event.rect.width + 'px';
                     }
-                    if (resizeOptionsValue.verticalResize) {
+                    if (resizeOptionsValue?.verticalResize) {
                         target.style.height = event.rect.height + 'px';
                     }
                 });
