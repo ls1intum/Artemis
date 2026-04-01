@@ -238,7 +238,7 @@ public class TutorialGroupSessionResource {
         checkIfSessionMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
 
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (explanation != null && explanation.trim().isEmpty()) {
+        if (explanation != null && !explanation.trim().isEmpty()) {
             sessionToCancel.setStatusExplanation(explanation.trim());
         }
         tutorialGroupSessionRepository.save(sessionToCancel);

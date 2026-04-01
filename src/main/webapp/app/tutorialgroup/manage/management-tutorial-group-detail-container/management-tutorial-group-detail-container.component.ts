@@ -138,7 +138,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .subscribe({
                 next: (rawSession: RawTutorialGroupSession) => {
                     const newSession = new TutorialGroupSession(rawSession);
-                    this.tutorialGroupCourseAndGroupService.insertNewSession(newSession);
+                    this.tutorialGroupCourseAndGroupService.insertSession(newSession);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -159,7 +159,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .subscribe({
                 next: (rawSession: RawTutorialGroupSession) => {
                     const newSession = new TutorialGroupSession(rawSession);
-                    this.tutorialGroupCourseAndGroupService.insertNewSession(newSession);
+                    this.tutorialGroupCourseAndGroupService.insertSession(newSession);
                     this.isActionLoading.set(false);
                 },
                 error: () => {

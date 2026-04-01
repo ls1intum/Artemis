@@ -323,7 +323,7 @@ public class TutorialGroupResource {
             if (!user.equals(newTutor)) {
                 var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
                         updateTutorialGroupRequestDTO.title(), tutorialGroupId, user.getName());
-                courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(user));
+                courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(newTutor));
             }
             if (!user.equals(oldTutor)) {
                 var tutorialGroupUnassignedNotification = new TutorialGroupUnassignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),

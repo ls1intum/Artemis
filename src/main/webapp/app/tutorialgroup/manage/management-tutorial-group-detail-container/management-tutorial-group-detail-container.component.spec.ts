@@ -55,7 +55,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         isTutorialGroupLoading: ReturnType<typeof signal<boolean>>;
         fetchTutorialGroup: ReturnType<typeof vi.fn>;
         toggleCancellationStatusOfSession: ReturnType<typeof vi.fn>;
-        insertNewSession: ReturnType<typeof vi.fn>;
+        insertSession: ReturnType<typeof vi.fn>;
     };
     let tutorialGroupSessionApiService: {
         deleteSession: ReturnType<typeof vi.fn>;
@@ -78,7 +78,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
             isTutorialGroupLoading: signal(false),
             fetchTutorialGroup: vi.fn(),
             toggleCancellationStatusOfSession: vi.fn(),
-            insertNewSession: vi.fn(),
+            insertSession: vi.fn(),
         };
         tutorialGroupSessionApiService = {
             deleteSession: vi.fn(),
@@ -373,7 +373,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('should insert the updated session on successful updateSession', () => {
+    it('should update the session on successful updateSession', () => {
         const rawSession = createRawSession(3);
         const update$ = new Subject<RawTutorialGroupSession>();
         tutorialGroupSessionApiService.updateSession.mockReturnValue(update$.asObservable());
@@ -386,10 +386,10 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         update$.next(rawSession);
         update$.complete();
 
-        expect(tutorialGroupCourseAndGroupService.insertNewSession).toHaveBeenCalledOnce();
-        const insertedSession = tutorialGroupCourseAndGroupService.insertNewSession.mock.calls[0][0] as TutorialGroupSession;
-        expect(insertedSession).toBeInstanceOf(TutorialGroupSession);
-        expect(insertedSession.id).toBe(3);
+        expect(tutorialGroupCourseAndGroupService.insertSession).toHaveBeenCalledOnce();
+        const updatedSession = tutorialGroupCourseAndGroupService.insertSession.mock.calls[0][0] as TutorialGroupSession;
+        expect(updatedSession).toBeInstanceOf(TutorialGroupSession);
+        expect(updatedSession.id).toBe(3);
         expect(component.isLoading()).toBe(false);
     });
 
@@ -403,7 +403,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         update$.error(new Error('network error'));
 
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupDetail.networkError.updateSession');
-        expect(tutorialGroupCourseAndGroupService.insertNewSession).not.toHaveBeenCalled();
+        expect(tutorialGroupCourseAndGroupService.insertSession).not.toHaveBeenCalled();
         expect(component.isLoading()).toBe(false);
     });
 
@@ -420,8 +420,8 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         create$.next(rawSession);
         create$.complete();
 
-        expect(tutorialGroupCourseAndGroupService.insertNewSession).toHaveBeenCalledOnce();
-        const insertedSession = tutorialGroupCourseAndGroupService.insertNewSession.mock.calls[0][0] as TutorialGroupSession;
+        expect(tutorialGroupCourseAndGroupService.insertSession).toHaveBeenCalledOnce();
+        const insertedSession = tutorialGroupCourseAndGroupService.insertSession.mock.calls[0][0] as TutorialGroupSession;
         expect(insertedSession.id).toBe(4);
         expect(component.isLoading()).toBe(false);
     });
@@ -436,7 +436,7 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
         create$.error(new Error('network error'));
 
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupDetail.networkError.createSession');
-        expect(tutorialGroupCourseAndGroupService.insertNewSession).not.toHaveBeenCalled();
+        expect(tutorialGroupCourseAndGroupService.insertSession).not.toHaveBeenCalled();
         expect(component.isLoading()).toBe(false);
     });
 

@@ -30,17 +30,22 @@ export class TutorialGroupCourseAndGroupService {
         });
     }
 
-    insertNewSession(newSession: TutorialGroupSession) {
+    insertSession(sessionToInsert: TutorialGroupSession) {
         this.tutorialGroup.update((tutorialGroup) => {
             if (!tutorialGroup) return tutorialGroup;
 
-            const insertIndex = tutorialGroup.sessions.findIndex((session) => newSession.start.isBefore(session.start));
             const sessions = [...tutorialGroup.sessions];
+            const existingSessionIndex = sessions.findIndex((session) => session.id === sessionToInsert.id);
 
+            if (existingSessionIndex !== -1) {
+                sessions.splice(existingSessionIndex, 1);
+            }
+
+            const insertIndex = sessions.findIndex((session) => sessionToInsert.start.isBefore(session.start));
             if (insertIndex === -1) {
-                sessions.push(newSession);
+                sessions.push(sessionToInsert);
             } else {
-                sessions.splice(insertIndex, 0, newSession);
+                sessions.splice(insertIndex, 0, sessionToInsert);
             }
 
             return {

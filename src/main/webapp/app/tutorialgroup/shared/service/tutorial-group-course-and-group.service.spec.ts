@@ -110,18 +110,34 @@ describe('TutorialGroupCourseAndGroupService', () => {
         const tutorialGroup = new TutorialGroupDetailData(createTutorialGroupDetailData([firstSession, thirdSession]));
         service.tutorialGroup.set(tutorialGroup);
 
-        service.insertNewSession(insertedSession);
+        service.insertSession(insertedSession);
 
         expect(service.tutorialGroup()?.sessions.map((session) => session.id)).toEqual([1, 2, 3]);
         expect(service.tutorialGroup()?.sessions[1]).toBe(insertedSession);
     });
 
-    it('should guard insertNewSession when no tutorial group is loaded', () => {
+    it('should guard insertSession when no tutorial group is loaded', () => {
         expect(service.tutorialGroup()).toBeUndefined();
 
-        service.insertNewSession(new TutorialGroupSession(createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false)));
+        service.insertSession(new TutorialGroupSession(createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false)));
 
         expect(service.tutorialGroup()).toBeUndefined();
+    });
+
+    it('should replace the matching session and keep sessions ordered by start time', () => {
+        const firstSession = createRawTutorialGroupSession(1, '2026-04-20T10:15:00.000Z', '2026-04-20T11:45:00.000Z', false);
+        const secondSession = createRawTutorialGroupSession(2, '2026-04-21T10:15:00.000Z', '2026-04-21T11:45:00.000Z', false);
+        const thirdSession = createRawTutorialGroupSession(3, '2026-04-22T10:15:00.000Z', '2026-04-22T11:45:00.000Z', false);
+        const updatedSecondSession = new TutorialGroupSession(createRawTutorialGroupSession(2, '2026-04-23T10:15:00.000Z', '2026-04-23T11:45:00.000Z', true));
+        const tutorialGroup = new TutorialGroupDetailData(createTutorialGroupDetailData([firstSession, secondSession, thirdSession]));
+        service.tutorialGroup.set(tutorialGroup);
+
+        service.insertSession(updatedSecondSession);
+
+        expect(service.tutorialGroup()?.sessions.map((session) => session.id)).toEqual([1, 3, 2]);
+        expect(service.tutorialGroup()?.sessions).toHaveLength(3);
+        expect(service.tutorialGroup()?.sessions[2]).toBe(updatedSecondSession);
+        expect(service.tutorialGroup()?.sessions.find((session) => session.id === 2)?.isCancelled).toBe(true);
     });
 
     it('should fetch tutorial group on success and clear loading state', () => {
