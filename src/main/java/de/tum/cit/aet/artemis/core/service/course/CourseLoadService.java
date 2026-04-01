@@ -45,8 +45,7 @@ public class CourseLoadService {
     private final ExerciseRepository exerciseRepository;
 
     public CourseLoadService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi> prerequisitesApi,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<PrerequisitesApi> prerequisitesApi, Optional<ExamRepositoryApi> examRepositoryApi) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;

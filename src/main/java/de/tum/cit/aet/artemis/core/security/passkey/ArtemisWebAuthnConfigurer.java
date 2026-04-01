@@ -100,7 +100,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, MailSendingService mailSendingService,
             ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService,
-            de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;

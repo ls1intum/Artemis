@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -32,6 +33,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows
@@ -245,14 +247,14 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Handles {@link de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException} and returns a 500 response.
+     * Handles {@link WeaviateException} and returns a 500 response.
      *
      * @param ex      the Weaviate operation exception
      * @param request the current web request
      * @return a {@link ResponseEntity} with problem details and HTTP 500 status
      */
     @ExceptionHandler
-    public ResponseEntity<ProblemDetail> handleWeaviateException(de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException ex, NativeWebRequest request) {
+    public ResponseEntity<ProblemDetail> handleWeaviateException(WeaviateException ex, NativeWebRequest request) {
         log.error("Weaviate operation failed: {}", ex.getMessage(), ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         detail.setTitle("Weaviate Error");
@@ -270,8 +272,8 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
      * @param request the current web request
      * @return a {@link ResponseEntity} with problem details and HTTP 403 status
      */
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public ResponseEntity<ProblemDetail> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex, NativeWebRequest request) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException ex, NativeWebRequest request) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         detail.setTitle("Forbidden");
         detail.setDetail(ex.getMessage());
