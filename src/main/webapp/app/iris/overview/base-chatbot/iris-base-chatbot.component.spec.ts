@@ -1499,4 +1499,54 @@ describe('IrisBaseChatbotComponent', () => {
             expect(userContent.textContent).toBe(userText);
         });
     });
+
+    describe('shouldShowStatusBar', () => {
+        function createComponentWithStages(stages: IrisStageDTO[]): IrisBaseChatbotComponent {
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of(stages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            const comp = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            return comp;
+        }
+
+        it('should return false when stages are empty', () => {
+            const comp = createComponentWithStages([]);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return false when all stages are DONE or SKIPPED', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.SKIPPED, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return true when a non-internal stage is IN_PROGRESS', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return true when a non-internal stage is ERROR', () => {
+            const stages: IrisStageDTO[] = [{ name: 'Stage 1', weight: 1, state: IrisStageStateDTO.ERROR, message: '', internal: false } as IrisStageDTO];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return false when only internal stages are unfinished', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Internal Stage', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: true } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+    });
 });
