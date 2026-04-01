@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 
 import type { FeatureCategory } from './data/types';
-import { PlatformId } from './data/types';
+import { PlatformId, SupportLevel } from './data/types';
 import CategoryHeader from './CategoryHeader';
 import FeatureRow from './FeatureRow';
+import SupportBadge from './SupportBadge';
 import styles from './LmsComparison.module.css';
 
 interface ComparisonTableProps {
@@ -25,9 +26,9 @@ export default function ComparisonTable({ platforms, categories }: ComparisonTab
                 ))}
 
                 <div className={styles.legend}>
-                    <span className={styles.supportSupported}>✅ Supported</span>
-                    <span className={styles.supportPartial}>⚠️ Via plugin / limited</span>
-                    <span className={styles.supportNone}>❌ Not available</span>
+                    <SupportBadge level={SupportLevel.Supported} />
+                    <SupportBadge level={SupportLevel.Partial} />
+                    <SupportBadge level={SupportLevel.None} />
                 </div>
             </div>
         </div>

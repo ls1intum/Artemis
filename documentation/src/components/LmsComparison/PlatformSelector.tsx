@@ -19,7 +19,12 @@ export default function PlatformSelector({ selected, onChange, isSticky }: Platf
                 <span className={styles.artemisName}>Artemis</span>
             </div>
             <div className={styles.selectorPlatform}>
-                <select className={styles.platformSelect} value={selected[0]} onChange={(e) => onChange([e.target.value as PlatformId, selected[1]])}>
+                <select
+                    aria-label="Select first comparison platform"
+                    className={styles.platformSelect}
+                    value={selected[0]}
+                    onChange={(e) => onChange([e.target.value as PlatformId, selected[1]])}
+                >
                     {selectablePlatforms.map((pid) => (
                         <option key={pid} value={pid} disabled={pid === selected[1]}>
                             {platforms[pid].name}
@@ -28,7 +33,12 @@ export default function PlatformSelector({ selected, onChange, isSticky }: Platf
                 </select>
             </div>
             <div className={styles.selectorPlatform}>
-                <select className={styles.platformSelect} value={selected[1]} onChange={(e) => onChange([selected[0], e.target.value as PlatformId])}>
+                <select
+                    aria-label="Select second comparison platform"
+                    className={styles.platformSelect}
+                    value={selected[1]}
+                    onChange={(e) => onChange([selected[0], e.target.value as PlatformId])}
+                >
                     {selectablePlatforms.map((pid) => (
                         <option key={pid} value={pid} disabled={pid === selected[0]}>
                             {platforms[pid].name}

@@ -8,7 +8,7 @@ import styles from './LmsComparison.module.css';
 const config = {
     [SupportLevel.Supported]: { icon: faCircleCheck, label: 'Supported', className: styles.supportSupported },
     [SupportLevel.Partial]: { icon: faCircleExclamation, label: 'Limited', className: styles.supportPartial },
-    [SupportLevel.None]: { icon: faCircleXmark, label: 'None', className: styles.supportNone },
+    [SupportLevel.None]: { icon: faCircleXmark, label: 'Not available', className: styles.supportNone },
 };
 
 interface SupportBadgeProps {

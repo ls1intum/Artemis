@@ -1,4 +1,17 @@
-import { faBrain, faCode, faFileCircleCheck, faComments, faGears, faGauge, faShieldHalved, faRobot, faLock, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBrain,
+    faCode,
+    faFileCircleCheck,
+    faComments,
+    faGears,
+    faGauge,
+    faShieldHalved,
+    faRobot,
+    faLock,
+    faClipboardCheck,
+    faGlobe,
+    faPuzzlePiece,
+} from '@fortawesome/free-solid-svg-icons';
 
 import { type Feature, type FeatureCategory, type HighlightCardData, type PlatformInfo, PlatformId, SupportLevel } from './types';
 
@@ -92,13 +105,13 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Blackboard]: 'Adaptive release rules',
                 },
             }),
-            feature('competency-tracking', 'Competency Tracking', [S, P, P, P, P, P], {
+            feature('competency-tracking', 'Competency Tracking', [S, P, P, P, P, S], {
                 notes: {
                     [PlatformId.Canvas]: 'Learning Outcomes',
                     [PlatformId.Moodle]: 'Competency framework',
                     [PlatformId.Blackboard]: 'Goals and standards alignment',
                     [PlatformId.ILIAS]: 'Competence management',
-                    [PlatformId.OpenOlat]: 'Taxonomy-based competencies',
+                    [PlatformId.OpenOlat]: 'Competency frameworks with curriculum mapping',
                 },
             }),
         ],
@@ -118,7 +131,12 @@ export const featureCategories: FeatureCategory[] = [
                 tooltip: 'Drag-and-drop UML diagram exercises with semi-automatic assessment',
             }),
             feature('text', 'Text Exercises', [S, S, S, S, S, S]),
-            feature('quiz', 'Quiz Exercises', [S, S, S, S, S, S]),
+            feature('quiz', 'Quiz Exercises', [S, S, S, S, S, S], {
+                notes: {
+                    [PlatformId.Moodle]: '30+ question types including calculated variants',
+                    [PlatformId.ILIAS]: 'IMS QTI compliant question engine',
+                },
+            }),
             feature('file-upload', 'File Upload Exercises', [S, S, S, S, S, S]),
             feature('team', 'Team Exercises', [S, N, P, N, P, P], {
                 notes: {
@@ -136,6 +154,16 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Moodle]: 'Turnitin / Urkund plugins',
                     [PlatformId.ILIAS]: 'Via plugin',
                     [PlatformId.OpenOlat]: 'Via plugin',
+                },
+            }),
+            feature('inline-grading', 'Inline Document Grading', [N, S, P, S, P, P], {
+                tooltip: 'Annotate and grade PDFs, documents, and media submissions inline',
+                notes: {
+                    [PlatformId.Canvas]: 'SpeedGrader with annotation',
+                    [PlatformId.Moodle]: 'PDF annotation in assignment grading',
+                    [PlatformId.Blackboard]: 'Inline document annotation',
+                    [PlatformId.ILIAS]: 'Basic annotation support',
+                    [PlatformId.OpenOlat]: 'Basic annotation support',
                 },
             }),
         ],
@@ -190,6 +218,7 @@ export const featureCategories: FeatureCategory[] = [
             feature('qa-forums', 'Q&A / Discussion Forums', [S, S, S, S, S, S]),
             feature('mobile', 'Mobile Apps (iOS/Android)', [S, S, S, S, P, P], {
                 notes: {
+                    [PlatformId.Canvas]: 'Native apps with offline support',
                     [PlatformId.ILIAS]: 'Community-maintained app',
                     [PlatformId.OpenOlat]: 'Mobile-responsive web only',
                 },
@@ -215,13 +244,105 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('grading', 'Grading & Grade Export', [S, S, S, S, S, S]),
-            feature('analytics', 'Learning Analytics Dashboard', [S, P, P, P, P, P], {
+            feature('analytics', 'Learning Analytics Dashboard', [S, P, P, S, P, P], {
                 notes: {
                     [PlatformId.Canvas]: 'Basic analytics, advanced via paid add-on',
                     [PlatformId.Moodle]: 'Analytics via plugins',
-                    [PlatformId.Blackboard]: 'Retention Center',
+                    [PlatformId.Blackboard]: 'Anthology Illuminate for institutional analytics',
                     [PlatformId.ILIAS]: 'Limited built-in statistics',
                     [PlatformId.OpenOlat]: 'Basic course statistics',
+                },
+            }),
+            feature('curriculum', 'Curriculum Management', [N, N, P, N, P, S], {
+                tooltip: 'Multi-level curriculum structures with program, semester, and module hierarchy',
+                notes: {
+                    [PlatformId.Moodle]: 'Limited via course categories',
+                    [PlatformId.ILIAS]: 'Category and repository structure',
+                    [PlatformId.OpenOlat]: 'Full curriculum management with automatic enrollment',
+                },
+            }),
+            feature('eportfolio', 'ePortfolio', [N, N, P, N, S, S], {
+                tooltip: 'Students collect, reflect on, and present learning artifacts',
+                notes: {
+                    [PlatformId.Moodle]: 'Mahara integration or basic competency portfolios',
+                    [PlatformId.ILIAS]: 'Built-in competency-based portfolio',
+                    [PlatformId.OpenOlat]: 'Integrated portfolio with competency mapping',
+                },
+            }),
+        ],
+    },
+    {
+        id: 'content',
+        name: 'Content & Standards',
+        icon: faGlobe,
+        features: [
+            feature('scorm', 'SCORM / xAPI / cmi5', [N, S, S, S, S, S], {
+                tooltip: 'Support for standardized learning content packages',
+                notes: {
+                    [PlatformId.ILIAS]: 'Strongest open-source SCORM 2004 implementation',
+                },
+            }),
+            feature('h5p', 'Interactive Content (H5P)', [N, P, S, P, P, P], {
+                tooltip: 'Create interactive content like quizzes, presentations, and simulations',
+                notes: {
+                    [PlatformId.Canvas]: 'Via LTI integration',
+                    [PlatformId.Moodle]: 'Native H5P integration',
+                    [PlatformId.Blackboard]: 'Via LTI integration',
+                    [PlatformId.ILIAS]: 'H5P plugin',
+                    [PlatformId.OpenOlat]: 'H5P plugin',
+                },
+            }),
+            feature('content-authoring', 'Built-in Content Authoring', [P, P, S, P, S, S], {
+                tooltip: 'Create rich learning content directly within the platform',
+                notes: {
+                    [PlatformId.Artemis]: 'Markdown-based lecture content',
+                    [PlatformId.Canvas]: 'Rich text editor for pages',
+                    [PlatformId.Moodle]: 'Lesson builder, book, wiki modules',
+                    [PlatformId.Blackboard]: 'Content editor',
+                    [PlatformId.ILIAS]: 'Learning module editor with page layout',
+                    [PlatformId.OpenOlat]: 'Course editor with content elements',
+                },
+            }),
+            feature('multilingual', 'Multilingual Interface', [P, S, S, S, S, S], {
+                tooltip: 'Platform interface available in multiple languages',
+                notes: {
+                    [PlatformId.Artemis]: 'English and German',
+                    [PlatformId.Moodle]: '100+ language packs',
+                },
+            }),
+        ],
+    },
+    {
+        id: 'extensibility',
+        name: 'Extensibility & Ecosystem',
+        icon: faPuzzlePiece,
+        features: [
+            feature('plugin-ecosystem', 'Plugin / Extension Ecosystem', [N, S, S, P, P, P], {
+                tooltip: 'Marketplace or repository of third-party extensions',
+                notes: {
+                    [PlatformId.Canvas]: '500+ LTI-certified integrations',
+                    [PlatformId.Moodle]: '2,000+ community plugins',
+                    [PlatformId.Blackboard]: 'Building Blocks and LTI partners',
+                    [PlatformId.ILIAS]: 'Community plugin repository',
+                    [PlatformId.OpenOlat]: 'Limited extension ecosystem',
+                },
+            }),
+            feature('accessibility-tools', 'Accessibility Tools', [P, S, P, S, P, P], {
+                tooltip: 'Built-in tools for content accessibility checking and remediation',
+                notes: {
+                    [PlatformId.Artemis]: 'Improving, not yet fully WCAG compliant',
+                    [PlatformId.Canvas]: 'VPAT-certified, WCAG 2.1 AA',
+                    [PlatformId.Blackboard]: 'Ally tool for automated accessibility scoring',
+                },
+            }),
+            feature('video-conferencing', 'Built-in Video Conferencing', [N, P, P, S, P, P], {
+                tooltip: 'Integrated virtual classroom or video meeting capability',
+                notes: {
+                    [PlatformId.Canvas]: 'BigBlueButton / Zoom LTI',
+                    [PlatformId.Moodle]: 'BigBlueButton integration',
+                    [PlatformId.Blackboard]: 'Collaborate Ultra built-in',
+                    [PlatformId.ILIAS]: 'BigBlueButton plugin',
+                    [PlatformId.OpenOlat]: 'BigBlueButton / Teams integration',
                 },
             }),
         ],
@@ -255,7 +376,7 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.OpenOlat]: 'Functional, utilitarian design',
                 },
             }),
-            feature('accessibility', 'Accessibility', [P, S, P, S, P, P], {
+            feature('accessibility', 'Accessibility (WCAG)', [P, S, P, S, P, P], {
                 tooltip: 'Compliance with WCAG accessibility standards',
                 notes: {
                     [PlatformId.Artemis]: 'Improving, not yet fully WCAG compliant',

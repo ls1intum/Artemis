@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Layout from '@theme/Layout';
 
 import { PlatformId } from '../../components/LmsComparison/data/types';
@@ -28,6 +28,15 @@ export default function ComparePage(): ReactNode {
         return () => observer.disconnect();
     }, []);
 
+    const handlePlatformChange = useCallback(
+        (next: [PlatformId, PlatformId]) => {
+            if (next[0] !== next[1]) {
+                setSelected(next);
+            }
+        },
+        [setSelected],
+    );
+
     const visiblePlatforms: [PlatformId, PlatformId, PlatformId] = [PlatformId.Artemis, selected[0], selected[1]];
 
     return (
@@ -36,7 +45,7 @@ export default function ComparePage(): ReactNode {
                 <HeroSection />
                 <HighlightCards cards={highlightCards} />
                 <div ref={sentinelRef} aria-hidden="true" />
-                <PlatformSelector selected={selected} onChange={setSelected} isSticky={isSticky} />
+                <PlatformSelector selected={selected} onChange={handlePlatformChange} isSticky={isSticky} />
                 <ComparisonTable platforms={visiblePlatforms} categories={featureCategories} />
             </main>
         </Layout>

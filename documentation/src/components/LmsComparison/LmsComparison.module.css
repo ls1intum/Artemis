@@ -120,7 +120,7 @@
     color: var(--ifm-color-emphasis-800);
 }
 
-.categoryHeader:first-child {
+.table > div:first-child .categoryHeader {
     border-top: none;
 }
 
