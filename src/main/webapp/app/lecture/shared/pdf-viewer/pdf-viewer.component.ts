@@ -249,15 +249,21 @@ export class PdfViewerComponent {
             return;
         }
 
+        if (type === 'download') {
+            if (mode === 'embedded') {
+                this.downloadRequested.emit();
+            } else {
+                this.fullscreenService.triggerDownloadRequested();
+            }
+            return;
+        }
+
         // Embedded-mode-only handlers
         if (mode !== 'embedded') {
             return;
         }
 
         switch (type) {
-            case 'download':
-                this.downloadRequested.emit();
-                break;
             case 'openFullscreen':
                 this.openFullscreen();
                 break;
@@ -271,7 +277,9 @@ export class PdfViewerComponent {
         if (!pdfUrl) return;
 
         const currentPage = this.currentPage() || this.initialPage() || 1;
-        this.fullscreenService.open(pdfUrl, currentPage, this.uploadDate(), this.version());
+        this.fullscreenService.open(pdfUrl, currentPage, this.uploadDate(), this.version(), () => {
+            this.downloadRequested.emit();
+        });
     }
 
     /** Unified page tracking: Set current page based on mode */
@@ -286,6 +294,7 @@ export class PdfViewerComponent {
     private loadPdf(url: string, page: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         this.isLoading.set(true);
+        this.setCurrentPage(page);
 
         this.postMessageToIframe('loadPDF', {
             url,

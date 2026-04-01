@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -464,6 +465,66 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadFileForConversationTooLarge() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        var conversation = posts.getFirst().getConversation();
+        var course = conversation.getCourse();
+
+        byte[] largeContent = new byte[(int) Constants.MAX_FILE_SIZE_COMMUNICATION + 1];
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", largeContent);
+
+        request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(), "file", file,
+                JsonNode.class, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetMarkdownFileWithUnsanitizedFilename() throws Exception {
+        mockMvc.perform(get("/api/core/files/markdown/{filename}", "unsafe name.png")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAttachmentVideoUnitAttachmentRangeRequest() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-range", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
+                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
+
+            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAttachmentVideoUnitAttachmentRangeRequestNotSatisfiable() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-range-invalid", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            mockMvc.perform(get(url).header("Range", "bytes=25-30")).andExpect(status().isRequestedRangeNotSatisfiable()).andExpect(header().string("Content-Range", "bytes */10"));
+        }
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testMarkdownFileCacheHeaders() throws Exception {
         // Upload a markdown file
@@ -490,6 +551,19 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify cache headers (30 days = 2592000 seconds)
         mockMvc.perform(get(requestUrl)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
+    }
+
+    private AttachmentVideoUnit createAttachmentVideoUnitWithTempFile(Path tempFile) {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        lectureRepo.save(lecture);
+
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
+        attachmentVideoUnit.setLecture(lecture);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        attachment.setName("test-file");
+        attachment.setLink(tempFile.toUri().toString());
+        attachmentRepo.save(attachment);
+        return attachmentVideoUnitRepo.save(attachmentVideoUnit);
     }
 
 }

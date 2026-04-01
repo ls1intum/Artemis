@@ -72,6 +72,26 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.currentPage()).toBe(1);
     });
 
+    it('should reset document-specific state when loadPDF URL changes', () => {
+        component.totalPages.set(42);
+        (component as any).searchQuery.set('needle');
+        (component as any).searchMatchesCount.set({ current: 4, total: 10 });
+
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'new-doc.pdf', initialPage: 3 } },
+                origin: window.location.origin,
+                source: window,
+            }),
+        );
+
+        expect(component.pdfUrl()).toBe('new-doc.pdf');
+        expect(component.totalPages()).toBe(0);
+        expect((component as any).searchQuery()).toBe('');
+        expect((component as any).searchMatchesCount()).toBeUndefined();
+        expect(component.currentPage()).toBe(3);
+    });
+
     it('should handle themeChange message', () => {
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'themeChange', data: { isDarkMode: true } }, origin: window.location.origin, source: window }));
         expect(component.isDarkMode()).toBe(true);

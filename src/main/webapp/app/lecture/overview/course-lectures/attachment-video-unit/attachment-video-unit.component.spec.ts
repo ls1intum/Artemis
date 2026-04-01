@@ -290,6 +290,9 @@ describe('AttachmentVideoUnitComponent', () => {
 
         // Test null playlist response
         component.lectureUnit().videoSource = 'https://example.com/some-video';
+        component.playlistUrl.set('stale.m3u8');
+        component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'stale', slideNumber: 1 }]);
+        component.isLoading.set(true);
         component.toggleCollapse(false);
 
         expectPlaylistRequest('https://example.com/some-video', null);
@@ -297,6 +300,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
         expect(component.playlistUrl()).toBeUndefined();
+        expect(component.hasTranscript()).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('fetchTranscript: handles server error and keeps segments empty', async () => {

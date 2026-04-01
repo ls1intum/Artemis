@@ -35,7 +35,11 @@
     overflow: hidden;
     background-color: var(--card-bg);
     box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
-    outline: none;
+}
+
+.pdf-fullscreen-window:focus-visible {
+    outline: var(--bs-focus-ring-width) solid var(--bs-focus-ring-color);
+    outline-offset: 0.15rem;
 }
 
 .pdf-fullscreen-close {
@@ -55,19 +59,19 @@
     justify-content: center;
 }
 
-// Iframe styles - defined here where the iframe is created
+/* Iframe styles - defined here where the iframe is created */
 .pdf-iframe {
     width: 100%;
     border: none;
     display: block;
 
-    // Embedded mode: fixed aspect ratio
+    /* Embedded mode: fixed aspect ratio */
     .pdf-iframe-wrapper--embedded & {
         height: 100%;
         aspect-ratio: 2 / 1;
     }
 
-    // Fullscreen mode: flexible height
+    /* Fullscreen mode: flexible height */
     .pdf-fullscreen-window & {
         flex: 1;
     }

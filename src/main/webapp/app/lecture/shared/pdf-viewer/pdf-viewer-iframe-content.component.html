@@ -57,6 +57,7 @@
                                 class="artemis-pdf-toolbar__button"
                                 type="button"
                                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.previousMatch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.previousMatch' | artemisTranslate"
                                 [disabled]="!searchMatchesCount()?.total"
                                 (click)="search(true)"
                             >
@@ -67,6 +68,7 @@
                                 class="artemis-pdf-toolbar__button"
                                 type="button"
                                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"
                                 [disabled]="!searchMatchesCount()?.total"
                                 (click)="search(false)"
                             >
@@ -76,6 +78,7 @@
                                 class="artemis-pdf-toolbar__button"
                                 type="button"
                                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.clearSearch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.clearSearch' | artemisTranslate"
                                 (click)="clearSearch()"
                             >
                                 <fa-icon [icon]="faTimes" />
@@ -101,6 +104,7 @@
                             class="artemis-pdf-toolbar__button artemis-pdf-toolbar__page-confirm"
                             type="button"
                             [title]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
                             (click)="confirmPageNavigation()"
                         >
                             <fa-icon [icon]="faCheck" />

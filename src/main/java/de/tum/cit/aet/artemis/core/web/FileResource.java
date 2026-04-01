@@ -742,6 +742,9 @@ public class FileResource {
             long rangeLength = end - start + 1;
             byte[] rangeBytes = readFileRangeBytes(actualPath, start, rangeLength);
             long actualRangeLength = rangeBytes.length;
+            if (actualRangeLength == 0) {
+                return buildRangeNotSatisfiableResponse(headers, fileSize);
+            }
             long actualEnd = start + actualRangeLength - 1;
 
             var response = ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(headers).contentType(mediaType)

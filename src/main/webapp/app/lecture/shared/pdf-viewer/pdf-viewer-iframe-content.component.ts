@@ -1,10 +1,10 @@
 import {
     ChangeDetectionStrategy,
     Component,
-    DestroyRef,
     ElementRef,
     HostListener,
     Injector,
+    OnDestroy,
     OnInit,
     ViewEncapsulation,
     afterNextRender,
@@ -63,10 +63,9 @@ interface FindMatchesCount {
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PdfViewerIframeContentComponent implements OnInit {
+export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     private readonly pdfNotificationService = inject(PDFNotificationService);
     private readonly injector = inject(Injector);
-    private readonly destroyRef = inject(DestroyRef);
 
     readonly pdfUrl = signal('');
     readonly currentPage = signal(1);
@@ -108,10 +107,6 @@ export class PdfViewerIframeContentComponent implements OnInit {
                 { injector: this.injector },
             );
         });
-
-        this.destroyRef.onDestroy(() => {
-            this.resizeObserver?.disconnect();
-        });
     }
 
     ngOnInit(): void {
@@ -123,6 +118,10 @@ export class PdfViewerIframeContentComponent implements OnInit {
             },
             { injector: this.injector },
         );
+    }
+
+    ngOnDestroy(): void {
+        this.resizeObserver?.disconnect();
     }
 
     @HostListener('window:message', ['$event'])
@@ -156,6 +155,9 @@ export class PdfViewerIframeContentComponent implements OnInit {
                     const urlChanged = data.url !== this.pdfUrl();
                     if (urlChanged) {
                         this.pdfUrl.set(data.url);
+                        this.totalPages.set(0);
+                        this.searchQuery.set('');
+                        this.searchMatchesCount.set(undefined);
                     }
                     if (data.initialPage !== undefined && Number.isInteger(data.initialPage) && data.initialPage > 0) {
                         this.setCurrentPage(data.initialPage);

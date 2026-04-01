@@ -167,7 +167,21 @@ describe('PdfViewerComponent', () => {
             sendIframeMessage('openFullscreen');
             fixture.detectChanges();
 
-            expect(openSpy).toHaveBeenCalledWith('test.pdf', 6, uploadDate, 2);
+            expect(openSpy).toHaveBeenCalledWith('test.pdf', 6, uploadDate, 2, expect.any(Function));
+        });
+
+        it('should use initial page when opening fullscreen before first pageChange', () => {
+            const openSpy = vi.spyOn(fullscreenService, 'open');
+
+            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+            fixture.componentRef.setInput('initialPage', 7);
+            fixture.detectChanges();
+
+            sendIframeMessage('ready');
+            fixture.detectChanges();
+            sendIframeMessage('openFullscreen');
+
+            expect(openSpy).toHaveBeenCalledWith('test.pdf', 7, undefined, undefined, expect.any(Function));
         });
     });
 
