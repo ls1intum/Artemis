@@ -14,7 +14,7 @@ function parseFailedTests(resultsFile) {
         const xml = fs.readFileSync(resultsFile, 'utf8');
         const blocks = xml.split('</testcase>');
         for (const block of blocks) {
-            if (!block.includes('<failure')) continue;
+            if (!block.includes('<failure') && !block.includes('<error')) continue;
             const testcaseMatch = block.match(/<testcase\s[^>]*>/);
             if (!testcaseMatch) continue;
             const tag = testcaseMatch[0];
