@@ -1,13 +1,14 @@
-import { Component, ElementRef, input, model, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, input, model, viewChild } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import interact from 'interactjs';
+import { Interactable } from '@interactjs/core/Interactable';
 
 @Component({
     template: '',
 })
-export abstract class ModelingComponent {
+export abstract class ModelingComponent implements OnDestroy {
     protected readonly faGripLines = faGripLines;
     protected readonly faGripLinesVertical = faGripLinesVertical;
 
@@ -23,11 +24,13 @@ export abstract class ModelingComponent {
     readOnly = input(false);
 
     apollonEditor?: ApollonEditor;
+    private interactable: Interactable | undefined;
 
     protected setupInteract(): void {
         const resizeOptions = this.resizeOptions();
-        if (resizeOptions) {
-            interact('.resizable')
+        const resizeContainer = this.resizeContainer()?.nativeElement;
+        if (resizeOptions && resizeContainer) {
+            this.interactable = interact(resizeContainer)
                 .resizable({
                     edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize, top: false },
                     modifiers: [
@@ -55,5 +58,9 @@ export abstract class ModelingComponent {
                     }
                 });
         }
+    }
+
+    ngOnDestroy(): void {
+        this.interactable?.unset();
     }
 }
