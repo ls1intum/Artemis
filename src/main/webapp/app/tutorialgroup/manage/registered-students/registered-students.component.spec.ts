@@ -17,6 +17,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Registered Students Component', () => {
     setupTestBed({ zoneless: true });
@@ -39,6 +40,7 @@ describe('Registered Students Component', () => {
                 MockProvider(LocalStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
