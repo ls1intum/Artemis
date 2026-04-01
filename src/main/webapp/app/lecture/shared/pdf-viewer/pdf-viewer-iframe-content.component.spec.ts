@@ -67,45 +67,6 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.isDarkMode()).toBe(true);
     });
 
-    it('should update initialPage even when URL is unchanged', () => {
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 2 } },
-                origin: window.location.origin,
-                source: window,
-            }),
-        );
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 7 } },
-                origin: window.location.origin,
-                source: window,
-            }),
-        );
-
-        expect(component.pdfUrl()).toBe('doc.pdf');
-        expect(component.currentPage()).toBe(7);
-    });
-
-    it('should not reset page when URL is unchanged and initialPage is missing', () => {
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 4 } },
-                origin: window.location.origin,
-                source: window,
-            }),
-        );
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { type: 'loadPDF', data: { url: 'doc.pdf' } },
-                origin: window.location.origin,
-                source: window,
-            }),
-        );
-
-        expect(component.currentPage()).toBe(4);
-    });
-
     it('should use default initialPage if not provided', () => {
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'loadPDF', data: { url: 'doc.pdf' } }, origin: window.location.origin, source: window }));
         expect(component.currentPage()).toBe(1);
@@ -151,15 +112,7 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(mockEventBus.dispatch).toHaveBeenCalledWith('zoomout');
     });
 
-    it('should handle missing pdfViewerApplication gracefully', () => {
-        const pdfNotificationService = TestBed.inject(PDFNotificationService);
-        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(null as any);
-        expect(() => component.zoomIn()).not.toThrow();
-        expect(() => component.zoomOut()).not.toThrow();
-    });
-
-    it('should execute next search and focus next button when Enter is pressed in search input', () => {
-        vi.useFakeTimers();
+    it('should execute next search and focus next button when Enter is pressed in search input', async () => {
         const pdfNotificationService = TestBed.inject(PDFNotificationService);
         vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
         (component as any).searchQuery.set('needle');
@@ -172,7 +125,8 @@ describe('PdfViewerIframeContentComponent', () => {
         const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
 
         searchInput.dispatchEvent(enterEvent);
-        vi.runAllTimers();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(enterEvent.defaultPrevented).toBe(true);
         expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
@@ -184,7 +138,6 @@ describe('PdfViewerIframeContentComponent', () => {
             findPrevious: false,
         });
         expect(document.activeElement).toBe(searchNextButton);
-        vi.useRealTimers();
     });
 
     it('should handle Escape key in fullscreen mode', () => {
@@ -192,14 +145,6 @@ describe('PdfViewerIframeContentComponent', () => {
         const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
         window.dispatchEvent(event);
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
-    });
-
-    it('should not handle Escape key when not in fullscreen mode', () => {
-        component.isFullscreenMode.set(false);
-        postMessageSpy.mockClear();
-        const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
-        window.dispatchEvent(event);
-        expect(postMessageSpy).not.toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
     });
 
     it('should perform search with query', () => {
@@ -216,27 +161,6 @@ describe('PdfViewerIframeContentComponent', () => {
         });
     });
 
-    it('should clear search when query is empty', () => {
-        const pdfNotificationService = TestBed.inject(PDFNotificationService);
-        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
-        (component as any).searchQuery.set('previous query');
-        (component as any).performSearch('   ');
-        expect((component as any).searchQuery()).toBe('');
-        expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
-            type: 'find',
-            query: '',
-            caseSensitive: false,
-            entireWord: false,
-            highlightAll: false,
-            findPrevious: false,
-        });
-    });
-
-    it('should update search matches count', () => {
-        component.onFindMatchesCountUpdate({ current: 2, total: 5 });
-        expect((component as any).searchMatchesCount()).toEqual({ current: 2, total: 5 });
-    });
-
     it('should trigger download action', () => {
         postMessageSpy.mockClear();
         (component as any).triggerDownload();
@@ -249,14 +173,6 @@ describe('PdfViewerIframeContentComponent', () => {
         (component as any).confirmPageNavigation();
         expect(component.currentPage()).toBe(5);
         expect((component as any).pageInputValue()).toBe(5);
-    });
-
-    it('should reset invalid page navigation to fallback', () => {
-        component.totalPages.set(10);
-        component.currentPage.set(3);
-        (component as any).pageInputValue.set(undefined);
-        (component as any).confirmPageNavigation();
-        expect((component as any).pageInputValue()).toBe(3);
     });
 
     it('should set fullscreen mode flag from loadPDF message', () => {

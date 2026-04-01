@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Injector, OnInit, ViewEncapsulation, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -51,6 +51,7 @@ interface FindMatchesCount {
 })
 export class PdfViewerIframeContentComponent implements OnInit {
     private readonly pdfNotificationService = inject(PDFNotificationService);
+    private readonly injector = inject(Injector);
 
     readonly pdfUrl = signal('');
     readonly currentPage = signal(1);
@@ -204,12 +205,15 @@ export class PdfViewerIframeContentComponent implements OnInit {
         event.preventDefault();
         this.search(false);
 
-        setTimeout(() => {
-            const nextButton = this.searchNextButtonElement()?.nativeElement;
-            if (nextButton && !nextButton.disabled) {
-                nextButton.focus();
-            }
-        });
+        afterNextRender(
+            () => {
+                const nextButton = this.searchNextButtonElement()?.nativeElement;
+                if (nextButton && !nextButton.disabled) {
+                    nextButton.focus();
+                }
+            },
+            { injector: this.injector },
+        );
     }
 
     protected search(findPrevious: boolean): void {
@@ -247,7 +251,12 @@ export class PdfViewerIframeContentComponent implements OnInit {
     }
 
     protected onPageInputFocus(): void {
-        setTimeout(() => this.pageInputElement()?.input?.nativeElement?.select());
+        afterNextRender(
+            () => {
+                this.pageInputElement()?.input?.nativeElement?.select();
+            },
+            { injector: this.injector },
+        );
     }
 
     protected triggerDownload(): void {

@@ -1,5 +1,23 @@
 import { Location, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    Injector,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,8 +26,6 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
-import { PdfFullscreenWrapperComponent } from './pdf-fullscreen-wrapper.component';
-import { PdfEmbeddedWrapperComponent } from './pdf-embedded-wrapper.component';
 
 /**
  * Unified PDF viewer component that supports both embedded and fullscreen modes.
@@ -18,7 +34,7 @@ import { PdfEmbeddedWrapperComponent } from './pdf-embedded-wrapper.component';
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet, PdfFullscreenWrapperComponent, PdfEmbeddedWrapperComponent],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet, FaIconComponent],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,12 +56,14 @@ export class PdfViewerComponent {
 
     // Shared state
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
+    readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
     readonly iframeReady = signal(false);
 
     // Services
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
     protected readonly fullscreenService = inject(PdfFullscreenOverlayService);
 
     // Internal state (embedded mode only)
@@ -63,9 +81,11 @@ export class PdfViewerComponent {
 
     // For fullscreen mode
     readonly fullscreenMetadata = this.fullscreenService.fullscreenMetadata;
+    protected readonly faXmark = faXmark;
 
     constructor() {
         let wasFullscreenOpen = false;
+        let lastFullscreenPdfUrl: string | undefined;
 
         // Cleanup handler to prevent memory leaks when component is destroyed
         this.destroyRef.onDestroy(() => {
@@ -112,18 +132,38 @@ export class PdfViewerComponent {
             if (this.mode() !== 'embedded') return;
 
             const { isOpen, pdfUrl: fullscreenPdfUrl } = this.fullscreenService.fullscreenMetadata();
+            if (isOpen && fullscreenPdfUrl) {
+                lastFullscreenPdfUrl = fullscreenPdfUrl;
+            }
 
             if (wasFullscreenOpen && !isOpen) {
                 const page = this.fullscreenService.currentPage();
                 const pdfUrl = this.pdfUrl();
                 // Only restore if this viewer's PDF matches the one that was opened in fullscreen
-                if (this.iframeReady() && pdfUrl && pdfUrl === fullscreenPdfUrl) {
+                if (this.iframeReady() && pdfUrl && pdfUrl === lastFullscreenPdfUrl) {
                     this.currentPage.set(page);
                     this.loadPdf(pdfUrl, page);
                 }
             }
 
             wasFullscreenOpen = isOpen;
+        });
+
+        // Auto-focus fullscreen window when rendered (for keyboard interactions)
+        effect(() => {
+            if (this.mode() !== 'fullscreen' || !this.fullscreenMetadata().isOpen) {
+                return;
+            }
+
+            const fullscreenWindow = this.fullscreenWindow()?.nativeElement;
+            if (fullscreenWindow) {
+                afterNextRender(
+                    () => {
+                        fullscreenWindow.focus();
+                    },
+                    { injector: this.injector },
+                );
+            }
         });
     }
 
@@ -138,6 +178,18 @@ export class PdfViewerComponent {
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);
+    }
+
+    protected onFullscreenOverlayClick(): void {
+        this.close();
+    }
+
+    protected onFullscreenCloseClick(): void {
+        this.close();
+    }
+
+    protected onFullscreenEscapeKey(): void {
+        this.close();
     }
 
     /** Handles iframe messages and ignores messages from invalid origins/sources. */

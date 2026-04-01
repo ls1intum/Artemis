@@ -30,7 +30,7 @@ export class PdfFullscreenOverlayService {
     }
 
     close(): void {
-        this.metadata.update((m) => ({ ...m, isOpen: false }));
+        this.metadata.set({ isOpen: false });
         this.loading.set(false);
     }
 

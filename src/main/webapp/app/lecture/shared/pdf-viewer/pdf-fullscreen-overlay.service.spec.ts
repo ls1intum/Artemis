@@ -28,7 +28,7 @@ describe('PdfFullscreenOverlayService', () => {
         expect(metadata.pdfUrl).toBe('test.pdf');
     });
 
-    it('should handle multiple open/close cycles and preserve metadata', () => {
+    it('should handle multiple open/close cycles and reset metadata on close', () => {
         const service = new PdfFullscreenOverlayService();
         const uploadDate1 = dayjs();
         const uploadDate2 = dayjs().add(1, 'day');
@@ -44,16 +44,16 @@ describe('PdfFullscreenOverlayService', () => {
         expect(metadata.uploadDate).toBe(uploadDate1);
         expect(metadata.version).toBe(1);
 
-        // Close and verify metadata is preserved
+        // Close and verify metadata is reset
         service.close();
         metadata = service.fullscreenMetadata();
         page = service.currentPage();
 
         expect(metadata.isOpen).toBe(false);
-        expect(metadata.pdfUrl).toBe('first.pdf');
+        expect(metadata.pdfUrl).toBeUndefined();
         expect(page).toBe(3);
-        expect(metadata.uploadDate).toBe(uploadDate1);
-        expect(metadata.version).toBe(1);
+        expect(metadata.uploadDate).toBeUndefined();
+        expect(metadata.version).toBeUndefined();
 
         // Second open with different parameters
         service.open('second.pdf', 5, uploadDate2, 2);
