@@ -10,8 +10,8 @@ import jakarta.persistence.Table;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -27,7 +27,12 @@ public class ConversationParticipant extends DomainObject {
     private Conversation conversation;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "firstName", "lastName" })
+    // NOTE: Using @JsonIgnoreProperties instead of @JsonIncludeProperties to avoid Jackson deserialization issues
+    // with "No _valueDeserializer assigned" errors in nested entity hierarchies
+    // We basically want: @JsonIncludeProperties({ "id", "firstName", "lastName" })
+    @JsonIgnoreProperties(value = { "password", "registrationNumber", "activationKey", "resetKey", "vcsAccessToken", "vcsAccessTokenExpiryDate", "groups", "authorities",
+            "organizations", "tutorialGroupRegistrations", "completedLectureUnits", "competencyProgresses", "learningPaths", "examUsers", "pushNotificationDeviceConfigurations",
+            "savedPosts", "learnerProfile" }, allowSetters = true)
     @NonNull
     private User user;
 
