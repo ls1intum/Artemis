@@ -129,7 +129,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                             <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
                         <div class="card-assets">
-                            <img class="card-image" [src]="cardImageSrc(card)" [alt]="card.imageAltKey | artemisTranslate" />
+                            <img class="card-image" [src]="cardImageSrc(card)" [alt]="card.imageAltKey | artemisTranslate" loading="lazy" />
                         </div>
                     </div>
                 }

@@ -2,7 +2,8 @@
     "landing": {
         "pageTitle": "Artemis - Interaktive Lernplattform",
         "navbar": {
-            "logIn": "Anmelden"
+            "logIn": "Anmelden",
+            "toggleMenu": "Menü umschalten"
         },
         "hero": {
             "tagline": "Für Universitäten & technische Hochschulen",

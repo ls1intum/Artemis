@@ -154,22 +154,27 @@ import { MenuItem } from 'primeng/api';
     `,
     template: `
         <nav class="landing-navbar">
-            <button type="button" class="logo" (click)="scrollToTop()">
+            <div class="logo" (click)="scrollToTop()">
                 <img src="public/images/logo.png" alt="Artemis Logo" />
                 <span class="logo-text">Artemis</span>
-            </button>
+            </div>
 
             <div class="right-section">
                 <jhi-theme-switch [popoverPlacement]="'bottom-right'" />
                 <div class="lang-dropdown">
-                    <a class="nav-link" (click)="langMenu.toggle($event)">
+                    <button type="button" class="nav-link" (click)="langMenu.toggle($event)">
                         <fa-icon [icon]="faFlag" />
                         <span>{{ 'global.menu.language' | artemisTranslate }}</span>
-                    </a>
+                    </button>
                     <p-menu #langMenu [model]="languageMenuItems" [popup]="true" />
                 </div>
                 <button class="login-btn" (click)="navigateToLogin()">{{ 'landing.navbar.logIn' | artemisTranslate }}</button>
-                <button class="icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" [attr.aria-expanded]="mobileMenuOpen()" aria-label="Toggle menu">
+                <button
+                    class="icon-btn mobile-menu-btn"
+                    (click)="toggleMobileMenu()"
+                    [attr.aria-expanded]="mobileMenuOpen()"
+                    [attr.aria-label]="'landing.navbar.toggleMenu' | artemisTranslate"
+                >
                     <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" />
                 </button>
             </div>
@@ -180,10 +185,10 @@ import { MenuItem } from 'primeng/api';
                 <div class="mobile-controls">
                     <jhi-theme-switch [popoverPlacement]="'bottom'" />
                     <div class="lang-dropdown">
-                        <a class="nav-link" (click)="mobileLangMenu.toggle($event)">
+                        <button type="button" class="nav-link" (click)="mobileLangMenu.toggle($event)">
                             <fa-icon [icon]="faFlag" />
                             <span>{{ 'global.menu.language' | artemisTranslate }}</span>
-                        </a>
+                        </button>
                         <p-menu #mobileLangMenu [model]="mobileLanguageMenuItems" [popup]="true" />
                     </div>
                 </div>
