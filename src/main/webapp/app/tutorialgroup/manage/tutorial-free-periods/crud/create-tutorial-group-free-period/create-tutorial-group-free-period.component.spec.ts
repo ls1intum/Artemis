@@ -91,8 +91,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should correctly combine date and time for freePeriods+', () => {
-        const startDate = new Date('2021-01-01');
-        const endDate: Date | undefined = new Date('2021-01-07');
+        const startDate = new Date(2021, 0, 1);
+        const endDate: Date | undefined = new Date(2021, 0, 7);
         const startTime: Date | undefined = undefined;
         const endTime: Date | undefined = undefined;
         const combinedStart = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined);
@@ -102,7 +102,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should correctly combine date and time for freeDay', () => {
-        const startDate = new Date('2021-01-01');
+        const startDate = new Date(2021, 0, 1);
         const endDate: Date | undefined = undefined;
         const startTime: Date | undefined = undefined;
         const endTime: Date | undefined = undefined;
@@ -113,7 +113,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should correctly combine date and time for freePeriodWithinDay', () => {
-        const startDate = new Date('2021-01-01');
+        const startDate = new Date(2021, 0, 1);
         const endDate: Date | undefined = undefined;
         const startTime: Date | undefined = new Date('2023-12-31T16:00:00');
         const endTime: Date | undefined = new Date('2023-12-31T18:00:00');
