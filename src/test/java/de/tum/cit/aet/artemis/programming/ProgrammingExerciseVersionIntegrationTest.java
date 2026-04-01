@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -38,7 +39,10 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -93,6 +97,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
         assertThat(programmingExercise.getId()).isNotNull();
+        // Ensure build plan has valid phases so update validation passes
+        ensureValidBuildPlanPhases(programmingExercise);
         // wait for solution/template/test to build and generate git commits
         await().untilAsserted(() -> {
             ExerciseVersion exerciseVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -101,6 +107,16 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
             assertThat(exerciseVersion.getExerciseSnapshot().programmingData().templateParticipation().commitId()).isNotNull();
             assertThat(exerciseVersion.getExerciseSnapshot().programmingData().testsCommitId()).isNotNull();
         });
+    }
+
+    /**
+     * Sets a valid build plan configuration with at least one phase on the exercise.
+     * The factory creates exercises with an empty-action Windfile that gets converted to
+     * phases format with empty phases during setup, which fails update validation.
+     */
+    private void ensureValidBuildPlanPhases(ProgrammingExercise exercise) throws JsonProcessingException {
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())), "dummy-docker-image");
+        exercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
     }
 
     @Test
