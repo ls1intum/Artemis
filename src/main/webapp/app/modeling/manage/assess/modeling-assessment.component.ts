@@ -120,6 +120,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     ngOnDestroy() {
+        super.ngOnDestroy();
         if (this.apollonEditor) {
             if (this.modelChangeSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.modelChangeSubscription);

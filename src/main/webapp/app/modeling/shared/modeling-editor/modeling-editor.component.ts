@@ -194,6 +194,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
+        super.ngOnDestroy();
         this.isDestroyed = true;
         try {
             this.destroyApollonEditor();
