@@ -83,13 +83,13 @@ public class HyperionCodeGenerationResource {
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (request.checkOnly()) {
-            return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId())))
+            return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         Long courseId = resolveCourseId(exercise);
         String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
-        return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
+        return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
     }
 
     /**
