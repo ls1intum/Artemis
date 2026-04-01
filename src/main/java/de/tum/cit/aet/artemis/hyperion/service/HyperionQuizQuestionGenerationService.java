@@ -17,6 +17,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -255,10 +258,14 @@ public class HyperionQuizQuestionGenerationService {
     private record GeneratedQuestionsOutput(List<GeneratedQuestionOutput> questions) {
     }
 
-    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options, String hint, String explanation) {
+    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options,
+            @JsonProperty(required = false) @JsonPropertyDescription("optional, omit if not needed") @Nullable String hint,
+            @JsonProperty(required = false) @JsonPropertyDescription("optional, omit if not needed") @Nullable String explanation) {
     }
 
-    private record GeneratedOptionOutput(String text, Boolean correct, String hint, String explanation) {
+    private record GeneratedOptionOutput(String text, Boolean correct,
+            @JsonProperty(required = false) @JsonPropertyDescription("optional, omit if not needed") @Nullable String hint,
+            @JsonProperty(required = false) @JsonPropertyDescription("optional, omit if not needed") @Nullable String explanation) {
     }
 
     private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question, String reasoning) {

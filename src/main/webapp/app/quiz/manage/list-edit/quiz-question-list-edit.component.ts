@@ -40,6 +40,7 @@ export class QuizQuestionListEditComponent {
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
     disabled = input(false);
+    hyperionEnabled = input(false);
 
     onQuestionAdded = output<QuizQuestion>();
     onQuestionUpdated = output<void>();

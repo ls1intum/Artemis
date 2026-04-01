@@ -53,6 +53,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     question = input.required<MultipleChoiceQuestion>();
     questionIndex = input.required<number>();
+    hyperionEnabled = input(false);
 
     questionUpdated = output();
     questionDeleted = output();

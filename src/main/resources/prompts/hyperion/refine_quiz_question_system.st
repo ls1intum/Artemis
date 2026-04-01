@@ -16,5 +16,5 @@ Rules:
 - Use basic Markdown (bold, italic, inline code, code blocks, tables, and lists) in question text and answer options where helpful.
 - Only add or modify `hint` or `explanation` fields if the user explicitly requests it. Preserve existing ones unchanged.
 - Write the reasoning in the same language as the question.
-- The reasoning must be concise (1-3 sentences) and describe only what actually changed.
+- The reasoning must be concise (1-3 sentences) and describe only what actually changed, do not include empty hint / explanation fields.
 - Return only data matching the required output format.

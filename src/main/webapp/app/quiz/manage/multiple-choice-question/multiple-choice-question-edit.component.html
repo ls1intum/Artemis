@@ -202,9 +202,11 @@
                 </div>
             } @else {
                 <div class="form-group question-action-buttons">
-                    <button type="button" class="refine-button" aria-label="Refine question" (click)="refineRequested.emit()">
-                        <fa-icon [icon]="faWandMagicSparkles" size="2x" />
-                    </button>
+                    @if (hyperionEnabled()) {
+                        <button type="button" class="refine-button" aria-label="Refine question" (click)="refineRequested.emit()">
+                            <fa-icon [icon]="faWandMagicSparkles" size="2x" />
+                        </button>
+                    }
                     <button type="button" class="delete-button" aria-label="Delete question" (click)="deleteQuestion()">
                         <fa-icon [icon]="faTrash" size="2x" />
                     </button>

@@ -13,19 +13,22 @@
                             #editMultipleChoice
                             [question]="quizQuestion"
                             [questionIndex]="i + 1"
+                            [hyperionEnabled]="hyperionEnabled()"
                             (questionUpdated)="handleQuestionUpdated()"
                             (questionDeleted)="handleQuestionDeleted(quizQuestion)"
                             (refineRequested)="toggleRefinement(quizQuestion)"
                             (collapseChanged)="handleCollapseChanged(quizQuestion, $event)"
                         />
                     </div>
-                    <jhi-quiz-ai-question-refinement-panel
-                        [question]="quizQuestion"
-                        [courseId]="courseId()"
-                        [isOpen]="openRefinementQuestions().has(quizQuestion)"
-                        [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
-                        (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
-                    />
+                    @if (hyperionEnabled()) {
+                        <jhi-quiz-ai-question-refinement-panel
+                            [question]="quizQuestion"
+                            [courseId]="courseId()"
+                            [isOpen]="openRefinementQuestions().has(quizQuestion)"
+                            [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
+                            (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
+                        />
+                    }
                 }
                 @if (quizQuestion.type === DRAG_AND_DROP) {
                     <div>
