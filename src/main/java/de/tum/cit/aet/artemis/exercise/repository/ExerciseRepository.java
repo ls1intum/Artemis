@@ -52,6 +52,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+                LEFT JOIN FETCH e.course
             WHERE e.course.id IN :courseIds
             """)
     Set<Exercise> findByCourseIds(@Param("courseIds") Set<Long> courseIds);

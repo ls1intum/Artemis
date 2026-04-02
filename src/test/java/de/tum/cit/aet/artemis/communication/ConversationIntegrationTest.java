@@ -170,10 +170,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
         conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
         // then
-        // TODO: Hibernate 7 increased query count from 10 to 16 — investigate and reduce in a follow-up
+        // TODO: Hibernate 7 increased query count from 10 to 11 — investigate remaining 1 extra query in a follow-up
         // 4 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
-        // + additional queries from Hibernate 7 entity/collection loading changes
-        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(16);
+        // + 1 additional query from Hibernate 7 entity loading changes
+        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());

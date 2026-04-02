@@ -54,8 +54,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledTimes(11);
-        // TODO: Hibernate 7 increased query count from 6 to 11 — investigate and reduce in a follow-up
+        }).hasBeenCalledTimes(8);
+        // TODO: Hibernate 7 increased query count from 6 to 8 — investigate remaining 2 extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
@@ -71,8 +71,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledTimes(21);
-        // TODO: Hibernate 7 increased query count from 15 to 21 — investigate and reduce in a follow-up
+        }).hasBeenCalledTimes(19);
+        // TODO: Hibernate 7 increased query count from 15 to 19 — investigate remaining 4 extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories

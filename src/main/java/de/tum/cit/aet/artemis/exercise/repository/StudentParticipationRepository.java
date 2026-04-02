@@ -881,6 +881,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.exercise
             WHERE p.student.id = :studentId
                 AND p.exercise IN :exercises
                 AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
@@ -986,6 +987,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.exercise
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students teamStudent
             WHERE teamStudent.id = :studentId
