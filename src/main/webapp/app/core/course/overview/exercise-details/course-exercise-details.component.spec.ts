@@ -86,6 +86,7 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -207,6 +208,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).overrideComponent(CourseExerciseDetailsComponent, {
