@@ -51,11 +51,12 @@ export class ResultHistoryDropdownComponent {
     private readonly selectedResultId = signal<number | undefined>(undefined);
 
     private readonly latestResultId = computed(() => {
-        const results = this.sortedHistoryResults();
-        if (!results.length) {
+        const participation = this.studentParticipation();
+        const allResults = participation?.submissions?.flatMap((s) => s.results ?? []) ?? [];
+        if (!allResults.length) {
             return undefined;
         }
-        return results.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
+        return allResults.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
     });
 
     activeResultId = computed(() => {
