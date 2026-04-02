@@ -311,7 +311,7 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.OpenOlat]: 'Course editor with content elements',
                 },
             }),
-            feature('video-transcription', 'Automatic Video Transcription', [N, P, P, S, N, P], {
+            feature('video-transcription', 'Automatic Video Transcription', [S, P, P, S, N, P], {
                 tooltip: 'Automatically generate captions and transcripts for lecture videos',
                 notes: {
                     [PlatformId.Canvas]: 'Via third-party integrations (e.g., 3Play Media)',
