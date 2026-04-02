@@ -30,7 +30,7 @@
                         id="submit"
                         class="submission-button"
                         [exercise]="modelingExercise"
-                        [disabled]="(!isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"
+                        [disabled]="(!examMode && !isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                         (onSubmit)="submit()"
                         [isLoading]="isSaving"
