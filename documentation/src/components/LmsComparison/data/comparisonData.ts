@@ -105,13 +105,24 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Blackboard]: 'Adaptive release rules',
                 },
             }),
-            feature('competency-tracking', 'Competency Tracking', [S, P, P, P, P, S], {
+            feature('competency-tracking', 'Competency-based Learning', [S, P, P, P, P, S], {
                 notes: {
                     [PlatformId.Canvas]: 'Learning Outcomes',
                     [PlatformId.Moodle]: 'Competency framework',
                     [PlatformId.Blackboard]: 'Goals and standards alignment',
                     [PlatformId.ILIAS]: 'Competence management',
                     [PlatformId.OpenOlat]: 'Competency frameworks with curriculum mapping',
+                },
+            }),
+            feature('constructive-alignment', 'Constructive Alignment', [S, P, P, P, P, P], {
+                tooltip: 'Deliberate alignment of learning outcomes, teaching activities, and assessments',
+                notes: {
+                    [PlatformId.Artemis]: 'Competencies linked to exercises, lectures, and online exams',
+                    [PlatformId.Canvas]: 'Outcomes can be linked to assignments',
+                    [PlatformId.Moodle]: 'Competencies linkable to activities',
+                    [PlatformId.Blackboard]: 'Goals and standards mapping',
+                    [PlatformId.ILIAS]: 'Competencies linked to learning modules',
+                    [PlatformId.OpenOlat]: 'Taxonomy-based tagging of resources',
                 },
             }),
         ],
