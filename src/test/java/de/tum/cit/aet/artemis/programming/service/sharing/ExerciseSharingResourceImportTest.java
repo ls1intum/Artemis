@@ -82,7 +82,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupObjectMapper() {
-        objectMapper = JsonObjectMapper.get();
+        objectMapper = JsonObjectMapper.get().copy();
         objectMapper.findAndRegisterModules();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }

@@ -429,7 +429,7 @@ public class CourseStudentDataExportService {
             }
 
             Path outputFile = outputDir.resolve("iris-sessions.json");
-            objectMapper.writeValue(outputFile.toFile(), sessions);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), sessions);
             return Optional.of(outputFile);
         }
         catch (Exception e) {

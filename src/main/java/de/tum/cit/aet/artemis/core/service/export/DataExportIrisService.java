@@ -79,7 +79,7 @@ public class DataExportIrisService {
         List<IrisChatSessionExportDTO> exportDTOs = chatSessions.stream().sorted(Comparator.comparing(IrisChatSession::getCreationDate)).map(this::convertToExportDTO).toList();
 
         Path outputFile = workingDirectory.resolve("iris_chat_sessions.json");
-        objectMapper.writeValue(outputFile.toFile(), exportDTOs);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), exportDTOs);
     }
 
     /**

@@ -278,8 +278,8 @@ dependencies {
     // Use sentry-spring-boot-4-starter for Spring Boot 4 compatibility (replaces sentry-spring-boot-starter-jakarta)
     implementation "io.sentry:sentry-spring-boot-4-starter:${sentry_version}"
 
-    implementation "ch.qos.logback:logback-classic:${logback_version}"
-    implementation "ch.qos.logback:logback-core:${logback_version}"
+    implementation "ch.qos.logback:logback-classic"
+    implementation "ch.qos.logback:logback-core"
 
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
@@ -297,16 +297,16 @@ dependencies {
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.28.0"
 
-    // required for monitoring with prometheus and grafana
-    implementation "io.micrometer:micrometer-registry-prometheus:1.16.4"
-    implementation "io.micrometer:micrometer-core:1.16.4"
-    implementation "io.micrometer:micrometer-commons:1.16.4"
-    implementation "io.micrometer:micrometer-observation:1.16.4"
+    // required for monitoring with prometheus and grafana (versions managed by Spring Boot BOM)
+    implementation "io.micrometer:micrometer-registry-prometheus"
+    implementation "io.micrometer:micrometer-core"
+    implementation "io.micrometer:micrometer-commons"
+    implementation "io.micrometer:micrometer-observation"
 
-    // required for exposing LLM traces to Langfuse
-    implementation "io.micrometer:micrometer-tracing-bridge-otel:1.6.4"
-    // NOTE: Version must match the OpenTelemetry version from the Spring Boot 4.0.5 BOM
-    implementation "io.opentelemetry:opentelemetry-exporter-otlp:1.55.0"
+    // required for exposing LLM traces to Langfuse (version managed by Spring Boot BOM)
+    implementation "io.micrometer:micrometer-tracing-bridge-otel"
+    // OpenTelemetry version managed by the micrometer-tracing BOM
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.34.1"
@@ -472,7 +472,7 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    annotationProcessor "org.hibernate.orm:hibernate-jpamodelgen:7.2.7.Final"
+    annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.7.Final"
     annotationProcessor "org.hibernate.orm:hibernate-core:7.2.7.Final"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
