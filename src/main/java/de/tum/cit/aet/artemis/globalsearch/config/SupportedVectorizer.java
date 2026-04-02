@@ -41,13 +41,14 @@ public enum SupportedVectorizer {
 
     /**
      * Resolves a configuration value to the matching {@link SupportedVectorizer}.
-     * Returns {@link #NONE} if the value does not match any supported vectorizer.
      *
      * @param value the vectorizer module string from configuration
-     * @return the matching vectorizer, or {@link #NONE} as fallback
+     * @return the matching vectorizer
+     * @throws IllegalArgumentException if the value does not match any supported vectorizer
      */
     public static SupportedVectorizer fromConfigValue(String value) {
-        return Arrays.stream(values()).filter(vectorizer -> vectorizer.configValue.equals(value)).findFirst().orElse(NONE);
+        return Arrays.stream(values()).filter(vectorizer -> vectorizer.configValue.equals(value)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported vectorizer module: " + value));
     }
 
     /**
