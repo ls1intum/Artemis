@@ -4,9 +4,13 @@
             @if (informationBoxItem.content.type === 'submissionStatus') {
                 <div
                     [attr.role]="sortedHistoryResults.length ? 'button' : undefined"
+                    [attr.tabindex]="sortedHistoryResults.length ? 0 : undefined"
+                    [attr.aria-disabled]="!sortedHistoryResults.length"
                     [class.pe-auto]="sortedHistoryResults.length"
                     [ngbTooltip]="sortedHistoryResults.length ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
                     (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.enter)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.space)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
                 >
                     <jhi-information-box [informationBoxData]="informationBoxItem">
                         <span contentComponent class="d-flex align-items-center gap-1">
