@@ -141,6 +141,10 @@ jobs:
           JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$(grep -E "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/${EXTRACT_NUMBER_REGEX}/\1/" | head -1 || true)
           JAVA_MAX_DEFERRED_CHAIN_LENGTH=$(grep -E "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/${EXTRACT_NUMBER_REGEX}/\1/" | head -1 || true)
 
+          echo "Extracted thresholds from Java file:"
+          echo "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = ${JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH:-<empty>}"
+          echo "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = ${JAVA_MAX_DEFERRED_CHAIN_LENGTH:-<empty>}"
+
           if [[ -z "${JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH:-}" || -z "${JAVA_MAX_DEFERRED_CHAIN_LENGTH:-}" ]]; then
             echo "❌ Failed to extract threshold values from Java file"
             grep -A2 -B2 -E "(STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD|DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD)" "$JAVA_FILE" || echo "Threshold constants not found"
@@ -167,6 +171,8 @@ jobs:
             echo "🔧 Please update either the Java constants or GitHub Action variables to match"
             exit 1
           fi
+
+          echo "✅ All thresholds match between Java file and GitHub Action"
 
       - name: Set up JDK 25
         uses: actions/setup-java@v5
@@ -251,18 +257,30 @@ jobs:
             exit 1
           fi
 
+          echo "• Number of instantiated beans = $INSTANTIATED_BEANS"
+          echo "• Longest dependency chain length = $LONGEST_CHAIN_LENGTH"
+          echo "Validating against thresholds: MIN_INSTANTIATED_BEANS=$MIN_INSTANTIATED_BEANS, MAX_INSTANTIATED_BEANS=$MAX_INSTANTIATED_BEANS, MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
+
           STARTUP_VALIDATION_FAILED=false
 
           if (( INSTANTIATED_BEANS < MIN_INSTANTIATED_BEANS )); then
+            echo "❌ $INSTANTIATED_BEANS < $MIN_INSTANTIATED_BEANS beans. Something seems to be wrong, as usually more beans are instantiated."
             STARTUP_VALIDATION_FAILED=true
           fi
 
           if (( INSTANTIATED_BEANS > MAX_INSTANTIATED_BEANS )); then
+            echo "❌ $INSTANTIATED_BEANS > $MAX_INSTANTIATED_BEANS threshold"
             STARTUP_VALIDATION_FAILED=true
           fi
 
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
+            echo "❌ Longest dependency chain length $LONGEST_CHAIN_LENGTH > $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH threshold"
             STARTUP_VALIDATION_FAILED=true
+          fi
+
+          if [[ "$STARTUP_VALIDATION_FAILED" == false ]]; then
+            echo "✅ Final values -> Beans: $INSTANTIATED_BEANS; Longest dependency chain length: $LONGEST_CHAIN_LENGTH"
+            echo "✅ Startup bean instantiation metrics within expected ranges"
           fi
 
           {
@@ -278,7 +296,14 @@ jobs:
           LOG_FILE="app.log"
 
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
+            echo "❌ Startup dependency chain length $LONGEST_CHAIN_LENGTH > $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH threshold"
+            echo "Chains exceeding threshold:"
             grep -E "$STARTUP_DEEP_CHAIN_PATTERN" "$LOG_FILE" || true
+            echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
+            echo "You can find a visualization of the bean instantiation graph in the artifacts of this job in startupBeans.dot"
+            echo "You can visualize the file on http://webgraphviz.com/"
+          else
+            echo "✅ No startup dependency chains exceed the threshold of $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
           fi
 
           if [[ "$STARTUP_VALIDATION_FAILED" == "true" ]]; then
@@ -317,14 +342,23 @@ jobs:
             exit 1
           fi
 
+          echo "• Maximum deferred eager bean dependency chain length = $DEFERRED_CHAIN_LENGTH"
+          echo "Validating against thresholds: MIN_DEFERRED_CHAIN_LENGTH=$MIN_DEFERRED_CHAIN_LENGTH, MAX_DEFERRED_CHAIN_LENGTH=$MAX_DEFERRED_CHAIN_LENGTH"
+
           DEFERRED_VALIDATION_FAILED=false
 
           if (( DEFERRED_CHAIN_LENGTH < MIN_DEFERRED_CHAIN_LENGTH )); then
+            echo "❌ Deferred eager bean chain length $DEFERRED_CHAIN_LENGTH < $MIN_DEFERRED_CHAIN_LENGTH. This is suspicious because deferred eager initialization should have happened."
             DEFERRED_VALIDATION_FAILED=true
           fi
 
           if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
+            echo "❌ Deferred eager bean chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             DEFERRED_VALIDATION_FAILED=true
+          fi
+
+          if [[ "$DEFERRED_VALIDATION_FAILED" == false ]]; then
+            echo "✅ Deferred eager bean chain length within expected ranges"
           fi
 
           {
@@ -340,7 +374,14 @@ jobs:
           LOG_FILE="app.log"
 
           if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
+            echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
+            echo "Chains exceeding threshold:"
             grep -E "$DEFERRED_LONG_CHAIN_PATTERN" "$LOG_FILE" || true
+            echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
+            echo "You can find a visualization of the deferred eager bean instantiation graph in the artifacts of this job in deferredEagerBeanInstantiationViolations.dot"
+            echo "You can visualize the file on http://webgraphviz.com/"
+          else
+            echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_CHAIN_LENGTH"
           fi
 
           if [[ "$DEFERRED_VALIDATION_FAILED" == "true" ]]; then
