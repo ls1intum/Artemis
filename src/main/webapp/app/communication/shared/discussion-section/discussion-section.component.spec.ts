@@ -195,7 +195,7 @@ describe('DiscussionSectionComponent', () => {
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input#search');
-        expect(searchInput.value).toBe('');
+        expect((searchInput as HTMLInputElement).value).toBe('');
         vi.advanceTimersByTime(0);
     });
 

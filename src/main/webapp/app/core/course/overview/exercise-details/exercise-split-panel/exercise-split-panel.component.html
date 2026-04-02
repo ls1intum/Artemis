@@ -14,13 +14,7 @@
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }
             @if (exampleSolutionInfo()?.exampleSolutionPublished) {
-                <div class="row mb-2 mt-2 align-items-baseline">
-                    <div class="control-label" (click)="onChangeExampleSolution()?.()">
-                        <span class="h3 pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></span>
-                        <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed() ? faAngleDown : faAngleUp" />
-                    </div>
-                </div>
-                @if (!exampleSolutionCollapsed()) {
+                <p-panel [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" [toggleable]="true" [collapsed]="true">
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>
@@ -57,7 +51,7 @@
                             }
                         }
                     </dl>
-                }
+                </p-panel>
             }
             @if (showComplaintView()) {
                 <jhi-complaint-student-view

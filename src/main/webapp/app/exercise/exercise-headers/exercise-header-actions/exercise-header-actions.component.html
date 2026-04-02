@@ -122,7 +122,10 @@
                     ></button>
                 }
                 @if (isStartExerciseAvailable()) {
-                    <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
+                    <span
+                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
+                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                    >
                         <button
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
@@ -210,8 +213,11 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
-                    @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                    <span
+                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
+                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                    >
                         <button
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
@@ -224,8 +230,8 @@
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
-                    }
-                </span>
+                    </span>
+                }
                 @if (isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise().id"

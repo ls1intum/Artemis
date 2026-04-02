@@ -17,10 +17,14 @@
     <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
         @for (result of displayedResults(); track result) {
             <div
-                class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-3 py-2"
+                class="list-group-item d-flex align-items-center gap-2 px-3 py-2"
+                [class.list-group-item-action]="isRowClickable()"
                 [class.bg-primary-subtle]="result.id === activeResultId()"
                 [attr.role]="isRowClickable() ? 'button' : undefined"
+                [attr.tabindex]="isRowClickable() ? 0 : undefined"
                 (click)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.enter)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.space)="isRowClickable() && navigateToSubmission(result, $event)"
             >
                 <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
                 <fa-icon [icon]="getResultIcon(result)" [class]="getResultColorClass(result)" class="flex-shrink-0" style="font-size: 14px" />

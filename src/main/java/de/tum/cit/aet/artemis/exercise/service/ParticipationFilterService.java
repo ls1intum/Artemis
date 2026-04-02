@@ -119,7 +119,7 @@ public class ParticipationFilterService {
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow only a single participation (non-programming and non-quiz).
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming, non-quiz, non-text, and non-modeling).
      *
      * @param participations the set of participations in the exercise to validate
      * @return the valid set of participations (empty or singleton set)

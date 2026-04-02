@@ -72,6 +72,7 @@ export class ResultHistoryDropdownComponent {
         effect(() => {
             this.studentParticipation();
             this.selectedResultId.set(undefined);
+            this.viewingSubmissionChange.emit(false);
         });
     }
 
@@ -165,7 +166,10 @@ export class ResultHistoryDropdownComponent {
 
     getBadge(result: Result): Badge {
         const participation = result.submission?.participation ?? this.studentParticipation();
-        return ResultService.evaluateBadge(participation!, result);
+        if (!participation) {
+            return { class: 'bg-secondary', text: '', tooltip: '' };
+        }
+        return ResultService.evaluateBadge(participation, result);
     }
 
     getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {

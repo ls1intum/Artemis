@@ -169,9 +169,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly _submissionPolicy = signal<SubmissionPolicy | undefined>(undefined);
     readonly submissionPolicy = this._submissionPolicy.asReadonly();
 
-    private readonly _exampleSolutionCollapsed = signal<boolean | undefined>(undefined);
-    readonly exampleSolutionCollapsed = this._exampleSolutionCollapsed.asReadonly();
-
     private readonly _plagiarismCaseInfo = signal<PlagiarismCaseInfo | undefined>(undefined);
     readonly plagiarismCaseInfo = this._plagiarismCaseInfo.asReadonly();
 
@@ -289,8 +286,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
         this._exampleSolutionInfo.set(ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown));
-        // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
-        this._exampleSolutionCollapsed.set(!!newExercise?.isAtLeastTutor);
     }
 
     /**
@@ -488,13 +483,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     toggleShowMoreResults() {
         this._showMoreResults.update((v) => !v);
-    }
-
-    /**
-     * Used to change the boolean value for the example solution dropdown menu
-     */
-    changeExampleSolution() {
-        this._exampleSolutionCollapsed.update((v) => !v);
     }
 
     // INSTRUCTOR ACTIONS
