@@ -28,12 +28,14 @@ public class YouTubeService {
     /**
      * Pattern to extract YouTube video IDs (11 characters: alphanumeric, hyphens, underscores).
      * Matches:
-     * - youtube.com/watch?v=VIDEO_ID
+     * - youtube.com/watch?v=VIDEO_ID (with optional other query params)
      * - youtube.com/embed/VIDEO_ID
      * - youtube.com/live/VIDEO_ID
+     * - youtube.com/shorts/VIDEO_ID
+     * - youtube-nocookie.com/embed/VIDEO_ID
      * - youtu.be/VIDEO_ID
      */
-    private static final Pattern YOUTUBE_ID_PATTERN = Pattern.compile("(?:youtube\\.com/(?:watch\\?(?:.*&)?v=|embed/|live/)|youtu\\.be/)([\\w-]{11})");
+    private static final Pattern YOUTUBE_ID_PATTERN = Pattern.compile("(?:youtube(?:-nocookie)?\\.com/(?:watch\\?(?:[^&]*&)*v=|embed/|live/|shorts/)|youtu\\.be/)([\\w-]{11})");
 
     /**
      * Extracts the YouTube video ID from a given URL.
@@ -49,7 +51,8 @@ public class YouTubeService {
         try {
             URI uri = new URI(videoUrl);
             String host = uri.getHost();
-            if (host == null || (!host.equals("youtube.com") && !host.endsWith(".youtube.com") && !host.equals("youtu.be"))) {
+            if (host == null || (!host.equals("youtube.com") && !host.endsWith(".youtube.com") && !host.equals("youtube-nocookie.com") && !host.endsWith(".youtube-nocookie.com")
+                    && !host.equals("youtu.be"))) {
                 return Optional.empty();
             }
         }

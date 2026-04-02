@@ -45,9 +45,31 @@ class YouTubeServiceTest {
     }
 
     @Test
+    void shouldExtractVideoIdFromShortsUrl() {
+        Optional<String> videoId = youTubeService.extractYouTubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ");
+        assertThat(videoId).contains("dQw4w9WgXcQ");
+    }
+
+    @Test
+    void shouldExtractVideoIdFromNoCookieEmbedUrl() {
+        Optional<String> videoId = youTubeService.extractYouTubeVideoId("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+        assertThat(videoId).contains("dQw4w9WgXcQ");
+    }
+
+    @Test
     void shouldExtractVideoIdWithHyphensAndUnderscores() {
         Optional<String> videoId = youTubeService.extractYouTubeVideoId("https://www.youtube.com/watch?v=a-B_c1D2e3F");
         assertThat(videoId).contains("a-B_c1D2e3F");
+    }
+
+    @Test
+    void shouldExtractVideoIdFromShortenedUrlWithQueryParams() {
+        assertThat(youTubeService.extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ?t=42")).contains("dQw4w9WgXcQ");
+    }
+
+    @Test
+    void shouldExtractVideoIdFromEmbedUrlWithQueryParams() {
+        assertThat(youTubeService.extractYouTubeVideoId("https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1")).contains("dQw4w9WgXcQ");
     }
 
     @ParameterizedTest

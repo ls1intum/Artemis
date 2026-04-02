@@ -1091,17 +1091,22 @@ class LectureContentProcessingServiceTest {
             // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should start transcription with YouTube URL directly
+            // Then: Should start transcription with YouTube URL directly and correct source type
             ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
             verify(transcriptionApi).startNebulaTranscription(eq(testLecture.getId()), eq(testUnit.getId()), requestCaptor.capture());
 
             NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
             assertThat(capturedRequest.videoUrl()).isEqualTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
             assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.YOUTUBE);
+            assertThat(capturedRequest.lectureUnitId()).isEqualTo(testUnit.getId());
+            assertThat(capturedRequest.lectureId()).isEqualTo(testLecture.getId());
+
+            // State should transition to TRANSCRIBING
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
-        void shouldPreferTumLiveOverYouTube() {
+        void shouldPreferTumLiveOverYouTubeAndSetCorrectSourceType() {
             // Given: TUM Live URL that returns a playlist
             testUnit.setVideoSource("https://live.rbg.tum.de/w/course/12345");
 
@@ -1113,17 +1118,19 @@ class LectureContentProcessingServiceTest {
             // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should use TUM Live playlist URL, not the original URL
+            // Then: Should use TUM Live playlist URL with TUM_LIVE source type
             ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
             verify(transcriptionApi).startNebulaTranscription(eq(testLecture.getId()), eq(testUnit.getId()), requestCaptor.capture());
 
             NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
             assertThat(capturedRequest.videoUrl()).isEqualTo("https://playlist.m3u8");
             assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.TUM_LIVE);
+            // YouTube API should NOT have been consulted since TUM Live succeeded
+            verify(youTubeApi, never()).isYouTubeUrl(any());
         }
 
         @Test
-        void shouldFallBackToYouTubeWhenTumLiveApiThrows() {
+        void shouldFallBackToYouTubeWhenTumLiveApiThrowsWithCorrectSourceType() {
             // Given: YouTube URL, TUM Live API throws exception
             testUnit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
@@ -1136,8 +1143,14 @@ class LectureContentProcessingServiceTest {
             // When
             service.triggerProcessing(testUnit);
 
-            // Then: Should fall back to YouTube
-            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+            // Then: Should fall back to YouTube with correct source type and original URL
+            ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
+            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), requestCaptor.capture());
+
+            NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
+            assertThat(capturedRequest.videoUrl()).isEqualTo("https://youtu.be/dQw4w9WgXcQ");
+            assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.YOUTUBE);
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
@@ -1161,6 +1174,125 @@ class LectureContentProcessingServiceTest {
             // Then: Should skip transcription and go to PDF ingestion
             verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
             verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
+        void shouldRetryTranscriptionWithYouTubeUrl() {
+            // Given: State is ready for scheduler retry with a YouTube URL
+            testUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(1);
+
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+            when(youTubeApi.isYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).thenReturn(true);
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("retry-yt-job");
+
+            // When: Scheduler calls retryTranscription
+            service.retryTranscription(testState);
+
+            // Then: Should retry with YouTube source type
+            ArgumentCaptor<NebulaTranscriptionRequestDTO> requestCaptor = ArgumentCaptor.forClass(NebulaTranscriptionRequestDTO.class);
+            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), requestCaptor.capture());
+
+            NebulaTranscriptionRequestDTO capturedRequest = requestCaptor.getValue();
+            assertThat(capturedRequest.videoUrl()).isEqualTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            assertThat(capturedRequest.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.lecture.domain.VideoSourceType.YOUTUBE);
+            assertThat(testState.getRetryEligibleAt()).isNull();
+        }
+
+        @Test
+        void shouldTranscribeWithOnlyYouTubeApiAvailable() {
+            // Given: Service created without TUM Live API but with YouTube API
+            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), // No TUM Live
+                    Optional.of(youTubeApi), Optional.of(irisLectureApi), featureToggleService, callbackService);
+
+            testUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(youTubeApi.isYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).thenReturn(true);
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("yt-job-789");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should transcribe via YouTube (TUM Live API not consulted)
+            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldFallBackToIngestionWhenNoVideoResolversAvailable() {
+            // Given: Service with transcriptionApi but NO TUM Live and NO YouTube
+            ProcessingStateCallbackService callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi));
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), // No TUM Live
+                    Optional.empty(), // No YouTube
+                    Optional.of(irisLectureApi), featureToggleService, callbackService);
+
+            testUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should skip transcription entirely and fall back to PDF ingestion
+            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+        }
+    }
+
+    // ==================== hasProcessingCapabilities ====================
+
+    @Nested
+    class HasProcessingCapabilities {
+
+        @Test
+        void shouldReturnTrueWithTumLiveOnly() {
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
+                    Optional.empty(), Optional.empty(), featureToggleService, processingStateCallbackService);
+
+            assertThat(service.hasProcessingCapabilities()).isTrue();
+        }
+
+        @Test
+        void shouldReturnTrueWithYouTubeOnly() {
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(),
+                    Optional.of(youTubeApi), Optional.empty(), featureToggleService, processingStateCallbackService);
+
+            assertThat(service.hasProcessingCapabilities()).isTrue();
+        }
+
+        @Test
+        void shouldReturnTrueWithIrisOnly() {
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.of(irisLectureApi), featureToggleService, processingStateCallbackService);
+
+            assertThat(service.hasProcessingCapabilities()).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWithNoVideoResolversAndNoIris() {
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), Optional.empty(),
+                    Optional.empty(), featureToggleService, processingStateCallbackService);
+
+            assertThat(service.hasProcessingCapabilities()).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWithNoServicesAtAll() {
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.empty(), featureToggleService, processingStateCallbackService);
+
+            assertThat(service.hasProcessingCapabilities()).isFalse();
         }
     }
 }

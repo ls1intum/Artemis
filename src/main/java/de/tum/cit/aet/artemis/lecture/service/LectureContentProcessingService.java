@@ -281,7 +281,7 @@ public class LectureContentProcessingService {
             return newState.get();
         }
 
-        // Processing couldn't start (e.g., no playlist available for video)
+        // Processing couldn't start (e.g., no transcribable video source available)
         // Create a FAILED state to provide feedback to the user
         var failedState = new LectureUnitProcessingState(lectureUnit);
         failedState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noVideoSource");
@@ -338,7 +338,7 @@ public class LectureContentProcessingService {
             return;
         }
 
-        if (hasVideo && transcriptionApi.isPresent()) {
+        if (hasVideo && transcriptionApi.isPresent() && (tumLiveApi.isPresent() || youTubeApi.isPresent())) {
             // Try to resolve video URL for transcription (TUM Live playlist or YouTube URL)
             Optional<ResolvedVideoSource> resolvedSource = resolveVideoSource(unit);
 
@@ -369,7 +369,7 @@ public class LectureContentProcessingService {
                     processingStateRepository.save(state);
                 }
             }
-            log.debug("No processing possible for unit {} (no playlist and no PDF)", unit.getId());
+            log.debug("No processing possible for unit {} (no transcribable video source and no PDF)", unit.getId());
         }
     }
 
