@@ -159,7 +159,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.submissionId = newSubmissionId;
                 this.resultId = newResultId;
                 if (participationChanged || submissionOrResultChanged) {
-                    const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id!;
+                    const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
+                    if (participationIdToFetch === undefined) {
+                        return;
+                    }
                     this.textService.get(participationIdToFetch, this.resultId).subscribe({
                         next: (data: StudentParticipation) => {
                             this.updateParticipation(data, this.submissionId, this.resultId);
