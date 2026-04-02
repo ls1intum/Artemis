@@ -159,9 +159,10 @@
                             [smallButtons]="smallButtons()"
                             [participations]="studentParticipations()"
                             [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
+                            [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
                             [hideLabelMobile]="true"
                             [repositoryUri]="''"
+                            [isPractice]="participationMode() === 'practice'"
                         />
                     }
                 }

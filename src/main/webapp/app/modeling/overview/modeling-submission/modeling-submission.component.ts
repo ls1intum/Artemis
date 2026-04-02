@@ -419,6 +419,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.model) {
             this.umlModel = importDiagram(JSON.parse(this.submission.model));
             this.hasElements = hasModelElements(this.umlModel);
+        } else {
+            this.umlModel = undefined!;
+            this.hasElements = false;
         }
         this.explanation = this.submission.explanationText ?? '';
     }

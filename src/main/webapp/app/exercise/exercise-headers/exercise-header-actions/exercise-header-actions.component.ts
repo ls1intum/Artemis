@@ -177,6 +177,18 @@ export class ExerciseHeaderActionsComponent {
 
     readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
+    readonly activeParticipationForCode = computed(() => {
+        return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
+    });
+
+    readonly routerLinkForRepositoryView = computed(() => {
+        const participation = this.activeParticipationForCode();
+        if (!participation?.id) {
+            return ['/courses', this.courseId(), 'exercises', this.exercise().id!];
+        }
+        return ['/courses', this.courseId(), 'exercises', this.exercise().id!, 'repository', participation.id];
+    });
+
     readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false));
 
     readonly beforeDueDate = computed(() => {

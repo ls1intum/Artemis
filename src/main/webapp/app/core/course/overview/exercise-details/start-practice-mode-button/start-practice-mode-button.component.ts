@@ -37,6 +37,7 @@ export class StartPracticeModeButtonComponent {
 
     readonly startingPracticeMode = computed(() => this._startingPracticeMode());
     readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
+    readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
     // Icons
     faPlayCircle = faPlayCircle;
