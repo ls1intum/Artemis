@@ -156,7 +156,7 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.OpenOlat]: 'Group tasks',
                 },
             }),
-            feature('code-review', 'Automatic Code Review & Static Analysis', [S, N, N, N, N, N], {
+            feature('code-review', 'Automatic Code Review', [S, N, N, N, N, N], {
                 tooltip: 'Automated static analysis feedback on code quality, style, and common errors',
             }),
             feature('plagiarism', 'Plagiarism Detection', [S, P, P, S, P, P], {
