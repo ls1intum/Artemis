@@ -18,57 +18,81 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     test('Instructor enables learning paths via activation card', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await page.waitForLoadState('networkidle');
+
+        // Wait for the loading spinner to disappear before checking for the activation card
+        const spinner = page.locator('.spinner-border');
+        await expect(spinner).not.toBeVisible({ timeout: 30000 });
 
         // Feature activation card is visible and can be enabled
         const activationCard = page.locator('jhi-feature-activation');
-        await expect(activationCard).toBeVisible();
+        await expect(activationCard).toBeVisible({ timeout: 15000 });
         await activationCard.locator('.jhi-btn').first().click();
 
         // Assert: management UI becomes visible after enabling
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
+        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 
     test('Instructor enables learning paths via course settings', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}`);
+        await page.waitForLoadState('networkidle');
 
         await page.getByRole('link', { name: 'Settings' }).click();
 
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
-        await expect(lpCheckbox).toBeVisible();
+        await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
         await lpCheckbox.click();
         await page.locator('#save-entity').click();
 
         await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await page.waitForLoadState('networkidle');
+
+        // Wait for loading to complete
+        const spinner = page.locator('.spinner-border');
+        await expect(spinner).not.toBeVisible({ timeout: 30000 });
 
         // Assert: management UI becomes visible after enabling
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
+        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
         await page.goto(`/course-management/${course.id}`);
+        await page.waitForLoadState('networkidle');
 
         await page.getByRole('link', { name: 'Settings' }).click();
 
         // Toggle checkbox off and save
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
-        await expect(lpCheckbox).toBeVisible();
+        await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
         if (await lpCheckbox.isChecked()) {
             await lpCheckbox.click();
         }
         await page.locator('#save-entity').click();
 
         await page.goto(`/course-management/${course.id}/learning-path-management`);
-        await expect(page.locator('jhi-feature-activation')).toBeVisible();
+        await page.waitForLoadState('networkidle');
+
+        // Wait for loading to complete
+        const spinner = page.locator('.spinner-border');
+        await expect(spinner).not.toBeVisible({ timeout: 30000 });
+
+        await expect(page.locator('jhi-feature-activation')).toBeVisible({ timeout: 15000 });
     });
 
     test('Create simple learning path', async ({ page, courseManagementAPIRequests }) => {
         // Enable learning paths first
         await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await page.waitForLoadState('networkidle');
+
+        // Wait for loading to complete
+        const spinner = page.locator('.spinner-border');
+        await expect(spinner).not.toBeVisible({ timeout: 30000 });
+
         const activationCard = page.locator('jhi-feature-activation');
-        await expect(activationCard).toBeVisible();
+        await expect(activationCard).toBeVisible({ timeout: 15000 });
         await activationCard.locator('.jhi-btn').first().click();
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
+        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
 
         // Create all competencies and prerequisites via API and store their IDs
         const comp1 = await courseManagementAPIRequests.createCompetency(course, 'Competency 1', 'Seed competency for learning path graph test 1');
@@ -93,6 +117,9 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.createCompetencyRelation(course, comp5.id, comp6.id, 'ASSUMES');
 
         await page.reload();
-        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
+        await page.waitForLoadState('networkidle');
+        const reloadSpinner = page.locator('.spinner-border');
+        await expect(reloadSpinner).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 });

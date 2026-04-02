@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, untracked } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import {
     faAt,
@@ -31,7 +31,7 @@ import { FileService } from 'app/shared/service/file.service';
     styleUrls: ['../../metis.component.scss'],
     imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
 })
-export class PostingContentPartComponent implements OnInit, OnChanges {
+export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
     private dialog = inject(MatDialog);
     private accountService = inject(AccountService);
@@ -88,12 +88,22 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     processedContentBeforeReference: string;
     processedContentAfterReference: string;
 
-    ngOnInit() {
-        this.processContent();
+    private initialized = false;
+
+    constructor() {
+        effect(() => {
+            this.postingContentPart();
+            untracked(() => {
+                if (this.initialized) {
+                    this.processContent();
+                }
+            });
+        });
     }
 
-    ngOnChanges() {
+    ngOnInit() {
         this.processContent();
+        this.initialized = true;
     }
 
     /**

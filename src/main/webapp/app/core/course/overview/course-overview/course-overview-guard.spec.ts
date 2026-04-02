@@ -34,7 +34,7 @@ describe('CourseOverviewGuard', () => {
 
     const lecture = new Lecture();
 
-    const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], faqEnabled: true } as Course;
+    const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], numberOfAcceptedFaqs: 3 } as Course;
 
     const responseFakeCourse = { body: mockCourse } as HttpResponse<Course>;
 
@@ -155,7 +155,7 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBe(true);
         });
 
-        it('should return true if type is faq and course has faqEnabled', () => {
+        it('should return true if type is faq and course has accepted faqs', () => {
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.FAQ);
             let resultValue = true;
             result.subscribe((value) => {

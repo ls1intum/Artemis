@@ -29,10 +29,6 @@ export function isCommunicationEnabled(course: Course | undefined) {
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
 }
 
-export function isFaqEnabled(course: Course | undefined) {
-    return course?.faqEnabled;
-}
-
 /**
  * Note: Keep in sync with method in CourseRepository.java
  */
@@ -78,7 +74,6 @@ export class Course implements BaseEntity {
     public courseIcon?: string;
     public courseIconPath?: string;
     public onlineCourse?: boolean;
-    public faqEnabled?: boolean;
     public trainingEnabled?: boolean;
     public enrollmentEnabled?: boolean;
     public enrollmentConfirmationMessage?: string;
@@ -112,6 +107,7 @@ export class Course implements BaseEntity {
     public numberOfTutorialGroups?: number;
     public numberOfCompetencies?: number;
     public numberOfPrerequisites?: number;
+    public numberOfAcceptedFaqs?: number;
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
@@ -136,6 +132,7 @@ export class Course implements BaseEntity {
     public irisEnabledInCourse?: boolean;
 
     public courseArchivePath?: string;
+    public onboardingDone?: boolean;
 
     constructor() {
         this.onlineCourse = false; // default value
