@@ -79,6 +79,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
 
         test('Adds a programming exercise', async ({ page, examExerciseGroups, programmingExerciseCreation }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
+            await page.waitForLoadState('networkidle');
             await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
             const programmingExerciseTitle = 'programming' + uid;
             await programmingExerciseCreation.changeEditMode();

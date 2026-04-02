@@ -151,11 +151,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
 
             this.route.params?.subscribe((params) => {
-                this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                this.resultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
+                const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
+                const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
                 const newParticipationId = Number(params['participationId']);
-                if (!Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id) {
-                    this.textService.get(newParticipationId, this.resultId).subscribe({
+                const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
+                const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
+                this.submissionId = newSubmissionId;
+                this.resultId = newResultId;
+                if (participationChanged || submissionOrResultChanged) {
+                    const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
+                    if (participationIdToFetch === undefined) {
+                        return;
+                    }
+                    this.textService.get(participationIdToFetch, this.resultId).subscribe({
                         next: (data: StudentParticipation) => {
                             this.updateParticipation(data, this.submissionId, this.resultId);
                         },
@@ -164,13 +172,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 } else {
                     this.updateParticipation(this.participation, this.submissionId, this.resultId);
                 }
-            });
-
-            this.textService.get(participationId!, this.resultId).subscribe({
-                next: (data: StudentParticipation) => {
-                    this.updateParticipation(data, this.submissionId, this.resultId);
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
             this.isReadOnlyWithShowResult = !!this.submissionId;
@@ -197,7 +198,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.hasAthenaResultForLatestSubmission = true;
                     }
                 }
-                this.updateParticipation(changedParticipation);
+                this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
             });
     }
 

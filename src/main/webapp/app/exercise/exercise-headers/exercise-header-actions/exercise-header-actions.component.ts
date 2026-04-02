@@ -194,6 +194,7 @@ export class ExerciseHeaderActionsComponent {
                 this._studentParticipations.set(exercise.studentParticipations ?? []);
                 this.updateParticipations();
                 this._isTeamAvailable.set(!!(exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId));
+                this.resetExerciseSpecificState();
                 this.initializeExerciseSpecificState(exercise);
             });
         });
@@ -207,6 +208,13 @@ export class ExerciseHeaderActionsComponent {
                 nonOutlined[nonOutlined.length - 1].overrideSecondary.set(false);
             }
         });
+    }
+
+    private resetExerciseSpecificState(): void {
+        this._uninitializedQuiz.set(false);
+        this._quizNotStarted.set(false);
+        this._programmingExercise.set(undefined);
+        this._editorLabel.set(undefined);
     }
 
     private initializeExerciseSpecificState(exercise: Exercise): void {

@@ -169,38 +169,11 @@ export const courseRoutes: Routes = [
                 ],
             },
             {
-                path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
-                loadComponent: () =>
-                    import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
                 path: 'exercises/:exerciseId/repository',
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
-            },
-            {
-                path: 'exercises/modeling-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
-            },
-            {
-                path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-                canDeactivate: [PendingChangesGuard],
             },
 
             {

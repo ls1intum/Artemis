@@ -44,7 +44,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/course/s
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { Directive, input, output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -59,8 +59,8 @@ import { DialogService } from 'primeng/dynamicdialog';
     selector: '[infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Input() scrollWindow = true;
-    @Output() scrolledUp = new EventEmitter<void>();
+    readonly scrollWindow = input(true);
+    readonly scrolledUp = output<void>();
 }
 
 describe('DiscussionSectionComponent', () => {
@@ -195,7 +195,7 @@ describe('DiscussionSectionComponent', () => {
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input#search');
-        expect(searchInput.textContent).toBe('');
+        expect((searchInput as HTMLInputElement).value).toBe('');
         vi.advanceTimersByTime(0);
     });
 

@@ -52,7 +52,6 @@ test.describe('Import exercises', () => {
             const exercise = await importResponse.json();
             await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
-            await courseOverview.openRunningExercise(exercise.id!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.shouldShowNumberOfWords(0);
             await textExerciseEditor.shouldShowNumberOfCharacters(0);
@@ -102,7 +101,6 @@ test.describe('Import exercises', () => {
                 page,
                 courseManagementExercises,
                 quizExerciseCreation,
-                courseOverview,
                 quizExerciseShortAnswerQuiz,
                 exerciseResult,
                 navigationBar,
@@ -123,7 +121,6 @@ test.describe('Import exercises', () => {
                 const exercise: QuizExercise = await importResponse.json();
                 const questionId = exercise.quizQuestions![0].id!;
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await courseOverview.openRunningExercise(exercise.id!);
                 await quizExerciseParticipation.startIndividualQuizBatch();
                 await page.waitForSelector('.quiz-waiting-for-start-overlay', { state: 'hidden' });
                 await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, questionId, 'give');
@@ -167,7 +164,6 @@ test.describe('Import exercises', () => {
                 const exercise: ModelingExercise = await importResponse.json();
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await courseOverview.startExercise(exercise.id!);
-                await courseOverview.openRunningExercise(exercise.id!);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);

@@ -188,6 +188,9 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
+
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -218,6 +221,8 @@ describe('TextEditorComponent', () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -247,6 +252,8 @@ describe('TextEditorComponent', () => {
         comp.textExercise = textExercise;
         comp.textExercise.dueDate = dayjs();
         participation.initializationDate = dayjs().add(1, 'days');
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -261,6 +268,8 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

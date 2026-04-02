@@ -2,7 +2,6 @@ import { Component, ElementRef, computed, effect, inject, input, output, signal,
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
@@ -11,6 +10,8 @@ import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -26,10 +27,11 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
-    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
+    private translateService = inject(TranslateService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private exerciseService = inject(ExerciseService);
@@ -44,20 +46,17 @@ export class ResultHistoryDropdownComponent {
     studentParticipation = input<StudentParticipation>();
     showUngradedResults = input<boolean>(false);
 
-    displayedResults = computed(() => this.sortedHistoryResults());
+    displayedResults = computed(() => [...this.sortedHistoryResults()]);
 
     private readonly selectedResultId = signal<number | undefined>(undefined);
 
     private readonly latestResultId = computed(() => {
         const participation = this.studentParticipation();
-        if (!participation) {
+        const allResults = participation?.submissions?.flatMap((s) => s.results ?? []) ?? [];
+        if (!allResults.length) {
             return undefined;
         }
-        const results = getAllResultsOfAllSubmissions(participation.submissions);
-        if (!results.length) {
-            return undefined;
-        }
-        return results.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
+        return allResults.reduce((maxId, result) => Math.max(maxId, result.id ?? 0), 0) || undefined;
     });
 
     activeResultId = computed(() => {
@@ -74,6 +73,7 @@ export class ResultHistoryDropdownComponent {
         effect(() => {
             this.studentParticipation();
             this.selectedResultId.set(undefined);
+            this.viewingSubmissionChange.emit(false);
         });
     }
 
@@ -141,33 +141,36 @@ export class ResultHistoryDropdownComponent {
     getResultFeedbackMessage(result: Result): string {
         const submission = result.submission;
         if (submission && (submission as ProgrammingSubmission).buildFailed) {
-            return 'Your build failed!';
+            return this.translateService.instant('artemisApp.result.progressString.buildFailed');
         }
 
         const score = result.score ?? 0;
         if (score === 100) {
-            return 'Goal reached! Excellent work.';
+            return this.translateService.instant('artemisApp.result.progressString.goalReached');
         }
 
         const sortedResults = this.sortedHistoryResults();
         const index = sortedResults.indexOf(result);
         if (index <= 0) {
-            return "Nice progress! You're getting closer.";
+            return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         }
 
         const previousScore = sortedResults[index - 1].score ?? 0;
         if (score > previousScore) {
-            return "Nice progress! You're getting closer.";
+            return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         } else if (score < previousScore) {
-            return 'Oops, your score dropped. Try a different path!';
+            return this.translateService.instant('artemisApp.result.progressString.scoreDrop');
         } else {
-            return 'Stuck? Try a new approach.';
+            return this.translateService.instant('artemisApp.result.progressString.stuck');
         }
     }
 
     getBadge(result: Result): Badge {
         const participation = result.submission?.participation ?? this.studentParticipation();
-        return ResultService.evaluateBadge(participation!, result);
+        if (!participation) {
+            return { class: 'bg-secondary', text: '', tooltip: '' };
+        }
+        return ResultService.evaluateBadge(participation, result);
     }
 
     getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {
@@ -191,13 +194,13 @@ export class ResultHistoryDropdownComponent {
 
     navigateToSubmission(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
-        this.viewingSubmissionChange.emit(true);
-        this.resultsPopover()?.hide();
         const participation = result.submission?.participation;
         if (!participation) {
             return;
         }
+        this.selectedResultId.set(result.id);
+        this.viewingSubmissionChange.emit(true);
+        this.resultsPopover()?.hide();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;
 
@@ -218,11 +221,11 @@ export class ResultHistoryDropdownComponent {
 
     showFeedback(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
         const participation = result.submission?.participation;
         if (!participation) {
             return;
         }
+        this.selectedResultId.set(result.id);
 
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);

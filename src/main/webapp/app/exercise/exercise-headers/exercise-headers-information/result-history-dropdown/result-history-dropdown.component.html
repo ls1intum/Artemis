@@ -7,17 +7,24 @@
     <div class="d-flex align-items-center justify-content-between px-3 bg-light border-bottom" style="height: 40px">
         <div class="d-flex align-items-center gap-2">
             <fa-icon [icon]="faClock" class="text-body-tertiary" style="font-size: 14px" />
-            <span class="fw-medium text-body-secondary" style="font-size: 13px">Result History</span>
+            <span class="fw-medium text-body-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
         </div>
-        <span class="text-body-tertiary" style="font-size: 12px">{{ sortedHistoryResults().length }} results</span>
+        <span class="text-body-tertiary" style="font-size: 12px">{{
+            (sortedHistoryResults().length === 1 ? 'artemisApp.result.progressString.resultsCount.one' : 'artemisApp.result.progressString.resultsCount.other')
+                | artemisTranslate: { count: sortedHistoryResults().length }
+        }}</span>
     </div>
     <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
-        @for (result of displayedResults(); track result; let i = $index; let last = $last) {
+        @for (result of displayedResults(); track result) {
             <div
-                class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-3 py-2"
+                class="list-group-item d-flex align-items-center gap-2 px-3 py-2"
+                [class.list-group-item-action]="isRowClickable()"
                 [class.bg-primary-subtle]="result.id === activeResultId()"
                 [attr.role]="isRowClickable() ? 'button' : undefined"
-                (click)="isRowClickable() ? navigateToSubmission(result, $event) : undefined"
+                [attr.tabindex]="isRowClickable() ? 0 : undefined"
+                (click)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.enter)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.space)="isRowClickable() && navigateToSubmission(result, $event)"
             >
                 <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
                 <fa-icon [icon]="getResultIcon(result)" [class]="getResultColorClass(result)" class="flex-shrink-0" style="font-size: 14px" />
@@ -33,7 +40,13 @@
                     </div>
                 </div>
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
-                    <p-button label="Feedback" [outlined]="true" size="small" class="flex-shrink-0" (onClick)="showFeedback(result, $event)" />
+                    <p-button
+                        [label]="'artemisApp.result.progressString.feedbackButton' | artemisTranslate"
+                        [outlined]="true"
+                        size="small"
+                        class="flex-shrink-0"
+                        (onClick)="showFeedback(result, $event)"
+                    />
                 }
             </div>
         }

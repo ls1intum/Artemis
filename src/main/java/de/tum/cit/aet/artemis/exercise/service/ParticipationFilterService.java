@@ -119,7 +119,7 @@ public class ParticipationFilterService {
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow only a single participation (non-programming and non-quiz).
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming, non-quiz, non-text, and non-modeling).
      *
      * @param participations the set of participations in the exercise to validate
      * @return the valid set of participations (empty or singleton set)
@@ -127,7 +127,7 @@ public class ParticipationFilterService {
      */
     private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
         if (participations.size() > 1) {
-            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming or quiz.");
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming, quiz, text or modeling.");
         }
         return participations.iterator().next();
     }

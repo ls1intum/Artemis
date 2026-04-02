@@ -66,6 +66,26 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private resizeObserver?: ResizeObserver;
 
     constructor() {
+        // Clamp _activeRightIndex when rightPanels shrinks.
+        effect(() => {
+            const len = this.rightPanels().length;
+            untracked(() => {
+                if (this._activeRightIndex() >= len) {
+                    this._activeRightIndex.set(Math.max(0, len - 1));
+                }
+            });
+        });
+
+        // Clamp _activeSingleIndex when panels shrinks.
+        effect(() => {
+            const len = this.panels().length;
+            untracked(() => {
+                if (this._activeSingleIndex() >= len) {
+                    this._activeSingleIndex.set(Math.max(0, len - 1));
+                }
+            });
+        });
+
         // (Re-)initialize split.js whenever panes enter or leave the DOM,
         // i.e. when switching between wide and narrow mode.
         effect(() => {

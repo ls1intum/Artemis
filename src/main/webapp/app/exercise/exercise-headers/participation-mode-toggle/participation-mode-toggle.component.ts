@@ -16,8 +16,8 @@ export class ParticipationModeToggleComponent {
     readonly hasPractice = input(false);
     readonly hasBoth = input(false);
 
-    faBook = faBook;
-    faGraduationCap = faGraduationCap;
+    readonly faBook = faBook;
+    readonly faGraduationCap = faGraduationCap;
 
     selectMode(mode: ParticipationMode) {
         this.mode.set(mode);

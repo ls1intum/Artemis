@@ -55,15 +55,15 @@
             background: transparent;
         }
 
+        &:not(.p-disabled):focus-visible {
+            box-shadow: none;
+            outline: none;
+        }
+
         &:not(.p-tab-active):not(.p-disabled):hover {
             color: var(--bs-body-color);
             background: transparent;
             border-color: transparent;
-        }
-
-        &:not(.p-disabled):focus-visible {
-            box-shadow: none;
-            outline: none;
         }
     }
 

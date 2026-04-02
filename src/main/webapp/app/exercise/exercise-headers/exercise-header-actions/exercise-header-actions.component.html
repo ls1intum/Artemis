@@ -3,8 +3,7 @@
         <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
             @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
-            }
-            @if (plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
+            } @else {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
             }
         </a>
@@ -41,6 +40,7 @@
                 #submitPopoverRef="ngbPopover"
             >
                 <button
+                    id="submit-exercise-popover"
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"
@@ -50,6 +50,7 @@
             </span>
         } @else {
             <button
+                id="submit-exercise"
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="'entity.action.submit' | artemisTranslate"
@@ -123,7 +124,10 @@
                     ></button>
                 }
                 @if (isStartExerciseAvailable()) {
-                    <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
+                    <span
+                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
+                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                    >
                         <button
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
@@ -211,8 +215,11 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
-                    @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                @if (!gradedParticipation() && isStartExerciseAvailable()) {
+                    <span
+                        [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
+                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                    >
                         <button
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
@@ -225,8 +232,8 @@
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
                         ></button>
-                    }
-                </span>
+                    </span>
+                }
                 @if (isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise().id"

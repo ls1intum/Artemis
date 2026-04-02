@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,7 +29,7 @@ export class ExerciseActionButtonComponent {
     smallButton = input(false);
 
     /** Allows parent to override primary/secondary styling programmatically. */
-    readonly overrideSecondary = signal<boolean | undefined>(undefined);
+    overrideSecondary = model<boolean | undefined>(undefined);
 
     protected isPrimary = computed(() => !this.outlined() && !(this.overrideSecondary() ?? false));
     protected isSecondary = computed(() => !this.outlined() && (this.overrideSecondary() ?? false));

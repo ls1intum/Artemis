@@ -1,4 +1,4 @@
-@if (!isExamExercise) {
+@if (!isExamExercise && requestFeedbackEnabled) {
     @if (athenaEnabled && hasUserAcceptedLLMUsage) {
         @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             <button
@@ -12,7 +12,13 @@
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
             </button>
         } @else {
-            <button class="btn btn-primary" (click)="requestAIFeedback()" [class.btn-sm]="smallButtons()" [id]="'request-feedback-' + exercise().id">
+            <button
+                class="btn btn-primary"
+                (click)="requestAIFeedback()"
+                [class.btn-sm]="smallButtons()"
+                [disabled]="!isSubmitted() || isGeneratingFeedback()"
+                [id]="'request-feedback-' + exercise().id"
+            >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
             </button>

@@ -3,7 +3,7 @@ import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutle
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faAngleDown, faAngleUp, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
@@ -25,7 +25,7 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PanelModule } from 'primeng/panel';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -54,10 +54,10 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
-        FaIconComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
+        PanelModule,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -70,8 +70,6 @@ export class ExerciseSplitPanelComponent {
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faAlignLeft = faAlignLeft;
-    protected readonly faAngleDown = faAngleDown;
-    protected readonly faAngleUp = faAngleUp;
     protected readonly getIcon = getIcon;
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
@@ -87,8 +85,6 @@ export class ExerciseSplitPanelComponent {
     readonly resultWithComplaint = input<Result>();
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
-    readonly exampleSolutionCollapsed = input<boolean>(true);
-    readonly onChangeExampleSolution = input<(() => void) | undefined>(undefined);
     readonly participationMode = input<ParticipationMode>('graded');
 
     readonly showDiscussion = computed(() => {

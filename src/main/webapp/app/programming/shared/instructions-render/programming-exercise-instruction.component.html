@@ -7,7 +7,7 @@
         <div class="instructions__layout">
             <div class="instructions__problem-statement">
                 <!-- Empty state when problem statement is not available -->
-                @if (!renderedMarkdown && !isLoading) {
+                @if (!renderedMarkdown) {
                     <div class="empty-state-container">
                         <div class="empty-state-content">
                             <fa-icon [icon]="faFileAlt" size="3x" class="empty-state-icon" />
