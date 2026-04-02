@@ -55,7 +55,7 @@ abstract class SortStrategy {
 }
 
 class BubbleSort {
-  <color:testsColor(test_bubble_sort_struct)>+performSort(List<int>)</color>
+  <color:testsColor(test_bubble_sort_struct)>+perform_sort(List<int>)</color>
 }
 
 class MergeSort {

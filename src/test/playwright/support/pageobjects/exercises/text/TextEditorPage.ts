@@ -33,7 +33,7 @@ export class TextEditorPage {
 
     async submit() {
         const responsePromise = this.page.waitForResponse(`api/text/exercises/*/text-submissions`);
-        await this.page.locator('#submit-exercise, #submit button').first().click();
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit button').first().click();
         return await responsePromise;
     }
 

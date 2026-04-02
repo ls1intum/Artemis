@@ -13,7 +13,7 @@
                             : getTextColorClass(
                                   result,
                                   result.submission?.participation ?? participation()!,
-                                  evaluateTemplateStatus(exercise(), result.submission?.participation ?? participation(), result, false, MissingResultInfo.NONE)
+                                  evaluateTemplateStatus(exercise(), result.submission?.participation ?? participation()!, result, false, MissingResultInfo.NONE)
                               )
                     "
                 >
@@ -22,7 +22,7 @@
                             getResultIconClass(
                                 result,
                                 result.submission?.participation ?? participation()!,
-                                evaluateTemplateStatus(exercise(), result.submission?.participation ?? participation(), result, false, MissingResultInfo.NONE)
+                                evaluateTemplateStatus(exercise(), result.submission?.participation ?? participation()!, result, false, MissingResultInfo.NONE)
                             )
                         "
                         size="xl"

@@ -119,7 +119,7 @@ export class ModelingEditor {
 
     async submit() {
         const responsePromise = this.page.waitForResponse(`api/modeling/exercises/*/modeling-submissions`);
-        await this.page.locator('#submit-exercise, #submit button').first().click();
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit button').first().click();
         return await responsePromise;
     }
 

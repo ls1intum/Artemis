@@ -50,11 +50,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     }
 
     /**
-     * Opens the FeedbackComponent as popup; displays test results
-     * @param {string[]} tests - Identifies the testcase
-     * @param taskName - the name of the selected task
-     */
-    /**
      * Scrolls the problem statement to the task with the given id.
      */
     scrollToTask(taskId: number) {
@@ -62,6 +57,11 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         taskElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    /**
+     * Opens the FeedbackComponent as popup; displays test results
+     * @param {string[]} tests - Identifies the testcase
+     * @param taskName - the name of the selected task
+     */
     public showDetailsForTests(tests: number[], taskName: string) {
         if (!this.latestResult || !tests.length) {
             return;

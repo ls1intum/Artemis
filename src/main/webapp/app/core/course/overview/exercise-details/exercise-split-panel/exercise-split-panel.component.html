@@ -9,7 +9,7 @@
 
     @if (exercise().type !== ExerciseType.QUIZ) {
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.problemStatement'" [icon]="faAlignLeft">
-            <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
+            <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()" />
             @if (exercise().type === ExerciseType.PROGRAMMING && exercise().studentParticipations && exercise().studentParticipations!.length) {
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }

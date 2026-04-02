@@ -125,7 +125,10 @@
             },
             "progressString": {
                 "title": "Result history",
-                "resultsCount": "{{ count }} results",
+                "resultsCount": {
+                    "one": "{{ count }} result",
+                    "other": "{{ count }} results"
+                },
                 "feedbackButton": "Feedback",
                 "clickToSeeAllResults": "Click to see all your results",
                 "buildFailed": "Your build failed!",

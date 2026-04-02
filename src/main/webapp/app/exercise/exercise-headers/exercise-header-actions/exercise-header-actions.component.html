@@ -3,8 +3,7 @@
         <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
             @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
-            }
-            @if (plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
+            } @else {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
             }
         </a>
@@ -41,7 +40,7 @@
                 #submitPopoverRef="ngbPopover"
             >
                 <button
-                    id="submit-exercise"
+                    id="submit-exercise-popover"
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
                     [buttonLabel]="'entity.action.submit' | artemisTranslate"

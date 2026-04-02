@@ -92,6 +92,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
                 'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage

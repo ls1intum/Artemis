@@ -2,7 +2,6 @@ import { Component, ElementRef, computed, effect, inject, input, output, signal,
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
@@ -52,11 +51,7 @@ export class ResultHistoryDropdownComponent {
     private readonly selectedResultId = signal<number | undefined>(undefined);
 
     private readonly latestResultId = computed(() => {
-        const participation = this.studentParticipation();
-        if (!participation) {
-            return undefined;
-        }
-        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        const results = this.sortedHistoryResults();
         if (!results.length) {
             return undefined;
         }
@@ -194,13 +189,13 @@ export class ResultHistoryDropdownComponent {
 
     navigateToSubmission(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
-        this.viewingSubmissionChange.emit(true);
-        this.resultsPopover()?.hide();
         const participation = result.submission?.participation;
         if (!participation) {
             return;
         }
+        this.selectedResultId.set(result.id);
+        this.viewingSubmissionChange.emit(true);
+        this.resultsPopover()?.hide();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;
 
@@ -221,11 +216,11 @@ export class ResultHistoryDropdownComponent {
 
     showFeedback(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
         const participation = result.submission?.participation;
         if (!participation) {
             return;
         }
+        this.selectedResultId.set(result.id);
 
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
