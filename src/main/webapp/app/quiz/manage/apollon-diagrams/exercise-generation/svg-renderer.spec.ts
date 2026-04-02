@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { convertRenderedSVGToPNG } from './svg-renderer';
-import { SVG } from '@ls1intum/apollon';
+import { SVG } from '@tumaet/apollon';
 
 describe('SVG Renderer', () => {
     let mockImageInstance: {

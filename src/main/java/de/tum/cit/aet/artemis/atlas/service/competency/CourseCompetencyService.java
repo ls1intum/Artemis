@@ -89,13 +89,13 @@ public class CourseCompetencyService {
 
     private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
 
-    private final AtlasMLService atlasMLService;
+    private final Optional<AtlasMLService> atlasMLService;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, AtlasMLService atlasMLService) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, Optional<AtlasMLService> atlasMLService) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -272,7 +272,7 @@ public class CourseCompetencyService {
         }
 
         if (!allCompetenciesForAtlas.isEmpty()) {
-            atlasMLService.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE);
+            atlasMLService.ifPresent(service -> service.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE));
         }
 
         if (importOptions.importRelations()) {
