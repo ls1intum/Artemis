@@ -300,10 +300,10 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.OpenOlat]: 'H5P plugin',
                 },
             }),
-            feature('content-authoring', 'Built-in Content Authoring', [P, P, S, P, S, S], {
+            feature('content-authoring', 'Built-in Content Authoring', [S, P, S, P, S, S], {
                 tooltip: 'Create rich learning content directly within the platform',
                 notes: {
-                    [PlatformId.Artemis]: 'Markdown-based lecture content',
+                    [PlatformId.Artemis]: 'Markdown-based — lightweight, version-control friendly',
                     [PlatformId.Canvas]: 'Rich text editor for pages',
                     [PlatformId.Moodle]: 'Lesson builder, book, wiki modules',
                     [PlatformId.Blackboard]: 'Content editor',
