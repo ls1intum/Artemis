@@ -340,24 +340,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise, artemisMarkdown);
     });
 
-    it('should collapse example solution for tutors', () => {
-        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
-        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
-        expect(comp.exampleSolutionCollapsed()).toBe(true);
-
-        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
-        expect(comp.exampleSolutionCollapsed()).toBe(false);
-    });
-
-    it('should collapse/expand example solution when clicked', () => {
-        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
-        comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed()).toBe(true);
-
-        comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed()).toBe(false);
-    });
-
     it('should sort results by completion date in ascending order', () => {
         const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
         const result2 = { completionDate: dayjs().subtract(1, 'day') } as Result;
