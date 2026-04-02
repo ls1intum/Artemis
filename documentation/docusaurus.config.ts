@@ -35,7 +35,12 @@ const config: Config = {
 
     onBrokenLinks: 'throw',
     onBrokenAnchors: 'throw',
-    onBrokenMarkdownLinks: 'throw',
+
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'throw',
+        },
+    },
 
     // Even if you don't use internationalization, you can use this field to set
     // useful metadata like html lang. For example, if your site is Chinese, you
@@ -50,6 +55,7 @@ const config: Config = {
             'classic',
             {
                 docs: false,
+                blog: false,
                 theme: {
                     customCss: './src/css/custom.css',
                 },
@@ -65,6 +71,7 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
+                indexBlog: false,
                 docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
                 searchContextByPaths: [
                     {
@@ -152,6 +159,11 @@ const config: Config = {
                 src: 'img/artemis-favicon.svg',
             },
             items: [
+                {
+                    to: '/compare',
+                    label: 'Compare',
+                    position: 'left',
+                },
                 {
                     href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                     label: 'GitHub',

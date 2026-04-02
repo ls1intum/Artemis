@@ -23,4 +23,8 @@ public record BuildConfig(String buildScript, String dockerImage, String commitH
         // make sure to avoid whitespace issues
         return dockerImage.trim();
     }
+
+    public boolean areTestsExpected() {
+        return resultPaths != null && !resultPaths.isEmpty();
+    }
 }

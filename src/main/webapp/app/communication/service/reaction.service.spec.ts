@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
@@ -7,10 +9,13 @@ import { metisReactionToCreate, metisReactionUser2 } from 'test/helpers/sample/m
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Reaction Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ReactionService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
@@ -18,8 +23,14 @@ describe('Reaction Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
     describe('Service methods', () => {
-        it('should create a Reaction', fakeAsync(() => {
+        it('should create a Reaction', () => {
             const returnedFromService = { ...metisReactionToCreate };
             const expected = { ...returnedFromService };
             service
@@ -28,18 +39,14 @@ describe('Reaction Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should delete a Reaction', fakeAsync(() => {
-            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).toBeTrue());
+        it('should delete a Reaction', () => {
+            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).toBe(true));
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-        }));
-    });
-
-    afterEach(() => {
-        httpMock.verify();
+            vi.advanceTimersByTime(0);
+        });
     });
 });

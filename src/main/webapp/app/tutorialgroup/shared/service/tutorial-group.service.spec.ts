@@ -5,8 +5,8 @@ import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -167,7 +167,7 @@ describe('TutorialGroupService', () => {
         let result: any;
 
         service
-            .registerMultipleStudents(1, 1, [returnedFromService])
+            .importRegistrations(1, 1, [returnedFromService])
             .pipe(
                 take(1),
                 map((resp) => resp.body),

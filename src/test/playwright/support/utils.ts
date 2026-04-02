@@ -10,8 +10,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
-import { CoursesPage } from './pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from './pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from './pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from './pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -393,8 +391,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
-    const courseList = new CoursesPage(page);
-    const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
     const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
@@ -402,8 +398,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
     const examParticipation = new ExamParticipationPage(
-        courseList,
-        courseOverview,
         examNavigation,
         examStartEnd,
         modelingExerciseEditor,
@@ -464,7 +458,7 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
 }
@@ -477,7 +471,7 @@ export async function makeExamSubmission(
  */
 export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
     if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
         console.log(`Waiting ${timeToWait}ms for exam to end...`);
         await page.waitForTimeout(timeToWait);
     }
@@ -494,7 +488,7 @@ export async function startAssessing(
     isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton();
+    await courseAssessment.clickExerciseDashboardButton(0, timeout);
     if (toggleSecondRound) {
         await exerciseAssessment.toggleSecondCorrectionRound();
     }

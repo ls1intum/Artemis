@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { HttpResponse } from '@angular/common/http';
@@ -13,10 +15,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CourseNotificationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseNotificationService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [CourseNotificationService, provideHttpClient(), provideHttpClientTesting()],
         });
@@ -26,8 +31,9 @@ describe('CourseNotificationService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -38,15 +44,15 @@ describe('CourseNotificationService', () => {
         it('should return false if final page was already reached', () => {
             const courseId = 123;
             service['courseNotificationPageMap'][courseId] = true;
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
 
             const result = service.getNextNotificationPage(courseId);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
             expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
         });
 
-        it('should initialize the notifications array if it does not exist', fakeAsync(() => {
+        it('should initialize the notifications array if it does not exist', () => {
             const courseId = 123;
             expect(service['courseNotificationMap'][courseId]).toBeUndefined();
 
@@ -56,10 +62,10 @@ describe('CourseNotificationService', () => {
 
             const req = httpMock.expectOne(`/api/communication/notification/${courseId}?page=0&size=10`);
             req.flush({ content: [], totalPages: 0 });
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should fetch notification page and handle response with content', fakeAsync(() => {
+        it('should fetch notification page and handle response with content', () => {
             const courseId = 123;
 
             const mockNotifications: CourseNotification[] = [
@@ -84,38 +90,38 @@ describe('CourseNotificationService', () => {
                 content: mockNotifications,
                 totalPages: 1,
             };
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
 
             const result = service.getNextNotificationPage(courseId);
 
             const req = httpMock.expectOne(`/api/communication/notification/${courseId}?page=0&size=10`);
             expect(req.request.method).toBe('GET');
             req.flush(mockResponse);
-            tick();
+            vi.advanceTimersByTime(0);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
             expect(service['courseNotificationMap'][courseId]).toHaveLength(2);
-            expect(service['courseNotificationPageMap'][courseId]).toBeTrue();
+            expect(service['courseNotificationPageMap'][courseId]).toBe(true);
             expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should handle empty response', fakeAsync(() => {
+        it('should handle empty response', () => {
             const courseId = 123;
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
 
             service.getNextNotificationPage(courseId);
 
             const req = httpMock.expectOne(`/api/communication/notification/${courseId}?page=0&size=10`);
             req.flush(null);
-            tick();
+            vi.advanceTimersByTime(0);
 
-            expect(service['courseNotificationPageMap'][courseId]).toBeTrue();
+            expect(service['courseNotificationPageMap'][courseId]).toBe(true);
             expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
-        }));
+        });
     });
 
     describe('setNotificationStatus', () => {
-        it('should make PUT request to set notification status', fakeAsync(() => {
+        it('should make PUT request to set notification status', () => {
             // Arrange
             const courseId = 123;
             const notificationIds = [1, 2, 3];
@@ -130,12 +136,12 @@ describe('CourseNotificationService', () => {
                 statusType,
             });
             req.flush({});
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
     });
 
     describe('archiveAll', () => {
-        it('should make PUT request to archive all notifications', fakeAsync(() => {
+        it('should make PUT request to archive all notifications', () => {
             const courseId = 123;
 
             service.archiveAll(courseId);
@@ -144,16 +150,16 @@ describe('CourseNotificationService', () => {
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({});
             req.flush({});
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
     });
 
     describe('archiveAllInMap', () => {
         it('should clear notifications in map and update count', () => {
             const courseId = 123;
             service['courseNotificationMap'][courseId] = [{ notificationId: 1 } as CourseNotification, { notificationId: 2 } as CourseNotification];
-            const updateNotificationCountMapSpy = jest.spyOn(service, 'updateNotificationCountMap');
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
+            const updateNotificationCountMapSpy = vi.spyOn(service, 'updateNotificationCountMap');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
 
             service.archiveAllInMap(courseId);
 
@@ -172,7 +178,7 @@ describe('CourseNotificationService', () => {
                 { notificationId: 2, status: CourseNotificationViewingStatus.UNSEEN } as CourseNotification,
                 { notificationId: 3, status: CourseNotificationViewingStatus.UNSEEN } as CourseNotification,
             ];
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
 
             service.setNotificationStatusInMap(courseId, [1, 3], CourseNotificationViewingStatus.SEEN);
 
@@ -188,9 +194,9 @@ describe('CourseNotificationService', () => {
             const courseId = 123;
             const notification = { notificationId: 1 } as CourseNotification;
             expect(service['courseNotificationMap'][courseId]).toBeUndefined();
-            const addNotificationIfNotDuplicateSpy = jest.spyOn(service as any, 'addNotificationIfNotDuplicate');
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
-            const incrementNotificationCountSpy = jest.spyOn(service, 'incrementNotificationCount');
+            const addNotificationIfNotDuplicateSpy = vi.spyOn(service as any, 'addNotificationIfNotDuplicate');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
+            const incrementNotificationCountSpy = vi.spyOn(service, 'incrementNotificationCount');
 
             service.addNotification(courseId, notification);
 
@@ -217,8 +223,8 @@ describe('CourseNotificationService', () => {
             const courseId = 123;
             const notification = { notificationId: 1 } as CourseNotification;
             service['courseNotificationMap'][courseId] = [{ notificationId: 1 } as CourseNotification, { notificationId: 2 } as CourseNotification];
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
-            const decreaseNotificationCountBySpy = jest.spyOn(service, 'decreaseNotificationCountBy');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
+            const decreaseNotificationCountBySpy = vi.spyOn(service, 'decreaseNotificationCountBy');
 
             service.removeNotificationFromMap(courseId, notification);
 
@@ -233,8 +239,8 @@ describe('CourseNotificationService', () => {
             const courseId = 123;
             const notification = { notificationId: 3 } as CourseNotification;
             service['courseNotificationMap'][courseId] = [{ notificationId: 1 } as CourseNotification, { notificationId: 2 } as CourseNotification];
-            const notifyNotificationSubscribersSpy = jest.spyOn(service as any, 'notifyNotificationSubscribers');
-            const decreaseNotificationCountBySpy = jest.spyOn(service, 'decreaseNotificationCountBy');
+            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
+            const decreaseNotificationCountBySpy = vi.spyOn(service, 'decreaseNotificationCountBy');
 
             service.removeNotificationFromMap(courseId, notification);
 
@@ -249,7 +255,7 @@ describe('CourseNotificationService', () => {
             const courseId = 123;
             const count = 5;
             service['courseNotificationCountMap'][courseId] = 3;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.updateNotificationCountMap(courseId, count);
 
@@ -261,7 +267,7 @@ describe('CourseNotificationService', () => {
             const courseId = 123;
             const count = 5;
             service['courseNotificationCountMap'][courseId] = count;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.updateNotificationCountMap(courseId, count);
 
@@ -273,7 +279,7 @@ describe('CourseNotificationService', () => {
     describe('incrementNotificationCount', () => {
         it('should initialize count to 0 if undefined and increment', () => {
             const courseId = 123;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.incrementNotificationCount(courseId);
 
@@ -284,7 +290,7 @@ describe('CourseNotificationService', () => {
         it('should increment existing count', () => {
             const courseId = 123;
             service['courseNotificationCountMap'][courseId] = 3;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.incrementNotificationCount(courseId);
 
@@ -296,7 +302,7 @@ describe('CourseNotificationService', () => {
     describe('decreaseNotificationCountBy', () => {
         it('should do nothing if count is undefined', () => {
             const courseId = 123;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.decreaseNotificationCountBy(courseId, 1);
 
@@ -307,7 +313,7 @@ describe('CourseNotificationService', () => {
         it('should decrease count and notify subscribers', () => {
             const courseId = 123;
             service['courseNotificationCountMap'][courseId] = 5;
-            const notifyCountSubscribersSpy = jest.spyOn(service as any, 'notifyCountSubscribers');
+            const notifyCountSubscribersSpy = vi.spyOn(service as any, 'notifyCountSubscribers');
 
             service.decreaseNotificationCountBy(courseId, 2);
 
@@ -354,8 +360,6 @@ describe('CourseNotificationService', () => {
             expect(icon).toBe(faComments);
         });
 
-        // TODO: Add other notification types here
-
         it('should return default icon for undefined type', () => {
             const icon = service.getIconFromType(undefined);
 
@@ -371,7 +375,7 @@ describe('CourseNotificationService', () => {
 
     describe('getDateTranslationKey', () => {
         beforeEach(() => {
-            jest.useFakeTimers().setSystemTime(new Date('2024-01-01T12:00:00'));
+            vi.useFakeTimers().setSystemTime(new Date('2024-01-01T12:00:00'));
         });
 
         it('should return "now" for notifications created within last 5 minutes', () => {
@@ -425,11 +429,11 @@ describe('CourseNotificationService', () => {
         });
 
         it('should return "date" for notifications created before this week', () => {
-            jest.spyOn(dayjs.prototype, 'startOf').mockImplementation(function () {
+            vi.spyOn(dayjs.prototype, 'startOf').mockImplementation(function () {
                 if (arguments[0] === 'week') return dayjs('2023-12-31');
                 return this;
             });
-            jest.spyOn(dayjs.prototype, 'endOf').mockImplementation(function () {
+            vi.spyOn(dayjs.prototype, 'endOf').mockImplementation(function () {
                 if (arguments[0] === 'week') return dayjs('2024-01-06');
                 return this;
             });
@@ -446,7 +450,7 @@ describe('CourseNotificationService', () => {
 
     describe('getDateTranslationParams', () => {
         it('should return formatted translation parameters', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2024-01-01T12:00:00'));
+            vi.useFakeTimers().setSystemTime(new Date('2024-01-01T12:00:00'));
 
             const notification = {
                 creationDate: dayjs('2024-01-01T10:30:00'), // 1.5 hours ago
@@ -515,15 +519,6 @@ describe('CourseNotificationService', () => {
                     totalPages: 1,
                 },
             } as unknown as HttpResponse<CourseNotificationPage>;
-
-            jest.mock('app/shared/util/date.utils', () => ({
-                convertDateFromServer: (date: any) => {
-                    if (date === '2024-01-01T10:30:00Z') {
-                        return dayjs('2024-01-01T10:30:00Z');
-                    }
-                    return date;
-                },
-            }));
 
             const result = service['convertResponseFromServer'](mockResponse);
 

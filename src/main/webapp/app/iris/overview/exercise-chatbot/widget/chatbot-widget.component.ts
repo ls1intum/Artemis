@@ -2,6 +2,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import interact from 'interactjs';
+import { Interactable } from '@interactjs/core/Interactable';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
@@ -35,6 +36,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     readonly fullHeightFactor = 0.85;
     readonly fullSize = signal(false);
     public ButtonType = ButtonType;
+    private interactable: Interactable | undefined;
 
     constructor() {
         this.router.events
@@ -51,7 +53,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        interact('.chat-widget')
+        this.interactable = interact('.chat-widget')
             .resizable({
                 // resize from all edges and corners
                 edges: { left: true, right: true, bottom: true, top: '.chat-widget-top-resize-area' },
@@ -155,6 +157,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
+        this.interactable?.unset();
         this.toggleScrollLock(false);
     }
 

@@ -4,8 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { CoursesPage } from '../course/CoursesPage';
-import { CourseOverviewPage } from '../course/CourseOverviewPage';
 import { ExamNavigationBar } from './ExamNavigationBar';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
@@ -14,10 +12,9 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
     private readonly examStartEnd: ExamStartEndPage;
     private readonly modelingExerciseEditor: ModelingEditor;
@@ -26,8 +23,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly textExerciseEditor: TextEditorPage;
 
     constructor(
-        courseList: CoursesPage,
-        courseOverview: CourseOverviewPage,
         examNavigation: ExamNavigationBar,
         examStartEnd: ExamStartEndPage,
         modelingExerciseEditor: ModelingEditor,
@@ -37,8 +32,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         page: Page,
     ) {
         super(page);
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
         this.examStartEnd = examStartEnd;
         this.modelingExerciseEditor = modelingExerciseEditor;
@@ -67,7 +60,8 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        await this.page.waitForTimeout(300);
+        // Wait for the text to be processed by Angular change detection
+        await this.page.waitForTimeout(1000);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
@@ -82,7 +76,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({ timeout: 60000 });
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
+                timeout: BUILD_RESULT_TIMEOUT * 2,
+            });
         }
     }
 
@@ -101,7 +97,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
         await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        // Use a permissive glob so Angular sub-path routing (e.g. /exams/{id}/start)
+        // does not cause waitForURL to time out.
+        await this.page.waitForURL(`**/exams/${exam.id}**`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
@@ -123,9 +121,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(expectedResult: string) {
-        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
+        // In exam mode, page.reload() navigates away from the active exercise tab,
+        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }

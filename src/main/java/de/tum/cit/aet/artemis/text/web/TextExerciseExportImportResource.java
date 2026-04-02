@@ -113,8 +113,7 @@ public class TextExerciseExportImportResource {
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
-        var savedExercise = textExerciseRepository.save(newTextExercise);
-        exerciseVersionService.createExerciseVersion(savedExercise, user);
+        exerciseVersionService.createExerciseVersion(newTextExercise, user);
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
