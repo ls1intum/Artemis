@@ -507,6 +507,49 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionRangeRequest() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-range-student", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
+                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
+
+            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureAttachmentRangeRequest() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-range-lecture", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/lecture/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
+                    .thenReturn(tempFile);
+
+            MvcResult result = mockMvc.perform(get(url).header("Range", "bytes=2-5")).andExpect(status().isPartialContent())
+                    .andExpect(header().string("Content-Range", "bytes 2-5/10")).andExpect(header().string("Accept-Ranges", "bytes")).andReturn();
+
+            assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
+        }
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentRangeRequestNotSatisfiable() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
@@ -564,6 +607,17 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setLink(tempFile.toUri().toString());
         attachmentRepo.save(attachment);
         return attachmentVideoUnitRepo.save(attachmentVideoUnit);
+    }
+
+    private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        lectureRepo.save(lecture);
+
+        Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));
+        attachment.setName("test-lecture-file");
+        attachment.setLecture(lecture);
+        attachment.setLink(tempFile.toUri().toString());
+        return attachmentRepo.save(attachment);
     }
 
 }
