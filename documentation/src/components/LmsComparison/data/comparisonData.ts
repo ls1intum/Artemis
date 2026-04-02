@@ -59,6 +59,7 @@ export const highlightCards: HighlightCardData[] = [
     },
 ];
 
+/** @param support Support levels in order: [Artemis, Canvas, Moodle, Blackboard, ILIAS, OpenOlat] */
 function feature(
     id: string,
     name: string,

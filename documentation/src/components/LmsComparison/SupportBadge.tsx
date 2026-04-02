@@ -1,11 +1,18 @@
 import type { ReactNode } from 'react';
+import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleExclamation, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 
 import { SupportLevel } from './data/types';
 import styles from './LmsComparison.module.css';
 
-const config = {
+interface SupportConfig {
+    icon: IconDefinition;
+    label: string;
+    className: string;
+}
+
+const config: Record<SupportLevel, SupportConfig> = {
     [SupportLevel.Supported]: { icon: faCircleCheck, label: 'Supported', className: styles.supportSupported },
     [SupportLevel.Partial]: { icon: faCircleExclamation, label: 'Limited', className: styles.supportPartial },
     [SupportLevel.None]: { icon: faCircleXmark, label: 'Not available', className: styles.supportNone },
