@@ -156,6 +156,10 @@ public class QuizParticipationResource {
         log.debug("REST request to get quiz participation result : exerciseId={}, participationId={}, submissionId={}", exerciseId, participationId, submissionId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
+        if (!exercise.isQuizEnded()) {
+            throw new AccessForbiddenException("Quiz results are only available after the quiz has ended");
+        }
+
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
