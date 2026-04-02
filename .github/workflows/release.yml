@@ -26,6 +26,7 @@ jobs:
   test:
     name: Test
     uses: ./.github/workflows/ci-test.yml
+    secrets: inherit
     with:
       base_branch: ${{ github.event.repository.default_branch }}
       run_all_tests: true

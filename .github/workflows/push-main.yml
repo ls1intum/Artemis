@@ -80,6 +80,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-test.yml
+    secrets: inherit
     with:
       base_branch: main
       run_all_tests: true
@@ -90,6 +91,7 @@ jobs:
     needs: [detect-changes, build, test]
     if: needs.detect-changes.outputs.build_relevant == 'true' && needs.build.result == 'success' && needs.test.result == 'success'
     uses: ./.github/workflows/ci-e2e.yml
+    secrets: inherit
     permissions:
       contents: read
       statuses: write

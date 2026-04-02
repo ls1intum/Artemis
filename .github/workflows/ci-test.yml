@@ -21,7 +21,6 @@ env:
   CI: true
   node: 24
   java: 25
-  RUN_ALL_TESTS: ${{ inputs.run_all_tests }}
 
 jobs:
   server-tests:
