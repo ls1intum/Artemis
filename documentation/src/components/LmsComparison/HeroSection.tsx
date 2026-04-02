@@ -9,7 +9,7 @@ export default function HeroSection(): ReactNode {
             <Heading as="h1" className={styles.heroTitle}>
                 How Does Artemis Compare?
             </Heading>
-            <p className={styles.heroSubtitle}>See how Artemis measures up against other learning management systems used in European universities</p>
+            <p className={styles.heroSubtitle}>See how Artemis measures up against other learning management systems used in universities</p>
         </header>
     );
 }
