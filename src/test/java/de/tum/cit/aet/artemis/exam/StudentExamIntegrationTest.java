@@ -2843,8 +2843,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
         // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 20 — investigate and reduce in a follow-up
-        private final int BASE_QUERY_COUNT = 20;
+        // TODO: Hibernate 7 increased base query count from 5 to 12 — investigate remaining extra queries in a follow-up
+        private final int BASE_QUERY_COUNT = 12;
 
         private TextExercise textExercise;
 

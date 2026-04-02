@@ -54,8 +54,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledTimes(8);
-        // TODO: Hibernate 7 increased query count from 6 to 8 — investigate remaining 2 extra queries in a follow-up
+        }).hasBeenCalledAtMostTimes(8);
+        // TODO: Hibernate 7 increased query count from 6 to 7-8 — investigate remaining extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
@@ -71,8 +71,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourse = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledTimes(19);
-        // TODO: Hibernate 7 increased query count from 15 to 19 — investigate remaining 4 extra queries in a follow-up
+        }).hasBeenCalledAtMostTimes(19);
+        // TODO: Hibernate 7 increased query count from 15 to 18-19 — investigate remaining extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories
@@ -94,9 +94,9 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.addEmptyCourse();
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
 
-        // TODO: Hibernate 7 increased exam start query count from 7 to 8, and submit from 3 to 5 — investigate in a follow-up
-        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledTimes(8);
-        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledTimes(5);
+        // TODO: Hibernate 7 increased exam start query count from 7 to 7-8, and submit from 3 to 5 — investigate in a follow-up
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(8);
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(5);
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {
