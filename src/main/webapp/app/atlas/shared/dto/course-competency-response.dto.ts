@@ -46,6 +46,13 @@ export interface CompetencyProgressDTO {
     confidenceReason?: ConfidenceReason;
 }
 
+export interface CourseCompetencyProgressDTO {
+    competencyId?: number;
+    numberOfStudents?: number;
+    numberOfMasteredStudents?: number;
+    averageStudentScore?: number;
+}
+
 export interface CourseInfoDTO {
     id: number;
     title?: string;

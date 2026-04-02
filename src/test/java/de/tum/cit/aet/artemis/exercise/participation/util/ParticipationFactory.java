@@ -364,6 +364,20 @@ public class ParticipationFactory {
     }
 
     /**
+     * Generates a practice mode StudentParticipation with testRun=true and attempt=1.
+     *
+     * @param exercise The Exercise the StudentParticipation belongs to
+     * @param user     The User the StudentParticipation belongs to
+     * @return The generated practice StudentParticipation
+     */
+    public static StudentParticipation generatePracticeStudentParticipation(Exercise exercise, User user) {
+        StudentParticipation participation = generateStudentParticipation(InitializationState.FINISHED, exercise, user);
+        participation.setPracticeMode(true);
+        participation.setAttempt(1);
+        return participation;
+    }
+
+    /**
      * Generates a StudentParticipation for the given Exercise and without participant. The StudentParticipation's initializationDate is set to now - 5 days.
      *
      * @param initializationState The InitializationState of the StudentParticipation
