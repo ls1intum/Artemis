@@ -8,6 +8,7 @@
     row-gap: 10px;
 
     /* In assessment context, the wrapper is inside assessment-layout which handles scrolling */
+
     /* In non-assessment context (e.g., student code editor), constrain to viewport */
     &:not(.assessment-wrapper) {
         max-height: 100vh;
