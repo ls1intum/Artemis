@@ -49,7 +49,7 @@ public class YouTubeService {
         try {
             URI uri = new URI(videoUrl);
             String host = uri.getHost();
-            if (host == null || (!host.contains("youtube.com") && !host.contains("youtu.be"))) {
+            if (host == null || (!host.equals("youtube.com") && !host.endsWith(".youtube.com") && !host.equals("youtu.be"))) {
                 return Optional.empty();
             }
         }

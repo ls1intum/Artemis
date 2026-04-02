@@ -57,6 +57,13 @@ class YouTubeServiceTest {
         assertThat(videoId).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "https://notyoutube.com/watch?v=dQw4w9WgXcQ", "https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ", "https://fakeyoutu.be/dQw4w9WgXcQ" })
+    void shouldRejectSpoofedYouTubeDomains(String url) {
+        Optional<String> videoId = youTubeService.extractYouTubeVideoId(url);
+        assertThat(videoId).isEmpty();
+    }
+
     @Test
     void shouldReturnEmptyForNullUrl() {
         Optional<String> videoId = youTubeService.extractYouTubeVideoId(null);

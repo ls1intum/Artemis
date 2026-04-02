@@ -484,7 +484,7 @@ public class LectureContentProcessingService {
                 }
             }
             catch (Exception e) {
-                log.error("Failed to fetch TUM Live playlist URL for unit {}: {}", unit.getId(), e.getMessage());
+                log.error("Failed to fetch TUM Live playlist URL for unit {}: {}", unit.getId(), e.getMessage(), e);
             }
         }
 
