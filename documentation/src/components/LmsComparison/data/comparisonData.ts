@@ -284,12 +284,6 @@ export const featureCategories: FeatureCategory[] = [
         name: 'Content & Standards',
         icon: faGlobe,
         features: [
-            feature('scorm', 'SCORM / xAPI / cmi5', [N, S, S, S, S, S], {
-                tooltip: 'Support for standardized learning content packages',
-                notes: {
-                    [PlatformId.ILIAS]: 'Strongest open-source SCORM 2004 implementation',
-                },
-            }),
             feature('content-authoring', 'Built-in Content Authoring', [S, P, S, P, S, S], {
                 tooltip: 'Create rich learning content directly within the platform',
                 notes: {
@@ -315,6 +309,12 @@ export const featureCategories: FeatureCategory[] = [
                 notes: {
                     [PlatformId.Artemis]: 'English and German',
                     [PlatformId.Moodle]: '100+ language packs',
+                },
+            }),
+            feature('scorm', 'SCORM / xAPI / cmi5', [N, S, S, S, S, S], {
+                tooltip: 'Support for standardized learning content packages',
+                notes: {
+                    [PlatformId.ILIAS]: 'Strongest open-source SCORM 2004 implementation',
                 },
             }),
             feature('h5p', 'Interactive Content (H5P)', [N, P, S, P, P, P], {
