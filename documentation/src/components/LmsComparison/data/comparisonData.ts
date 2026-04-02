@@ -115,9 +115,9 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('constructive-alignment', 'Constructive Alignment', [S, P, P, P, P, P], {
-                tooltip: 'Deliberate alignment of learning outcomes, teaching activities, and assessments',
+                tooltip: 'Learning objectives, learning activities, and assessments are deliberately linked',
                 notes: {
-                    [PlatformId.Artemis]: 'Competencies linked to exercises, lectures, and online exams',
+                    [PlatformId.Artemis]: 'Exercises and integrated online exams aligned with learning objectives',
                     [PlatformId.Canvas]: 'Outcomes can be linked to assignments',
                     [PlatformId.Moodle]: 'Competencies linkable to activities',
                     [PlatformId.Blackboard]: 'Goals and standards mapping',
@@ -176,6 +176,21 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.ILIAS]: 'Basic annotation support',
                     [PlatformId.OpenOlat]: 'Basic annotation support',
                 },
+            }),
+            feature('double-blind-grading', 'Double-Blind Grading', [S, P, P, P, N, P], {
+                tooltip: 'Anonymized assessment where neither grader nor student identity is revealed',
+                notes: {
+                    [PlatformId.Canvas]: 'Anonymous grading (single-blind)',
+                    [PlatformId.Moodle]: 'Blind marking for assignments',
+                    [PlatformId.Blackboard]: 'Anonymous grading option',
+                    [PlatformId.OpenOlat]: 'Anonymous grading option',
+                },
+            }),
+            feature('assessment-training', 'Assessment Training', [S, N, N, N, N, N], {
+                tooltip: 'Tutors practice grading on example submissions to calibrate before assessing real student work',
+            }),
+            feature('quiz-training', 'Quiz Practice Mode with Leaderboard', [S, N, N, N, N, N], {
+                tooltip: 'Students practice quizzes repeatedly with a competitive leaderboard for motivation',
             }),
         ],
     },
