@@ -290,16 +290,6 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.ILIAS]: 'Strongest open-source SCORM 2004 implementation',
                 },
             }),
-            feature('h5p', 'Interactive Content (H5P)', [N, P, S, P, P, P], {
-                tooltip: 'Create interactive content like quizzes, presentations, and simulations',
-                notes: {
-                    [PlatformId.Canvas]: 'Via LTI integration',
-                    [PlatformId.Moodle]: 'Native H5P integration',
-                    [PlatformId.Blackboard]: 'Via LTI integration',
-                    [PlatformId.ILIAS]: 'H5P plugin',
-                    [PlatformId.OpenOlat]: 'H5P plugin',
-                },
-            }),
             feature('content-authoring', 'Built-in Content Authoring', [S, P, S, P, S, S], {
                 tooltip: 'Create rich learning content directly within the platform',
                 notes: {
@@ -325,6 +315,16 @@ export const featureCategories: FeatureCategory[] = [
                 notes: {
                     [PlatformId.Artemis]: 'English and German',
                     [PlatformId.Moodle]: '100+ language packs',
+                },
+            }),
+            feature('h5p', 'Interactive Content (H5P)', [N, P, S, P, P, P], {
+                tooltip: 'Create interactive content like quizzes, presentations, and simulations',
+                notes: {
+                    [PlatformId.Canvas]: 'Via LTI integration',
+                    [PlatformId.Moodle]: 'Native H5P integration',
+                    [PlatformId.Blackboard]: 'Via LTI integration',
+                    [PlatformId.ILIAS]: 'H5P plugin',
+                    [PlatformId.OpenOlat]: 'H5P plugin',
                 },
             }),
         ],
