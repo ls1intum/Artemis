@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
 import type { Feature } from './data/types';
 import { PlatformId } from './data/types';
@@ -14,8 +16,16 @@ interface FeatureRowProps {
 export default function FeatureRow({ feature, platforms, isEven }: FeatureRowProps): ReactNode {
     return (
         <div className={`${styles.featureRow} ${isEven ? styles.featureRowEven : ''}`}>
-            <div className={styles.featureName} title={feature.tooltip}>
+            <div className={styles.featureName}>
                 {feature.name}
+                {feature.tooltip && (
+                    <span className={styles.tooltipWrapper}>
+                        <FontAwesomeIcon icon={faCircleInfo} className={styles.tooltipIcon} aria-hidden="true" />
+                        <span className={styles.tooltipText} role="tooltip">
+                            {feature.tooltip}
+                        </span>
+                    </span>
+                )}
             </div>
             {platforms.map((pid) => (
                 <div key={pid} className={styles.featureCell}>

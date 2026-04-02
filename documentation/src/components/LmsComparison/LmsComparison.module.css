@@ -147,10 +147,50 @@
 
 .featureName {
     color: var(--ifm-color-emphasis-800);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .featureCell {
     text-align: center;
+}
+
+/* Tooltip */
+.tooltipWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tooltipIcon {
+    font-size: 12px;
+    color: var(--ifm-color-emphasis-400);
+    cursor: help;
+}
+
+.tooltipText {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ifm-color-emphasis-800);
+    color: var(--ifm-color-emphasis-100);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: max-content;
+    max-width: 260px;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.tooltipWrapper:hover .tooltipText {
+    display: block;
 }
 
 /* Support Badge Colors — WCAG AA contrast ≥ 4.5:1 on white/light-gray backgrounds */
