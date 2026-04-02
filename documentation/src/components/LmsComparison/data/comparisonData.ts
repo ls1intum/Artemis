@@ -216,6 +216,14 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('qa-forums', 'Q&A / Discussion Forums', [S, S, S, S, S, S]),
+            feature('faqs', 'FAQs', [S, N, P, N, P, P], {
+                tooltip: 'Course-specific FAQ management for frequently asked questions',
+                notes: {
+                    [PlatformId.Moodle]: 'Via wiki or custom pages',
+                    [PlatformId.ILIAS]: 'FAQ page object',
+                    [PlatformId.OpenOlat]: 'Via wiki or info pages',
+                },
+            }),
             feature('mobile', 'Mobile Apps (iOS/Android)', [S, S, S, S, P, P], {
                 notes: {
                     [PlatformId.Canvas]: 'Native apps with offline support',
@@ -303,6 +311,15 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.OpenOlat]: 'Course editor with content elements',
                 },
             }),
+            feature('video-transcription', 'Automatic Video Transcription', [N, P, P, S, N, P], {
+                tooltip: 'Automatically generate captions and transcripts for lecture videos',
+                notes: {
+                    [PlatformId.Canvas]: 'Via third-party integrations (e.g., 3Play Media)',
+                    [PlatformId.Moodle]: 'Via plugins or external tools',
+                    [PlatformId.Blackboard]: 'Ally auto-generates alternative formats including captions',
+                    [PlatformId.OpenOlat]: 'Via external transcription services',
+                },
+            }),
             feature('multilingual', 'Multilingual Interface', [P, S, S, S, S, S], {
                 tooltip: 'Platform interface available in multiple languages',
                 notes: {
@@ -325,14 +342,6 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Blackboard]: 'Building Blocks and LTI partners',
                     [PlatformId.ILIAS]: 'Community plugin repository',
                     [PlatformId.OpenOlat]: 'Limited extension ecosystem',
-                },
-            }),
-            feature('accessibility-tools', 'Accessibility Tools', [P, S, P, S, P, P], {
-                tooltip: 'Built-in tools for content accessibility checking and remediation',
-                notes: {
-                    [PlatformId.Artemis]: 'Improving, not yet fully WCAG compliant',
-                    [PlatformId.Canvas]: 'VPAT-certified, WCAG 2.1 AA',
-                    [PlatformId.Blackboard]: 'Ally tool for automated accessibility scoring',
                 },
             }),
             feature('video-conferencing', 'Built-in Video Conferencing', [N, P, P, S, P, P], {
@@ -377,11 +386,11 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('accessibility', 'Accessibility (WCAG)', [P, S, P, S, P, P], {
-                tooltip: 'Compliance with WCAG accessibility standards',
+                tooltip: 'Compliance with WCAG accessibility standards and built-in accessibility tools',
                 notes: {
                     [PlatformId.Artemis]: 'Improving, not yet fully WCAG compliant',
-                    [PlatformId.Canvas]: 'Strong VPAT, WCAG 2.1 AA',
-                    [PlatformId.Blackboard]: 'Ally integration, VPAT available',
+                    [PlatformId.Canvas]: 'VPAT-certified, WCAG 2.1 AA',
+                    [PlatformId.Blackboard]: 'Ally tool for automated accessibility scoring, VPAT available',
                 },
             }),
         ],
