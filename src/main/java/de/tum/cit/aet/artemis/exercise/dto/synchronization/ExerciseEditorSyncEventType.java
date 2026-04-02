@@ -8,5 +8,5 @@ package de.tum.cit.aet.artemis.exercise.dto.synchronization;
  * relayed by the server without deserialization and do not need representation here.
  */
 public enum ExerciseEditorSyncEventType {
-    NEW_COMMIT_ALERT, NEW_EXERCISE_VERSION_ALERT
+    NEW_COMMIT_ALERT, NEW_EXERCISE_VERSION_ALERT, REVIEW_THREAD_UPDATE
 }

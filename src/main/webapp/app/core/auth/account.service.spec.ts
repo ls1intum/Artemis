@@ -620,7 +620,7 @@ describe('AccountService', () => {
         beforeEach(() => {
             vi.useFakeTimers();
             // Set a fixed date for consistent testing
-            vi.setSystemTime(new Date('2025-11-28'));
+            vi.setSystemTime(new Date('2025-11-28T12:00:00'));
         });
 
         afterEach(() => {
