@@ -255,7 +255,7 @@ describe('PdfViewerIframeContentComponent', () => {
         });
     };
 
-    it('should first hide the download button when the toolbar starts overflowing', () => {
+    it('should first hide the dividers when the toolbar starts overflowing', () => {
         const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
         setToolbarMeasurements(toolbarCenter, 450, [500, 430, 390, 360, 340, 320]);
 
@@ -267,7 +267,7 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-2')).toBe(false);
     });
 
-    it('should progressively hide controls in the configured order (download -> dividers -> search -> zoom -> page navigation)', () => {
+    it('should progressively hide controls in the configured order (dividers -> download -> search -> zoom -> page navigation)', () => {
         const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
         setToolbarMeasurements(toolbarCenter, 400, [500, 430, 390, 360, 340, 320]);
 
