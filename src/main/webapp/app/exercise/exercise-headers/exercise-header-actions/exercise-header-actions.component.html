@@ -74,7 +74,9 @@
                 @if (isStartPracticeAvailable()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
-                        [ngTemplateOutletContext]="{ $implicit: { icon: faRedo, label: 'artemisApp.exerciseActions.practice', quizMode: 'practice', hideLabelMobile: false } }"
+                        [ngTemplateOutletContext]="{
+                            $implicit: { icon: faPlayCircle, label: 'artemisApp.exerciseActions.startPractice', quizMode: 'practice', hideLabelMobile: false },
+                        }"
                     />
                 }
                 @if (uninitializedQuiz()) {

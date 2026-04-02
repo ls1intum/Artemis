@@ -181,12 +181,13 @@ export class ExerciseSplitPanelComponent {
         effect(() => {
             const participation = this.studentParticipation();
             const exercise = this.exercise();
+            const mode = this.participationMode();
             if (!exercise.id) return;
 
             const type = exercise.type;
             if (type === ExerciseType.QUIZ) {
                 const canPractice = !!(exercise as QuizExercise).quizEnded;
-                const targetSegment = this.participationMode() === 'practice' && canPractice ? 'practice' : 'live';
+                const targetSegment = mode === 'practice' && canPractice ? 'practice' : 'live';
                 const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
                 if (currentSegment !== targetSegment) {
                     this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
@@ -212,7 +213,8 @@ export class ExerciseSplitPanelComponent {
         if (!this.studentParticipation()) return false;
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) {
-            return (this.exercise() as QuizExercise).quizStarted ?? false;
+            const quiz = this.exercise() as QuizExercise;
+            return (quiz.quizStarted ?? false) || (this.participationMode() === 'practice' && (quiz.quizEnded ?? false));
         }
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;

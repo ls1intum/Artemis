@@ -10,7 +10,6 @@ import {
     faListAlt,
     faPaperPlane,
     faPlayCircle,
-    faRedo,
     faRobot,
     faSignal,
     faTable,
@@ -89,7 +88,6 @@ export class ExerciseHeaderActionsComponent {
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
     protected readonly faPlayCircle = faPlayCircle;
-    protected readonly faRedo = faRedo;
     protected readonly faWrench = faWrench;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faPaperPlane = faPaperPlane;

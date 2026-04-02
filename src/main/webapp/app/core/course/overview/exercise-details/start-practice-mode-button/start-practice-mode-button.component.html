@@ -1,9 +1,9 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        [buttonIcon]="faRedo"
+        [buttonIcon]="faPlayCircle"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
+        [buttonLabel]="'artemisApp.exerciseActions.startPractice' | artemisTranslate"
         [buttonLoading]="startingPracticeMode()"
         [smallButton]="smallButtons()"
         [hideLabelMobile]="false"
@@ -22,7 +22,7 @@
             <div class="button-footer">
                 <button
                     jhi-exercise-action-button
-                    [buttonIcon]="faRedo"
+                    [buttonIcon]="faPlayCircle"
                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                     [buttonLabel]="
                         (gradedStudentParticipation() ? 'artemisApp.exerciseActions.practiceMode.practiceWithTemplate' : 'artemisApp.exerciseActions.practice') | artemisTranslate
@@ -36,7 +36,7 @@
                     <button
                         jhi-exercise-action-button
                         class="ms-2"
-                        [buttonIcon]="faRedo"
+                        [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         [buttonLabel]="'artemisApp.exerciseActions.practiceMode.practiceWithGradedParticipation' | artemisTranslate"
                         [buttonLoading]="startingPracticeMode()"

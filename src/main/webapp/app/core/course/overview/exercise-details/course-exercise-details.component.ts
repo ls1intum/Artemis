@@ -427,6 +427,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             }
+            // Keep exercise.studentParticipations in sync so mergeResultsAndSubmissionsForParticipations
+            // does not overwrite _studentParticipations and lose the new participation
+            if (this.exercise) {
+                //TODO ldv
+                this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+            }
         }
         this.sortResults();
         if (participation.testRun) {

@@ -44,7 +44,7 @@ export class ResultHistoryDropdownComponent {
     studentParticipation = input<StudentParticipation>();
     showUngradedResults = input<boolean>(false);
 
-    displayedResults = computed(() => [...this.sortedHistoryResults()].reverse());
+    displayedResults = computed(() => this.sortedHistoryResults());
 
     private readonly selectedResultId = signal<number | undefined>(undefined);
 

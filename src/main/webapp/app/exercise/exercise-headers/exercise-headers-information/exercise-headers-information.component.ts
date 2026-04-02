@@ -93,17 +93,22 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.updateSubmissionPolicyItem();
         }
         const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
-        if (results.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(results, 'id', false);
-            this.sortedHistoryResults = results;
+        // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
+        this.sortService.sortByProperty(results, 'id', false);
+        this.sortedHistoryResults = results;
 
+        if (results.length) {
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
-                this.updatePointsItem();
+            } else {
+                this.achievedPoints = 0;
             }
+            this.updatePointsItem();
             this.updateStaticCodeAnalysisItem();
+        } else {
+            this.achievedPoints = 0;
+            this.updatePointsItem();
         }
         if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
             this.updateAiFeedbackItem();

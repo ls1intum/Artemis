@@ -9,6 +9,7 @@
             "viewResults": "View result",
             "statistics": "Quiz Statistics",
             "startExercise": "Start exercise",
+            "startPractice": "Start practice",
             "resumeExercise": "Resume exercise",
             "requestManualFeedback": "Request feedback",
             "requestManualFeedbackTooltip": "Send a manual feedback request before the due date for review.",

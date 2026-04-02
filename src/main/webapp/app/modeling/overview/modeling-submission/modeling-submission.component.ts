@@ -908,7 +908,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && !this.examMode && !hasExerciseDueDatePassed(this.modelingExercise, this.participation);
+        return this.modelingExercise && !this.examMode && (!hasExerciseDueDatePassed(this.modelingExercise, this.participation) || !!this.participation?.testRun);
     }
 
     get submitButtonTooltip(): string {

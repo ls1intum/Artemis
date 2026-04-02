@@ -1,5 +1,6 @@
 import { Component, computed, input, model, output, signal, viewChild } from '@angular/core';
-import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -26,21 +27,29 @@ export class ExerciseHeaderComponent {
     readonly feedbackRequestLimit = input<number>(10);
     readonly newParticipation = output<StudentParticipation>();
 
+    // Local signal to track a practice participation created in this session,
+    // ensuring the toggle appears immediately without waiting for the parent round-trip.
+    private readonly localPracticeParticipation = signal<StudentParticipation | undefined>(undefined);
+
     readonly exerciseIcon = computed(() => {
         const exercise = this.exercise();
         return exercise.type ? getIcon(exercise.type) : undefined;
     });
 
+    readonly effectivePracticeParticipation = computed(() => {
+        return this.practiceParticipation() ?? this.localPracticeParticipation();
+    });
+
     readonly hasParticipation = computed(() => {
-        return !!this.studentParticipation() || !!this.practiceParticipation();
+        return !!this.studentParticipation() || !!this.effectivePracticeParticipation();
     });
 
     readonly hasBothParticipations = computed(() => {
-        return !!this.studentParticipation() && !!this.practiceParticipation();
+        return !!this.studentParticipation() && !!this.effectivePracticeParticipation();
     });
 
     readonly activeParticipation = computed(() => {
-        return this.participationMode() === 'practice' ? (this.practiceParticipation() ?? this.studentParticipation()) : this.studentParticipation();
+        return this.participationMode() === 'practice' ? (this.effectivePracticeParticipation() ?? this.studentParticipation()) : this.studentParticipation();
     });
 
     readonly isViewingSubmission = signal(false);
@@ -49,6 +58,16 @@ export class ExerciseHeaderComponent {
 
     readonly effectiveOnSubmitExercise = computed(() => {
         if (this.isViewingSubmission()) {
+            return undefined;
+        }
+        const exercise = this.exercise();
+        const participation = this.activeParticipation();
+        // Hide submit for graded participation after due date
+        if (this.participationMode() === 'graded' && hasExerciseDueDatePassed(exercise, participation)) {
+            return undefined;
+        }
+        // Hide submit for graded quiz after student has already submitted (practice allows multiple submissions)
+        if (exercise.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && participation?.submissions?.some((s) => s.submitted)) {
             return undefined;
         }
         return this.onSubmitExercise();
@@ -60,4 +79,12 @@ export class ExerciseHeaderComponent {
         }
         return () => this.headersInfo()?.resultHistoryDropdown()?.continueToLatest();
     });
+
+    onNewParticipation(participation: StudentParticipation) {
+        if (participation.testRun) {
+            this.localPracticeParticipation.set(participation);
+            this.participationMode.set('practice');
+        }
+        this.newParticipation.emit(participation);
+    }
 }
