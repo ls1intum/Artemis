@@ -167,6 +167,32 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
     });
 
+    it('should remove focus from search input when Escape is pressed', () => {
+        const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
+        searchInput.focus();
+        fixture.detectChanges();
+
+        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        window.dispatchEvent(event);
+        fixture.detectChanges();
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).not.toBe(searchInput);
+    });
+
+    it('should prioritize search blur over fullscreen close when Escape is pressed in search', () => {
+        component.isFullscreenMode.set(true);
+        const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
+        searchInput.focus();
+        postMessageSpy.mockClear();
+
+        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        window.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(postMessageSpy).not.toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
+    });
+
     it('should perform search with query', () => {
         const pdfNotificationService = TestBed.inject(PDFNotificationService);
         vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
@@ -212,30 +238,70 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.currentPage()).toBe(1);
     });
 
-    it('should enable wrapped toolbar layout when controls overflow', () => {
-        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
-        Object.defineProperty(toolbarCenter, 'clientWidth', { configurable: true, get: () => 320 });
-        Object.defineProperty(toolbarCenter, 'scrollWidth', { configurable: true, get: () => 640 });
+    const getToolbarCompressionLevel = (toolbarCenter: HTMLElement) => {
+        for (let level = 5; level >= 1; level -= 1) {
+            if (toolbarCenter.classList.contains(`artemis-pdf-toolbar__center--compact-${level}`)) {
+                return level;
+            }
+        }
+        return 0;
+    };
 
-        (component as any).updateToolbarWrapMode();
+    const setToolbarMeasurements = (toolbarCenter: HTMLElement, clientWidth: number, widthsByCompressionLevel: number[]) => {
+        Object.defineProperty(toolbarCenter, 'clientWidth', { configurable: true, get: () => clientWidth });
+        Object.defineProperty(toolbarCenter, 'scrollWidth', {
+            configurable: true,
+            get: () => widthsByCompressionLevel[getToolbarCompressionLevel(toolbarCenter)],
+        });
+    };
+
+    it('should first hide the download button when the toolbar starts overflowing', () => {
+        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
+        setToolbarMeasurements(toolbarCenter, 450, [500, 430, 390, 360, 340, 320]);
+
+        (component as any).updateToolbarCompressionLevel();
         fixture.detectChanges();
 
-        expect((component as any).isToolbarWrapped()).toBe(true);
-        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--wrapped')).toBe(true);
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(1);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-1')).toBe(true);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-2')).toBe(false);
     });
 
-    it('should disable wrapped toolbar layout when controls fit in one row', () => {
+    it('should progressively hide controls in the configured order (download -> dividers -> search -> zoom -> page navigation)', () => {
         const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
-        (component as any).isToolbarWrapped.set(true);
+        setToolbarMeasurements(toolbarCenter, 400, [500, 430, 390, 360, 340, 320]);
+
+        (component as any).updateToolbarCompressionLevel();
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(2);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-2')).toBe(true);
+
+        setToolbarMeasurements(toolbarCenter, 370, [500, 430, 390, 360, 340, 320]);
+        (component as any).updateToolbarCompressionLevel();
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(3);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-3')).toBe(true);
+
+        setToolbarMeasurements(toolbarCenter, 350, [500, 430, 390, 360, 340, 320]);
+        (component as any).updateToolbarCompressionLevel();
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(4);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-4')).toBe(true);
+
+        setToolbarMeasurements(toolbarCenter, 330, [500, 430, 390, 360, 340, 320]);
+        (component as any).updateToolbarCompressionLevel();
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(5);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-5')).toBe(true);
+    });
+
+    it('should restore all controls when enough width is available again', () => {
+        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
+        setToolbarMeasurements(toolbarCenter, 330, [500, 430, 390, 360, 340, 320]);
+        (component as any).updateToolbarCompressionLevel();
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(5);
+
+        setToolbarMeasurements(toolbarCenter, 700, [500, 430, 390, 360, 340, 320]);
+        (component as any).updateToolbarCompressionLevel();
         fixture.detectChanges();
 
-        Object.defineProperty(toolbarCenter, 'clientWidth', { configurable: true, get: () => 640 });
-        Object.defineProperty(toolbarCenter, 'scrollWidth', { configurable: true, get: () => 320 });
-
-        (component as any).updateToolbarWrapMode();
-        fixture.detectChanges();
-
-        expect((component as any).isToolbarWrapped()).toBe(false);
-        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--wrapped')).toBe(false);
+        expect(getToolbarCompressionLevel(toolbarCenter)).toBe(0);
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--compact-1')).toBe(false);
     });
 });

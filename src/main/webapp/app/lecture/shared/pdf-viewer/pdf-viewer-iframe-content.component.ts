@@ -53,6 +53,9 @@ interface FindMatchesCount {
     total: number;
 }
 
+const TOOLBAR_COMPACT_LEVELS = 5;
+const TOOLBAR_COMPACT_CLASS_PREFIX = 'artemis-pdf-toolbar__center--compact-';
+
 /** Iframe PDF viewer content with toolbar, search, page navigation, and zoom. */
 @Component({
     selector: 'jhi-pdf-viewer-iframe-content',
@@ -90,7 +93,6 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     protected searchQuery = signal('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
-    protected readonly isToolbarWrapped = signal(false);
 
     private resizeObserver?: ResizeObserver;
 
@@ -99,25 +101,16 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
             this.searchQuery();
             this.totalPages();
             this.isFullscreenMode();
-
-            afterNextRender(
-                () => {
-                    this.updateToolbarWrapMode();
-                },
-                { injector: this.injector },
-            );
+            this.scheduleToolbarCompressionUpdate();
         });
     }
 
     ngOnInit(): void {
         this.postMessageToParent('ready', {});
-        afterNextRender(
-            () => {
-                this.initializeToolbarResizeObserver();
-                this.updateToolbarWrapMode();
-            },
-            { injector: this.injector },
-        );
+        this.scheduleToolbarCompressionUpdate(() => {
+            this.initializeToolbarResizeObserver();
+            this.updateToolbarCompressionLevel();
+        });
     }
 
     ngOnDestroy(): void {
@@ -131,7 +124,20 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     protected onKeyDown(event: KeyboardEvent): void {
-        if (event.key === 'Escape' && this.isFullscreenMode()) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        if (this.shouldBlurSearchOnEscape(event.target)) {
+            event.preventDefault();
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement) {
+                activeElement.blur();
+            }
+            return;
+        }
+
+        if (this.isFullscreenMode()) {
             event.preventDefault();
             this.postMessageToParent('closeFullscreen', {});
         }
@@ -355,31 +361,40 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
         this.resizeObserver?.disconnect();
         this.resizeObserver = new ResizeObserver(() => {
-            this.updateToolbarWrapMode();
+            this.updateToolbarCompressionLevel();
         });
         this.resizeObserver.observe(toolbarCenterElement);
     }
 
-    private updateToolbarWrapMode(): void {
+    private updateToolbarCompressionLevel(): void {
         const toolbarCenterElement = this.toolbarCenterElement()?.nativeElement;
         if (!toolbarCenterElement || toolbarCenterElement.clientWidth === 0) {
             return;
         }
-        const wasWrapped = this.isToolbarWrapped();
-        const wrappedClassName = 'artemis-pdf-toolbar__center--wrapped';
 
-        if (wasWrapped) {
-            toolbarCenterElement.classList.remove(wrappedClassName);
+        for (let compressionLevel = 0; compressionLevel <= TOOLBAR_COMPACT_LEVELS; compressionLevel += 1) {
+            this.applyToolbarCompressionLevel(toolbarCenterElement, compressionLevel);
+            if (toolbarCenterElement.scrollWidth <= toolbarCenterElement.clientWidth || compressionLevel === TOOLBAR_COMPACT_LEVELS) {
+                break;
+            }
         }
+    }
 
-        const shouldWrap = toolbarCenterElement.scrollWidth > toolbarCenterElement.clientWidth;
-
-        if (wasWrapped) {
-            toolbarCenterElement.classList.add(wrappedClassName);
+    private applyToolbarCompressionLevel(toolbarCenterElement: HTMLElement, compressionLevel: number): void {
+        for (let level = 1; level <= TOOLBAR_COMPACT_LEVELS; level += 1) {
+            toolbarCenterElement.classList.toggle(`${TOOLBAR_COMPACT_CLASS_PREFIX}${level}`, compressionLevel >= level);
         }
+    }
 
-        if (shouldWrap !== wasWrapped) {
-            this.isToolbarWrapped.set(shouldWrap);
-        }
+    private shouldBlurSearchOnEscape(eventTarget: EventTarget | null): boolean {
+        return this.isWithinSearchToolbar(eventTarget) || this.isWithinSearchToolbar(document.activeElement);
+    }
+
+    private isWithinSearchToolbar(node: EventTarget | null): boolean {
+        return node instanceof Element && !!node.closest('.artemis-pdf-toolbar__search');
+    }
+
+    private scheduleToolbarCompressionUpdate(callback: () => void = () => this.updateToolbarCompressionLevel()): void {
+        afterNextRender(callback, { injector: this.injector });
     }
 }

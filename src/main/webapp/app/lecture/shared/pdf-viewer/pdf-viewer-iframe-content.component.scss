@@ -1,6 +1,15 @@
 @use 'src/main/webapp/content/scss/themes/default-variables' as light;
 @use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
 
+$toolbar-search-width: 168px;
+$toolbar-compact-hidden-selectors: (
+    1: '.artemis-pdf-toolbar__download-button',
+    2: '.artemis-pdf-toolbar__divider',
+    3: '.artemis-pdf-toolbar__search',
+    4: '.artemis-pdf-toolbar__zoom-controls',
+    5: '.artemis-pdf-toolbar__page-navigation',
+);
+
 :host {
     display: block;
     width: 100%;
@@ -53,35 +62,25 @@
     gap: 0.5rem;
     width: 100%;
     height: auto;
+    overflow: hidden;
 }
 
-.artemis-pdf-toolbar__center--wrapped {
-    flex-wrap: wrap;
-    row-gap: 0.375rem;
-    padding: 0.25rem 0;
+.artemis-pdf-toolbar__search:focus-within ~ * {
+    display: none !important;
 }
 
-.artemis-pdf-toolbar__center--wrapped .artemis-pdf-toolbar__search {
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: 0.25rem;
+.artemis-pdf-toolbar__search:focus-within {
+    max-width: 100%;
 }
 
-.artemis-pdf-toolbar__center--wrapped .artemis-pdf-toolbar__search-field {
-    flex: 0 0 auto;
+.artemis-pdf-toolbar__search:focus-within .artemis-pdf-toolbar__search-input {
+    width: $toolbar-search-width !important;
 }
 
-.artemis-pdf-toolbar__center--wrapped .artemis-pdf-toolbar__search-input {
-    width: 168px !important;
-}
-
-.artemis-pdf-toolbar__center--wrapped .artemis-pdf-toolbar__search-controls {
-    justify-content: center;
-}
-
-.artemis-pdf-toolbar__center--wrapped .artemis-pdf-toolbar__search + .artemis-pdf-toolbar__divider {
-    display: none;
+@each $level, $selector in $toolbar-compact-hidden-selectors {
+    .artemis-pdf-toolbar__center--compact-#{$level} #{$selector} {
+        display: none;
+    }
 }
 
 .iframe-pdf-container #toolbarContainer {
@@ -218,7 +217,7 @@
 }
 
 .artemis-pdf-toolbar .artemis-pdf-toolbar__search-input {
-    width: 168px;
+    width: $toolbar-search-width;
     padding-left: 1.5rem !important;
 }
 
@@ -226,6 +225,11 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+.artemis-pdf-toolbar__zoom-controls {
+    display: flex;
+    align-items: center;
 }
 
 .artemis-pdf-toolbar__search-count {

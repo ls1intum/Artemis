@@ -33,7 +33,7 @@
     />
     <ng-template #customToolbar>
         <div id="toolbarViewer" class="artemis-pdf-toolbar">
-            <div #toolbarCenter class="artemis-pdf-toolbar__center" [class.artemis-pdf-toolbar__center--wrapped]="isToolbarWrapped()">
+            <div #toolbarCenter class="artemis-pdf-toolbar__center">
                 <div class="artemis-pdf-toolbar__search">
                     <div class="artemis-pdf-toolbar__search-field">
                         <fa-icon class="artemis-pdf-toolbar__search-icon" [icon]="faMagnifyingGlass" />
@@ -113,27 +113,29 @@
                     </div>
                     <div class="artemis-pdf-toolbar__divider"></div>
                 }
-                <button
-                    class="artemis-pdf-toolbar__button"
-                    type="button"
-                    [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
-                    (click)="zoomOut()"
-                >
-                    <fa-icon [icon]="faMagnifyingGlassMinus" />
-                </button>
-                <button
-                    class="artemis-pdf-toolbar__button"
-                    type="button"
-                    [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
-                    (click)="zoomIn()"
-                >
-                    <fa-icon [icon]="faMagnifyingGlassPlus" />
-                </button>
+                <div class="artemis-pdf-toolbar__zoom-controls">
+                    <button
+                        class="artemis-pdf-toolbar__button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                        (click)="zoomOut()"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlassMinus" />
+                    </button>
+                    <button
+                        class="artemis-pdf-toolbar__button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                        (click)="zoomIn()"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlassPlus" />
+                    </button>
+                </div>
                 <div class="artemis-pdf-toolbar__divider"></div>
                 <button
-                    class="artemis-pdf-toolbar__button"
+                    class="artemis-pdf-toolbar__button artemis-pdf-toolbar__download-button"
                     type="button"
                     [title]="'artemisApp.attachmentVideoUnit.pdfViewer.downloadPdf' | artemisTranslate"
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.downloadPdf' | artemisTranslate"
@@ -144,7 +146,7 @@
                 @if (!isFullscreenMode()) {
                     <div class="artemis-pdf-toolbar__divider"></div>
                     <button
-                        class="artemis-pdf-toolbar__button"
+                        class="artemis-pdf-toolbar__button artemis-pdf-toolbar__fullscreen-button"
                         type="button"
                         [title]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
                         [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
