@@ -59,6 +59,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -152,7 +154,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -346,23 +351,30 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
-        // Create
-        courseUtilService.enableMessagingForCourse(course);
-        textExercise.setId(null);
-        textExercise.setTitle("AtlasML Create");
-        textExercise.setChannelName("atlasml-create");
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+            // Create
+            courseUtilService.enableMessagingForCourse(course);
+            textExercise.setId(null);
+            textExercise.setTitle("AtlasML Create");
+            textExercise.setChannelName("atlasml-create");
+            request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
 
-        // Update
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        textExercise.setTitle("AtlasML Update");
-        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
+            // Update
+            textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+            textExercise.setTitle("AtlasML Update");
+            request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
 
-        // Delete
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+            // Delete
+            request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
     }
 
     @Test
