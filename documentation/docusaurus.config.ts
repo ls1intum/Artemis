@@ -160,6 +160,11 @@ const config: Config = {
             },
             items: [
                 {
+                    to: '/compare',
+                    label: 'Compare',
+                    position: 'left',
+                },
+                {
                     href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                     label: 'GitHub',
                     position: 'right',
