@@ -67,6 +67,16 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent).not.toBeNull();
     });
 
+    it('should render the transcription hint with correct translate key', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const hintElement = attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('.alert-info');
+        expect(hintElement).not.toBeNull();
+        expect(hintElement.getAttribute('role')).toBe('status');
+        const span = hintElement.querySelector('span[jhiTranslate]');
+        expect(span).not.toBeNull();
+        expect(span.getAttribute('jhiTranslate')).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint');
+    });
+
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', {
             type: 'application/pdf',

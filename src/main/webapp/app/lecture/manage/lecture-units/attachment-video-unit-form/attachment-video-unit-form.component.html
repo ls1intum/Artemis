@@ -162,8 +162,8 @@
                     </div>
                 </div>
             </div>
-            <div class="alert alert-info mt-2 py-2 small" [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing">
-                <fa-icon [icon]="faCircleInfo" class="me-1" />
+            <div class="alert alert-info mt-2 py-2 small" role="status" [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing">
+                <fa-icon [icon]="faCircleInfo" class="me-1" aria-hidden="true" />
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint"></span>
             </div>
             <div class="row">
