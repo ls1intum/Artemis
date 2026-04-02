@@ -69,9 +69,9 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      */
     public static TutorialGroupSessionDTO from(TutorialGroupSession session, TutorialGroupSchedule schedule) {
         boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
-        boolean sameLocation = false;
-        boolean sameTime = false;
-        boolean sameDate = false;
+        boolean sameLocation = true;
+        boolean sameTime = true;
+        boolean sameDate = true;
         if (schedule != null) {
             LocalTime scheduleStart = LocalTime.parse(schedule.getStartTime());
             LocalTime scheduleEnd = LocalTime.parse(schedule.getEndTime());

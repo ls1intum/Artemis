@@ -261,7 +261,6 @@ public class TutorialGroupResource {
         if (tutorialGroupScheduleDTO != null) {
             TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
             tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, schedule);
-            tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).orElseThrow();
             tutorialGroup.setTutorialGroupSchedule(schedule);
         }
 
@@ -316,19 +315,24 @@ public class TutorialGroupResource {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
 
-        if (!oldTutor.equals(newTutor) && configuration.getUseTutorialGroupChannels()) {
-            tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(newTutor));
-            tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(tutorialGroup, Set.of(newTutor));
-            tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(oldTutor));
-            if (!user.equals(newTutor)) {
+        boolean newTutorDoesNotEqualOldTutor = !newTutor.equals(oldTutor);
+        if (newTutorDoesNotEqualOldTutor) {
+            boolean newTutorIsNotLoggedInUser = newTutor.equals(user);
+            if (newTutorIsNotLoggedInUser) {
                 var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
                         updateTutorialGroupRequestDTO.title(), tutorialGroupId, user.getName());
                 courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(newTutor));
             }
-            if (!user.equals(oldTutor)) {
+            boolean oldTutorIsNotLoggedInUser = oldTutor.equals(user);
+            if (oldTutorIsNotLoggedInUser) {
                 var tutorialGroupUnassignedNotification = new TutorialGroupUnassignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
                         tutorialGroup.getTitle(), tutorialGroupId, user.getName());
                 courseNotificationService.sendCourseNotification(tutorialGroupUnassignedNotification, List.of(oldTutor));
+            }
+            if (configuration.getUseTutorialGroupChannels()) {
+                tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(newTutor));
+                tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(tutorialGroup, Set.of(newTutor));
+                tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(oldTutor));
             }
         }
 
