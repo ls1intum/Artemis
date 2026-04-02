@@ -240,10 +240,16 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-:global([data-theme='dark']) :root {
-    --lms-support-color: #8bbe3a;
-    --lms-partial-color: #e5a04d;
-    --lms-none-color: #9a9a9a;
+:global([data-theme='dark']) .supportSupported {
+    color: #8bbe3a;
+}
+
+:global([data-theme='dark']) .supportPartial {
+    color: #e5a04d;
+}
+
+:global([data-theme='dark']) .supportNone {
+    color: #9a9a9a;
 }
 
 /* Responsive */

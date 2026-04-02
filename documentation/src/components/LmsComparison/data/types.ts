@@ -18,8 +18,6 @@ export enum PlatformId {
 export interface PlatformInfo {
     id: PlatformId;
     name: string;
-    shortName: string;
-    color: string;
 }
 
 export interface Feature {

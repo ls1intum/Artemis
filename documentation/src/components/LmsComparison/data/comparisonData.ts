@@ -20,12 +20,12 @@ const P = SupportLevel.Partial;
 const N = SupportLevel.None;
 
 export const platforms: Record<PlatformId, PlatformInfo> = {
-    [PlatformId.Artemis]: { id: PlatformId.Artemis, name: 'Artemis', shortName: 'Artemis', color: '#0065BD' },
-    [PlatformId.Canvas]: { id: PlatformId.Canvas, name: 'Canvas LMS', shortName: 'Canvas', color: '#E4060F' },
-    [PlatformId.Moodle]: { id: PlatformId.Moodle, name: 'Moodle', shortName: 'Moodle', color: '#F98012' },
-    [PlatformId.Blackboard]: { id: PlatformId.Blackboard, name: 'Blackboard', shortName: 'Bb', color: '#262626' },
-    [PlatformId.ILIAS]: { id: PlatformId.ILIAS, name: 'ILIAS', shortName: 'ILIAS', color: '#005CA9' },
-    [PlatformId.OpenOlat]: { id: PlatformId.OpenOlat, name: 'OpenOlat', shortName: 'OpenOlat', color: '#5B9A68' },
+    [PlatformId.Artemis]: { id: PlatformId.Artemis, name: 'Artemis' },
+    [PlatformId.Canvas]: { id: PlatformId.Canvas, name: 'Canvas LMS' },
+    [PlatformId.Moodle]: { id: PlatformId.Moodle, name: 'Moodle' },
+    [PlatformId.Blackboard]: { id: PlatformId.Blackboard, name: 'Blackboard' },
+    [PlatformId.ILIAS]: { id: PlatformId.ILIAS, name: 'ILIAS' },
+    [PlatformId.OpenOlat]: { id: PlatformId.OpenOlat, name: 'OpenOlat' },
 };
 
 export const selectablePlatforms: PlatformId[] = [PlatformId.Canvas, PlatformId.Moodle, PlatformId.Blackboard, PlatformId.ILIAS, PlatformId.OpenOlat];
