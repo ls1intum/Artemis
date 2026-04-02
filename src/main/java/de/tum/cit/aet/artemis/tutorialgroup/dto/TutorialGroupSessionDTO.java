@@ -5,7 +5,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
+import org.hibernate.validator.constraints.Range;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,8 +20,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, @NotNull Boolean isCancelled,
-        @NotNull Boolean locationChanged, @NotNull Boolean timeChanged, @NotNull Boolean dateChanged, @Nullable Integer attendanceCount) {
+public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull @Size(min = 1, max = 255) String location,
+        @NotNull Boolean isCancelled, @NotNull Boolean locationChanged, @NotNull Boolean timeChanged, @NotNull Boolean dateChanged,
+        @Nullable @Range(min = 1, max = 5000) Integer attendanceCount) {
 
     /**
      * Builds a {@link TutorialGroupSessionDTO} for a {@link TutorialGroupSession} of which the {@link TutorialGroup} has a {@link TutorialGroupSchedule}. Uses:

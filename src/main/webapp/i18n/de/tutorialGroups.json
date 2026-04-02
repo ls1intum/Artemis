@@ -302,7 +302,8 @@
                         "startTimeRequired": "Bitte wähle eine Startzeit.",
                         "endTimeRequired": "Bitte wähle eine Endzeit.",
                         "endTimeNotAfterStartTime": "Die Endzeit muss nach der Startzeit sein.",
-                        "locationRequired": "Bitte wähle einen Ort."
+                        "locationRequired": "Bitte wähle einen Ort.",
+                        "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
                     }
                 }
             },

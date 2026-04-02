@@ -302,7 +302,8 @@
                         "startTimeRequired": "Please choose a start time.",
                         "endTimeRequired": "Please choose an end time.",
                         "endTimeNotAfterStartTime": "The end time must be after the start time.",
-                        "locationRequired": "Please choose a location."
+                        "locationRequired": "Please choose a location.",
+                        "locationLength": "Location must contain at most 255 characters. The system automatically removes leading/trailing whitespaces."
                     }
                 }
             },

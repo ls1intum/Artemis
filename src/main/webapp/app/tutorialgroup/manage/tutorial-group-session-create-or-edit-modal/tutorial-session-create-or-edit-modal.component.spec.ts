@@ -160,6 +160,13 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationRequired',
         });
 
+        component.location.set('A'.repeat(256));
+
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationLength',
+        });
+
         component.location.set('Room 102');
 
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
@@ -253,7 +260,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
 
         expect(onUpdateSpy).toHaveBeenCalledWith({
             tutorialGroupSessionId: 17,
-            updateTutorialGroupSessionDTO: {
+            updateTutorialGroupSessionRequest: {
                 date: '2026-04-20',
                 startTime: '10:15',
                 endTime: '11:45',

@@ -195,6 +195,12 @@ export class TutorialSessionCreateOrEditModalComponent {
                 message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationRequired',
             };
         }
+        if (trimmedLocation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.locationLength',
+            };
+        }
         return { status: ValidationStatus.VALID };
     }
 
