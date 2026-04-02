@@ -14,7 +14,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
@@ -51,10 +50,6 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
-import { onError } from 'app/shared/util/global.utils';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
