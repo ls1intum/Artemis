@@ -1,35 +1,27 @@
 @if (!isLoading) {
     <div class="instructions__content border-0">
+        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResultValue" [participation]="participation" [tasks]="tasks" />
         <!-- problem statement update & difference highlighter -->
         @if (exercise && exercise.exerciseGroup) {
             <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />
         }
-        <div class="instructions__layout">
-            <div class="instructions__problem-statement">
-                <!-- Empty state when problem statement is not available -->
-                @if (!renderedMarkdown) {
-                    <div class="empty-state-container">
-                        <div class="empty-state-content">
-                            <fa-icon [icon]="faFileAlt" size="3x" class="empty-state-icon" />
-                            <h4 class="empty-state-title" jhiTranslate="artemisApp.exercise.emptyProblemStatementPreview.title"></h4>
-                            <p class="empty-state-description" jhiTranslate="artemisApp.exercise.emptyProblemStatementPreview.description"></p>
-                        </div>
-                    </div>
-                }
-                <!-- Rendered markdown will be inserted in this div -->
-                <div
-                    id="programming-exercise-instructions-content"
-                    class="instructions__content__markdown markdown-preview"
-                    [hidden]="!renderedMarkdown"
-                    [innerHtml]="renderedMarkdown"
-                ></div>
-            </div>
-            @if (tasks?.length) {
-                <div class="instructions__tasks">
-                    <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResultValue" [participation]="participation" [tasks]="tasks" />
+        <!-- Empty state when problem statement is not available -->
+        @if (!renderedMarkdown && !isLoading) {
+            <div class="empty-state-container">
+                <div class="empty-state-content">
+                    <fa-icon [icon]="faFileAlt" size="3x" class="empty-state-icon" />
+                    <h4 class="empty-state-title" jhiTranslate="artemisApp.exercise.emptyProblemStatementPreview.title"></h4>
+                    <p class="empty-state-description" jhiTranslate="artemisApp.exercise.emptyProblemStatementPreview.description"></p>
                 </div>
-            }
-        </div>
+            </div>
+        }
+        <!-- Rendered markdown will be inserted in this div -->
+        <div
+            id="programming-exercise-instructions-content"
+            class="instructions__content__markdown markdown-preview"
+            [hidden]="!renderedMarkdown"
+            [innerHtml]="renderedMarkdown"
+        ></div>
     </div>
 } @else {
     <span id="programming-exercise-instructions-loading" class="d-flex justify-content-center mt-2"><fa-icon size="lg" [icon]="faSpinner" animation="spin" /></span>

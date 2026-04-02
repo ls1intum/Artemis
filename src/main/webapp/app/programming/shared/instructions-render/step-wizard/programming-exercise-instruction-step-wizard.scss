@@ -6,42 +6,26 @@ $step-font-size: 0.6rem;
 $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
 .stepwizard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    padding: 0.25rem;
+    display: table;
+    width: 100%;
+    position: relative;
 }
 
 .stepwizard-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
+    display: table-cell;
+    width: 1%;
 }
 
-.stepwizard-column {
+.stepwizard-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    flex: 1 1 auto;
-    position: relative;
-
-    &::before {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 0;
-        bottom: 0;
-        transform: translateX(-50%);
-        border-left: 3px solid $gray-500;
-        z-index: 0;
-    }
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .stepwizard-step {
+    display: table-cell;
+    text-align: center;
     position: relative;
-    z-index: 1;
 
     .fa {
         vertical-align: initial;
@@ -92,4 +76,21 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
         color: $gray-600;
         font-size: 0.4rem;
     }
+}
+
+.test-passing {
+    cursor: default !important;
+}
+
+.test-passing:hover {
+    background-color: var(--programming-exercise-instruction-step-wizard-test-passing-hover-color);
+}
+
+.stepwizard-row-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-top: 3px solid $gray-500;
 }

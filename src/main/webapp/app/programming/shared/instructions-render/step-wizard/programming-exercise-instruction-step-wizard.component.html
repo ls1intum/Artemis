@@ -1,8 +1,10 @@
-<div class="stepwizard" [hidden]="!steps?.length">
-    <div class="stepwizard-title" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
-    <div class="stepwizard-column">
+<div class="stepwizard">
+    <div class="stepwizard-title pe-3" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
+    <div class="stepwizard-row position-relative">
+        <hr class="stepwizard-row-line" />
         @for (step of steps; let i = $index; track i) {
             <div class="stepwizard-step">
+                <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                 <div
                     [ngbTooltip]="step.title"
                     class="btn btn-circle"
@@ -10,7 +12,7 @@
                     [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
                     [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
                     [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
-                    (click)="scrollToTask(step.taskId); showDetailsForTests(step.testIds, step.title)"
+                    (click)="showDetailsForTests(step.testIds, step.title)"
                 >
                     @if (step.done === TestCaseState.SUCCESS) {
                         <fa-icon [icon]="faCheck" size="lg" class="text-success" />

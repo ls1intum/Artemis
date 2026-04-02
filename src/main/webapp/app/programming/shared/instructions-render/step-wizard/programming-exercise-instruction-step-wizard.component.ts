@@ -50,14 +50,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     }
 
     /**
-     * Scrolls the problem statement to the task with the given id.
-     */
-    scrollToTask(taskId: number) {
-        const taskElement = document.querySelector(`.pe-${this.exercise.id}-task-${taskId}`);
-        taskElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    /**
      * Opens the FeedbackComponent as popup; displays test results
      * @param {string[]} tests - Identifies the testcase
      * @param taskName - the name of the selected task
