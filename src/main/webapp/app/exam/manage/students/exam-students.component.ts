@@ -1,20 +1,15 @@
 import { Component, EventEmitter, OnDestroy, ViewEncapsulation, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { Observable, Subject, of } from 'rxjs';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { UserService } from 'app/core/user/shared/user.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
 import { faChair, faCheck, faTimes, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -43,11 +38,6 @@ import { InputIcon } from 'primeng/inputicon';
 import { InputText } from 'primeng/inputtext';
 import { Path } from 'app/shared/util/global.utils';
 
-const cssClasses = {
-    alreadyRegistered: 'already-registered',
-    newlyRegistered: 'newly-registered',
-};
-
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
@@ -59,9 +49,7 @@ const cssClasses = {
         StudentsExportDialogComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
-        RouterLink,
         DeleteButtonDirective,
-        DataTableComponent,
         NgxDatatableModule,
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
@@ -81,16 +69,13 @@ export class ExamStudentsComponent implements OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
-    private userService = inject(UserService);
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
     private deleteDialogService = inject(DeleteDialogService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
 
-    dataTable = viewChild.required(DataTableComponent);
     usersImportDialog = viewChild.required(UsersImportDialogComponent);
     studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
@@ -117,29 +102,20 @@ export class ExamStudentsComponent implements OnDestroy {
             return exam.examUsers?.map((examUser) => {
                 const studentExam = studentExams?.find((studentExam) => studentExam.user?.id === examUser.user!.id);
                 return {
-                    ...examUser.user!,
                     ...examUser,
                     didExamUserAttendExam: !!studentExam?.started,
                 };
             });
         } else {
-            return exam.examUsers?.map((examUser) => ({ ...examUser.user!, ...examUser }));
+            return exam.examUsers;
         }
     });
 
-    readonly filteredUsersSize = signal(0);
-    readonly rowClass = signal<string | undefined>(undefined);
-
-    readonly isLoading = signal(true);
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
-    readonly isSearching = signal(false);
-    readonly searchFailed = signal(false);
-    readonly searchNoResults = signal(false);
-    readonly isTransitioning = signal(false);
     readonly isAdmin = signal(false);
-
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isLoading = signal(true);
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
@@ -279,98 +255,6 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     /**
-     * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
-     *
-     * @param stream$ stream of searches of the format {text, entities} where entities are the results
-     * @return stream of users for the autocomplete
-     */
-    searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
-        return stream$.pipe(
-            switchMap(({ text: loginOrName }) => {
-                this.searchFailed.set(false);
-                this.searchNoResults.set(false);
-                if (loginOrName.length < 3) {
-                    return of([]);
-                }
-                this.isSearching.set(true);
-                return this.userService
-                    .search(loginOrName)
-                    .pipe(map((usersResponse) => usersResponse.body!))
-                    .pipe(
-                        tap((users) => {
-                            if (users.length === 0) {
-                                this.searchNoResults.set(true);
-                            }
-                        }),
-                        catchError(() => {
-                            this.searchFailed.set(true);
-                            return of([]);
-                        }),
-                    );
-            }),
-            tap(() => {
-                this.isSearching.set(false);
-            }),
-            tap((users) => {
-                setTimeout(() => {
-                    for (let i = 0; i < this.dataTable().typeaheadButtons.length; i++) {
-                        const isAlreadyInCourseGroup = this.allRegisteredUsers()
-                            .map((user) => user.id)
-                            .includes(users[i].id);
-                        const button = this.dataTable().typeaheadButtons[i];
-                        const hasIcon = button.querySelector('fa-icon');
-                        if (!hasIcon) {
-                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
-                        }
-                        if (isAlreadyInCourseGroup) {
-                            button.classList.add(cssClasses.alreadyRegistered);
-                        }
-                    }
-                });
-            }),
-        );
-    };
-
-    /**
-     * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
-     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
-     *
-     * @param user The selected user from the autocomplete suggestions
-     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
-     */
-    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
-        const examId = this.exam().id;
-
-        // If the user is not registered for this exam yet, perform the server call to add them
-        const userNotRegisteredForExam =
-            !this.allRegisteredUsers()
-                .map((eu) => eu.user!.id)
-                .includes(user.id) &&
-            user.login &&
-            examId;
-        if (userNotRegisteredForExam) {
-            this.isTransitioning.set(true);
-            this.examManagementService.addStudentToExam(this.courseId(), examId, user.login!).subscribe({
-                next: () => {
-                    this.isTransitioning.set(false);
-                    this.reloadExamWithRegisteredUsers();
-                    // Flash green background color to signal to the user that this student was registered
-                    this.flashRowClass(cssClasses.newlyRegistered);
-                },
-                error: (error: HttpErrorResponse) => {
-                    if (error.status === 403) {
-                        this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
-                    }
-                    this.isTransitioning.set(false);
-                },
-            });
-        } else {
-            // Hand back over to the data table
-            callback(user);
-        }
-    };
-
-    /**
      * Unregister student from exam
      *
      * @param examUser User that should be removed from the exam
@@ -413,15 +297,6 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     /**
-     * Update the number of filtered users
-     *
-     * @param filteredUsersSize Total number of users after filters have been applied
-     */
-    handleUsersSizeChange = (filteredUsersSize: number) => {
-        this.filteredUsersSize.set(filteredUsersSize);
-    };
-
-    /**
      * Formats the results in the autocomplete overlay.
      *
      * @param user
@@ -430,36 +305,6 @@ export class ExamStudentsComponent implements OnDestroy {
         const { name, login } = user;
         return `${name} (${login})`;
     };
-
-    /**
-     * Converts a user object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param user User
-     */
-    searchTextFromUser = (user: User): string => {
-        return user.login || '';
-    };
-
-    /**
-     * Can be used to highlight rows temporarily by flashing a certain css class
-     *
-     * @param className Name of the class to be applied to all rows
-     */
-    flashRowClass = (className: string) => {
-        this.rowClass.set(className);
-        setTimeout(() => this.rowClass.set(undefined), 500);
-    };
-
-    /**
-     * Show an error as an alert in the top of the editor html.
-     * Used by other components to display errors.
-     * The error must already be provided translated by the emitting component.
-     */
-    onError(error: string) {
-        this.alertService.error(error);
-        this.isTransitioning.set(false);
-    }
 
     /**
      * Registers all students who are enrolled in the course for the exam
