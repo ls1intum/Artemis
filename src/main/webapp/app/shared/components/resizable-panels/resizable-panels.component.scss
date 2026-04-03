@@ -56,8 +56,8 @@
         }
 
         &:not(.p-disabled):focus-visible {
-            box-shadow: none;
-            outline: none;
+            outline: 2px solid var(--bs-primary);
+            outline-offset: 2px;
         }
 
         &:not(.p-tab-active):not(.p-disabled):hover {

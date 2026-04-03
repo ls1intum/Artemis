@@ -34,6 +34,7 @@
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                         (onSubmit)="submit()"
                         [isLoading]="isSaving"
+                        [isSubmitted]="!!submission?.submitted"
                         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                         [tooltip]="submitButtonTooltip"
                         [isGeneratingFeedback]="isGeneratingFeedback"

@@ -67,8 +67,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private page = 1;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
-    // as set for the css class '.items-container'
-    private messagesContainerHeight = 700;
+    private get messagesContainerHeight(): number {
+        return this.content()?.nativeElement.clientHeight ?? 700;
+    }
     private viewChildrenInitialized = false;
     currentSortDirection = SortDirection.DESCENDING;
 

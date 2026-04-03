@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -175,10 +176,10 @@ public class QuizParticipationResource {
             if (!participationId.equals(submission.getParticipation().getId())) {
                 throw new BadRequestAlertException("The submission does not belong to the specified participation", "quizSubmission", "participationMismatch");
             }
-            result = submission.getResults().stream().findFirst().orElse(new Result());
+            result = submission.getResults().stream().filter(Result::isRated).max(Comparator.comparing(Result::getCompletionDate)).orElse(new Result());
         }
         else {
-            result = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).orElse(new Result());
+            result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).orElse(new Result());
             if (result.getId() != null) {
                 submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
             }

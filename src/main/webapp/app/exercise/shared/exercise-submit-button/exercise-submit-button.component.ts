@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -18,6 +18,7 @@ export class ExerciseSubmitButtonComponent {
     readonly exercise = input.required<Exercise>();
     readonly disabled = input(false);
     readonly isLoading = input(false);
+    readonly isSubmitted = input(false);
     readonly title = input('entity.action.submit');
     readonly btnType = input(ButtonType.PRIMARY);
     readonly tooltip = input('');
@@ -32,9 +33,29 @@ export class ExerciseSubmitButtonComponent {
 
     readonly faRobot = faRobot;
 
+    private pendingPopover = false;
+    private wasLoading = false;
+
+    constructor() {
+        effect(() => {
+            const loading = this.isLoading();
+            const submitted = this.isSubmitted();
+
+            if (loading) {
+                this.wasLoading = true;
+            }
+
+            if (this.wasLoading && !loading && this.pendingPopover && submitted) {
+                this.wasLoading = false;
+                this.pendingPopover = false;
+                setTimeout(() => this.popover()?.open());
+            }
+        });
+    }
+
     submitAndShowPopover() {
+        this.pendingPopover = true;
         this.onSubmit.emit();
-        this.popover()?.open();
     }
 
     @HostListener('document:click', ['$event'])

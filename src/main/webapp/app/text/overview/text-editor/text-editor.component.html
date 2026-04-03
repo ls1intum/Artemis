@@ -32,6 +32,7 @@
                             (onSubmit)="submit()"
                             [disabled]="!isActive || !submission"
                             [isLoading]="isSaving"
+                            [isSubmitted]="!!submission?.submitted"
                             [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
                             [tooltip]="submitButtonTooltip"
                             [isGeneratingFeedback]="isGeneratingFeedback"

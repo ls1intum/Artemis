@@ -225,6 +225,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
+        this.participationMode.set('graded');
         this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
         this._resultWithComplaint.set(
             getFirstResultWithComplaintFromResults(
@@ -276,11 +277,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._exerciseIcon.set(getIcon(this.exercise.type));
         }
         this.createInstructorActions();
-
-        // Auto-select practice mode when the due date has passed and a practice participation exists
-        if (this.participationService.shouldPreferPractice(this.exercise) && this.practiceStudentParticipation()) {
-            this.participationMode.set('practice');
-        }
     }
 
     /**

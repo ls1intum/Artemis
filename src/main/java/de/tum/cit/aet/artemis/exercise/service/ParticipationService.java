@@ -637,15 +637,19 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
-        // After the due date, prefer the practice participation for submission context (student is in practice mode)
-        if (exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate())) {
+        // After the effective due date (respecting individual extensions), prefer the practice participation
+        Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                username, false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
+                .orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
             Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
                     username, true);
             if (practiceParticipation.isPresent()) {
                 return practiceParticipation;
             }
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
+        return gradedParticipation;
     }
 
     /**
