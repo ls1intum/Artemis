@@ -121,11 +121,12 @@ public class CourseAdminService {
     public CourseSummaryDTO getCourseSummary(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
 
-        // Users
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        long numberOfTutors = userRepository.countUserInGroup(course.getTeachingAssistantGroupName());
-        long numberOfEditors = userRepository.countUserInGroup(course.getEditorGroupName());
-        long numberOfInstructors = userRepository.countUserInGroup(course.getInstructorGroupName());
+        // Users - batch query instead of 4 separate queries
+        userRepository.setUserCountsForCourse(course);
+        long numberOfStudents = course.getNumberOfStudents();
+        long numberOfTutors = course.getNumberOfTeachingAssistants();
+        long numberOfEditors = course.getNumberOfEditors();
+        long numberOfInstructors = course.getNumberOfInstructors();
 
         Set<Long> exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
 
