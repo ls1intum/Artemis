@@ -79,6 +79,9 @@ export class IrisMcqCarouselComponent {
                     }
                 }
                 this.answers.set(restored);
+                if (restored.size === data.questions?.length) {
+                    this.showScore.set(true);
+                }
             }
         });
     }
