@@ -52,7 +52,11 @@
         </div>
 
         <div class="label-and-input-row">
-            <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="alreadyUsedLanguages()" [(language)]="selectedLanguage" />
+            <jhi-tutorial-edit-languages-input
+                [alreadyUsedLanguages]="alreadyUsedLanguages()"
+                [(language)]="selectedLanguage"
+                [(languageValidationResult)]="languageValidationResult"
+            />
 
             <div class="label-and-input">
                 <label for="mode-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate }} *</label>

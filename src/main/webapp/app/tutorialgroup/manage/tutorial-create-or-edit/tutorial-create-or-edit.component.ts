@@ -85,6 +85,7 @@ export class TutorialCreateOrEditComponent {
     tutorInputTouched = signal(false);
     alreadyUsedLanguages = signal<string[]>([]);
     selectedLanguage = signal<string>('');
+    languageValidationResult = signal<Validation>({ status: ValidationStatus.VALID });
     modes = Object.values(Mode);
     selectedMode = signal<Mode>(Mode.OFFLINE);
     campus = signal('');
@@ -397,7 +398,10 @@ export class TutorialCreateOrEditComponent {
     private computeIfInputsInvalid(): boolean {
         const titleInvalid = this.titleValidationResult().status === ValidationStatus.INVALID;
         const tutorInvalid = this.tutorValidationResult().status === ValidationStatus.INVALID;
-        const generalInformationInvalid = titleInvalid || tutorInvalid;
+        const languageInvalid = this.languageValidationResult().status === ValidationStatus.INVALID;
+        const campusInvalid = this.campusValidationResult().status === ValidationStatus.INVALID;
+        const additionalInformationInvalid = this.additionalInformationValidationResult().status === ValidationStatus.INVALID;
+        const generalInformationInvalid = titleInvalid || tutorInvalid || languageInvalid || campusInvalid || additionalInformationInvalid;
 
         const firstSessionStartInvalid = this.firstSessionStartValidationResult().status === ValidationStatus.INVALID;
         const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === ValidationStatus.INVALID;
