@@ -101,20 +101,34 @@
                     />
                 </td>
                 <td>
-                    <div class="d-flex flex-column">
-                        <div class="d-flex align-items-center gap-1 mb-1">
-                            <i class="pi pi-id-card"></i>
-                            <span>{{ examUser.user?.name }}</span>
+                    <ng-template #studentDetailsTemplate>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center gap-1 mb-1">
+                                <i class="pi pi-id-card"></i>
+                                <span>{{ examUser.user?.name }}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 text-secondary">
+                                <i class="pi pi-sign-in"></i>
+                                <span>{{ examUser.user?.login }}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 text-secondary">
+                                <i class="pi pi-envelope"></i>
+                                <span>{{ examUser.user?.email }}</span>
+                            </div>
                         </div>
-                        <div class="d-flex align-items-center gap-1 text-secondary">
-                            <i class="pi pi-sign-in"></i>
-                            <span>{{ examUser.user?.login }}</span>
+                    </ng-template>
+                    @if (isAdmin()) {
+                        <a
+                            class="d-block text-reset text-decoration-none cursor-pointer link-underline link-underline-opacity-0 link-underline-opacity-75-hover"
+                            [routerLink]="['/admin/user-management', examUser.user?.login]"
+                        >
+                            <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
+                        </a>
+                    } @else {
+                        <div>
+                            <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
                         </div>
-                        <div class="d-flex align-items-center gap-1 text-secondary">
-                            <i class="pi pi-envelope"></i>
-                            <span>{{ examUser.user?.email }}</span>
-                        </div>
-                    </div>
+                    }
                 </td>
                 <td>
                     <span>{{ examUser.user?.visibleRegistrationNumber }}</span>

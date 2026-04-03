@@ -1,8 +1,9 @@
 import { Component, EventEmitter, OnDestroy, ViewEncapsulation, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Subject } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -61,6 +62,8 @@ import { Path } from 'app/shared/util/global.utils';
         IconField,
         InputIcon,
         InputText,
+        RouterLink,
+        NgTemplateOutlet,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
