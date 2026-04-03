@@ -94,9 +94,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.addEmptyCourse();
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
 
-        // TODO: Hibernate 7 increased exam start query count from 7 to 7-8, and submit from 3 to 5 — investigate in a follow-up
-        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(8);
-        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(5);
+        assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);
+        assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(3);
     }
 
     private StudentExam startWorkingOnExam(StudentExam studentExam) throws Exception {

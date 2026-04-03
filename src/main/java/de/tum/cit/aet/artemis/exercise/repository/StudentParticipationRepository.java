@@ -908,7 +908,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
@@ -965,7 +968,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = TRUE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
@@ -977,7 +983,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = TRUE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises

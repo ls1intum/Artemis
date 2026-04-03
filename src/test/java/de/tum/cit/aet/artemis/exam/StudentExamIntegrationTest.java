@@ -2843,8 +2843,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
         // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 12 — investigate remaining extra queries in a follow-up
-        private final int BASE_QUERY_COUNT = 12;
+        // TODO: Hibernate 7 increased base query count from 5 to 6 — investigate remaining extra query in a follow-up
+        private final int BASE_QUERY_COUNT = 6;
 
         private TextExercise textExercise;
 
@@ -2946,7 +2946,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // load Quiz Submissions Submitted Answers (for comparison)
-            // TODO: Hibernate 7 increased quiz query count from 3 to 8 — investigate in a follow-up
+            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
             final int quizQueryCount = 8;
 
             // When
