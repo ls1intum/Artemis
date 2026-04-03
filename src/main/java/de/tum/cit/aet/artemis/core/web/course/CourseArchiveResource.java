@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -162,6 +164,7 @@ public class CourseArchiveResource {
      */
     @GetMapping("courses/for-archive")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
         long start = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();

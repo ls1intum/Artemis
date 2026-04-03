@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -41,6 +43,7 @@ public class IrisSettingsResource {
 
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
         courseRepository.findByIdElseThrow(courseId);
         return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));

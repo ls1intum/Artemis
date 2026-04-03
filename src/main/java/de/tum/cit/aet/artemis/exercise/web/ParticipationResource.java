@@ -141,7 +141,7 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

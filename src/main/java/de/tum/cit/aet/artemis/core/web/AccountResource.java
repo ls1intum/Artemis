@@ -181,7 +181,7 @@ public class AccountResource {
      */
     @GetMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 
@@ -198,7 +198,7 @@ public class AccountResource {
      */
     @PutMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 

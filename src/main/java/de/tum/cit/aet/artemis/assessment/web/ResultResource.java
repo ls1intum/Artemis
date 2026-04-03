@@ -163,7 +163,7 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
