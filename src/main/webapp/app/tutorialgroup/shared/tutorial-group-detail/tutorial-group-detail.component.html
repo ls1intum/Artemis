@@ -148,7 +148,7 @@
                         <div class="info-item" role="listitem" aria-labelledby="next-session-date-label" aria-describedby="next-session-date-value">
                             <fa-icon [icon]="faCalendar" aria-hidden="true" />
                             <span class="info-label" id="next-session-date-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.date"></span>
-                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-date-value">{{ session.date }}</span>
+                            <span class="info-value" [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-date-value">{{ session.date }}</span>
                             @if (session.dateChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
@@ -156,7 +156,7 @@
                         <div class="info-item" role="listitem" aria-labelledby="next-session-time-label" aria-describedby="next-session-time-value">
                             <fa-icon [icon]="faClock" aria-hidden="true" />
                             <span class="info-label" id="next-session-time-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.time"></span>
-                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-time-value">{{ session.time }}</span>
+                            <span class="info-value" [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-time-value">{{ session.time }}</span>
                             @if (session.timeChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
@@ -177,7 +177,7 @@
                         <div class="info-item" role="listitem" aria-labelledby="next-session-location-label" aria-describedby="next-session-location-value">
                             <fa-icon [icon]="faMapPin" aria-hidden="true" />
                             <span class="info-label" id="next-session-location-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.location"></span>
-                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-location-value">{{ session.location }}</span>
+                            <span class="info-value" [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-location-value">{{ session.location }}</span>
                             @if (session.locationChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
