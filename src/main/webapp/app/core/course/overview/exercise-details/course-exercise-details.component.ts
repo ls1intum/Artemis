@@ -276,6 +276,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._exerciseIcon.set(getIcon(this.exercise.type));
         }
         this.createInstructorActions();
+
+        // Auto-select practice mode when the due date has passed and a practice participation exists
+        if (this.participationService.shouldPreferPractice(this.exercise) && this.practiceStudentParticipation()) {
+            this.participationMode.set('practice');
+        }
     }
 
     /**

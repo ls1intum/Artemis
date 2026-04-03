@@ -117,6 +117,7 @@ export class ExerciseHeaderActionsComponent {
 
     readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
+    readonly participationModeChange = output<ParticipationMode>();
 
     // Instructor actions
     private readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.OPEN_FOR_PRACTICE];

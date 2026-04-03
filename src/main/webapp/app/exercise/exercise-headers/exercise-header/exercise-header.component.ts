@@ -45,6 +45,12 @@ export class ExerciseHeaderComponent {
     });
 
     readonly hasBothParticipations = computed(() => {
+        // Also show both toggle buttons when the mode is explicitly set to 'practice'
+        // with a graded participation, even if the practice participation hasn't been
+        // created yet (e.g. quiz practice just started).
+        if (this.participationMode() === 'practice' && !!this.studentParticipation()) {
+            return true;
+        }
         return !!this.studentParticipation() && !!this.effectivePracticeParticipation();
     });
 

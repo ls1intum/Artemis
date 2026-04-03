@@ -261,6 +261,7 @@
         [hideLabelMobile]="button.hideLabelMobile"
         [outlined]="button.outlined"
         [routerLink]="['/courses', courseId(), 'exercises', 'quiz-exercises', exercise().id, button.quizMode]"
+        (click)="button.quizMode === 'practice' ? participationModeChange.emit('practice') : null"
     ></button>
 </ng-template>
 

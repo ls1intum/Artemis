@@ -17,6 +17,7 @@
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             (newParticipation)="onNewParticipation($event)"
+            (participationModeChange)="participationMode.set($event)"
         />
     </div>
 
