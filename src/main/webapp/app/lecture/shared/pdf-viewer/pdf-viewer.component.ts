@@ -16,8 +16,6 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -34,7 +32,7 @@ import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet, FaIconComponent],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,7 +79,6 @@ export class PdfViewerComponent {
 
     // For fullscreen mode
     readonly fullscreenMetadata = this.fullscreenService.fullscreenMetadata;
-    protected readonly faXmark = faXmark;
 
     constructor() {
         let wasFullscreenOpen = false;

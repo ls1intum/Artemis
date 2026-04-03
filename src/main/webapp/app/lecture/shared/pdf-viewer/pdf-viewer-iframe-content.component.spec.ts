@@ -213,6 +213,19 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'download', data: {} }, window.location.origin);
     });
 
+    it('should render close button in fullscreen mode and trigger close action', () => {
+        component.isFullscreenMode.set(true);
+        fixture.detectChanges();
+        postMessageSpy.mockClear();
+
+        const closeButton = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__close-fullscreen-button') as HTMLButtonElement;
+        expect(closeButton).toBeTruthy();
+
+        closeButton.click();
+
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
+    });
+
     it('should confirm valid page navigation', () => {
         component.totalPages.set(10);
         (component as any).pageInputValue.set(5);

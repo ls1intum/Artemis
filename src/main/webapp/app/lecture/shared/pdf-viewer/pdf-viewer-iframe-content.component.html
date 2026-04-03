@@ -32,7 +32,10 @@
         [showZoomDropdown]="false"
     />
     <ng-template #customToolbar>
-        <div id="toolbarViewer" class="artemis-pdf-toolbar">
+        <div id="toolbarViewer" class="artemis-pdf-toolbar" [class.artemis-pdf-toolbar--fullscreen]="isFullscreenMode()">
+            @if (isFullscreenMode()) {
+                <div class="artemis-pdf-toolbar__left-spacer" aria-hidden="true"></div>
+            }
             <div #toolbarCenter class="artemis-pdf-toolbar__center">
                 <div class="artemis-pdf-toolbar__search">
                     <div class="artemis-pdf-toolbar__search-field">
@@ -156,6 +159,19 @@
                     </button>
                 }
             </div>
+            @if (isFullscreenMode()) {
+                <div class="artemis-pdf-toolbar__right">
+                    <button
+                        class="artemis-pdf-toolbar__button artemis-pdf-toolbar__close-fullscreen-button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
+                        (click)="closeFullscreen()"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                </div>
+            }
         </div>
     </ng-template>
 </div>

@@ -26,6 +26,7 @@ import {
     faMagnifyingGlassMinus,
     faMagnifyingGlassPlus,
     faTimes,
+    faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
@@ -90,6 +91,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faDownload = faDownload;
     protected readonly faExpand = faExpand;
+    protected readonly faXmark = faXmark;
 
     protected searchQuery = signal('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
@@ -318,6 +320,10 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     protected requestFullscreen(): void {
         this.postMessageToParent('openFullscreen', {});
+    }
+
+    protected closeFullscreen(): void {
+        this.postMessageToParent('closeFullscreen', {});
     }
 
     private getPdfViewerApplication(): PDFViewerApplication | undefined {
