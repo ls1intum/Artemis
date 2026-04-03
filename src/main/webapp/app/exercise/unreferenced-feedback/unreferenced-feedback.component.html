@@ -20,7 +20,7 @@
                     <jhi-unreferenced-feedback-detail
                         [feedback]="feedback"
                         [resultId]="resultId"
-                        (onFeedbackChange)="updateFeedback(feedback)"
+                        (onFeedbackChange)="updateFeedback($event)"
                         (onFeedbackDelete)="deleteFeedback(feedback)"
                         [readOnly]="readOnly"
                         [highlightDifferences]="highlightDifferences"
