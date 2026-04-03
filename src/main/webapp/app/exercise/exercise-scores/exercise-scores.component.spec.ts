@@ -1,7 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/course/shared/entities/course.model';

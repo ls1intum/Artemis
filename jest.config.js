@@ -118,10 +118,10 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/hyperion/**',                                              // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**',                    // programming version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation/participation.component.spec.ts',        // participation component uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation-submission/participation-submission.component.spec.ts', // participation-submission component uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/exercise-scores.component.spec.ts',    // exercise-scores component uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared/search-filter/search-filter.component.spec.ts', // search-filter component tests use Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/participation/**',        // participation module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**',    // exercise-scores module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
@@ -154,10 +154,10 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation/participation.component.spec.ts/', // participation component uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/participation-submission.component.spec.ts/', // participation-submission component uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/exercise-scores.component.spec.ts/', // exercise-scores component uses Vitest
-        '<rootDir>/src/main/webapp/app/shared/search-filter/search-filter.component.spec.ts/', // search-filter component tests use Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -217,10 +217,10 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
-        '<rootDir>/src/main/webapp/app/exercise/participation/participation.component.spec.ts', // participation component (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/participation-submission.component.spec.ts', // participation-submission component (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/exercise-scores.component.spec.ts', // exercise-scores component (Vitest)
-        '<rootDir>/src/main/webapp/app/shared/search-filter/search-filter.component.spec.ts', // search-filter component (Vitest)
+        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module (Vitest)
+        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module (Vitest)
+        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module (Vitest)
+        '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter (Vitest)
     ],
     testTimeout: 3000,
     testMatch: [

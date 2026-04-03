@@ -1,8 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { FilterProp, ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
