@@ -77,7 +77,8 @@ class HyperionCodeGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
     }
 
     @Test
@@ -92,7 +93,8 @@ class HyperionCodeGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-456");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, null);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE);
     }
 
     @Test
@@ -107,7 +109,8 @@ class HyperionCodeGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-789");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS, null);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS);
     }
 
     @Test
@@ -242,6 +245,7 @@ class HyperionCodeGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-check-1");
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
         verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
     }

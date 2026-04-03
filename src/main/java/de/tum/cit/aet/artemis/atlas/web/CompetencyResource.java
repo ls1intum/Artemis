@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -82,11 +84,11 @@ public class CompetencyResource {
 
     private final CourseCompetencyService courseCompetencyService;
 
-    private final AtlasMLApi atlasMLApi;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService, AtlasMLApi atlasMLApi) {
+            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -374,8 +376,9 @@ public class CompetencyResource {
     public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
         log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
 
+        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
         try {
-            SuggestCompetencyResponseDTO result = atlasMLApi.suggestCompetencies(request);
+            SuggestCompetencyResponseDTO result = api.suggestCompetencies(request);
             return ResponseEntity.ok(result);
         }
         catch (Exception e) {
@@ -395,8 +398,9 @@ public class CompetencyResource {
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
+        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
         try {
-            SuggestCompetencyRelationsResponseDTO result = atlasMLApi.suggestCompetencyRelations(courseId);
+            SuggestCompetencyRelationsResponseDTO result = api.suggestCompetencyRelations(courseId);
             return ResponseEntity.ok(result);
         }
         catch (Exception e) {
@@ -442,7 +446,7 @@ public class CompetencyResource {
      */
     private void notifyAtlasML(List<Competency> competencies, @NonNull OperationTypeDTO operationType, String operationDescription) {
         try {
-            atlasMLApi.saveCompetencies(competencies, operationType);
+            atlasMLApi.ifPresent(api -> api.saveCompetencies(competencies, operationType));
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());

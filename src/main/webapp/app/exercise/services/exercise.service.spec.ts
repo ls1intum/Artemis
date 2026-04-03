@@ -19,6 +19,7 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -38,7 +39,7 @@ describe('Exercise Service', () => {
         id: 23,
         type: ExerciseType.MODELING,
         studentParticipations: [],
-        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
         exampleSolutionExplanation: 'Solution<br>Explanation',
     } as unknown as ModelingExercise;
 
@@ -393,6 +394,28 @@ describe('Exercise Service', () => {
         expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should convert exercise dates and categories from client', () => {
+        const category = {
+            color: '#6ae8ac',
+            category: 'category1',
+        } as ExerciseCategory;
+
+        const releaseDate = dayjs();
+
+        exercise = Object.assign({}, textExercise, {
+            categories: [category],
+            releaseDate,
+        });
+
+        const converted = ExerciseService.convertExerciseFromClient(exercise);
+
+        expect(converted.categories).toHaveLength(1);
+        expect(converted.categories![0]).toBe(JSON.stringify(category));
+
+        expect(converted.releaseDate).toBe(releaseDate.toJSON());
+        expect(converted.startDate).toBeUndefined();
     });
 
     it('should get exercise details', () => {

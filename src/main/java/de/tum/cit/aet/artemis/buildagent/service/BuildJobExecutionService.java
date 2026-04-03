@@ -345,7 +345,7 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
             log.debug(msg);
 
-            buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+            final int buildScriptExitCode = buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
             msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
             buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
@@ -371,14 +371,14 @@ public class BuildJobExecutionService {
 
                 var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
                 buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
-                        buildJob.id(), buildLogs);
+                        buildJob.id(), buildLogs, buildScriptExitCode);
             }
             catch (NotFoundException e) {
                 msg = "Could not find test results in container " + containerName;
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 log.error(msg, e);
                 // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-                return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+                return constructFailedBuildResult(buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate, buildScriptExitCode);
             }
             catch (IOException | IllegalStateException e) {
                 msg = "Error while parsing test results";
@@ -449,7 +449,7 @@ public class BuildJobExecutionService {
     // --- Helper methods ----
 
     private BuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
-            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs) throws IOException {
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate, String buildJobId, List<BuildLogDTO> buildLogs, int buildScriptExitCode) throws IOException {
 
         List<LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
@@ -499,7 +499,7 @@ public class BuildJobExecutionService {
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
-                buildCompletedDate, staticCodeAnalysisReports, buildLogs);
+                buildCompletedDate, staticCodeAnalysisReports, buildLogs, buildScriptExitCode);
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
@@ -560,11 +560,13 @@ public class BuildJobExecutionService {
      * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
      * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
      * @param buildRunDate             The date when the build was completed.
+     * @param buildScriptExitCode      The exit code of the build script (0 = success, non-zero = failure).
      * @return a {@link BuildResult} that indicates a failed build
      */
     private BuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
-            ZonedDateTime buildRunDate) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of(), null);
+            ZonedDateTime buildRunDate, int buildScriptExitCode) {
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of(), null,
+                buildScriptExitCode);
     }
 
     /**
@@ -579,14 +581,15 @@ public class BuildJobExecutionService {
      * @param buildRunDate              The date when the build was completed.
      * @param staticCodeAnalysisReports The static code analysis reports
      * @param buildLogs                 the build logs
+     * @param buildScriptExitCode       The exit code of the build script (0 = success, non-zero = failure).
      * @return a {@link BuildResult}
      */
     private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
             String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs) {
+            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs, int buildScriptExitCode) {
         LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests);
         return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), buildLogs,
-                staticCodeAnalysisReports, true);
+                staticCodeAnalysisReports, true, buildScriptExitCode);
     }
 
     /**

@@ -1,10 +1,37 @@
 <div class="row justify-content-center">
     @if (course()) {
-        <div class="d-flex flex-column flex-md-row p-2">
-            <jhi-quick-actions [course]="course()!" class="mb-md-0 me-md-3" style="min-height: 13rem" />
-
-            <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" style="min-height: 13rem" />
+        <div class="col-12 p-2">
+            <div class="section-card section-card--actions">
+                <div class="section-header">
+                    <div class="section-header-icon">
+                        <fa-icon [icon]="faBolt" />
+                    </div>
+                    <div class="section-header-text">
+                        <h4 jhiTranslate="artemisApp.course.quickActions.title"></h4>
+                        <p jhiTranslate="artemisApp.course.quickActions.description"></p>
+                    </div>
+                    @if (course()!.isAtLeastInstructor) {
+                        <button class="section-header-action" (click)="quickActions.openImportDialog()">
+                            <fa-icon [icon]="faFileImport" class="me-1" />
+                            <span jhiTranslate="artemisApp.course.import.button"></span>
+                        </button>
+                    }
+                </div>
+                <div class="section-body d-flex flex-column flex-xl-row">
+                    <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0" [class.me-xl-3]="course()!.isAtLeastInstructor && irisEnabled()" />
+                    @if (course()!.isAtLeastInstructor && irisEnabled()) {
+                        <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
+                    }
+                </div>
+            </div>
         </div>
+        @if (course()!.isAtLeastInstructor) {
+            <div #exploreSection class="col-12 p-2" [class.explore-animate]="fromOnboarding()">
+                <div class="section-card section-card--explore">
+                    <jhi-onboarding-explore [course]="course()!" [showOnboardingLink]="true" />
+                </div>
+            </div>
+        }
         <div class="col-12">
             <div class="row">
                 <div class="col-xxl-4">

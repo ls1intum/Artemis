@@ -18,6 +18,40 @@ export interface UserAddAction {
     selector: 'jhi-user-management-dropdown',
     templateUrl: './user-management-dropdown.component.html',
     imports: [NgbDropdown, NgbDropdownItem, NgbDropdownToggle, NgbDropdownMenu, ArtemisTranslatePipe, TranslateDirective, RouterLink, FaIconComponent],
+    styles: [
+        `
+            .user-mgmt-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 0.875rem;
+                border: 1px solid var(--bs-border-color);
+                border-radius: 0.625rem;
+                background: var(--overview-card-nested-bg, var(--bs-body-bg));
+                color: var(--bs-body-color);
+                font-weight: 500;
+                font-size: 0.85rem;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: var(--bs-tertiary-bg);
+                    border-color: var(--bs-secondary-border-subtle);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                }
+
+                &::after {
+                    margin-left: 0.25rem;
+                }
+
+                fa-icon {
+                    color: var(--bs-secondary-color);
+                    font-size: 0.9rem;
+                }
+            }
+        `,
+    ],
 })
 export class UserManagementDropdownComponent {
     protected readonly ButtonType = ButtonType;
