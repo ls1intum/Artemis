@@ -167,7 +167,7 @@ test.describe('Import exercises', () => {
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);
-                const submitResponse = await modelingExerciseEditor.submit();
+                const submitResponse = await courseOverview.submitExercise('api/modeling/exercises/*/modeling-submissions');
                 const submission: ModelingSubmission = await submitResponse.json();
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
