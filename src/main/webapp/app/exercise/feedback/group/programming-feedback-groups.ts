@@ -2,6 +2,7 @@ import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 /**
  * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed
@@ -23,9 +24,11 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
+        const isAthenaNonGradedWrongFeedback =
+            feedbackItem.type === 'Reviewer' && Feedback.isNonGradedFeedbackSuggestion(feedbackItem.feedbackReference) && feedbackItem.credits === 0;
         const isTestFeedback = feedbackItem.type === 'Test';
         const isFailedTest = feedbackItem.positive === false || (feedbackItem.positive === undefined && feedbackItem.credits === 0);
-        return isReviewerFeedback || (isTestFeedback && isFailedTest);
+        return isReviewerFeedback || isAthenaNonGradedWrongFeedback || (isTestFeedback && isFailedTest);
     }
 }
 
@@ -62,9 +65,10 @@ class ProgrammingFeedbackGroupInfo extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
+        const isAthenaNonGradedFeedback = Feedback.isNonGradedFeedbackSuggestion(feedbackItem.feedbackReference);
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits === 0;
         const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
-        return isReviewerFeedback || isSubsequentFeedback;
+        return (isReviewerFeedback && !isAthenaNonGradedFeedback) || isSubsequentFeedback;
     }
 }
 
@@ -82,8 +86,10 @@ class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
+        const isAthenaNonGradedCorrectFeedback =
+            feedbackItem.type === 'Reviewer' && Feedback.isNonGradedFeedbackSuggestion(feedbackItem.feedbackReference) && (feedbackItem.credits ?? 0) > 0;
         const isTestFeedback = feedbackItem.type === 'Test';
         const isSuccessfulTest = feedbackItem.positive === true || (feedbackItem.positive === undefined && !!feedbackItem.credits);
-        return isReviewerFeedback || (isTestFeedback && isSuccessfulTest);
+        return isReviewerFeedback || isAthenaNonGradedCorrectFeedback || (isTestFeedback && isSuccessfulTest);
     }
 }
