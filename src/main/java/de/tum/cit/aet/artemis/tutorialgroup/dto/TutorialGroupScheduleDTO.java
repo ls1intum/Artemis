@@ -27,8 +27,9 @@ public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart,
      * @throws BadRequestException if the tutorial period end is more than 2 years after the first session start
      */
     public void validateMaximumTutorialPeriodLength() {
-        if (firstSessionStart == null || tutorialPeriodEnd == null)
+        if (firstSessionStart == null || tutorialPeriodEnd == null) {
             return;
+        }
         if (tutorialPeriodEnd.isAfter(firstSessionStart.toLocalDate().plusYears(2))) {
             throw new BadRequestException("The end of the teaching period must be at most 2 years after the first session's start.");
         }

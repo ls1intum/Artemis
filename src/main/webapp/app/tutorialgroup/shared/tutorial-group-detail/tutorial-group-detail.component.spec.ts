@@ -31,7 +31,7 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
-describe('CourseTutorialGroupDetailComponent', () => {
+describe('TutorialGroupDetailComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: TutorialGroupDetailComponent;
@@ -925,7 +925,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             courseId: 1,
             tutorialGroupId: 1,
             tutorialGroupSessionId: 1,
-            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionRequest,
+            updateTutorialGroupSessionRequest: updateTutorialGroupSessionData.updateTutorialGroupSessionRequest,
         });
     });
 
@@ -938,7 +938,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
         const createSessionEmitSpy = vi.spyOn(component.onCreateSession, 'emit');
         const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
-        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionRequest = {
+        const createTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest = {
             date: '2025-01-20',
             startTime: '10:00',
             endTime: '12:00',
@@ -947,12 +947,12 @@ describe('CourseTutorialGroupDetailComponent', () => {
         };
 
         fixture.debugElement.query(By.css('[data-testid="new-session-button"]')).triggerEventHandler('click');
-        modal.onCreate.emit(createTutorialGroupSessionDTO);
+        modal.onCreate.emit(createTutorialGroupSessionRequest);
 
         expect(createSessionEmitSpy).toHaveBeenCalledWith({
             courseId: 1,
             tutorialGroupId: 1,
-            createTutorialGroupSessionDTO,
+            createTutorialGroupSessionRequest: createTutorialGroupSessionRequest,
         });
     });
 });
