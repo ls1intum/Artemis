@@ -95,8 +95,10 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation).toBeDefined();
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
-        expect(websocketSendSpy).toHaveBeenCalledOnce();
-        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy).toHaveBeenCalledTimes(2);
+        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy.mock.calls[1][0]).toBe(expectedWebsocketTopic + '/patch');
+        expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
     });
 
     it('should handle submission patch payloads.', () => {
@@ -107,12 +109,13 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
         component.receiveSubmissionPatch.subscribe(receiver);
 
+        const patchString = JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]);
         mockEmitter.next({
-            submissionPatch: { patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
+            submissionPatch: { patch: patchString },
             sender: currentUser.login!,
         });
 
-        expect(receiver).toHaveBeenCalledWith({ patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
+        expect(receiver).toHaveBeenCalledWith({ patch: patchString });
     });
 
     it('should properly send submission patches.', () => {
@@ -124,7 +127,7 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const patch: SubmissionPatch = { patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
+        const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });

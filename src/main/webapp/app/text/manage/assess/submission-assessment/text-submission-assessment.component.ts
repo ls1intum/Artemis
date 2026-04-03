@@ -470,7 +470,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     /**
      * Validate the feedback of the assessment
      */
-    validateFeedback(): void {
+    validateFeedback(updatedFeedbacks?: Feedback[]): void {
+        if (updatedFeedbacks) {
+            this.unreferencedFeedback = updatedFeedbacks;
+        }
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
