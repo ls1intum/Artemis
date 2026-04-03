@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -15,8 +14,8 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
 
 /**
- * CustomMetricsExtension.
- * Extends the default Artemis Metrics with custom metrics.
+ * Extends the default Artemis metrics endpoint with custom metrics
+ * (e.g., active WebSocket user count).
  */
 @Component
 @Lazy
@@ -39,12 +38,9 @@ public class CustomMetricsExtension {
      * @return extended metrics
      */
     @ReadOperation
-    public Map<String, Map<?, ?>> getMetrics() {
+    public Map<String, Object> getMetrics() {
         var metrics = this.artemisMetricsEndpoint.allMetrics();
-        HashMap<String, Integer> activeUsers = new HashMap<>();
-        activeUsers.put("activeUsers", this.simpUserRegistry.getUserCount());
-        metrics.put("customMetrics", new HashMap<>(activeUsers));
+        metrics.put("customMetrics", Map.of("activeUsers", this.simpUserRegistry.getUserCount()));
         return metrics;
     }
-
 }
