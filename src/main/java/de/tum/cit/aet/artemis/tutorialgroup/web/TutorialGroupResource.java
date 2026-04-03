@@ -317,13 +317,13 @@ public class TutorialGroupResource {
 
         boolean newTutorDoesNotEqualOldTutor = !newTutor.equals(oldTutor);
         if (newTutorDoesNotEqualOldTutor) {
-            boolean newTutorIsNotLoggedInUser = newTutor.equals(user);
+            boolean newTutorIsNotLoggedInUser = !newTutor.equals(user);
             if (newTutorIsNotLoggedInUser) {
                 var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
                         updateTutorialGroupRequestDTO.title(), tutorialGroupId, user.getName());
                 courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(newTutor));
             }
-            boolean oldTutorIsNotLoggedInUser = oldTutor.equals(user);
+            boolean oldTutorIsNotLoggedInUser = !oldTutor.equals(user);
             if (oldTutorIsNotLoggedInUser) {
                 var tutorialGroupUnassignedNotification = new TutorialGroupUnassignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
                         tutorialGroup.getTitle(), tutorialGroupId, user.getName());
@@ -453,7 +453,7 @@ public class TutorialGroupResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
+        var isUserTutorInTutorialGroup = tutorialGroupRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
         var isUserAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!isUserTutorInTutorialGroup && !isUserAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of the group, editors and instructors are allowed to access unregistered students of a tutorial group.");

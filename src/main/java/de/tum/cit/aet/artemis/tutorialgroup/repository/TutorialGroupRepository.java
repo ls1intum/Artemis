@@ -182,6 +182,13 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             """)
     Set<TutorialGroupStudentDTO> getRegisteredStudentsOfTutorialGroup(@Param("tutorialGroupId") long tutorialGroupId);
 
+    @Query("""
+            SELECT COUNT(tutorialGroup) > 0
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.teachingAssistant.id = :userId AND tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    boolean isTutorInTutorialGroup(@Param("userId") long userId, @Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
     }
