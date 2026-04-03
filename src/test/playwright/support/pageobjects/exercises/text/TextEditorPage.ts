@@ -37,14 +37,6 @@ export class TextEditorPage {
         return await responsePromise;
     }
 
-    async shouldShowExerciseTitleInHeader(exerciseTitle: string): Promise<void> {
-        await expect(this.page.locator('#participation-header').getByText(exerciseTitle)).toBeVisible();
-    }
-
-    async shouldShowProblemStatement(): Promise<void> {
-        await expect(this.page.locator('#problem-statement')).toBeVisible();
-    }
-
     async shouldShowNumberOfWords(numberOfWords: number): Promise<void> {
         const wordCountElement = this.page.locator('#word-count');
         await expect(wordCountElement).toContainText(numberOfWords.toString());
