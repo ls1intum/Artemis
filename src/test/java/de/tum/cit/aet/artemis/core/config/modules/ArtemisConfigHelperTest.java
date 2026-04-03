@@ -28,6 +28,24 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testAtlasMLProperty() {
+        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, true);
+
+        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
+        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isTrue();
+
+        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, false);
+        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
+
+        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, null);
+        assertThatThrownBy(() -> artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isInstanceOf(RuntimeException.class).hasMessageContaining(Constants.ATLASML_ENABLED_PROPERTY_NAME);
+
+        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, false);
+        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
+        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
+    }
+
+    @Test
     void testNebulaProperty() {
         testProperty(artemisConfigHelper::isNebulaEnabled, Constants.NEBULA_ENABLED_PROPERTY_NAME);
     }
