@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 /**
  * Inlined replacement for JHipster's {@code JHipsterMetricsEndpoint}.
  * <p>
- * Exposes a custom {@code /management/artemis-metrics} actuator endpoint
+ * Exposes a custom {@code /management/artemismetrics} actuator endpoint
  * with JVM thread and memory statistics. This endpoint is extended by
  * {@link de.tum.cit.aet.artemis.core.web.CustomMetricsExtension} which
  * adds active-user counts.
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @Profile(PROFILE_CORE)
 @Component
 @Lazy
-@Endpoint(id = "artemis-metrics")
+@Endpoint(id = "artemismetrics")
 public class ArtemisMetricsEndpoint {
 
     /**
