@@ -77,6 +77,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     readonly isDarkMode = signal(false);
     readonly isFullscreenMode = signal(false);
     readonly pageInputValue = signal<number | undefined>(1);
+    readonly isPageNavigationPending = signal(false);
 
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly searchNextButtonElement = viewChild<ElementRef<HTMLButtonElement>>('searchNextButton');
@@ -103,6 +104,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
             this.searchQuery();
             this.totalPages();
             this.isFullscreenMode();
+            this.isPageNavigationPending();
             this.scheduleToolbarCompressionUpdate();
         });
     }
@@ -132,6 +134,16 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
         if (this.shouldBlurSearchOnEscape(event.target)) {
             event.preventDefault();
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement) {
+                activeElement.blur();
+            }
+            return;
+        }
+
+        if (this.shouldCancelPageNavigationOnEscape(event.target)) {
+            event.preventDefault();
+            this.cancelPageNavigation();
             const activeElement = document.activeElement;
             if (activeElement instanceof HTMLElement) {
                 activeElement.blur();
@@ -286,6 +298,11 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         this.dispatchFindCommand('find', '', false, false);
     }
 
+    protected onPageInputValueChange(value: number | undefined): void {
+        this.pageInputValue.set(value);
+        this.isPageNavigationPending.set(value !== undefined && Number.isInteger(value) && value !== this.currentPage());
+    }
+
     protected confirmPageNavigation(): void {
         const value = this.pageInputValue();
         const totalPages = this.totalPages();
@@ -298,6 +315,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         if (value === undefined || !Number.isInteger(value) || value < 1 || value > totalPages) {
             const fallbackPage = previousPage > 0 && previousPage <= totalPages ? previousPage : 1;
             this.pageInputValue.set(fallbackPage);
+            this.isPageNavigationPending.set(false);
         } else {
             this.setCurrentPage(value);
         }
@@ -305,13 +323,15 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         this.pageInputElement()?.input?.nativeElement?.blur();
     }
 
+    protected cancelPageNavigation(): void {
+        this.pageInputValue.set(this.currentPage());
+        this.isPageNavigationPending.set(false);
+    }
+
     protected onPageInputFocus(): void {
-        afterNextRender(
-            () => {
-                this.pageInputElement()?.input?.nativeElement?.select();
-            },
-            { injector: this.injector },
-        );
+        window.setTimeout(() => {
+            this.pageInputElement()?.input?.nativeElement?.select();
+        }, 0);
     }
 
     protected triggerDownload(): void {
@@ -350,6 +370,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     private setCurrentPage(page: number): void {
         this.currentPage.set(page);
         this.pageInputValue.set(page);
+        this.isPageNavigationPending.set(false);
     }
 
     /** Updates dark mode only when the value is valid and has changed. */
@@ -396,8 +417,16 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         return this.isWithinSearchToolbar(eventTarget) || this.isWithinSearchToolbar(document.activeElement);
     }
 
+    private shouldCancelPageNavigationOnEscape(eventTarget: EventTarget | null): boolean {
+        return this.isPageNavigationPending() || this.isWithinPageNavigation(eventTarget) || this.isWithinPageNavigation(document.activeElement);
+    }
+
     private isWithinSearchToolbar(node: EventTarget | null): boolean {
         return node instanceof Element && !!node.closest('.artemis-pdf-toolbar__search');
+    }
+
+    private isWithinPageNavigation(node: EventTarget | null): boolean {
+        return node instanceof Element && !!node.closest('.artemis-pdf-toolbar__page-navigation');
     }
 
     private scheduleToolbarCompressionUpdate(callback: () => void = () => this.updateToolbarCompressionLevel()): void {

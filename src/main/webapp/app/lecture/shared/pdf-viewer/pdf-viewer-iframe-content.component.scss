@@ -82,6 +82,10 @@ $toolbar-compact-hidden-selectors: (
     grid-column: 2;
 }
 
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--page-navigation-pending > :not(.artemis-pdf-toolbar__page-navigation) {
+    display: none !important;
+}
+
 .artemis-pdf-toolbar__right {
     grid-column: 3;
     display: flex;

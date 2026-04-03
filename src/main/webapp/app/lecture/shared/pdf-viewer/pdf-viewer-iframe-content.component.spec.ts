@@ -180,6 +180,24 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(document.activeElement).not.toBe(searchInput);
     });
 
+    it('should cancel pending page navigation when Escape is pressed', () => {
+        component.totalPages.set(10);
+        (component as any).onPageInputValueChange(6);
+        fixture.detectChanges();
+
+        const pageInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-input') as HTMLInputElement;
+        pageInput.focus();
+
+        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        window.dispatchEvent(event);
+        fixture.detectChanges();
+
+        expect(event.defaultPrevented).toBe(true);
+        expect((component as any).pageInputValue()).toBe(1);
+        expect((component as any).isPageNavigationPending()).toBe(false);
+        expect(document.activeElement).not.toBe(pageInput);
+    });
+
     it('should prioritize search blur over fullscreen close when Escape is pressed in search', () => {
         component.isFullscreenMode.set(true);
         const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
@@ -232,6 +250,21 @@ describe('PdfViewerIframeContentComponent', () => {
         (component as any).confirmPageNavigation();
         expect(component.currentPage()).toBe(5);
         expect((component as any).pageInputValue()).toBe(5);
+    });
+
+    it('should only show page confirmation button while page navigation is pending', () => {
+        component.totalPages.set(10);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeFalsy();
+
+        (component as any).onPageInputValueChange(5);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeTruthy();
+
+        (component as any).confirmPageNavigation();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeFalsy();
     });
 
     it('should set fullscreen mode flag from loadPDF message', () => {
