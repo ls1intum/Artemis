@@ -60,9 +60,8 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostToCreateUser1 };
-        component.ngOnInit();
-        component.ngOnChanges();
+        component.posting.set({ ...metisPostToCreateUser1 });
+        fixture.detectChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
         expect(component.modalTitle).toBe('artemisApp.metis.createModalTitlePost');
 
@@ -77,10 +76,12 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should reset context selection on changes', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostTechSupport };
-        component.ngOnInit();
+        component.posting.set({ ...metisPostTechSupport });
+        fixture.detectChanges();
         component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
-        component.ngOnChanges();
+        // Trigger a posting change to reset context
+        component.posting.set({ ...metisPostTechSupport });
+        fixture.detectChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
         expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
     });
@@ -88,8 +89,8 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke metis service with created post in overview', () => {
         vi.useFakeTimers();
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostToCreateUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostToCreateUser1);
+        fixture.detectChanges();
         const newContent = 'New Content';
         const newTitle = 'New Title';
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
@@ -102,7 +103,7 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.similarPosts).toEqual([]);
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting,
+            ...component.posting()!,
             content: newContent,
             title: newTitle,
         });
@@ -116,9 +117,8 @@ describe('PostCreateEditModalComponent', () => {
         vi.useFakeTimers();
         metisServiceIsAtLeastInstructorStub.mockReturnValue(true);
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = metisPostToCreateUser1;
-        component.ngOnInit();
-        component.ngOnChanges();
+        component.posting.set(metisPostToCreateUser1);
+        fixture.detectChanges();
         const newContent = 'New Content';
         const newTitle = 'New Title';
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
@@ -129,7 +129,7 @@ describe('PostCreateEditModalComponent', () => {
         });
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting,
+            ...component.posting()!,
             content: newContent,
             title: newTitle,
         });
@@ -142,8 +142,8 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke metis service with updated post in page section', () => {
         vi.useFakeTimers();
         metisServiceGetPageTypeMock.mockReturnValue(PageType.PAGE_SECTION);
-        component.posting = metisPostLectureUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostLectureUser1);
+        fixture.detectChanges();
         expect(component.pageType).toEqual(PageType.PAGE_SECTION);
         expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
         const updatedContent = 'Updated Content';
@@ -156,7 +156,7 @@ describe('PostCreateEditModalComponent', () => {
         vi.advanceTimersByTime(800);
         component.confirm();
         expect(metisServiceUpdateStub).toHaveBeenCalledWith({
-            ...component.posting,
+            ...component.posting()!,
             content: updatedContent,
             title: updatedTitle,
         });

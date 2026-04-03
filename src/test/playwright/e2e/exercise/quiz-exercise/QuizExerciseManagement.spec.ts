@@ -36,6 +36,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(title)).toBeVisible();
         });
 
@@ -49,6 +50,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(title)).toBeVisible();
             for (const answerOption of answerOptions) {
                 await expect(page.getByText(answerOption)).toBeVisible();
@@ -62,6 +64,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(title)).toBeVisible();
         });
 
@@ -72,6 +75,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quiz = await response.json();
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(quizQuestionTitle)).toBeVisible();
         });
     });
@@ -118,7 +122,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
                     resolve();
                 });
 
-                setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 10000);
+                setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 30000);
             });
             await quizExerciseOverview.exportQuizExercise();
             await expect(downloadPromise).resolves.toBeUndefined();

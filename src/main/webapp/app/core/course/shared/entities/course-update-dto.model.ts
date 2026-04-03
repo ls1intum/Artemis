@@ -48,7 +48,6 @@ export interface CourseCreateDTO {
     unenrollmentEnabled: boolean;
 
     // Course features
-    faqEnabled: boolean;
     learningPathsEnabled: boolean;
     studentCourseAnalyticsDashboardEnabled: boolean;
     presentationScore?: number;
@@ -107,7 +106,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         unenrollmentEnabled: course.unenrollmentEnabled ?? false,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
         learningPathsEnabled: course.learningPathsEnabled ?? false,
         studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
@@ -169,7 +167,6 @@ export interface CourseUpdateDTO {
     courseInformationSharingMessagingCodeOfConduct?: string;
 
     // Course features
-    faqEnabled: boolean;
     learningPathsEnabled: boolean;
     studentCourseAnalyticsDashboardEnabled: boolean;
     presentationScore?: number;
@@ -178,6 +175,7 @@ export interface CourseUpdateDTO {
     restrictedAthenaModulesAccess: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    onboardingDone: boolean;
 }
 
 /**
@@ -233,7 +231,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
         learningPathsEnabled: course.learningPathsEnabled ?? false,
         studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
@@ -242,5 +239,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        onboardingDone: course.onboardingDone ?? false,
     };
 }

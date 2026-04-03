@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
-        List<LocalCIJobDTO> jobs, List<BuildLogDTO> buildLogEntries, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, boolean hasLogs)
+        List<LocalCIJobDTO> jobs, List<BuildLogDTO> buildLogEntries, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, boolean hasLogs, Integer buildScriptExitCode)
         implements BuildResultNotification, Serializable {
 
     public BuildResult {
@@ -35,7 +35,7 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
     }
 
     public BuildResult(String branch, String assignmentRepoCommitHash, String testsRepoCommitHash, List<BuildLogDTO> buildLogs, boolean isBuildSuccessful) {
-        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, buildLogs != null && !buildLogs.isEmpty());
+        this(branch, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, null, null, buildLogs, null, buildLogs != null && !buildLogs.isEmpty(), null);
     }
 
     @Override
