@@ -84,7 +84,7 @@ class ExerciseMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository, courseRepository, authorizationCheckService,
-                userRepository, atlasMLApi, sessionCacheService);
+                userRepository, Optional.of(atlasMLApi), sessionCacheService);
 
         course = new Course();
         course.setId(10L);
@@ -172,6 +172,28 @@ class ExerciseMappingToolsServiceTest {
         assertThat(preview).isNotNull();
         assertThat(preview.competencies().get(0).suggested()).isTrue();   // LLM flag preserved
         assertThat(preview.competencies().get(1).suggested()).isFalse();
+    }
+
+    @Test
+    void preview_usesLlmSuggestedFlags_whenAtlasMLApiMissing() {
+        ExerciseMappingToolsService serviceWithoutAtlasML = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository,
+                courseRepository, authorizationCheckService, userRepository, Optional.empty(), sessionCacheService);
+
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1, competency2));
+
+        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, true),
+                new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, false));
+
+        serviceWithoutAtlasML.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
+
+        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        assertThat(preview).isNotNull();
+        assertThat(preview.competencies().get(0).suggested()).isTrue();
+        assertThat(preview.competencies().get(1).suggested()).isFalse();
+        verify(atlasMLApi, never()).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
     }
 
     @Test

@@ -79,7 +79,7 @@ class CompetencyMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, atlasMLApi, authorizationCheckService, userRepository);
+                sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
 
         course = new Course();
         course.setId(123L);
