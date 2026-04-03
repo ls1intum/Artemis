@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -299,8 +298,6 @@ public class ProgrammingExerciseImportFromFileService {
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
         ObjectMapper objectMapper = JsonObjectMapper.get();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
 
         try {
             return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);

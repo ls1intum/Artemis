@@ -30,7 +30,14 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
         }
     }
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final ObjectMapper mapper;
+
+    static {
+        mapper = JsonObjectMapper.get().copy();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        mapper.registerModule(module);
+    }
 
     /**
      * Creates a new windfile based on an existing one with updated metadata.
@@ -61,9 +68,6 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
      * @throws JsonProcessingException if the json string is not valid.
      */
     public static Windfile deserialize(String json) throws JsonProcessingException {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Action.class, new ActionDeserializer());
-        mapper.registerModule(module);
         return mapper.readValue(json, Windfile.class);
     }
 

@@ -674,6 +674,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
+    // VCS project deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
     void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
@@ -689,6 +691,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.OK, params);
     }
 
+    // VCS repository deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
     void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();

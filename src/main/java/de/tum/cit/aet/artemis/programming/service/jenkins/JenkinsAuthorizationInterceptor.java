@@ -68,9 +68,14 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
             final var response = restTemplate.exchange(jenkinsServerUri.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity,
                     new ParameterizedTypeReference<Map<String, Object>>() {
                     });
-            final var sessionId = response.getHeaders().get("Set-Cookie").getFirst();
-            headersToAuthenticate.add("Jenkins-Crumb", String.valueOf(response.getBody().get("crumb")));
-            headersToAuthenticate.add("Cookie", sessionId);
+            final var body = response.getBody();
+            final var cookies = response.getHeaders().get("Set-Cookie");
+            if (body == null || !body.containsKey("crumb") || cookies == null || cookies.isEmpty()) {
+                log.warn("Incomplete Jenkins crumb response: body={}, cookies={}", body, cookies);
+                return;
+            }
+            headersToAuthenticate.add("Jenkins-Crumb", String.valueOf(body.get("crumb")));
+            headersToAuthenticate.add("Cookie", cookies.getFirst());
         }
         catch (RestClientException e) {
             log.error("Cannot get Jenkins crumb from crumb issuer: {}", e.getMessage());
