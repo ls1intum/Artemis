@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
@@ -76,6 +78,7 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -94,6 +97,7 @@ public class IrisCourseChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
@@ -116,6 +120,7 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();

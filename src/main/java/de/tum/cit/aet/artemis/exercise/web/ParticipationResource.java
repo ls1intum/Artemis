@@ -189,6 +189,7 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations/practice")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
