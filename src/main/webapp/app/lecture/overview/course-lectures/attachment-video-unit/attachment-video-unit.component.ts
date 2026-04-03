@@ -34,18 +34,15 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent, MessageModule],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, MessageModule],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
-    protected readonly faFileLines = faFileLines;
-
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
