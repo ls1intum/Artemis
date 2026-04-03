@@ -457,6 +457,7 @@ describe('AttachmentVideoUnitComponent', () => {
             const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
             const mockBlobUrl = 'blob:http://localhost/fallback-pdf';
             const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobUrl);
+            const getBlobFromUrlSpy = vi.spyOn(fileService, 'getBlobFromUrl').mockReturnValue(of(testBlob));
 
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
             fixture.detectChanges();
@@ -474,15 +475,10 @@ describe('AttachmentVideoUnitComponent', () => {
             // Simulate PDF load error to trigger blob fallback
             component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
-            // Blob fallback should trigger only one HTTP request even if the direct-load error fires twice
+            // Blob fallback should trigger only one request even if the direct-load error fires twice
             component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
-            const requests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
-            expect(requests).toHaveLength(1);
-            const [req] = requests;
-            expect(req.request.method).toBe('GET');
-            req.flush(testBlob);
-
-            await fixture.whenStable();
+            expect(getBlobFromUrlSpy).toHaveBeenCalledTimes(1);
+            expect(getBlobFromUrlSpy).toHaveBeenCalledWith('api/core/files//path/to/file/test.pdf');
 
             expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe(mockBlobUrl);

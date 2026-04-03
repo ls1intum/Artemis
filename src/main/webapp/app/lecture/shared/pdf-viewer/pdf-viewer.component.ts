@@ -81,15 +81,21 @@ export class PdfViewerComponent {
     readonly fullscreenMetadata = this.fullscreenService.fullscreenMetadata;
 
     constructor() {
-        let wasFullscreenOpen = false;
-        let lastFullscreenPdfUrl: string | undefined;
+        this.registerDestroyCleanup();
+        this.setupPdfLoadingEffect();
+        this.setupFullscreenLoadingEffect();
+        this.setupThemeSyncEffect();
+        this.setupPageRestoreEffect();
+        this.setupFullscreenFocusEffect();
+    }
 
-        // Cleanup handler to prevent memory leaks when component is destroyed
+    private registerDestroyCleanup(): void {
         this.destroyRef.onDestroy(() => {
             this.close();
         });
+    }
 
-        // Load PDF when iframe ready
+    private setupPdfLoadingEffect(): void {
         effect(() => {
             if (!this.iframeReady()) {
                 return;
@@ -101,7 +107,6 @@ export class PdfViewerComponent {
                     return;
                 }
 
-                // Use untracked to avoid reloading when page changes
                 const page = untracked(() => this.fullscreenService.currentPage());
                 this.loadPdf(pdfUrl, page);
                 return;
@@ -112,8 +117,9 @@ export class PdfViewerComponent {
                 this.loadPdf(pdfUrl, this.initialPage() ?? 1);
             }
         });
+    }
 
-        // Show loading state whenever a fullscreen PDF is opened.
+    private setupFullscreenLoadingEffect(): void {
         effect(() => {
             if (this.mode() !== 'fullscreen') {
                 return;
@@ -124,18 +130,25 @@ export class PdfViewerComponent {
                 this.isLoading.set(true);
             }
         });
+    }
 
-        // Sync theme changes
+    private setupThemeSyncEffect(): void {
         effect(() => {
             const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
             if (this.iframeReady()) {
                 this.postMessageToIframe('themeChange', { isDarkMode });
             }
         });
+    }
 
-        // Restore page when fullscreen closes (embedded mode only)
+    private setupPageRestoreEffect(): void {
+        let wasFullscreenOpen = false;
+        let lastFullscreenPdfUrl: string | undefined;
+
         effect(() => {
-            if (this.mode() !== 'embedded') return;
+            if (this.mode() !== 'embedded') {
+                return;
+            }
 
             const { isOpen, pdfUrl: fullscreenPdfUrl } = this.fullscreenService.fullscreenMetadata();
             if (isOpen && fullscreenPdfUrl) {
@@ -145,7 +158,6 @@ export class PdfViewerComponent {
             if (wasFullscreenOpen && !isOpen) {
                 const page = this.fullscreenService.currentPage();
                 const pdfUrl = this.pdfUrl();
-                // Only restore if this viewer's PDF matches the one that was opened in fullscreen
                 if (this.iframeReady() && pdfUrl && pdfUrl === lastFullscreenPdfUrl) {
                     this.currentPage.set(page);
                     this.loadPdf(pdfUrl, page);
@@ -154,8 +166,9 @@ export class PdfViewerComponent {
 
             wasFullscreenOpen = isOpen;
         });
+    }
 
-        // Auto-focus fullscreen window when rendered (for keyboard interactions)
+    private setupFullscreenFocusEffect(): void {
         effect(() => {
             if (this.mode() !== 'fullscreen' || !this.fullscreenMetadata().isOpen) {
                 return;

@@ -357,14 +357,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
         Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
-        attachment.setId(1L);
         attachment.setLecture(lecture);
 
         Long courseId = lecture.getCourse().getId();
-        Long attachmentId = attachment.getId();
 
         lectureRepo.save(lecture);
-        attachmentRepo.save(attachment);
+        attachment = attachmentRepo.save(attachment);
+        Long attachmentId = attachment.getId();
 
         request.get("/api/core/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
     }

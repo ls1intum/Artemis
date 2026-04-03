@@ -7,13 +7,10 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,15 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -66,6 +60,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -110,6 +105,8 @@ public class FileResource {
 
     private final FileService fileService;
 
+    private final FileDownloadService fileDownloadService;
+
     private final FileUploadService fileUploadService;
 
     private final ResourceLoaderService resourceLoaderService;
@@ -136,12 +133,13 @@ public class FileResource {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
-    public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
+    public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
+        this.fileDownloadService = fileDownloadService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
@@ -451,7 +449,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName, @RequestHeader HttpHeaders requestHeaders) {
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -524,7 +522,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
     @EnforceAtLeastTutor
-    public ResponseEntity<?> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -551,7 +549,7 @@ public class FileResource {
      */
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<?> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
@@ -574,7 +572,7 @@ public class FileResource {
      */
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<?> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId, @RequestHeader HttpHeaders requestHeaders) {
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get attachment file : {}", attachmentId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
@@ -664,7 +662,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<?> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -691,104 +689,21 @@ public class FileResource {
         return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
     }
 
-    private ResponseEntity<?> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
         return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
     }
 
-    private ResponseEntity<?> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
-        if (!filename.toLowerCase().endsWith(".pdf")) {
-            return buildFileResponse(path, filename, replaceFilename, cacheDays);
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
+        var payload = fileDownloadService.prepareAttachmentDownload(path, filename, replaceFilename, ranges, MAX_PDF_RANGE_BYTES);
+        var response = ResponseEntity.status(payload.status()).headers(payload.headers()).contentType(payload.mediaType()).header("filename", filename)
+                .contentLength(payload.content().length);
+        if (payload.contentRange().isPresent()) {
+            response = response.header(HttpHeaders.CONTENT_RANGE, payload.contentRange().get());
         }
-
-        try {
-            Path actualPath = path.resolve(filename);
-            if (!actualPath.toFile().exists()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            FileSystemResource resource = new FileSystemResource(actualPath);
-            long fileSize = resource.contentLength();
-            HttpHeaders headers = createFileHeaders(filename, replaceFilename);
-            headers.set(HttpHeaders.ACCEPT_RANGES, "bytes");
-            MediaType mediaType = getMediaTypeFromFilename(filename);
-
-            if (ranges == null || ranges.isEmpty()) {
-                var response = ResponseEntity.ok().headers(headers).contentType(mediaType).header("filename", filename).contentLength(fileSize);
-                if (cacheDays > 0) {
-                    response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
-                }
-                return response.body(resource);
-            }
-            HttpRange range = ranges.getFirst();
-            long start, end;
-            try {
-                start = range.getRangeStart(fileSize);
-                end = range.getRangeEnd(fileSize);
-            }
-            catch (IllegalArgumentException ex) {
-                return buildRangeNotSatisfiableResponse(headers, fileSize);
-            }
-
-            long rangeLength = end - start + 1;
-            if (start < 0 || end < start || end >= fileSize || rangeLength > MAX_PDF_RANGE_BYTES) {
-                return buildRangeNotSatisfiableResponse(headers, fileSize);
-            }
-
-            byte[] rangeBytes = readFileRangeBytes(actualPath, start, rangeLength);
-            long actualRangeLength = rangeBytes.length;
-            if (actualRangeLength == 0) {
-                return buildRangeNotSatisfiableResponse(headers, fileSize);
-            }
-            long actualEnd = start + actualRangeLength - 1;
-
-            var response = ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(headers).contentType(mediaType)
-                    .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + actualEnd + "/" + fileSize).header("filename", filename).contentLength(actualRangeLength);
-            if (cacheDays > 0) {
-                response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
-            }
-            return response.body(rangeBytes);
+        if (cacheDays > 0) {
+            response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
         }
-        catch (IOException ex) {
-            log.error("Failed to serve PDF range request", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        catch (RuntimeException ex) {
-            log.warn("Range request failed, falling back to full response", ex);
-            return buildFileResponse(path, filename, replaceFilename, cacheDays);
-        }
-    }
-
-    private ResponseEntity<?> buildRangeNotSatisfiableResponse(HttpHeaders headers, long fileSize) {
-        return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE).headers(headers).header(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize).build();
-    }
-
-    private HttpHeaders createFileHeaders(String filename, Optional<String> replaceFilename) {
-        HttpHeaders headers = new HttpHeaders();
-
-        // attachment will force the user to download the file
-        String contentType = filename.toLowerCase().endsWith("htm") || filename.toLowerCase().endsWith("html") || filename.toLowerCase().endsWith("svg")
-                || filename.toLowerCase().endsWith("svgz") ? "attachment" : "inline";
-        String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
-        headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
-        headers.set("Filename", headerFilename);
-
-        return headers;
-    }
-
-    private byte[] readFileRangeBytes(Path actualPath, long start, long rangeLength) throws IOException {
-        if (rangeLength <= 0 || rangeLength > Integer.MAX_VALUE) {
-            return new byte[0];
-        }
-
-        byte[] buffer = new byte[(int) rangeLength];
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(actualPath.toFile(), "r")) {
-            randomAccessFile.seek(start);
-            int bytesRead = randomAccessFile.read(buffer);
-            if (bytesRead <= 0) {
-                return new byte[0];
-            }
-            return bytesRead == buffer.length ? buffer : Arrays.copyOf(buffer, bytesRead);
-        }
+        return response.body(payload.content());
     }
 
     /**
@@ -878,9 +793,9 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
 
-            HttpHeaders headers = createFileHeaders(filename, replaceFilename);
+            HttpHeaders headers = fileDownloadService.createFileHeaders(filename, replaceFilename);
 
-            var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
+            var response = ResponseEntity.ok().headers(headers).contentType(fileDownloadService.getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cacheDays > 0) {
                 var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
                 response = response.cacheControl(cacheControl);
@@ -903,23 +818,6 @@ public class FileResource {
 
     private Path getActualPathFromPublicPathString(@NonNull String publicPath, FilePathType filePathType) {
         return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
-    }
-
-    private MediaType getMediaTypeFromFilename(String filename) {
-        // 1) Spring’s mapping (uses common extensions → MediaType)
-        Optional<MediaType> fromSpring = MediaTypeFactory.getMediaType(filename);
-        if (fromSpring.isPresent()) {
-            return fromSpring.get();
-        }
-
-        // 2) JDK fallback (may return null depending on OS/config)
-        String mimeType = URLConnection.guessContentTypeFromName(filename);
-        if (mimeType != null && !mimeType.isBlank()) {
-            return MediaType.parseMediaType(mimeType);
-        }
-
-        // 3) Last resort
-        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     /**
@@ -974,7 +872,7 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS)) // Cache for 30 days;
-                    .contentType(getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
+                    .contentType(fileDownloadService.getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
         }
         catch (IOException e) {
             log.error("Failed to return requested file with path {}", filePath, e);

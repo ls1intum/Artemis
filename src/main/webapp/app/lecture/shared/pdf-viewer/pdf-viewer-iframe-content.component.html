@@ -53,8 +53,9 @@
                     </div>
                     @if (searchQuery()) {
                         <div class="artemis-pdf-toolbar__search-controls">
-                            @if (searchMatchesCount()) {
-                                <span class="artemis-pdf-toolbar__search-count"> {{ searchMatchesCount()!.current }}/{{ searchMatchesCount()!.total }} </span>
+                            @let matchesCount = searchMatchesCount();
+                            @if (matchesCount) {
+                                <span class="artemis-pdf-toolbar__search-count"> {{ matchesCount.current }}/{{ matchesCount.total }} </span>
                             }
                             <button
                                 class="artemis-pdf-toolbar__button"
