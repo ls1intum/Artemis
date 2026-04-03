@@ -191,7 +191,7 @@ management:
                   - env
                   - health
                   - info
-                  - jhimetrics
+                  - artemismetrics
                   - logfile
                   - loggers
                   - prometheus

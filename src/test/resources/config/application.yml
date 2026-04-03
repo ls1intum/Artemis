@@ -306,9 +306,9 @@ management:
         web:
             base-path: /management
             exposure:
-                include: ["jhimetrics"]
+                include: ["artemismetrics"]
     endpoint:
-        jhimetrics:
+        artemismetrics:
             access: read_only
     info:
         env:

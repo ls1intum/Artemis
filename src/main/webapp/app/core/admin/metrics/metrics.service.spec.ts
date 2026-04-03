@@ -45,7 +45,7 @@ describe('MetricsService', () => {
         });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('management/jhimetrics');
+        expect(req.request.url).toBe('management/artemismetrics');
         req.flush(metrics);
         expect(result).toEqual(metrics);
     });

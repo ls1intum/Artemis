@@ -120,7 +120,7 @@ management:
             show-details: never
         probes:
             enabled: false
-        jhimetrics:
+        artemismetrics:
             access: none
     metrics:
         enable:

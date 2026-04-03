@@ -9,7 +9,7 @@ export class MetricsService {
     private http = inject(HttpClient);
 
     getMetrics(): Observable<Metrics> {
-        return this.http.get<Metrics>('management/jhimetrics');
+        return this.http.get<Metrics>('management/artemismetrics');
     }
 
     threadDump(): Observable<ThreadDump> {
