@@ -222,7 +222,12 @@ export class PdfViewerComponent {
 
         // Common handlers
         if (type === 'ready') {
+            const wasReady = this.iframeReady();
             this.iframeReady.set(true);
+            // Drag & drop in instructor view can re-initialize the iframe; when this happens, the current PDF must be loaded again.
+            if (wasReady) {
+                this.reloadCurrentPdf();
+            }
             // Don't hide spinner yet - wait for PDF to load
             return;
         }
@@ -312,6 +317,27 @@ export class PdfViewerComponent {
             isDarkMode,
             viewerMode: this.mode(),
         });
+    }
+
+    private reloadCurrentPdf(): void {
+        if (this.mode() === 'fullscreen') {
+            const { isOpen, pdfUrl } = this.fullscreenService.fullscreenMetadata();
+            if (!isOpen || !pdfUrl) {
+                return;
+            }
+
+            const page = this.fullscreenService.currentPage();
+            this.loadPdf(pdfUrl, page);
+            return;
+        }
+
+        const pdfUrl = this.pdfUrl();
+        if (!pdfUrl) {
+            return;
+        }
+
+        const page = this.currentPage() || this.initialPage() || 1;
+        this.loadPdf(pdfUrl, page);
     }
 
     private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {

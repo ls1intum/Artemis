@@ -183,6 +183,32 @@ describe('PdfViewerComponent', () => {
 
             expect(openSpy).toHaveBeenCalledWith('test.pdf', 7, undefined, undefined, expect.any(Function));
         });
+
+        it('should reload the current PDF when the iframe sends ready again', () => {
+            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+            fixture.componentRef.setInput('initialPage', 3);
+            fixture.detectChanges();
+
+            const iframe = component.pdfIframe()?.nativeElement;
+            expect(iframe?.contentWindow).toBeTruthy();
+
+            const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+
+            sendIframeMessage('ready');
+            sendIframeMessage('pageChange', { page: 5 });
+            postMessageSpy.mockClear();
+
+            sendIframeMessage('ready');
+            fixture.detectChanges();
+
+            expect(postMessageSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'loadPDF',
+                    data: expect.objectContaining({ url: 'test.pdf', initialPage: 5, viewerMode: 'embedded' }),
+                }),
+                window.location.origin,
+            );
+        });
     });
 
     describe('Fullscreen Mode Specific', () => {
