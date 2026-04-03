@@ -27,12 +27,12 @@ export class TutorialEditContainerComponent {
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
-    isTutorsLoading = this.tutorialGroupTutorService.isLoading;
     tutors = this.tutorialGroupTutorService.tutors;
-    isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
     tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
-    isScheduleLoading = signal(false);
     schedule = signal<TutorialGroupSchedule | undefined>(undefined);
+    isTutorsLoading = this.tutorialGroupTutorService.isLoading;
+    isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
+    isScheduleLoading = signal(false);
     isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading() || this.isScheduleLoading());
 
     constructor() {

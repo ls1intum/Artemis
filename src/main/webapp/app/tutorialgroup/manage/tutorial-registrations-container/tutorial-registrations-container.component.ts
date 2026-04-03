@@ -36,14 +36,21 @@ export class TutorialRegistrationsContainerComponent {
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
                 this.tutorialGroupRegisteredStudentsService.fetchRegisteredStudents(courseId, tutorialGroupId);
-                this.fetchTutorialGroupIfNecessary(courseId, tutorialGroupId);
+
+                const fetchTutorialGroupIsNecessary = this.tutorialGroup() === undefined;
+                if (fetchTutorialGroupIsNecessary) {
+                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
+                }
             }
         });
 
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.fetchCourseIfNecessary(courseId);
+                const fetchCourseIsNecessary = this.course() === undefined;
+                if (fetchCourseIsNecessary) {
+                    this.tutorialGroupCourseAndGroupService.fetchCourse(courseId);
+                }
             }
         });
     }
@@ -59,17 +66,5 @@ export class TutorialRegistrationsContainerComponent {
         const course = this.course();
         if (!course) return undefined;
         return this.accountService.isAtLeastInstructorInCourse(course);
-    }
-
-    private fetchCourseIfNecessary(courseId: number) {
-        if (!this.course()) {
-            this.tutorialGroupCourseAndGroupService.fetchCourse(courseId);
-        }
-    }
-
-    private fetchTutorialGroupIfNecessary(courseId: number, tutorialGroupId: number) {
-        if (!this.tutorialGroup()) {
-            this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
-        }
     }
 }
