@@ -141,4 +141,14 @@ export class CourseOverviewPage {
     async shouldShowProblemStatement(): Promise<void> {
         await expect(this.page.locator('#problem-statement')).toBeVisible();
     }
+
+    /**
+     * Clicks the submit button in the shared exercise header and waits for the API response.
+     * @param apiPattern The URL pattern of the submission API endpoint to wait for.
+     */
+    async submitExercise(apiPattern: string) {
+        const responsePromise = this.page.waitForResponse(apiPattern);
+        await this.page.locator('#submit-exercise, #submit-exercise-popover').first().click();
+        return await responsePromise;
+    }
 }

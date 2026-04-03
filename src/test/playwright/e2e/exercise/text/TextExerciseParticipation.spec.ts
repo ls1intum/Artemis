@@ -32,7 +32,7 @@ test.describe('Text exercise participation', { tag: '@fast' }, () => {
         await textExerciseEditor.typeSubmission(exercise.id!, submission!);
         await textExerciseEditor.shouldShowNumberOfWords(74);
         await textExerciseEditor.shouldShowNumberOfCharacters(451);
-        const response = await textExerciseEditor.submit();
+        const response = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
         const textSubmission: TextSubmission = await response.json();
         expect(textSubmission.text).toBe(submission);
         expect(textSubmission.submitted).toBe(true);

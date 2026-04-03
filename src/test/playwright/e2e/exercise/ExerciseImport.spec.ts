@@ -58,7 +58,7 @@ test.describe('Import exercises', () => {
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
             await textExerciseEditor.shouldShowNumberOfWords(16);
             await textExerciseEditor.shouldShowNumberOfCharacters(83);
-            const submissionResponse = await textExerciseEditor.submit();
+            const submissionResponse = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
             const submission: TextSubmission = await submissionResponse.json();
             expect(submission.text).toBe(submissionText);
             expect(submission.submitted).toBe(true);

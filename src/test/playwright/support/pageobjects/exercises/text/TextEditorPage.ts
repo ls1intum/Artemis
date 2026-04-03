@@ -31,12 +31,6 @@ export class TextEditorPage {
         return await responsePromise;
     }
 
-    async submit() {
-        const responsePromise = this.page.waitForResponse(`api/text/exercises/*/text-submissions`);
-        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit button').first().click();
-        return await responsePromise;
-    }
-
     async shouldShowNumberOfWords(numberOfWords: number): Promise<void> {
         const wordCountElement = this.page.locator('#word-count');
         await expect(wordCountElement).toContainText(numberOfWords.toString());
