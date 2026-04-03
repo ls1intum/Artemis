@@ -19,7 +19,7 @@ export class TutorialGroupTutorsService {
         this.courseManagementService.getAllUsersInCourseGroup(courseId, CourseGroup.TUTORS).subscribe({
             next: (response: HttpResponse<User[]>) => {
                 const users = response.body ?? [];
-                const tutors = users.map((u) => this.convertUserToTutorialGroupTutorDTO(u)).filter(Boolean) as TutorialGroupTutor[];
+                const tutors = users.map((u) => this.convertUserToTutorialGroupTutor(u)).filter(Boolean) as TutorialGroupTutor[];
 
                 this.tutors.set(tutors);
                 this.isLoading.set(false);
@@ -31,7 +31,7 @@ export class TutorialGroupTutorsService {
         });
     }
 
-    private convertUserToTutorialGroupTutorDTO(user: User): TutorialGroupTutor | undefined {
+    private convertUserToTutorialGroupTutor(user: User): TutorialGroupTutor | undefined {
         if (!user.id || !user.login) return;
         let nameAndLogin = user.login;
         if (user.firstName && user.lastName) {
