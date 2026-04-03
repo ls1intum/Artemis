@@ -12,13 +12,13 @@
     }
     <div class="apollon-row" id="apollon-assessment-row">
         <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions() && resizeOptions().horizontalResize) {
+        @if (resizeOptions()?.horizontalResize) {
             <div class="draggable-right">
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
     </div>
-    @if (resizeOptions() && resizeOptions().verticalResize) {
+    @if (resizeOptions()?.verticalResize) {
         <div class="draggable-bottom">
             <fa-icon [icon]="faGripLines" />
         </div>

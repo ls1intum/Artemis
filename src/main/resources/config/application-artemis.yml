@@ -97,6 +97,10 @@ artemis:
   atlas:
     chat-model: gpt-4o
     temperature: 0.2
+    atlasml:
+      enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
+      base-url: <your-atlasml-url> # Required address to you own AtlasML instance
+      auth-token: <your-secret> # The secret used to authenticate Artemis against AtlasML
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
