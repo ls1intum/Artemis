@@ -96,7 +96,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
 
@@ -123,7 +123,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();

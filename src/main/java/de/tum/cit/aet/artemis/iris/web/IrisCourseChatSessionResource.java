@@ -78,7 +78,7 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -97,7 +97,7 @@ public class IrisCourseChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
@@ -120,7 +120,7 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();

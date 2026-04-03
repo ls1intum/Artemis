@@ -67,7 +67,7 @@ public class IrisResource {
      */
     @GetMapping("courses/{courseId}/status")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<IrisStatusDTO> getCourseStatus(@PathVariable long courseId) {
         var user = userRepository.getUser();
         var health = pyrisHealthIndicator.health(true);

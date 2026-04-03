@@ -1173,7 +1173,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/own-student-exam")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getOrCreateStudentExamElseThrow(courseId, examId);
@@ -1190,7 +1190,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/real-exams-sidebar-data")
     @EnforceAtLeastStudentInCourse
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
         log.debug("REST request to get sidebar data for exams in course {}", courseId);
         User user = userRepository.getUser();

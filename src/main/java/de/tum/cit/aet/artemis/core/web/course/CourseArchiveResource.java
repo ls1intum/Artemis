@@ -164,7 +164,7 @@ public class CourseArchiveResource {
      */
     @GetMapping("courses/for-archive")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.ARTEMIS_EXTENSION)
+    @AllowedTools({ ToolTokenType.SCORPIO, ToolTokenType.ARTEMIS_EXTENSION })
     public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
         long start = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
