@@ -4,5 +4,6 @@ export class TheiaRedirectProps {
     public gitUser?: string;
     public gitMail?: string;
     public artemisToken: string;
+    public artemisExtensionToken: string;
     public artemisUrl: string;
 }

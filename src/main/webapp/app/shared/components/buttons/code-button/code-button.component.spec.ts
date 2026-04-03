@@ -505,7 +505,9 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalledOnce();
+        expect(getToolTokenSpy).toHaveBeenCalledTimes(2);
+        expect(getToolTokenSpy).toHaveBeenCalledWith('SCORPIO');
+        expect(getToolTokenSpy).toHaveBeenCalledWith('ARTEMIS_EXTENSION');
         expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
         expect(documentAppendChildSpy).toHaveBeenCalledOnce();
         expect(formSubmitSpy).toHaveBeenCalledOnce();
@@ -554,7 +556,9 @@ describe('CodeButtonComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         await component.startOnlineIDE();
-        expect(getToolTokenSpy).toHaveBeenCalledOnce();
+        expect(getToolTokenSpy).toHaveBeenCalledTimes(2);
+        expect(getToolTokenSpy).toHaveBeenCalledWith('SCORPIO');
+        expect(getToolTokenSpy).toHaveBeenCalledWith('ARTEMIS_EXTENSION');
         expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
         expect(documentAppendChildSpy).toHaveBeenCalledOnce();
         expect(formSubmitSpy).toHaveBeenCalledOnce();

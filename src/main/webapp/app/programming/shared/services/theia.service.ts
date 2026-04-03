@@ -36,6 +36,7 @@ export class TheiaService {
         }
 
         const artemisToken: string = (await firstValueFrom(this.accountService.getToolToken('SCORPIO'))) ?? '';
+        const artemisExtensionToken: string = (await firstValueFrom(this.accountService.getToolToken('ARTEMIS_EXTENSION'))) ?? '';
 
         let artemisUrl: string = '';
         if (window.location.protocol) {
@@ -51,6 +52,7 @@ export class TheiaService {
             gitUser: userName,
             gitMail: userEmail,
             artemisToken,
+            artemisExtensionToken,
             artemisUrl,
         };
 
