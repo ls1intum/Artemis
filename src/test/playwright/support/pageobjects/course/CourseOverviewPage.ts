@@ -16,7 +16,7 @@ export class CourseOverviewPage {
      * @param term The search term to use.
      */
     async search(term: string) {
-        const searchInput = this.page.locator('input[formcontrolname="searchFilter"]');
+        const searchInput = this.page.locator('jhi-sidebar input[formcontrolname="searchFilter"]');
         await searchInput.pressSequentially(term, { delay: 20 });
     }
 
