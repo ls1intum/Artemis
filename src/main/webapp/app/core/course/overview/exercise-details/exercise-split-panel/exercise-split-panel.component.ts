@@ -182,8 +182,7 @@ export class ExerciseSplitPanelComponent {
 
             const type = exercise.type;
             if (type === ExerciseType.QUIZ) {
-                const canPractice = !!(exercise as QuizExercise).quizEnded;
-                const targetSegment = mode === 'practice' && canPractice ? 'practice' : 'live';
+                const targetSegment = mode === 'practice' ? 'practice' : 'live';
                 const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
                 if (currentSegment !== targetSegment) {
                     this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });

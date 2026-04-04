@@ -342,16 +342,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
     /**
-     * True, if the due date is after the current date, or there is no due date, or the exercise is always active
+     * True, if the due date is after the current date, or there is no due date, or the participation is a practice run
      */
     get isActive(): boolean {
-        const isActive =
+        return (
             !this.examMode &&
             (!this.result || this.isAutomaticResult) &&
-            (!!this.participation?.testRun ||
-                this.isAlwaysActive ||
-                (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
-        return !!isActive;
+            (!!this.participation?.testRun || (this.textExercise && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))))
+        );
     }
 
     get submitButtonTooltip(): string {
