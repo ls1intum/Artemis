@@ -33,6 +33,7 @@ export interface GradingScaleUpdateDTO {
  * DTO for a grade step within a grading scale.
  */
 export interface GradeStepDTO {
+    id?: number;
     lowerBoundPercentage: number;
     lowerBoundInclusive: boolean;
     upperBoundPercentage: number;
