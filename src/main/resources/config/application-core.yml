@@ -48,7 +48,7 @@ spring:
         exclude:
           # Important: Make sure to keep the exclusions in sync with the `application-buildagent.yml` file, except for the build agent specific exclusions
           - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
-          - org.springframework.boot.jdbc.autoconfigure.metrics.DataSourcePoolMetricsAutoConfiguration
+          # DataSourcePoolMetricsAutoConfiguration is NOT excluded — HikariCP metrics are shown on the admin metrics page
           - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration

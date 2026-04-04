@@ -279,9 +279,8 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Binds Hazelcast IMap metrics to Micrometer after the application is fully started.
-     * This must run after Hibernate has created all entity cache regions, which happens
-     * during EntityManagerFactory initialization (after the CacheManager bean is created).
+     * Binds JCache and Hazelcast cache metrics to Micrometer after the application is fully started.
+     * This must run after Hibernate has created all entity cache regions via JCacheRegionFactory.
      * Without this, the admin metrics page shows empty cache statistics.
      */
     @EventListener(ApplicationReadyEvent.class)
@@ -289,30 +288,48 @@ public class HazelcastConfiguration {
         if (meterRegistry == null) {
             return;
         }
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (hazelcastInstance == null) {
-            return;
-        }
-        // Iterate all distributed objects (IMaps) that Hazelcast has created at runtime,
-        // including entity caches created by Hibernate's JCache bridge
+
         int bound = 0;
-        for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
-            if (distributedObject instanceof IMap<?, ?> map) {
-                String mapName = map.getName();
-                // Skip internal Hazelcast maps and transient maps
-                if (mapName.startsWith("__") || "default".equals(mapName) || "nodeMetrics".equals(mapName)) {
-                    continue;
-                }
-                try {
-                    new HazelcastCacheMetrics(map, List.of()).bindTo(meterRegistry);
-                    bound++;
-                }
-                catch (Exception e) {
-                    log.debug("Could not bind cache metrics for '{}': {}", mapName, e.getMessage());
+
+        // 1. Bind JCache (javax.cache) caches — these are created by Hibernate's JCacheRegionFactory
+        // via the HazelcastMemberCachingProvider. They don't appear as Hazelcast IMaps.
+        try {
+            var cachingProvider = javax.cache.Caching.getCachingProvider(com.hazelcast.cache.HazelcastMemberCachingProvider.class.getName());
+            for (var cacheManager : List.of(cachingProvider.getCacheManager())) {
+                for (String cacheName : cacheManager.getCacheNames()) {
+                    var cache = cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        new io.micrometer.core.instrument.binder.cache.JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
+                        bound++;
+                    }
                 }
             }
         }
-        log.info("Bound {} Hazelcast cache metrics to Micrometer", bound);
+        catch (Exception e) {
+            log.debug("Could not bind JCache metrics: {}", e.getMessage());
+        }
+
+        // 2. Bind Hazelcast IMap caches (Spring CacheManager maps like "files", "rate-limit-buckets", etc.)
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance != null) {
+            for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
+                if (distributedObject instanceof IMap<?, ?> map) {
+                    String mapName = map.getName();
+                    if (mapName.startsWith("__") || "default".equals(mapName) || "nodeMetrics".equals(mapName)) {
+                        continue;
+                    }
+                    try {
+                        new HazelcastCacheMetrics(map, List.of()).bindTo(meterRegistry);
+                        bound++;
+                    }
+                    catch (Exception e) {
+                        log.debug("Could not bind Hazelcast cache metrics for '{}': {}", mapName, e.getMessage());
+                    }
+                }
+            }
+        }
+
+        log.info("Bound {} cache metrics to Micrometer", bound);
     }
 
     /**
