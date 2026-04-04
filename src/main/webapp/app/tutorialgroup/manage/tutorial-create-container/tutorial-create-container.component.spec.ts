@@ -107,8 +107,8 @@ describe('TutorialCreateContainerComponent', () => {
         expect(component.tutors()).toEqual(tutorialGroupTutorsService.tutors());
     });
 
-    it('should create the tutorial group and navigate back on success', async () => {
-        const create$ = new Subject<void>();
+    it('should create the tutorial group and navigate to the created tutorial group on success', async () => {
+        const create$ = new Subject<number>();
         const createEvent = createCreateEvent();
         const router = TestBed.inject(Router);
 
@@ -122,12 +122,12 @@ describe('TutorialCreateContainerComponent', () => {
         expect(tutorialGroupApiService.createTutorialGroup).toHaveBeenCalledWith(2, createEvent.createTutorialGroupDTO);
         expect(component.isTutorialGroupLoading()).toBe(true);
 
-        create$.next();
+        create$.next(42);
         create$.complete();
         await fixture.whenStable();
 
         expect(component.isTutorialGroupLoading()).toBe(false);
-        expect(router.navigate).toHaveBeenCalledWith(['..'], { relativeTo: activatedRoute });
+        expect(router.navigate).toHaveBeenCalledWith(['..', 42], { relativeTo: activatedRoute });
         expect(alertService.addErrorAlert).not.toHaveBeenCalled();
     });
 
