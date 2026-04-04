@@ -18,9 +18,11 @@ import {
     TutorialCreateOrEditComponent,
     UpdateTutorialGroupEvent,
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 
 describe('TutorialCreateOrEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -32,7 +34,7 @@ describe('TutorialCreateOrEditComponent', () => {
     let alertService: { addErrorAlert: ReturnType<typeof vi.fn> };
 
     const mockTranslateService = new MockTranslateService();
-    const tutors: TutorialGroupTutorDTO[] = [
+    const tutors: TutorialGroupTutor[] = [
         { id: 11, nameAndLogin: 'Ada Lovelace (ada)' },
         { id: 12, nameAndLogin: 'Grace Hopper (grace)' },
     ];
@@ -66,8 +68,8 @@ describe('TutorialCreateOrEditComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroupDetailDTO(overrides: Partial<RawTutorialGroupDetailGroupDTO> = {}): TutorialGroupDetailDTO {
-        return new TutorialGroupDetailDTO({
+    function createTutorialGroupDetailData(overrides: Partial<RawTutorialGroupDetailData> = {}): TutorialGroupDetailData {
+        return new TutorialGroupDetailData({
             id: 17,
             title: 'TG 1',
             language: 'English',
@@ -75,16 +77,18 @@ describe('TutorialCreateOrEditComponent', () => {
             sessions: [],
             tutorName: 'Grace Hopper',
             tutorLogin: 'grace',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 15,
             campus: 'Garching',
+            additionalInformation: 'Bring laptop',
             groupChannelId: undefined,
             tutorChatId: undefined,
             ...overrides,
         });
     }
 
-    function createTutorialGroupScheduleDTO(overrides: Partial<TutorialGroupScheduleDTO> = {}): TutorialGroupScheduleDTO {
+    function createTutorialGroupSchedule(overrides: Partial<TutorialGroupSchedule> = {}): TutorialGroupSchedule {
         return {
             firstSessionStart: '2026-04-20T10:15:00',
             firstSessionEnd: '2026-04-20T11:45:00',
@@ -147,8 +151,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
 
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.componentRef.setInput('schedule', schedule);
@@ -157,12 +161,12 @@ describe('TutorialCreateOrEditComponent', () => {
 
         expect(component.isEditMode()).toBe(true);
         expect(component.title()).toBe('TG 1');
-        expect(component.selectedTutorId()).toBe(1);
+        expect(component.selectedTutorId()).toBe(12);
         expect(component.selectedLanguage()).toBe('English');
         expect(component.selectedMode()).toBe('Offline');
         expect(component.campus()).toBe('Garching');
         expect(component.capacity()).toBe(15);
-        expect(component.additionalInformation()).toBe('');
+        expect(component.additionalInformation()).toBe('Bring laptop');
         expect(component.configureSessionPlan()).toBe(true);
         expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart).toDate());
         expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd).toDate());
@@ -238,6 +242,21 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.campusValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
+    it('should expose the correct additional information validation state', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+
+        component.additionalInformation.set('a'.repeat(256));
+        expect(component.additionalInformationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.additionalInformationLength',
+        });
+
+        component.additionalInformation.set('Bring worksheet');
+        expect(component.additionalInformationValidationResult()).toEqual({ status: ValidationStatus.VALID });
+    });
+
     it('should expose the correct first session start validation state', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
@@ -298,7 +317,13 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
         });
 
-        component.tutorialPeriodEnd.set(new Date(2026, 6, 20));
+        component.tutorialPeriodEnd.set(new Date(2028, 3, 21));
+        expect(component.tutorialPeriodEndValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
+        });
+
+        component.tutorialPeriodEnd.set(new Date(2028, 3, 20));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -310,8 +335,19 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
         });
 
-        component.location.set('Room 101');
+        component.location.set('   ');
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+        });
 
+        component.location.set('a'.repeat(256));
+        expect(component.locationValidationResult()).toEqual({
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationLength',
+        });
+
+        component.location.set('Room 101');
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -333,8 +369,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should disable the save button in edit mode until something changes', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
 
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.componentRef.setInput('schedule', schedule);
@@ -371,7 +407,7 @@ describe('TutorialCreateOrEditComponent', () => {
                 campus: 'Garching',
                 capacity: 20,
                 additionalInformation: 'Bring worksheet',
-                tutorialGroupScheduleDTO: {
+                tutorialGroupSchedule: {
                     firstSessionStart: '2026-04-20T10:15:00',
                     firstSessionEnd: '2026-04-20T11:45:00',
                     repetitionFrequency: 2,
@@ -385,7 +421,7 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should emit onUpdate directly when saving an edited tutorial group without schedule overwrite confirmation', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
         const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
         component.onUpdate.subscribe(onUpdateSpy);
 
@@ -404,13 +440,13 @@ describe('TutorialCreateOrEditComponent', () => {
             tutorialGroupId: 17,
             updateTutorialGroupDTO: {
                 title: 'TG Updated',
-                tutorId: 1,
+                tutorId: 12,
                 language: 'English',
                 isOnline: false,
                 campus: 'Garching',
                 capacity: 15,
-                additionalInformation: undefined,
-                tutorialGroupScheduleDTO: undefined,
+                additionalInformation: 'Bring laptop',
+                tutorialGroupSchedule: undefined,
             },
         });
     });
@@ -418,8 +454,8 @@ describe('TutorialCreateOrEditComponent', () => {
     it('should confirm schedule-overwriting update and emit on accept', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
-        const tutorialGroup = createTutorialGroupDetailDTO();
-        const schedule = createTutorialGroupScheduleDTO();
+        const tutorialGroup = createTutorialGroupDetailData();
+        const schedule = createTutorialGroupSchedule();
         const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
         component.onUpdate.subscribe(onUpdateSpy);
 
@@ -446,13 +482,13 @@ describe('TutorialCreateOrEditComponent', () => {
             tutorialGroupId: 17,
             updateTutorialGroupDTO: {
                 title: 'TG 1',
-                tutorId: 1,
+                tutorId: 12,
                 language: 'English',
                 isOnline: false,
                 campus: 'Garching',
                 capacity: 15,
-                additionalInformation: undefined,
-                tutorialGroupScheduleDTO: {
+                additionalInformation: 'Bring laptop',
+                tutorialGroupSchedule: {
                     firstSessionStart: '2026-04-20T10:15:00',
                     firstSessionEnd: '2026-04-20T11:45:00',
                     repetitionFrequency: 2,
