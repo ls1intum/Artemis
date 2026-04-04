@@ -44,11 +44,11 @@ public class CustomMetricsExtension {
         this.simpUserRegistry = simpUserRegistry;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ExtendedMetricsResponse(@JsonUnwrapped MetricsResponse metrics, CustomMetrics customMetrics) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CustomMetrics(int activeUsers) {
     }
 

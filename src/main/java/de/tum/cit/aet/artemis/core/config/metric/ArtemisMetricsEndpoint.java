@@ -51,58 +51,58 @@ public class ArtemisMetricsEndpoint {
     // Jackson treats the full string as a flat JSON key, matching the client's TypeScript interface.
     // Maps are only used where keys are dynamic at runtime (memory pool names, cache names, URIs, status codes).
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record MetricsResponse(Map<String, MemoryMetrics> jvm, ProcessMetrics processMetrics, GarbageCollectorMetrics garbageCollector,
             @JsonProperty("http.server.requests") HttpRequestMetrics httpServerRequests, Map<String, CacheStats> cache, DatabaseMetrics databases,
             Map<String, Map<String, RequestStats>> services) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record MemoryMetrics(long committed, long max, long used) implements java.io.Serializable {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ProcessMetrics(@JsonProperty("system.cpu.usage") double systemCpuUsage, @JsonProperty("system.cpu.count") double systemCpuCount,
             @JsonProperty("system.load.average.1m") double systemLoadAverage, @JsonProperty("process.cpu.usage") double processCpuUsage,
             @JsonProperty("process.files.max") double processFilesMax, @JsonProperty("process.files.open") double processFilesOpen,
             @JsonProperty("process.start.time") double processStartTime, @JsonProperty("process.uptime") double processUptime) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record TimerSummary(long count, double mean, double max, double totalTime, @JsonProperty("0.0") double p0, @JsonProperty("0.5") double p50,
             @JsonProperty("0.75") double p75, @JsonProperty("0.95") double p95, @JsonProperty("0.99") double p99, @JsonProperty("1.0") double p100) {
 
         static final TimerSummary EMPTY = new TimerSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record GarbageCollectorMetrics(@JsonProperty("jvm.gc.live.data.size") double liveDataSize, @JsonProperty("jvm.gc.max.data.size") double maxDataSize,
             @JsonProperty("jvm.gc.memory.promoted") double memoryPromoted, @JsonProperty("jvm.gc.memory.allocated") double memoryAllocated, double classesLoaded,
             double classesUnloaded, @JsonProperty("jvm.gc.pause") TimerSummary gcPause) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RequestCount(long count) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RequestStats(long count, double mean, double max) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record HttpRequestMetrics(RequestCount all, Map<String, RequestStats> percode) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CacheStats(@JsonProperty("cache.gets.hit") double hits, @JsonProperty("cache.gets.miss") double misses, @JsonProperty("cache.puts") double puts,
             @JsonProperty("cache.evictions") double evictions, @JsonProperty("cache.removals") double removals, @JsonProperty("cache.size") double size) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record GaugeValue(double value) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DatabaseMetrics(GaugeValue min, GaugeValue max, GaugeValue idle, GaugeValue active, GaugeValue pending, GaugeValue connections, TimerSummary acquire,
             TimerSummary creation, TimerSummary usage) {
     }

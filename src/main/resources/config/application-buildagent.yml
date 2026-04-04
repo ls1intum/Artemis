@@ -94,16 +94,15 @@ spring:
     autoconfigure:
         exclude:
             # Hibernate and DataSource are not needed in the build agent
-            - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-            - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-            # Those 6 exclusions are repeated here from application-core.yml, because overriding the `exclude` array is not possible
+            - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+            # Those 5 exclusions are repeated here from application-core.yml, because overriding the `exclude` array is not possible
             # Important: Make sure to keep the exclusions in sync with the `application-core.yml` file, except for the build agent specific exclusions
-            - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
-            - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
-            - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
-            - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
-            - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
-            - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
+            - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.metrics.DataSourcePoolMetricsAutoConfiguration
+            - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
+            - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
+            - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
     cloud:
         loadbalancer:
             cache:
