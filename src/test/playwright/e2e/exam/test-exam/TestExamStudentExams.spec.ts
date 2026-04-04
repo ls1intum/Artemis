@@ -70,7 +70,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Progress', 'Started');
             await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Progress', 'Not started');
 
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Working time', '2min');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
         });
 
         test('Search for a student in exams', async ({ page, studentExamManagement }) => {

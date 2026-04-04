@@ -40,13 +40,14 @@ import { InputText } from 'primeng/inputtext';
 import { Path, onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { tap } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -54,6 +55,7 @@ type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted';
 
 interface ExamUserWithExamData extends ExamUser {
     workingTime?: number;
+    studentExam?: StudentExam;
     progress: ExamProgress;
     submissionDate?: dayjs.Dayjs;
     numberOfExamSessions: number;
@@ -85,10 +87,11 @@ interface ExamUserWithExamData extends ExamUser {
         InputText,
         RouterLink,
         NgTemplateOutlet,
-        ArtemisDurationFromSecondsPipe,
         ArtemisDatePipe,
         NgbProgressbar,
         StudentExamStatusComponent,
+        StudentExamWorkingTimeComponent,
+        TestExamWorkingTimeComponent,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -144,6 +147,7 @@ export class ExamStudentsComponent implements OnDestroy {
             return Object.assign({}, examUser, {
                 didExamUserAttendExam: hasExamEnded ? !!studentExam?.started : examUser.didExamUserAttendExam,
                 workingTime: studentExam?.workingTime,
+                studentExam,
                 progress,
                 submissionDate: studentExam?.submissionDate,
                 numberOfExamSessions: studentExam?.examSessions?.length ?? 0,

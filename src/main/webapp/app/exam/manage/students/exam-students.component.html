@@ -41,7 +41,7 @@
                     <div class="position-absolute w-100 h-100 top-0">
                         <ngb-progressbar
                             [value]="exPrepStatus.finished!"
-                            [max]="!!exPrepStatus.overall && !!exPrepStatus.failed ? exPrepStatus.overall - exPrepStatus.failed : 0"
+                            [max]="!!exPrepStatus.overall && !!exPrepStatus.failed ? exPrepStatus!.overall - exPrepStatus!.failed : 0"
                             [animated]="true"
                             [height]="'2em'"
                             type="success"
@@ -140,7 +140,11 @@
                 }
                 <th style="min-width: 4rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Working time </span>
+                        @if (isTestExam()) {
+                            <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>
+                        } @else {
+                            <span jhiTranslate="artemisApp.studentExams.workingTime"></span>
+                        }
                     </div>
                 </th>
                 <th style="min-width: 8rem">
@@ -256,8 +260,12 @@
                     </td>
                 }
                 <td>
-                    @if (examUser.workingTime !== undefined) {
-                        <span>{{ examUser.workingTime | artemisDurationFromSeconds }}</span>
+                    @if (examUser.studentExam) {
+                        @if (isTestExam()) {
+                            <jhi-test-exam-working-time [studentExam]="examUser.studentExam" />
+                        } @else {
+                            <jhi-student-exam-working-time [studentExam]="examUser.studentExam" />
+                        }
                     } @else {
                         <span>-</span>
                     }
