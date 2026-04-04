@@ -81,6 +81,8 @@
         [value]="allRegisteredUsers()"
         [rows]="10"
         paginator
+        [customSort]="true"
+        (sortFunction)="onCustomSort($event)"
         [globalFilterFields]="filterFields"
         rowHover
         [scrollable]="true"
@@ -108,53 +110,60 @@
         <ng-template #header>
             <tr>
                 <th style="min-width: 3rem"></th>
-                <th pSortableColumn="name-and-login" style="min-width: 8rem">
+                <th pSortableColumn="studentDetails" style="min-width: 6rem">
                     <div class="d-flex align-items-center gap-2">
                         <div class="d-flex gap-1">
                             <span> Student details </span>
                         </div>
-                        <p-sortIcon field="name-and-login" />
+                        <p-sortIcon field="studentDetails" />
                     </div>
                 </th>
-                <th style="min-width: 6rem">
+                <th pSortableColumn="matriculationNumber" style="min-width: 6rem">
                     <div class="d-flex align-items-center gap-2">
                         <span> Matriculation number </span>
+                        <p-sortIcon field="matriculationNumber" />
                     </div>
                 </th>
-                <th style="min-width: 2rem">
+                <th pSortableColumn="room" style="min-width: 2rem">
                     <div class="d-flex align-items-center gap-2">
                         <span> Room </span>
+                        <p-sortIcon field="room" />
                     </div>
                 </th>
-                <th style="min-width: 3rem">
+                <th pSortableColumn="seat" style="min-width: 3rem">
                     <div class="d-flex align-items-center gap-2">
                         <span> Seat </span>
+                        <p-sortIcon field="seat" />
                     </div>
                 </th>
                 @if (hasExamEnded()) {
-                    <th style="min-width: 2rem">
+                    <th pSortableColumn="attendanceStatus" style="min-width: 2rem">
                         <div class="d-flex align-items-center gap-2">
                             <span> Status </span>
+                            <p-sortIcon field="attendanceStatus" />
                         </div>
                     </th>
                 }
-                <th style="min-width: 4rem">
+                <th pSortableColumn="workingTime" style="min-width: 4rem">
                     <div class="d-flex align-items-center gap-2">
                         @if (isTestExam()) {
                             <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>
                         } @else {
                             <span jhiTranslate="artemisApp.studentExams.workingTime"></span>
                         }
+                        <p-sortIcon field="workingTime" />
                     </div>
                 </th>
-                <th style="min-width: 8rem">
+                <th pSortableColumn="progress" style="min-width: 8rem">
                     <div class="d-flex align-items-center gap-2">
                         <span> Progress </span>
+                        <p-sortIcon field="progress" />
                     </div>
                 </th>
-                <th style="min-width: 4rem">
+                <th pSortableColumn="sessions" style="min-width: 4rem">
                     <div class="d-flex align-items-center gap-2">
                         <span> Sessions </span>
+                        <p-sortIcon field="sessions" />
                     </div>
                 </th>
                 <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>

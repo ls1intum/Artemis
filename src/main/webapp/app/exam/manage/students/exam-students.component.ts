@@ -48,6 +48,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
+import { SortEvent } from 'primeng/api';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -177,6 +178,13 @@ export class ExamStudentsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     readonly filterFields: Path<ExamUser, 1>[] = ['user.login', 'user.name', 'user.email', 'user.visibleRegistrationNumber'] as const;
+
+    private readonly progressRank: Record<ExamProgress, number> = {
+        examMissing: 0,
+        notStarted: 1,
+        started: 2,
+        submitted: 3,
+    } as const;
 
     // Icons
     protected readonly faUserTimes = faUserTimes;
@@ -565,6 +573,159 @@ export class ExamStudentsComponent implements OnDestroy {
         } else {
             this.exercisePreparationEta.set(undefined);
         }
+    }
+
+    onCustomSort(event: SortEvent) {
+        const data = event.data as ExamUserWithExamData[] | undefined;
+        const field = event.field;
+        const order = event.order;
+        if (!data || !field || !order) {
+            return;
+        }
+
+        data.sort((a, b) => this.compareByField(a, b, field, order));
+    }
+
+    private compareByField(a: ExamUserWithExamData, b: ExamUserWithExamData, field: string, order: number) {
+        switch (field) {
+            case 'studentDetails':
+                return this.compareStudentDetails(a, b, order);
+            case 'matriculationNumber':
+                return this.compareNullableStrings(a.user?.visibleRegistrationNumber, b.user?.visibleRegistrationNumber, order);
+            case 'room':
+                return this.compareNullableStrings(this.getDisplayedRoom(a), this.getDisplayedRoom(b), order);
+            case 'seat':
+                return this.compareNatural(this.getDisplayedSeat(a), this.getDisplayedSeat(b), order);
+            case 'attendanceStatus':
+                return this.compareAttendanceStatus(a, b, order);
+            case 'workingTime':
+                return this.compareNullableNumbers(this.getWorkingTimeSortValue(a), this.getWorkingTimeSortValue(b), order);
+            case 'progress':
+                return this.compareProgress(a, b, order);
+            case 'sessions':
+                return this.compareNullableNumbers(a.numberOfExamSessions, b.numberOfExamSessions, order);
+            default:
+                return 0;
+        }
+    }
+
+    private compareStudentDetails(a: ExamUserWithExamData, b: ExamUserWithExamData, order: number) {
+        const byName = this.compareNullableStrings(a.user?.name, b.user?.name, order);
+        if (byName !== 0) {
+            return byName;
+        }
+
+        const byLogin = this.compareNullableStrings(a.user?.login, b.user?.login, order);
+        if (byLogin !== 0) {
+            return byLogin;
+        }
+
+        return this.compareNullableStrings(a.user?.email, b.user?.email, order);
+    }
+
+    private compareAttendanceStatus(a: ExamUserWithExamData, b: ExamUserWithExamData, order: number) {
+        const rankA = this.getAttendanceRank(a);
+        const rankB = this.getAttendanceRank(b);
+        const byRank = (rankA - rankB) * order;
+        if (byRank !== 0) {
+            return byRank;
+        }
+
+        return this.compareStudentDetails(a, b, order);
+    }
+
+    private compareProgress(a: ExamUserWithExamData, b: ExamUserWithExamData, order: number) {
+        const byProgress = (this.progressRank[a.progress] - this.progressRank[b.progress]) * order;
+        if (byProgress !== 0) {
+            return byProgress;
+        }
+
+        if (a.progress === 'submitted' && b.progress === 'submitted') {
+            const bySubmissionDate = this.compareNullableNumbers(a.submissionDate?.valueOf(), b.submissionDate?.valueOf(), order);
+            if (bySubmissionDate !== 0) {
+                return bySubmissionDate;
+            }
+        }
+
+        return this.compareStudentDetails(a, b, order);
+    }
+
+    private compareNullableStrings(a: string | undefined, b: string | undefined, order: number) {
+        if (a === b) {
+            return 0;
+        }
+        if (a == undefined || a === '') {
+            return -1 * order;
+        }
+        if (b == undefined || b === '') {
+            return order;
+        }
+        return a.localeCompare(b, undefined, { sensitivity: 'base' }) * order;
+    }
+
+    private compareNullableNumbers(a: number | undefined, b: number | undefined, order: number) {
+        if (a === b) {
+            return 0;
+        }
+        if (a == undefined) {
+            return -1 * order;
+        }
+        if (b == undefined) {
+            return order;
+        }
+        return (a - b) * order;
+    }
+
+    private compareNatural(a: string | undefined, b: string | undefined, order: number) {
+        if (a === b) {
+            return 0;
+        }
+        if (a == undefined || a === '') {
+            return -1 * order;
+        }
+        if (b == undefined || b === '') {
+            return order;
+        }
+        return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }) * order;
+    }
+
+    private getDisplayedRoom(examUser: ExamUserWithExamData) {
+        return examUser.actualRoom ?? examUser.plannedRoom;
+    }
+
+    private getDisplayedSeat(examUser: ExamUserWithExamData) {
+        return examUser.actualSeat ?? examUser.plannedSeat;
+    }
+
+    private getAttendanceRank(examUser: ExamUserWithExamData) {
+        if (this.attendanceCheckFailed(examUser)) {
+            return 0;
+        }
+        if (this.attendanceCheckPassed(examUser)) {
+            return 1;
+        }
+        if (examUser.didExamUserAttendExam) {
+            return 2;
+        }
+        return 3;
+    }
+
+    private getWorkingTimeSortValue(examUser: ExamUserWithExamData) {
+        const studentExam = examUser.studentExam;
+        if (!studentExam) {
+            return undefined;
+        }
+
+        if (!this.isTestExam()) {
+            return studentExam.workingTime;
+        }
+
+        if (!studentExam.started || !studentExam.submitted || !studentExam.workingTime || !studentExam.startedDate || !studentExam.submissionDate) {
+            return 0;
+        }
+
+        const usedWorkingTime = dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds');
+        return Math.min(studentExam.workingTime, usedWorkingTime);
     }
 
     /**
