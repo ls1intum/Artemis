@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -131,24 +132,28 @@ public class GradingScaleResource {
     /**
      * POST /courses/{courseId}/grading-scale : Create a grading scale for a course
      *
-     * @param courseId        the course to which the grading scale belongs
-     * @param gradingScaleDto the grading scale, which will be created
-     * @return ResponseEntity with status 201 (Created) with body the new grading scale dto if no such exists for the course
+     * @param courseId the course to which the grading scale belongs
+     * @param dto      the DTO containing the grading scale values
+     * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScaleDTO> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleRequestDTO gradingScaleDto)
-            throws URISyntaxException {
+    public ResponseEntity<GradingScaleDTO> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        validateGradingScaleForCreate(existingGradingScale);
+        validateGradingScaleForCreate(existingGradingScale, dto);
 
-        // Create a grading scale from DTO
-        GradingScale gradingScale = gradingScaleDto.toEntity();
+        // Create grading scale from DTO
+        GradingScale gradingScale = dto.toEntity();
         gradingScale.setCourse(course);
+
+        // Apply DTO values to course before validation so that presentation config is validated correctly
+        applyCourseValuesFromDTO(dto, course);
+        validatePresentationsConfiguration(gradingScale);
+        saveCourseIfChanged(dto, course);
 
         boolean courseValuesProvided = gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null;
 
@@ -164,37 +169,44 @@ public class GradingScaleResource {
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
+    private void validateGradingScaleForCreate(Optional<GradingScale> existingGradingScale, GradingScaleUpdateDTO dto) {
+        if (existingGradingScale.isPresent()) {
+            throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
+        }
+        else if (dto.gradeSteps() == null || dto.gradeSteps().isEmpty()) {
+            throw new BadRequestAlertException("A grading scale must contain grade steps", ENTITY_NAME, "emptyGradeSteps");
+        }
     }
 
     /**
      * POST /courses/{courseId}/exams/{examId}/grading-scale : Create grading scale for exam
      *
-     * @param courseId        the course to which the exam belongs
-     * @param examId          the exam to which the grading scale belongs
-     * @param gradingScaleDto the grading scale, which will be created
-     * @return ResponseEntity with status 201 (Created) with body the new grading scale dto if no such exists for the course
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to which the grading scale belongs
+     * @param dto      the DTO containing the grading scale values
+     * @return ResponseEntity with status 201 (Created) with body the new grading scale if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScaleDTO> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId,
-            @Valid @RequestBody GradingScaleRequestDTO gradingScaleDto) throws URISyntaxException {
+    public ResponseEntity<GradingScaleDTO> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto)
+            throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        validateGradingScaleForCreate(existingGradingScale);
+        validateGradingScaleForCreate(existingGradingScale, dto);
 
         Exam exam = api.findByIdElseThrow(examId);
-        if (gradingScaleDto.examMaxPoints() != null && !gradingScaleDto.examMaxPoints().equals(exam.getExamMaxPoints())) {
-            exam.setExamMaxPoints(gradingScaleDto.examMaxPoints());
+        if (dto.examMaxPoints() != null && !dto.examMaxPoints().equals(exam.getExamMaxPoints())) {
+            exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }
 
-        // Create a grading scale from DTO
-        GradingScale gradingScale = gradingScaleDto.toEntity();
+        // Create grading scale from DTO
+        GradingScale gradingScale = dto.toEntity();
         gradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -205,13 +217,13 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/grading-scale : Update grading scale for course
      *
-     * @param courseId        the course to which the grading scale belongs
-     * @param gradingScaleDto the grading scale, which will be updated
-     * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale dto if it is correctly formatted and 400 (Bad request) otherwise
+     * @param courseId the course to which the grading scale belongs
+     * @param dto      the DTO containing the grading scale update values
+     * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScaleDTO> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleRequestDTO gradingScaleDto) {
+    public ResponseEntity<GradingScaleDTO> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -244,11 +256,11 @@ public class GradingScaleResource {
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the grading scale belongs
      * @param dto      the DTO containing the grading scale update values
-     * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale dto if it is correctly formatted and 400 (Bad request) otherwise
+     * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/grading-scale")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradingScaleDTO> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleRequestDTO dto) {
+    public ResponseEntity<GradingScaleDTO> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScaleUpdateDTO dto) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
@@ -261,7 +273,7 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
         // Update exam max points if provided
-        if (dto.examMaxPoints() != null && !dto.examMaxPoints().equals(exam.getExamMaxPoints())) {
+        if (dto.examMaxPoints() != null && !Objects.equals(dto.examMaxPoints(), exam.getExamMaxPoints())) {
             exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }
@@ -307,6 +319,38 @@ public class GradingScaleResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScaleRepository.delete(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
+    }
+
+    /**
+     * Applies course properties from DTO to the course object (in memory, does not save).
+     * This should be called before validation so that the validation uses the intended values.
+     */
+    private void applyCourseValuesFromDTO(GradingScaleUpdateDTO dto, Course course) {
+        if (dto == null || course == null) {
+            return;
+        }
+
+        if (dto.courseMaxPoints() != null) {
+            course.setMaxPoints(dto.courseMaxPoints());
+        }
+        if (dto.coursePresentationScore() != null) {
+            course.setPresentationScore(dto.coursePresentationScore());
+        }
+    }
+
+    /**
+     * Saves the course if it was modified by DTO values.
+     * Should be called after validation succeeds.
+     */
+    private void saveCourseIfChanged(GradingScaleUpdateDTO dto, Course course) {
+        if (dto == null || course == null) {
+            return;
+        }
+
+        // If either value was provided in the DTO, we need to save
+        if (dto.courseMaxPoints() != null || dto.coursePresentationScore() != null) {
+            courseRepository.save(course);
+        }
     }
 
     private void validatePresentationsConfiguration(GradingScale gradingScale) {

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -12,6 +13,34 @@ import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dt
 
 export type EntityResponseType = HttpResponse<GradingScaleDTO>;
 export type EntityArrayResponseType = HttpResponse<GradingScaleDTO[]>;
+
+/**
+ * DTO for updating a grading scale.
+ */
+export interface GradingScaleUpdateDTO {
+    gradeType: GradeType;
+    bonusStrategy?: BonusStrategy;
+    plagiarismGrade?: string;
+    noParticipationGrade?: string;
+    presentationsNumber?: number;
+    presentationsWeight?: number;
+    gradeSteps: GradeStepDTO[];
+    courseMaxPoints?: number;
+    coursePresentationScore?: number;
+    examMaxPoints?: number;
+}
+
+/**
+ * DTO for a grade step within a grading scale.
+ */
+export interface GradeStepDTO {
+    lowerBoundPercentage: number;
+    lowerBoundInclusive: boolean;
+    upperBoundPercentage: number;
+    upperBoundInclusive: boolean;
+    gradeName: string;
+    isPassingGrade: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GradingService {
@@ -26,7 +55,7 @@ export class GradingService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = toRequestDTO(gradingScale);
+        const dto = this.toUpdateDTO(gradingScale);
         return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
@@ -37,7 +66,7 @@ export class GradingService {
      * @param gradingScale the grading scale to be updated
      */
     updateGradingScaleForCourse(courseId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = toRequestDTO(gradingScale);
+        const dto = this.toUpdateDTO(gradingScale);
         return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/grading-scale`, dto, { observe: 'response' });
     }
 
@@ -67,7 +96,7 @@ export class GradingService {
      * @param gradingScale the grading scale to be created
      */
     createGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = toRequestDTO(gradingScale);
+        const dto = this.toUpdateDTO(gradingScale);
         return this.http.post<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
@@ -79,7 +108,7 @@ export class GradingService {
      * @param gradingScale the grading scale to be updated
      */
     updateGradingScaleForExam(courseId: number, examId: number, gradingScale: GradingScale): Observable<EntityResponseType> {
-        const dto = toRequestDTO(gradingScale);
+        const dto = this.toUpdateDTO(gradingScale);
         return this.http.put<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, dto, { observe: 'response' });
     }
 
@@ -351,5 +380,30 @@ export class GradingService {
             return undefined;
         }
         return numericValue;
+    }
+
+    /**
+     * Converts a GradingScale to an update DTO for sending to the server.
+     */
+    private toUpdateDTO(gradingScale: GradingScale): GradingScaleUpdateDTO {
+        return {
+            gradeType: gradingScale.gradeType,
+            bonusStrategy: gradingScale.bonusStrategy,
+            plagiarismGrade: gradingScale.plagiarismGrade,
+            noParticipationGrade: gradingScale.noParticipationGrade,
+            presentationsNumber: gradingScale.presentationsNumber,
+            presentationsWeight: gradingScale.presentationsWeight,
+            gradeSteps: gradingScale.gradeSteps.map((step) => ({
+                lowerBoundPercentage: step.lowerBoundPercentage,
+                lowerBoundInclusive: step.lowerBoundInclusive,
+                upperBoundPercentage: step.upperBoundPercentage,
+                upperBoundInclusive: step.upperBoundInclusive,
+                gradeName: step.gradeName,
+                isPassingGrade: step.isPassingGrade,
+            })),
+            courseMaxPoints: gradingScale.course?.maxPoints,
+            coursePresentationScore: gradingScale.course?.presentationScore,
+            examMaxPoints: gradingScale.exam?.examMaxPoints,
+        };
     }
 }
