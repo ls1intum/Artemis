@@ -53,7 +53,8 @@
                 id="submit-exercise"
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
-                [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                [buttonLabel]="(exercise().type === ExerciseType.QUIZ ? submitLabel() : 'entity.action.submit') | artemisTranslate"
+                [overwriteDisabled]="exercise().type === ExerciseType.QUIZ && submitDisabled()"
                 [smallButton]="smallButtons()"
                 (click)="onSubmitExercise()!()"
             ></button>
@@ -72,37 +73,11 @@
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">
-                @if (isStartPracticeAvailable()) {
+                @if (isStartPracticeAvailable() && !(participationMode() === 'practice' && !submitDisabled())) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
                             $implicit: { icon: faPlayCircle, label: 'artemisApp.exerciseActions.startPractice', quizMode: 'practice', hideLabelMobile: false },
-                        }"
-                    />
-                }
-                @if (uninitializedQuiz()) {
-                    <ng-container
-                        [ngTemplateOutlet]="quizActionButton"
-                        [ngTemplateOutletContext]="{
-                            $implicit: {
-                                id: 'start-exercise-' + exercise().id,
-                                icon: faPlayCircle,
-                                label: 'artemisApp.exerciseActions.startQuiz',
-                                quizMode: 'live',
-                                hideLabelMobile: false,
-                            },
-                        }"
-                    />
-                }
-                @if (gradedParticipation()?.initializationState === InitializationState.FINISHED && !numberOfGradedParticipationResults()) {
-                    <ng-container
-                        [ngTemplateOutlet]="quizActionButton"
-                        [ngTemplateOutletContext]="{
-                            $implicit: {
-                                icon: faEye,
-                                label: 'artemisApp.exerciseActions.viewSubmissions',
-                                quizMode: 'live',
-                            },
                         }"
                     />
                 }

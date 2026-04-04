@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -135,6 +135,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly inputExerciseId = input<number>();
     readonly inputCourseId = input<number>();
     readonly inputMode = input<string>();
+    readonly quizStartedEvent = output<void>();
+
+    private readonly _isSubmitDisabled = signal(true);
+    private readonly _submitTitleKey = signal('entity.action.submit');
+    readonly isSubmitDisabled = this._isSubmitDisabled.asReadonly();
+    readonly submitTitleKey = this._submitTitleKey.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -475,6 +481,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         } else {
             this.timeUntilStart = '';
         }
+        this.syncSubmitState();
     }
 
     /**
@@ -683,6 +690,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param quizExercise
      */
     applyQuizFull(quizExercise: QuizExercise) {
+        const wasWaiting = this.waitingForQuizStart;
         this.quizExercise = quizExercise;
         this.initQuiz();
 
@@ -711,7 +719,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // apply randomized order where necessary
                 this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
             }
+
+            // Notify parent that the quiz has just started (transition from waiting → started)
+            if (wasWaiting) {
+                this.quizStartedEvent.emit();
+            }
         }
+        this.syncSubmitState();
     }
 
     /*
@@ -924,6 +938,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
         if (confirmSubmit) {
             this.isSubmitting = true;
+            this.syncSubmitState();
             switch (this.mode) {
                 case 'practice':
                     if (!this.submission.id) {
@@ -956,6 +971,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.unsavedChanges = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
+                            this.syncSubmitState();
                             if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
                                 this.alertService.success('artemisApp.quizExercise.submitSuccess');
                             }
@@ -973,6 +989,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
         this.isSubmitting = false;
+        this.syncSubmitState();
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
         const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
@@ -993,6 +1010,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             disableTranslation: true,
         });
         this.isSubmitting = false;
+        this.syncSubmitState();
     }
 
     private highlightQuestion(questionIndex: number) {
@@ -1109,5 +1127,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     get shouldTreatAsSubmittedForUi(): boolean {
         const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
+    }
+
+    /**
+     * Syncs the submit button state signals so that the exercise header actions
+     * component can render the correct disabled state and label without relying
+     * on a button inside this component.
+     */
+    syncSubmitState(): void {
+        const disabled = this.shouldTreatAsSubmittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
+        this._isSubmitDisabled.set(disabled);
+        this._submitTitleKey.set(this.shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
     }
 }

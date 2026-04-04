@@ -112,6 +112,8 @@ export class ExerciseHeaderActionsComponent {
     readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
+    readonly submitDisabled = input<boolean>(false);
+    readonly submitLabel = input<string>('entity.action.submit');
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
