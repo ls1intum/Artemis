@@ -4,7 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Subject } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -42,6 +42,13 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
+import { tap } from 'rxjs/operators';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+
+const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
 type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted';
 
@@ -80,6 +87,8 @@ interface ExamUserWithExamData extends ExamUser {
         NgTemplateOutlet,
         ArtemisDurationFromSecondsPipe,
         ArtemisDatePipe,
+        NgbProgressbar,
+        StudentExamStatusComponent,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -96,6 +105,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private router = inject(Router);
     private alertService = inject(AlertService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private websocketService = inject(WebsocketService);
 
     usersImportDialog = viewChild.required(UsersImportDialogComponent);
     studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
@@ -154,6 +164,11 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isLoading = signal(true);
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
+    exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
+    exercisePreparationRunning = signal(false);
+    exercisePreparationPercentage = signal(0);
+    exercisePreparationEta = signal<string | undefined>(undefined);
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -194,6 +209,7 @@ export class ExamStudentsComponent implements OnDestroy {
         const isExamStarted = this.hasExamStarted();
         const isLoading = this.isLoading();
         const hasStudentsWithoutExam = this.hasStudentsWithoutExam();
+        const exercisePreparationRunning = this.exercisePreparationRunning();
 
         return [
             {
@@ -211,7 +227,7 @@ export class ExamStudentsComponent implements OnDestroy {
             {
                 label: 'artemisApp.studentExams.startExercises',
                 icon: 'pi pi-play',
-                disabled: isExamStarted || isLoading,
+                disabled: isExamStarted || isLoading || exercisePreparationRunning,
                 command: () => this.startExercises(),
             },
         ];
@@ -230,6 +246,23 @@ export class ExamStudentsComponent implements OnDestroy {
             if (exam) {
                 this.setUpExamInformation(exam);
             }
+        });
+
+        effect((onCleanup) => {
+            const examId = this.exam().id;
+            if (!examId) {
+                return;
+            }
+
+            const channel = getWebsocketChannel(examId);
+            const exercisePreparationSubscription = this.websocketService
+                .subscribe<ExamExerciseStartPreparationStatus>(channel)
+                .pipe(tap((status: ExamExerciseStartPreparationStatus) => (status.startedAt = convertDateFromServer(status.startedAt))))
+                .subscribe((status: ExamExerciseStartPreparationStatus) => this.setExercisePreparationStatus(status));
+
+            onCleanup(() => {
+                exercisePreparationSubscription.unsubscribe();
+            });
         });
     }
 
@@ -307,7 +340,11 @@ export class ExamStudentsComponent implements OnDestroy {
             return;
         }
 
-        this.studentExamService.findAllForExam(this.courseId(), exam.id).subscribe((res) => {
+        const courseId = this.courseId();
+
+        this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe((res) => this.setExercisePreparationStatus(res.body ?? undefined));
+
+        this.studentExamService.findAllForExam(courseId, exam.id).subscribe((res) => {
             this.studentExams.set(res.body || []);
             this.isLoading.set(false);
         });
@@ -502,6 +539,28 @@ export class ExamStudentsComponent implements OnDestroy {
                 this.isLoading.set(false);
             },
         });
+    }
+
+    private setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
+        this.exercisePreparationStatus.set(newStatus);
+        const processedExams = (newStatus?.finished ?? 0) + (newStatus?.failed ?? 0);
+        const exPrepRunning = !!(newStatus && processedExams < newStatus.overall!);
+        this.exercisePreparationRunning.set(exPrepRunning);
+        this.exercisePreparationPercentage.set(newStatus ? (newStatus.overall! ? Math.round((processedExams / newStatus.overall!) * 100) : 100) : 0);
+        if (exPrepRunning && processedExams) {
+            const remainingExams = newStatus!.overall! - processedExams;
+
+            const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
+            const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
+
+            const h = Math.floor(remainingSeconds / 60 / 60);
+            const min = Math.floor((remainingSeconds - h * 60 * 60) / 60);
+            const s = Math.floor(remainingSeconds - h * 60 * 60 - min * 60);
+
+            this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
+        } else {
+            this.exercisePreparationEta.set(undefined);
+        }
     }
 
     /**

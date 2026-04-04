@@ -29,6 +29,53 @@
         </ng-template>
     </p-toolbar>
 
+    <div class="d-flex align-items-center gap-3 mt-2 mb-3 flex-wrap">
+        @if (!isLoading()) {
+            <jhi-student-exam-status [isTestExam]="isTestExam()" [hasStudentsWithoutExam]="hasStudentsWithoutExam()" />
+        }
+        @let exPrepStatus = exercisePreparationStatus();
+        @if (exPrepStatus) {
+            <div class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
+                <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label"></div>
+                <div class="flex-grow-1 flex-basis-10 position-relative">
+                    <div class="position-absolute w-100 h-100 top-0">
+                        <ngb-progressbar
+                            [value]="exPrepStatus.finished!"
+                            [max]="exPrepStatus.overall ? exPrepStatus.overall - exPrepStatus.failed! : 0"
+                            [animated]="true"
+                            [height]="'2em'"
+                            type="success"
+                        />
+                    </div>
+                    <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
+                        @let exPrepPercentage = exercisePreparationPercentage();
+                        <span
+                            >{{ exPrepPercentage }}% {{ exPrepStatus.finished }} / {{ exPrepStatus.overall }}
+                            {{ 'artemisApp.studentExams.exercisePreparationProgress.exams' | artemisTranslate }}</span
+                        >
+                        @if (exPrepStatus.failed) {
+                            <span> ({{ exPrepStatus.failed }} {{ 'artemisApp.studentExams.exercisePreparationProgress.failed' | artemisTranslate }}) </span>
+                        }
+                        |
+                        @if (exPrepStatus.participationCount) {
+                            <span> {{ exPrepStatus.participationCount }} {{ 'artemisApp.studentExams.exercisePreparationProgress.participations' | artemisTranslate }} | </span>
+                        }
+                        @let exPrepEta = exercisePreparationEta();
+                        @if (exPrepEta) {
+                            <span>{{ exPrepEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span>
+                        }
+                        @if (!exPrepEta && exPrepPercentage === 100) {
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished"></span>
+                        }
+                        @if (!exPrepEta && exPrepPercentage < 100) {
+                            <span jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
     <p-table
         #dt
         [value]="allRegisteredUsers()"

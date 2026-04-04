@@ -27,16 +27,9 @@ import { StudentExamStatusComponent } from './student-exam-status/student-exam-s
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
-
-export type ExamExerciseStartPreparationStatus = {
-    finished?: number;
-    failed?: number;
-    overall?: number;
-    participationCount?: number;
-    startedAt?: dayjs.Dayjs;
-};
 
 @Component({
     selector: 'jhi-student-exams',
