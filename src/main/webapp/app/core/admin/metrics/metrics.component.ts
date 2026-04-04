@@ -1,9 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { FormsModule } from '@angular/forms';
 
 import { MetricsService } from './metrics.service';
-import { Metrics, Thread } from 'app/core/admin/metrics/metrics.model';
+import { Metrics, NodeInfo, Thread } from 'app/core/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JvmMemoryComponent } from './blocks/jvm-memory/jvm-memory.component';
@@ -16,6 +17,13 @@ import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.comp
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { SelectModule } from 'primeng/select';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+interface NodeOption {
+    label: string;
+    value: string;
+}
 
 @Component({
     selector: 'jhi-metrics',
@@ -33,6 +41,9 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         MetricsDatasourceComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        SelectModule,
+        FormsModule,
+        ArtemisTranslatePipe,
     ],
 })
 export class MetricsComponent implements OnInit {
@@ -47,13 +58,46 @@ export class MetricsComponent implements OnInit {
     /** Whether metrics are currently being updated */
     readonly updatingMetrics = signal(true);
 
+    /** Available cluster nodes for the dropdown */
+    readonly nodeOptions = signal<NodeOption[]>([]);
+
+    /** Currently selected node ID ('all' for aggregated view) */
+    selectedNodeId = 'all';
+
     /** Icons */
     protected readonly faSync = faSync;
 
     /**
-     * Calls the refresh method on init
+     * Loads available nodes and fetches metrics on init
      */
     ngOnInit() {
+        this.loadNodes();
+        this.refresh();
+    }
+
+    /**
+     * Loads the list of available cluster nodes for the dropdown
+     */
+    loadNodes(): void {
+        this.metricsService.getAvailableNodes().subscribe({
+            next: (nodes: NodeInfo[]) => {
+                const options: NodeOption[] = [{ label: 'All Nodes (Aggregated)', value: 'all' }];
+                nodes.forEach((node, index) => {
+                    options.push({ label: `Node ${index + 1} (${node.label})`, value: node.nodeId });
+                });
+                this.nodeOptions.set(options);
+            },
+            error: () => {
+                // Fallback: only show "All Nodes" if node list fails (e.g., single-node setup)
+                this.nodeOptions.set([{ label: 'All Nodes', value: 'all' }]);
+            },
+        });
+    }
+
+    /**
+     * Called when the node dropdown selection changes
+     */
+    onNodeChange(): void {
         this.refresh();
     }
 
@@ -62,7 +106,8 @@ export class MetricsComponent implements OnInit {
      */
     refresh(): void {
         this.updatingMetrics.set(true);
-        combineLatest([this.metricsService.getMetrics(), this.metricsService.threadDump()]).subscribe(([metrics, threadDump]) => {
+        const nodeId = this.selectedNodeId !== 'all' ? this.selectedNodeId : undefined;
+        combineLatest([this.metricsService.getMetrics(nodeId), this.metricsService.threadDump()]).subscribe(([metrics, threadDump]) => {
             this.metrics.set(metrics);
             this.threads.set(threadDump.threads);
             this.updatingMetrics.set(false);
