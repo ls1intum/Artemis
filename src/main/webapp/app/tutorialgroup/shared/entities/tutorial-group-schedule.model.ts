@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import dayjs from 'dayjs/esm';
 
 export class TutorialGroupSchedule implements BaseEntity {
@@ -13,5 +13,5 @@ export class TutorialGroupSchedule implements BaseEntity {
     public location?: string;
     public validFromInclusive?: dayjs.Dayjs;
     public validToInclusive?: dayjs.Dayjs;
-    public tutorialGroupSessions?: TutorialGroupSession[];
+    public tutorialGroupSessions?: LegacyTutorialGroupSession[];
 }

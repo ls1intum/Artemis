@@ -1,0 +1,23 @@
+<div>
+    @let tutorialGroupToPass = tutorialGroup();
+    @let courseIdToPass = courseId();
+    @let isMessagingEnabledToPass = isMessagingEnabled();
+    @let userTutorialGroupDetailAccessLevel = loggedInUserTutorialGroupDetailAccessLevel();
+    @if (tutorialGroupToPass && courseIdToPass && isMessagingEnabledToPass !== undefined && userTutorialGroupDetailAccessLevel !== undefined) {
+        <jhi-tutorial-group-detail
+            [tutorialGroup]="tutorialGroupToPass"
+            [courseId]="courseIdToPass"
+            [isMessagingEnabled]="isMessagingEnabledToPass"
+            [loggedInUserAccessLevel]="userTutorialGroupDetailAccessLevel"
+            (onDeleteSession)="deleteSession($event)"
+            (onDeleteGroup)="deleteGroup($event)"
+            (onCancelSession)="cancelSession($event)"
+            (onActivateSession)="activateSession($event)"
+            (onUpdateSession)="updateSession($event)"
+            (onCreateSession)="createSession($event)"
+        />
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>
