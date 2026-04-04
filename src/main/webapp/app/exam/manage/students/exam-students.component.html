@@ -41,7 +41,7 @@
                     <div class="position-absolute w-100 h-100 top-0">
                         <ngb-progressbar
                             [value]="exPrepStatus.finished!"
-                            [max]="exPrepStatus.overall ? exPrepStatus.overall - exPrepStatus.failed! : 0"
+                            [max]="!!exPrepStatus.overall && !!exPrepStatus.failed ? exPrepStatus.overall - exPrepStatus.failed : 0"
                             [animated]="true"
                             [height]="'2em'"
                             type="success"
@@ -291,7 +291,7 @@
                             <fa-icon [icon]="faChair" />
                         </button>
                         <button pButton size="small" severity="primary" title="View exam" (click)="viewStudentExam(examUser)" [disabled]="!examUser.studentExamId">
-                            <i class="pi pi-file-edit"></i>
+                            <i class="pi pi-eye"></i>
                         </button>
                         <button
                             pButton

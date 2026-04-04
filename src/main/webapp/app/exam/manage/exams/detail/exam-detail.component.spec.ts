@@ -66,7 +66,6 @@ describe('ExamDetailComponent', () => {
                         component: DummyComponent,
                     },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -167,14 +166,14 @@ describe('ExamDetailComponent', () => {
         });
     }));
 
-    it('should correctly route to student exams subpage', fakeAsync(() => {
+    it('should correctly route to students subpage', fakeAsync(() => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
         const studentExamsButton = fixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
         discardPeriodicTasks();
         fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
+            expect(location.path()).toBe('/course-management/1/exams/1/students');
         });
     }));
 

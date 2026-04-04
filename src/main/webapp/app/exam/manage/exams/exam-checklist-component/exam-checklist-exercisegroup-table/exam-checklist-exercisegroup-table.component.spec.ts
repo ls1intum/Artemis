@@ -75,7 +75,6 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/assessment-dashboard', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                 ]),
