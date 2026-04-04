@@ -423,13 +423,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
         } else {
             this._studentParticipations.set([...current, participation]);
-            if (participation.id && this.exercise) {
-                this.participationWebsocketService.addParticipation(participation, this.exercise);
-            }
-            // Keep exercise.studentParticipations in sync so mergeResultsAndSubmissionsForParticipations
-            // does not overwrite _studentParticipations and lose the new participation
+
             if (this.exercise) {
                 this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+            }
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
             }
         }
         this.sortResults();
