@@ -23,17 +23,17 @@ import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { DialogModule } from 'primeng/dialog';
 import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { User } from 'app/core/user/user.model';
 import { Checkbox } from 'primeng/checkbox';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
     let component: UsersImportDialogComponent;
     let examManagementService: ExamManagementService;
-    let tutorialGroupsService: TutorialGroupsService;
+    let tutorialGroupApiService: TutorialGroupApiService;
     let adminUserService: AdminUserService;
 
     const studentCsvColumns = 'REGISTRATION_NUMBER,FIRST_NAME_OF_STUDENT,FAMILY_NAME_OF_STUDENT';
@@ -57,7 +57,7 @@ describe('UsersImportDialogComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
-                MockProvider(TutorialGroupsService),
+                MockProvider(TutorialGroupApiService),
                 MockProvider(AdminUserService),
                 MockProvider(HttpClient),
                 MockProvider(TranslateService),
@@ -84,7 +84,7 @@ describe('UsersImportDialogComponent', () => {
                 fixture = TestBed.createComponent(UsersImportDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
-                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+                tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
                 adminUserService = TestBed.inject(AdminUserService);
 
                 fixture.componentRef.setInput('courseId', course.id!);
@@ -479,12 +479,12 @@ describe('UsersImportDialogComponent', () => {
         ];
 
         const fakeResponse = { body: generatedStudents } as HttpResponse<any[]>;
-        jest.spyOn(tutorialGroupsService, 'importRegistrations').mockReturnValue(of(fakeResponse));
+        jest.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
         component.importUsers();
 
-        expect(tutorialGroupsService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport);
+        expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport, 'response');
         expect(component.isImporting).toBeFalse();
         expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toEqual([

@@ -6,7 +6,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -62,7 +62,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 
-        const createResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
+        const createResponse: HttpResponse<LegacyTutorialGroupSession> = new HttpResponse({
             body: exampleFreePeriod,
             status: 201,
         });
