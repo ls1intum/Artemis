@@ -8,6 +8,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -15,9 +16,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.search.Search;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 
 /**
  * Actuator endpoint that exposes JVM, process, HTTP, cache, datasource and garbage-collector
@@ -29,14 +31,21 @@ import io.micrometer.core.instrument.search.Search;
  * Extended by {@link de.tum.cit.aet.artemis.core.web.CustomMetricsExtension} which adds
  * active-user counts.
  * <p>
- * TODO: Make metrics multi-node capable by aggregating data from all cluster members
- * (e.g., via Hazelcast distributed queries or a shared metrics store).
+ * TODO: Make metrics multi-node capable. Currently this endpoint returns metrics from
+ * the local JVM only. To support multi-node deployments:
+ * 1. Each node could push its metrics into a shared Hazelcast IMap (keyed by node ID)
+ * 2. This endpoint would then aggregate metrics from all nodes in the map
+ * 3. Alternatively, use Prometheus federation or a central metrics store (Grafana/Mimir)
+ * and query aggregated metrics from there instead of collecting locally
+ * 4. The client UI would need a node selector dropdown to view per-node or aggregated metrics
  */
 @Profile(PROFILE_CORE)
 @Component
 @Lazy
 @Endpoint(id = "artemismetrics")
 public class ArtemisMetricsEndpoint {
+
+    private static final TimeUnit MS = TimeUnit.MILLISECONDS;
 
     private final MeterRegistry meterRegistry;
 
@@ -74,13 +83,14 @@ public class ArtemisMetricsEndpoint {
         jvm.put("Heap", Map.of("committed", heap.getCommitted(), "max", heap.getMax(), "used", heap.getUsed()));
 
         var nonHeap = memoryBean.getNonHeapMemoryUsage();
-        jvm.put("Non-Heap", Map.of("committed", nonHeap.getCommitted(), "max", nonHeap.getMax() == -1 ? nonHeap.getCommitted() : nonHeap.getMax(), "used", nonHeap.getUsed()));
+        long nonHeapMax = nonHeap.getMax() == -1 ? nonHeap.getCommitted() : nonHeap.getMax();
+        jvm.put("Non-Heap", Map.of("committed", nonHeap.getCommitted(), "max", nonHeapMax, "used", nonHeap.getUsed()));
 
-        // Individual memory pools (Eden, Survivor, Old Gen, etc.)
         for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
             var usage = pool.getUsage();
             if (usage != null) {
-                jvm.put(pool.getName(), Map.of("committed", usage.getCommitted(), "max", usage.getMax() == -1 ? usage.getCommitted() : usage.getMax(), "used", usage.getUsed()));
+                long max = usage.getMax() == -1 ? usage.getCommitted() : usage.getMax();
+                jvm.put(pool.getName(), Map.of("committed", usage.getCommitted(), "max", max, "used", usage.getUsed()));
             }
         }
 
@@ -127,26 +137,24 @@ public class ArtemisMetricsEndpoint {
         Map<String, Map<String, Number>> perCode = new TreeMap<>();
 
         long totalCount = 0;
-        var timers = Search.in(meterRegistry).name("http.server.requests").timers();
-        for (Timer timer : timers) {
+        for (Timer timer : meterRegistry.find("http.server.requests").timers()) {
             String status = timer.getId().getTag("status");
             if (status == null) {
                 status = "unknown";
             }
             long count = timer.count();
-            double mean = timer.mean(java.util.concurrent.TimeUnit.MILLISECONDS);
-            double max = timer.max(java.util.concurrent.TimeUnit.MILLISECONDS);
+            double mean = timer.mean(MS);
+            double max = timer.max(MS);
             totalCount += count;
 
-            perCode.merge(status, new LinkedHashMap<>(Map.of("count", count, "mean", mean, "max", max)), (existing, newVal) -> {
+            perCode.merge(status, newMutableMap(count, mean, max), (existing, newVal) -> {
                 long existingCount = existing.get("count").longValue();
                 double existingMean = existing.get("mean").doubleValue();
-                long newCount = existingCount + count;
-                // Weighted average: (existingMean * existingCount + mean * count) / newCount
-                double weightedMean = newCount > 0 ? (existingMean * existingCount + mean * count) / newCount : 0;
-                existing.put("count", newCount);
+                long mergedCount = existingCount + newVal.get("count").longValue();
+                double weightedMean = mergedCount > 0 ? (existingMean * existingCount + newVal.get("mean").doubleValue() * newVal.get("count").longValue()) / mergedCount : 0;
+                existing.put("count", mergedCount);
                 existing.put("mean", weightedMean);
-                existing.put("max", Math.max(existing.get("max").doubleValue(), max));
+                existing.put("max", Math.max(existing.get("max").doubleValue(), newVal.get("max").doubleValue()));
                 return existing;
             });
         }
@@ -158,40 +166,46 @@ public class ArtemisMetricsEndpoint {
 
     /**
      * Collects cache metrics (hits, misses, puts, evictions, removals) per cache name.
-     * <p>
-     * TODO: In a multi-node setup, aggregate cache metrics from all Hazelcast cluster members.
      */
     private Map<String, Map<String, Number>> cacheMetrics() {
         Map<String, Map<String, Number>> caches = new TreeMap<>();
 
-        Search.in(meterRegistry).name(n -> n.startsWith("cache.")).meters().forEach(meter -> {
-            String cacheName = meter.getId().getTag("cache");
-            if (cacheName == null) {
-                return;
-            }
-            String metricName = meter.getId().getName();
-            String result = meter.getId().getTag("result");
-
-            // Build composite key like "cache.gets.hit" or "cache.gets.miss"
-            String key = result != null ? metricName + "." + result : metricName;
-
-            caches.computeIfAbsent(cacheName,
-                    k -> new LinkedHashMap<>(Map.of("cache.gets.hit", 0.0, "cache.gets.miss", 0.0, "cache.puts", 0.0, "cache.removals", 0.0, "cache.evictions", 0.0)));
-
-            double value = 0;
-            for (var measurement : meter.measure()) {
-                value += measurement.getValue();
-            }
-            caches.get(cacheName).put(key, value);
-        });
+        meterRegistry.find("cache.gets").meters().forEach(meter -> processCacheMeter(caches, meter));
+        meterRegistry.find("cache.puts").meters().forEach(meter -> processCacheMeter(caches, meter));
+        meterRegistry.find("cache.removals").meters().forEach(meter -> processCacheMeter(caches, meter));
+        meterRegistry.find("cache.evictions").meters().forEach(meter -> processCacheMeter(caches, meter));
 
         return caches;
     }
 
+    private void processCacheMeter(Map<String, Map<String, Number>> caches, Meter meter) {
+        String cacheName = meter.getId().getTag("cache");
+        if (cacheName == null) {
+            return;
+        }
+        String metricName = meter.getId().getName();
+        String result = meter.getId().getTag("result");
+        String key = result != null ? metricName + "." + result : metricName;
+
+        caches.computeIfAbsent(cacheName, k -> {
+            Map<String, Number> defaults = new LinkedHashMap<>();
+            defaults.put("cache.gets.hit", 0.0);
+            defaults.put("cache.gets.miss", 0.0);
+            defaults.put("cache.puts", 0.0);
+            defaults.put("cache.removals", 0.0);
+            defaults.put("cache.evictions", 0.0);
+            return defaults;
+        });
+
+        double value = 0;
+        for (var measurement : meter.measure()) {
+            value += measurement.getValue();
+        }
+        caches.get(cacheName).put(key, value);
+    }
+
     /**
      * Collects datasource / connection pool metrics.
-     * <p>
-     * TODO: In a multi-node setup, aggregate datasource metrics from all nodes.
      */
     private Map<String, Object> databaseMetrics() {
         Map<String, Object> db = new LinkedHashMap<>();
@@ -210,31 +224,46 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects per-endpoint request metrics grouped by URI and HTTP method.
      * Format: { "/api/courses": { "GET": { "count": N, "mean": ms, "max": ms } } }
-     * <p>
-     * TODO: In a multi-node setup, aggregate endpoint metrics from all nodes.
      */
     private Map<String, Map<String, Map<String, Number>>> endpointMetrics() {
         Map<String, Map<String, Map<String, Number>>> services = new TreeMap<>();
 
-        for (Timer timer : Search.in(meterRegistry).name("http.server.requests").timers()) {
+        for (Timer timer : meterRegistry.find("http.server.requests").timers()) {
             String uri = timer.getId().getTag("uri");
             String method = timer.getId().getTag("method");
             if (uri == null || method == null) {
                 continue;
             }
 
+            long count = timer.count();
+            double mean = timer.mean(MS);
+            double max = timer.max(MS);
+
             services.computeIfAbsent(uri, k -> new LinkedHashMap<>());
-            services.get(uri).merge(method, new LinkedHashMap<>(Map.of("count", (Number) timer.count(), "mean", timer.mean(java.util.concurrent.TimeUnit.MILLISECONDS), "max",
-                    timer.max(java.util.concurrent.TimeUnit.MILLISECONDS))), (existing, newVal) -> {
-                        existing.put("count", existing.get("count").longValue() + timer.count());
-                        return existing;
-                    });
+            services.get(uri).merge(method, newMutableMap(count, mean, max), (existing, newVal) -> {
+                long existingCount = existing.get("count").longValue();
+                long mergedCount = existingCount + newVal.get("count").longValue();
+                existing.put("count", mergedCount);
+                existing.put("mean",
+                        mergedCount > 0 ? (existing.get("mean").doubleValue() * existingCount + newVal.get("mean").doubleValue() * newVal.get("count").longValue()) / mergedCount
+                                : 0.0);
+                existing.put("max", Math.max(existing.get("max").doubleValue(), newVal.get("max").doubleValue()));
+                return existing;
+            });
         }
 
         return services;
     }
 
     // --- Helper methods ---
+
+    private static Map<String, Number> newMutableMap(long count, double mean, double max) {
+        Map<String, Number> map = new LinkedHashMap<>();
+        map.put("count", count);
+        map.put("mean", mean);
+        map.put("max", max);
+        return map;
+    }
 
     private double gaugeValue(String meterName) {
         var gauge = meterRegistry.find(meterName).gauge();
@@ -264,20 +293,24 @@ public class ArtemisMetricsEndpoint {
         Map<String, Number> summary = new LinkedHashMap<>();
         var timer = meterRegistry.find(meterName).timer();
         if (timer != null) {
-            var unit = java.util.concurrent.TimeUnit.MILLISECONDS;
             summary.put("count", timer.count());
-            summary.put("mean", timer.mean(unit));
-            summary.put("max", timer.max(unit));
-            summary.put("totalTime", timer.totalTime(unit));
-            summary.put("0.0", timer.percentile(0.0, unit));
-            summary.put("0.5", timer.percentile(0.5, unit));
-            summary.put("0.75", timer.percentile(0.75, unit));
-            summary.put("0.95", timer.percentile(0.95, unit));
-            summary.put("0.99", timer.percentile(0.99, unit));
-            summary.put("1.0", timer.percentile(1.0, unit));
+            summary.put("mean", timer.mean(MS));
+            summary.put("max", timer.max(MS));
+            summary.put("totalTime", timer.totalTime(MS));
+
+            // Extract percentiles from the histogram snapshot (only available if publishPercentiles is configured)
+            Map<Double, Double> percentileMap = new LinkedHashMap<>();
+            for (ValueAtPercentile vp : timer.takeSnapshot().percentileValues()) {
+                percentileMap.put(vp.percentile(), vp.value(MS));
+            }
+            summary.put("0.0", percentileMap.getOrDefault(0.0, 0.0));
+            summary.put("0.5", percentileMap.getOrDefault(0.5, 0.0));
+            summary.put("0.75", percentileMap.getOrDefault(0.75, 0.0));
+            summary.put("0.95", percentileMap.getOrDefault(0.95, 0.0));
+            summary.put("0.99", percentileMap.getOrDefault(0.99, 0.0));
+            summary.put("1.0", percentileMap.getOrDefault(1.0, 0.0));
         }
         else {
-            // Return zeros so client doesn't get null
             summary.put("count", 0);
             summary.put("mean", 0.0);
             summary.put("max", 0.0);
