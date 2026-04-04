@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,8 +47,8 @@ public class ParticipationFilterService {
             return Set.of();
         }
         // Compare by ID to avoid Hibernate 7 lazy proxy initialization (with @ConcreteProxy, equals() triggers entity loading)
-        var participationsInExercise = participationsAcrossAllExercises.stream().filter(p -> p.getExercise() != null && Objects.equals(p.getExercise().getId(), exercise.getId()))
-                .collect(Collectors.toSet());
+        var participationsInExercise = participationsAcrossAllExercises.stream()
+                .filter(p -> p.getExercise() != null && exercise.getId() != null && exercise.getId().equals(p.getExercise().getId())).collect(Collectors.toSet());
 
         if (participationsInExercise.isEmpty()) {
             return Set.of();

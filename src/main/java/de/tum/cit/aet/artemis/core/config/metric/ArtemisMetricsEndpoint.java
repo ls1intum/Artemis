@@ -139,8 +139,13 @@ public class ArtemisMetricsEndpoint {
             totalCount += count;
 
             perCode.merge(status, new LinkedHashMap<>(Map.of("count", count, "mean", mean, "max", max)), (existing, newVal) -> {
-                existing.put("count", existing.get("count").longValue() + count);
-                existing.put("mean", (existing.get("mean").doubleValue() + mean) / 2);
+                long existingCount = existing.get("count").longValue();
+                double existingMean = existing.get("mean").doubleValue();
+                long newCount = existingCount + count;
+                // Weighted average: (existingMean * existingCount + mean * count) / newCount
+                double weightedMean = newCount > 0 ? (existingMean * existingCount + mean * count) / newCount : 0;
+                existing.put("count", newCount);
+                existing.put("mean", weightedMean);
                 existing.put("max", Math.max(existing.get("max").doubleValue(), max));
                 return existing;
             });
