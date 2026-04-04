@@ -41,7 +41,7 @@
                     <div class="position-absolute w-100 h-100 top-0">
                         <ngb-progressbar
                             [value]="exPrepStatus.finished!"
-                            [max]="!!exPrepStatus.overall && !!exPrepStatus.failed ? exPrepStatus!.overall - exPrepStatus!.failed : 0"
+                            [max]="exPrepStatus.overall ? exPrepStatus.overall - exPrepStatus.failed! : 0"
                             [animated]="true"
                             [height]="'2em'"
                             type="success"
@@ -87,13 +87,13 @@
         rowHover
         [scrollable]="true"
         scrollHeight="flex"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} students"
+        [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
         showCurrentPageReport
         class="border border-1 rounded-4 overflow-hidden flex-grow-1"
     >
         <ng-template #caption>
             <div class="d-flex align-items-center justify-content-between gap-2">
-                <h5 class="m-0">Registered Students</h5>
+                <h5 class="m-0" jhiTranslate="artemisApp.examManagement.examStudents.registeredStudents"></h5>
                 <p-icon-field style="width: 33%">
                     <p-inputicon class="pi pi-search" />
                     <input
@@ -101,7 +101,7 @@
                         pInputText
                         type="text"
                         (input)="dt.filterGlobal(globalFilterInput.value, 'contains')"
-                        placeholder="Search for registered students"
+                        [placeholder]="'artemisApp.examManagement.examStudents.table.searchPlaceholder' | artemisTranslate"
                         class="w-100"
                     />
                 </p-icon-field>
@@ -113,33 +113,33 @@
                 <th pSortableColumn="studentDetails" style="min-width: 6rem">
                     <div class="d-flex align-items-center gap-2">
                         <div class="d-flex gap-1">
-                            <span> Student details </span>
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.studentDetails"></span>
                         </div>
                         <p-sortIcon field="studentDetails" />
                     </div>
                 </th>
                 <th pSortableColumn="matriculationNumber" style="min-width: 6rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Matriculation number </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.matriculationNumber"></span>
                         <p-sortIcon field="matriculationNumber" />
                     </div>
                 </th>
                 <th pSortableColumn="room" style="min-width: 2rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Room </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.room"></span>
                         <p-sortIcon field="room" />
                     </div>
                 </th>
                 <th pSortableColumn="seat" style="min-width: 3rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Seat </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.seat"></span>
                         <p-sortIcon field="seat" />
                     </div>
                 </th>
                 @if (hasExamEnded()) {
                     <th pSortableColumn="attendanceStatus" style="min-width: 2rem">
                         <div class="d-flex align-items-center gap-2">
-                            <span> Status </span>
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.status"></span>
                             <p-sortIcon field="attendanceStatus" />
                         </div>
                     </th>
@@ -156,18 +156,18 @@
                 </th>
                 <th pSortableColumn="progress" style="min-width: 8rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Progress </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progress"></span>
                         <p-sortIcon field="progress" />
                     </div>
                 </th>
                 <th pSortableColumn="sessions" style="min-width: 4rem">
                     <div class="d-flex align-items-center gap-2">
-                        <span> Sessions </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.sessions"></span>
                         <p-sortIcon field="sessions" />
                     </div>
                 </th>
                 <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
-                    <span class="d-flex align-items-center gap-2">Actions</span>
+                    <span class="d-flex align-items-center gap-2" jhiTranslate="artemisApp.examManagement.examStudents.table.actions"></span>
                 </th>
             </tr>
         </ng-template>
@@ -281,15 +281,15 @@
                 </td>
                 <td>
                     @if (examUser.progress === 'submitted' && examUser.submissionDate) {
-                        <span> Submitted on {{ examUser.submissionDate | artemisDate }}</span>
+                        <span>{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</span>
                     } @else if (examUser.progress === 'submitted') {
-                        <span> Submitted </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted"></span>
                     } @else if (examUser.progress === 'started') {
-                        <span> Started </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted"></span>
                     } @else if (examUser.progress === 'notStarted') {
-                        <span> Not started </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted"></span>
                     } @else {
-                        <span> Exam missing </span>
+                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing"></span>
                     }
                 </td>
                 <td>
@@ -307,7 +307,14 @@
                         >
                             <fa-icon [icon]="faChair" />
                         </button>
-                        <button pButton size="small" severity="primary" title="View exam" (click)="viewStudentExam(examUser)" [disabled]="!examUser.studentExamId">
+                        <button
+                            pButton
+                            size="small"
+                            severity="primary"
+                            [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                            (click)="viewStudentExam(examUser)"
+                            [disabled]="!examUser.studentExamId"
+                        >
                             <i class="pi pi-eye"></i>
                         </button>
                         <button
@@ -315,7 +322,7 @@
                             jhiDeleteButton
                             severity="danger"
                             size="small"
-                            title="Remove"
+                            [title]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
                             [disabled]="isTestExam()"
                             [renderButtonStyle]="false"
                             [renderButtonText]="false"
