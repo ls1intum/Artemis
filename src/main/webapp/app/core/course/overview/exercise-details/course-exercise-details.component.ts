@@ -234,6 +234,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
+            if (!this.gradedStudentParticipation() && this.practiceStudentParticipation()) {
+                this.participationMode.set('practice');
+            }
             this.loadComplaintAndLatestRatedResult();
         });
     }

@@ -90,10 +90,7 @@ export class ExerciseHeaderComponent {
         if (participation.testRun) {
             this.localPracticeParticipation.set(participation);
         }
-        // Emit first so the parent adds the participation to its list before
-        // switching the mode.  Otherwise activeParticipation() falls back to
-        // the graded participation because practiceStudentParticipation() is
-        // still undefined when participationMode changes.
+
         this.newParticipation.emit(participation);
         if (participation.testRun) {
             this.participationMode.set('practice');
