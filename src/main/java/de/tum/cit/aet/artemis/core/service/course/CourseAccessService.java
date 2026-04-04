@@ -161,7 +161,6 @@ public class CourseAccessService {
      */
     @NonNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllByDeletedIsFalseAndGroupsContains(groupName);
         usersInGroup.forEach(user -> {
             // explicitly set the registration number
