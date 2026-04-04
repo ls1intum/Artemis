@@ -31,3 +31,8 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     testCaseStats?: TestCaseStats;
     changed?: boolean;
 }
+
+export class TestCaseDTO {
+    public testName?: string;
+    public id?: number;
+}

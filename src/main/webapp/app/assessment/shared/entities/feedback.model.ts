@@ -3,7 +3,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/shared/util/text.utils';
-import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, TestCaseDTO, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -334,3 +334,16 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
         }
     }
 };
+
+export class FeedbackDTO {
+    public id?: number;
+    public text?: string;
+    public detailText?: string;
+    public hasLongFeedbackText?: boolean;
+    public reference?: string;
+    public credits?: number;
+    public positive?: boolean;
+    public type?: string;
+    public visibility?: Visibility;
+    public testCase?: TestCaseDTO;
+}
