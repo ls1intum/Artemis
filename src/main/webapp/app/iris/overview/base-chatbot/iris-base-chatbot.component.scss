@@ -446,7 +446,7 @@ pre {
     textarea {
         background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
-        padding: 16px 56px 36px 16px;
+        padding: 16px 56px 52px 16px;
         resize: none;
         border-radius: $iris-border-radius-lg;
         min-height: 72px;
@@ -678,6 +678,12 @@ pre {
 
 .rate-button-not-clicked {
     color: var(--secondary);
+}
+
+.context-selection {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
 }
 
 #irisSendButton {
