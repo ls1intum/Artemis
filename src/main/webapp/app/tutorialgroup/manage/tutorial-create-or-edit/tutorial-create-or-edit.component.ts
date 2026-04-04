@@ -10,7 +10,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
-import { CreateOrUpdateTutorialGroupDTO, TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -21,6 +21,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
 
 enum Mode {
     ONLINE = 'Online',
@@ -29,13 +31,13 @@ enum Mode {
 
 export interface CreateTutorialGroupEvent {
     courseId: number;
-    createTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO;
+    createTutorialGroupDTO: CreateOrUpdateTutorialGroupRequest;
 }
 
 export interface UpdateTutorialGroupEvent {
     courseId: number;
     tutorialGroupId: number;
-    updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO;
+    updateTutorialGroupDTO: CreateOrUpdateTutorialGroupRequest;
 }
 
 @Component({
@@ -71,9 +73,9 @@ export class TutorialCreateOrEditComponent {
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
-    tutors = input.required<TutorialGroupTutorDTO[]>();
-    tutorialGroup = input<TutorialGroupDetailDTO>();
-    schedule = input<TutorialGroupScheduleDTO>();
+    tutors = input.required<TutorialGroupTutor[]>();
+    tutorialGroup = input<TutorialGroupDetailData>();
+    schedule = input<TutorialGroupSchedule>();
 
     title = signal('');
     titleValidationResult = computed<Validation>(() => this.computeTitleValidation());
@@ -83,12 +85,14 @@ export class TutorialCreateOrEditComponent {
     tutorInputTouched = signal(false);
     alreadyUsedLanguages = signal<string[]>([]);
     selectedLanguage = signal<string>('');
+    languageValidationResult = signal<Validation>({ status: ValidationStatus.VALID });
     modes = Object.values(Mode);
     selectedMode = signal<Mode>(Mode.OFFLINE);
     campus = signal('');
     campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
     capacity = signal<number | undefined>(undefined);
     additionalInformation = signal('');
+    additionalInformationValidationResult = computed<Validation>(() => this.computeAdditionalInformationValidation());
 
     configureSessionPlan = signal(false);
     firstSessionStart = signal<Date | undefined>(undefined);
@@ -158,19 +162,19 @@ export class TutorialCreateOrEditComponent {
         if (this.tutorialGroup()) {
             const tutorialGroupId = this.tutorialGroup()?.id;
             if (!tutorialGroupId) return;
-            const updateTutorialGroupDTO = this.assembleCreateOrUpdateTutorialGroupDTO();
+            const updateTutorialGroup = this.assembleCreateOrUpdateTutorialGroupRequest();
             if (this.scheduleChangeOverwritesSessions()) {
-                this.confirmScheduleChangingSave(courseId, tutorialGroupId, updateTutorialGroupDTO);
+                this.confirmScheduleChangingSave(courseId, tutorialGroupId, updateTutorialGroup);
             } else {
-                this.onUpdate.emit({ courseId: courseId, tutorialGroupId: tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupDTO });
+                this.onUpdate.emit({ courseId: courseId, tutorialGroupId: tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroup });
             }
         } else {
-            const createTutorialGroupDTO = this.assembleCreateOrUpdateTutorialGroupDTO();
-            this.onCreate.emit({ courseId: courseId, createTutorialGroupDTO: createTutorialGroupDTO });
+            const createTutorialGroupRequest = this.assembleCreateOrUpdateTutorialGroupRequest();
+            this.onCreate.emit({ courseId: courseId, createTutorialGroupDTO: createTutorialGroupRequest });
         }
     }
 
-    private confirmScheduleChangingSave(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO) {
+    private confirmScheduleChangingSave(courseId: number, tutorialGroupId: number, updateTutorialGroupRequest: CreateOrUpdateTutorialGroupRequest) {
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.header'),
             message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
@@ -178,12 +182,12 @@ export class TutorialCreateOrEditComponent {
             rejectLabel: this.translateService.instant('entity.action.cancel'),
             acceptButtonStyleClass: 'p-button-danger',
             rejectButtonStyleClass: 'p-button-secondary',
-            accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO }),
+            accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupRequest }),
         });
     }
 
-    private assembleCreateOrUpdateTutorialGroupDTO(): CreateOrUpdateTutorialGroupDTO {
-        const tutorialGroupScheduleDTO: TutorialGroupScheduleDTO | undefined = this.configureSessionPlan()
+    private assembleCreateOrUpdateTutorialGroupRequest(): CreateOrUpdateTutorialGroupRequest {
+        const tutorialGroupSchedule: TutorialGroupSchedule | undefined = this.configureSessionPlan()
             ? {
                   firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
                   firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
@@ -193,14 +197,14 @@ export class TutorialCreateOrEditComponent {
               }
             : undefined;
         return {
-            title: this.title(),
+            title: this.title().trim(),
             tutorId: this.selectedTutorId()!,
-            language: this.selectedLanguage(),
+            language: this.selectedLanguage().trim(),
             isOnline: this.selectedMode() === Mode.ONLINE,
-            campus: this.campus() || undefined,
+            campus: this.campus().trim() || undefined,
             capacity: this.capacity(),
-            additionalInformation: this.additionalInformation() || undefined,
-            tutorialGroupScheduleDTO: tutorialGroupScheduleDTO,
+            additionalInformation: this.additionalInformation().trim() || undefined,
+            tutorialGroupSchedule: tutorialGroupSchedule,
         };
     }
 
@@ -239,6 +243,17 @@ export class TutorialCreateOrEditComponent {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.campusLength',
+            };
+        }
+        return { status: ValidationStatus.VALID };
+    }
+
+    private computeAdditionalInformationValidation(): Validation {
+        const trimmedAdditionalInformation = this.additionalInformation().trim();
+        if (trimmedAdditionalInformation && trimmedAdditionalInformation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.additionalInformationLength',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -297,6 +312,12 @@ export class TutorialCreateOrEditComponent {
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
             };
         }
+        if (firstSessionStart && teachingPeriodEnd > dayjs(firstSessionStart).add(2, 'year').toDate()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
+            };
+        }
         const firstSessionEnd = this.firstSessionEnd();
         if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
             return {
@@ -308,11 +329,17 @@ export class TutorialCreateOrEditComponent {
     }
 
     private computeLocationValidation(): Validation {
-        const location = this.location();
-        if (!location) {
+        const trimmedLocation = this.location().trim();
+        if (!trimmedLocation) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired',
+            };
+        }
+        if (trimmedLocation.length > 255) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.locationLength',
             };
         }
         return { status: ValidationStatus.VALID };
@@ -343,7 +370,7 @@ export class TutorialCreateOrEditComponent {
         return false;
     }
 
-    private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDetailDTO, schedule?: TutorialGroupScheduleDTO): boolean {
+    private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDetailData, schedule?: TutorialGroupSchedule): boolean {
         const titleChanged = this.title() !== tutorialGroup.title;
         const tutorChanged = this.selectedTutorId() !== tutorialGroup.tutorId;
         const languageChanged = this.selectedLanguage() !== tutorialGroup.language;
@@ -371,7 +398,10 @@ export class TutorialCreateOrEditComponent {
     private computeIfInputsInvalid(): boolean {
         const titleInvalid = this.titleValidationResult().status === ValidationStatus.INVALID;
         const tutorInvalid = this.tutorValidationResult().status === ValidationStatus.INVALID;
-        const generalInformationInvalid = titleInvalid || tutorInvalid;
+        const languageInvalid = this.languageValidationResult().status === ValidationStatus.INVALID;
+        const campusInvalid = this.campusValidationResult().status === ValidationStatus.INVALID;
+        const additionalInformationInvalid = this.additionalInformationValidationResult().status === ValidationStatus.INVALID;
+        const generalInformationInvalid = titleInvalid || tutorInvalid || languageInvalid || campusInvalid || additionalInformationInvalid;
 
         const firstSessionStartInvalid = this.firstSessionStartValidationResult().status === ValidationStatus.INVALID;
         const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === ValidationStatus.INVALID;
