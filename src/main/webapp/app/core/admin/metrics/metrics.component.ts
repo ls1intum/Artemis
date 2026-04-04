@@ -18,8 +18,6 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import { SelectModule } from 'primeng/select';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
 interface NodeOption {
     label: string;
     value: string;
@@ -43,7 +41,6 @@ interface NodeOption {
         AdminTitleBarActionsDirective,
         SelectModule,
         FormsModule,
-        ArtemisTranslatePipe,
     ],
 })
 export class MetricsComponent implements OnInit {
