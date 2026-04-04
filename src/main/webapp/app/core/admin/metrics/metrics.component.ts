@@ -18,6 +18,7 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import { SelectModule } from 'primeng/select';
+
 interface NodeOption {
     label: string;
     value: string;
@@ -26,6 +27,7 @@ interface NodeOption {
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
+    styleUrl: './metrics.component.scss',
     imports: [
         TranslateDirective,
         FaIconComponent,
@@ -85,7 +87,6 @@ export class MetricsComponent implements OnInit {
                 this.nodeOptions.set(options);
             },
             error: () => {
-                // Fallback: only show "All Nodes" if node list fails (e.g., single-node setup)
                 this.nodeOptions.set([{ label: 'All Nodes', value: 'all' }]);
             },
         });
@@ -99,16 +100,30 @@ export class MetricsComponent implements OnInit {
     }
 
     /**
-     * Refreshes the metrics by retrieving all metrics and thread dumps
+     * Refreshes the metrics in-place without removing DOM content.
+     * Sets updatingMetrics only on initial load (when metrics is undefined).
      */
     refresh(): void {
-        this.updatingMetrics.set(true);
+        const isInitialLoad = !this.metrics();
+        if (isInitialLoad) {
+            this.updatingMetrics.set(true);
+        }
         const nodeId = this.selectedNodeId !== 'all' ? this.selectedNodeId : undefined;
         combineLatest([this.metricsService.getMetrics(nodeId), this.metricsService.threadDump()]).subscribe(([metrics, threadDump]) => {
             this.metrics.set(metrics);
             this.threads.set(threadDump.threads);
             this.updatingMetrics.set(false);
         });
+    }
+
+    /**
+     * Smoothly scrolls to a section by its element ID
+     */
+    scrollToSection(sectionId: string): void {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     /**
