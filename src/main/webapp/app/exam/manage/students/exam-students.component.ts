@@ -37,7 +37,21 @@ import { ButtonDirective } from 'primeng/button';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { InputText } from 'primeng/inputtext';
-import { Path } from 'app/shared/util/global.utils';
+import { Path, onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+
+type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted';
+
+interface ExamUserWithExamData extends ExamUser {
+    workingTime?: number;
+    progress: ExamProgress;
+    submissionDate?: dayjs.Dayjs;
+    numberOfExamSessions: number;
+    studentExamId?: number;
+}
 
 @Component({
     selector: 'jhi-exam-students',
@@ -64,6 +78,8 @@ import { Path } from 'app/shared/util/global.utils';
         InputText,
         RouterLink,
         NgTemplateOutlet,
+        ArtemisDurationFromSecondsPipe,
+        ArtemisDatePipe,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -78,6 +94,8 @@ export class ExamStudentsComponent implements OnDestroy {
     private deleteDialogService = inject(DeleteDialogService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
+    private alertService = inject(AlertService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     usersImportDialog = viewChild.required(UsersImportDialogComponent);
     studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
@@ -92,7 +110,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
     readonly exam = signal<Exam>(new Exam());
     readonly studentExams = signal<StudentExam[]>([]);
-    readonly allRegisteredUsers = computed<ExamUser[]>(() => {
+    readonly allRegisteredUsers = computed<ExamUserWithExamData[]>(() => {
         const exam = this.exam();
         const studentExams = this.studentExams();
         const hasExamEnded = this.hasExamEnded();
@@ -101,17 +119,32 @@ export class ExamStudentsComponent implements OnDestroy {
             return [];
         }
 
-        if (hasExamEnded) {
-            return exam.examUsers?.map((examUser) => {
-                const studentExam = studentExams?.find((studentExam) => studentExam.user?.id === examUser.user!.id);
-                return {
-                    ...examUser,
-                    didExamUserAttendExam: !!studentExam?.started,
-                };
-            });
-        } else {
-            return exam.examUsers;
-        }
+        const studentExamsByUserId = new Map<number, StudentExam>();
+        studentExams.forEach((studentExam) => {
+            const userId = studentExam.user?.id;
+            if (userId) {
+                studentExamsByUserId.set(userId, studentExam);
+            }
+        });
+
+        return exam.examUsers.map((examUser) => {
+            const studentExam = examUser.user?.id ? studentExamsByUserId.get(examUser.user.id) : undefined;
+            const progress: ExamProgress = studentExam?.submitted ? 'submitted' : studentExam?.started ? 'started' : studentExam ? 'notStarted' : 'examMissing';
+
+            return Object.assign({}, examUser, {
+                didExamUserAttendExam: hasExamEnded ? !!studentExam?.started : examUser.didExamUserAttendExam,
+                workingTime: studentExam?.workingTime,
+                progress,
+                submissionDate: studentExam?.submissionDate,
+                numberOfExamSessions: studentExam?.examSessions?.length ?? 0,
+                studentExamId: studentExam?.id,
+            }) as ExamUserWithExamData;
+        });
+    });
+
+    readonly hasStudentsWithoutExam = computed(() => {
+        const registeredStudents = this.exam().examUsers?.length ?? 0;
+        return registeredStudents > 0 && this.studentExams().length < registeredStudents;
     });
 
     readonly hasExamStarted = signal(false);
@@ -119,7 +152,6 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isAdmin = signal(false);
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
-
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
     private dialogErrorSource = new Subject<string>();
@@ -157,6 +189,33 @@ export class ExamStudentsComponent implements OnDestroy {
             command: () => this.openVerifyAttendance(),
         },
     ]);
+
+    readonly studentExamsMenuActions = computed<MenuItem[]>(() => {
+        const isExamStarted = this.hasExamStarted();
+        const isLoading = this.isLoading();
+        const hasStudentsWithoutExam = this.hasStudentsWithoutExam();
+
+        return [
+            {
+                label: 'artemisApp.studentExams.generateStudentExams',
+                icon: 'pi pi-file-plus',
+                disabled: isExamStarted || isLoading,
+                command: () => this.handleGenerateStudentExams(),
+            },
+            {
+                label: 'artemisApp.studentExams.generateMissingStudentExams',
+                icon: 'pi pi-file-plus',
+                disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
+                command: () => this.generateMissingStudentExams(),
+            },
+            {
+                label: 'artemisApp.studentExams.startExercises',
+                icon: 'pi pi-play',
+                disabled: isExamStarted || isLoading,
+                command: () => this.startExercises(),
+            },
+        ];
+    });
 
     constructor() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -242,15 +301,16 @@ export class ExamStudentsComponent implements OnDestroy {
         const hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
         this.hasExamEnded.set(hasExamEnded);
 
-        if (hasExamEnded) {
-            this.studentExamService.findAllForExam(this.courseId(), exam.id!).subscribe((res) => {
-                this.studentExams.set(res.body || []);
-                this.isLoading.set(false);
-            });
-        } else {
-            this.studentExams.set([]); // Reset it just in case
+        if (!exam.id) {
+            this.studentExams.set([]);
             this.isLoading.set(false);
+            return;
         }
+
+        this.studentExamService.findAllForExam(this.courseId(), exam.id).subscribe((res) => {
+            this.studentExams.set(res.body || []);
+            this.isLoading.set(false);
+        });
     }
 
     ngOnDestroy() {
@@ -324,6 +384,69 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
+    /**
+     * Generate all student exams for the exam on the server and handle the result.
+     * Asks for confirmation if some exams already exist.
+     */
+    handleGenerateStudentExams() {
+        if (this.studentExams().length) {
+            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
+            modalRef.result.then(() => {
+                this.generateStudentExams();
+            });
+        } else {
+            this.generateStudentExams();
+        }
+    }
+
+    /**
+     * Generate missing student exams for the exam on the server and handle the result.
+     * Student exams can be missing if a student was added after the initial generation of all student exams.
+     */
+    generateMissingStudentExams() {
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.examManagementService.generateMissingStudentExams(this.courseId(), examId).subscribe({
+            next: (res) => {
+                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
+                this.reloadExamWithRegisteredUsers();
+                this.isLoading.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
+                this.isLoading.set(false);
+            },
+        });
+    }
+
+    /**
+     * Starts all the exercises of the student exams that belong to the exam
+     */
+    startExercises() {
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.examManagementService.startExercises(this.courseId(), examId).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
+                this.isLoading.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.startExerciseFailure', err);
+                this.isLoading.set(false);
+            },
+        });
+    }
+
     attendanceCheckFailed(examUser: ExamUser | undefined) {
         return (
             examUser?.didExamUserAttendExam &&
@@ -348,7 +471,56 @@ export class ExamStudentsComponent implements OnDestroy {
         return !examUser?.didExamUserAttendExam && this.hasExamEnded();
     }
 
-    asExamUser(value: ExamUser | undefined) {
-        return value as ExamUser | undefined;
+    asExamUserWithExamData(value: ExamUserWithExamData | undefined) {
+        return value as ExamUserWithExamData | undefined;
+    }
+
+    viewStudentExam(examUser: ExamUserWithExamData) {
+        const examId = this.exam().id;
+        if (!examId || !examUser.studentExamId) {
+            return;
+        }
+
+        this.router.navigate(['/course-management', this.courseId(), 'exams', examId, 'student-exams', examUser.studentExamId]);
+    }
+
+    private generateStudentExams() {
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.examManagementService.generateStudentExams(this.courseId(), examId).subscribe({
+            next: (res) => {
+                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
+                this.reloadExamWithRegisteredUsers();
+                this.isLoading.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
+                this.isLoading.set(false);
+            },
+        });
+    }
+
+    /**
+     * Shows the translated error message if an error key is available in the error response. Otherwise it defaults to the generic alert.
+     * @param translationString the string identifier in the translation service for the text. This is ignored if the response does not contain an error message or error key.
+     * @param err the error response
+     */
+    private handleError(translationString: string, err: HttpErrorResponse) {
+        let errorDetail;
+        if (err?.error && err.error.errorKey) {
+            errorDetail = this.artemisTranslatePipe.transform(err.error.errorKey);
+        } else {
+            errorDetail = err?.error?.message;
+        }
+        if (errorDetail) {
+            this.alertService.error(translationString, { message: errorDetail });
+        } else {
+            // Sometimes the response does not have an error field, so we default to generic error handling
+            onError(this.alertService, err);
+        }
     }
 }

@@ -591,6 +591,7 @@
                 "menu": {
                     "manageStudents": "Manage students",
                     "examLogistics": "Exam logistics",
+                    "manageStudentExams": "Manage student exams",
                     "addStudents": "Add students",
                     "importUsers": "Import users",
                     "exportUsers": "Export users",

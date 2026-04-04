@@ -25,6 +25,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -66,6 +70,17 @@ describe('ExamStudentsComponent', () => {
         data: of({ exam: examWithCourse }),
     } as any as ActivatedRoute;
 
+    const studentExams: StudentExam[] = [
+        Object.assign(new StudentExam(), {
+            id: 123,
+            user: user1,
+            workingTime: 3600,
+            started: true,
+            submitted: false,
+            examSessions: [{}, {}],
+        }),
+    ];
+
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
@@ -88,6 +103,10 @@ describe('ExamStudentsComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DeleteDialogService, useClass: MockDialogService },
+                MockProvider(StudentExamService, {
+                    findAllForExam: () => of(new HttpResponse({ body: studentExams })),
+                }),
+                MockProvider(AlertService),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
@@ -107,7 +126,11 @@ describe('ExamStudentsComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId()).toEqual(course.id);
         expect(component.exam()).toEqual(examWithCourse);
-        expect(component.isLoading()).toBe(false);
+        expect(component.allRegisteredUsers()[0].studentExamId).toBe(123);
+        expect(component.allRegisteredUsers()[0].numberOfExamSessions).toBe(2);
+        expect(component.allRegisteredUsers()[0].progress).toBe('started');
+        expect(component.allRegisteredUsers()[1].studentExamId).toBeUndefined();
+        expect(component.allRegisteredUsers()[1].progress).toBe('examMissing');
     });
 
     it('should reload with only registered users', () => {
@@ -125,9 +148,10 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam()).toEqual(examWithOneUser);
-        expect(component.allRegisteredUsers()).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ]);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user2.id);
+        expect(component.allRegisteredUsers()[0].studentExamId).toBeUndefined();
+        expect(component.allRegisteredUsers()[0].progress).toBe('examMissing');
     });
 
     it('should remove users from the exam', () => {
@@ -148,9 +172,8 @@ describe('ExamStudentsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
-        expect(component.allRegisteredUsers()).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-        ]);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user1.id);
     });
 
     it('should register all enrolled students of the course to the exam', () => {
@@ -168,9 +191,8 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allRegisteredUsers()).toEqual([
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ]);
+        expect(component.allRegisteredUsers()).toHaveLength(1);
+        expect(component.allRegisteredUsers()[0].user?.id).toBe(user2.id);
     });
 
     it('should remove all users from the exam', () => {

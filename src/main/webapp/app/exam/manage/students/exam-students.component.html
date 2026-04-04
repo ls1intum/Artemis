@@ -19,6 +19,13 @@
                 buttonIconClass="pi pi-th-large"
                 [disabled]="isTestExam()"
             />
+            <jhi-exam-students-menu-button
+                [model]="studentExamsMenuActions()"
+                label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
+                buttonIconClass="pi pi-file-edit"
+                [disabled]="isTestExam()"
+                buttonClass="ms-2"
+            />
         </ng-template>
     </p-toolbar>
 
@@ -84,13 +91,28 @@
                         </div>
                     </th>
                 }
+                <th style="min-width: 4rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <span> Working time </span>
+                    </div>
+                </th>
+                <th style="min-width: 8rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <span> Progress </span>
+                    </div>
+                </th>
+                <th style="min-width: 4rem">
+                    <div class="d-flex align-items-center gap-2">
+                        <span> Sessions </span>
+                    </div>
+                </th>
                 <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
                     <span class="d-flex align-items-center gap-2">Actions</span>
                 </th>
             </tr>
         </ng-template>
         <ng-template #body let-student>
-            @let examUser = asExamUser(student)!;
+            @let examUser = asExamUserWithExamData(student)!;
             <tr>
                 <td>
                     <img
@@ -131,7 +153,11 @@
                     }
                 </td>
                 <td>
-                    <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
+                    @if (examUser.user?.visibleRegistrationNumber) {
+                        <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
+                    } @else {
+                        <span>-</span>
+                    }
                 </td>
                 <td>
                     @if (examUser.actualRoom) {
@@ -139,9 +165,13 @@
                             <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</del>
                             <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
                         </div>
-                    } @else {
+                    } @else if (examUser.plannedRoom) {
                         <div>
                             <span title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <span>-</span>
                         </div>
                     }
                 </td>
@@ -151,9 +181,13 @@
                             <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</del>
                             <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
                         </div>
-                    } @else {
+                    } @else if (examUser.plannedSeat) {
                         <div>
                             <span title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <span>-</span>
                         </div>
                     }
                 </td>
@@ -174,6 +208,29 @@
                         }
                     </td>
                 }
+                <td>
+                    @if (examUser.workingTime !== undefined) {
+                        <span>{{ examUser.workingTime | artemisDurationFromSeconds }}</span>
+                    } @else {
+                        <span>-</span>
+                    }
+                </td>
+                <td>
+                    @if (examUser.progress === 'submitted' && examUser.submissionDate) {
+                        <span> Submitted on {{ examUser.submissionDate | artemisDate }}</span>
+                    } @else if (examUser.progress === 'submitted') {
+                        <span> Submitted </span>
+                    } @else if (examUser.progress === 'started') {
+                        <span> Started </span>
+                    } @else if (examUser.progress === 'notStarted') {
+                        <span> Not started </span>
+                    } @else {
+                        <span> Exam missing </span>
+                    }
+                </td>
+                <td>
+                    <span>{{ examUser.numberOfExamSessions }}</span>
+                </td>
                 <td alignFrozen="right" pFrozenColumn>
                     <div class="d-flex gap-1">
                         <button
@@ -185,6 +242,9 @@
                             [disabled]="isTestExam()"
                         >
                             <fa-icon [icon]="faChair" />
+                        </button>
+                        <button pButton size="small" severity="primary" title="View exam" (click)="viewStudentExam(examUser)" [disabled]="!examUser.studentExamId">
+                            <i class="pi pi-file-edit"></i>
                         </button>
                         <button
                             pButton

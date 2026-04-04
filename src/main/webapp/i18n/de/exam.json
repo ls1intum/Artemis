@@ -590,7 +590,8 @@
                 "verifyChecks": "Anwesenheitskontrollen überprüfen",
                 "menu": {
                     "manageStudents": "Studierende verwalten",
-                    "examLogistics": "Prüfungslogistik",
+                    "examLogistics": "Klausurlogistik",
+                    "manageStudentExams": "Individuelle Klausuren verwalten",
                     "addStudents": "Studierende hinzufügen",
                     "importUsers": "Nutzer importieren",
                     "exportUsers": "Nutzer exportieren",
