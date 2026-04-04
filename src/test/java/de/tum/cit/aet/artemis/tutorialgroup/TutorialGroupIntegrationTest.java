@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -36,10 +38,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentImportDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
 
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -1003,6 +1007,108 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void importTutorialGroupsWithRegistrations_shouldWorkAsExpected() throws Exception {
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup2.getTitle(), firstCourseStudent2);
+            assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
+            assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent4);
+
+            var freshTitle = "fresh-group";
+            assertTutorialWithTitleDoesNotExistInDb(freshTitle);
+
+            // from existing group to existing group
+            var firstImport = new TutorialGroupImportDataDTO(firstCourseTutorialGroup2.getTitle(),
+                    new StudentDTO(firstCourseStudent1.getLogin(), firstCourseStudent1.getFirstName(), firstCourseStudent1.getLastName(), "", ""), null, null, null, null, null);
+
+            // from no group to existing group
+            var secondImport = new TutorialGroupImportDataDTO(firstCourseTutorialGroup1.getTitle(), new StudentDTO("", firstCourseStudent3.getFirstName(),
+                    firstCourseStudent3.getLastName(), firstCourseStudent3.getRegistrationNumber(), firstCourseStudent3.getEmail()), null, null, null, null, null);
+
+            // from no group to fresh group
+            var thirdImport = new TutorialGroupImportDataDTO(freshTitle, new StudentDTO(firstCourseStudent4), null, null, null, null, null);
+
+            // from existing group to fresh group
+            var fourthImport = new TutorialGroupImportDataDTO(freshTitle, new StudentDTO(firstCourseStudent2), null, null, null, null, null);
+
+            var importResult = request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import",
+                    List.of(firstImport, secondImport, thirdImport, fourthImport), TutorialGroupImportDataDTO.class, HttpStatus.OK);
+
+            assertThat(importResult).hasSize(4);
+            assertThat(importResult.stream().map(TutorialGroupImportDataDTO::importSuccessful)).allMatch(Boolean.TRUE::equals);
+            assertThat(importResult.stream().map(TutorialGroupImportDataDTO::error)).allMatch(Objects::isNull);
+            assertThat(importResult).containsExactlyInAnyOrder(firstImport, secondImport, thirdImport, fourthImport);
+
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup2.getTitle(), firstCourseStudent1);
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent3);
+            assertImportedTutorialGroupWithTitleInDb(freshTitle, Set.of(firstCourseStudent2, firstCourseStudent4), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void importTutorialGroupsWithRegistrations_withoutTitle_shouldNotCreateTutorialGroup() throws Exception {
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);
+
+            var emptyTitle = "";
+            var registration = new TutorialGroupImportDataDTO(emptyTitle, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
+
+            var importResult = request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(registration),
+                    TutorialGroupImportDataDTO.class, HttpStatus.OK);
+
+            assertThat(importResult).hasSize(1);
+            assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
+            assertThat(importResult.getFirst().importSuccessful()).isFalse();
+            assertThat(importResult.getFirst().error()).isEqualTo(TutorialGroupImportErrors.NO_TITLE);
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void importTutorialGroupsWithRegistrations_titleButNonExistingStudent_shouldStillCreateTutorialGroupButNoRegistration() throws Exception {
+            var freshTitle = "missing-student";
+            var registration = new TutorialGroupImportDataDTO(freshTitle, new StudentDTO("notExisting", "firstName", "lastName", "", ""), null, null, null, null, null);
+            assertTutorialWithTitleDoesNotExistInDb(freshTitle);
+
+            var importResult = request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(registration),
+                    TutorialGroupImportDataDTO.class, HttpStatus.OK);
+
+            assertImportedTutorialGroupWithTitleInDb(freshTitle, Set.of(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+            assertThat(importResult).hasSize(1);
+            assertThat(importResult.getFirst().importSuccessful()).isFalse();
+            assertThat(importResult.getFirst().error()).isEqualTo(TutorialGroupImportErrors.NO_USER_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void importTutorialGroupsWithRegistrations_titleButSameStudentToMultipleGroups_shouldStillCreateTutorialGroupsButNoRegistration() throws Exception {
+            var freshTitleOne = "duplicate-group-1";
+            var freshTitleTwo = "duplicate-group-2";
+
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);
+            assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
+
+            var reg1 = new TutorialGroupImportDataDTO(freshTitleOne, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
+            var reg2 = new TutorialGroupImportDataDTO(freshTitleTwo, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
+            var reg3 = new TutorialGroupImportDataDTO(freshTitleOne, new StudentDTO(firstCourseStudent3), null, null, null, null, null);
+            var reg4 = new TutorialGroupImportDataDTO(freshTitleTwo, new StudentDTO(firstCourseStudent3), null, null, null, null, null);
+
+            var importResult = request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(reg1, reg2, reg3, reg4),
+                    TutorialGroupImportDataDTO.class, HttpStatus.OK);
+
+            assertImportedTutorialGroupWithTitleInDb(freshTitleOne, Set.of(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+            assertImportedTutorialGroupWithTitleInDb(freshTitleTwo, Set.of(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+            assertThat(importResult).hasSize(4);
+            assertThat(importResult.stream().map(TutorialGroupImportDataDTO::importSuccessful)).allMatch(Boolean.FALSE::equals);
+            assertThat(importResult.stream().map(TutorialGroupImportDataDTO::error)).allMatch(TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
+            assertThat(importResult).containsExactlyInAnyOrder(reg1, reg2, reg3, reg4);
+
+            assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);
+            assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
+
+            asserTutorialGroupChannelIsCorrectlyConfigured(firstCourseTutorialGroup1);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void testCSVContentWithSampleData() throws Exception {
             tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
                     Set.of(firstCourseStudent1));
@@ -1144,6 +1250,31 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertThat(jsonResponse).contains("SampleInfo2");
             assertThat(jsonResponse).contains("GERMAN");
             assertThat(jsonResponse).contains("20");
+        }
+
+        private void assertUserIsRegisteredInTutorialWithTitle(String title, User user) {
+            var tutorialGroup = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).stream().filter(group -> title.equals(group.getTitle())).findFirst().orElseThrow();
+            var registeredUsers = tutorialGroupRegistrationTestRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
+                    .stream().map(registration -> registration.getStudent().getId()).collect(Collectors.toSet());
+            assertThat(registeredUsers).contains(user.getId());
+        }
+
+        private void assertUserIsNotRegisteredInATutorialGroup(User user) {
+            assertThat(tutorialGroupRegistrationTestRepository.countByStudentAndTutorialGroupCourseIdAndType(user, exampleCourseId,
+                    TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isZero();
+        }
+
+        private void assertTutorialWithTitleDoesNotExistInDb(String title) {
+            assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).stream().noneMatch(group -> title.equals(group.getTitle()))).isTrue();
+        }
+
+        private void assertImportedTutorialGroupWithTitleInDb(String title, Set<User> expectedStudents, String expectedTutorLogin) {
+            var tutorialGroup = tutorialGroupTestRepository.findAllByCourseId(exampleCourseId).stream().filter(group -> title.equals(group.getTitle())).findFirst().orElseThrow();
+            assertThat(tutorialGroup.getTeachingAssistant()).isNotNull();
+            assertThat(tutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(expectedTutorLogin);
+            var registeredStudents = tutorialGroupRegistrationTestRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
+                    .stream().map(registration -> registration.getStudent().getId()).collect(Collectors.toSet());
+            assertThat(registeredStudents).containsExactlyInAnyOrderElementsOf(expectedStudents.stream().map(User::getId).collect(Collectors.toSet()));
         }
     }
 }
