@@ -9,8 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialRegistrationsImportModalTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 import { ImportFlowStep, TutorialRegistrationsImportModalComponent } from './tutorial-registrations-import-modal.component';
@@ -20,12 +19,13 @@ import { LoadingIndicatorOverlayStubComponent } from 'src/test/javascript/spec/h
 import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
 import { TutorialRegistrationsImportModalTableStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-registrations-import-modal-table-stub.component';
 import { TutorialRegistrationsImportModalTableRow } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 interface AlertServiceMock {
     addErrorAlert: ReturnType<typeof vi.fn>;
 }
 
-interface TutorialGroupsServiceMock {
+interface TutorialGroupApiServiceMock {
     importRegistrations: ReturnType<typeof vi.fn>;
 }
 
@@ -46,15 +46,15 @@ describe('TutorialRegistrationsImportModalComponent', () => {
     let fixture: ComponentFixture<TutorialRegistrationsImportModalComponent>;
 
     let alertServiceMock: AlertServiceMock;
-    let tutorialGroupsServiceMock: TutorialGroupsServiceMock;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let tutorialGroupRegisteredStudentsServiceMock: TutorialGroupRegisteredStudentsServiceMock;
 
     const firstParsedStudent: StudentDTO = { login: 'ada', registrationNumber: 'R001', firstName: '', lastName: '', email: '' };
     const secondParsedStudent: StudentDTO = { login: 'alan', registrationNumber: 'R002', firstName: '', lastName: '', email: '' };
     const thirdParsedStudent: StudentDTO = { login: '', registrationNumber: 'R003', firstName: '', lastName: '', email: '' };
-    const firstStudent: TutorialGroupRegisterStudentDTO = { login: 'ada', registrationNumber: 'R001' };
-    const secondStudent: TutorialGroupRegisterStudentDTO = { login: 'alan', registrationNumber: 'R002' };
-    const thirdStudent: TutorialGroupRegisterStudentDTO = { login: '', registrationNumber: 'R003' };
+    const firstStudent: TutorialGroupRegisterStudentRequest = { login: 'ada', registrationNumber: 'R001' };
+    const secondStudent: TutorialGroupRegisterStudentRequest = { login: 'alan', registrationNumber: 'R002' };
+    const thirdStudent: TutorialGroupRegisterStudentRequest = { login: '', registrationNumber: 'R003' };
     const exampleRows: TutorialRegistrationsImportModalTableRow[] = [
         { login: 'user_1', registrationNumber: undefined, markFilledCells: false },
         { login: undefined, registrationNumber: 'ge86vox', markFilledCells: false },
@@ -154,7 +154,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             addErrorAlert: vi.fn(),
         };
 
-        tutorialGroupsServiceMock = {
+        tutorialGroupApiServiceMock = {
             importRegistrations: vi.fn(),
         };
 
@@ -166,7 +166,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             imports: [TutorialRegistrationsImportModalComponent],
             providers: [
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: TutorialGroupsService, useValue: tutorialGroupsServiceMock },
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -324,7 +324,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        tutorialGroupsServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [] })));
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [] })));
 
         component.open();
         fixture.detectChanges();
@@ -352,8 +352,8 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        const response$ = new Subject<HttpResponse<TutorialGroupRegisterStudentDTO[]>>();
-        tutorialGroupsServiceMock.importRegistrations.mockReturnValue(response$.asObservable());
+        const response$ = new Subject<HttpResponse<TutorialGroupRegisterStudentRequest[]>>();
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(response$.asObservable());
 
         component.open();
         fixture.detectChanges();
@@ -368,7 +368,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(tutorialGroupsServiceMock.importRegistrations).toHaveBeenCalledWith(7, 11, [firstStudent, secondStudent]);
+        expect(tutorialGroupApiServiceMock.importRegistrations).toHaveBeenCalledWith(7, 11, [firstStudent, secondStudent], 'response');
         expect(component.isLoading()).toBe(true);
         expect(fixture.nativeElement.querySelector('jhi-loading-indicator-overlay')).not.toBeNull();
 
@@ -389,7 +389,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent, thirdParsedStudent],
         });
-        tutorialGroupsServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [secondStudent, thirdStudent] })));
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ status: 200, body: [secondStudent, thirdStudent] })));
 
         component.open();
         fixture.detectChanges();
@@ -426,7 +426,7 @@ describe('TutorialRegistrationsImportModalComponent', () => {
             ok: true,
             students: [firstParsedStudent, secondParsedStudent],
         });
-        tutorialGroupsServiceMock.importRegistrations.mockReturnValue(throwError(() => new Error('import failed')));
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(throwError(() => new Error('import failed')));
 
         component.open();
         fixture.detectChanges();
