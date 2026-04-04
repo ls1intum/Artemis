@@ -596,6 +596,18 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    switchToNewSession(mode: ChatServiceMode, id?: number): void {
+        const modeUrl = chatModeToUrlComponent(mode);
+        this.sessionCreationIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
+        this.close();
+        if (this.sessionCreationIdentifier) {
+            this.createNewSession().subscribe({
+                ...this.handleNewSession(),
+                complete: () => this.loadChatSessions(),
+            });
+        }
+    }
+
     switchToSession(session: IrisSessionDTO): void {
         if (this.sessionId === session.id) {
             return;

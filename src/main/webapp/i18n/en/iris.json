@@ -149,6 +149,13 @@
                 "unitLabel": "Unit:",
                 "lectureLabel": "Lecture:"
             },
+            "contextSelection": {
+                "search": "Search...",
+                "placeholder": "Select context...",
+                "courseGroup": "Course",
+                "lecturesGroup": "Lectures",
+                "exercisesGroup": "Exercises"
+            },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."

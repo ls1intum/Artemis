@@ -386,6 +386,9 @@
                                 #messageTextarea
                             >
                             </textarea>
+                            @if (isChatHistoryAvailable()) {
+                                <jhi-context-selection />
+                            }
                             <jhi-button
                                 id="irisSendButton"
                                 class="send-button"

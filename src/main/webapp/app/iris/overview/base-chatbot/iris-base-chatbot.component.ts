@@ -71,6 +71,7 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -113,6 +114,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
         MenuModule,
+        ContextSelectionComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,

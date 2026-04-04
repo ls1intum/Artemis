@@ -145,6 +145,13 @@
                 "incorrect": "Falsch.",
                 "explanation": "Erklärung:"
             },
+            "contextSelection": {
+                "search": "Suchen...",
+                "placeholder": "Kontext auswählen...",
+                "courseGroup": "Kurs",
+                "lecturesGroup": "Vorlesungen",
+                "exercisesGroup": "Aufgaben"
+            },
             "citation": {
                 "unitLabel": "Einheit:",
                 "lectureLabel": "Vorlesung:"
