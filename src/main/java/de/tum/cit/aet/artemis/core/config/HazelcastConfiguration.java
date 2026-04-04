@@ -264,8 +264,22 @@ public class HazelcastConfiguration {
      * @return the Hazelcast-backed CacheManager for Spring's caching abstraction
      */
     @Bean
-    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, io.micrometer.core.instrument.MeterRegistry meterRegistry) {
         log.debug("Starting HazelcastCacheManager");
+        // Bind Hazelcast IMap metrics to Micrometer so the admin metrics page shows cache statistics.
+        // Without this, the JCache bridge provides L2 cache functionality but does not expose metrics.
+        for (String mapName : hazelcastInstance.getConfig().getMapConfigs().keySet()) {
+            if ("default".equals(mapName)) {
+                continue;
+            }
+            try {
+                com.hazelcast.map.IMap<Object, Object> map = hazelcastInstance.getMap(mapName);
+                new io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics(map, java.util.List.of()).bindTo(meterRegistry);
+            }
+            catch (Exception e) {
+                log.debug("Could not bind cache metrics for map '{}': {}", mapName, e.getMessage());
+            }
+        }
         return new HazelcastCacheManager(hazelcastInstance);
     }
 
