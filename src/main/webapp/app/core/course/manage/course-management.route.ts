@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
-import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
+import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
@@ -83,7 +83,7 @@ export const courseManagementRoutes: Routes = [
             {
                 path: ':courseId/tutorial-groups',
                 resolve: {
-                    course: TutorialGroupManagementResolve,
+                    course: TutorialGroupManagementCourseResolver,
                 },
                 loadChildren: () => import('app/tutorialgroup/manage/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
             },
