@@ -34,8 +34,7 @@ public class CustomMetricsExtensionConfiguration {
         /**
          * customMetricsExtension.
          *
-         * @param artemisMetricsEndpoint Default Artemis Metrics
-         * @param simpUserRegistry       Registry used to retrieve the number of active users.
+         * @param simpUserRegistry Registry used to retrieve the number of active users.
          * @return CustomMetricsExtension object.
          */
         @Bean
@@ -43,9 +42,8 @@ public class CustomMetricsExtensionConfiguration {
         @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsCollector.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsService,
-                SimpUserRegistry simpUserRegistry) {
-            return new CustomMetricsExtension(artemisMetricsEndpoint, nodeMetricsService, simpUserRegistry);
+        public CustomMetricsExtension customMetricsExtension(NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
+            return new CustomMetricsExtension(nodeMetricsService, simpUserRegistry);
         }
     }
 }

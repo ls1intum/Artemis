@@ -59,6 +59,7 @@ public class ArtemisMetricsEndpoint {
      * @return a map keyed by category containing metric details
      */
     @ReadOperation
+    // TODO: use DTO here instead of Map
     public Map<String, Object> allMetrics() {
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("jvm", jvmMemoryMetrics());
@@ -75,6 +76,7 @@ public class ArtemisMetricsEndpoint {
      * Collects JVM memory metrics per memory pool in the format:
      * { "poolName": { "committed": bytes, "max": bytes, "used": bytes } }
      */
+    // TODO: use DTO here instead of Map
     private Map<String, Map<String, Long>> jvmMemoryMetrics() {
         Map<String, Map<String, Long>> jvm = new LinkedHashMap<>();
 
@@ -100,6 +102,7 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects process-level metrics (CPU, uptime, file descriptors).
      */
+    // TODO: use DTO here instead of Map
     private Map<String, Number> processMetrics() {
         Map<String, Number> pm = new LinkedHashMap<>();
         pm.put("system.cpu.usage", gaugeValue("system.cpu.usage"));
@@ -116,6 +119,7 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects garbage collector and class loading metrics.
      */
+    // TODO: use DTO here instead of Map
     private Map<String, Object> garbageCollectorMetrics() {
         Map<String, Object> gc = new LinkedHashMap<>();
         gc.put("jvm.gc.live.data.size", gaugeValue("jvm.gc.live.data.size"));
@@ -132,6 +136,7 @@ public class ArtemisMetricsEndpoint {
      * Collects HTTP server request metrics grouped by status code.
      * Format: { "all": { "count": N }, "percode": { "200": { "max": ms, "mean": ms, "count": N }, ... } }
      */
+    // TODO: use DTO here instead of Map
     private Map<String, Object> httpRequestMetrics() {
         Map<String, Object> http = new LinkedHashMap<>();
         Map<String, Map<String, Number>> perCode = new TreeMap<>();
@@ -165,19 +170,20 @@ public class ArtemisMetricsEndpoint {
     }
 
     /**
-     * Collects cache metrics (hits, misses, puts, evictions, removals) per cache name.
+     * Collects cache metrics (hits, misses, puts, evictions, size) per cache name.
      */
     private Map<String, Map<String, Number>> cacheMetrics() {
         Map<String, Map<String, Number>> caches = new TreeMap<>();
 
         meterRegistry.find("cache.gets").meters().forEach(meter -> processCacheMeter(caches, meter));
         meterRegistry.find("cache.puts").meters().forEach(meter -> processCacheMeter(caches, meter));
-        meterRegistry.find("cache.removals").meters().forEach(meter -> processCacheMeter(caches, meter));
         meterRegistry.find("cache.evictions").meters().forEach(meter -> processCacheMeter(caches, meter));
+        meterRegistry.find("cache.size").meters().forEach(meter -> processCacheMeter(caches, meter));
 
         return caches;
     }
 
+    // TODO: use DTO here instead of Map
     private void processCacheMeter(Map<String, Map<String, Number>> caches, Meter meter) {
         String cacheName = meter.getId().getTag("cache");
         if (cacheName == null) {
@@ -192,8 +198,9 @@ public class ArtemisMetricsEndpoint {
             defaults.put("cache.gets.hit", 0.0);
             defaults.put("cache.gets.miss", 0.0);
             defaults.put("cache.puts", 0.0);
-            defaults.put("cache.removals", 0.0);
             defaults.put("cache.evictions", 0.0);
+            defaults.put("cache.removals", 0.0);
+            defaults.put("cache.size", 0.0);
             return defaults;
         });
 
@@ -207,6 +214,7 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects datasource / connection pool metrics.
      */
+    // TODO: use DTO here instead of Map
     private Map<String, Object> databaseMetrics() {
         Map<String, Object> db = new LinkedHashMap<>();
         db.put("min", Map.of("value", gaugeValue("hikaricp.connections.min")));
@@ -225,6 +233,7 @@ public class ArtemisMetricsEndpoint {
      * Collects per-endpoint request metrics grouped by URI and HTTP method.
      * Format: { "/api/courses": { "GET": { "count": N, "mean": ms, "max": ms } } }
      */
+    // TODO: we should avoid Map<String, Map<String, Map<String, Number>>> and rather use DTOs here
     private Map<String, Map<String, Map<String, Number>>> endpointMetrics() {
         Map<String, Map<String, Map<String, Number>>> services = new TreeMap<>();
 
@@ -256,7 +265,7 @@ public class ArtemisMetricsEndpoint {
     }
 
     // --- Helper methods ---
-
+    // TODO: use DTO here instead of Map
     private static Map<String, Number> newMutableMap(long count, double mean, double max) {
         Map<String, Number> map = new LinkedHashMap<>();
         map.put("count", count);
@@ -289,6 +298,7 @@ public class ArtemisMetricsEndpoint {
         return 0;
     }
 
+    // TODO: use DTO here instead of Map
     private Map<String, Number> timerSummary(String meterName) {
         Map<String, Number> summary = new LinkedHashMap<>();
         var timer = meterRegistry.find(meterName).timer();

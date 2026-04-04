@@ -33,14 +33,11 @@ import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 @EndpointWebExtension(endpoint = ArtemisMetricsEndpoint.class)
 public class CustomMetricsExtension {
 
-    private final ArtemisMetricsEndpoint artemisMetricsEndpoint;
-
     private final NodeMetricsCollector nodeMetricsService;
 
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
-        this.artemisMetricsEndpoint = artemisMetricsEndpoint;
+    public CustomMetricsExtension(NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
         this.nodeMetricsService = nodeMetricsService;
         this.simpUserRegistry = simpUserRegistry;
     }
@@ -51,6 +48,7 @@ public class CustomMetricsExtension {
      * @return aggregated metrics with active user count
      */
     @ReadOperation
+    // TODO: use a DTO instead of Map here
     public Map<String, Object> getMetrics() {
         var metrics = new LinkedHashMap<>(nodeMetricsService.getAggregatedMetrics());
         metrics.put("customMetrics", Map.of("activeUsers", this.simpUserRegistry.getUserCount()));
@@ -66,6 +64,7 @@ public class CustomMetricsExtension {
      * @param nodeId the node UUID or "nodes" for the node list
      * @return node-specific metrics, or the node list
      */
+    // TODO: use a DTO instead of Map here, avoid using Object as generic return type.
     @ReadOperation
     public Object getMetricsByNode(@Selector @Nullable String nodeId) {
         if (nodeId == null || "all".equals(nodeId)) {

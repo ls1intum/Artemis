@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
@@ -35,6 +37,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -55,6 +58,7 @@ import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.config.SplitBrainProtectionConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
@@ -62,6 +66,8 @@ import com.hazelcast.spring.context.SpringManagedContext;
 import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 
 /**
  * Configures and initializes the Hazelcast distributed data grid for Artemis.
@@ -164,6 +170,8 @@ public class HazelcastConfiguration {
 
     private final EurekaInstanceHelper eurekaInstanceHelper;
 
+    private final MeterRegistry meterRegistry;
+
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")
     private String instanceName;
 
@@ -202,12 +210,13 @@ public class HazelcastConfiguration {
      * @param env                  Spring environment for profile checking
      */
     public HazelcastConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
-            EurekaInstanceHelper eurekaInstanceHelper, Environment env) {
+            EurekaInstanceHelper eurekaInstanceHelper, Environment env, MeterRegistry meterRegistry) {
         this.applicationContext = applicationContext;
         this.serverProperties = serverProperties;
         this.registration = registration;
         this.eurekaInstanceHelper = eurekaInstanceHelper;
         this.env = env;
+        this.meterRegistry = meterRegistry;
 
         // Disable Hazelcast telemetry
         // https://docs.hazelcast.com/hazelcast/5.5/phone-homes
@@ -264,23 +273,46 @@ public class HazelcastConfiguration {
      * @return the Hazelcast-backed CacheManager for Spring's caching abstraction
      */
     @Bean
-    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, io.micrometer.core.instrument.MeterRegistry meterRegistry) {
+    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
-        // Bind Hazelcast IMap metrics to Micrometer so the admin metrics page shows cache statistics.
-        // Without this, the JCache bridge provides L2 cache functionality but does not expose metrics.
-        for (String mapName : hazelcastInstance.getConfig().getMapConfigs().keySet()) {
-            if ("default".equals(mapName)) {
-                continue;
-            }
-            try {
-                com.hazelcast.map.IMap<Object, Object> map = hazelcastInstance.getMap(mapName);
-                new io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics(map, java.util.List.of()).bindTo(meterRegistry);
-            }
-            catch (Exception e) {
-                log.debug("Could not bind cache metrics for map '{}': {}", mapName, e.getMessage());
+        return new HazelcastCacheManager(hazelcastInstance);
+    }
+
+    /**
+     * Binds Hazelcast IMap metrics to Micrometer after the application is fully started.
+     * This must run after Hibernate has created all entity cache regions, which happens
+     * during EntityManagerFactory initialization (after the CacheManager bean is created).
+     * Without this, the admin metrics page shows empty cache statistics.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void bindCacheMetricsToMicrometer() {
+        if (meterRegistry == null) {
+            return;
+        }
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
+            return;
+        }
+        // Iterate all distributed objects (IMaps) that Hazelcast has created at runtime,
+        // including entity caches created by Hibernate's JCache bridge
+        int bound = 0;
+        for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
+            if (distributedObject instanceof IMap<?, ?> map) {
+                String mapName = map.getName();
+                // Skip internal Hazelcast maps and transient maps
+                if (mapName.startsWith("__") || "default".equals(mapName) || "nodeMetrics".equals(mapName)) {
+                    continue;
+                }
+                try {
+                    new HazelcastCacheMetrics(map, List.of()).bindTo(meterRegistry);
+                    bound++;
+                }
+                catch (Exception e) {
+                    log.debug("Could not bind cache metrics for '{}': {}", mapName, e.getMessage());
+                }
             }
         }
-        return new HazelcastCacheManager(hazelcastInstance);
+        log.info("Bound {} Hazelcast cache metrics to Micrometer", bound);
     }
 
     /**
@@ -335,20 +367,20 @@ public class HazelcastConfiguration {
      * because other components (especially JCache/Hibernate integration) look up the
      * HazelcastInstance by this specific name.
      *
-     * @param jHipsterProperties the JHipster properties containing cache configuration
-     *                               (TTL, backup count, etc.)
+     * @param artemisProperties the Artemis properties containing cache configuration
+     *                              (TTL, backup count, etc.)
      * @return the configured HazelcastInstance appropriate for the deployment context
      */
     @Bean(name = "hazelcastInstance")
-    public HazelcastInstance hazelcastInstance(ArtemisProperties jHipsterProperties) {
+    public HazelcastInstance hazelcastInstance(ArtemisProperties artemisProperties) {
         if (isTestEnvironment()) {
-            return createTestHazelcastInstance(jHipsterProperties);
+            return createTestHazelcastInstance(artemisProperties);
         }
         if (shouldRunAsHazelcastClient()) {
             log.info("Build agent connecting to core cluster as Hazelcast client");
             return createHazelcastClient();
         }
-        return createClusterMemberInstance(jHipsterProperties);
+        return createClusterMemberInstance(artemisProperties);
     }
 
     /**
@@ -421,17 +453,17 @@ public class HazelcastConfiguration {
      * <li>Race conditions in cache access leading to flaky tests</li>
      * </ul>
      *
-     * @param jHipsterProperties configuration for cache maps (TTL, backup count)
+     * @param artemisProperties configuration for cache maps (TTL, backup count)
      * @return a fully isolated HazelcastInstance for testing
      */
-    private HazelcastInstance createTestHazelcastInstance(ArtemisProperties jHipsterProperties) {
+    private HazelcastInstance createTestHazelcastInstance(ArtemisProperties artemisProperties) {
         log.debug("Creating isolated Hazelcast instance for testing");
 
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
-        configureCacheMaps(config, jHipsterProperties);
+        configureCacheMaps(config, artemisProperties);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         configureIsolatedNetworkingForTests(config);
@@ -506,10 +538,10 @@ public class HazelcastConfiguration {
      * accidental double-initialization, which could occur if Spring recreates this bean
      * during context refresh.
      *
-     * @param jHipsterProperties configuration containing cache TTL, backup count settings
+     * @param artemisProperties configuration containing cache TTL, backup count settings
      * @return the configured HazelcastInstance ready for cluster participation
      */
-    private HazelcastInstance createClusterMemberInstance(ArtemisProperties jHipsterProperties) {
+    private HazelcastInstance createClusterMemberInstance(ArtemisProperties artemisProperties) {
         log.debug("Configuring Hazelcast cluster member");
 
         HazelcastInstance existingInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -527,10 +559,10 @@ public class HazelcastConfiguration {
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         configureNetworkBindingAndDiscovery(config);
-        configureCacheMaps(config, jHipsterProperties);
+        configureCacheMaps(config, artemisProperties);
         configureSplitBrainProtection(config);
         configureClusterStabilitySettings(config);
-        configureLocalCIQueueIfNeeded(config, jHipsterProperties);
+        configureLocalCIQueueIfNeeded(config, artemisProperties);
         configureLiteMemberIfBuildAgent(config);
 
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
@@ -957,7 +989,7 @@ public class HazelcastConfiguration {
      * processed before lower-priority ones (e.g., practice submissions).
      *
      * <p>
-     * <strong>Backup Count:</strong> Configured from JHipster properties to ensure queue
+     * <strong>Backup Count:</strong> Configured from Artemis properties to ensure queue
      * durability. If the primary owner fails, a backup takes over without losing jobs.
      *
      * <p>
@@ -965,15 +997,15 @@ public class HazelcastConfiguration {
      * are active, avoiding unnecessary resource allocation in deployments that don't use
      * local CI (e.g., external CI systems like Jenkins).
      *
-     * @param config             the Hazelcast configuration to modify
-     * @param jHipsterProperties configuration for backup count
+     * @param config            the Hazelcast configuration to modify
+     * @param artemisProperties configuration for backup count
      */
-    private void configureLocalCIQueueIfNeeded(Config config, ArtemisProperties jHipsterProperties) {
+    private void configureLocalCIQueueIfNeeded(Config config, ArtemisProperties artemisProperties) {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             log.debug("Configuring Build Job Queue for Local CI");
             QueueConfig queueConfig = new QueueConfig("buildJobQueue");
-            queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
+            queueConfig.setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount());
             queueConfig.setPriorityComparatorClassName(LocalCIPriorityQueueComparator.class.getName());
             config.addQueueConfig(queueConfig);
         }
@@ -1249,19 +1281,20 @@ public class HazelcastConfiguration {
      * {@code de.tum.cit.aet.artemis.*.domain.*}) to apply configuration to all matching maps.
      * This is used for Hibernate entity caches which are named after their class names.
      *
-     * @param config             the Hazelcast configuration to modify
-     * @param jHipsterProperties configuration for TTL and backup count
+     * @param config            the Hazelcast configuration to modify
+     * @param artemisProperties configuration for TTL and backup count
      */
-    private void configureCacheMaps(Config config, ArtemisProperties jHipsterProperties) {
-        config.getMapConfigs().put("default", createDefaultMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("files", createFilesMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("atlas-session-pending-relations", createAtlasSessionMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("atlas-execution-plan", createAtlasSessionMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("atlas-session-exercise-preview", createAtlasSessionMapConfig(jHipsterProperties));
-        config.getMapConfigs().put("atlas-session-relation-preview", createAtlasSessionMapConfig(jHipsterProperties));
+    private void configureCacheMaps(Config config, ArtemisProperties artemisProperties) {
+        config.getMapConfigs().put("default", createDefaultMapConfig(artemisProperties));
+        config.getMapConfigs().put("files", createFilesMapConfig(artemisProperties));
+        // TODO: does that still work and will it create a cache config map for all entities?
+        config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(artemisProperties));
+        config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-session-pending-relations", createAtlasSessionMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-execution-plan", createAtlasSessionMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-session-exercise-preview", createAtlasSessionMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-session-relation-preview", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
     }
@@ -1270,7 +1303,7 @@ public class HazelcastConfiguration {
      * Creates the default map configuration used for any map not explicitly configured.
      *
      * <p>
-     * <strong>Backup Count:</strong> Configurable via JHipster properties. Backups ensure
+     * <strong>Backup Count:</strong> Configurable via Artemis properties. Backups ensure
      * data survives single-node failures. Typical values:
      * <ul>
      * <li>0: No backups (fastest, but data loss on node failure)</li>
@@ -1288,11 +1321,11 @@ public class HazelcastConfiguration {
      * member, not globally. This prevents a single node from being overwhelmed with data
      * while others have capacity.
      *
-     * @param jHipsterProperties configuration for backup count
+     * @param artemisProperties configuration for backup count
      * @return the default map configuration
      */
-    private MapConfig createDefaultMapConfig(ArtemisProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+    private MapConfig createDefaultMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
     }
 
@@ -1312,13 +1345,13 @@ public class HazelcastConfiguration {
      * <strong>LRU Eviction:</strong> Ensures frequently accessed files stay in cache while
      * rarely accessed files are evicted when memory is needed.
      *
-     * @param jHipsterProperties configuration for backup count and TTL
+     * @param artemisProperties configuration for backup count and TTL
      * @return the file cache map configuration
      */
-    private MapConfig createFilesMapConfig(ArtemisProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+    private MapConfig createFilesMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
-                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+                .setTimeToLiveSeconds(artemisProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     /**
@@ -1339,11 +1372,11 @@ public class HazelcastConfiguration {
      * can be reconstructed from the database, so durability is less critical than for
      * session or rate-limit data.
      *
-     * @param jHipsterProperties configuration for TTL
+     * @param artemisProperties configuration for TTL
      * @return the domain entity cache map configuration
      */
-    private MapConfig createDomainMapConfig(ArtemisProperties jHipsterProperties) {
-        return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    private MapConfig createDomainMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setTimeToLiveSeconds(artemisProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     /**
@@ -1367,12 +1400,12 @@ public class HazelcastConfiguration {
      * <strong>No Eviction:</strong> Rate limit state should not be evicted under memory
      * pressure - losing this state could allow rate limit bypass. The TTL handles cleanup.
      *
-     * @param jHipsterProperties configuration for backup count and TTL
+     * @param artemisProperties configuration for backup count and TTL
      * @return the rate limit buckets map configuration
      */
-    private MapConfig createRateLimitBucketsMapConfig(ArtemisProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
-                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    private MapConfig createRateLimitBucketsMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
+                .setTimeToLiveSeconds(artemisProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     /**
@@ -1401,11 +1434,11 @@ public class HazelcastConfiguration {
      * failures. This prevents users from losing in-progress work if their session's primary
      * node fails.
      *
-     * @param jHipsterProperties configuration for backup count
+     * @param artemisProperties configuration for backup count
      * @return the Atlas session cache map configuration
      */
-    private MapConfig createAtlasSessionMapConfig(ArtemisProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+    private MapConfig createAtlasSessionMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE)).setTimeToLiveSeconds(2 * 60 * 60);
     }
 
