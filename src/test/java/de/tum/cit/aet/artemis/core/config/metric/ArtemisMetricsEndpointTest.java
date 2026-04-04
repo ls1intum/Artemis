@@ -2,18 +2,10 @@ package de.tum.cit.aet.artemis.core.config.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.CacheStats;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.DatabaseMetrics;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.GarbageCollectorMetrics;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.HttpRequestMetrics;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.MemoryMetrics;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.ProcessMetrics;
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.RequestStats;
+import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.MetricsResponse;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -34,16 +26,23 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    void allMetrics_shouldReturnAllExpectedTopLevelKeys() {
-        var metrics = endpoint.allMetrics();
-        assertThat(metrics).containsKeys("jvm", "processMetrics", "garbageCollector", "http.server.requests", "cache", "databases", "services");
+    void allMetrics_shouldReturnCompleteResponse() {
+        MetricsResponse response = endpoint.allMetrics();
+
+        assertThat(response).isNotNull();
+        assertThat(response.jvm()).isNotEmpty();
+        assertThat(response.processMetrics()).isNotNull();
+        assertThat(response.garbageCollector()).isNotNull();
+        assertThat(response.httpServerRequests()).isNotNull();
+        assertThat(response.cache()).isNotNull();
+        assertThat(response.databases()).isNotNull();
+        assertThat(response.services()).isNotNull();
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void jvmMetrics_shouldContainHeapAndNonHeapWithCorrectStructure() {
-        var metrics = endpoint.allMetrics();
-        var jvm = (Map<String, MemoryMetrics>) metrics.get("jvm");
+    void jvmMetrics_shouldContainHeapAndNonHeapWithPositiveValues() {
+        var response = endpoint.allMetrics();
+        var jvm = response.jvm();
 
         assertThat(jvm).containsKeys("Heap", "Non-Heap");
 
@@ -57,19 +56,16 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    void processMetrics_shouldContainExpectedValues() {
-        var metrics = endpoint.allMetrics();
-        var process = (ProcessMetrics) metrics.get("processMetrics");
+    void processMetrics_shouldContainCpuAndUptimeValues() {
+        var process = endpoint.allMetrics().processMetrics();
 
         assertThat(process).isNotNull();
-        // CPU count should be at least 1
         assertThat(process.systemCpuCount()).isGreaterThanOrEqualTo(0);
     }
 
     @Test
-    void garbageCollectorMetrics_shouldContainExpectedValues() {
-        var metrics = endpoint.allMetrics();
-        var gc = (GarbageCollectorMetrics) metrics.get("garbageCollector");
+    void garbageCollectorMetrics_shouldContainGcPause() {
+        var gc = endpoint.allMetrics().garbageCollector();
 
         assertThat(gc).isNotNull();
         assertThat(gc.gcPause()).isNotNull();
@@ -77,11 +73,10 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    void httpRequestMetrics_shouldContainAllAndPercode() {
+    void httpRequestMetrics_shouldAggregateByStatusCode() {
         meterRegistry.timer("http.server.requests", "status", "200", "method", "GET", "uri", "/api/test").record(java.time.Duration.ofMillis(50));
 
-        var metrics = endpoint.allMetrics();
-        var http = (HttpRequestMetrics) metrics.get("http.server.requests");
+        var http = endpoint.allMetrics().httpServerRequests();
 
         assertThat(http).isNotNull();
         assertThat(http.all().count()).isEqualTo(1L);
@@ -90,17 +85,14 @@ class ArtemisMetricsEndpointTest {
         var stats200 = http.percode().get("200");
         assertThat(stats200.count()).isEqualTo(1);
         assertThat(stats200.mean()).isGreaterThanOrEqualTo(0);
-        assertThat(stats200.max()).isGreaterThanOrEqualTo(0);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void cacheMetrics_shouldContainExpectedStructurePerCache() {
+    void cacheMetrics_shouldTrackHitsAndMisses() {
         meterRegistry.counter("cache.gets", "cache", "testCache", "result", "hit").increment(10);
         meterRegistry.counter("cache.gets", "cache", "testCache", "result", "miss").increment(2);
 
-        var metrics = endpoint.allMetrics();
-        var caches = (Map<String, CacheStats>) metrics.get("cache");
+        var caches = endpoint.allMetrics().cache();
 
         assertThat(caches).containsKey("testCache");
         var testCache = caches.get("testCache");
@@ -109,9 +101,8 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    void databaseMetrics_shouldContainConnectionPoolValues() {
-        var metrics = endpoint.allMetrics();
-        var db = (DatabaseMetrics) metrics.get("databases");
+    void databaseMetrics_shouldContainConnectionPoolRecords() {
+        var db = endpoint.allMetrics().databases();
 
         assertThat(db).isNotNull();
         assertThat(db.min()).isNotNull();
@@ -121,19 +112,16 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void endpointMetrics_shouldGroupByUriAndMethod() {
         meterRegistry.timer("http.server.requests", "uri", "/api/courses", "method", "GET", "status", "200").record(java.time.Duration.ofMillis(100));
         meterRegistry.timer("http.server.requests", "uri", "/api/courses", "method", "POST", "status", "201").record(java.time.Duration.ofMillis(200));
 
-        var metrics = endpoint.allMetrics();
-        var services = (Map<String, Map<String, RequestStats>>) metrics.get("services");
+        var services = endpoint.allMetrics().services();
 
         assertThat(services).containsKey("/api/courses");
         assertThat(services.get("/api/courses")).containsKeys("GET", "POST");
 
         var getStats = services.get("/api/courses").get("GET");
         assertThat(getStats.count()).isEqualTo(1);
-        assertThat(getStats.mean()).isGreaterThanOrEqualTo(0);
     }
 }

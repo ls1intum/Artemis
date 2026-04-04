@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -14,17 +13,20 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
+import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.MetricsResponse;
 import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 
 /**
  * Extends the default Artemis metrics endpoint with multi-node aggregation
  * and active WebSocket user counts.
- * <p>
- * Supports node selection:
  * <ul>
  * <li>{@code GET /management/artemismetrics} — aggregated metrics from all nodes</li>
- * <li>{@code GET /management/artemismetrics/{nodeId}} — metrics for a specific node, or "nodes" to list available nodes</li>
+ * <li>{@code GET /management/artemismetrics/nodes} — list available cluster nodes</li>
+ * <li>{@code GET /management/artemismetrics/{nodeId}} — metrics for a specific node</li>
  * </ul>
  */
 @Component
@@ -33,50 +35,41 @@ import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 @EndpointWebExtension(endpoint = ArtemisMetricsEndpoint.class)
 public class CustomMetricsExtension {
 
-    private final NodeMetricsCollector nodeMetricsService;
+    private final NodeMetricsCollector nodeMetricsCollector;
 
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
-        this.nodeMetricsService = nodeMetricsService;
+    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsCollector, SimpUserRegistry simpUserRegistry) {
+        this.nodeMetricsCollector = nodeMetricsCollector;
         this.simpUserRegistry = simpUserRegistry;
     }
 
-    /**
-     * Returns aggregated metrics from all cluster nodes (default view).
-     *
-     * @return aggregated metrics with active user count
-     */
-    @ReadOperation
-    // TODO: use a DTO instead of Map here
-    public Map<String, Object> getMetrics() {
-        var metrics = new LinkedHashMap<>(nodeMetricsService.getAggregatedMetrics());
-        metrics.put("customMetrics", Map.of("activeUsers", this.simpUserRegistry.getUserCount()));
-        return metrics;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record ExtendedMetricsResponse(@JsonUnwrapped MetricsResponse metrics, CustomMetrics customMetrics) {
     }
 
-    /**
-     * Returns metrics for a specific node or the list of available nodes.
-     * <p>
-     * If {@code nodeId} is "nodes", returns the list of available cluster nodes.
-     * Otherwise, returns the metrics snapshot for the specified node.
-     *
-     * @param nodeId the node UUID or "nodes" for the node list
-     * @return node-specific metrics, or the node list
-     */
-    // TODO: use a DTO instead of Map here, avoid using Object as generic return type.
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CustomMetrics(int activeUsers) {
+    }
+
+    @ReadOperation
+    public ExtendedMetricsResponse getMetrics() {
+        var metrics = nodeMetricsCollector.getAggregatedMetrics();
+        return new ExtendedMetricsResponse(metrics, new CustomMetrics(simpUserRegistry.getUserCount()));
+    }
+
     @ReadOperation
     public Object getMetricsByNode(@Selector @Nullable String nodeId) {
         if (nodeId == null || "all".equals(nodeId)) {
             return getMetrics();
         }
         if ("nodes".equals(nodeId)) {
-            return nodeMetricsService.getAvailableNodes();
+            return nodeMetricsCollector.getAvailableNodes();
         }
-        Map<String, Object> nodeMetrics = nodeMetricsService.getMetricsForNode(nodeId);
-        if (nodeMetrics.isEmpty()) {
+        MetricsResponse nodeMetrics = nodeMetricsCollector.getMetricsForNode(nodeId);
+        if (nodeMetrics == null) {
             return Map.of("error", "Node not found: " + nodeId);
         }
-        return nodeMetrics;
+        return new ExtendedMetricsResponse(nodeMetrics, new CustomMetrics(simpUserRegistry.getUserCount()));
     }
 }

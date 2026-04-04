@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.micrometer.core.instrument.Meter;
@@ -45,66 +46,72 @@ public class ArtemisMetricsEndpoint {
         this.meterRegistry = meterRegistry;
     }
 
-    // --- Public DTOs (serialized as JSON for the client) ---
+    // --- DTOs ---
+    // Note: @JsonProperty with dots (e.g., "system.cpu.usage") is intentional.
+    // Jackson treats the full string as a flat JSON key, matching the client's TypeScript interface.
+    // Maps are only used where keys are dynamic at runtime (memory pool names, cache names, URIs, status codes).
 
-    public record MemoryMetrics(long committed, long max, long used) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record MetricsResponse(Map<String, MemoryMetrics> jvm, ProcessMetrics processMetrics, GarbageCollectorMetrics garbageCollector,
+            @JsonProperty("http.server.requests") HttpRequestMetrics httpServerRequests, Map<String, CacheStats> cache, DatabaseMetrics databases,
+            Map<String, Map<String, RequestStats>> services) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record MemoryMetrics(long committed, long max, long used) implements java.io.Serializable {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProcessMetrics(@JsonProperty("system.cpu.usage") double systemCpuUsage, @JsonProperty("system.cpu.count") double systemCpuCount,
             @JsonProperty("system.load.average.1m") double systemLoadAverage, @JsonProperty("process.cpu.usage") double processCpuUsage,
             @JsonProperty("process.files.max") double processFilesMax, @JsonProperty("process.files.open") double processFilesOpen,
             @JsonProperty("process.start.time") double processStartTime, @JsonProperty("process.uptime") double processUptime) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TimerSummary(long count, double mean, double max, double totalTime, @JsonProperty("0.0") double p0, @JsonProperty("0.5") double p50,
             @JsonProperty("0.75") double p75, @JsonProperty("0.95") double p95, @JsonProperty("0.99") double p99, @JsonProperty("1.0") double p100) {
 
         static final TimerSummary EMPTY = new TimerSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record GarbageCollectorMetrics(@JsonProperty("jvm.gc.live.data.size") double liveDataSize, @JsonProperty("jvm.gc.max.data.size") double maxDataSize,
             @JsonProperty("jvm.gc.memory.promoted") double memoryPromoted, @JsonProperty("jvm.gc.memory.allocated") double memoryAllocated, double classesLoaded,
             double classesUnloaded, @JsonProperty("jvm.gc.pause") TimerSummary gcPause) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record RequestCount(long count) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record RequestStats(long count, double mean, double max) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record HttpRequestMetrics(RequestCount all, Map<String, RequestStats> percode) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CacheStats(@JsonProperty("cache.gets.hit") double hits, @JsonProperty("cache.gets.miss") double misses, @JsonProperty("cache.puts") double puts,
             @JsonProperty("cache.evictions") double evictions, @JsonProperty("cache.removals") double removals, @JsonProperty("cache.size") double size) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record GaugeValue(double value) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record DatabaseMetrics(GaugeValue min, GaugeValue max, GaugeValue idle, GaugeValue active, GaugeValue pending, GaugeValue connections, TimerSummary acquire,
             TimerSummary creation, TimerSummary usage) {
     }
 
     // --- Endpoint ---
 
-    /**
-     * Returns all Artemis-specific metrics.
-     *
-     * @return a map keyed by category containing metric details
-     */
     @ReadOperation
-    public Map<String, Object> allMetrics() {
-        Map<String, Object> metrics = new LinkedHashMap<>();
-        metrics.put("jvm", jvmMemoryMetrics());
-        metrics.put("processMetrics", processMetrics());
-        metrics.put("garbageCollector", garbageCollectorMetrics());
-        metrics.put("http.server.requests", httpRequestMetrics());
-        metrics.put("cache", cacheMetrics());
-        metrics.put("databases", databaseMetrics());
-        metrics.put("services", endpointMetrics());
-        return metrics;
+    public MetricsResponse allMetrics() {
+        return new MetricsResponse(jvmMemoryMetrics(), processMetrics(), garbageCollectorMetrics(), httpRequestMetrics(), cacheMetrics(), databaseMetrics(), endpointMetrics());
     }
 
     // --- Collection methods ---
@@ -155,47 +162,24 @@ public class ArtemisMetricsEndpoint {
             double max = timer.max(MS);
             totalCount += count;
 
-            perCode.merge(status, new RequestStats(count, mean, max), (existing, incoming) -> {
-                long mergedCount = existing.count() + incoming.count();
-                double weightedMean = mergedCount > 0 ? (existing.mean() * existing.count() + incoming.mean() * incoming.count()) / mergedCount : 0;
-                return new RequestStats(mergedCount, weightedMean, Math.max(existing.max(), incoming.max()));
-            });
+            perCode.merge(status, new RequestStats(count, mean, max), ArtemisMetricsEndpoint::mergeRequestStats);
         }
 
         return new HttpRequestMetrics(new RequestCount(totalCount), perCode);
     }
 
     private Map<String, CacheStats> cacheMetrics() {
-        // Collect raw values per cache name
-        Map<String, Map<String, Double>> raw = new TreeMap<>();
+        Map<String, CacheRawData> raw = new TreeMap<>();
         for (String meterName : new String[] { "cache.gets", "cache.puts", "cache.evictions", "cache.size" }) {
             meterRegistry.find(meterName).meters().forEach(meter -> collectCacheMeter(raw, meter));
         }
-        // Convert to CacheStats records
         Map<String, CacheStats> result = new TreeMap<>();
-        for (Map.Entry<String, Map<String, Double>> entry : raw.entrySet()) {
-            Map<String, Double> v = entry.getValue();
-            result.put(entry.getKey(), new CacheStats(v.getOrDefault("cache.gets.hit", 0.0), v.getOrDefault("cache.gets.miss", 0.0), v.getOrDefault("cache.puts", 0.0),
-                    v.getOrDefault("cache.evictions", 0.0), v.getOrDefault("cache.removals", 0.0), v.getOrDefault("cache.size", 0.0)));
+        for (var entry : raw.entrySet()) {
+            var d = entry.getValue();
+            result.put(entry.getKey(),
+                    new CacheStats(d.get("cache.gets.hit"), d.get("cache.gets.miss"), d.get("cache.puts"), d.get("cache.evictions"), d.get("cache.removals"), d.get("cache.size")));
         }
         return result;
-    }
-
-    private void collectCacheMeter(Map<String, Map<String, Double>> caches, Meter meter) {
-        String cacheName = meter.getId().getTag("cache");
-        if (cacheName == null) {
-            return;
-        }
-        String metricName = meter.getId().getName();
-        String resultTag = meter.getId().getTag("result");
-        String key = resultTag != null ? metricName + "." + resultTag : metricName;
-
-        caches.computeIfAbsent(cacheName, k -> new LinkedHashMap<>());
-        double value = 0;
-        for (var measurement : meter.measure()) {
-            value += measurement.getValue();
-        }
-        caches.get(cacheName).put(key, value);
     }
 
     private DatabaseMetrics databaseMetrics() {
@@ -217,17 +201,51 @@ public class ArtemisMetricsEndpoint {
 
             RequestStats stats = new RequestStats(timer.count(), timer.mean(MS), timer.max(MS));
             services.computeIfAbsent(uri, k -> new LinkedHashMap<>());
-            services.get(uri).merge(method, stats, (existing, incoming) -> {
-                long mergedCount = existing.count() + incoming.count();
-                double weightedMean = mergedCount > 0 ? (existing.mean() * existing.count() + incoming.mean() * incoming.count()) / mergedCount : 0;
-                return new RequestStats(mergedCount, weightedMean, Math.max(existing.max(), incoming.max()));
-            });
+            services.get(uri).merge(method, stats, ArtemisMetricsEndpoint::mergeRequestStats);
         }
 
         return services;
     }
 
-    // --- Helper methods ---
+    // --- Helpers ---
+
+    private static RequestStats mergeRequestStats(RequestStats existing, RequestStats incoming) {
+        long mergedCount = existing.count() + incoming.count();
+        double weightedMean = mergedCount > 0 ? (existing.mean() * existing.count() + incoming.mean() * incoming.count()) / mergedCount : 0;
+        return new RequestStats(mergedCount, weightedMean, Math.max(existing.max(), incoming.max()));
+    }
+
+    /**
+     * Mutable accumulator for raw cache metric values before conversion to {@link CacheStats}.
+     */
+    private static class CacheRawData {
+
+        private final Map<String, Double> values = new LinkedHashMap<>();
+
+        void put(String key, double value) {
+            values.put(key, value);
+        }
+
+        double get(String key) {
+            return values.getOrDefault(key, 0.0);
+        }
+    }
+
+    private static void collectCacheMeter(Map<String, CacheRawData> caches, Meter meter) {
+        String cacheName = meter.getId().getTag("cache");
+        if (cacheName == null) {
+            return;
+        }
+        String metricName = meter.getId().getName();
+        String resultTag = meter.getId().getTag("result");
+        String key = resultTag != null ? metricName + "." + resultTag : metricName;
+
+        double value = 0;
+        for (var measurement : meter.measure()) {
+            value += measurement.getValue();
+        }
+        caches.computeIfAbsent(cacheName, k -> new CacheRawData()).put(key, value);
+    }
 
     private double gaugeValue(String meterName) {
         var gauge = meterRegistry.find(meterName).gauge();

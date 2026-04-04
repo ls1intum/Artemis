@@ -42,8 +42,9 @@ public class CustomMetricsExtensionConfiguration {
         @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsCollector.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
-            return new CustomMetricsExtension(nodeMetricsService, simpUserRegistry);
+        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsCollector,
+                SimpUserRegistry simpUserRegistry) {
+            return new CustomMetricsExtension(artemisMetricsEndpoint, nodeMetricsCollector, simpUserRegistry);
         }
     }
 }
