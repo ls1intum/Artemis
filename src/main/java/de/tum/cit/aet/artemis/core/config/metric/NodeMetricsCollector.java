@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
@@ -33,11 +33,11 @@ import com.hazelcast.map.IMap;
  * {@link #getMap()}, {@link #getLocalNodeId()}, and {@link #getLocalNodeLabel()} methods.
  */
 @Profile(PROFILE_CORE)
-@Service
+@Component
 @Lazy(false) // must start immediately for scheduled task
-public class NodeMetricsService {
+public class NodeMetricsCollector {
 
-    private static final Logger log = LoggerFactory.getLogger(NodeMetricsService.class);
+    private static final Logger log = LoggerFactory.getLogger(NodeMetricsCollector.class);
 
     private static final String MAP_NAME = "nodeMetrics";
 
@@ -51,7 +51,7 @@ public class NodeMetricsService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    public NodeMetricsService(ArtemisMetricsEndpoint metricsEndpoint, HazelcastInstance hazelcastInstance) {
+    public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, HazelcastInstance hazelcastInstance) {
         this.metricsEndpoint = metricsEndpoint;
         this.hazelcastInstance = hazelcastInstance;
     }

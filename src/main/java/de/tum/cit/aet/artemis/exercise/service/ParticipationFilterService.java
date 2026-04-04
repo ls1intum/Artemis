@@ -46,9 +46,11 @@ public class ParticipationFilterService {
         if (participationsAcrossAllExercises == null || participationsAcrossAllExercises.isEmpty()) {
             return Set.of();
         }
-        // Compare by ID to avoid Hibernate 7 lazy proxy initialization (with @ConcreteProxy, equals() triggers entity loading)
+        // Compare by ID to avoid Hibernate 7 lazy proxy initialization (with @ConcreteProxy, equals() triggers entity loading).
+        // Fall back to reference equality for unpersisted entities (null IDs) in unit tests.
         var participationsInExercise = participationsAcrossAllExercises.stream()
-                .filter(p -> p.getExercise() != null && exercise.getId() != null && exercise.getId().equals(p.getExercise().getId())).collect(Collectors.toSet());
+                .filter(p -> p.getExercise() != null && (exercise.getId() != null ? exercise.getId().equals(p.getExercise().getId()) : p.getExercise() == exercise))
+                .collect(Collectors.toSet());
 
         if (participationsInExercise.isEmpty()) {
             return Set.of();

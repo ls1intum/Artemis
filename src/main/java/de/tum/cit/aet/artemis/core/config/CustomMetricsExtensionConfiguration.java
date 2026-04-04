@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
-import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsService;
+import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 import de.tum.cit.aet.artemis.core.web.CustomMetricsExtension;
 import io.micrometer.core.annotation.Timed;
 
@@ -40,10 +40,10 @@ public class CustomMetricsExtensionConfiguration {
          */
         @Bean
         @Lazy
-        @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsService.class, SimpUserRegistry.class })
+        @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsCollector.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsService nodeMetricsService,
+        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsService,
                 SimpUserRegistry simpUserRegistry) {
             return new CustomMetricsExtension(artemisMetricsEndpoint, nodeMetricsService, simpUserRegistry);
         }

@@ -15,7 +15,7 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
-import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsService;
+import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 
 /**
  * Extends the default Artemis metrics endpoint with multi-node aggregation
@@ -35,11 +35,11 @@ public class CustomMetricsExtension {
 
     private final ArtemisMetricsEndpoint artemisMetricsEndpoint;
 
-    private final NodeMetricsService nodeMetricsService;
+    private final NodeMetricsCollector nodeMetricsService;
 
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsService nodeMetricsService, SimpUserRegistry simpUserRegistry) {
+    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsService, SimpUserRegistry simpUserRegistry) {
         this.artemisMetricsEndpoint = artemisMetricsEndpoint;
         this.nodeMetricsService = nodeMetricsService;
         this.simpUserRegistry = simpUserRegistry;
