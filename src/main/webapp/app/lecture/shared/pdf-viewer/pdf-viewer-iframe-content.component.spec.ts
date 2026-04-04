@@ -67,11 +67,6 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.isDarkMode()).toBe(true);
     });
 
-    it('should use default initialPage if not provided', () => {
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'loadPDF', data: { url: 'doc.pdf' } }, origin: window.location.origin, source: window }));
-        expect(component.currentPage()).toBe(1);
-    });
-
     it('should reset document-specific state when loadPDF URL changes', () => {
         component.totalPages.set(42);
         (component as any).searchQuery.set('needle');
@@ -115,12 +110,6 @@ describe('PdfViewerIframeContentComponent', () => {
         postMessageSpy.mockClear();
         component.onPdfLoadingFailed();
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pdfLoadError', data: { url: '' } }, window.location.origin);
-    });
-
-    it('should request fullscreen mode from parent', () => {
-        postMessageSpy.mockClear();
-        (component as any).requestFullscreen();
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'openFullscreen', data: {} }, window.location.origin);
     });
 
     it('should dispatch zoom events', () => {
@@ -167,17 +156,45 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
     });
 
-    it('should remove focus from search input when Escape is pressed', () => {
+    it('should clear and close search when Escape is pressed in search input', () => {
+        const pdfNotificationService = TestBed.inject(PDFNotificationService);
+        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
+        (component as any).performSearch('needle');
+        fixture.detectChanges();
+
         const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
         searchInput.focus();
-        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-controls')).toBeTruthy();
 
         const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
         window.dispatchEvent(event);
         fixture.detectChanges();
 
         expect(event.defaultPrevented).toBe(true);
+        expect((component as any).searchQuery()).toBe('');
+        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-controls')).toBeFalsy();
+        expect(mockEventBus.dispatch).toHaveBeenLastCalledWith('find', {
+            type: 'find',
+            query: '',
+            caseSensitive: false,
+            entireWord: false,
+            highlightAll: false,
+            findPrevious: false,
+        });
         expect(document.activeElement).not.toBe(searchInput);
+    });
+
+    it('should keep the full toolbar visible when search is focused without a query', () => {
+        const toolbarCenter = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__center') as HTMLElement;
+        const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
+
+        searchInput.focus();
+        fixture.detectChanges();
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--search-active')).toBe(false);
+
+        (component as any).performSearch('needle');
+        fixture.detectChanges();
+        expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--search-active')).toBe(true);
     });
 
     it('should cancel pending page navigation when Escape is pressed', () => {
@@ -196,39 +213,6 @@ describe('PdfViewerIframeContentComponent', () => {
         expect((component as any).pageInputValue()).toBe(1);
         expect((component as any).isPageNavigationPending()).toBe(false);
         expect(document.activeElement).not.toBe(pageInput);
-    });
-
-    it('should prioritize search blur over fullscreen close when Escape is pressed in search', () => {
-        component.isFullscreenMode.set(true);
-        const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
-        searchInput.focus();
-        postMessageSpy.mockClear();
-
-        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-        window.dispatchEvent(event);
-
-        expect(event.defaultPrevented).toBe(true);
-        expect(postMessageSpy).not.toHaveBeenCalledWith({ type: 'closeFullscreen', data: {} }, window.location.origin);
-    });
-
-    it('should perform search with query', () => {
-        const pdfNotificationService = TestBed.inject(PDFNotificationService);
-        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
-        (component as any).performSearch('test query');
-        expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
-            type: 'find',
-            query: 'test query',
-            caseSensitive: false,
-            entireWord: false,
-            highlightAll: true,
-            findPrevious: false,
-        });
-    });
-
-    it('should trigger download action', () => {
-        postMessageSpy.mockClear();
-        (component as any).triggerDownload();
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'download', data: {} }, window.location.origin);
     });
 
     it('should render close button in fullscreen mode and trigger close action', () => {

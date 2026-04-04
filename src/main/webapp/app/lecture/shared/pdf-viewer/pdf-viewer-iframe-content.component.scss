@@ -82,8 +82,17 @@ $toolbar-compact-hidden-selectors: (
     grid-column: 2;
 }
 
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active > :not(.artemis-pdf-toolbar__search),
 .artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--page-navigation-pending > :not(.artemis-pdf-toolbar__page-navigation) {
     display: none !important;
+}
+
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active .artemis-pdf-toolbar__search {
+    max-width: 100%;
+}
+
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active .artemis-pdf-toolbar__search-input {
+    width: $toolbar-search-width !important;
 }
 
 .artemis-pdf-toolbar__right {
@@ -92,18 +101,6 @@ $toolbar-compact-hidden-selectors: (
     align-items: center;
     justify-content: flex-end;
     padding-right: 1rem;
-}
-
-.artemis-pdf-toolbar__search:focus-within ~ * {
-    display: none !important;
-}
-
-.artemis-pdf-toolbar__search:focus-within {
-    max-width: 100%;
-}
-
-.artemis-pdf-toolbar__search:focus-within .artemis-pdf-toolbar__search-input {
-    width: $toolbar-search-width !important;
 }
 
 @each $level, $selector in $toolbar-compact-hidden-selectors {

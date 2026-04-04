@@ -134,6 +134,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
         if (this.shouldBlurSearchOnEscape(event.target)) {
             event.preventDefault();
+            this.clearSearch();
             const activeElement = document.activeElement;
             if (activeElement instanceof HTMLElement) {
                 activeElement.blur();
