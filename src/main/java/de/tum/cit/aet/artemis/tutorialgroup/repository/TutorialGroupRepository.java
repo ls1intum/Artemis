@@ -40,14 +40,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-            SELECT DISTINCT tutorialGroup.campus
-            FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.id = :courseId
-                AND tutorialGroup.campus IS NOT NULL
-            """)
-    Set<String> findAllUniqueCampusValuesByCourseId(@Param("courseId") Long courseId);
-
-    @Query("""
             SELECT DISTINCT tutorialGroup.language
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.course.id = :courseId
@@ -127,14 +119,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
-            WHERE tutorialGroup.id = :tutorialGroupId
-            """)
-    Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
-
-    @Query("""
-            SELECT tutorialGroup
-            FROM TutorialGroup tutorialGroup
-                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
@@ -188,10 +172,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             WHERE tutorialGroup.teachingAssistant.id = :userId AND tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
             """)
     boolean isTutorInTutorialGroup(@Param("userId") long userId, @Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
-
-    default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
-        return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
-    }
 
     default TutorialGroup findByIdWithSessionsAndScheduleElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessionsAndSchedule(tutorialGroupId), tutorialGroupId);

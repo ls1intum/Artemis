@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
@@ -576,27 +575,6 @@ public class TutorialGroupService {
         });
         tutorialGroups.forEach(TutorialGroup::preventCircularJsonConversion);
         return tutorialGroups;
-    }
-
-    /**
-     * Get one tutorial group of a course, including setting the transient properties for the given user
-     *
-     * @param course              The course for which the tutorial group should be retrieved.
-     * @param tutorialGroupId     The id of the tutorial group to retrieve.
-     * @param user                The user for whom to set the transient properties of the tutorial group.
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     * @return The tutorial group of the course with the transient properties set for the given user.
-     */
-    public TutorialGroup getOneOfCourse(@NonNull Course course, long tutorialGroupId, @NonNull User user, boolean isAdminOrInstructor) {
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
-        if (!course.equals(tutorialGroup.getCourse())) {
-            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
-        }
-        this.setTransientPropertiesForUser(user, tutorialGroup);
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            tutorialGroup.hidePrivacySensitiveInformation();
-        }
-        return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
     }
 
     /**
