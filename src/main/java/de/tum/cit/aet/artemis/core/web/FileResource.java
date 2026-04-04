@@ -101,6 +101,9 @@ public class FileResource {
 
     private static final int DAYS_TO_CACHE = 1;
 
+    /**
+     * Maximum number of bytes allowed in a single PDF range response to prevent oversized range downloads.
+     */
     private static final int MAX_PDF_RANGE_BYTES = 16 * 1024 * 1024;
 
     private final FileService fileService;
@@ -685,14 +688,39 @@ public class FileResource {
                 downloadFilename, 0, requestHeaders.getRange());
     }
 
+    /**
+     * Derives the download filename from attachment name and file extension.
+     *
+     * @param attachment attachment metadata
+     * @return derived download filename
+     */
     private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
         return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
     }
 
+    /**
+     * Builds an attachment response for a path that already contains the filename.
+     *
+     * @param path            file path including the file name
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cache           true if response should include cache headers; false otherwise
+     * @param ranges          optional requested HTTP ranges
+     * @return response entity for full or partial attachment download
+     */
     private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
         return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
     }
 
+    /**
+     * Builds an attachment response for the given directory and filename with optional range support.
+     *
+     * @param path            directory path of the file
+     * @param filename        file name to serve from {@code path}
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cacheDays       number of days to cache the response
+     * @param ranges          optional requested HTTP ranges
+     * @return response entity for full or partial attachment download
+     */
     private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
         var payload = fileDownloadService.prepareAttachmentDownload(path, filename, replaceFilename, ranges, MAX_PDF_RANGE_BYTES);
         var response = ResponseEntity.status(payload.status()).headers(payload.headers()).contentType(payload.mediaType()).header("filename", filename)

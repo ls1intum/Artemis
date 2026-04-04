@@ -28,6 +28,9 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 
+/**
+ * Service for preparing downloadable file payloads, including support for HTTP range requests on PDF files.
+ */
 @Lazy
 @Service
 @Profile(PROFILE_CORE)
@@ -41,9 +44,31 @@ public class FileDownloadService {
         this.fileService = fileService;
     }
 
+    /**
+     * Payload container for file download responses.
+     *
+     * @param status       HTTP status of the response
+     * @param content      binary response body
+     * @param headers      headers to be set on the response
+     * @param mediaType    resolved media type for the file
+     * @param contentRange optional content-range header value for partial responses
+     */
     public record FileDownloadPayload(HttpStatus status, byte[] content, HttpHeaders headers, MediaType mediaType, Optional<String> contentRange) {
     }
 
+    /**
+     * Prepares a download payload for an attachment.
+     * <p>
+     * For non-PDF files, the whole file is returned. For PDF files, a single range request is supported and validated
+     * against {@code maxPdfRangeBytes}. Invalid ranges result in a {@code 416 Requested Range Not Satisfiable} payload.
+     *
+     * @param path             base directory of the file
+     * @param filename         filename to load from {@code path}
+     * @param replaceFilename  optional filename used in response headers
+     * @param ranges           requested ranges from the HTTP header
+     * @param maxPdfRangeBytes maximum allowed range length for PDF responses
+     * @return a payload describing status, headers, media type and content
+     */
     public FileDownloadPayload prepareAttachmentDownload(Path path, String filename, Optional<String> replaceFilename, List<HttpRange> ranges, int maxPdfRangeBytes) {
         Path actualPath = path.resolve(filename);
         if (!filename.toLowerCase().endsWith(".pdf")) {
@@ -98,6 +123,13 @@ public class FileDownloadService {
         }
     }
 
+    /**
+     * Creates content disposition headers for a file response.
+     *
+     * @param filename        original filename
+     * @param replaceFilename optional replacement filename used for content disposition
+     * @return response headers containing the sanitized filename
+     */
     public HttpHeaders createFileHeaders(String filename, Optional<String> replaceFilename) {
         HttpHeaders headers = new HttpHeaders();
 
@@ -109,6 +141,12 @@ public class FileDownloadService {
         return headers;
     }
 
+    /**
+     * Resolves the media type for the given filename.
+     *
+     * @param filename filename used for media type detection
+     * @return detected media type or {@link MediaType#APPLICATION_OCTET_STREAM} as fallback
+     */
     public MediaType getMediaTypeFromFilename(String filename) {
         Optional<MediaType> fromSpring = MediaTypeFactory.getMediaType(filename);
         if (fromSpring.isPresent()) {
