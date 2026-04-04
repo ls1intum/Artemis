@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * DTO containing {@link Result} information.
- * This does not include large reference attributes to send minimal data to the client.
+ * This does not include large reference attributes in order to send minimal data to the client.
  */
 // TODO: the result should include an actual string calculated and rounded on server side (based on exercise and course settings), this should not be done on the client side
 // this would also simplify the logic in result.component.ts and and result.service.ts and make the experience more consistent among different clients (webapp, ios, android)
@@ -57,26 +57,17 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      * Converts a Result into a ResultDTO
      *
      * @param result           to convert
-     * @param filteredFeedback feedback that should get send to the client will get converted into {@link FeedbackDTO} objects.
+     * @param filteredFeedback feedback that should get send to the client, will get converted into {@link FeedbackDTO} objects.
      * @return the converted DTO
      */
     public static ResultDTO of(Result result, List<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
-        ParticipationDTO participationDTO = null;
-        List<FeedbackDTO> feedbackDTOs = null;
-
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
-
-            if (result.getSubmission().getParticipation() != null && Hibernate.isInitialized(result.getSubmission().getParticipation())) {
-                participationDTO = ParticipationDTO.of(result.getSubmission().getParticipation());
-            }
         }
-        if (Hibernate.isInitialized(filteredFeedback) && filteredFeedback != null) {
-            feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
-        }
-        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO, participationDTO, feedbackDTOs,
-                result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
-                result.getCodeIssueCount());
+        var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
+        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
+                ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
+                result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }

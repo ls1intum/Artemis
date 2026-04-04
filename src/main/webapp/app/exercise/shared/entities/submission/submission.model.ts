@@ -169,3 +169,17 @@ export function reconnectSubmissions(submissions: Submission[]): void {
         }
     });
 }
+
+export class SubmissionDTO {
+    id?: number;
+    submitted?: boolean;
+    type?: SubmissionType;
+    exampleSubmission?: boolean;
+    submissionDate?: dayjs.Dayjs;
+    commitHash?: string;
+    buildFailed?: boolean;
+    submissionExerciseType?: string;
+    isProcessing?: boolean;
+    buildStartDate?: dayjs.Dayjs;
+    estimatedCompletionDate?: dayjs.Dayjs;
+}

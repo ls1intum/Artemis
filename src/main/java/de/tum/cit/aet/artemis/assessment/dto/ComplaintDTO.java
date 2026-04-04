@@ -1,15 +1,22 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 
 /**
  * DTO for a complaint.
@@ -21,7 +28,70 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ComplaintDTO(@NotNull Long id, String complaintText, ZonedDateTime submittedTime, ComplaintType complaintType, Boolean complaintIsAccepted,
-        ComplaintResponseDTO complaintResponse, @NotNull ResultDTO result, Long participantId) {
+        ComplaintResponseDTO complaintResponse, @NotNull ResultSimpleDTO result, Long participantId) {
+
+    /**
+     * DTO containing the minimal information of {@link Result} needed in complaint responses.
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, Boolean hasComplaint, Long submissionId,
+            Long participationId, Long exerciseId, String exerciseTitle, List<FeedbackDTO> feedbacks) {
+
+        /**
+         * Creates a {@link ResultSimpleDTO} from a {@link Result} entity.
+         *
+         * @param result the result entity to convert
+         * @return the corresponding DTO
+         */
+        public static ResultSimpleDTO of(Result result) {
+            Objects.requireNonNull(result, "The result must be set");
+
+            Long submissionId = null;
+            Long participationId = null;
+            Long exerciseId = null;
+            String exerciseTitle = null;
+
+            if (result.getSubmission() != null) {
+                submissionId = result.getSubmission().getId();
+
+                if (result.getSubmission().getParticipation() != null) {
+                    participationId = result.getSubmission().getParticipation().getId();
+
+                    if (result.getSubmission().getParticipation().getExercise() != null) {
+                        exerciseId = result.getSubmission().getParticipation().getExercise().getId();
+                        exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
+                    }
+                }
+            }
+            List<FeedbackDTO> feedbackDTOs = null;
+            if (result.getFeedbacks() != null && Hibernate.isInitialized(result.getFeedbacks())) {
+                feedbackDTOs = result.getFeedbacks().stream().filter(Objects::nonNull).map(FeedbackDTO::of).toList();
+            }
+            return new ResultSimpleDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.getAssessmentType(), result.hasComplaint(),
+                    submissionId, participationId, exerciseId, exerciseTitle, feedbackDTOs);
+        }
+
+        /**
+         * DTO containing the {@link Feedback} information.
+         */
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
+                Visibility visibility, String testCaseName) {
+
+            /**
+             * Creates a {@link FeedbackDTO} from a {@link Feedback} entity.
+             *
+             * @param feedback the feedback entity to convert
+             * @return the corresponding DTO
+             */
+            public static FeedbackDTO of(Feedback feedback) {
+                String testCaseName = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : null;
+
+                return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
+                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), testCaseName);
+            }
+        }
+    }
 
     /**
      * Creates a {@link ComplaintDTO} from a {@link Complaint} entity.
@@ -34,7 +104,7 @@ public record ComplaintDTO(@NotNull Long id, String complaintText, ZonedDateTime
         Objects.requireNonNull(complaint, "The complaint must be set");
         Objects.requireNonNull(complaint.getResult(), "The associated result must exist");
 
-        ResultDTO resultDTO = ResultDTO.of(complaint.getResult());
+        ResultSimpleDTO resultDTO = ResultSimpleDTO.of(complaint.getResult());
         Long participantId = complaint.getParticipant() != null ? complaint.getParticipant().getId() : null;
         ComplaintResponseDTO complaintResponseDTO = complaint.getComplaintResponse() != null ? ComplaintResponseDTO.of(complaint.getComplaintResponse()) : null;
 

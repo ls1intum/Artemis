@@ -677,47 +677,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     private void checkComplaintContainsNoSensitiveData(ComplaintDTO receivedComplaint) {
         checkIfNoStudentInformationPresent(receivedComplaint);
-        checkIfNoSensitiveExerciseDataPresent(receivedComplaint);
-        checkIfNoSensitiveSubmissionDataPresent(receivedComplaint);
-        checkIfNoSensitiveParticipationDataPresent(receivedComplaint);
-    }
-
-    private void checkIfNoSensitiveSubmissionDataPresent(ComplaintDTO receivedComplaint) {
-        final var submission = receivedComplaint.result().submission();
-        if (submission != null) {
-            assertThat(submission.submissionDate()).as("Submission only contains ID").isNull();
-            assertThat(submission.type()).as("Submission only contains ID").isNull();
-            assertThat(submission.exampleSubmission()).as("Submission only contains ID").isNull();
-            assertThat(submission.buildFailed()).as("Submission only contains ID").isNull();
-            assertThat(submission.buildStartDate()).as("Submission only contains ID").isNull();
-            assertThat(submission.commitHash()).as("Submission only contains ID").isNull();
-            assertThat(submission.estimatedCompletionDate()).as("Submission only contains ID").isNull();
-        }
-    }
-
-    private void checkIfNoSensitiveParticipationDataPresent(ComplaintDTO receivedComplaint) {
-        final var participation = receivedComplaint.result().participation();
-        if (participation != null) {
-            // participation dto does not contain other submission data
-            assertThat(participation.submissionCount()).as("Participation does not contain submission info").isNull();
-        }
-    }
-
-    private void checkIfNoSensitiveExerciseDataPresent(ComplaintDTO receivedComplaint) {
-        final var participation = receivedComplaint.result().participation();
-        if (participation != null && participation.exercise() != null) {
-            final var exercise = participation.exercise();
-            assertThat(exercise.assessmentType()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.dueDate()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.course()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.assessmentDueDate()).as("Exercise only contains title and ID").isNull();
-            // exercise dto does not contain exercise type specific sensitive attributes
-        }
     }
 
     private void checkIfNoStudentInformationPresent(ComplaintDTO receivedComplaint) {
         assertThat(receivedComplaint.participantId()).as("Student should not be contained").isNull();
-        // Result dto in complaint does not contain student participation
+        // Result dto in the complaint dto does not contain student participation
     }
 
     @Test
