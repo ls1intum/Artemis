@@ -63,23 +63,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private Exam exam;
 
     /**
-     * Converts a GradingScale entity to a GradingScaleRequestDTO for testing.
-     */
-    private GradingScaleRequestDTO toRequestDTO(GradingScale gradingScale) {
-        Set<GradeStepDTO> gradeStepDTOs = new HashSet<>();
-        if (gradingScale.getGradeSteps() != null) {
-            for (GradeStep step : gradingScale.getGradeSteps()) {
-                gradeStepDTOs.add(GradeStepDTO.of(step));
-            }
-        }
-        return new GradingScaleRequestDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
-                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs,
-                gradingScale.getCourse() != null ? gradingScale.getCourse().getMaxPoints() : null,
-                gradingScale.getCourse() != null ? gradingScale.getCourse().getPresentationScore() : null,
-                gradingScale.getExam() != null ? gradingScale.getExam().getExamMaxPoints() : null);
-    }
-
-    /**
      * Initialize variables
      */
     @BeforeEach
@@ -174,7 +157,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForCourseGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -185,7 +168,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
         courseGradingScale.setGradeSteps(Set.of());
 
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -196,7 +179,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForExamGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -207,7 +190,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
         examGradingScale.setGradeSteps(Set.of());
 
-        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -219,7 +202,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -257,12 +240,12 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setPresentationScore(null);
         courseGradingScale.setPresentationsNumber(0);
         courseGradingScale.setPresentationsWeight(120.0);
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
 
         // Test with null presentationsWeight
         courseGradingScale.setPresentationsNumber(2);
         courseGradingScale.setPresentationsWeight(null);
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -275,6 +258,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(gradeSteps);
 
         GradingScaleUpdateDTO dto = toDTO(courseGradingScale, 5);
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, GradingScaleDTO.class,
+                HttpStatus.CREATED);
+
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
@@ -291,8 +277,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
-                GradingScaleDTO.class, HttpStatus.CREATED);
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.CREATED);
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
 
@@ -312,8 +298,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(gradeSteps);
         courseGradingScale.setPlagiarismGrade("Plagiarism");
         courseGradingScale.setNoParticipationGrade("NoParticipation");
-        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
-                GradingScaleDTO.class, HttpStatus.CREATED);
+        GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.CREATED);
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
@@ -333,7 +319,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
-        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -348,7 +334,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         examRepository.save(exam);
 
         GradingScaleDTO savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
-                toRequestDTO(examGradingScale), GradingScaleDTO.class, HttpStatus.CREATED);
+                toDTO(examGradingScale, null), GradingScaleDTO.class, HttpStatus.CREATED);
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
@@ -365,7 +351,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnNotFound() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -378,7 +364,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale), HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -391,8 +377,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
 
-        GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", toRequestDTO(courseGradingScale),
-                GradingScaleDTO.class, HttpStatus.OK);
+        GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale",
+                toDTO(courseGradingScale, course.getPresentationScore()), GradingScaleDTO.class, HttpStatus.OK);
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
@@ -409,7 +395,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnNotFound() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.NOT_FOUND);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -424,7 +410,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
 
-        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toRequestDTO(examGradingScale), HttpStatus.BAD_REQUEST);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", toDTO(examGradingScale, null), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -440,7 +426,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         examRepository.save(exam);
 
         GradingScaleDTO savedGradingScale = request.putWithResponseBody("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale",
-                toRequestDTO(examGradingScale), GradingScaleDTO.class, HttpStatus.OK);
+                toDTO(examGradingScale, null), GradingScaleDTO.class, HttpStatus.OK);
 
         GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());

@@ -20,7 +20,6 @@ export class GradingScale implements BaseEntity {
     public exam?: Exam;
     public presentationsNumber?: number;
     public presentationsWeight?: number;
-    public bonusStrategy?: string;
     public bonusFrom?: Bonus[];
 
     constructor(gradeType: GradeType = GradeType.GRADE, gradeSteps: GradeStep[] = []) {

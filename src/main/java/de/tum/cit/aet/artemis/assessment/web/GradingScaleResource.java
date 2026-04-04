@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
-import de.tum.cit.aet.artemis.assessment.dto.GradingScaleRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
@@ -155,20 +155,11 @@ public class GradingScaleResource {
         validatePresentationsConfiguration(gradingScale);
         saveCourseIfChanged(dto, course);
 
-        boolean courseValuesProvided = gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null;
-
-        if (courseValuesProvided) {
-            applyCourseValuesFromDTO(gradingScaleDto, course);
-        }
-        validatePresentationsConfiguration(gradingScale);
-
-        if (courseValuesProvided) {
-            courseRepository.save(course);
-        }
-
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
+    }
+
     private void validateGradingScaleForCreate(Optional<GradingScale> existingGradingScale, GradingScaleUpdateDTO dto) {
         if (existingGradingScale.isPresent()) {
             throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
@@ -233,19 +224,14 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
 
         // Apply DTO values to the managed entity
-        gradingScaleDto.applyTo(existingGradingScale);
+        dto.applyTo(existingGradingScale);
         existingGradingScale.setCourse(course);
 
-        boolean courseValuesProvided = gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null;
-
-        if (courseValuesProvided) {
-            applyCourseValuesFromDTO(gradingScaleDto, course);
-        }
+        // Apply DTO values to course before validation so that presentation config is validated correctly
+        applyCourseValuesFromDTO(dto, course);
         validatePresentationsConfiguration(existingGradingScale);
+        saveCourseIfChanged(dto, course);
 
-        if (courseValuesProvided) {
-            courseRepository.save(course);
-        }
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }
@@ -393,28 +379,5 @@ public class GradingScaleResource {
             }
         }
         return course;
-    }
-
-    private void validateGradingScaleForCreate(Optional<GradingScale> existingGradingScale) {
-        if (existingGradingScale.isPresent()) {
-            throw new BadRequestAlertException("A grading scale already exists", ENTITY_NAME, "gradingScaleAlreadyExists");
-        }
-    }
-
-    /**
-     * Applies course properties from DTO to the course object (in memory, does not save).
-     * This should be called before validation so that the validation uses the intended values.
-     */
-    private void applyCourseValuesFromDTO(GradingScaleRequestDTO dto, Course course) {
-        if (dto == null || course == null) {
-            return;
-        }
-
-        if (dto.courseMaxPoints() != null) {
-            course.setMaxPoints(dto.courseMaxPoints());
-        }
-        if (dto.coursePresentationScore() != null) {
-            course.setPresentationScore(dto.coursePresentationScore());
-        }
     }
 }

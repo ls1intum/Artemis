@@ -1,4 +1,4 @@
-import { BonusDTO, toBonusDTOs } from 'app/assessment/shared/entities/bonus.model';
+import { BonusDTO, BonusStrategy, toBonusDTOs } from 'app/assessment/shared/entities/bonus.model';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -10,7 +10,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 export interface GradingScaleDTO {
     id?: number;
     gradeSteps: GradeStepsDTO;
-    bonusStrategy?: string;
+    bonusStrategy?: BonusStrategy;
     bonusFrom?: BonusDTO[];
 }
 

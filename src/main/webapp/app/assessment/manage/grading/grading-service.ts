@@ -8,7 +8,6 @@ import { map } from 'rxjs/operators';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { toRequestDTO } from 'app/assessment/shared/entities/grading-scale-request-dto.model';
 import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export type EntityResponseType = HttpResponse<GradingScaleDTO>;
