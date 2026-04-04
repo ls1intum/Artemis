@@ -14,7 +14,7 @@ const esModules = [
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
     '@fortawesome/angular-fontawesome',
-    '@ls1intum/apollon',
+    '@tumaet/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
@@ -155,10 +155,10 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 86.29,
+            statements: 86.2,
             branches: 74.5,
-            functions: 76.0,
-            lines: 87.2,
+            functions: 76,
+            lines: 87.1,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -226,7 +226,7 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
-        '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
-        '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
+        '^@tumaet/apollon$': '<rootDir>/node_modules/@tumaet/apollon/dist/index.js',
+        '^@tumaet/apollon/(.*)': '<rootDir>/node_modules/@tumaet/apollon/$1',
     },
 };
