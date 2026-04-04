@@ -181,6 +181,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // set correct mode
+
         this.routeAndDataSubscription = combineLatest([
             this.route.data,
             this.route.params,
