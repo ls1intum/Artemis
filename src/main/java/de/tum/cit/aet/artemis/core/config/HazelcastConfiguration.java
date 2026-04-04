@@ -1325,7 +1325,9 @@ public class HazelcastConfiguration {
      * @return the default map configuration
      */
     private MapConfig createDefaultMapConfig(ArtemisProperties artemisProperties) {
-        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setStatisticsEnabled(true) // Required for Micrometer
+                                                                                                                                       // HazelcastCacheMetrics to report cache
+                                                                                                                                       // hit/miss/put/eviction stats
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
     }
 
