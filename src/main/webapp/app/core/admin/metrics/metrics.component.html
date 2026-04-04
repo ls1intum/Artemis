@@ -2,7 +2,7 @@
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
     <div *adminTitleBarActions class="d-flex gap-2 align-items-center">
         @if (nodeOptions().length > 1) {
-            <p-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" styleClass="w-auto" />
+            <p-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" styleClass="w-auto" />
         }
         <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="metrics.refresh.button"></span></button>
     </div>
