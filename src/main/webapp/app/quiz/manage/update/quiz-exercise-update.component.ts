@@ -412,6 +412,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Returns whether pending changes are present, preventing a deactivation.
      */
     canDeactivate(): boolean {
+        if (!this.quizExercise?.isEditable) {
+            return true;
+        }
         return !this.pendingChangesCache;
     }
 
