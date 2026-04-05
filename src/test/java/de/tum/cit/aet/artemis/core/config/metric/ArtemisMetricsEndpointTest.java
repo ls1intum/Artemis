@@ -22,7 +22,7 @@ class ArtemisMetricsEndpointTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        endpoint = new ArtemisMetricsEndpoint(meterRegistry);
+        endpoint = new ArtemisMetricsEndpoint(meterRegistry, java.util.Optional.empty(), java.util.Optional.empty());
     }
 
     @Test
@@ -88,16 +88,10 @@ class ArtemisMetricsEndpointTest {
     }
 
     @Test
-    void cacheMetrics_shouldTrackHitsAndMisses() {
-        meterRegistry.counter("cache.gets", "cache", "testCache", "result", "hit").increment(10);
-        meterRegistry.counter("cache.gets", "cache", "testCache", "result", "miss").increment(2);
-
+    void cacheMetrics_shouldReturnEmptyWithoutHazelcast() {
+        // Without HazelcastInstance, cache metrics are empty
         var caches = endpoint.allMetrics().cache();
-
-        assertThat(caches).containsKey("testCache");
-        var testCache = caches.get("testCache");
-        assertThat(testCache.hits()).isEqualTo(10.0);
-        assertThat(testCache.misses()).isEqualTo(2.0);
+        assertThat(caches).isEmpty();
     }
 
     @Test

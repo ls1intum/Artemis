@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PreDestroy;
 
+import javax.sql.DataSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +29,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider;
+import org.springframework.boot.jdbc.metadata.HikariDataSourcePoolMetadata;
+import org.springframework.boot.jdbc.metrics.DataSourcePoolMetrics;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -62,12 +67,14 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
+import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.JCacheMetrics;
 
 /**
  * Configures and initializes the Hazelcast distributed data grid for Artemis.
@@ -307,7 +314,7 @@ public class HazelcastConfiguration {
                 try {
                     if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
                         log.info("Binding JCache metrics for '{}'", name);
-                        new io.micrometer.core.instrument.binder.cache.JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
+                        new JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
                         bound++;
                     }
                     else if (distributedObject instanceof IMap<?, ?> map) {
@@ -329,11 +336,10 @@ public class HazelcastConfiguration {
         // 2. Bind HikariCP datasource pool metrics (gauges for active, idle, min, max, pending connections)
         // Spring Boot 4 does not auto-register these — DataSourcePoolMetricsAutoConfiguration is not auto-discovered.
         try {
-            var dataSource = applicationContext.getBean(javax.sql.DataSource.class);
-            if (dataSource instanceof com.zaxxer.hikari.HikariDataSource hikariDataSource) {
-                org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider provider = ds -> new org.springframework.boot.jdbc.metadata.HikariDataSourcePoolMetadata(
-                        (com.zaxxer.hikari.HikariDataSource) ds);
-                new org.springframework.boot.jdbc.metrics.DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(meterRegistry);
+            var dataSource = applicationContext.getBean(DataSource.class);
+            if (dataSource instanceof HikariDataSource hikariDataSource) {
+                DataSourcePoolMetadataProvider provider = ds -> new HikariDataSourcePoolMetadata((HikariDataSource) ds);
+                new DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(meterRegistry);
                 log.info("Bound HikariCP pool metrics (active/idle/min/max/pending) to Micrometer for pool '{}'", hikariDataSource.getPoolName());
             }
         }

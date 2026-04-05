@@ -7,9 +7,14 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.context.annotation.Lazy;
@@ -18,8 +23,10 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+import com.zaxxer.hikari.HikariDataSource;
 
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
@@ -38,12 +45,20 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 @Endpoint(id = "artemismetrics")
 public class ArtemisMetricsEndpoint {
 
+    private static final Logger log = LoggerFactory.getLogger(ArtemisMetricsEndpoint.class);
+
     private static final TimeUnit MS = TimeUnit.MILLISECONDS;
 
     private final MeterRegistry meterRegistry;
 
-    public ArtemisMetricsEndpoint(MeterRegistry meterRegistry) {
+    private final Optional<HazelcastInstance> hazelcastInstance;
+
+    private final Optional<DataSource> dataSource;
+
+    public ArtemisMetricsEndpoint(MeterRegistry meterRegistry, Optional<HazelcastInstance> hazelcastInstance, Optional<DataSource> dataSource) {
         this.meterRegistry = meterRegistry;
+        this.hazelcastInstance = hazelcastInstance;
+        this.dataSource = dataSource;
     }
 
     // --- DTOs ---
@@ -168,25 +183,55 @@ public class ArtemisMetricsEndpoint {
         return new HttpRequestMetrics(new RequestCount(totalCount), perCode);
     }
 
+    /**
+     * Collects cache metrics directly from Hazelcast distributed objects.
+     * Bypasses Micrometer since the endpoint may receive an isolated MeterRegistry.
+     */
     private Map<String, CacheStats> cacheMetrics() {
-        Map<String, CacheRawData> raw = new TreeMap<>();
-        for (String meterName : new String[] { "cache.gets", "cache.puts", "cache.evictions", "cache.size" }) {
-            meterRegistry.find(meterName).meters().forEach(meter -> collectCacheMeter(raw, meter));
-        }
         Map<String, CacheStats> result = new TreeMap<>();
-        for (var entry : raw.entrySet()) {
-            var d = entry.getValue();
-            result.put(entry.getKey(),
-                    new CacheStats(d.get("cache.gets.hit"), d.get("cache.gets.miss"), d.get("cache.puts"), d.get("cache.evictions"), d.get("cache.removals"), d.get("cache.size")));
+        if (hazelcastInstance.isEmpty()) {
+            return result;
+        }
+        for (var distributedObject : hazelcastInstance.get().getDistributedObjects()) {
+            String name = distributedObject.getName();
+            if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
+                continue;
+            }
+            try {
+                if (distributedObject instanceof IMap<?, ?> map) {
+                    var stats = map.getLocalMapStats();
+                    long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
+                    result.put(name,
+                            new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getOwnedEntryCount(), stats.getRemoveOperationCount(), map.size()));
+                }
+            }
+            catch (Exception e) {
+                log.debug("Could not collect cache metrics for '{}': {}", name, e.getMessage());
+            }
         }
         return result;
     }
 
+    /**
+     * Collects datasource metrics directly from HikariCP.
+     * Bypasses Micrometer since the endpoint may receive an isolated MeterRegistry.
+     */
     private DatabaseMetrics databaseMetrics() {
-        return new DatabaseMetrics(new GaugeValue(gaugeValue("hikaricp.connections.min")), new GaugeValue(gaugeValue("hikaricp.connections.max")),
-                new GaugeValue(gaugeValue("hikaricp.connections.idle")), new GaugeValue(gaugeValue("hikaricp.connections.active")),
-                new GaugeValue(gaugeValue("hikaricp.connections.pending")), new GaugeValue(gaugeValue("hikaricp.connections")), timerSummary("hikaricp.connections.acquire"),
-                timerSummary("hikaricp.connections.creation"), timerSummary("hikaricp.connections.usage"));
+        if (dataSource.isPresent() && dataSource.get() instanceof HikariDataSource hikari) {
+            try {
+                var pool = hikari.getHikariPoolMXBean();
+                if (pool != null) {
+                    return new DatabaseMetrics(new GaugeValue(hikari.getMinimumIdle()), new GaugeValue(hikari.getMaximumPoolSize()), new GaugeValue(pool.getIdleConnections()),
+                            new GaugeValue(pool.getActiveConnections()), new GaugeValue(pool.getThreadsAwaitingConnection()), new GaugeValue(pool.getTotalConnections()),
+                            timerSummary("hikaricp.connections.acquire"), timerSummary("hikaricp.connections.creation"), timerSummary("hikaricp.connections.usage"));
+                }
+            }
+            catch (Exception e) {
+                log.debug("Could not collect datasource metrics: {}", e.getMessage());
+            }
+        }
+        return new DatabaseMetrics(new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), TimerSummary.EMPTY,
+                TimerSummary.EMPTY, TimerSummary.EMPTY);
     }
 
     private Map<String, Map<String, RequestStats>> endpointMetrics() {
@@ -213,38 +258,6 @@ public class ArtemisMetricsEndpoint {
         long mergedCount = existing.count() + incoming.count();
         double weightedMean = mergedCount > 0 ? (existing.mean() * existing.count() + incoming.mean() * incoming.count()) / mergedCount : 0;
         return new RequestStats(mergedCount, weightedMean, Math.max(existing.max(), incoming.max()));
-    }
-
-    /**
-     * Mutable accumulator for raw cache metric values before conversion to {@link CacheStats}.
-     */
-    private static class CacheRawData {
-
-        private final Map<String, Double> values = new LinkedHashMap<>();
-
-        void put(String key, double value) {
-            values.put(key, value);
-        }
-
-        double get(String key) {
-            return values.getOrDefault(key, 0.0);
-        }
-    }
-
-    private static void collectCacheMeter(Map<String, CacheRawData> caches, Meter meter) {
-        String cacheName = meter.getId().getTag("cache");
-        if (cacheName == null) {
-            return;
-        }
-        String metricName = meter.getId().getName();
-        String resultTag = meter.getId().getTag("result");
-        String key = resultTag != null ? metricName + "." + resultTag : metricName;
-
-        double value = 0;
-        for (var measurement : meter.measure()) {
-            value += measurement.getValue();
-        }
-        caches.computeIfAbsent(cacheName, k -> new CacheRawData()).put(key, value);
     }
 
     private double gaugeValue(String meterName) {
