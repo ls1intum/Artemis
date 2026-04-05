@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -58,6 +58,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
@@ -387,12 +388,29 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                        updatedParticipations = currentParticipations.map((participation) => (participation.id === changedParticipation.id ? changedParticipation : participation));
+                        updatedParticipations = currentParticipations.map((participation) => {
+                            if (participation.id !== changedParticipation.id) {
+                                return participation;
+                            }
+
+                            const existingSubmissions = participation.submissions ?? [];
+                            const incomingSubmissions = changedParticipation.submissions ?? [];
+                            const existingIds = new Set(existingSubmissions.map((s) => s.id));
+
+                            const updatedExisting = existingSubmissions.map((existing) => {
+                                const incoming = incomingSubmissions.find((s) => s.id === existing.id);
+                                return incoming ?? existing;
+                            });
+                            const newSubmissions = incomingSubmissions.filter((s) => !existingIds.has(s.id));
+
+                            return { ...participation, submissions: [...updatedExisting, ...newSubmissions] };
+                        });
                     } else {
                         updatedParticipations = [...currentParticipations, changedParticipation];
                     }
                     this._studentParticipations.set(updatedParticipations);
-                    this.mergeResultsAndSubmissionsForParticipations();
+                    this.sortResults();
+                    this.navigateToAthenaResult(changedParticipation);
                 }
             });
     }
@@ -601,6 +619,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
+    }
+
+    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
+        const athenaSubmission = changedParticipation.submissions?.find((s) => s.results?.some((r) => r.assessmentType === AssessmentType.AUTOMATIC_ATHENA && r.successful));
+
+        const submissionId = athenaSubmission?.id;
+        if (!submissionId || !this.exercise?.type || !changedParticipation.id) {
+            return;
+        }
+        let exerciseTypePath: string;
+        if (this.exercise.type === ExerciseType.TEXT) {
+            exerciseTypePath = 'text-exercises';
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            exerciseTypePath = 'modeling-exercises';
+        } else {
+            return;
+        }
+        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {

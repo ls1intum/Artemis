@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -46,6 +47,8 @@ import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercis
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+//import { AccountService } from 'app/core/auth/account.service'; //TODO ldv
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -76,6 +79,7 @@ interface InstructorActionItem {
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
         NgbPopover,
+        TranslatePipe,
     ],
     providers: [ExternalCloningService],
 })
@@ -104,6 +108,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
     private readonly profileService = inject(ProfileService);
+    // private readonly accountService = inject(AccountService); //TODO ldv
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -190,7 +195,13 @@ export class ExerciseHeaderActionsComponent {
         return ['/courses', this.courseId(), 'exercises', this.exercise().id!, 'repository', participation.id];
     });
 
-    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false));
+    readonly userLLMSelection = computed(() => LLMSelectionDecision.CLOUD_AI); //this.accountService.userIdentity()?.selectedLLMUsage);
+    readonly hasUserAcceptedLLM = computed(() => {
+        //TODO ldv
+        //const selection = this.userLLMSelection();
+        return true; //selection === LLMSelectionDecision.CLOUD_AI ;
+    });
+    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();

@@ -37,11 +37,22 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
-            this.availableAthenaModules = modules;
-            this.modulesAvailable = modules.length > 0;
+        this.athenaService.getAvailableModules(courseId, this.exercise).subscribe({
+            next: (modules) => {
+                this.availableAthenaModules = modules;
+                this.modulesAvailable = modules.length > 0;
+            },
+            // TODO ldv Remove this local testing workaround
+            error: () => {
+                this.availableAthenaModules = ['module_text_dummy'];
+                this.modulesAvailable = true;
+            },
         });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        // TODO ldv Remove this local testing workaround
+        if (!this.isAthenaEnabled) {
+            this.isAthenaEnabled = true;
+        }
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
     }
 

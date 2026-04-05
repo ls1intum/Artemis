@@ -235,7 +235,7 @@
                         ></button>
                     </span>
                 }
-                @if (isStartPracticeAvailable()) {
+                @if (isStartPracticeAvailable() && hasUserAcceptedLLM()) {
                     <jhi-start-practice-mode-button
                         [id]="'start-practice-' + exercise().id"
                         class="start-practice"
@@ -271,6 +271,11 @@
         <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
     </div>
     <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+    <p
+        class="mb-3 text-muted"
+        [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
+        [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
+    ></p>
     <span (click)="closeSubmitPopover()">
         <jhi-request-feedback-button
             [exercise]="exercise()"

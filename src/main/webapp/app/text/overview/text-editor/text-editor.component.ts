@@ -158,6 +158,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
                 this.submissionId = newSubmissionId;
                 this.resultId = newResultId;
+                this.isReadOnlyWithShowResult = !!newSubmissionId;
                 if (participationChanged || submissionOrResultChanged) {
                     const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
                     if (participationIdToFetch === undefined) {
@@ -285,6 +286,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.result = this.submission.latestResult!;
                 this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
+            if (this.result && !this.result.submission) {
+                this.result.submission = this.submission;
+            }
+
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
 

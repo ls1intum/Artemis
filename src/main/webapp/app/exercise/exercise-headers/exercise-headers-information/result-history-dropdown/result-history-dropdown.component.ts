@@ -15,7 +15,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -72,9 +74,31 @@ export class ResultHistoryDropdownComponent {
     constructor() {
         effect(() => {
             this.studentParticipation();
-            this.selectedResultId.set(undefined);
-            this.viewingSubmissionChange.emit(false);
+            this.syncSelectedResultWithRoute();
         });
+
+        // Also sync on navigation events (URL changes without signal changes)
+        this.router.events
+            .pipe(
+                filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+                takeUntilDestroyed(),
+            )
+            .subscribe(() => this.syncSelectedResultWithRoute());
+    }
+
+    private syncSelectedResultWithRoute() {
+        const match = this.router.url.match(/\/submission\/(\d+)/);
+        if (match) {
+            const submissionId = Number(match[1]);
+            const matchingResult = this.sortedHistoryResults().find((r) => r.submission?.id === submissionId);
+            if (matchingResult?.id) {
+                this.selectedResultId.set(matchingResult.id);
+                this.viewingSubmissionChange.emit(true);
+                return;
+            }
+        }
+        this.selectedResultId.set(undefined);
+        this.viewingSubmissionChange.emit(false);
     }
 
     continueToLatest() {
