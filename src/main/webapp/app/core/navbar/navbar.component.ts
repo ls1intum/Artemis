@@ -341,7 +341,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
         tutorial_groups: 'artemisApp.breadcrumb.title',
-        registered_students: 'artemisApp.pages.registeredStudents.title',
+        registrations: 'artemisApp.pages.tutorialGroupRegistrations.title',
         sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
@@ -793,7 +793,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/']).then((res) => {
+        this.router.navigate(['/sign-in']).then((res) => {
             if (res) {
                 this.participationWebsocketService.resetLocalCache();
                 this.loginService.logout(true);

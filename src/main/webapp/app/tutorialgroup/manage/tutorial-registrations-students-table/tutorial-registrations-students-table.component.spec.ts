@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TutorialRegistrationsStudentsTableComponent } from './tutorial-registrations-students-table.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from './tutorial-registrations-students-table.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 describe('TutorialRegistrationsStudentsTable', () => {
     setupTestBed({ zoneless: true });
@@ -13,7 +13,7 @@ describe('TutorialRegistrationsStudentsTable', () => {
     let component: TutorialRegistrationsStudentsTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsStudentsTableComponent>;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -22,7 +22,7 @@ describe('TutorialRegistrationsStudentsTable', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',
