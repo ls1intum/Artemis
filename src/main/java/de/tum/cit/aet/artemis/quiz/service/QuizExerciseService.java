@@ -1054,10 +1054,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // Check if quiz has already started or ended
-        checkQuizEditable(originalQuiz);
-
-        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        // Check if quiz has already started or ended, and reuse the fetched batches
+        Set<QuizBatch> batches = checkQuizEditable(originalQuiz);
 
         updatedQuiz.reconnectJSONIgnoreAttributes();
 
@@ -1353,28 +1351,31 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * For course exercises, checks quiz batches and due date.
      *
      * @param quizExercise the quiz exercise to check
+     * @return the quiz batches for course exercises (empty set for exam exercises), so callers can reuse them
      * @throws AccessForbiddenException if the quiz is not editable
      */
-    public void checkQuizEditable(QuizExercise quizExercise) {
+    public Set<QuizBatch> checkQuizEditable(QuizExercise quizExercise) {
         if (quizExercise.isExamExercise()) {
             Exam exam = quizExercise.getExerciseGroup().getExam();
             if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
                 ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
                 ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
                 if (latestEnd != null && ZonedDateTime.now().isAfter(latestEnd)) {
-                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible.");
                 }
-                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+                throw new AccessForbiddenException("During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.");
             }
+            return Set.of();
         }
         else {
             Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(quizExercise);
             if (quizExercise.isQuizEnded()) {
-                throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+                throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible.");
             }
             if (batches.stream().anyMatch(QuizBatch::isStarted)) {
-                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+                throw new AccessForbiddenException("During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.");
             }
+            return batches;
         }
     }
 

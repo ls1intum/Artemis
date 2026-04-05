@@ -258,7 +258,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExercise = this.initializeNewQuizExercise();
         } else {
             this.prepareEntity(this.quizExercise);
-            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+            // Combine server-provided isEditable (accounts for exam dates) with the local check
+            this.quizExercise.isEditable = this.quizExercise.isEditable !== false && isQuizEditable(this.quizExercise);
         }
 
         if (this.isImport) {
@@ -594,7 +595,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        // Combine server-provided isEditable (accounts for exam dates) with the local check
+        this.quizExercise.isEditable = this.quizExercise.isEditable !== false && isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();

@@ -133,13 +133,17 @@ public class QuizExerciseRetrievalResource {
         if (quizExercises.isEmpty()) {
             return ResponseEntity.ok(List.of());
         }
-        List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
 
+        // Compute the latest individual exam end date once for all quizzes in this exam
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+        ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
+        boolean examEnded = latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
+
+        List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         for (QuizExercise quizExercise : quizExercises) {
             boolean isEditable = quizExerciseService.isEditable(quizExercise);
-            boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
             quizExercise.setQuizBatches(null);
-            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, effectiveQuizEnded));
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, examEnded));
         }
         return ResponseEntity.ok(quizExerciseDTOs);
     }
