@@ -62,9 +62,9 @@
     box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
 }
 
+.pdf-fullscreen-window:focus,
 .pdf-fullscreen-window:focus-visible {
-    outline: var(--bs-focus-ring-width) solid var(--bs-focus-ring-color);
-    outline-offset: 0.15rem;
+    outline: none;
 }
 
 .pdf-viewer-footer {
