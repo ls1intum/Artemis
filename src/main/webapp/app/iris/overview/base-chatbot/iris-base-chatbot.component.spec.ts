@@ -48,6 +48,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -85,6 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(ContextSelectionComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -994,6 +996,26 @@ describe('IrisBaseChatbotComponent', () => {
             expect(relatedEntityButton).not.toBeNull();
             expect(component.relatedEntityRoute()).toBe('../exercises/99');
         });
+
+        it('should display correct related entity button when text exercise session selected', async () => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.TEXT_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(77));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/77');
+            expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
+        });
     });
 
     describe('LLM Selection Modal', () => {
@@ -1242,12 +1264,6 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.currentSessionTitle()).toBe('artemisApp.iris.chatHistory.newChat');
         });
 
-        it('should filter context sessions to matching chatMode and entityId', () => {
-            const contextSessions = component.contextSessions();
-            expect(contextSessions).toHaveLength(2);
-            expect(contextSessions.map((s) => s.id)).toEqual([10, 11]);
-        });
-
         it('should render session title trigger in widget layout', () => {
             const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
             expect(trigger).not.toBeNull();
@@ -1261,18 +1277,20 @@ describe('IrisBaseChatbotComponent', () => {
             expect(trigger).toBeNull();
         });
 
-        it('should build menu items with group labels and context sessions on toggle', () => {
+        it('should build menu items with group labels and all sessions on toggle', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            // "Today" group label + session1 + "Older" group label + session2
-            expect(component.sessionMenuItems()).toHaveLength(4);
+            // "Today" group label + 3 today sessions + "Older" group label + 1 older session
+            expect(component.sessionMenuItems()).toHaveLength(6);
             expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
-            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion');
+            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion'); // most recent today
             expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
-            expect(component.sessionMenuItems()[2].disabled).toBe(true); // "Older" group label
-            expect(component.sessionMenuItems()[3].label).toBe('Array sorting question');
-            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[2].label).toBe('Other exercise chat');
+            expect(component.sessionMenuItems()[3].label).toBe('Lecture question');
+            expect(component.sessionMenuItems()[4].disabled).toBe(true); // "Older" group label
+            expect(component.sessionMenuItems()[5].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[5].data?.isActive).toBe(false);
         });
 
         it('should still build grouped menu when current session id is undefined', () => {
@@ -1311,7 +1329,8 @@ describe('IrisBaseChatbotComponent', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            component.sessionMenuItems()[3].command!({} as any);
+            // index 5: "Older" label is at [4], exerciseSession2 (the only older session) is at [5]
+            component.sessionMenuItems()[5].command!({} as any);
 
             expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
         });
