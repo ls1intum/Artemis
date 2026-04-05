@@ -84,7 +84,7 @@ describe('ExamRoomsService', () => {
 
             const req = httpMock.expectOne('api/exam/rooms/upload');
             expect(req.request.method).toBe('POST');
-            expect(req.request.body instanceof FormData).toBeTrue();
+            expect(req.request.body instanceof FormData).toBe(true);
             expect(req.request.body.get('file')).toBe(mockFile);
             req.flush(mockResponse);
         });
