@@ -155,7 +155,6 @@
                     },
                     "lecture": {
                         "keyPoints": "Was sind die wichtigsten Punkte, die ich aus dieser Vorlesung wissen sollte?",
-                        "quizMe": "Frag mich zu dieser Vorlesung ab",
                         "summarise": "Fasse zusammen, was ich wissen sollte"
                     }
                 }

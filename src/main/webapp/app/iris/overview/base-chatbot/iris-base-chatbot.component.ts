@@ -1,6 +1,6 @@
 import {
     faArrowDown,
-    faBook,
+    faBrain,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -9,11 +9,11 @@ import {
     faCompress,
     faCopy,
     faExpand,
+    faGraduationCap,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
-    faQuestionCircle,
     faThumbsDown,
     faThumbsUp,
     faXmark,
@@ -93,8 +93,6 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 // Interval (in ms) between placeholder label cycling
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
 const PLACEHOLDER_FADE_DURATION_MS = 300;
-
-// Duration (in ms) for the placeholder fade-out before swapping text
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -271,10 +269,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     protected readonly suggestionChips = [
-        { icon: faBook, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
-        { icon: faQuestionCircle, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
+        { icon: faGraduationCap, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
+        { icon: faBrain, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
         { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
-    ];
+    ] as const;
+
+    readonly chipPreviewText = signal('');
+    private readonly isChipTextApplied = signal(false);
 
     readonly newChatTitle = computed(() => this.translateService.instant('artemisApp.iris.chatHistory.newChat'));
 
@@ -350,22 +351,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return mode === ChatServiceMode.PROGRAMMING_EXERCISE || mode === ChatServiceMode.TEXT_EXERCISE;
     });
 
-    readonly interpolatedLabels = computed<string[]>(() => {
-        let labels: string[];
-        if (this.isExerciseMode()) {
-            labels = EXERCISE_PLACEHOLDER_LABEL_KEYS.map((key) => this.translateService.instant(key));
-        } else if (this.currentChatMode() === ChatServiceMode.LECTURE) {
-            labels = LECTURE_PLACEHOLDER_LABEL_KEYS.map((key) => this.translateService.instant(key));
-        } else {
-            return [];
-        }
-        // Fisher-Yates shuffle for random display order
-        for (let i = labels.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [labels[i], labels[j]] = [labels[j], labels[i]];
-        }
-        return labels;
-    });
+    readonly interpolatedLabels = signal<string[]>([]);
 
     readonly placeholderIndex = signal(0);
     readonly placeholderVisible = signal(true);
@@ -379,7 +365,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return labels[this.placeholderIndex() % labels.length];
     });
 
-    readonly ghostText = signal('');
+    readonly shouldUseRotatingPlaceholder = computed(() => this.isExerciseOrLectureMode() && !this.messages().length && !this.isEmbeddedChat());
+
+    readonly ghostText = computed(() => {
+        const input = this.newMessageTextContent();
+        const labels = this.interpolatedLabels();
+        if (!input || !labels.length || !this.isExerciseOrLectureMode()) {
+            return '';
+        }
+        const inputLower = input.toLowerCase();
+        const match = labels.find((label) => label.toLowerCase().startsWith(inputLower));
+        return match ? match.slice(input.length) : '';
+    });
+
+    readonly textareaPlaceholder = computed(() => {
+        if (this.chipPreviewText()) return '';
+        if (this.shouldUseRotatingPlaceholder() && !this.isInputDisabled() && this.currentPlaceholder()) {
+            return this.currentPlaceholder();
+        }
+        return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
+    });
 
     protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
         return message.accessedMemories ?? [];
@@ -426,7 +431,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     onTextareaBlur(): void {
         this.isFocused.set(false);
-        if (!this.newMessageTextContent() && this.isExerciseOrLectureMode()) {
+        if (!this.newMessageTextContent() && this.shouldUseRotatingPlaceholder()) {
             const labels = this.interpolatedLabels();
             if (labels.length) {
                 this.placeholderIndex.update((i) => (i + 1) % labels.length);
@@ -549,7 +554,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Placeholder cycling lifecycle
         effect((onCleanup) => {
-            const shouldCycle = this.isExerciseOrLectureMode() && !this.newMessageTextContent() && !this.isFocused() && !this.isInputDisabled();
+            const shouldCycle = this.shouldUseRotatingPlaceholder() && !this.newMessageTextContent() && !this.isFocused() && !this.isInputDisabled();
             if (shouldCycle) {
                 this.startCycling();
             } else {
@@ -559,17 +564,32 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
         this.destroyRef.onDestroy(() => this.stopCycling());
 
-        // Ghost text autocomplete
+        // Reset chip applied state when textarea is cleared
         effect(() => {
-            const input = this.newMessageTextContent();
-            const labels = this.interpolatedLabels();
-            if (!input || !labels.length || !this.isExerciseOrLectureMode()) {
-                this.ghostText.set('');
+            if (!this.newMessageTextContent()) {
+                untracked(() => this.isChipTextApplied.set(false));
+            }
+        });
+
+        // Shuffle labels once when chat mode or entity changes (not on every computed read)
+        effect(() => {
+            const mode = this.currentChatMode();
+            let keys: readonly string[];
+            if (this.isExerciseMode()) {
+                keys = EXERCISE_PLACEHOLDER_LABEL_KEYS;
+            } else if (mode === ChatServiceMode.LECTURE) {
+                keys = LECTURE_PLACEHOLDER_LABEL_KEYS;
+            } else {
+                untracked(() => this.interpolatedLabels.set([]));
                 return;
             }
-            const inputLower = input.toLowerCase();
-            const match = labels.find((label) => label.toLowerCase().startsWith(inputLower));
-            this.ghostText.set(match ? match.slice(input.length) : '');
+            const labels = keys.map((key) => this.translateService.instant(key));
+            // Fisher-Yates shuffle for random display order
+            for (let i = labels.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [labels[i], labels[j]] = [labels[j], labels[i]];
+            }
+            untracked(() => this.interpolatedLabels.set(labels));
         });
     }
 
@@ -772,12 +792,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     handleKey(event: KeyboardEvent): void {
         if ((event.key === 'Tab' || event.key === 'ArrowRight') && this.ghostText()) {
+            const textarea = this.messageTextarea()?.nativeElement;
+            // Only accept ghost text on ArrowRight if cursor is at end of input
+            if (event.key === 'ArrowRight' && textarea && textarea.selectionStart !== this.newMessageTextContent().length) {
+                return;
+            }
             event.preventDefault();
             this.newMessageTextContent.set(this.newMessageTextContent() + this.ghostText());
-            this.ghostText.set('');
             this.adjustTextareaRows();
             // Move cursor to end
-            const textarea = this.messageTextarea()?.nativeElement;
             if (textarea) {
                 const len = this.newMessageTextContent().length;
                 textarea.setSelectionRange(len, len);
@@ -861,6 +884,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     applyChipText(translationKey: string): void {
         const text = this.translateService.instant(translationKey);
+        this.chipPreviewText.set('');
+        this.isChipTextApplied.set(true);
         this.newMessageTextContent.set(text);
         setTimeout(() => {
             const textarea = this.messageTextarea()?.nativeElement;
@@ -870,6 +895,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             this.adjustTextareaRows();
         });
+    }
+
+    onChipMouseEnter(starterKey: string): void {
+        if (this.isChipTextApplied()) return;
+        this.chipPreviewText.set(this.translateService.instant(starterKey));
+    }
+
+    onChipMouseLeave(): void {
+        if (this.isChipTextApplied()) return;
+        this.chipPreviewText.set('');
     }
 
     onSessionClick(session: IrisSessionDTO) {

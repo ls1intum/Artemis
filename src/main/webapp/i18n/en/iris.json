@@ -155,7 +155,6 @@
                     },
                     "lecture": {
                         "keyPoints": "What are the key points I should know from this lecture?",
-                        "quizMe": "Quiz me on this lecture",
                         "summarise": "Summarize what I should know"
                     }
                 }

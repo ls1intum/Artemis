@@ -517,7 +517,9 @@ pre {
         flex: 1;
     }
 
-    .ghost-text-overlay {
+    // These values must stay in sync with the textarea padding (16px) and send button width (56px)
+    .ghost-text-overlay,
+    .chip-preview-overlay {
         position: absolute;
         top: 16px;
         left: 16px;
@@ -537,8 +539,14 @@ pre {
     }
 
     .ghost-text-suggestion {
-        color: var(--bs-secondary-color, #6c757d);
+        color: var(--bs-secondary-color);
         opacity: 0.6;
+    }
+
+    .chip-preview-text {
+        color: var(--bs-secondary-color);
+        opacity: 1;
+        white-space: pre-wrap;
     }
 }
 

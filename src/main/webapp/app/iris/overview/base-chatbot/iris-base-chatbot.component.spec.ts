@@ -49,6 +49,10 @@ import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 
+// Must match the constants in the component
+const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
+const PLACEHOLDER_FADE_DURATION_MS = 300;
+
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -1526,28 +1530,22 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chips).toHaveLength(0);
         });
 
-        it('should call applyChipText with correct starter key when Learn chip is clicked', () => {
+        it('should call applyChipText with valid starter keys when chips are clicked', () => {
             fixture.detectChanges();
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
-            chips[0].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
-        });
+            const validStarterKeys = new Set([
+                'artemisApp.iris.chat.suggestions.learnStarter',
+                'artemisApp.iris.chat.suggestions.quizTopicStarter',
+                'artemisApp.iris.chat.suggestions.tipsStarter',
+            ]);
 
-        it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
-            fixture.detectChanges();
-            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
-            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
-            chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
-        });
-
-        it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
-            fixture.detectChanges();
-            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
-            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
-            chips[2].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+            const calledKeys = new Set<string>();
+            for (const chip of chips) {
+                chip.click();
+                calledKeys.add(applyChipTextSpy.mock.lastCall![0] as string);
+            }
+            expect(calledKeys).toEqual(validStarterKeys);
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
@@ -1560,6 +1558,51 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.debugElement.query(By.css('textarea'));
             expect(textarea).toBeTruthy();
+        });
+
+        it('should show preview text on chip hover', () => {
+            fixture.detectChanges();
+            const starterKey = 'artemisApp.iris.chat.suggestions.learnStarter';
+            component.onChipMouseEnter(starterKey);
+            expect(component.chipPreviewText()).toBe(starterKey);
+        });
+
+        it('should clear preview text on chip mouse leave', () => {
+            fixture.detectChanges();
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.learnStarter');
+            component.onChipMouseLeave();
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should not clear applied text on mouse leave after click', () => {
+            fixture.detectChanges();
+            const starterKey = 'artemisApp.iris.chat.suggestions.learnStarter';
+            component.applyChipText(starterKey);
+            component.onChipMouseLeave();
+            expect(component.newMessageTextContent()).toBe(starterKey);
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should not show preview on hover after chip click', () => {
+            fixture.detectChanges();
+            component.applyChipText('artemisApp.iris.chat.suggestions.learnStarter');
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.quizTopicStarter');
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should render all three chips in fixed order: learn, quiz, tips', () => {
+            fixture.detectChanges();
+            const chipKeys = component.suggestionChips.map((c) => c.translationKey);
+            expect(chipKeys).toEqual(['artemisApp.iris.chat.suggestions.learn', 'artemisApp.iris.chat.suggestions.quiz', 'artemisApp.iris.chat.suggestions.tips']);
+        });
+
+        it('should not show chip preview overlay when input is disabled', () => {
+            fixture.detectChanges();
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.learnStarter');
+            component.isLoading.set(true);
+            fixture.detectChanges();
+            const overlay = fixture.nativeElement.querySelector('.chip-preview-overlay');
+            expect(overlay).toBeNull();
         });
     });
 
@@ -1601,8 +1644,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             it('should interpolate exercise labels', () => {
                 const labels = component.interpolatedLabels();
-                expect(labels).toHaveLength(5);
-                expect(labels).toContain('artemisApp.iris.chat.placeholders.exercise.helpUnderstand');
+                expect(labels).toHaveLength(4);
                 expect(labels).toContain('artemisApp.iris.chat.placeholders.exercise.whereToStart');
             });
 
@@ -1645,6 +1687,60 @@ describe('IrisBaseChatbotComponent', () => {
                 component.onTextareaBlur();
                 expect(component.placeholderIndex()).toBe(indexAtFocus);
             });
+
+            it('should cycle placeholder after interval', () => {
+                vi.useFakeTimers();
+
+                // Trigger cycling by simulating blur with empty input
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                const indexAfterBlur = component.placeholderIndex();
+
+                // Advance past the cycle interval
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS);
+                expect(component.placeholderVisible()).toBe(false);
+
+                // Advance past the fade duration to swap text
+                vi.advanceTimersByTime(PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe((indexAfterBlur + 1) % component.interpolatedLabels().length);
+                expect(component.placeholderVisible()).toBe(true);
+
+                vi.useRealTimers();
+            });
+        });
+
+        describe('exercise mode with existing messages', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show the default placeholder label', () => {
+                expect(component.textareaPlaceholder()).toBe('artemisApp.exerciseChatbot.inputMessage');
+            });
+
+            it('should not cycle placeholder labels on blur', () => {
+                vi.useFakeTimers();
+
+                const indexAtStart = component.placeholderIndex();
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS + PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe(indexAtStart);
+                expect(component.placeholderVisible()).toBe(true);
+
+                vi.useRealTimers();
+            });
         });
 
         describe('lecture mode', () => {
@@ -1663,13 +1759,32 @@ describe('IrisBaseChatbotComponent', () => {
 
             it('should interpolate lecture labels', () => {
                 const labels = component.interpolatedLabels();
-                expect(labels).toHaveLength(4);
+                expect(labels).toHaveLength(2);
                 expect(labels).toContain('artemisApp.iris.chat.placeholders.lecture.keyPoints');
             });
 
             it('should hide suggestion chips on lecture screen', () => {
                 const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
                 expect(chips).toHaveLength(0);
+            });
+        });
+
+        describe('lecture mode with existing messages', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show the default placeholder label', () => {
+                expect(component.textareaPlaceholder()).toBe('artemisApp.exerciseChatbot.inputMessage');
             });
         });
 
@@ -1748,12 +1863,17 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(component.ghostText()).toBe('');
             });
 
-            it('should accept ghost text on ArrowRight key', () => {
+            it('should accept ghost text on ArrowRight key when cursor is at end', () => {
                 const label = component.interpolatedLabels()[1];
                 const prefix = label.substring(0, 47);
                 component.newMessageTextContent.set(prefix);
                 fixture.detectChanges();
                 expect(component.ghostText()).toBe(label.substring(47));
+
+                // Place cursor at end of input (set value to sync JSDOM with Angular model)
+                const textarea = fixture.debugElement.query(By.css('textarea')).nativeElement as HTMLTextAreaElement;
+                textarea.value = prefix;
+                textarea.setSelectionRange(prefix.length, prefix.length);
 
                 const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
                 vi.spyOn(event, 'preventDefault');
@@ -1761,6 +1881,26 @@ describe('IrisBaseChatbotComponent', () => {
 
                 expect(event.preventDefault).toHaveBeenCalled();
                 expect(component.newMessageTextContent()).toBe(label);
+            });
+
+            it('should not accept ghost text on ArrowRight key when cursor is in middle', () => {
+                const label = component.interpolatedLabels()[1];
+                const prefix = label.substring(0, 47);
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(47));
+
+                // Place cursor in the middle of input (set value to sync JSDOM with Angular model)
+                const textarea = fixture.debugElement.query(By.css('textarea')).nativeElement as HTMLTextAreaElement;
+                textarea.value = prefix;
+                textarea.setSelectionRange(5, 5);
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).not.toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe(prefix);
             });
 
             it('should not show ghost text on course screen', () => {
