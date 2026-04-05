@@ -276,6 +276,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Resets the component state and re-initializes practice mode so the student
+     * can take the quiz again with a fresh submission.
+     */
+    restartPractice(): void {
+        this.runningTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.runningTimeouts = [];
+        this.showingResult = false;
+        this.isSubmitting = false;
+        this.initPracticeMode();
+    }
+
+    /**
      * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
     initPracticeMode(participationId?: number, submissionId?: number) {

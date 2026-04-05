@@ -72,6 +72,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
+    protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
 
     readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 

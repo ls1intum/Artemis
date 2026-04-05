@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -108,6 +108,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
     private readonly profileService = inject(ProfileService);
+    private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
 
     readonly exercise = input.required<Exercise>();
@@ -117,6 +118,7 @@ export class ExerciseHeaderActionsComponent {
     readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
+    readonly onRestartPractice = input<() => boolean>();
     readonly submitDisabled = input<boolean>(false);
     readonly submitLabel = input<string>('entity.action.submit');
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
@@ -482,6 +484,17 @@ export class ExerciseHeaderActionsComponent {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
+    }
+
+    handleQuizAction(quizMode: string): void {
+        if (quizMode === 'practice') {
+            this.participationModeChange.emit('practice');
+            const restartFn = this.onRestartPractice();
+            if (restartFn && restartFn()) {
+                return;
+            }
+        }
+        this.router.navigate(['/courses', this.courseId(), 'exercises', 'quiz-exercises', this.exercise().id, quizMode]);
     }
 
     closeSubmitPopover() {

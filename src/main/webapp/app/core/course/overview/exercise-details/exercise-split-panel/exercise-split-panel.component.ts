@@ -263,6 +263,15 @@ export class ExerciseSplitPanelComponent {
         }
     }
 
+    restartPractice(): boolean {
+        const quizComponent = this._quizComponent();
+        if (quizComponent && quizComponent.mode === 'practice') {
+            quizComponent.restartPractice();
+            return true;
+        }
+        return false;
+    }
+
     onOutletActivate(component: any): void {
         if (component instanceof QuizParticipationComponent) {
             this._quizComponent.set(component);
