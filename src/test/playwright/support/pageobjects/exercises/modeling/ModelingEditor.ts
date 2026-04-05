@@ -99,12 +99,6 @@ export class ModelingEditor {
         await this.addElementViaEditorAPI(selector, 100 + componentNumber * 250, 100);
     }
 
-    async submit() {
-        const responsePromise = this.page.waitForResponse(`api/modeling/exercises/*/modeling-submissions`);
-        await this.page.locator('#submit-modeling-submission').first().click();
-        return await responsePromise;
-    }
-
     async clickCreateNewExampleSubmission() {
         await this.page.locator('#new-modeling-example-submission').click();
     }

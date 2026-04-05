@@ -33,7 +33,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private elementRef = inject(ElementRef);
     private ngZone = inject(NgZone);
-    private cdr = inject(ChangeDetectorRef);
+    private changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
@@ -153,7 +153,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             type: diagram?.diagramType,
             locale: this.translateService.getCurrentLang() as Locale,
         });
-        // Expose editor on host element for E2E test access (same pattern as ModelingEditorComponent)
+        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
         // Wrap callback in NgZone.run() because Apollon's React/Zustand store fires outside Angular's zone.
         // Without this, programmatic model updates (e.g., from E2E tests) don't trigger change detection,
@@ -161,7 +161,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor.subscribeToModelChange((newModel) => {
             this.ngZone.run(() => {
                 this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
-                this.cdr.markForCheck();
+                this.changeDetectorRef.markForCheck();
             });
         });
     }

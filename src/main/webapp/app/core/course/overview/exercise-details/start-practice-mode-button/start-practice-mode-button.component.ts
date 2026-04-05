@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
-import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -37,9 +37,10 @@ export class StartPracticeModeButtonComponent {
 
     readonly startingPracticeMode = computed(() => this._startingPracticeMode());
     readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
+    readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
 
     // Icons
-    faRedo = faRedo;
+    faPlayCircle = faPlayCircle;
 
     constructor() {
         effect(() => {
@@ -71,9 +72,9 @@ export class StartPracticeModeButtonComponent {
                         } else {
                             this.alertService.error('artemisApp.exercise.startError');
                         }
-                        if (participation) {
-                            this.practiceModeStarted.emit(participation);
-                        }
+                    }
+                    if (participation) {
+                        this.practiceModeStarted.emit(participation);
                     }
                 },
                 error: () => {

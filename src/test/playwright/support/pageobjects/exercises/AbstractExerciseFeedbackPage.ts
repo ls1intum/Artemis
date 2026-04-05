@@ -25,8 +25,7 @@ export abstract class AbstractExerciseFeedback {
     }
 
     async shouldShowScore(percentage: number) {
-        // Use .first() because some pages have multiple #result elements (exercise header + sidebar badges)
-        const resultPercentage = this.page.locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` }).first();
+        const resultPercentage = this.page.locator('#exercise-header').locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
         await expect(resultPercentage).toBeVisible();
     }
 
