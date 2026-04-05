@@ -150,6 +150,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 return this.alertService.error('artemisApp.textExercise.error');
             }
 
+            // When participationId is provided as input (e.g. in exam summary), route params won't contain it,
+            // so we fetch directly instead of relying on the route.params subscription to trigger the fetch.
+            if (this.participationId() !== undefined) {
+                this.textService.get(participationId!, this.resultId).subscribe({
+                    next: (data: StudentParticipation) => {
+                        this.updateParticipation(data, this.submissionId, this.resultId);
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+                this.isReadOnlyWithShowResult = !!this.submissionId;
+                return;
+            }
+
             this.route.params?.subscribe((params) => {
                 const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
                 const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
