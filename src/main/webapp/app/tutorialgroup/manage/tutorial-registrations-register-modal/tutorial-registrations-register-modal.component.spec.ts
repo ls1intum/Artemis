@@ -8,18 +8,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { Dialog } from 'primeng/dialog';
 import { PrimeNgDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
 import { TutorialRegistrationsRegisterModalComponent } from './tutorial-registrations-register-modal.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
 import { TutorialRegistrationsRegisterSearchBarStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-register-search-bar-stub.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsStudentsTableStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-students-table-stub.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
-interface TutorialGroupsServiceMock {
-    registerMultipleStudentsViaLogin: ReturnType<typeof vi.fn>;
+interface TutorialGroupApiServiceMock {
+    batchRegisterStudents: ReturnType<typeof vi.fn>;
 }
 
 interface AlertServiceMock {
@@ -36,11 +36,11 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
     let component: TutorialRegistrationsRegisterModalComponent;
     let fixture: ComponentFixture<TutorialRegistrationsRegisterModalComponent>;
 
-    let tutorialGroupsServiceMock: TutorialGroupsServiceMock;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let alertServiceMock: AlertServiceMock;
     let tutorialGroupRegisteredStudentsServiceMock: TutorialGroupRegisteredStudentsServiceMock;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -49,7 +49,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',
@@ -59,8 +59,8 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
     };
 
     beforeEach(async () => {
-        tutorialGroupsServiceMock = {
-            registerMultipleStudentsViaLogin: vi.fn(),
+        tutorialGroupApiServiceMock = {
+            batchRegisterStudents: vi.fn(),
         };
 
         alertServiceMock = {
@@ -74,7 +74,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsRegisterModalComponent],
             providers: [
-                { provide: TutorialGroupsService, useValue: tutorialGroupsServiceMock },
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -146,7 +146,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
     it('should register all selected students and close the modal on success', async () => {
         const response$ = new Subject<HttpResponse<void>>();
-        tutorialGroupsServiceMock.registerMultipleStudentsViaLogin.mockReturnValue(response$.asObservable());
+        tutorialGroupApiServiceMock.batchRegisterStudents.mockReturnValue(response$.asObservable());
 
         component.open();
         fixture.detectChanges();
@@ -168,7 +168,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
         let loadingOverlay = fixture.nativeElement.querySelector('jhi-loading-indicator-overlay');
 
-        expect(tutorialGroupsServiceMock.registerMultipleStudentsViaLogin).toHaveBeenCalledWith(7, 11, ['ada', 'alan']);
+        expect(tutorialGroupApiServiceMock.batchRegisterStudents).toHaveBeenCalledWith(7, 11, ['ada', 'alan']);
         expect(component.isLoading()).toBe(true);
         expect(loadingOverlay).not.toBeNull();
 
@@ -189,7 +189,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
     });
 
     it('should keep the modal open and show an error alert when register all fails', async () => {
-        tutorialGroupsServiceMock.registerMultipleStudentsViaLogin.mockReturnValue(throwError(() => new Error('register failed')));
+        tutorialGroupApiServiceMock.batchRegisterStudents.mockReturnValue(throwError(() => new Error('register failed')));
 
         component.open();
         fixture.detectChanges();
@@ -210,7 +210,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
         const loadingOverlay = fixture.nativeElement.querySelector('jhi-loading-indicator-overlay');
 
-        expect(tutorialGroupsServiceMock.registerMultipleStudentsViaLogin).toHaveBeenCalledWith(7, 11, ['ada']);
+        expect(tutorialGroupApiServiceMock.batchRegisterStudents).toHaveBeenCalledWith(7, 11, ['ada']);
         expect(alertServiceMock.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupRegistrations.registerModal.registerErrorAlert');
         expect(component.isLoading()).toBe(false);
         expect(component.isOpen()).toBe(true);
