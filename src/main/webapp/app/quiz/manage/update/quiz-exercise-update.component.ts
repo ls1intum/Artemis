@@ -30,7 +30,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -148,6 +148,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
+    faArrowLeft = faArrowLeft;
     faWrench = faWrench;
 
     readonly QuizMode = QuizMode;
@@ -703,6 +704,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     previousState(): void {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
+    }
+
+    navigateBack(): void {
+        this.previousState();
     }
 
     get reEvaluateUrl(): string[] {
