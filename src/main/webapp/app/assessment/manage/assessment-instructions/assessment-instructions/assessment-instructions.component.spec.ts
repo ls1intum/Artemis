@@ -11,7 +11,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
@@ -92,7 +92,7 @@ describe('AssessmentInstructionsComponent', () => {
     it('should initialize exercise input for modeling exercise', () => {
         const modelingExercise = {
             id: 1,
-            exampleSolutionModel: '{"elements": [{"id": 1}]}',
+            exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
             diagramType: UMLDiagramType.ClassDiagram,
             exampleSolutionExplanation: 'explanation',
             type: ExerciseType.MODELING,

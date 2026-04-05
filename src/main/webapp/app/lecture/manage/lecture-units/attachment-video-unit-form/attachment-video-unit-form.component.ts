@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, effect, inject, input, output, signal,
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleInfo, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -13,6 +13,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -85,12 +87,24 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+        FeatureToggleHideDirective,
+    ],
 })
 export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly FeatureToggle = FeatureToggle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;

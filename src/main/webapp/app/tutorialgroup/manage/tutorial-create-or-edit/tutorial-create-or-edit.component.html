@@ -52,7 +52,11 @@
         </div>
 
         <div class="label-and-input-row">
-            <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="alreadyUsedLanguages()" [(language)]="selectedLanguage" />
+            <jhi-tutorial-edit-languages-input
+                [alreadyUsedLanguages]="alreadyUsedLanguages()"
+                [(language)]="selectedLanguage"
+                [(languageValidationResult)]="languageValidationResult"
+            />
 
             <div class="label-and-input">
                 <label for="mode-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate }} *</label>
@@ -100,6 +104,7 @@
                         [(ngModel)]="capacity"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
                         [min]="1"
+                        [max]="5000"
                         [showButtons]="true"
                     />
                 </p-inputgroup>
@@ -110,6 +115,7 @@
             <div class="label-and-input">
                 <label for="additional-information-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
                 <p-inputgroup>
+                    @let additionalInformationValidation = additionalInformationValidationResult();
                     <input
                         id="additional-information-input"
                         type="text"
@@ -117,6 +123,11 @@
                         pInputText
                         [(ngModel)]="additionalInformation"
                     />
+                    @if (additionalInformationValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="additionalInformationValidation.message | artemisTranslate" tooltipPosition="left">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
                 </p-inputgroup>
             </div>
             <div class="spacer"></div>
@@ -125,7 +136,7 @@
 
     <section>
         <div class="session-plan-section-header">
-            <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.planSessions"></h3>
+            <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.defineSessionPlan"></h3>
             <p-toggleswitch [(ngModel)]="configureSessionPlan" />
         </div>
 
@@ -184,6 +195,7 @@
                             [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
                             [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
                             [min]="1"
+                            [max]="48"
                             [showButtons]="true"
                         />
                     </p-inputgroup>

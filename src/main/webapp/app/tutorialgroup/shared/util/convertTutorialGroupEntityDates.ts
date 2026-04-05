@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 
 export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
@@ -11,7 +11,7 @@ export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreeP
     return tutorialGroupFreePeriod;
 }
 
-export function convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
+export function convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: LegacyTutorialGroupSession): LegacyTutorialGroupSession {
     tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
     tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
     if (tutorialGroupSession.tutorialGroupFreePeriod) {
@@ -38,7 +38,7 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
         tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
     }
     if (tutorialGroup.tutorialGroupSessions) {
-        tutorialGroup.tutorialGroupSessions.forEach((tutorialGroupSession: TutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
+        tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
     }
     if (tutorialGroup.nextSession) {
         tutorialGroup.nextSession = convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
