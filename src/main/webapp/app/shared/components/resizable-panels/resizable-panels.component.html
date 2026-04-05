@@ -1,0 +1,71 @@
+@if (!isNarrow() && rightPanels().length > 0) {
+    <!-- ── Wide mode: resizable split ─────────────────────────────────── -->
+    <div class="d-flex w-100 h-100 overflow-hidden">
+        @if (leftPanel()) {
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
+                <p-tabs [value]="0" class="flex-shrink-0">
+                    <p-tablist>
+                        <p-tab [value]="0">
+                            @if (leftPanel()!.iconTemplate()) {
+                                <ng-container [ngTemplateOutlet]="leftPanel()!.iconTemplate()!" />
+                            } @else if (leftPanel()!.icon()) {
+                                <fa-icon [icon]="leftPanel()!.icon()!" />
+                            }
+                            <span [jhiTranslate]="leftPanel()!.label()"></span>
+                        </p-tab>
+                    </p-tablist>
+                </p-tabs>
+                <div class="flex-grow-1 overflow-y-auto p-2">
+                    <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
+                </div>
+            </div>
+        }
+
+        @if (rightPanels().length > 0) {
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
+                <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
+                    <p-tablist>
+                        @for (panel of rightPanels(); track panel; let i = $index) {
+                            <p-tab [value]="i">
+                                @if (panel.iconTemplate()) {
+                                    <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                                } @else if (panel.icon()) {
+                                    <fa-icon [icon]="panel.icon()!" />
+                                }
+                                <span [jhiTranslate]="panel.label()"></span>
+                            </p-tab>
+                        }
+                    </p-tablist>
+                </p-tabs>
+                <div class="flex-grow-1 overflow-y-auto p-2">
+                    @if (rightPanels()[activeRightIndex()]) {
+                        <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
+                    }
+                </div>
+            </div>
+        }
+    </div>
+} @else {
+    <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
+    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
+        <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
+            <p-tablist>
+                @for (panel of panels(); track panel; let i = $index) {
+                    <p-tab [value]="i">
+                        @if (panel.iconTemplate()) {
+                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                        } @else if (panel.icon()) {
+                            <fa-icon [icon]="panel.icon()!" />
+                        }
+                        <span [jhiTranslate]="panel.label()"></span>
+                    </p-tab>
+                }
+            </p-tablist>
+        </p-tabs>
+        <div class="flex-grow-1 overflow-y-auto p-2">
+            @if (panels()[activeSingleIndex()]) {
+                <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
+            }
+        </div>
+    </div>
+}

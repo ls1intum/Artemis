@@ -1,0 +1,41 @@
+$practice-color: #3e8acc;
+$graded-color: #28a745;
+
+.segmented-control {
+    display: inline-flex;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 6px;
+    overflow: hidden;
+
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border: none;
+        background: var(--bs-body-bg);
+        color: var(--bs-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+            background-color 0.15s ease,
+            color 0.15s ease;
+
+        &:not(:last-child) {
+            border-right: 1px solid var(--bs-border-color);
+        }
+
+        &--active {
+            color: white;
+        }
+
+        &--practice {
+            background-color: $practice-color;
+        }
+
+        &--graded {
+            background-color: $graded-color;
+        }
+    }
+}

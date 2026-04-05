@@ -172,6 +172,7 @@
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
+                "quizNotOpened": "Klicke auf \"Quiz öffnen\", um am Quiz teilzunehmen.",
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben.",
@@ -302,6 +303,12 @@
                 "bonus": "Bonus",
                 "of": " von ",
                 "problemStatement": "Problemstellung",
+                "codeEditor": "Code-Editor",
+                "textEditor": "Text-Editor",
+                "modelingEditor": "Modellierungs-Editor",
+                "fileUploadEditor": "Datei-Upload",
+                "quizEditor": "Quiz",
+                "iris": "Iris",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende",
@@ -339,7 +346,11 @@
                 "presented": "Präsentiert",
                 "presentation": "Präsentation",
                 "selectExercise": "Bitte wähle eine Aufgabe aus.",
-                "status": "Status"
+                "status": "Status",
+                "codeIssues": "Code-Probleme",
+                "codeIssuesTooltip": "Anzahl der statischen Code-Analyse-Probleme in deiner letzten Abgabe.",
+                "aiFeedbackRequests": "KI-Feedback",
+                "aiFeedbackRequestsTooltip": "Anzahl der genutzten KI-Feedback-Anfragen im Verhältnis zum erlaubten Limit."
             }
         }
     }

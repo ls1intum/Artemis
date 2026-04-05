@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject, input, signal } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
@@ -53,6 +53,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
 
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    readonly participationId = input<number>();
+    readonly lightweight = signal(false);
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
@@ -84,13 +87,14 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         this.paramSub = this.route!.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
-            const participationId = Number(params['participationId']);
+            const participationId = this.participationId() ?? Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        this.lightweight.set(!this.exercise?.exerciseGroup);
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
                         this.repositoryIsLocked = dueDateHasPassed && !isPracticeMode(this.participation);
@@ -119,6 +123,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                     },
                 });
         });
+    }
+
+    commit(): void {
+        this.codeEditorContainer?.commit();
     }
 
     /**

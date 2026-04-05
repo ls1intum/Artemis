@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -30,7 +30,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -82,6 +82,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        RouterLink,
         ButtonModule,
         QuizAiGenerationModalComponent,
     ],
@@ -147,6 +148,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
+    faArrowLeft = faArrowLeft;
+    faWrench = faWrench;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
@@ -221,9 +224,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (!this.quizExercise.isEditable) {
-                    this.alertService.error('error.http.403');
-                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -411,6 +411,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Returns whether pending changes are present, preventing a deactivation.
      */
     canDeactivate(): boolean {
+        if (!this.quizExercise?.isEditable) {
+            return true;
+        }
         return !this.pendingChangesCache;
     }
 
@@ -595,7 +598,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        // Respect the server-provided isEditable flag (accounts for exam dates), combined with local check
+        this.quizExercise.isEditable = this.quizExercise.isEditable && isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
@@ -704,6 +708,28 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
+    navigateBack(): void {
+        this.previousState();
+    }
+
+    get reEvaluateUrl(): string[] {
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                String(this.courseId),
+                'exams',
+                String(this.examId),
+                'exercise-groups',
+                String(groupId),
+                'quiz-exercises',
+                String(this.quizExercise?.id),
+                're-evaluate',
+            ];
+        }
+        return ['/course-management', String(this.courseId), 'quiz-exercises', String(this.quizExercise?.id), 're-evaluate'];
+    }
+
     /**
      * Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
@@ -727,7 +753,25 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+        return (
+            this.isSaving ||
+            !this.pendingChangesCache ||
+            !this.quizIsValid ||
+            this.hasSavedQuizStarted ||
+            !this.quizExercise.isEditable ||
+            this.quizExercise.dueDateError ||
+            this.hasErrorInQuizBatches()
+        );
+    }
+
+    get saveButtonTooltip(): string {
+        if (!this.quizExercise.isEditable) {
+            if (this.quizExercise.quizEnded) {
+                return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            }
+            return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+        }
+        return '';
     }
 
     hasErrorInQuizBatches(): boolean {

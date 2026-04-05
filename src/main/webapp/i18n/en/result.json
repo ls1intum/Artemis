@@ -122,6 +122,20 @@
             "manualFeedbackCount": "You received {{feedbacks}} manual feedbacks.",
             "buildLogs": {
                 "viewLogs": "View logs"
+            },
+            "progressString": {
+                "title": "Result history",
+                "resultsCount": {
+                    "one": "{{ count }} result",
+                    "other": "{{ count }} results"
+                },
+                "feedbackButton": "Feedback",
+                "clickToSeeAllResults": "Click to see all your results",
+                "buildFailed": "Your build failed!",
+                "goalReached": "Goal reached! Excellent work.",
+                "niceProgress": "Nice progress! You're getting closer.",
+                "scoreDrop": "Oops, your score dropped. Try a different path!",
+                "stuck": "Stuck? Try a new approach."
             }
         }
     }
