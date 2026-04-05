@@ -33,6 +33,7 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
 
         // Make sure file upload exercise is shown in exercises list
         await page.goto(`/course-management/${course.id}/exercises`);
+        await page.waitForLoadState('networkidle');
         await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
     });
 

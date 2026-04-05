@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
@@ -161,7 +163,11 @@ public class ExerciseVersionService {
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
-                    exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot);
+                    List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
+                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
+                    for (CommentThreadDTO updatedThread : updatedThreads) {
+                        exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
+                    }
                 }
                 catch (Exception ex) {
                     log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
