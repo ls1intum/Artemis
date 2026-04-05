@@ -28,7 +28,15 @@ export class MockStudentsRoomDistributionService {
     });
 
     reseatStudent = vi.fn((courseId: number, examId: number, examUserId: number, newRoom: string, newSeat?: string): Observable<void> => {
-        return of();
+        return of(undefined);
+    });
+
+    getAliases = vi.fn((courseId: number, examId: number): Observable<Record<string, string>> => {
+        return of({});
+    });
+
+    updateAliases = vi.fn((courseId: number, examId: number, examAliases: Record<number, string>): Observable<void> => {
+        return of(undefined);
     });
 
     private convertBodyToHttpResponse<T>(body?: T): HttpResponse<T> {

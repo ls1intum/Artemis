@@ -26,6 +26,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
+import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
@@ -58,7 +60,7 @@ describe('ExamStudentsComponent', () => {
         course,
         id: 2,
         examUsers: [
-            { ...examUser1, ...user1 },
+            { ...examUser1, ...user1, plannedRoom: 'R1', actualRoom: 'R2' },
             { ...examUser2, ...user2 },
         ],
     } as Exam;
@@ -73,6 +75,7 @@ describe('ExamStudentsComponent', () => {
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
     let userService: UserService;
+    let studentsRoomDistributionService: StudentsRoomDistributionService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -92,6 +95,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
                 { provide: DeleteDialogService, useClass: MockDialogService },
                 provideHttpClientTesting(),
             ],
@@ -101,6 +105,7 @@ describe('ExamStudentsComponent', () => {
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
         userService = TestBed.inject(UserService);
+        studentsRoomDistributionService = TestBed.inject(StudentsRoomDistributionService);
     });
 
     afterEach(() => {
@@ -108,8 +113,9 @@ describe('ExamStudentsComponent', () => {
         fixture.destroy();
     });
 
-    it('should initialize', () => {
+    it('should initialize', async () => {
         fixture.detectChanges();
+        await fixture.whenStable();
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
@@ -266,5 +272,59 @@ describe('ExamStudentsComponent', () => {
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning).toBe(false);
+    });
+
+    describe('room alias handling', () => {
+        it('should set aliases for plannedRoom and actualRoom', async () => {
+            examWithCourse.examUsers = [examWithCourse.examUsers![0]];
+            const aliasMap = {
+                R1: 'Main Hall',
+                R2: 'Side Room',
+            };
+
+            vi.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(studentsRoomDistributionService.getAliases).toHaveBeenCalledExactlyOnceWith(course.id, examWithCourse.id);
+            expect(component.allRegisteredUsers[0].plannedRoom).toBe('R1');
+            expect(component.allRegisteredUsers[0].actualRoom).toBe('R2');
+            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].actualRoomAlias).toBe('Side Room');
+        });
+
+        it('should leave rooms unchanged if no alias exists', async () => {
+            examWithCourse.examUsers = [examWithCourse.examUsers![0]];
+            const aliasMap = {
+                R1: 'Main Hall',
+            };
+
+            vi.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.allRegisteredUsers[0].plannedRoom).toBe('R1');
+            expect(component.allRegisteredUsers[0].actualRoom).toBe('R2');
+            expect(component.allRegisteredUsers[0].plannedRoomAlias).toBe('Main Hall');
+            expect(component.allRegisteredUsers[0].actualRoomAlias).toBeUndefined();
+        });
+
+        it('should handle users without rooms gracefully', async () => {
+            examWithCourse.examUsers = [
+                {
+                    ...examWithCourse.examUsers![0],
+                    plannedRoom: undefined,
+                    actualRoom: undefined,
+                },
+            ];
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.allRegisteredUsers[0].plannedRoom).toBeUndefined();
+            expect(component.allRegisteredUsers[0].actualRoom).toBeUndefined();
+        });
     });
 });

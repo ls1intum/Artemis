@@ -108,7 +108,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
 
     openDialog(examUser: ExamUser): void {
         this.examUser.set(examUser);
-        this.selectedRoomNumber.set(this.examUser()!.plannedRoom ?? '');
+        this.selectedRoomNumber.set('');
         this.selectedSeat.set('');
         this.dialogVisible.set(true);
     }

@@ -5,6 +5,7 @@ export interface RoomForDistributionDTO {
     name: string;
     alternativeName?: string;
     building: string;
+    alias?: string;
 }
 
 export interface ExamDistributionCapacityDTO {

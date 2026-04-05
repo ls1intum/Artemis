@@ -180,13 +180,13 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         @if (value.actualRoom) {
                             <div>
-                                <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoom }}</del>
-                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ value.actualRoom }}</span>
+                                <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoomAlias ?? value.plannedRoom }}</del>
+                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ value.actualRoomAlias ?? value.actualRoom }}</span>
                             </div>
                         }
                         @if (value.plannedRoom && !value.actualRoom) {
                             <div>
-                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoom }}</span>
+                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ value.plannedRoomAlias ?? value.plannedRoom }}</span>
                             </div>
                         }
                     </ng-template>
@@ -215,7 +215,6 @@
                     <ng-template ngx-datatable-header-template />
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button class="btn btn-secondary ms-auto" (click)="reseatingDialog.openDialog(value)">
-                            <fa-icon [icon]="faChair" />
                             <span jhiTranslate="artemisApp.exam.examUsers.changeLocationButton"></span>
                         </button>
                     </ng-template>

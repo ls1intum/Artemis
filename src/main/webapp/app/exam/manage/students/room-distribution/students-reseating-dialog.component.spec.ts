@@ -78,7 +78,7 @@ describe('StudentsReseatingDialogComponent', () => {
         fixture.detectChanges();
 
         expect(component.examUser()).toEqual(examUser);
-        expect(component.selectedRoomNumber()).toBe('2.0.1');
+        expect(component.selectedRoomNumber()).toBe('');
         expect(component.selectedSeat()).toBe('');
         expect(component.dialogVisible()).toBe(true);
     });
@@ -101,32 +101,27 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.dialogVisible()).toBe(false);
     });
 
-    it('calling openDialog() twice should update fields to the latest user and trigger a new seat load for persisted rooms', () => {
+    it('calling openDialog() twice should update to the latest user', () => {
         const userA = { ...examUser, id: 20, plannedRoom: rooms[0].roomNumber, plannedSeat: 'A1' };
         const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
 
         const loadUsedRoomsSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const loadSeatsInSelectedRoomSpy = vi.spyOn(service, 'loadSeatsOfExamRoom');
 
         component.openDialog(userA);
         fixture.detectChanges();
-
-        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledExactlyOnceWith(rooms[0].id);
 
         component.openDialog(userB);
         fixture.detectChanges();
 
         expect(component.examUser()).toEqual(userB);
-        expect(component.selectedRoomNumber()).toBe(rooms[1].roomNumber);
+        expect(component.selectedRoomNumber()).toBe('');
         expect(component.selectedSeat()).toBe('');
         expect(loadUsedRoomsSpy).toHaveBeenCalledOnce();
-        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledTimes(2);
-        expect(loadSeatsInSelectedRoomSpy).toHaveBeenLastCalledWith(rooms[1].id);
     });
 
     it('should call reseatStudent with correct values', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
+        const reseatSpy = vi.spyOn(service, 'reseatStudent');
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -192,6 +187,7 @@ describe('StudentsReseatingDialogComponent', () => {
         vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
+        component.selectedRoomNumber.set(rooms[1].roomNumber);
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
 

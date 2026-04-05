@@ -5,8 +5,10 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 export class ExamUser implements BaseEntity {
     public id?: number;
     public actualRoom?: string;
+    public actualRoomAlias?: string; // optionally set by the client
     public actualSeat?: string;
     public plannedRoom?: string;
+    public plannedRoomAlias?: string; // optionally set by the client
     public plannedSeat?: string;
     public signingImagePath?: string;
     public studentImagePath?: string;
