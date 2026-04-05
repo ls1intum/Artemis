@@ -25,7 +25,8 @@ export abstract class AbstractExerciseFeedback {
     }
 
     async shouldShowScore(percentage: number) {
-        const resultPercentage = this.page.locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
+        // Use the result element in the exercise header to avoid matching sidebar result badges
+        const resultPercentage = this.page.locator('#exercise-headers-information').locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
         await expect(resultPercentage).toBeVisible();
     }
 
