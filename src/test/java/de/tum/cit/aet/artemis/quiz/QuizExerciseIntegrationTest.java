@@ -664,6 +664,15 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(updatedQuizExercise).isNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamQuizExerciseAfterExamEnded() throws Exception {
+        QuizExercise quizExercise = createQuizOnServerForExamWithEndedExam();
+
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
+        assertThat(updatedQuizExercise).isNull();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)

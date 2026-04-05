@@ -168,6 +168,15 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         return quizExercise;
     }
 
+    protected QuizExercise createQuizOnServerForExamWithEndedExam() throws Exception {
+        QuizExercise quizExercise = createQuizOnServerForExam();
+        Exam exam = quizExercise.getExerciseGroup().getExam();
+        ZonedDateTime now = ZonedDateTime.now();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, now.minusHours(3), now.minusHours(2), now.minusHours(1));
+        examRepository.save(exam);
+        return quizExercise;
+    }
+
     /**
      * Sends a create request for a quiz exercise. It automatically adds the files to the request and modifies the exercise to be sent.
      *
