@@ -1,4 +1,4 @@
-@if (displayHeader() && fileUploadExercise() && participation()) {
+@if (displayHeader() && examMode() && fileUploadExercise() && participation()) {
     <jhi-header-participation-page class="d-block mb-4" [exercise]="$any(fileUploadExercise())" [participation]="$any(participation())">
         <span pagetitle>
             {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
@@ -20,7 +20,7 @@
     </jhi-header-participation-page>
 }
 @if (fileUploadExercise()) {
-    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()">
+    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">

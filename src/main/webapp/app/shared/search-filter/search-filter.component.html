@@ -14,7 +14,7 @@
             @if (searchValue()) {
                 <fa-icon id="test-fa-times" class="pointer text-secondary" [icon]="faTimes" (click)="resetSearchValue()" tooltip="Clear search filter" />
             } @else {
-                <fa-icon class="text-secondary" [icon]="faMagnifyingGlass" />
+                <fa-icon [icon]="faMagnifyingGlass" />
             }
         </div>
     </div>

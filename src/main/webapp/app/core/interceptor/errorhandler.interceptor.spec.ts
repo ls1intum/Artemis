@@ -41,7 +41,7 @@ describe(`ErrorHandlerInterceptor`, () => {
         };
         vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
-        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(eventManagerMock.broadcast).toHaveBeenCalledOnce();
         expect(eventManagerMock.broadcast).toHaveBeenCalledWith({
@@ -59,7 +59,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             };
             const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
-            errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+            errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
             expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         },

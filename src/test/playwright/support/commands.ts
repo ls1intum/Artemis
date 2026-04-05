@@ -42,6 +42,7 @@ export class Commands {
 
         if (url) {
             await page.goto(url);
+            await page.waitForLoadState('load');
         }
     };
 
@@ -77,14 +78,17 @@ export class Commands {
         throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
     };
 
-    static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string, interval = 5000, timeout = 60000) => {
+    static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string | RegExp, interval = 5000, timeout = 60000) => {
         const startTime = Date.now();
+        let lastSeenText: string | null = null;
+        const matches = (text: string | null): boolean => text != null && (expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText));
 
         while (Date.now() - startTime < timeout) {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 const text = await locator.textContent();
-                if (text?.includes(expectedText)) {
+                lastSeenText = text;
+                if (matches(text)) {
                     return;
                 }
             } catch {
@@ -102,7 +106,7 @@ export class Commands {
             }
         }
 
-        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()})`);
+        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()}). Last seen text: "${lastSeenText}"`);
     };
 
     /**
@@ -155,7 +159,6 @@ export class Commands {
         // Otherwise, wait for the result count to increase by at least 1.
         const targetCount = minResults ?? numberOfBuildResults + 1;
 
-        console.log(`Waiting for build results to reach ${targetCount} (currently ${numberOfBuildResults})...`);
         while (Date.now() - startTime < timeout) {
             exerciseParticipation = await getParticipation();
             const currentBuildResultsCount = countResults(exerciseParticipation);
@@ -186,47 +189,49 @@ export class Commands {
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
     ) => {
+        if (participationId == null || isNaN(participationId)) {
+            throw new Error(`[waitForParticipationBuildToFinish] Invalid participationId: ${participationId}. Cannot poll for build result.`);
+        }
         const startTime = Date.now();
 
-        const countResults = (participation: StudentParticipation): number => {
-            return participation.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+        const getLatestResultId = (participation: StudentParticipation): number | undefined => {
+            const ids = (participation.submissions ?? [])
+                .flatMap((s) => s.results ?? [])
+                .map((r) => r.id)
+                .filter((id): id is number => id !== undefined && id !== null);
+            return ids.length > 0 ? Math.max(...ids) : undefined;
         };
 
-        let initialResultCount = 0;
-
-        // Get initial result count
+        // Snapshot the highest result ID before the student's build starts so we can
+        // detect a genuinely new result even if it arrives before the first poll.
+        let initialResultId: number | undefined;
         try {
             const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
-            initialResultCount = countResults(participation);
-            console.log(`[waitForParticipationBuildToFinish] Initial result count for participation ${participationId}: ${initialResultCount}`);
-        } catch (e) {
-            console.log(`[waitForParticipationBuildToFinish] Could not get initial results for participation ${participationId}: ${e}`);
+            initialResultId = getLatestResultId(participation);
+        } catch {
+            // ignore — we will poll until we see a new result ID
         }
 
-        console.log(`[waitForParticipationBuildToFinish] Waiting for build of participation ${participationId} to finish (timeout: ${timeout}ms)...`);
-        let pollCount = 0;
         while (Date.now() - startTime < timeout) {
             try {
                 const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
-                const currentResultCount = countResults(participation);
-                pollCount++;
+                const currentResultId = getLatestResultId(participation);
 
-                if (pollCount % 5 === 0) {
-                    console.log(`[waitForParticipationBuildToFinish] Poll #${pollCount}: current result count = ${currentResultCount}, waiting for > ${initialResultCount}`);
-                }
-
-                if (currentResultCount > initialResultCount) {
-                    console.log(`[waitForParticipationBuildToFinish] Build finished! Result count increased from ${initialResultCount} to ${currentResultCount}`);
+                // A new result has a different (higher) ID than the pre-build snapshot.
+                // Comparing IDs rather than counts avoids the race where the build finishes
+                // between makeSubmission() and the initial fetch above, leaving the count
+                // permanently stuck.
+                if (currentResultId !== undefined && currentResultId !== initialResultId) {
                     return participation;
                 }
-            } catch (e) {
-                console.log(`[waitForParticipationBuildToFinish] Poll failed: ${e}`);
+            } catch {
+                // ignore transient poll failures — we retry until timeout
             }
 
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
 
-        throw new Error(`Timed out waiting for build to finish for participation ${participationId}. Initial results: ${initialResultCount}, timeout: ${timeout}ms`);
+        throw new Error(`Timed out waiting for build to finish for participation ${participationId}. Initial result ID: ${initialResultId}, timeout: ${timeout}ms`);
     };
 
     static toggleSidebar = async (page: Page) => {

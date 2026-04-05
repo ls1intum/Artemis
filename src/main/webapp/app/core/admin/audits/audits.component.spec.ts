@@ -58,12 +58,15 @@ describe('AuditsComponent', () => {
         fixture = TestBed.createComponent(AuditsComponent);
         comp = fixture.componentInstance;
         service = TestBed.inject(AuditsService);
+        // Prevent real HTTP calls in tests that call ngOnInit() without their own service mock
+        vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
         mockActivatedRoute = TestBed.inject(ActivatedRoute) as unknown as MockActivatedRoute;
         mockActivatedRoute.setParameters({ sort: 'id,desc' });
     });
 
     afterEach(() => {
         vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     describe('today function', () => {
@@ -110,6 +113,7 @@ describe('AuditsComponent', () => {
 
     describe('By default, on init', () => {
         it('should set all default values correctly', () => {
+            vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
             fixture.detectChanges();
             expect(comp.toDate()).toBe(getDate());
             expect(comp.fromDate()).toBe(getDate(false));

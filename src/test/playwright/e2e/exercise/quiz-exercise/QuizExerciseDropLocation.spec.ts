@@ -20,13 +20,6 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(420, 90);
 
-            await quizExerciseDragAndDropQuiz.activateInteractiveMode();
-
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(0, 2);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(1, 1);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 1);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 2);
-
             const exerciseId = await quizExerciseDragAndDropQuiz.generateQuizExercise();
             await quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
 

@@ -4,6 +4,7 @@ import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
 import { Commands } from '../../../support/commands';
+import { BUILD_RESULT_TIMEOUT } from 'src/test/playwright/support/timeouts';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
@@ -11,7 +12,7 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     let exercise: ProgrammingExercise;
 
-    test.beforeEach('Create C exercise with SCA, submit via API', async ({ login, exerciseAPIRequests }) => {
+    test.beforeEach('Create C exercise with SCA, submit via API', async ({ login, exerciseAPIRequests, waitForParticipationBuildToFinish }) => {
         await login(admin);
         exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50, programmingLanguage: ProgrammingLanguage.C });
         // Wait for both template build (SCA categories) and solution build (test cases).
@@ -29,6 +30,8 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         // and the PUT /files endpoint can only update existing files.
         await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, 'sca_issues.c');
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, cScaSubmission);
+        // Wait for the build to complete via API so the test doesn't have to poll the UI
+        await waitForParticipationBuildToFinish(participation.id!);
     });
 
     test.afterEach('Delete exercise to prevent DB accumulation', async ({ login, exerciseAPIRequests }) => {
@@ -37,12 +40,19 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     });
 
     test('Verifies SCA feedback is displayed correctly after submission', async ({ login, page, programmingExerciseScaFeedback }) => {
+        // The beforeEach creates a C exercise, waits for solution build, submits, and waits for
+        // the student build — all of which can take several minutes under CI load.
+        test.setTimeout(300000);
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         const resultScore = page.locator('#exercise-headers-information').locator('#result-score');
         const expectedScore = resultScore.getByText(cScaSubmission.expectedResult);
-        // C builds complete in 2-5s. Use a 45s timeout to stay within the 90s @slow budget.
-        await Commands.reloadUntilFound(page, expectedScore, 5000, 45000);
+        // Build is already confirmed complete via API. Use reloadUntilFound as a fallback
+        // in case the page needs a moment to render the result.
+        await Commands.reloadUntilFound(page, expectedScore, 5000, BUILD_RESULT_TIMEOUT);
+        // Open the result history dropdown by clicking the submission status area, then click
+        // the "Feedback" button for the latest result to open the SCA feedback modal.
         await resultScore.click();
+        await page.getByRole('button', { name: 'Feedback' }).first().click();
         await programmingExerciseScaFeedback.shouldShowPointChart();
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_x'", '0.2');
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_y'", '0.2');
