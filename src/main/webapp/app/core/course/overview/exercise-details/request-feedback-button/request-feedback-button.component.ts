@@ -107,7 +107,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
+        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     }
 
     async showLLMSelectionModal(): Promise<void> {
