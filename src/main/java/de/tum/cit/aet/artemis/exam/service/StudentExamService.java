@@ -731,10 +731,7 @@ public class StudentExamService {
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (cache != null) {
-            cache.evict(examId);
-        }
+        this.invalidateExerciseStartStatus(examId);
 
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
@@ -802,6 +799,13 @@ public class StudentExamService {
                 .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
+    public void invalidateExerciseStartStatus(Long examId) {
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+    }
+
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
@@ -831,6 +835,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
         // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(existingStudentExams);
@@ -851,6 +856,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());

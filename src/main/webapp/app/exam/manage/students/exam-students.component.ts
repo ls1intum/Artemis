@@ -153,6 +153,7 @@ export class ExamStudentsComponent implements OnDestroy {
             }) as ExamUserWithExamData;
         });
     });
+    readonly hasRegisteredUsers = computed(() => this.allRegisteredUsers().length != 0);
 
     readonly hasStudentsWithoutExam = computed(() => {
         const registeredStudents = this.exam().examUsers?.length ?? 0;
@@ -377,10 +378,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeStudentFromExam(this.courseId(), examId, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.exam.update((prevExam) => {
-                    const updatedExamUsers = prevExam.examUsers?.filter((eu) => eu.user!.login !== examUser.user!.login);
-                    return Object.assign(new Exam(), prevExam, { examUsers: updatedExamUsers });
-                });
+                this.reloadExamWithRegisteredUsers();
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -398,7 +396,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.exam.update((prevExam) => Object.assign(new Exam(), prevExam, { examUsers: [] }));
+                this.reloadExamWithRegisteredUsers();
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
