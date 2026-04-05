@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -115,12 +116,13 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * @param currentLink The current URL to return to after login.
      */
     redirectUserToLoginThenTargetLink(currentLink: string): void {
-        this.router.navigate(['/']).then(() => {
-            this.accountService.getAuthenticationState().subscribe((user) => {
-                if (user) {
+        this.router.navigate(['/sign-in']).then(() => {
+            this.accountService
+                .getAuthenticationState()
+                .pipe(filter(Boolean), take(1))
+                .subscribe(() => {
                     window.location.replace(currentLink);
-                }
-            });
+                });
         });
     }
 
