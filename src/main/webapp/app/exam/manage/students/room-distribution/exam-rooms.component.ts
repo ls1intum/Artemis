@@ -22,7 +22,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 /**
- * Admin component for managing exam rooms.
+ * Component for managing exam rooms.
  * Allows uploading room data via ZIP files and viewing/deleting exam room configurations.
  */
 @Component({

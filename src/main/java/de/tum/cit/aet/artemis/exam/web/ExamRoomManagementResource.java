@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
  * something that would actually affect an instructor, but rather is an operation that can be run whenever a safe
  * cleanup is required, the need for which only an admin could determine.
  * <p>
- * Course and exam specific connections between are managed by {@link ExamRoomDistributionResource}.
+ * Course and exam specific connections between rooms and exams are managed by {@link ExamRoomDistributionResource}.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -100,7 +100,7 @@ public class ExamRoomManagementResource {
     public ResponseEntity<ExamRoomOverviewDTO> getExamRoomOverview() {
         log.debug("REST request to get exam room overview");
 
-        var examRoomAdminOverviewDTO = examRoomService.getExamRoomOverview();
-        return ResponseEntity.ok(examRoomAdminOverviewDTO);
+        var examRoomOverviewDTO = examRoomService.getExamRoomOverview();
+        return ResponseEntity.ok(examRoomOverviewDTO);
     }
 }

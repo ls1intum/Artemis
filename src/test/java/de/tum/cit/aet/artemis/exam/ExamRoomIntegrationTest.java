@@ -51,7 +51,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static ExpectedRoom singleNoLayoutsExpectedRoom;
 
-    record ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
+    private record ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
 
         public ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
             this.roomNumber = roomNumber;
@@ -84,7 +84,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examRoomRepository.deleteAll();
     }
 
-    /* Tests for the POST /exam-rooms/upload endpoint */
+    /* Tests for the POST /exam/rooms/upload endpoint */
 
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
@@ -216,7 +216,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileIllegalExamRooms, HttpStatus.BAD_REQUEST);
     }
 
-    /* Tests for the GET /exam-rooms/admin-overview endpoint */
+    /* Tests for the GET /exam/rooms/overview endpoint */
 
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
@@ -335,7 +335,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         validateExamRoomOverview(roomOverview, ExamRoomZipFiles.singleExamRoomName);
     }
 
-    /* Tests for the DELETE /exam-rooms/outdated-and-unused endpoint */
+    /* Tests for the DELETE /exam/rooms/outdated-and-unused endpoint */
 
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
