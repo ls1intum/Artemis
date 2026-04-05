@@ -11,8 +11,9 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
-export type EntityResponseType = HttpResponse<Complaint>;
+export type EntityResponseType = HttpResponse<ComplaintDTO>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 export interface IComplaintService {
@@ -82,7 +83,7 @@ export class ComplaintService implements IComplaintService {
      */
     create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
         return this.http
-            .post<Complaint>(this.resourceUrl, complaintRequest, { observe: 'response' })
+            .post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
@@ -92,12 +93,12 @@ export class ComplaintService implements IComplaintService {
      */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Complaint>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
+            .get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
     /**
-     * Find complaints for instructor for specified test run exercise (complaintType == 'COMPLAINT').
+     * Find complaints for the instructor for a specified test run exercise (complaintType == 'COMPLAINT').
      * @param exerciseId
      */
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
@@ -107,7 +108,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Find all complaints by tutor id, course id and complaintType.
+     * Find all complaints by tutor id, course id, and complaintType.
      * @param tutorId
      * @param courseId
      * @param complaintType
@@ -128,7 +129,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Find all complaints by tutor id, exercise id and complaintType.
+     * Find all complaints by tutor id, exercise id, and complaintType.
      * @param tutorId
      * @param exerciseId
      * @param complaintType
@@ -247,7 +248,7 @@ export class ComplaintService implements IComplaintService {
         if (res.body) {
             res.body.submittedTime = res.body.submittedTime ? dayjs(res.body.submittedTime) : undefined;
             if (res.body?.complaintResponse) {
-                this.complaintResponseService.convertComplaintResponseDatesFromServer(res.body.complaintResponse);
+                this.complaintResponseService.convertComplaintResponseDTODatesFromServer(res.body.complaintResponse);
             }
         }
         return res;

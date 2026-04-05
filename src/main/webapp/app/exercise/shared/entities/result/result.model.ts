@@ -13,7 +13,7 @@ export class Result implements BaseEntity {
     public successful?: boolean;
 
     /**
-     * Current score in percent i.e. between 1 - 100
+     * Current score in percent i.e., between 1 - 100
      * - Can be larger than 100 if bonus points are available
      */
     public score?: number;
@@ -50,7 +50,7 @@ export class Result implements BaseEntity {
 }
 /**
  * Checks whether the given result is a practice result.
- * A practice result is a result that belongs to a test run of a student participation.
+ * A practice result is a result that belongs to a test run of student participation.
  * @param result the result to check
  * @return true if the result is a practice result, false otherwise
  */
@@ -62,17 +62,16 @@ export function isPracticeResult(result: Result | undefined): boolean {
     return studentParticipation?.testRun ?? false;
 }
 
-export class ResultDTO {
+export class ResultSimpleDTO {
     public id?: number;
     public completionDate?: dayjs.Dayjs;
-    public successful?: boolean;
     public score?: number;
     public rated?: boolean;
     public feedbacks?: FeedbackDTO[];
     public assessmentType?: AssessmentType;
     public hasComplaint?: boolean;
-    public exampleResult?: boolean;
-    public testCaseCount?: number;
-    public passedTestCaseCount?: number;
-    public codeIssueCount?: number;
+    public submissionId?: number;
+    public participationId?: number;
+    public exerciseId?: number;
+    public exerciseTitle?: string;
 }

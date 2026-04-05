@@ -6,7 +6,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 
@@ -72,6 +72,14 @@ export class ComplaintResponseService {
             this.convertComplaintResponseDatesFromServer(res.body);
         }
         return res;
+    }
+
+    public convertComplaintResponseDTODatesFromServer(complaintResponseDTO: ComplaintResponseDTO): ComplaintResponseDTO {
+        if (complaintResponseDTO) {
+            complaintResponseDTO.submittedTime = convertDateFromServer(complaintResponseDTO.submittedTime);
+            complaintResponseDTO.lockEndDate = convertDateFromServer(complaintResponseDTO.lockEndDate);
+        }
+        return complaintResponseDTO;
     }
 
     public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
