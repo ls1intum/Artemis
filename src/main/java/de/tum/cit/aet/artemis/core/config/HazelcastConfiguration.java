@@ -58,6 +58,7 @@ import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.config.SplitBrainProtectionConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
@@ -66,6 +67,7 @@ import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 
 /**
  * Configures and initializes the Hazelcast distributed data grid for Artemis.
@@ -277,48 +279,50 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Binds cache and datasource metrics to Micrometer after the application is fully started.
+     * Binds cache metrics to Micrometer after the application is fully started.
      * <p>
-     * Cache: JCache caches created by Hibernate's JCacheRegionFactory have statistics disabled
-     * by default. We enable statistics on each cache, then bind via JCacheMetrics.
+     * Hibernate's JCacheRegionFactory creates Hazelcast ICache instances (not IMaps).
+     * These implement both javax.cache.Cache and DistributedObject, so they appear
+     * in getDistributedObjects(). We bind them via JCacheMetrics after enabling statistics.
      * <p>
-     * Datasource: HikariCP metrics are bound directly from the DataSource bean.
+     * Spring CacheManager caches are Hazelcast IMaps, bound via HazelcastCacheMetrics.
+     * <p>
+     * HikariCP datasource metrics are bound separately in MetricsBean.registerDatasourceMetrics().
      */
     @EventListener(ApplicationReadyEvent.class)
-    public void bindMetricsToMicrometer() {
+    public void bindCacheMetricsToMicrometer() {
         if (meterRegistry == null) {
+            return;
+        }
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
             return;
         }
 
         int bound = 0;
-
-        // 1. Bind JCache caches with statistics enabled
-        try {
-            var cachingProvider = javax.cache.Caching.getCachingProvider(com.hazelcast.cache.HazelcastMemberCachingProvider.class.getName());
-            var jCacheManager = cachingProvider.getCacheManager();
-            for (String cacheName : jCacheManager.getCacheNames()) {
-                try {
-                    var cache = jCacheManager.getCache(cacheName);
-                    if (cache != null) {
-                        // Enable statistics so JCacheMetrics can read hit/miss/put counters
-                        cache.getConfiguration(javax.cache.configuration.CompleteConfiguration.class).isStatisticsEnabled();
-                        // Enable via MXBean management
-                        jCacheManager.enableStatistics(cacheName, true);
-                        new io.micrometer.core.instrument.binder.cache.JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
-                        bound++;
-                    }
+        for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
+            String name = distributedObject.getName();
+            if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
+                continue;
+            }
+            try {
+                if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
+                    // Hibernate L2 cache regions (ICache instances created by JCacheRegionFactory)
+                    // Enable statistics so JCacheMetrics can read hit/miss/put counters
+                    cache.getConfiguration(javax.cache.configuration.CompleteConfiguration.class);
+                    new io.micrometer.core.instrument.binder.cache.JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
+                    bound++;
                 }
-                catch (Exception e) {
-                    log.debug("Could not bind JCache metrics for '{}': {}", cacheName, e.getMessage());
+                else if (distributedObject instanceof IMap<?, ?> map) {
+                    // Spring CacheManager maps (files, rate-limit-buckets, etc.)
+                    new HazelcastCacheMetrics(map, List.of()).bindTo(meterRegistry);
+                    bound++;
                 }
             }
+            catch (Exception e) {
+                log.debug("Could not bind cache metrics for '{}': {}", name, e.getMessage());
+            }
         }
-        catch (Exception e) {
-            log.debug("Could not access JCache provider: {}", e.getMessage());
-        }
-
-        // Note: HikariCP datasource metrics are bound separately in MetricsBean.registerDatasourceMetrics()
-
         log.info("Bound {} cache metrics to Micrometer", bound);
     }
 

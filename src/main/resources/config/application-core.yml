@@ -46,9 +46,9 @@ spring:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed
         exclude:
-          # Important: Make sure to keep the exclusions in sync with the `application-buildagent.yml` file, except for the build agent specific exclusions
+          # Important: Keep in sync with application-buildagent.yml (except build agent specific exclusions)
           - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
-          - org.springframework.boot.jdbc.autoconfigure.metrics.DataSourcePoolMetricsAutoConfiguration
+          # Note: DataSourcePoolMetricsAutoConfiguration is NOT excluded — it registers hikaricp.connections.* gauges for the admin metrics page
           - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
