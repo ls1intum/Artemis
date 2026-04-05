@@ -284,6 +284,74 @@ $iris-z-index-dropdown: 1050;
     }
 }
 
+.learn-chip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.learn-dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: $iris-z-index-dropdown;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    background-color: var(--iris-secondary-background);
+    border-radius: $iris-border-radius-lg;
+    box-shadow:
+        0 0 0.5px rgba(0, 0, 0, 0.12),
+        0 10px 16px rgba(0, 0, 0, 0.12),
+        0 2px 5px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.learn-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 24px;
+    padding: 4px 8px;
+    border: none;
+    background: none;
+    color: var(--bs-body-color);
+    font-size: 0.6875rem;
+    cursor: pointer;
+    text-align: left;
+    border-radius: $iris-border-radius-sm;
+    transition: background-color 0.15s;
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--iris-tertiary-background);
+        outline: none;
+    }
+
+    fa-icon {
+        flex-shrink: 0;
+        font-size: 12px;
+    }
+}
+
+.learn-dropdown-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    line-height: 16px;
+}
+
+.learn-dropdown-empty {
+    display: block;
+    padding: 4px 8px;
+    font-size: 0.6875rem;
+    color: var(--bs-body-color);
+    opacity: 0.6;
+}
+
 :host {
     .bubble-left,
     .bubble-right {
@@ -470,6 +538,7 @@ pre {
     display: flex;
     flex-direction: column;
     flex: 0 1 auto;
+    gap: 16px;
 
     textarea {
         background-color: var(--iris-secondary-background);
@@ -517,16 +586,14 @@ pre {
 
     .ghost-text-overlay {
         position: absolute;
-        top: 0;
-        left: 0;
+        top: 16px;
+        left: 16px;
         right: 56px;
-        padding: 16px 0 36px 16px;
         border: 1px solid transparent;
         pointer-events: none;
-        font: inherit;
+        font-family: var(--bs-body-font-family);
         font-size: inherit;
         line-height: inherit;
-        white-space: pre-wrap;
         word-wrap: break-word;
         overflow: hidden;
     }

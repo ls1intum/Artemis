@@ -139,9 +139,28 @@
             "chat": {
                 "helpOffer": "How can I help you today?",
                 "suggestions": {
-                    "explainConcept": "Explain a concept",
-                    "testUnderstanding": "Test my understanding",
-                    "whereToStart": "Where do I start?"
+                    "learn": "Learn",
+                    "learnStarter": "Help me learn about {{entityName}}",
+                    "quiz": "Quiz",
+                    "quizStarter": "Generate 5 multiple choice questions to quiz me on the topic of",
+                    "tips": "Tips",
+                    "tipsStarter": "Give me study tips for this course",
+                    "noRecentEntities": "No recent exercises or lectures"
+                },
+                "placeholders": {
+                    "exercise": {
+                        "helpUnderstand": "Help me understand this exercise",
+                        "testsFailing": "Why are my tests failing?",
+                        "whereToStart": "I am stuck, where should I start?",
+                        "conceptNeeded": "What concept do I need to understand to solve this exercise?",
+                        "walkThrough": "Walk me through the requirements of this exercise"
+                    },
+                    "lecture": {
+                        "keyPoints": "What are the key points I should know from this lecture?",
+                        "quizMe": "Quiz me on this lecture",
+                        "summarise": "Summarize what I should know",
+                        "relateToLearned": "How does this lecture relate to what I have learned before?"
+                    }
                 }
             },
             "mcq": {

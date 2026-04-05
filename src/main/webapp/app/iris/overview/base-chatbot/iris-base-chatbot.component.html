@@ -329,16 +329,6 @@
                 <div class="empty-chat-message">
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
-                    @if (!isExerciseOrLectureMode()) {
-                        <div class="prompt-suggestion-chips">
-                            @for (chip of suggestionChips; track chip.translationKey) {
-                                <button type="button" class="prompt-suggestion-chip" (click)="applyChipText(chip.translationKey)">
-                                    <fa-icon [icon]="chip.icon" aria-hidden="true" />
-                                    <span [jhiTranslate]="chip.translationKey"></span>
-                                </button>
-                            }
-                        </div>
-                    }
                 </div>
             }
             <jhi-chat-status-bar [stages]="stages()" />
@@ -416,6 +406,58 @@
                             />
                         </div>
                     </div>
+                    @if (!messages()?.length && !isEmbeddedChat() && !isExerciseOrLectureMode()) {
+                        <div class="prompt-suggestion-chips">
+                            @for (chip of suggestionChips; track chip.translationKey) {
+                                @if (chip.hasMenu) {
+                                    <div class="learn-chip-container">
+                                        <button
+                                            type="button"
+                                            class="prompt-suggestion-chip"
+                                            [attr.aria-expanded]="learnMenuOpen()"
+                                            aria-haspopup="true"
+                                            (click)="toggleLearnMenu($event)"
+                                        >
+                                            <fa-icon [icon]="chip.icon" aria-hidden="true" />
+                                            <span [jhiTranslate]="chip.translationKey"></span>
+                                        </button>
+                                        @if (learnMenuOpen()) {
+                                            <div
+                                                class="learn-dropdown-menu"
+                                                role="menu"
+                                                [attr.aria-label]="'artemisApp.iris.chat.suggestions.learn' | artemisTranslate"
+                                                (click)="$event.stopPropagation()"
+                                                (keydown)="onLearnMenuKeydown($event, learnMenu)"
+                                                #learnMenu
+                                            >
+                                                @for (entity of recentEntities(); track entity.entityId) {
+                                                    <button
+                                                        class="learn-dropdown-item"
+                                                        role="menuitem"
+                                                        tabindex="0"
+                                                        (click)="onLearnMenuItemClick(entity)"
+                                                        (mouseenter)="onLearnMenuItemHover(entity)"
+                                                        (mouseleave)="onLearnMenuItemLeave()"
+                                                    >
+                                                        <fa-icon [icon]="entity.chatMode === 'LECTURE_CHAT' ? faChalkboardUser : faKeyboard" aria-hidden="true" />
+                                                        <span class="learn-dropdown-label">{{ entity.entityName }}</span>
+                                                    </button>
+                                                }
+                                                @if (recentEntities().length === 0) {
+                                                    <span class="learn-dropdown-empty" jhiTranslate="artemisApp.iris.chat.suggestions.noRecentEntities"></span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                } @else {
+                                    <button type="button" class="prompt-suggestion-chip" (click)="applyChipText(chip.starterKey)">
+                                        <fa-icon [icon]="chip.icon" aria-hidden="true" />
+                                        <span [jhiTranslate]="chip.translationKey"></span>
+                                    </button>
+                                }
+                            }
+                        </div>
+                    }
                     @if (!isChatGptWrapper()) {
                         <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
                     } @else {

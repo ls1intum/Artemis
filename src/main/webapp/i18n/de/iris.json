@@ -139,9 +139,28 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?",
                 "suggestions": {
-                    "explainConcept": "Erkläre mir ein Konzept",
-                    "testUnderstanding": "Teste mein Verständnis",
-                    "whereToStart": "Wo soll ich anfangen?"
+                    "learn": "Lernen",
+                    "learnStarter": "Hilf mir, mehr über {{entityName}} zu lernen",
+                    "quiz": "Quiz",
+                    "quizStarter": "Erstelle 5 Multiple-Choice-Fragen, um mich zum Thema zu prüfen",
+                    "tips": "Tipps",
+                    "tipsStarter": "Gib mir Lerntipps für diesen Kurs",
+                    "noRecentEntities": "Keine kürzlichen Übungen oder Vorlesungen"
+                },
+                "placeholders": {
+                    "exercise": {
+                        "helpUnderstand": "Hilf mir, diese Aufgabe zu verstehen",
+                        "testsFailing": "Warum schlagen meine Tests fehl?",
+                        "whereToStart": "Ich stecke fest, wo soll ich anfangen?",
+                        "conceptNeeded": "Welches Konzept muss ich verstehen, um diese Aufgabe zu lösen?",
+                        "walkThrough": "Führe mich durch die Anforderungen dieser Aufgabe"
+                    },
+                    "lecture": {
+                        "keyPoints": "Was sind die wichtigsten Punkte, die ich aus dieser Vorlesung wissen sollte?",
+                        "quizMe": "Frag mich zu dieser Vorlesung ab",
+                        "summarise": "Fasse zusammen, was ich wissen sollte",
+                        "relateToLearned": "Wie hängt diese Vorlesung mit dem zusammen, was ich vorher gelernt habe?"
+                    }
                 }
             },
             "mcq": {

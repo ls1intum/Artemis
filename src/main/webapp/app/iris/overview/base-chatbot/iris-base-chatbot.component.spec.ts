@@ -1526,17 +1526,127 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chips).toHaveLength(0);
         });
 
-        it('should call applyChipText with correct translation key when chip is clicked', () => {
+        it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
             fixture.detectChanges();
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
-            chips[0].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.explainConcept');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizStarter');
+        });
+
+        it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[2].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+        });
+
+        it('should open Learn menu when Learn chip is clicked and entities exist', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
+                of([
+                    { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
+                    { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Exercise 1' } as IrisSessionDTO,
+                ]),
+            );
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const learnChip = fixture.nativeElement.querySelector('.learn-chip-container .prompt-suggestion-chip');
+            learnChip.click();
+            fixture.detectChanges();
+
+            expect(component.learnMenuOpen()).toBe(true);
+            const menuItems = fixture.nativeElement.querySelectorAll('.learn-dropdown-item');
+            expect(menuItems).toHaveLength(2);
+        });
+
+        it('should fall back to applyChipText when Learn chip is clicked with no entities', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const learnChip = fixture.nativeElement.querySelector('.learn-chip-container .prompt-suggestion-chip');
+            learnChip.click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+        });
+
+        it('should close Learn menu on document click', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
+                of([{ id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO]),
+            );
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            component.learnMenuOpen.set(true);
+            component.onDocumentClick();
+            expect(component.learnMenuOpen()).toBe(false);
+        });
+
+        it('should populate textarea on Learn menu item hover and clear on leave', () => {
+            const entity = { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO;
+            component.onLearnMenuItemHover(entity);
+            expect(component.newMessageTextContent()).toBe('Lecture 1');
+            component.onLearnMenuItemLeave();
+            expect(component.newMessageTextContent()).toBe('');
+        });
+
+        it('should call switchTo and send on Learn menu item click', () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+            const entity = { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO;
+            const switchToSpy = vi.spyOn(chatService, 'switchTo');
+            component.onLearnMenuItemClick(entity);
+            expect(component.learnMenuOpen()).toBe(false);
+            expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 10);
+        });
+
+        it('should deduplicate entities by chatMode and entityId', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
+                of([
+                    { id: 1, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
+                    { id: 2, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
+                    { id: 3, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Exercise 1' } as IrisSessionDTO,
+                ]),
+            );
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const entities = component.recentEntities();
+            expect(entities).toHaveLength(2);
+        });
+
+        it('should limit to 2 lectures and 2 exercises', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
+                of([
+                    { id: 1, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
+                    { id: 2, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.LECTURE, entityId: 11, entityName: 'Lecture 2' } as IrisSessionDTO,
+                    { id: 3, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.LECTURE, entityId: 12, entityName: 'Lecture 3' } as IrisSessionDTO,
+                    { id: 4, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Ex 1' } as IrisSessionDTO,
+                    { id: 5, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 21, entityName: 'Ex 2' } as IrisSessionDTO,
+                    { id: 6, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 22, entityName: 'Ex 3' } as IrisSessionDTO,
+                ]),
+            );
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const entities = component.recentEntities();
+            expect(entities).toHaveLength(4);
+            expect(entities.filter((e) => e.chatMode === ChatServiceMode.LECTURE)).toHaveLength(2);
+            expect(entities.filter((e) => e.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE)).toHaveLength(2);
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
             fixture.detectChanges();
-            const translationKey = 'artemisApp.iris.chat.suggestions.explainConcept';
+            const translationKey = 'artemisApp.iris.chat.suggestions.quiz';
             component.applyChipText(translationKey);
             expect(component.newMessageTextContent()).toBe(translationKey);
 
@@ -1583,19 +1693,16 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(component.isExerciseOrLectureMode()).toBeTruthy();
             });
 
-            it('should resolve entity name from session', () => {
-                expect(component.entityName()).toBe('Sorting Arrays');
-            });
-
-            it('should interpolate exercise labels with entity name', () => {
+            it('should interpolate exercise labels', () => {
                 const labels = component.interpolatedLabels();
-                expect(labels).toHaveLength(6);
-                expect(labels[0]).toBe('Help me understand Sorting Arrays');
-                expect(labels[2]).toBe('What should I focus on next in Sorting Arrays?');
+                expect(labels).toHaveLength(5);
+                expect(labels).toContain('artemisApp.iris.chat.placeholders.exercise.helpUnderstand');
+                expect(labels).toContain('artemisApp.iris.chat.placeholders.exercise.whereToStart');
             });
 
             it('should provide a current placeholder', () => {
-                expect(component.currentPlaceholder()).toBe('Help me understand Sorting Arrays');
+                const labels = component.interpolatedLabels();
+                expect(labels).toContain(component.currentPlaceholder());
             });
 
             it('should hide suggestion chips on exercise screen', () => {
@@ -1621,7 +1728,7 @@ describe('IrisBaseChatbotComponent', () => {
                 // Blur with empty input resumes from next label
                 component.onTextareaBlur();
                 expect(component.isFocused()).toBeFalsy();
-                expect(component.placeholderIndex()).toBe((indexAtFocus + 1) % 6);
+                expect(component.placeholderIndex()).toBe((indexAtFocus + 1) % component.interpolatedLabels().length);
             });
 
             it('should not advance index on blur when input has text', () => {
@@ -1648,11 +1755,10 @@ describe('IrisBaseChatbotComponent', () => {
                 fixture.detectChanges();
             });
 
-            it('should interpolate lecture labels with entity name', () => {
+            it('should interpolate lecture labels', () => {
                 const labels = component.interpolatedLabels();
-                expect(labels).toHaveLength(7);
-                expect(labels[0]).toBe('Explain a concept from Data Structures');
-                expect(labels[1]).toBe('What are the key points I should know from Data Structures?');
+                expect(labels).toHaveLength(4);
+                expect(labels).toContain('artemisApp.iris.chat.placeholders.lecture.keyPoints');
             });
 
             it('should hide suggestion chips on lecture screen', () => {
@@ -1692,9 +1798,12 @@ describe('IrisBaseChatbotComponent', () => {
             });
 
             it('should show ghost text when input matches a label prefix', () => {
-                component.newMessageTextContent.set('Help me');
+                // MockTranslateService returns the key, so labels are translation keys
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10);
+                component.newMessageTextContent.set(prefix);
                 fixture.detectChanges();
-                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+                expect(component.ghostText()).toBe(label.substring(10));
             });
 
             it('should clear ghost text when input does not match any label', () => {
@@ -1704,9 +1813,11 @@ describe('IrisBaseChatbotComponent', () => {
             });
 
             it('should be case insensitive', () => {
-                component.newMessageTextContent.set('help me');
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10).toLowerCase();
+                component.newMessageTextContent.set(prefix);
                 fixture.detectChanges();
-                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+                expect(component.ghostText()).toBe(label.substring(10));
             });
 
             it('should clear ghost text when input is empty', () => {
@@ -1716,30 +1827,34 @@ describe('IrisBaseChatbotComponent', () => {
             });
 
             it('should accept ghost text on Tab key', () => {
-                component.newMessageTextContent.set('Help me');
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10);
+                component.newMessageTextContent.set(prefix);
                 fixture.detectChanges();
-                expect(component.ghostText()).toBe(' understand Sorting Arrays');
+                expect(component.ghostText()).toBe(label.substring(10));
 
                 const event = new KeyboardEvent('keydown', { key: 'Tab' });
                 vi.spyOn(event, 'preventDefault');
                 component.handleKey(event);
 
                 expect(event.preventDefault).toHaveBeenCalled();
-                expect(component.newMessageTextContent()).toBe('Help me understand Sorting Arrays');
+                expect(component.newMessageTextContent()).toBe(label);
                 expect(component.ghostText()).toBe('');
             });
 
             it('should accept ghost text on ArrowRight key', () => {
-                component.newMessageTextContent.set('Why are');
+                const label = component.interpolatedLabels()[1];
+                const prefix = label.substring(0, 47);
+                component.newMessageTextContent.set(prefix);
                 fixture.detectChanges();
-                expect(component.ghostText()).toBe(' my tests failing?');
+                expect(component.ghostText()).toBe(label.substring(47));
 
                 const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
                 vi.spyOn(event, 'preventDefault');
                 component.handleKey(event);
 
                 expect(event.preventDefault).toHaveBeenCalled();
-                expect(component.newMessageTextContent()).toBe('Why are my tests failing?');
+                expect(component.newMessageTextContent()).toBe(label);
             });
 
             it('should not show ghost text on course screen', () => {
