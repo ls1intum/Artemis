@@ -126,7 +126,7 @@ export class ContextSelectionComponent {
                 filter((id): id is number => id !== undefined),
                 switchMap((courseId) => {
                     const cached = this.courseStorageService.getCourse(courseId);
-                    if (cached?.lectures?.length || cached?.exercises?.length) {
+                    if (cached) {
                         return of({
                             courseName: cached.title ?? '',
                             lectures: cached.lectures ?? [],

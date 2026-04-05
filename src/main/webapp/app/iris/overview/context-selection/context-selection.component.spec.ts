@@ -120,6 +120,18 @@ describe('ContextSelectionComponent', () => {
             expect(component.lectures()).toHaveLength(1);
         });
 
+        it('should use cached course data even when lectures and exercises are empty', async () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Empty Course', lectures: [], exercises: [] });
+            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockClear();
+
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            await fixture.whenStable();
+
+            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).not.toHaveBeenCalled();
+            expect(component.courseName()).toBe('Empty Course');
+        });
+
         it('should handle API error gracefully and reset to empty state', async () => {
             courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(throwError(() => new Error('Network error')));
 

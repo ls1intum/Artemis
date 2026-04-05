@@ -146,6 +146,7 @@
                 "explanation": "Erklärung:"
             },
             "contextSelection": {
+                "label": "Chat-Kontext auswählen",
                 "search": "Suchen...",
                 "placeholder": "Kontext auswählen...",
                 "courseGroup": "Kurs",

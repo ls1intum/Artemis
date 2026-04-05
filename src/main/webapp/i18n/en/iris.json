@@ -150,6 +150,7 @@
                 "lectureLabel": "Lecture:"
             },
             "contextSelection": {
+                "label": "Select chat context",
                 "search": "Search...",
                 "placeholder": "Select context...",
                 "courseGroup": "Course",
