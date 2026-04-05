@@ -209,6 +209,7 @@
                 "older": "Older",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
+                    "textExercise": "This chat is related to a text exercise.",
                     "lecture": "This chat is related to a lecture."
                 },
                 "deleteSession": "Delete",

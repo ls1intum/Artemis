@@ -924,6 +924,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         switch (currentChatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
+            case ChatServiceMode.TEXT_EXERCISE:
                 return `../exercises/${currentRelatedEntityId}`;
             case ChatServiceMode.LECTURE:
                 return `../lectures/${currentRelatedEntityId}`;
@@ -935,6 +936,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {
         switch (currentChatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
+            case ChatServiceMode.TEXT_EXERCISE:
                 return `artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel`;
             case ChatServiceMode.LECTURE:
                 return `artemisApp.exerciseChatbot.goToRelatedEntityButton.lectureLabel`;
