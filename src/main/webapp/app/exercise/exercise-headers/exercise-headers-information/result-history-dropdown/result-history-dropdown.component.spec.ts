@@ -308,7 +308,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
             component.navigateToSubmission(result, event);
 
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'text-exercises', 10, 'participate', 2, 'submission', 7]);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'text-exercises', 10, 'participate', 2, 'submission', 7, 'result', 1]);
         });
 
         it('should navigate to modeling exercise submission', () => {
@@ -321,7 +321,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
             component.navigateToSubmission(result, event);
 
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'modeling-exercises', 10, 'participate', 2, 'submission', 7]);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'modeling-exercises', 10, 'participate', 2, 'submission', 7, 'result', 1]);
         });
     });
 

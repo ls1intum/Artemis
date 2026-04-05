@@ -119,10 +119,15 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent],
+                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(HeaderParticipationPageComponent), MockComponent(TeamParticipateInfoBoxComponent)],
+                imports: [
+                    StubModelingEditorComponent,
+                    MockComponent(HeaderParticipationPageComponent),
+                    MockComponent(TeamParticipateInfoBoxComponent),
+                    MockComponent(RatingComponent),
+                ],
             },
         });
 

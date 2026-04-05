@@ -118,10 +118,15 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent],
+                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(HeaderParticipationPageComponent), MockComponent(TeamParticipateInfoBoxComponent)],
+                imports: [
+                    StubModelingEditorComponent,
+                    MockComponent(HeaderParticipationPageComponent),
+                    MockComponent(TeamParticipateInfoBoxComponent),
+                    MockComponent(RatingComponent),
+                ],
             },
         });
 
@@ -258,7 +263,15 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         // Initialize submission
-        submission.model = '{"version": "3.0.0", "elements": {"1": {"id": 1}}, "relationships": {}}';
+        submission.model = JSON.stringify({
+            version: '3.0.0',
+            type: 'ClassDiagram',
+            size: { width: 100, height: 100 },
+            interactive: { elements: {}, relationships: {} },
+            elements: { '1': { id: '1', type: 'Class', name: 'TestClass', bounds: { x: 0, y: 0, width: 100, height: 100 } } },
+            relationships: {},
+            assessments: {},
+        });
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize the component
