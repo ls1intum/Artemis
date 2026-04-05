@@ -14,7 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
+import { NgxExtendedPdfViewerModule, PDFNotificationService, type PdfLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faCheck,
@@ -98,6 +98,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
 
     private resizeObserver?: ResizeObserver;
+    private firstPageRenderedPosted = false;
 
     constructor() {
         effect(() => {
@@ -172,6 +173,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
         switch (type) {
             case 'loadPDF':
+                this.firstPageRenderedPosted = false;
                 if (typeof data?.url === 'string' && data.url.length > 0) {
                     const urlChanged = data.url !== this.pdfUrl();
                     if (urlChanged) {
@@ -189,6 +191,9 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 this.updateDarkMode(data?.isDarkMode);
                 break;
+            case 'viewerModeChange':
+                this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
+                break;
             case 'themeChange':
                 this.updateDarkMode(data?.isDarkMode);
                 break;
@@ -200,15 +205,17 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         this.postMessageToParent('pageChange', { page });
     }
 
-    onPagesLoaded(event: PagesLoadedEvent): void {
-        const totalPages = event.pagesCount ?? 0;
-        this.totalPages.set(totalPages);
-
-        const currentPage = this.currentPage();
-        if (currentPage < 1 || currentPage > totalPages) {
-            this.setCurrentPage(1);
+    onPageRendered(): void {
+        if (this.firstPageRenderedPosted) {
+            return;
         }
-        this.postMessageToParent('pagesLoaded', { pagesCount: totalPages, url: this.pdfUrl() });
+
+        this.firstPageRenderedPosted = true;
+        this.postMessageToParent('pageRendered', { url: this.pdfUrl() });
+    }
+
+    onPdfLoaded(event: PdfLoadedEvent): void {
+        this.updateTotalPages(event.pagesCount);
     }
 
     onPdfLoadingFailed(): void {
@@ -257,6 +264,15 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     private postMessageToParent(type: IframeMessageType, data: IframeMessageData): void {
         window.parent.postMessage({ type, data }, window.location.origin);
+    }
+
+    private updateTotalPages(totalPages: number): void {
+        this.totalPages.set(totalPages);
+
+        const currentPage = this.currentPage();
+        if (currentPage < 1 || currentPage > totalPages) {
+            this.setCurrentPage(1);
+        }
     }
 
     protected performSearch(query: string): void {

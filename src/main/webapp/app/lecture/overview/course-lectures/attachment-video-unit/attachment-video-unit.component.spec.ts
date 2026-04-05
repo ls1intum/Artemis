@@ -485,7 +485,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(createObjectURLSpy).toHaveBeenCalledWith(testBlob);
 
             // Complete loading
-            component['onPdfPagesLoaded']({ pdfUrl: mockBlobUrl });
+            component['onPdfPageRendered']({ pdfUrl: mockBlobUrl });
             expect(component.isPdfLoading()).toBe(false);
 
             createObjectURLSpy.mockRestore();
@@ -512,21 +512,21 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(revokeSpy).toHaveBeenCalledWith(blobUrl);
         });
 
-        it('onPdfPagesLoaded: stops loading when PDF loads successfully', () => {
+        it('onPdfPageRendered: stops loading when first page is rendered', () => {
             const url = 'api/core/files/test.pdf';
             component.pdfUrl.set(url);
             component.isPdfLoading.set(true);
 
-            component['onPdfPagesLoaded']({ pdfUrl: url });
+            component['onPdfPageRendered']({ pdfUrl: url });
 
             expect(component.isPdfLoading()).toBe(false);
         });
 
-        it('onPdfPagesLoaded: ignores events for non-matching URLs', () => {
+        it('onPdfPageRendered: ignores events for non-matching URLs', () => {
             component.pdfUrl.set('api/core/files/test.pdf');
             component.isPdfLoading.set(true);
 
-            component['onPdfPagesLoaded']({ pdfUrl: 'different.pdf' });
+            component['onPdfPageRendered']({ pdfUrl: 'different.pdf' });
 
             expect(component.isPdfLoading()).toBe(true); // unchanged
         });

@@ -135,7 +135,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.loadPdfAsBlob();
     }
 
-    protected onPdfPagesLoaded(event: { pdfUrl: string }): void {
+    protected onPdfPageRendered(event: { pdfUrl: string }): void {
         const loadedUrl = event.pdfUrl;
         const activePdfUrl = this.pdfUrl();
 

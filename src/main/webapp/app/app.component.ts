@@ -16,7 +16,6 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
-import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 
 @Component({
     selector: 'jhi-app',
@@ -24,7 +23,6 @@ import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.com
     styleUrls: ['./app.component.scss'],
     imports: [
         AlertOverlayComponent,
-        PdfViewerComponent,
         CdkScrollable,
         NgClass,
         NgStyle,

@@ -92,6 +92,22 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.isDarkMode()).toBe(true);
     });
 
+    it('should handle viewerModeChange message without reloading the PDF', () => {
+        component.pdfUrl.set('doc.pdf');
+        component.isFullscreenMode.set(false);
+
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'viewerModeChange', data: { viewerMode: 'fullscreen' } },
+                origin: window.location.origin,
+                source: window,
+            }),
+        );
+
+        expect(component.pdfUrl()).toBe('doc.pdf');
+        expect(component.isFullscreenMode()).toBe(true);
+    });
+
     it('should update currentPage and post pageChange message', () => {
         postMessageSpy.mockClear();
         component.onPageChange(10);
@@ -99,11 +115,36 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pageChange', data: { page: 10 } }, window.location.origin);
     });
 
-    it('should update totalPages and post pagesLoaded message', () => {
+    it('should post pageRendered once per loadPDF cycle', () => {
         postMessageSpy.mockClear();
-        component.onPagesLoaded({ pagesCount: 42, source: {} });
-        expect(component.totalPages()).toBe(42);
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pagesLoaded', data: { pagesCount: 42, url: '' } }, window.location.origin);
+        component.pdfUrl.set('doc-a.pdf');
+
+        component.onPageRendered();
+        component.onPageRendered();
+
+        expect(postMessageSpy).toHaveBeenCalledTimes(1);
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pageRendered', data: { url: 'doc-a.pdf' } }, window.location.origin);
+
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc-b.pdf' } },
+                origin: window.location.origin,
+                source: window,
+            }),
+        );
+
+        component.onPageRendered();
+
+        expect(postMessageSpy).toHaveBeenCalledTimes(2);
+        expect(postMessageSpy).toHaveBeenLastCalledWith({ type: 'pageRendered', data: { url: 'doc-b.pdf' } }, window.location.origin);
+    });
+
+    it('should update totalPages on pdfLoaded', () => {
+        component.currentPage.set(99);
+        component.onPdfLoaded({ pagesCount: 12 });
+
+        expect(component.totalPages()).toBe(12);
+        expect(component.currentPage()).toBe(1);
     });
 
     it('should post pdfLoadError on loading failure', () => {
@@ -260,12 +301,6 @@ describe('PdfViewerIframeContentComponent', () => {
             }),
         );
         expect(component.isFullscreenMode()).toBe(true);
-    });
-
-    it('should reset currentPage when out of bounds on pagesLoaded', () => {
-        component.currentPage.set(99);
-        component.onPagesLoaded({ pagesCount: 10, source: {} });
-        expect(component.currentPage()).toBe(1);
     });
 
     const getToolbarCompressionLevel = (toolbarCenter: HTMLElement) => {

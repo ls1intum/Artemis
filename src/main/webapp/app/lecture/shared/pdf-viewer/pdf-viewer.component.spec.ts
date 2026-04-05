@@ -7,8 +7,6 @@ import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
-import dayjs from 'dayjs/esm';
 
 describe('PdfViewerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -16,7 +14,6 @@ describe('PdfViewerComponent', () => {
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
     let mockThemeService: { currentTheme: ReturnType<typeof signal<Theme>> };
-    let fullscreenService: PdfFullscreenOverlayService;
 
     function sendIframeMessage(type: string, data?: any) {
         const iframe = component.pdfIframe()?.nativeElement;
@@ -33,217 +30,150 @@ describe('PdfViewerComponent', () => {
         mockThemeService = { currentTheme: signal(Theme.LIGHT) };
         await TestBed.configureTestingModule({
             imports: [PdfViewerComponent],
-            providers: [
-                provideHttpClient(),
-                PdfFullscreenOverlayService,
-                { provide: ThemeService, useValue: mockThemeService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [provideHttpClient(), { provide: ThemeService, useValue: mockThemeService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PdfViewerComponent);
         component = fixture.componentInstance;
-        fullscreenService = TestBed.inject(PdfFullscreenOverlayService);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    describe.each([
-        { mode: 'embedded' as const, setup: () => fixture.componentRef.setInput('mode', 'embedded') },
-        { mode: 'fullscreen' as const, setup: () => fullscreenService.open('test.pdf', 1, undefined, undefined) },
-    ])('$mode Mode', ({ mode, setup }) => {
-        beforeEach(() => {
-            if (mode === 'embedded') {
-                fixture.componentRef.setInput('mode', 'embedded');
-            } else {
-                fixture.componentRef.setInput('mode', 'fullscreen');
-            }
-        });
+    it('should create and accept inputs', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.componentRef.setInput('version', 3);
+        fixture.componentRef.setInput('initialPage', 5);
+        fixture.detectChanges();
 
-        it('should create and accept inputs', () => {
-            if (mode === 'embedded') {
-                fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-                fixture.componentRef.setInput('version', 3);
-                fixture.componentRef.setInput('initialPage', 5);
-                fixture.detectChanges();
-
-                expect(component).toBeTruthy();
-                expect(component.pdfUrl()).toBe('test.pdf');
-                expect(component.version()).toBe(3);
-                expect(component.initialPage()).toBe(5);
-                expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
-            } else {
-                fullscreenService.open('test.pdf', 1, undefined, undefined);
-                fixture.detectChanges();
-
-                const overlay = fixture.nativeElement.querySelector('.pdf-fullscreen-overlay');
-                const iframe = fixture.nativeElement.querySelector('iframe');
-                expect(overlay).toBeTruthy();
-                expect(iframe).toBeTruthy();
-            }
-        });
-
-        it('should handle ready message', () => {
-            setup();
-            fixture.detectChanges();
-
-            sendIframeMessage('ready');
-            fixture.detectChanges();
-
-            expect(component.iframeReady()).toBe(true);
-        });
-
-        it('should render footer when metadata provided', () => {
-            if (mode === 'embedded') {
-                fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-                fixture.detectChanges();
-                expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeFalsy();
-
-                fixture.componentRef.setInput('version', 1);
-                fixture.detectChanges();
-                expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeTruthy();
-            } else {
-                const uploadDate = dayjs();
-                fullscreenService.open('test.pdf', 1, uploadDate, 3);
-                fixture.detectChanges();
-
-                // Footer should be hidden while loading
-                expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeFalsy();
-
-                // Simulate PDF loading completion
-                sendIframeMessage('ready');
-                fixture.detectChanges();
-                sendIframeMessage('pagesLoaded', { pagesCount: 10, url: 'test.pdf' });
-                fixture.detectChanges();
-
-                // Footer should now be visible
-                const footer = fixture.nativeElement.querySelector('.pdf-viewer-footer');
-                expect(footer).toBeTruthy();
-                expect(footer.textContent).toContain('3');
-            }
-        });
+        expect(component).toBeTruthy();
+        expect(component.pdfUrl()).toBe('test.pdf');
+        expect(component.version()).toBe(3);
+        expect(component.initialPage()).toBe(5);
+        expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
+        expect(component.isFullscreen()).toBe(false);
+        expect(fixture.nativeElement.querySelector('.pdf-fullscreen-overlay')).toBeFalsy();
     });
 
-    describe('Embedded Mode Specific', () => {
-        beforeEach(() => {
-            fixture.componentRef.setInput('mode', 'embedded');
-        });
+    it('should handle ready message', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
 
-        it('should emit events (loadError, pagesLoaded, downloadRequested)', () => {
-            const loadErrorSpy = vi.fn();
-            const pagesLoadedSpy = vi.fn();
-            const downloadSpy = vi.fn();
+        sendIframeMessage('ready');
+        fixture.detectChanges();
 
-            component.loadError.subscribe(loadErrorSpy);
-            component.pagesLoaded.subscribe(pagesLoadedSpy);
-            component.downloadRequested.subscribe(downloadSpy);
-
-            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-            fixture.detectChanges();
-
-            sendIframeMessage('pdfLoadError', { url: 'failed.pdf' });
-            expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'failed.pdf' });
-
-            sendIframeMessage('pagesLoaded', { pagesCount: 12, url: 'loaded.pdf' });
-            expect(pagesLoadedSpy).toHaveBeenCalledWith({ pdfUrl: 'loaded.pdf', pagesCount: 12 });
-
-            sendIframeMessage('download');
-            expect(downloadSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should call fullscreen service when openFullscreen message received', () => {
-            const openSpy = vi.spyOn(fullscreenService, 'open');
-            const uploadDate = dayjs();
-
-            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-            fixture.componentRef.setInput('uploadDate', uploadDate);
-            fixture.componentRef.setInput('version', 2);
-            fixture.detectChanges();
-
-            sendIframeMessage('ready');
-            sendIframeMessage('pageChange', { page: 6 });
-            sendIframeMessage('openFullscreen');
-            fixture.detectChanges();
-
-            expect(openSpy).toHaveBeenCalledWith('test.pdf', 6, uploadDate, 2, expect.any(Function));
-        });
-
-        it('should use initial page when opening fullscreen before first pageChange', () => {
-            const openSpy = vi.spyOn(fullscreenService, 'open');
-
-            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-            fixture.componentRef.setInput('initialPage', 7);
-            fixture.detectChanges();
-
-            sendIframeMessage('ready');
-            fixture.detectChanges();
-            sendIframeMessage('openFullscreen');
-
-            expect(openSpy).toHaveBeenCalledWith('test.pdf', 7, undefined, undefined, expect.any(Function));
-        });
-
-        it('should reload the current PDF when the iframe sends ready again', () => {
-            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-            fixture.componentRef.setInput('initialPage', 3);
-            fixture.detectChanges();
-
-            const iframe = component.pdfIframe()?.nativeElement;
-            expect(iframe?.contentWindow).toBeTruthy();
-
-            const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-
-            sendIframeMessage('ready');
-            sendIframeMessage('pageChange', { page: 5 });
-            postMessageSpy.mockClear();
-
-            sendIframeMessage('ready');
-            fixture.detectChanges();
-
-            expect(postMessageSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: 'loadPDF',
-                    data: expect.objectContaining({ url: 'test.pdf', initialPage: 5, viewerMode: 'embedded' }),
-                }),
-                window.location.origin,
-            );
-        });
+        expect(component.iframeReady()).toBe(true);
     });
 
-    describe('Fullscreen Mode Specific', () => {
-        beforeEach(() => {
-            fixture.componentRef.setInput('mode', 'fullscreen');
-        });
+    it('should emit events (loadError, pageRendered, downloadRequested)', () => {
+        const loadErrorSpy = vi.fn();
+        const pageRenderedSpy = vi.fn();
+        const downloadSpy = vi.fn();
 
-        it('should update page on message', () => {
-            const updateSpy = vi.spyOn(fullscreenService, 'updateCurrentPage');
-            fullscreenService.open('test.pdf', 1, undefined, undefined);
-            fixture.detectChanges();
+        component.loadError.subscribe(loadErrorSpy);
+        component.pageRendered.subscribe(pageRenderedSpy);
+        component.downloadRequested.subscribe(downloadSpy);
 
-            sendIframeMessage('pageChange', { page: 10 });
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
 
-            expect(updateSpy).toHaveBeenCalledWith(10);
-        });
+        sendIframeMessage('pdfLoadError', { url: 'failed.pdf' });
+        expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'failed.pdf' });
 
-        it('should keep loading spinner visible until PDF is loaded in fullscreen mode', () => {
-            // Open fullscreen → spinner visible
-            fullscreenService.open('test.pdf', 1, undefined, undefined);
-            fixture.detectChanges();
-            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+        sendIframeMessage('pageRendered', { url: 'rendered.pdf' });
+        expect(pageRenderedSpy).toHaveBeenCalledWith({ pdfUrl: 'rendered.pdf' });
 
-            // Iframe sends 'ready' → spinner should STILL be visible
-            sendIframeMessage('ready');
-            fixture.detectChanges();
+        sendIframeMessage('download');
+        expect(downloadSpy).toHaveBeenCalledOnce();
+    });
 
-            expect(component.iframeReady()).toBe(true);
-            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+    it('should enter fullscreen on openFullscreen message without triggering PDF reload', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+        const hostElement = fixture.nativeElement as HTMLElement;
+        const originalParent = hostElement.parentElement;
 
-            // PDF loads, iframe sends 'pagesLoaded' → NOW spinner should hide
-            sendIframeMessage('pagesLoaded', { pagesCount: 10, url: 'test.pdf' });
-            fixture.detectChanges();
+        sendIframeMessage('ready');
+        fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
-        });
+        const iframe = component.pdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+        postMessageSpy.mockClear();
+
+        sendIframeMessage('openFullscreen');
+        fixture.detectChanges();
+
+        expect(component.isFullscreen()).toBe(true);
+        expect(hostElement.parentElement).toBe(document.body);
+        expect(fixture.nativeElement.querySelector('.pdf-fullscreen-overlay')).toBeTruthy();
+        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'fullscreen' } }), window.location.origin);
+        expect(postMessageSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'loadPDF' }), window.location.origin);
+        expect(originalParent).not.toBeNull();
+    });
+
+    it('should close fullscreen on closeFullscreen message and sync mode back to embedded', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+        const hostElement = fixture.nativeElement as HTMLElement;
+        const originalParent = hostElement.parentElement;
+
+        sendIframeMessage('ready');
+        sendIframeMessage('openFullscreen');
+        fixture.detectChanges();
+        expect(component.isFullscreen()).toBe(true);
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+        postMessageSpy.mockClear();
+
+        sendIframeMessage('closeFullscreen');
+        fixture.detectChanges();
+
+        expect(component.isFullscreen()).toBe(false);
+        expect(hostElement.parentElement).toBe(originalParent);
+        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'embedded' } }), window.location.origin);
+    });
+
+    it('should keep loading spinner visible until first pageRendered', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+
+        sendIframeMessage('ready');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.pdf-iframe')?.classList.contains('pdf-iframe--hidden')).toBe(true);
+
+        sendIframeMessage('pageRendered', { url: 'test.pdf' });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.pdf-iframe')?.classList.contains('pdf-iframe--hidden')).toBe(false);
+    });
+
+    it('should reload the current PDF when the iframe sends ready again', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.componentRef.setInput('initialPage', 3);
+        fixture.detectChanges();
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        expect(iframe?.contentWindow).toBeTruthy();
+
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+
+        sendIframeMessage('ready');
+        sendIframeMessage('pageChange', { page: 5 });
+        postMessageSpy.mockClear();
+
+        sendIframeMessage('ready');
+        fixture.detectChanges();
+
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'loadPDF',
+                data: expect.objectContaining({ url: 'test.pdf', initialPage: 5 }),
+            }),
+            window.location.origin,
+        );
     });
 });

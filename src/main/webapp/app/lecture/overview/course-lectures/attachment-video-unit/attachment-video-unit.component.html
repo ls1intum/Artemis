@@ -82,13 +82,12 @@
                     </div>
                 }
                 <jhi-pdf-viewer
-                    mode="embedded"
                     [class.pdf-viewer-loading]="showPdfSpinner()"
                     [pdfUrl]="pdfUrl()!"
                     [uploadDate]="lectureUnit().attachment?.uploadDate"
                     [version]="lectureUnit().attachment?.version"
                     [initialPage]="validatedPdfPage()"
-                    (pagesLoaded)="onPdfPagesLoaded($event)"
+                    (pageRendered)="onPdfPageRendered($event)"
                     (loadError)="onPdfLoadError($event)"
                     (downloadRequested)="handleDownload()"
                 />
