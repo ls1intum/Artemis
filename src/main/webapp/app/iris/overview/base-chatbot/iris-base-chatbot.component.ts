@@ -294,35 +294,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         return session.title;
     });
-    readonly contextSessions = computed(() => {
-        let chatMode = this.currentChatMode();
-        let entityId = this.currentRelatedEntityId();
-
-        // Fallback to active session context when service context signals are not initialized yet
-        if (chatMode === undefined || entityId === undefined) {
-            const activeSession = this.chatSessions().find((s) => s.id === this.currentSessionId());
-            chatMode = activeSession?.chatMode;
-            entityId = activeSession?.entityId;
-        }
-        if (chatMode === undefined || entityId === undefined) {
-            return [];
-        }
-        return this.chatSessions()
-            .filter((s) => s.chatMode === chatMode && s.entityId === entityId)
-            .sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
-    });
-
-    readonly hasPastContextSessions = computed(() => {
-        const sessions = this.contextSessions();
+    readonly hasPastSessions = computed(() => {
         const currentId = this.currentSessionId();
-        return sessions.some((s) => s.id !== currentId);
+        return this.chatSessions().some((s) => s.id !== currentId);
     });
 
     readonly showWidgetHeader = computed(() => {
         if (this.layout() !== 'widget') {
             return true;
         }
-        return !this.isEmptyState() || this.hasPastContextSessions();
+        return !this.isEmptyState() || this.hasPastSessions();
     });
 
     protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
@@ -814,7 +795,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const currentId = this.currentSessionId();
         const newChatLabel = this.newChatTitle();
 
-        const sessions = this.contextSessions();
+        const sessions = this.chatSessions();
         const todaySessions = this.filterSessionsBetween(sessions, 0, 0);
         const olderSessions = this.filterSessionsBetween(sessions, 1, undefined, true);
 
@@ -850,10 +831,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), todaySessions);
         addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), olderSessions);
 
-        // Fallback: if contextSessions() returned [] (e.g., chatMode/entityId race condition)
-        // but we have an active session, ensure the menu is never empty.
-        // currentSession may be undefined if chatSessions() hasn't been populated yet;
-        // in that case we fall back to newChatLabel for the display text.
+        // Fallback: if chatSessions() is empty but we have an active session,
+        // ensure the menu is never empty.
         if (items.length === 0 && currentId !== undefined) {
             const currentSession = this.chatSessions().find((s) => s.id === currentId);
             const fallbackLabel = currentSession ? this.getSessionMenuLabel(currentSession, newChatLabel) : newChatLabel;
