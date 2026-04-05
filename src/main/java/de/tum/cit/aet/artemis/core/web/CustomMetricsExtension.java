@@ -39,7 +39,7 @@ public class CustomMetricsExtension {
 
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsCollector, SimpUserRegistry simpUserRegistry) {
+    public CustomMetricsExtension(NodeMetricsCollector nodeMetricsCollector, SimpUserRegistry simpUserRegistry) {
         this.nodeMetricsCollector = nodeMetricsCollector;
         this.simpUserRegistry = simpUserRegistry;
     }
@@ -58,6 +58,12 @@ public class CustomMetricsExtension {
         return new ExtendedMetricsResponse(metrics, new CustomMetrics(simpUserRegistry.getUserCount()));
     }
 
+    /**
+     * Returns metrics for a specific node or the list of available nodes.
+     *
+     * @param nodeId the node UUID, "nodes" for the node list, or "all" for aggregated metrics
+     * @return node-specific metrics, the node list, or aggregated metrics
+     */
     @ReadOperation
     public Object getMetricsByNode(@Selector @Nullable String nodeId) {
         if (nodeId == null || "all".equals(nodeId)) {

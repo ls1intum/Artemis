@@ -32,19 +32,19 @@ public class CustomMetricsExtensionConfiguration {
     public static class ArtemisMetricsEndpointConfiguration {
 
         /**
-         * customMetricsExtension.
+         * Creates the CustomMetricsExtension that adds multi-node aggregation and active user counts.
          *
-         * @param simpUserRegistry Registry used to retrieve the number of active users.
-         * @return CustomMetricsExtension object.
+         * @param nodeMetricsCollector collector for multi-node metrics aggregation
+         * @param simpUserRegistry     registry used to retrieve the number of active WebSocket users
+         * @return CustomMetricsExtension object
          */
         @Bean
         @Lazy
         @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsCollector.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, NodeMetricsCollector nodeMetricsCollector,
-                SimpUserRegistry simpUserRegistry) {
-            return new CustomMetricsExtension(artemisMetricsEndpoint, nodeMetricsCollector, simpUserRegistry);
+        public CustomMetricsExtension customMetricsExtension(NodeMetricsCollector nodeMetricsCollector, SimpUserRegistry simpUserRegistry) {
+            return new CustomMetricsExtension(nodeMetricsCollector, simpUserRegistry);
         }
     }
 }

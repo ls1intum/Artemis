@@ -198,7 +198,7 @@ public class ArtemisMetricsEndpoint {
                         var stats = map.getLocalMapStats();
                         long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
                         result.put(name,
-                                new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getOwnedEntryCount(), stats.getRemoveOperationCount(), map.size()));
+                                new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(), map.size()));
                     }
                     else if (distributedObject instanceof javax.cache.Cache<?, ?>) {
                         // Hibernate L2 entity caches (ICache via JCacheRegionFactory)
