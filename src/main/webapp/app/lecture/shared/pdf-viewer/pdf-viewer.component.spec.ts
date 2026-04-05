@@ -92,8 +92,6 @@ describe('PdfViewerComponent', () => {
     it('should enter fullscreen on openFullscreen message without triggering PDF reload', () => {
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
-        const hostElement = fixture.nativeElement as HTMLElement;
-        const originalParent = hostElement.parentElement;
 
         sendIframeMessage('ready');
         fixture.detectChanges();
@@ -106,18 +104,14 @@ describe('PdfViewerComponent', () => {
         fixture.detectChanges();
 
         expect(component.isFullscreen()).toBe(true);
-        expect(hostElement.parentElement).toBe(document.body);
         expect(fixture.nativeElement.querySelector('.pdf-fullscreen-overlay')).toBeTruthy();
         expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'fullscreen' } }), window.location.origin);
         expect(postMessageSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'loadPDF' }), window.location.origin);
-        expect(originalParent).not.toBeNull();
     });
 
     it('should close fullscreen on closeFullscreen message and sync mode back to embedded', () => {
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
-        const hostElement = fixture.nativeElement as HTMLElement;
-        const originalParent = hostElement.parentElement;
 
         sendIframeMessage('ready');
         sendIframeMessage('openFullscreen');
@@ -132,7 +126,6 @@ describe('PdfViewerComponent', () => {
         fixture.detectChanges();
 
         expect(component.isFullscreen()).toBe(false);
-        expect(hostElement.parentElement).toBe(originalParent);
         expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'embedded' } }), window.location.origin);
     });
 

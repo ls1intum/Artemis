@@ -1,4 +1,4 @@
-import { DOCUMENT, Location, NgTemplateOutlet } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -59,12 +59,10 @@ export class PdfViewerComponent {
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
     private readonly injector = inject(Injector);
-    // Required to reparent the viewer host into <body> during fullscreen, escaping local stacking contexts.
-    private readonly document = inject(DOCUMENT);
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
     private readonly currentPage = signal(1);
-    private originalHostParent?: Node;
-    private hostPlaceholder?: Comment;
+    private drawerContentElement?: HTMLElement;
+    private originalDrawerContentZIndex?: string;
 
     protected readonly effectiveUploadDate = computed(() => this.uploadDate());
     protected readonly effectiveVersion = computed(() => this.version());
@@ -136,7 +134,7 @@ export class PdfViewerComponent {
         if (!this.pdfUrl() || this.isFullscreen()) {
             return;
         }
-        this.moveHostToBody();
+        this.applyFullscreenLayering();
         this.isFullscreen.set(true);
     }
 
@@ -145,7 +143,7 @@ export class PdfViewerComponent {
             return;
         }
         this.isFullscreen.set(false);
-        this.restoreHostPosition();
+        this.resetFullscreenLayering();
     }
 
     @HostListener('window:message', ['$event'])
@@ -242,27 +240,24 @@ export class PdfViewerComponent {
         }
     }
 
-    private moveHostToBody(): void {
-        const host = this.hostElementRef.nativeElement;
-        const parent = host.parentNode;
-        if (!parent || host.parentNode === this.document.body) {
+    private applyFullscreenLayering(): void {
+        const drawerContent = this.hostElementRef.nativeElement.closest('.mat-drawer-content') as HTMLElement | null;
+        if (!drawerContent) {
             return;
         }
 
-        this.originalHostParent = parent;
-        this.hostPlaceholder = this.document.createComment('pdf-viewer-host-placeholder');
-        parent.insertBefore(this.hostPlaceholder, host);
-        this.document.body.appendChild(host);
+        this.drawerContentElement = drawerContent;
+        this.originalDrawerContentZIndex = drawerContent.style.zIndex;
+        drawerContent.style.zIndex = '4000';
     }
 
-    private restoreHostPosition(): void {
-        if (!this.originalHostParent || !this.hostPlaceholder) {
+    private resetFullscreenLayering(): void {
+        if (!this.drawerContentElement) {
             return;
         }
 
-        this.originalHostParent.insertBefore(this.hostElementRef.nativeElement, this.hostPlaceholder);
-        this.hostPlaceholder.remove();
-        this.hostPlaceholder = undefined;
-        this.originalHostParent = undefined;
+        this.drawerContentElement.style.zIndex = this.originalDrawerContentZIndex ?? '';
+        this.drawerContentElement = undefined;
+        this.originalDrawerContentZIndex = undefined;
     }
 }
