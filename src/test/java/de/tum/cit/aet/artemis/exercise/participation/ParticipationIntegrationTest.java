@@ -1846,25 +1846,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
 
         private ParticipationScoreSearchDTO buildScoreSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
-            var search = new ParticipationScoreSearchDTO();
-            search.setPage(0);
-            search.setPageSize(50);
-            search.setSearchTerm(searchTerm);
-            search.setFilterProp(filterProp);
-            search.setSortedColumn(sortedColumn);
-            search.setSortingOrder(order);
-            return search;
+            return new ParticipationScoreSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp, null, null);
         }
 
         private ParticipationSearchDTO buildParticipationSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
-            var search = new ParticipationSearchDTO();
-            search.setPage(0);
-            search.setPageSize(50);
-            search.setSearchTerm(searchTerm);
-            search.setFilterProp(filterProp);
-            search.setSortedColumn(sortedColumn);
-            search.setSortingOrder(order);
-            return search;
+            return new ParticipationSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp);
         }
 
         // ---- Scores endpoint tests ----
@@ -1997,9 +1983,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             r2.setAssessmentType(AssessmentType.AUTOMATIC);
             resultRepository.save(r2);
 
-            var search = buildScoreSearch("", "All", "id", SortingOrder.ASCENDING);
-            search.setScoreRangeLower(50);
-            search.setScoreRangeUpper(100);
+            var search = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", 50, 100);
             var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
@@ -2054,14 +2038,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
 
-            var search = buildScoreSearch("", "All", "id", SortingOrder.ASCENDING);
-            search.setPageSize(2);
-            search.setPage(0);
-            var page0 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            var page0 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationScoreSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
             assertThat(page0).hasSize(2);
 
-            search.setPage(1);
-            var page1 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+            var page1 = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationScoreSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
             assertThat(page1).hasSize(1);
         }
 
@@ -2150,14 +2132,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
 
-            var search = buildParticipationSearch("", "All", "id", SortingOrder.ASCENDING);
-            search.setPageSize(2);
-            search.setPage(0);
-            var page0 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            var page0 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All")));
             assertThat(page0).hasSize(2);
 
-            search.setPage(1);
-            var page1 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            var page1 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All")));
             assertThat(page1).hasSize(1);
         }
 

@@ -2,30 +2,12 @@ package de.tum.cit.aet.artemis.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+
 /**
- * Search DTO for the exercise scores view, extending the participation search with
- * score range parameters.
+ * Search DTO for the exercise scores view, containing pagination, sorting, search term, filter, and score range parameters.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ParticipationScoreSearchDTO extends ParticipationSearchDTO {
-
-    private Integer scoreRangeLower;
-
-    private Integer scoreRangeUpper;
-
-    public Integer getScoreRangeLower() {
-        return scoreRangeLower;
-    }
-
-    public void setScoreRangeLower(Integer scoreRangeLower) {
-        this.scoreRangeLower = scoreRangeLower;
-    }
-
-    public Integer getScoreRangeUpper() {
-        return scoreRangeUpper;
-    }
-
-    public void setScoreRangeUpper(Integer scoreRangeUpper) {
-        this.scoreRangeUpper = scoreRangeUpper;
-    }
+public record ParticipationScoreSearchDTO(int page, int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm, String filterProp, Integer scoreRangeLower,
+        Integer scoreRangeUpper) {
 }

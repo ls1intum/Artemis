@@ -812,18 +812,18 @@ public class ParticipationService {
      * @return a page of ParticipationManagementDTO
      */
     public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
-        SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
-        Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize());
+        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if ("Failed".equals(search.getFilterProp()) && exercise instanceof ProgrammingExercise) {
+        if ("Failed".equals(search.filterProp()) && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
-                stuckBuildCutoff, pageable, sortOrder, search.getSortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
+                pageable, sortOrder, search.sortedColumn());
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
@@ -910,13 +910,13 @@ public class ParticipationService {
      * @return a page of ParticipationScoreDTO
      */
     public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
-        SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
-        Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize());
+        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         // Step 1: Get paginated participation IDs with filters
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
-                search.getScoreRangeLower(), search.getScoreRangeUpper(), pageable, sortOrder, search.getSortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
