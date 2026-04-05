@@ -25,7 +25,6 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
-import { Toolbar } from 'primeng/toolbar';
 import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -78,7 +77,6 @@ interface ExamUserWithExamData extends ExamUser {
         NgxDatatableModule,
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
-        Toolbar,
         ExamStudentsMenuButtonComponent,
         ExamAddStudentsDialogComponent,
         TableModule,
