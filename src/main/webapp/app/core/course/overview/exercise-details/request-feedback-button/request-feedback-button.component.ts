@@ -19,7 +19,6 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import dayjs from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -200,49 +199,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 if (participation) {
                     this.generatingFeedback.emit();
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-
-                    // TODO ldv Remove this local testing workaround - simulate Athena result
-                    setTimeout(() => {
-                        const participationId = this.participation!.id!;
-                        const wsService = this.participationWebsocketService as any;
-                        const submissions = this.participation?.submissions || [];
-
-                        const lastSubmission = submissions.last();
-                        /*
-                            .filter(s => s.id !== undefined && s.id !== null)
-                            .reduce((prev, current) => {
-                                // TypeScript now knows current.id is defined here
-                                // @ts-expect-error
-                                return (prev && prev.id > current.id) ? prev : current;
-                            }, undefined as typeof submissions[0] | undefined);*/
-
-                        // Build fake result
-                        const fakeResult = new Result();
-                        fakeResult.id = Math.floor(Math.random() * 100000);
-                        fakeResult.completionDate = dayjs();
-                        fakeResult.successful = true;
-                        fakeResult.score = 50;
-                        fakeResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-                        fakeResult.submission = lastSubmission;
-
-                        // 1) Notify result subscribers directly
-                        const resultObs = wsService.resultObservables?.get(participationId);
-                        if (resultObs) {
-                            resultObs.next(fakeResult);
-                        }
-
-                        // 2) Update cached participation and notify participation subscribers
-                        const cached = wsService.cachedParticipations?.get(participationId);
-                        if (cached) {
-                            const updated = { ...cached };
-                            updated.submissions = [{ ...lastSubmission, participation: updated, results: [fakeResult] }];
-                            wsService.cachedParticipations.set(participationId, updated);
-                            const partObs = wsService.participationObservable;
-                            if (partObs) {
-                                partObs.next(updated);
-                            }
-                        }
-                    }, 1500);
                 }
             },
             error: (error: HttpErrorResponse) => {

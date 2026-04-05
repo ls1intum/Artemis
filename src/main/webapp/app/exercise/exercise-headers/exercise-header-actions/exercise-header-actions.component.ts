@@ -47,7 +47,7 @@ import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercis
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-//import { AccountService } from 'app/core/auth/account.service'; //TODO ldv
+import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -108,7 +108,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
     private readonly profileService = inject(ProfileService);
-    // private readonly accountService = inject(AccountService); //TODO ldv
+    private readonly accountService = inject(AccountService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -197,11 +197,10 @@ export class ExerciseHeaderActionsComponent {
         return ['/courses', this.courseId(), 'exercises', this.exercise().id!, 'repository', participation.id];
     });
 
-    readonly userLLMSelection = computed(() => LLMSelectionDecision.CLOUD_AI); //this.accountService.userIdentity()?.selectedLLMUsage);
+    readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
     readonly hasUserAcceptedLLM = computed(() => {
-        //TODO ldv
-        //const selection = this.userLLMSelection();
-        return true; //selection === LLMSelectionDecision.CLOUD_AI ;
+        const selection = this.userLLMSelection();
+        return selection === LLMSelectionDecision.CLOUD_AI;
     });
     readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
 

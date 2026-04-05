@@ -7,7 +7,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -114,11 +114,9 @@ export class CourseExerciseService {
     }
 
     requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        // TODO ldv Remove this local testing workaround
-        return of({ id: participationId } as StudentParticipation);
-        /*return this.http
+        return this.http
             .put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/request-feedback`, {})
-            .pipe(map((participation: StudentParticipation) => participation));*/
+            .pipe(map((participation: StudentParticipation) => participation));
     }
 
     /**
