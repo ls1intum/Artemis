@@ -468,7 +468,7 @@ public class FileResource {
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), false,
-                requestHeaders.getRange());
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -538,7 +538,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), false,
-                requestHeaders.getRange());
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -561,7 +561,7 @@ public class FileResource {
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), false,
-                requestHeaders.getRange());
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -583,7 +583,7 @@ public class FileResource {
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), false,
-                requestHeaders.getRange());
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -679,13 +679,13 @@ public class FileResource {
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
             return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename, false,
-                    requestHeaders.getRange());
+                    parseRequestedRangesOrThrowBadRequest(requestHeaders));
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
         return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, 0, requestHeaders.getRange());
+                downloadFilename, 0, parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -696,6 +696,22 @@ public class FileResource {
      */
     private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
         return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
+    }
+
+    /**
+     * Parses HTTP range headers and maps malformed range syntax to a client error response.
+     *
+     * @param requestHeaders request headers that may contain a Range entry
+     * @return parsed list of HTTP ranges (empty if no Range header was sent)
+     */
+    private List<HttpRange> parseRequestedRangesOrThrowBadRequest(HttpHeaders requestHeaders) {
+        String rangeHeader = requestHeaders.getFirst(HttpHeaders.RANGE);
+        try {
+            return HttpRange.parseRanges(rangeHeader);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Range header", ex);
+        }
     }
 
     /**

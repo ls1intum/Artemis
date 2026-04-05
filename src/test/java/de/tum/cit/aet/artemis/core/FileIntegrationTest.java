@@ -568,6 +568,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAttachmentVideoUnitAttachmentRangeRequestMalformedHeader() throws Exception {
+        byte[] dummyContent = "0123456789".getBytes();
+        Path tempFile = tempFileUtilService.createTempFile("dummy-range-malformed", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
+        tempFile.toFile().deleteOnExit();
+
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+
+            mockMvc.perform(get(url).header("Range", "bytes=abc-def")).andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testMarkdownFileCacheHeaders() throws Exception {
         // Upload a markdown file
         MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
