@@ -83,7 +83,6 @@ test.describe('Import exercises', () => {
                 const exercise: QuizExercise = await importResponse.json();
                 await courseManagementExercises.startQuiz(exercise.id!);
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await courseOverview.startExercise(exercise.id!);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
                 const submitResponse = await quizExerciseMultipleChoice.submit();
