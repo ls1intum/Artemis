@@ -8,6 +8,8 @@ import { omit as _omit } from 'lodash-es';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
+import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
@@ -21,9 +23,6 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
-import { createProgrammingExerciseEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -49,15 +48,18 @@ export class ProgrammingExerciseService {
     public resourceUrl = 'api/programming/programming-exercises';
 
     /**
-     * Sets a new programming exercise up
+     * Sets a new programming exercise up.
+     *
      * @param programmingExercise which should be setup
+     * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
      */
-    automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+    automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
         return this.http
-            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -158,11 +160,9 @@ export class ProgrammingExerciseService {
      */
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -173,9 +173,9 @@ export class ProgrammingExerciseService {
      */
     updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.convertDataFromClient(programmingExercise);
+        const dto = toProgrammingExerciseTimelineUpdateDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
+            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -471,11 +471,9 @@ export class ProgrammingExerciseService {
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, {
+            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
                 params: options,
                 observe: 'response',
             })
@@ -549,18 +547,5 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
-    }
-
-    /**
-     * Get a summary of the deletion of a programming exercise.
-     * @param exerciseId the id of the programming exercise
-     */
-    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.http.get<ProgrammingExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
-            map((response) => {
-                const summary = response.body;
-                return summary ? createProgrammingExerciseEntitySummary(summary) : {};
-            }),
-        );
     }
 }

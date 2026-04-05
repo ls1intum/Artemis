@@ -1,23 +1,18 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('File upload exercise management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-    });
-
-    test('Creates a file upload exercise in the UI', async ({ page, navigationBar, courseManagement, courseManagementExercises, fileUploadExerciseCreation }) => {
-        await page.goto('/');
+    test('Creates a file upload exercise in the UI', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, fileUploadExerciseCreation }) => {
+        await login(admin, '/');
         await navigationBar.openCourseManagement();
         await courseManagement.openExercisesOfCourse(course.id!);
         await courseManagementExercises.createFileUploadExercise();
@@ -37,7 +32,8 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const exercise: FileUploadExercise = await exerciseCreationResponse.json();
 
         // Make sure file upload exercise is shown in exercises list
-        await page.goto(`course-management/${course.id}/exercises`);
+        await page.goto(`/course-management/${course.id}/exercises`);
+        await page.waitForLoadState('networkidle');
         await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
     });
 
@@ -58,7 +54,5 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

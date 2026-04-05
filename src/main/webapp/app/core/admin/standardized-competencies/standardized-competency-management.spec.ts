@@ -4,6 +4,20 @@
  * including CRUD operations, tree navigation, and filtering.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('interactjs', () => {
+    const mockOn = vi.fn((eventName: string, callback: (event: any) => void) => {
+        return { on: mockOn };
+    });
+    const mockResizable = vi.fn(() => ({ on: mockOn }));
+    const mockInteract = Object.assign(
+        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
+        {
+            modifiers: { restrictSize: vi.fn(() => ({})) },
+        },
+    );
+    return { default: mockInteract };
+});
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
@@ -13,7 +27,6 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { StandardizedCompetencyManagementComponent } from 'app/core/admin/standardized-competencies/standardized-competency-management.component';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
@@ -45,9 +58,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
     let getSourcesSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -55,15 +67,13 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyManagementComponent);
-                component = componentFixture.componentInstance;
-                competencyService = TestBed.inject(StandardizedCompetencyService);
-                getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
-                getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
-            });
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(StandardizedCompetencyManagementComponent);
+        component = componentFixture.componentInstance;
+        competencyService = TestBed.inject(StandardizedCompetencyService);
+        getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
+        getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
     });
 
     afterEach(() => {
@@ -101,7 +111,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         getSourcesSpy.mockReturnValue(of(new HttpResponse({ body: sources })));
         componentFixture.detectChanges();
 
-        expect(getForTreeViewSpy).toHaveBeenCalled();
+        expect(getForTreeViewSpy).toHaveBeenCalledOnce();
         expect(component['knowledgeAreaMap'].size).toBe(7);
         expect(component['knowledgeAreasForSelect']).toHaveLength(7);
         expect(component['dataSource'].data).toHaveLength(3);
@@ -109,16 +119,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should open cancel modal', () => {
-        const modalRef = {
-            result: Promise.resolve(),
-            componentInstance: {},
-        } as NgbModalRef;
-        const modalService = TestBed.inject(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const callback = vi.fn();
+        component['openCancelModal']('title', 'standardizedCompetency', callback);
 
-        component['openCancelModal']('title', 'standardizedCompetency', () => {});
+        expect(component['confirmDialogVisible']()).toBe(true);
+        expect(component['confirmDialogTitle']()).toBe('artemisApp.standardizedCompetency.manage.cancelModal.title');
 
-        expect(openSpy).toHaveBeenCalledOnce();
+        // Simulate confirming the dialog
+        component['onConfirmDialogConfirm']();
+        expect(component['confirmDialogVisible']()).toBe(false);
+        expect(callback).toHaveBeenCalledOnce();
     });
 
     it('should open new competency', () => {
@@ -229,7 +239,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const competencies = component['knowledgeAreaMap'].get(1)!.competencies!;
         expect(competencies).toHaveLength(3);
         expect(competencies).toContainEqual(expectedCompetencyInTree);
@@ -415,7 +425,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const knowledgeAreaMap = component['knowledgeAreaMap'];
         expect(knowledgeAreaMap.size).toBe(2);
         expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
@@ -443,7 +453,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         component.saveKnowledgeArea(knowledgeAreaToCreate);
 
-        expect(createSpy).toHaveBeenCalled();
+        expect(createSpy).toHaveBeenCalledOnce();
         const knowledgeAreaMap = component['knowledgeAreaMap'];
         expect(knowledgeAreaMap.size).toBe(3);
         expect(knowledgeAreaMap.get(5)).toEqual(expectedKnowledgeAreaInTree);
@@ -484,6 +494,21 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
     });
 
+    it('should show drag handle when detail panel is visible', () => {
+        component['selectedKnowledgeArea'].set({ id: 1, title: 'test' });
+        componentFixture.detectChanges();
+
+        const dragHandle = componentFixture.debugElement.query(By.css('.draggable-left'));
+        expect(dragHandle).not.toBeNull();
+    });
+
+    it('should not show detail panel when nothing is selected', () => {
+        componentFixture.detectChanges();
+
+        const detailPanel = componentFixture.debugElement.query(By.css('.sc-detail-panel'));
+        expect(detailPanel).toBeNull();
+    });
+
     it('should not deactivate with pending changes', () => {
         let canDeactivate;
 
@@ -510,7 +535,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
         detailComponent.onSave.emit(competencyToUpdate);
 
-        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy).toHaveBeenCalledOnce();
     }
 
     /**
@@ -527,7 +552,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
         detailComponent.onSave.emit(knowledgeAreaToUpdate);
 
-        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy).toHaveBeenCalledOnce();
     }
 
     /**

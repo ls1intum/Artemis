@@ -1,0 +1,17 @@
+<article class="quiz-ai-generation-question-card">
+    <div class="question-card-header">
+        <h5 class="question-title">{{ questionIndex() + 1 }}. {{ question().title }}</h5>
+        <span class="type-badge" [jhiTranslate]="getQuestionTypeLabelKey(question().type)"></span>
+    </div>
+    <div class="question-text" [innerHTML]="question().questionText | htmlForMarkdown"></div>
+    <div class="option-list">
+        @for (option of question().options; track option.text) {
+            <div class="option-item" [ngClass]="{ correct: option.correct }">
+                <div class="option-text" [innerHTML]="option.text | htmlForMarkdown"></div>
+                @if (option.correct) {
+                    <span class="correct-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.correct"></span>
+                }
+            </div>
+        }
+    </div>
+</article>

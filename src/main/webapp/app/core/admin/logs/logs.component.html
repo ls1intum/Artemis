@@ -6,7 +6,7 @@
         <input type="text" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" class="form-control" />
         <table class="table table-sm table-striped table-bordered" aria-describedby="logs-page-heading">
             <thead>
-                <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event)" (ascendingChange)="ascending.set($event)">
+                <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event!)" (ascendingChange)="ascending.set($event)">
                     <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="level" scope="col"><span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" /></th>
                 </tr>

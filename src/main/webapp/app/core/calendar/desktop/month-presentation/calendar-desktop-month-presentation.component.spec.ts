@@ -1,7 +1,10 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
@@ -10,8 +13,14 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PopoverModule } from 'primeng/popover';
 
 describe('CalendarDesktopMonthPresentationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
@@ -42,6 +51,10 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
     ];
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeAll(() => {
         mockMap = new Map();
         for (const event of events) {
@@ -54,15 +67,38 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarDesktopMonthPresentationComponent, CalendarEventDetailPopoverComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
+            imports: [
+                CalendarDesktopMonthPresentationComponent,
+                CalendarEventDetailPopoverComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(CalendarDayBadgeComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CalendarDesktopMonthPresentationComponent, {
+                set: {
+                    imports: [
+                        NgTemplateOutlet,
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                        MockComponent(CalendarDayBadgeComponent),
+                        CalendarEventDetailPopoverComponent,
+                    ],
+                },
+            })
+            .overrideComponent(CalendarEventDetailPopoverComponent, {
+                set: {
+                    imports: [MockModule(PopoverModule), MockDirective(TranslateDirective), MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;
@@ -78,7 +114,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     it('should compute correct number of weeks and days', () => {
         const weeks = component.weeks();
         expect(weeks).toHaveLength(5);
-        expect(weeks.every((week) => week.days.length === 7)).toBeTrue();
+        expect(weeks.every((week) => week.days.length === 7)).toBe(true);
     });
 
     it('should display correct events', async () => {
@@ -109,7 +145,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
         // Spy on the component's open method to verify it's called and manually trigger onShow
-        const openSpy = jest.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
+        const openSpy = vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent.onShow();
         });
 
@@ -119,15 +155,15 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         await fixture.whenStable();
 
         expect(openSpy).toHaveBeenCalled();
-        expect(popoverComponent.isOpen()).toBeTrue();
+        expect(popoverComponent.isOpen()).toBe(true);
     });
 
     it('should close popover only when close button used', async () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
-        const closeSpy = jest.spyOn(popoverComponent, 'close');
+        const closeSpy = vi.spyOn(popoverComponent, 'close');
         // Mock the PrimeNG popover to avoid animation timing issues in tests
-        jest.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
+        vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent['event'].set(event);
             popoverComponent.onShow();
         });
@@ -137,7 +173,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         examEventCell.nativeElement.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(popoverComponent.isOpen()).toBeTrue();
+        expect(popoverComponent.isOpen()).toBe(true);
 
         // Since popover is mocked, manually call close
         popoverComponent.onHide();

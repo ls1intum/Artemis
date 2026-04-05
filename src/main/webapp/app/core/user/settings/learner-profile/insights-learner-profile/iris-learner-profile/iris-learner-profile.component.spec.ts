@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisLearnerProfileComponent } from './iris-learner-profile.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -8,8 +10,11 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
 
 describe('IrisLearnerProfileComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisLearnerProfileComponent;
     let fixture: ComponentFixture<IrisLearnerProfileComponent>;
     let accountService: AccountService;
@@ -40,9 +45,9 @@ describe('IrisLearnerProfileComponent', () => {
                 provideHttpClient(),
                 // Mock the IrisMemoriesHttpService to avoid HttpClient dependency in nested component
                 MockProvider(IrisMemoriesHttpService, {
-                    listUserMemories: jest.fn().mockReturnValue({ subscribe: () => {} } as any),
-                    getUserMemory: jest.fn(),
-                    deleteUserMemory: jest.fn(),
+                    getUserMemoryData: vi.fn().mockReturnValue(of({ memories: [], learnings: [], connections: [] } as any)),
+                    getUserMemory: vi.fn(),
+                    deleteUserMemory: vi.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
             ],
@@ -52,11 +57,11 @@ describe('IrisLearnerProfileComponent', () => {
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         accountService.userIdentity.set(mockUser);
-        jest.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {});
+        vi.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {});
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -67,19 +72,19 @@ describe('IrisLearnerProfileComponent', () => {
         it('should initialize memirisEnabled to true when user has memiris enabled', () => {
             accountService.userIdentity.set(mockUser);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
         });
 
         it('should initialize memirisEnabled to false when user has memiris disabled', () => {
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user identity is undefined', () => {
             accountService.userIdentity.set(undefined);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user memirisEnabled property is undefined', () => {
@@ -93,7 +98,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithoutMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
 
         it('should initialize memirisEnabled to false when user memirisEnabled property is null', () => {
@@ -108,7 +113,7 @@ describe('IrisLearnerProfileComponent', () => {
 
             accountService.userIdentity.set(userWithNullMemiris);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
     });
 
@@ -153,7 +158,7 @@ describe('IrisLearnerProfileComponent', () => {
         it('should properly initialize and handle toggle changes', () => {
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
             component.memirisEnabled = true;
             component.onMemirisEnabledChange();
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
@@ -162,10 +167,10 @@ describe('IrisLearnerProfileComponent', () => {
         it('should handle user identity changes during component lifecycle', () => {
             accountService.userIdentity.set(mockUser);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
             accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
     });
 
@@ -181,7 +186,7 @@ describe('IrisLearnerProfileComponent', () => {
         });
 
         it('should handle setUserEnabledMemiris throwing an error', () => {
-            jest.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {
+            vi.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {
                 throw new Error('Service error');
             });
             component.memirisEnabled = true;
@@ -249,7 +254,7 @@ describe('IrisLearnerProfileComponent', () => {
         });
 
         it('should trigger onMemirisEnabledChange when checkbox is clicked', () => {
-            jest.spyOn(component, 'onMemirisEnabledChange');
+            vi.spyOn(component, 'onMemirisEnabledChange');
             fixture.detectChanges();
             const checkbox = fixture.nativeElement.querySelector('input[type="checkbox"]');
             checkbox.click();
@@ -262,7 +267,7 @@ describe('IrisLearnerProfileComponent', () => {
             const checkbox = fixture.nativeElement.querySelector('input[type="checkbox"]');
             checkbox.click();
             fixture.detectChanges();
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
         });
     });
 });

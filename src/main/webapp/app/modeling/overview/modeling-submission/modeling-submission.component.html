@@ -99,7 +99,7 @@
                                                     [savedStatus]="{ isChanged, isSaving }"
                                                     (onModelPatch)="onModelPatch($event)"
                                                 />
-                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
                                                 @if (modelingExercise.teamMode) {
                                                     <jhi-team-submission-sync
                                                         [exerciseType]="modelingExercise.type!"
@@ -124,7 +124,7 @@
                                                     [enablePopups]="false"
                                                     [displayPoints]="false"
                                                     [course]="course"
-                                                    (selectionChanged)="onSelectionChanged($event)"
+                                                    (selectedElementIdsChanged)="onSelectedElementIdsChanged($event)"
                                                     [explanation]="explanation"
                                                 />
                                             </div>
@@ -146,7 +146,7 @@
                                                         </thead>
                                                         @if (assessmentsNames) {
                                                             <tbody>
-                                                                @for (feedback of referencedFeedback; track feedback) {
+                                                                @for (feedback of referencedFeedback; track feedback.id) {
                                                                     <tr [hidden]="!shouldBeDisplayed(feedback)">
                                                                         <td>
                                                                             @if (feedback.reference) {

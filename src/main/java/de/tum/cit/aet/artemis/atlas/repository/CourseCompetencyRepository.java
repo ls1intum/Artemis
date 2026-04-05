@@ -39,6 +39,14 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     List<String> findAllTitlesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
+            SELECT c.title
+            FROM CourseCompetency c
+            WHERE c.course.id = :courseId
+                AND (:excludeCompetencyId IS NULL OR c.id <> :excludeCompetencyId)
+            """)
+    List<String> findAllTitlesByCourseIdExcludingCompetencyId(@Param("courseId") long courseId, @Param("excludeCompetencyId") Long excludeCompetencyId);
+
+    @Query("""
             SELECT c
             FROM CourseCompetency c
                 LEFT JOIN FETCH c.lectureUnitLinks lul
@@ -259,6 +267,15 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+            WHERE c.course.id = :courseId
+            """)
+    List<CourseCompetency> findByCourseIdWithExercises(@Param("courseId") long courseId);
 
     default CourseCompetency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);

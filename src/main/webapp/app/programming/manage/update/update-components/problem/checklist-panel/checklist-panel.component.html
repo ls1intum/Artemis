@@ -1,0 +1,463 @@
+<div class="checklist-panel">
+    <div class="checklist-panel-header">
+        <h5 jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
+        <button
+            pButton
+            severity="primary"
+            size="small"
+            data-testid="analyze-button"
+            (click)="analyze()"
+            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+        >
+            <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
+            <span>{{
+                (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
+            }}</span>
+        </button>
+    </div>
+
+    @if (analysisResult(); as result) {
+        <!-- Quality Section -->
+        <p-panel
+            [toggleable]="true"
+            [collapsed]="!sectionExpanded['quality']()"
+            (collapsedChange)="toggleSection('quality')"
+            [header]="'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate"
+            [class]="'checklist-section' + (isSectionStale('quality') ? ' stale' : '')"
+        >
+            <ng-template #icons>
+                @if (result.qualityIssues?.length) {
+                    <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" />
+                } @else {
+                    <p-tag severity="success">
+                        <fa-icon [icon]="faCheckCircle" size="xs" />
+                    </p-tag>
+                }
+                @if (isSectionStale('quality')) {
+                    <span class="stale-badge">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                    </span>
+                }
+                <button
+                    pButton
+                    severity="warn"
+                    [text]="true"
+                    size="small"
+                    (click)="$event.stopPropagation(); reanalyzeSection('quality')"
+                    [disabled]="isLoading() || isSectionLoading('quality')"
+                >
+                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" />
+                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                </button>
+            </ng-template>
+
+            <!-- Quality Radar Chart -->
+            <div class="quality-radar-section">
+                <div class="quality-radar-chart">
+                    <svg
+                        viewBox="-120 -120 240 240"
+                        width="220"
+                        height="220"
+                        style="overflow: visible"
+                        role="img"
+                        [attr.aria-label]="'artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel' | artemisTranslate"
+                    >
+                        <title jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel">Quality scores radar chart</title>
+                        <!-- Background grid -->
+                        <g class="radar-grid">
+                            @for (points of qualityGridStrings; track $index) {
+                                <polygon [attr.points]="points" fill="none" stroke="var(--surface-500)" stroke-width="0.5" opacity="0.3" />
+                            }
+                        </g>
+                        <!-- Axes -->
+                        <g class="radar-axes">
+                            @for (point of qualityRadarPoints(); track point.label) {
+                                <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" [style.stroke]="point.color" stroke-width="1" opacity="0.5" />
+                            }
+                        </g>
+                        <!-- Data polygon -->
+                        <polygon [attr.points]="qualityPolygonPoints()" fill="var(--primary)" fill-opacity="0.15" stroke="var(--primary)" stroke-width="2" />
+                        <!-- Data points and labels -->
+                        @for (point of qualityRadarPoints(); track point.label) {
+                            <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="4" [style.fill]="point.color" stroke="var(--surface-ground)" stroke-width="1.5" />
+                            <text
+                                [attr.x]="point.labelX"
+                                [attr.y]="point.labelY"
+                                text-anchor="middle"
+                                dominant-baseline="middle"
+                                class="radar-label"
+                                [style.fill]="point.color"
+                                font-size="11"
+                                font-weight="600"
+                            >
+                                {{ point.label }}
+                            </text>
+                            <text
+                                [attr.x]="point.labelX"
+                                [attr.y]="point.labelY + 14"
+                                text-anchor="middle"
+                                dominant-baseline="middle"
+                                [style.fill]="point.color"
+                                font-size="10"
+                                opacity="0.7"
+                            >
+                                {{ point.value * 100 | number: '1.0-0' }}%
+                            </text>
+                        }
+                    </svg>
+                </div>
+                <!-- Quality Legend -->
+                <div class="quality-legend">
+                    @for (point of qualityRadarPoints(); track point.label) {
+                        <div class="quality-legend-item">
+                            <span class="quality-dot" [style.background-color]="point.color"></span>
+                            <span class="quality-legend-name">{{ point.label }}</span>
+                            <span class="quality-legend-value">{{ point.value * 100 | number: '1.0-0' }}%</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (result.qualityIssues && result.qualityIssues.length > 0) {
+                <div class="issue-toolbar">
+                    <div class="issue-toolbar-start">
+                        <p-checkbox
+                            [binary]="true"
+                            [ngModel]="allIssuesSelected()"
+                            (ngModelChange)="$event ? selectAllIssues() : deselectAllIssues()"
+                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                            inputId="select-all-issues"
+                            data-testid="select-all-issues"
+                        />
+                        <label for="select-all-issues" class="issue-toolbar-label">
+                            {{
+                                (allIssuesSelected()
+                                    ? 'artemisApp.programmingExercise.instructorChecklist.quality.deselectAll'
+                                    : 'artemisApp.programmingExercise.instructorChecklist.quality.selectAll'
+                                ) | artemisTranslate
+                            }}
+                        </label>
+                    </div>
+                    <div class="issue-toolbar-end">
+                        @if (selectedIssueIndices().size > 0) {
+                            <button
+                                pButton
+                                severity="warn"
+                                size="small"
+                                [outlined]="true"
+                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                (click)="fixSelectedIssues()"
+                                data-testid="fix-selected-button"
+                            >
+                                <fa-icon
+                                    [icon]="isActionLoading('fix-selected') ? faSpinner : faBolt"
+                                    [animation]="isActionLoading('fix-selected') ? 'spin' : undefined"
+                                    size="xs"
+                                />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixSelected">Fix Selected</span>
+                                <span>({{ selectedIssueIndices().size }})</span>
+                            </button>
+                            <button
+                                pButton
+                                severity="secondary"
+                                size="small"
+                                [outlined]="true"
+                                [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                (click)="discardSelectedIssues()"
+                                data-testid="discard-selected-button"
+                            >
+                                <fa-icon [icon]="faTrashCan" size="xs" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.discardSelected">Discard Selected</span>
+                                <span>({{ selectedIssueIndices().size }})</span>
+                            </button>
+                        }
+                        <button
+                            pButton
+                            severity="primary"
+                            size="small"
+                            [outlined]="true"
+                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                            (click)="fixAllQualityIssues()"
+                        >
+                            <fa-icon [icon]="isActionLoading('fix-all') ? faSpinner : faBolt" [animation]="isActionLoading('fix-all') ? 'spin' : undefined" size="xs" />
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="quality-issues-list">
+                    @for (issue of result.qualityIssues; track $index; let i = $index) {
+                        <div class="quality-issue-item" [class.issue-selected]="isIssueSelected(i)">
+                            <div class="issue-item-header">
+                                <div class="issue-badges">
+                                    <p-checkbox
+                                        [binary]="true"
+                                        [ngModel]="isIssueSelected(i)"
+                                        (ngModelChange)="toggleIssueSelection(i)"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                        [inputId]="'issue-select-' + i"
+                                        [attr.data-testid]="'issue-checkbox-' + i"
+                                    />
+                                    <p-tag [value]="issue.category" styleClass="category-badge" [ngClass]="getCategoryColorClass(issue.category)" />
+                                    <p-tag [value]="issue.severity" [severity]="getSeverityTagSeverity(issue.severity)" />
+                                </div>
+                                <div class="issue-actions">
+                                    @if (issue.location?.startLine) {
+                                        <small class="issue-line-ref">Line {{ issue.location?.startLine }}</small>
+                                    }
+                                    <button
+                                        pButton
+                                        severity="warn"
+                                        size="small"
+                                        [outlined]="true"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                        (click)="fixQualityIssue(issue, i)"
+                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
+                                    >
+                                        <fa-icon
+                                            [icon]="isActionLoading('fix-issue-' + i) ? faSpinner : faWrench"
+                                            [animation]="isActionLoading('fix-issue-' + i) ? 'spin' : undefined"
+                                            size="xs"
+                                        />
+                                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
+                                    </button>
+                                    <button
+                                        pButton
+                                        severity="secondary"
+                                        size="small"
+                                        [text]="true"
+                                        [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
+                                        (click)="discardQualityIssue(i)"
+                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.discardIssue' | artemisTranslate"
+                                        [attr.data-testid]="'discard-issue-' + i"
+                                    >
+                                        <fa-icon [icon]="faTrashCan" size="xs" />
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="issue-description">{{ issue.description }}</p>
+                            @if (issue.suggestedFix) {
+                                <p class="issue-suggestion">
+                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.suggestedFix">Suggested fix:</strong>
+                                    {{ issue.suggestedFix }}
+                                </p>
+                            }
+                            @if (issue.impactOnLearners) {
+                                <p class="issue-impact">
+                                    <fa-icon [icon]="faInfoCircle" />
+                                    {{ issue.impactOnLearners }}
+                                </p>
+                            }
+                        </div>
+                    }
+                </div>
+            } @else {
+                <p class="no-issues-message">
+                    <fa-icon [icon]="faCheckCircle" />
+                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
+                </p>
+            }
+        </p-panel>
+
+        <!-- Estimated Learning Goals Section -->
+        <p-panel
+            [toggleable]="true"
+            [collapsed]="!sectionExpanded['competencies']()"
+            (collapsedChange)="toggleSection('competencies')"
+            [header]="'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate"
+            [class]="'checklist-section' + (isSectionStale('competencies') ? ' stale' : '')"
+        >
+            <ng-template #icons>
+                @if (result.inferredCompetencies?.length) {
+                    <p-badge [value]="'' + result.inferredCompetencies?.length" severity="info" />
+                }
+                @if (isSectionStale('competencies')) {
+                    <span class="stale-badge">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                    </span>
+                }
+                <button
+                    pButton
+                    severity="warn"
+                    [text]="true"
+                    size="small"
+                    (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
+                    [disabled]="isLoading() || isSectionLoading('competencies')"
+                >
+                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" />
+                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                </button>
+            </ng-template>
+
+            @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
+                <p class="competency-empty-state" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</p>
+            } @else {
+                <div class="competency-list">
+                    @for (comp of result.inferredCompetencies; track $index) {
+                        <div class="competency-item">
+                            <div class="competency-header">
+                                <div class="competency-info">
+                                    <div class="competency-tags">
+                                        @if (comp.knowledgeAreaShortTitle) {
+                                            <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
+                                        }
+                                        <strong class="competency-title">{{ comp.competencyTitle }}</strong>
+                                        @if (comp.isLikelyPrimary) {
+                                            <p-tag severity="info" [value]="'artemisApp.programmingExercise.instructorChecklist.competencies.primary' | artemisTranslate" />
+                                        }
+                                        <p-tag [value]="comp.taxonomyLevel" severity="info" />
+                                        @if (isCompetencyLinked(comp)) {
+                                            <p-tag severity="success">
+                                                <fa-icon [icon]="faLink" size="xs" />
+                                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.linked">Linked</span>
+                                            </p-tag>
+                                        }
+                                    </div>
+                                    @if (comp.whyThisMatches) {
+                                        <p class="competency-rationale">{{ comp.whyThisMatches }}</p>
+                                    }
+                                </div>
+                                <button
+                                    pButton
+                                    [text]="true"
+                                    severity="secondary"
+                                    size="small"
+                                    class="expand-details-btn"
+                                    (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
+                                >
+                                    <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" />
+                                    <span>{{
+                                        isCompetencyExpanded($index)
+                                            ? ('artemisApp.programmingExercise.instructorChecklist.competencies.hideDetails' | artemisTranslate)
+                                            : ('artemisApp.programmingExercise.instructorChecklist.competencies.showDetails' | artemisTranslate)
+                                    }}</span>
+                                </button>
+                            </div>
+                            @if (isCompetencyExpanded($index)) {
+                                <div class="evidence-section">
+                                    @if (comp.relatedTaskNames?.length) {
+                                        <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks">Related tasks:</strong>
+                                        <span class="evidence-text">{{ comp.relatedTaskNames?.join(', ') }}</span>
+                                    }
+                                    @if (comp.evidence?.length) {
+                                        <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence">Evidence:</strong>
+                                        <ul>
+                                            @for (item of comp.evidence; track $index) {
+                                                <li>{{ item }}</li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="competency-actions-section">
+                    <button
+                        pButton
+                        severity="primary"
+                        size="small"
+                        [outlined]="true"
+                        [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
+                        (click)="applyCompetencies()"
+                    >
+                        <fa-icon [icon]="isSyncingCompetencies() ? faSpinner : faLink" [animation]="isSyncingCompetencies() ? 'spin' : undefined" size="xs" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Apply Competencies</span>
+                    </button>
+                    <small class="competency-apply-hint" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
+                        Links matching course competencies and creates new ones for unmatched learning goals.
+                    </small>
+                </div>
+            }
+        </p-panel>
+
+        <!-- Difficulty Section -->
+        <p-panel
+            [toggleable]="true"
+            [collapsed]="!sectionExpanded['difficulty']()"
+            (collapsedChange)="toggleSection('difficulty')"
+            [header]="'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate"
+            [class]="'checklist-section' + (isSectionStale('difficulty') ? ' stale' : '')"
+        >
+            <ng-template #icons>
+                @if (isSectionStale('difficulty')) {
+                    <span class="stale-badge">
+                        <fa-icon [icon]="faExclamationTriangle" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                    </span>
+                }
+                <button
+                    pButton
+                    severity="warn"
+                    [text]="true"
+                    size="small"
+                    (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
+                    [disabled]="isLoading() || isSectionLoading('difficulty')"
+                >
+                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" />
+                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                </button>
+            </ng-template>
+
+            @if (result.difficultyAssessment) {
+                <div class="difficulty-overview">
+                    <div>
+                        <span class="difficulty-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
+                        <p-tag [value]="result.difficultyAssessment.suggested" [severity]="getDifficultySeverity(result.difficultyAssessment.suggested)" />
+                    </div>
+                    <div>
+                        <span class="difficulty-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
+                        <fa-icon [icon]="getDeltaIcon(effectiveDelta())" [ngClass]="getDeltaClass(effectiveDelta())" />
+                        <span [ngClass]="getDeltaClass(effectiveDelta())">{{ getDeltaLabel(effectiveDelta()) }}</span>
+                    </div>
+                </div>
+                <div class="difficulty-counts">
+                    @if (result.difficultyAssessment.taskCount !== null) {
+                        <p-tag severity="secondary">
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
+                            {{ result.difficultyAssessment.taskCount }}
+                        </p-tag>
+                    }
+                    @if (result.difficultyAssessment.testCount !== null) {
+                        <p-tag severity="secondary">
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
+                            {{ result.difficultyAssessment.testCount }}
+                        </p-tag>
+                    }
+                </div>
+                <p class="difficulty-reasoning">{{ result.difficultyAssessment.reasoning }}</p>
+                <div class="difficulty-adapt">
+                    <small class="difficulty-adapt-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo">Adapt to:</small>
+                    @for (level of difficultyLevels; track level) {
+                        <button
+                            pButton
+                            [severity]="getDifficultySeverity(level)"
+                            size="small"
+                            class="difficulty-chip"
+                            [ngClass]="{
+                                'difficulty-chip--current': exercise()?.difficulty === level,
+                                'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
+                            }"
+                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
+                            (click)="adaptDifficulty(level)"
+                        >
+                            @if (isActionLoading('adapt-' + level)) {
+                                <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                            } @else {
+                                {{ 'artemisApp.exercise.' + level.toLowerCase() | artemisTranslate }}
+                            }
+                            @if (exercise()?.difficulty === level) {
+                                <small jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.current">(current)</small>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </p-panel>
+    } @else {
+        <p class="checklist-empty-state" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
+            Click "Analyze Problem Statement" to check for competencies, difficulty, and quality issues.
+        </p>
+    }
+</div>

@@ -34,11 +34,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -567,6 +565,18 @@ public class RequestUtilService {
         return res.getResponse();
     }
 
+    public MockHttpServletResponse patchWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+
+        var request = MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+
+        restoreSecurityContext();
+
+        return res.getResponse();
+    }
+
     @SuppressWarnings("unchecked")
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value()))
@@ -813,15 +823,6 @@ public class RequestUtilService {
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
-    }
-
-    public void getWithFileContents(String path, HttpStatus expectedStatus, String expectedFileContents) throws Exception {
-        performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(matchFileContents(expectedFileContents)).andReturn();
-        restoreSecurityContext();
-    }
-
-    public static ResultMatcher matchFileContents(String expectedFilesAsString) {
-        return (result) -> AssertionErrors.assertEquals("File contents", expectedFilesAsString, result.getResponse().getContentAsString());
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {

@@ -66,8 +66,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // BeforeEach
     void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        atlasMLRequestMockProvider.ifPresent(provider -> {
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+        });
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
@@ -379,6 +381,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate(CourseCompetency newCompetency) throws Exception {
         newCompetency.setTitle("Example Title");
+        newCompetency.setMasteryThreshold(42);
         createCall(course.getId(), newCompetency, HttpStatus.FORBIDDEN);
     }
 

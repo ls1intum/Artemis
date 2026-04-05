@@ -19,12 +19,15 @@ import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -69,11 +72,13 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -86,6 +91,17 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
+        this.exerciseWeaviateService = exerciseWeaviateService;
+    }
+
+    /**
+     * Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the summary of the deletion of the exercise
+     */
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+        return exerciseRepository.findDeletionSummaryByExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**
@@ -178,6 +194,8 @@ public class ExerciseDeletionService {
         }
 
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
+
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExerciseAsync(exerciseId));
     }
 
     /**

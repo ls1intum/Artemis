@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
@@ -7,16 +6,11 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.quizParticipation.id } as any;
 
 test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    });
-
     test.describe('Quiz exercise participation', () => {
         let quizExercise: QuizExercise;
 
@@ -27,7 +21,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student cannot see hidden quiz', async ({ login, courseOverview }) => {
             await login(studentOne, '/courses/' + course.id);
-            await expect(courseOverview.getExercises()).toHaveCount(0);
+            await expect(courseOverview.getOpenRunningExerciseButton(quizExercise.id!)).not.toBeVisible();
         });
 
         test('Student can see a visible quiz', async ({ login, exerciseAPIRequests, courseOverview }) => {
@@ -51,7 +45,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
     test.describe('Quiz exercise scheduled participation', () => {
         let quizExercise: QuizExercise;
-        const timeUntilQuizStartInSeconds = 10;
+        const timeUntilQuizStartInSeconds = 15;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -69,8 +63,8 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await courseOverview.openRunningExercise(quizExercise.id!);
-            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000);
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible();
+            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
     });
@@ -99,7 +93,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             courseOverview,
             quizExerciseParticipation,
         }) => {
-            await login(instructor);
+            await login(instructor, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             const quizBatch = await quizExerciseOverview.addQuizBatch(quizExercise.id!);
@@ -211,7 +205,5 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

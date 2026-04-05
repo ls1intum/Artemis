@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -78,16 +79,16 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisProgrammingExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ProgrammingExercise programmingExercise = validateExercise(exercise);
+        validateExercise(exercise);
 
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user);
+        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(exercise, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
@@ -98,16 +99,16 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<List<IrisProgrammingExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ProgrammingExercise programmingExercise = validateExercise(exercise);
+        validateExercise(exercise);
 
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions);
+        return ResponseEntity.ok(sessions.stream().map(IrisChatSessionResponseDTO::of).toList());
     }
 
     /**
@@ -120,23 +121,22 @@ public class IrisProgrammingExerciseChatSessionResource {
      */
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisProgrammingExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ProgrammingExercise programmingExercise = validateExercise(exercise);
+        validateExercise(exercise);
 
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.createSession(programmingExercise, user);
+        var session = irisExerciseChatSessionService.createSession(exercise, user);
         var uriString = "/api/iris/sessions/" + session.getId();
 
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
-    private static ProgrammingExercise validateExercise(ProgrammingExercise exercise) {
+    private static void validateExercise(ProgrammingExercise exercise) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        return exercise;
     }
 }
