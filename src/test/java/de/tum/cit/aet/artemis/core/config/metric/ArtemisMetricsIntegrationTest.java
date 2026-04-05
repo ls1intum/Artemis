@@ -43,7 +43,7 @@ class ArtemisMetricsIntegrationTest extends AbstractSpringIntegrationIndependent
         userTestRepository.count();
 
         // Debug: print all hikaricp meters
-        var hikariMeters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("hikaricp")).map(Meter::getId).toList();
+        var hikariMeters = meterRegistry.getMeters().stream().map(Meter::getId).filter(id -> id.getName().startsWith("hikaricp")).toList();
 
         assertThat(hikariMeters).as("HikariCP meters should be registered after a DB query. Found meters: " + hikariMeters).isNotEmpty();
     }
