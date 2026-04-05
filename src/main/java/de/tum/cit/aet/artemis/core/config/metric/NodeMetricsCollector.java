@@ -67,6 +67,9 @@ public class NodeMetricsCollector {
 
     // --- Scheduled push ---
 
+    /**
+     * Pushes the local node's metrics snapshot to a shared Hazelcast map so other nodes can read it.
+     */
     @Scheduled(initialDelay = 5_000, fixedRate = 15_000)
     public void pushLocalMetrics() {
         try {
@@ -87,6 +90,11 @@ public class NodeMetricsCollector {
 
     // --- Public API ---
 
+    /**
+     * Returns a list of all cluster nodes that have recently pushed metrics.
+     *
+     * @return the available node identifiers and labels
+     */
     public List<NodeInfo> getAvailableNodes() {
         List<NodeInfo> nodes = new ArrayList<>();
         for (var entry : getMap().entrySet()) {
@@ -98,6 +106,12 @@ public class NodeMetricsCollector {
         return nodes;
     }
 
+    /**
+     * Returns the latest metrics snapshot for a specific cluster node.
+     *
+     * @param nodeId the Hazelcast member UUID of the node
+     * @return the metrics response, or null if the node is not found
+     */
     public MetricsResponse getMetricsForNode(String nodeId) {
         var raw = getMap().get(nodeId);
         if (raw == null) {
@@ -107,6 +121,11 @@ public class NodeMetricsCollector {
         return snapshot != null ? snapshot.metrics() : null;
     }
 
+    /**
+     * Aggregates metrics from all cluster nodes into a single combined response.
+     *
+     * @return the aggregated metrics, or the local node's metrics if no cluster data is available
+     */
     public MetricsResponse getAggregatedMetrics() {
         List<MetricsResponse> all = new ArrayList<>();
         for (var raw : getMap().values()) {
