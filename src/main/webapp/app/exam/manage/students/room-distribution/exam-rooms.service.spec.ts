@@ -5,16 +5,19 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamRoomsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamRoomsService;
     let httpMock: HttpTestingController;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             providers: [ExamRoomsService, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
@@ -22,8 +25,9 @@ describe('ExamRoomsService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(async () => {
+    afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
