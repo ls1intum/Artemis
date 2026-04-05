@@ -317,17 +317,7 @@ public class HazelcastConfiguration {
             log.debug("Could not access JCache provider: {}", e.getMessage());
         }
 
-        // 2. Bind HikariCP datasource metrics directly
-        try {
-            var dataSource = applicationContext.getBean(javax.sql.DataSource.class);
-            if (dataSource instanceof com.zaxxer.hikari.HikariDataSource hikariDataSource) {
-                hikariDataSource.setMetricRegistry(meterRegistry);
-                log.info("Bound HikariCP datasource metrics to Micrometer");
-            }
-        }
-        catch (Exception e) {
-            log.debug("Could not bind datasource metrics: {}", e.getMessage());
-        }
+        // Note: HikariCP datasource metrics are bound separately in MetricsBean.registerDatasourceMetrics()
 
         log.info("Bound {} cache metrics to Micrometer", bound);
     }
