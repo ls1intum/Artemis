@@ -108,10 +108,10 @@ export class ExamStudentsComponent implements OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
 
-    usersImportDialog = viewChild.required(UsersImportDialogComponent);
-    studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
-    studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
-    addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
+    readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
+    readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
+    readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
+    readonly addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
 
     private routeData = toSignal(this.route.data, {
         initialValue: { exam: undefined as Exam | undefined },
@@ -166,10 +166,10 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isLoading = signal(true);
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
-    exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
-    exercisePreparationRunning = signal(false);
-    exercisePreparationPercentage = signal(0);
-    exercisePreparationEta = signal<string | undefined>(undefined);
+    readonly exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
+    readonly exercisePreparationRunning = signal(false);
+    readonly exercisePreparationPercentage = signal(0);
+    readonly exercisePreparationEta = signal<string | undefined>(undefined);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
