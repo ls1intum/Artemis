@@ -1,4 +1,4 @@
-@if (!isNarrow()) {
+@if (!isNarrow() && rightPanels().length > 0) {
     <!-- ── Wide mode: resizable split ─────────────────────────────────── -->
     <div class="d-flex w-100 h-100 overflow-hidden">
         @if (leftPanel()) {
