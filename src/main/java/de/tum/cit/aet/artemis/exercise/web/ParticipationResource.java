@@ -194,7 +194,7 @@ public class ParticipationResource {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
+        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (exercise.isExamExercise()) {
@@ -253,8 +253,9 @@ public class ParticipationResource {
         }
 
         // There is a second participation of that student in the exercise that is inactive/finished now
-        Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
-                !participation.isPracticeMode());
+        Optional<StudentParticipation> optionalOtherStudentParticipation = participation.isPracticeMode()
+                ? participationService.findOneGradedByExerciseAndParticipant(programmingExercise, user)
+                : participationService.findOnePracticeByExerciseAndParticipant(programmingExercise, user);
         if (optionalOtherStudentParticipation.isPresent()) {
             StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
             if (participation.getInitializationState() == InitializationState.INACTIVE) {
@@ -317,7 +318,9 @@ public class ParticipationResource {
         }
 
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
-            boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
+            var submissions = submissionRepository.findAllByParticipationId(participation.getId());
+            // Only count real submitted entries, not auto-created placeholders
+            boolean hasSubmittedOnce = submissions.stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
