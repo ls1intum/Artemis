@@ -134,6 +134,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
+        (this.elementRef.nativeElement as any).__apollonEditor = undefined;
     }
 
     /**
