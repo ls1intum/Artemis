@@ -186,6 +186,6 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
         assertThat(svg).as("SVG should contain the class name from diagram").contains("Person");
         assertThat(svg).as("Output should not contain PlantUML error markers").doesNotContain("Syntax Error");
         // Verify it doesn't contain Graphviz-related error messages (indicates Smetana is being used)
-        assertThat(svg).as("Output should not contain Graphviz errors").doesNotContain("Cannot find Graphviz");
+        assertThat(svg).as("Output should not contain Graphviz errors").doesNotContain("Graphviz");
     }
 }
