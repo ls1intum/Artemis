@@ -306,7 +306,7 @@ public class HazelcastConfiguration {
         if (hazelcastInstance != null) {
             int bound = 0;
             var distributedObjects = hazelcastInstance.getDistributedObjects();
-            log.info("Found {} Hazelcast distributed objects for cache metrics binding", distributedObjects.size());
+            log.debug("Found {} Hazelcast distributed objects for cache metrics binding", distributedObjects.size());
             for (var distributedObject : distributedObjects) {
                 String name = distributedObject.getName();
                 if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
@@ -314,7 +314,7 @@ public class HazelcastConfiguration {
                 }
                 try {
                     if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
-                        log.info("Binding JCache metrics for '{}'", name);
+                        log.debug("Binding JCache metrics for '{}'", name);
                         new JCacheMetrics<>(cache, List.of()).bindTo(registry);
                         bound++;
                     }

@@ -7,7 +7,6 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -51,14 +51,11 @@ public class ArtemisMetricsEndpoint {
 
     private final MeterRegistry meterRegistry;
 
-    private final Optional<HazelcastInstance> hazelcastInstance;
+    private final ApplicationContext applicationContext;
 
-    private final Optional<DataSource> dataSource;
-
-    public ArtemisMetricsEndpoint(MeterRegistry meterRegistry, Optional<HazelcastInstance> hazelcastInstance, Optional<DataSource> dataSource) {
+    public ArtemisMetricsEndpoint(MeterRegistry meterRegistry, ApplicationContext applicationContext) {
         this.meterRegistry = meterRegistry;
-        this.hazelcastInstance = hazelcastInstance;
-        this.dataSource = dataSource;
+        this.applicationContext = applicationContext;
     }
 
     // --- DTOs ---
@@ -184,41 +181,53 @@ public class ArtemisMetricsEndpoint {
     }
 
     /**
-     * Collects cache metrics directly from Hazelcast distributed objects.
-     * Bypasses Micrometer since the endpoint may receive an isolated MeterRegistry.
+     * Collects cache metrics from all Hazelcast distributed objects (IMap and ICache).
+     * IMap caches come from Spring CacheManager, ICache caches come from Hibernate L2 (JCacheRegionFactory).
      */
     private Map<String, CacheStats> cacheMetrics() {
         Map<String, CacheStats> result = new TreeMap<>();
-        if (hazelcastInstance.isEmpty()) {
-            return result;
-        }
-        for (var distributedObject : hazelcastInstance.get().getDistributedObjects()) {
-            String name = distributedObject.getName();
-            if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
-                continue;
-            }
-            try {
-                if (distributedObject instanceof IMap<?, ?> map) {
-                    var stats = map.getLocalMapStats();
-                    long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
-                    result.put(name,
-                            new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getOwnedEntryCount(), stats.getRemoveOperationCount(), map.size()));
+        try {
+            var hazelcast = applicationContext.getBean(HazelcastInstance.class);
+            for (var distributedObject : hazelcast.getDistributedObjects()) {
+                String name = distributedObject.getName();
+                if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
+                    continue;
+                }
+                try {
+                    if (distributedObject instanceof IMap<?, ?> map) {
+                        var stats = map.getLocalMapStats();
+                        long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
+                        result.put(name,
+                                new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getOwnedEntryCount(), stats.getRemoveOperationCount(), map.size()));
+                    }
+                    else if (distributedObject instanceof javax.cache.Cache<?, ?>) {
+                        // Hibernate L2 entity caches (ICache via JCacheRegionFactory)
+                        // ICache extends javax.cache.Cache — get stats via JMX
+                        if (distributedObject instanceof com.hazelcast.cache.ICache<?, ?> iCache) {
+                            var stats = iCache.getLocalCacheStatistics();
+                            result.put(name, new CacheStats(stats.getCacheHits(), stats.getCacheMisses(), stats.getCachePuts(), stats.getCacheEvictions(), stats.getCacheRemovals(),
+                                    iCache.size()));
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    log.debug("Could not collect cache metrics for '{}': {}", name, e.getMessage());
                 }
             }
-            catch (Exception e) {
-                log.debug("Could not collect cache metrics for '{}': {}", name, e.getMessage());
-            }
+        }
+        catch (Exception e) {
+            log.debug("Could not access HazelcastInstance for cache metrics: {}", e.getMessage());
         }
         return result;
     }
 
     /**
-     * Collects datasource metrics directly from HikariCP.
-     * Bypasses Micrometer since the endpoint may receive an isolated MeterRegistry.
+     * Collects datasource metrics directly from HikariCP pool MXBean.
      */
     private DatabaseMetrics databaseMetrics() {
-        if (dataSource.isPresent() && dataSource.get() instanceof HikariDataSource hikari) {
-            try {
+        try {
+            var ds = applicationContext.getBean(DataSource.class);
+            if (ds instanceof HikariDataSource hikari) {
                 var pool = hikari.getHikariPoolMXBean();
                 if (pool != null) {
                     return new DatabaseMetrics(new GaugeValue(hikari.getMinimumIdle()), new GaugeValue(hikari.getMaximumPoolSize()), new GaugeValue(pool.getIdleConnections()),
@@ -226,9 +235,9 @@ public class ArtemisMetricsEndpoint {
                             timerSummary("hikaricp.connections.acquire"), timerSummary("hikaricp.connections.creation"), timerSummary("hikaricp.connections.usage"));
                 }
             }
-            catch (Exception e) {
-                log.debug("Could not collect datasource metrics: {}", e.getMessage());
-            }
+        }
+        catch (Exception e) {
+            log.debug("Could not collect datasource metrics: {}", e.getMessage());
         }
         return new DatabaseMetrics(new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), new GaugeValue(0), TimerSummary.EMPTY,
                 TimerSummary.EMPTY, TimerSummary.EMPTY);

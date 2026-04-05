@@ -22,7 +22,9 @@ class ArtemisMetricsEndpointTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        endpoint = new ArtemisMetricsEndpoint(meterRegistry, java.util.Optional.empty(), java.util.Optional.empty());
+        // Use a mock ApplicationContext that has no beans — cache/DB will return empty/zeros
+        var emptyContext = new org.springframework.context.support.GenericApplicationContext();
+        endpoint = new ArtemisMetricsEndpoint(meterRegistry, emptyContext);
     }
 
     @Test
