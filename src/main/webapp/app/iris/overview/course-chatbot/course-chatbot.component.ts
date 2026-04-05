@@ -14,6 +14,7 @@ export class CourseChatbotComponent {
     private readonly irisBaseChatbot = viewChild(IrisBaseChatbotComponent);
 
     readonly courseId = input<number>();
+    readonly hasAvailableExercises = input(true);
 
     constructor() {
         effect(() => {

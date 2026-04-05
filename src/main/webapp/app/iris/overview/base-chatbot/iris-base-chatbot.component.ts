@@ -69,6 +69,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 
@@ -135,6 +136,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly clipboard = inject(Clipboard);
+    private readonly onboardingService = inject(IrisOnboardingService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -266,6 +268,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
     readonly fullSize = input<boolean>();
+    readonly hasAvailableExercises = input(true);
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget'>('client');
@@ -459,6 +462,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+
+        void this.onboardingService
+            .showOnboardingIfNeeded(this.hasAvailableExercises())
+            .then((result) => {
+                if (result?.action === 'promptSelected') {
+                    this.applyPromptStarter(result.promptKey);
+                }
+            })
+            .catch(() => undefined);
+    }
+
+    /**
+     * Inserts a translated onboarding prompt starter into the chat textarea.
+     */
+    applyPromptStarter(promptKey: string): void {
+        const text = this.translateService.instant(promptKey);
+        this.newMessageTextContent.set(text);
+        setTimeout(() => {
+            const textarea = this.messageTextarea()?.nativeElement;
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(text.length, text.length);
+            }
+            this.adjustTextareaRows();
+        });
     }
 
     checkIfUserAcceptedLLMUsage(): void {

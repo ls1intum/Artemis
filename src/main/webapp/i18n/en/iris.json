@@ -1,6 +1,38 @@
 {
     "artemisApp": {
         "iris": {
+            "onboarding": {
+                "title": "Meet Iris",
+                "description": "Iris is an AI coding tutor built into Artemis. It has the current exercise and latest code context, so you can ask questions right away.",
+                "note": "Please note: Iris only supports course-related questions and does not engage in off-topic conversations.",
+                "close": "Close",
+                "getStarted": "Take the tour",
+                "next": "Next",
+                "stepOf": "Step {{current}} of {{total}}",
+                "step1": {
+                    "description": "Click Exercises to continue."
+                },
+                "step2": {
+                    "header": "Inside programming exercises",
+                    "description": "Iris can explain concepts, help locate errors, and offer hints, without giving away full answers."
+                },
+                "step3": {
+                    "description": "Return to Iris to complete the tour."
+                },
+                "step4": {
+                    "title": "Try a first question",
+                    "description": "Choose a suggested prompt below to begin.",
+                    "prompts": {
+                        "explainConcept": "Explain a concept",
+                        "explainConceptStarter": "Help me understand the concept of ",
+                        "quizTopic": "Quiz me on a topic",
+                        "quizTopicStarter": "Generate 5 multiple choice questions to quiz me on the topic of ",
+                        "studyTips": "Give me study tips",
+                        "studyTipsStarter": "Give me 3 tips to be effective at learning "
+                    },
+                    "promptSuggestions": "Prompt suggestions"
+                }
+            },
             "settings": {
                 "success": "Successfully saved Iris settings",
                 "saved": "All saved",

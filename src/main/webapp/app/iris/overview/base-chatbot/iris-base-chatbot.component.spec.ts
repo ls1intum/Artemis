@@ -47,6 +47,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { AlertService } from 'app/shared/service/alert.service';
 
 describe('IrisBaseChatbotComponent', () => {
@@ -72,6 +73,9 @@ describe('IrisBaseChatbotComponent', () => {
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
+    const mockOnboardingService = {
+        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
+    } as any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -95,6 +99,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: IrisOnboardingService, useValue: mockOnboardingService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
@@ -115,6 +120,7 @@ describe('IrisBaseChatbotComponent', () => {
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
+                mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
                 // Set user identity BEFORE creating component (constructor reads this)
                 accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
@@ -139,6 +145,22 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
         expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should trigger onboarding flow after view init', () => {
+        component.ngAfterViewInit();
+        expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
+    });
+
+    it('should apply prompt starter from onboarding result', async () => {
+        const promptKey = 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter';
+        mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'promptSelected', promptKey });
+
+        component.ngAfterViewInit();
+        await fixture.whenStable();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(component.newMessageTextContent()).toBe(promptKey);
     });
 
     describe('when user has not accepted LLM usage policy', () => {

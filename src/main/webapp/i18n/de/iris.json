@@ -1,6 +1,38 @@
 {
     "artemisApp": {
         "iris": {
+            "onboarding": {
+                "title": "Lerne Iris kennen",
+                "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",
+                "note": "Bitte beachte: Iris unterstützt nur kursbezogene Fragen und beteiligt sich nicht an themenfremden Gesprächen.",
+                "close": "Schließen",
+                "getStarted": "Zur Tour",
+                "next": "Weiter",
+                "stepOf": "Schritt {{current}} von {{total}}",
+                "step1": {
+                    "description": "Klicke auf Übungen, um fortzufahren."
+                },
+                "step2": {
+                    "header": "In Programmierübungen",
+                    "description": "Iris kann Konzepte erklären, Fehler finden und Hinweise geben – ohne vollständige Lösungen zu verraten."
+                },
+                "step3": {
+                    "description": "Kehre zu Iris zurück, um die Tour abzuschließen."
+                },
+                "step4": {
+                    "title": "Probiere eine erste Frage",
+                    "description": "Wähle unten einen vorgeschlagenen Prompt aus, um zu beginnen.",
+                    "prompts": {
+                        "explainConcept": "Erkläre ein Konzept",
+                        "explainConceptStarter": "Hilf mir, das Konzept von ",
+                        "quizTopic": "Frage mich zu einem Thema ab",
+                        "quizTopicStarter": "Erstelle 5 Multiple-Choice-Fragen zum Thema ",
+                        "studyTips": "Gib mir Lerntipps",
+                        "studyTipsStarter": "Gib mir 3 Tipps, um effektiv zu lernen: "
+                    },
+                    "promptSuggestions": "Prompt-Vorschläge"
+                }
+            },
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
                 "saved": "Alles gespeichert",

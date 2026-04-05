@@ -14,6 +14,7 @@ import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-
 })
 class MockCourseChatbotComponent {
     readonly courseId = input<number>();
+    readonly hasAvailableExercises = input<boolean>();
 
     toggleChatHistory = vi.fn();
 }
