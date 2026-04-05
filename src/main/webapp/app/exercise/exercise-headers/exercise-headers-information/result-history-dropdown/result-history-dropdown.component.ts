@@ -88,6 +88,16 @@ export class ResultHistoryDropdownComponent {
     }
 
     private syncSelectedResultWithRoute() {
+        const resultMatch = this.router.url.match(/\/result\/(\d+)/);
+        if (resultMatch) {
+            const resultId = Number(resultMatch[1]);
+            const matchingResult = this.sortedHistoryResults().find((r) => r.id === resultId);
+            if (matchingResult?.id) {
+                this.selectedResultId.set(matchingResult.id);
+                this.viewingSubmissionChange.emit(true);
+                return;
+            }
+        }
         const match = this.router.url.match(/\/submission\/(\d+)/);
         if (match) {
             const submissionId = Number(match[1]);
@@ -241,7 +251,7 @@ export class ResultHistoryDropdownComponent {
 
         const submissionId = result.submission?.id;
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id, 'submission', submissionId]);
+        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id, 'submission', submissionId, 'result', result.id]);
     }
 
     showFeedback(result: Result, event: Event) {
