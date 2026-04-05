@@ -8,6 +8,8 @@
             [practiceParticipation]="practiceStudentParticipation()"
             [submissionPolicy]="submissionPolicy()"
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
+            [submitDisabled]="splitPanel()?.quizSubmitDisabled() ?? false"
+            [submitLabel]="splitPanel()?.quizSubmitTitle() ?? 'entity.action.submit'"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             [athenaEnabled]="athenaEnabled"

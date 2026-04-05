@@ -21,6 +21,8 @@ export class ExerciseHeaderComponent {
     readonly practiceParticipation = input<StudentParticipation>();
     readonly submissionPolicy = input<SubmissionPolicy>();
     readonly onSubmitExercise = input<() => void>();
+    readonly submitDisabled = input<boolean>(false);
+    readonly submitLabel = input<string>('entity.action.submit');
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);

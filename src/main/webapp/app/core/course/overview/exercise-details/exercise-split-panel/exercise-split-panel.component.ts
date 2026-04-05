@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -65,6 +65,15 @@ export class ExerciseSplitPanelComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
+    // Tracks whether a quiz batch is started from the server-provided exercise data.
+    // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
+    private readonly _quizBatchStarted = signal(false);
+    private readonly _quizHasStarted = signal(false);
+    private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
+    private quizStartedSubscription: { unsubscribe(): void } | undefined;
+
+    readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
+    readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
@@ -167,6 +176,14 @@ export class ExerciseSplitPanelComponent {
     });
 
     constructor() {
+        // Keep _quizBatchStarted in sync with the exercise input.
+        // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
+        // so this is safe even during the initial evaluation before inputs are fully bound.
+        effect(() => {
+            const exercise = this.exercise();
+            const started = exercise.type === ExerciseType.QUIZ ? ((exercise as QuizExercise).quizBatches?.some((b) => b.started) ?? false) : false;
+            this._quizBatchStarted.set(started);
+        });
         effect(() => {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
@@ -205,12 +222,23 @@ export class ExerciseSplitPanelComponent {
     }
 
     readonly canSubmit = computed(() => {
-        if (!this.studentParticipation()) return false;
+        const studentParticipation = this.studentParticipation();
+        const quizBatchStarted = this._quizBatchStarted();
+        const quizHasStarted = this._quizHasStarted();
+
+        // Guard: prevents accessing exercise() before inputs are bound (NG0950).
+        // During early init all three are falsy; the effect will update _quizBatchStarted
+        // once exercise is set, causing this computed to re-evaluate.
+        if (!studentParticipation && !quizBatchStarted && !quizHasStarted) {
+            return false;
+        }
+
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) {
-            const quiz = this.exercise() as QuizExercise;
-            return (quiz.quizStarted ?? false) || (this.participationMode() === 'practice' && (quiz.quizEnded ?? false));
+            // Quiz manages participation internally; check if a batch is started or the student triggered start
+            return quizBatchStarted || quizHasStarted || (this.participationMode() === 'practice' && ((this.exercise() as QuizExercise).quizEnded ?? false));
         }
+        if (!studentParticipation) return false;
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
@@ -233,5 +261,21 @@ export class ExerciseSplitPanelComponent {
                 component.onSubmit();
             }
         }
+    }
+
+    onOutletActivate(component: any): void {
+        if (component instanceof QuizParticipationComponent) {
+            this._quizComponent.set(component);
+            this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
+                this._quizHasStarted.set(true);
+            });
+        }
+    }
+
+    onOutletDeactivate(): void {
+        this._quizComponent.set(undefined);
+        this.quizStartedSubscription?.unsubscribe();
+        this.quizStartedSubscription = undefined;
+        this._quizHasStarted.set(false);
     }
 }

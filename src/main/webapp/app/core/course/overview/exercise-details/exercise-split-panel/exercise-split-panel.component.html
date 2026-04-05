@@ -2,7 +2,7 @@
     @if (showEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
-                <router-outlet />
+                <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
             }
         </ng-template>
     }

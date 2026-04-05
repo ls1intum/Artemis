@@ -29,14 +29,6 @@ export class CourseOverviewPage {
     }
 
     /**
-     * Opens an already running exercise given its ID.
-     * @param exerciseId The ID of the exercise to open.
-     */
-    async openRunningExercise(exerciseId: number) {
-        await this.getOpenRunningExerciseButton(exerciseId).click();
-    }
-
-    /**
      * Initiates the practice of an exercise.
      */
     async practiceExercise() {
@@ -100,7 +92,6 @@ export class CourseOverviewPage {
      */
     async openRunningProgrammingExercise(exerciseID: number) {
         const responsePromise = this.page.waitForRequest(`${BASE_API}/programming/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks`);
-        await this.openRunningExercise(exerciseID);
         await responsePromise;
     }
 

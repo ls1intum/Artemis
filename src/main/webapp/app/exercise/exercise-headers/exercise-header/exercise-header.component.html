@@ -14,6 +14,8 @@
             [exercise]="exercise()"
             [onSubmitExercise]="effectiveOnSubmitExercise()"
             [onContinueExercise]="onContinueExercise()"
+            [submitDisabled]="submitDisabled()"
+            [submitLabel]="submitLabel()"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             (newParticipation)="onNewParticipation($event)"
