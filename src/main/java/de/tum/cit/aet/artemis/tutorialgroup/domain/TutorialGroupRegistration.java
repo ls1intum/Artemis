@@ -27,7 +27,7 @@ public class TutorialGroupRegistration extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "student_id")
     @NonNull
-    @JsonIgnoreProperties("tutorialGroupRegistrations")
+    @JsonIgnoreProperties(value = "tutorialGroupRegistrations", allowSetters = true)
     private User student;
 
     @ManyToOne
