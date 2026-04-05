@@ -1,7 +1,6 @@
 import {
     faArrowDown,
     faBook,
-    faChalkboardUser,
     faCheck,
     faChevronDown,
     faCircleInfo,
@@ -10,7 +9,6 @@ import {
     faCompress,
     faCopy,
     faExpand,
-    faKeyboard,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -94,9 +92,9 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 
 // Interval (in ms) between placeholder label cycling
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
+const PLACEHOLDER_FADE_DURATION_MS = 300;
 
 // Duration (in ms) for the placeholder fade-out before swapping text
-const PLACEHOLDER_FADE_DURATION_MS = 300;
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -272,39 +270,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    protected readonly faChalkboardUser = faChalkboardUser;
-    protected readonly faKeyboard = faKeyboard;
-
     protected readonly suggestionChips = [
-        { icon: faBook, translationKey: 'artemisApp.iris.chat.suggestions.learn', hasMenu: true },
-        { icon: faQuestionCircle, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizStarter' },
+        { icon: faBook, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
+        { icon: faQuestionCircle, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
         { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
     ];
-
-    readonly learnMenuOpen = signal(false);
-
-    readonly recentEntities = computed(() => {
-        const sessions = this.chatSessions();
-        const entityMap = new Map<string, IrisSessionDTO>();
-        for (const s of sessions) {
-            if (!s.entityId || !s.entityName) continue;
-            const key = `${s.chatMode}:${s.entityId}`;
-            const existing = entityMap.get(key);
-            if (!existing || new Date(s.creationDate) > new Date(existing.creationDate)) {
-                entityMap.set(key, s);
-            }
-        }
-        const allEntities = [...entityMap.values()];
-        const lectures = allEntities
-            .filter((s) => s.chatMode === ChatServiceMode.LECTURE)
-            .sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime())
-            .slice(0, 2);
-        const exercises = allEntities
-            .filter((s) => s.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE || s.chatMode === ChatServiceMode.TEXT_EXERCISE)
-            .sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime())
-            .slice(0, 2);
-        return [...lectures, ...exercises];
-    });
 
     readonly newChatTitle = computed(() => this.translateService.instant('artemisApp.iris.chatHistory.newChat'));
 
@@ -902,51 +872,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
     }
 
-    toggleLearnMenu(event: Event): void {
-        event.stopPropagation();
-        const entities = this.recentEntities();
-        if (entities.length === 0) {
-            this.applyChipText('artemisApp.iris.chat.suggestions.learnStarter');
-            return;
-        }
-        this.learnMenuOpen.update((open) => !open);
-    }
-
-    onLearnMenuItemHover(entity: IrisSessionDTO): void {
-        this.newMessageTextContent.set(entity.entityName ?? '');
-    }
-
-    onLearnMenuItemLeave(): void {
-        this.newMessageTextContent.set('');
-    }
-
-    onLearnMenuItemClick(entity: IrisSessionDTO): void {
-        this.learnMenuOpen.set(false);
-        this.chatService.switchTo(entity.chatMode, entity.entityId);
-        const starterText = this.translateService.instant('artemisApp.iris.chat.suggestions.learnStarter', { entityName: entity.entityName });
-        this.newMessageTextContent.set(starterText);
-        setTimeout(() => this.onSend());
-    }
-
-    onLearnMenuKeydown(event: KeyboardEvent, menuElement: HTMLElement): void {
-        const items = Array.from(menuElement.querySelectorAll<HTMLElement>('.learn-dropdown-item'));
-        const currentIndex = items.indexOf(event.target as HTMLElement);
-        switch (event.key) {
-            case 'ArrowDown':
-                event.preventDefault();
-                items[(currentIndex + 1) % items.length]?.focus();
-                break;
-            case 'ArrowUp':
-                event.preventDefault();
-                items[(currentIndex - 1 + items.length) % items.length]?.focus();
-                break;
-            case 'Escape':
-                event.preventDefault();
-                this.learnMenuOpen.set(false);
-                break;
-        }
-    }
-
     onSessionClick(session: IrisSessionDTO) {
         if (this.isNewChatSession(session)) {
             this.openNewSession();
@@ -1106,7 +1031,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     @HostListener('document:click')
     onDocumentClick() {
         this.onSessionMenuHide();
-        this.learnMenuOpen.set(false);
     }
 
     openNewSession() {

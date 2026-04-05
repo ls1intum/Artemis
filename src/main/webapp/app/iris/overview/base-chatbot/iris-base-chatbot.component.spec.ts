@@ -1526,12 +1526,20 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chips).toHaveLength(0);
         });
 
+        it('should call applyChipText with correct starter key when Learn chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[0].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+        });
+
         it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
             fixture.detectChanges();
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
         });
 
         it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
@@ -1540,108 +1548,6 @@ describe('IrisBaseChatbotComponent', () => {
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[2].click();
             expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
-        });
-
-        it('should open Learn menu when Learn chip is clicked and entities exist', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
-                of([
-                    { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
-                    { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Exercise 1' } as IrisSessionDTO,
-                ]),
-            );
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            const learnChip = fixture.nativeElement.querySelector('.learn-chip-container .prompt-suggestion-chip');
-            learnChip.click();
-            fixture.detectChanges();
-
-            expect(component.learnMenuOpen()).toBe(true);
-            const menuItems = fixture.nativeElement.querySelectorAll('.learn-dropdown-item');
-            expect(menuItems).toHaveLength(2);
-        });
-
-        it('should fall back to applyChipText when Learn chip is clicked with no entities', () => {
-            fixture.detectChanges();
-            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
-            const learnChip = fixture.nativeElement.querySelector('.learn-chip-container .prompt-suggestion-chip');
-            learnChip.click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
-        });
-
-        it('should close Learn menu on document click', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
-                of([{ id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO]),
-            );
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            component.learnMenuOpen.set(true);
-            component.onDocumentClick();
-            expect(component.learnMenuOpen()).toBe(false);
-        });
-
-        it('should populate textarea on Learn menu item hover and clear on leave', () => {
-            const entity = { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO;
-            component.onLearnMenuItemHover(entity);
-            expect(component.newMessageTextContent()).toBe('Lecture 1');
-            component.onLearnMenuItemLeave();
-            expect(component.newMessageTextContent()).toBe('');
-        });
-
-        it('should call switchTo and send on Learn menu item click', () => {
-            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
-            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
-            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-
-            const entity = { id: 1, creationDate: new Date(), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO;
-            const switchToSpy = vi.spyOn(chatService, 'switchTo');
-            component.onLearnMenuItemClick(entity);
-            expect(component.learnMenuOpen()).toBe(false);
-            expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 10);
-        });
-
-        it('should deduplicate entities by chatMode and entityId', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
-                of([
-                    { id: 1, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
-                    { id: 2, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
-                    { id: 3, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Exercise 1' } as IrisSessionDTO,
-                ]),
-            );
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            const entities = component.recentEntities();
-            expect(entities).toHaveLength(2);
-        });
-
-        it('should limit to 2 lectures and 2 exercises', () => {
-            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(
-                of([
-                    { id: 1, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.LECTURE, entityId: 10, entityName: 'Lecture 1' } as IrisSessionDTO,
-                    { id: 2, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.LECTURE, entityId: 11, entityName: 'Lecture 2' } as IrisSessionDTO,
-                    { id: 3, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.LECTURE, entityId: 12, entityName: 'Lecture 3' } as IrisSessionDTO,
-                    { id: 4, creationDate: new Date('2026-01-01'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 20, entityName: 'Ex 1' } as IrisSessionDTO,
-                    { id: 5, creationDate: new Date('2026-01-02'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 21, entityName: 'Ex 2' } as IrisSessionDTO,
-                    { id: 6, creationDate: new Date('2026-01-03'), chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 22, entityName: 'Ex 3' } as IrisSessionDTO,
-                ]),
-            );
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            const entities = component.recentEntities();
-            expect(entities).toHaveLength(4);
-            expect(entities.filter((e) => e.chatMode === ChatServiceMode.LECTURE)).toHaveLength(2);
-            expect(entities.filter((e) => e.chatMode === ChatServiceMode.PROGRAMMING_EXERCISE)).toHaveLength(2);
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
