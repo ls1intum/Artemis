@@ -35,7 +35,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
-    let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
+    let service: StudentsRoomDistributionService;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -71,11 +71,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
-
-        vi.spyOn(service, 'loadRoomData').mockImplementation(() => {
-            (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
-        });
+        service = TestBed.inject(StudentsRoomDistributionService);
 
         component.openDialog();
     });
@@ -159,7 +155,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should find correct rooms', () => {
         vi.useFakeTimers();
-        (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
+        (service as unknown as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component.search(of('t')).subscribe((rooms) => {
@@ -251,7 +247,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         }
 
         fixture.componentRef.setInput('exam', examWithUsers);
-        (service as MockStudentsRoomDistributionService).capacityData.set({
+        (service as unknown as MockStudentsRoomDistributionService).capacityData.set({
             combinedDefaultCapacity: 999,
             combinedMaximumCapacity: 999,
         });

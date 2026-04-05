@@ -135,10 +135,10 @@ describe('ExamRoomsComponent', () => {
 
         // THEN
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasOverview()).toBeTrue();
+        expect(component.hasOverview()).toBe(true);
         expect(component.numberOfAvailable()!.examRooms).toBe(0);
         expect(component.numberOfAvailable()!.examSeats).toBe(0);
-        expect(component.hasExamRoomData()).toBeFalse();
+        expect(component.hasExamRoomData()).toBe(false);
     });
 
     it('should properly extract values from room overview', () => {
@@ -147,13 +147,13 @@ describe('ExamRoomsComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasOverview()).toBeTrue();
+        expect(component.hasOverview()).toBe(true);
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
 
         expect(component.numberOfAvailable()!.examRooms).toBe(1);
         expect(component.numberOfAvailable()!.examSeats).toBe(50);
 
-        expect(component.hasExamRoomData()).toBeTrue();
+        expect(component.hasExamRoomData()).toBe(true);
         expect(component.examRoomData()).toHaveLength(1);
         expect(component.examRoomData()![0]).toEqual({
             ...uploadedRoom,
@@ -169,7 +169,7 @@ describe('ExamRoomsComponent', () => {
 
         // THEN
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasOverview()).toBeFalse();
+        expect(component.hasOverview()).toBe(false);
     });
 
     it('should reject non-zip files', () => {
@@ -184,8 +184,8 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBeFalse();
-        expect(uploadButton.disabled).toBeTrue();
+        expect(component.hasSelectedFile()).toBe(false);
+        expect(uploadButton.disabled).toBe(true);
     });
 
     it('should reject empty input', () => {
@@ -198,8 +198,8 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBeFalse();
-        expect(uploadButton.disabled).toBeTrue();
+        expect(component.hasSelectedFile()).toBe(false);
+        expect(uploadButton.disabled).toBe(true);
     });
 
     it('should reject files exceeding max size', () => {
@@ -216,8 +216,8 @@ describe('ExamRoomsComponent', () => {
         fixture.detectChanges();
 
         expect(onFileSelectedSpy).toHaveBeenCalledOnce();
-        expect(component.hasSelectedFile()).toBeFalse();
-        expect(uploadButton.disabled).toBeTrue();
+        expect(component.hasSelectedFile()).toBe(false);
+        expect(uploadButton.disabled).toBe(true);
     });
 
     it('should enable upload button on valid file selection', () => {
@@ -230,9 +230,9 @@ describe('ExamRoomsComponent', () => {
         setInputFiles(fileSelectButton, [zipFile]);
         fixture.detectChanges();
 
-        expect(component.hasSelectedFile()).toBeTrue();
+        expect(component.hasSelectedFile()).toBe(true);
         expect(fileSelectLabel.textContent.trim()).toBe('my_file.zip');
-        expect(uploadButton.disabled).toBeFalse();
+        expect(uploadButton.disabled).toBe(false);
     });
 
     it('should make upload service call and refresh overview on valid zip upload', () => {
@@ -249,7 +249,7 @@ describe('ExamRoomsComponent', () => {
 
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
-        expect(component.hasSelectedFile()).toBeFalse();
+        expect(component.hasSelectedFile()).toBe(false);
         // Once from initial load, once from upload button click
         expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
@@ -269,7 +269,7 @@ describe('ExamRoomsComponent', () => {
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
-        expect(component.hasUploadInformation()).toBeFalse();
+        expect(component.hasUploadInformation()).toBe(false);
     });
 
     it('should show upload summary on successful upload', () => {
@@ -284,7 +284,7 @@ describe('ExamRoomsComponent', () => {
         uploadButton.click();
         fixture.detectChanges();
 
-        expect(component.hasUploadInformation()).toBeTrue();
+        expect(component.hasUploadInformation()).toBe(true);
         expect(component.uploadInformation()!.uploadedFileName).toEqual(uploadData.uploadedFileName);
         expect(component.uploadInformation()!.numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
         expect(component.uploadInformation()!.numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
@@ -337,7 +337,7 @@ describe('ExamRoomsComponent', () => {
         deleteButton.click();
         fixture.detectChanges();
 
-        expect(component.hasDeletionInformation()).toBeTrue();
+        expect(component.hasDeletionInformation()).toBe(true);
         expect(component.deletionInformation()).toBeDefined();
         expect(component.deletionInformation()!.numberOfDeletedExamRooms).toBe(4);
     });
