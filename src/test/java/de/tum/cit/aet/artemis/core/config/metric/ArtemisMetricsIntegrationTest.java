@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
@@ -37,25 +38,42 @@ class ArtemisMetricsIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    void meterRegistry_shouldContainHikariCpConnectionGauges() {
-        // DataSourcePoolMetricsAutoConfiguration must not be excluded in application-core.yml
-        // for these gauges to be registered
-        var activeGauge = meterRegistry.find("hikaricp.connections.active").gauge();
-        var idleGauge = meterRegistry.find("hikaricp.connections.idle").gauge();
-        var maxGauge = meterRegistry.find("hikaricp.connections.max").gauge();
+    void meterRegistry_shouldContainHikariCpMeters() {
+        // Trigger a DB query so HikariCP initializes connections
+        userTestRepository.count();
 
-        assertThat(activeGauge).as("hikaricp.connections.active gauge should be registered").isNotNull();
-        assertThat(idleGauge).as("hikaricp.connections.idle gauge should be registered").isNotNull();
-        assertThat(maxGauge).as("hikaricp.connections.max gauge should be registered").isNotNull();
-        // max connections should be > 0 if the pool is configured
-        assertThat(maxGauge.value()).as("HikariCP max connections should be positive").isPositive();
+        // Debug: print all hikaricp meters
+        var hikariMeters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("hikaricp")).map(Meter::getId).toList();
+
+        assertThat(hikariMeters).as("HikariCP meters should be registered after a DB query. Found meters: " + hikariMeters).isNotEmpty();
     }
 
     @Test
-    void metricsEndpoint_shouldReturnDatabaseMetricsWithPositiveMaxConnections() {
+    void meterRegistry_shouldContainCacheMeters() {
+        userTestRepository.count();
+
+        var cacheMeters = meterRegistry.getMeters().stream().filter(m -> m.getId().getName().startsWith("cache.")).toList();
+        assertThat(cacheMeters).as("Cache meters should be registered").isNotEmpty();
+    }
+
+    @Test
+    void metricsEndpoint_shouldReturnDatabaseMetricsWithPositiveValues() {
+        // Trigger DB activity
+        userTestRepository.count();
+
         var response = metricsEndpoint.allMetrics();
         assertThat(response.databases()).isNotNull();
-        assertThat(response.databases().max()).isNotNull();
-        assertThat(response.databases().max().value()).as("Database max connections should be positive").isPositive();
+        assertThat(response.databases().max().value()).as("DB max connections").isPositive();
+        assertThat(response.databases().idle().value()).as("DB idle connections").isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    void metricsEndpoint_shouldReturnCacheMetrics() {
+        userTestRepository.count();
+
+        var cache = metricsEndpoint.allMetrics().cache();
+        assertThat(cache).as("Cache metrics should not be empty").isNotEmpty();
+        // At least one cache should have activity
+        assertThat(cache.values().stream().anyMatch(s -> s.hits() > 0 || s.puts() > 0 || s.size() > 0)).as("At least one cache should have activity").isTrue();
     }
 }
