@@ -745,6 +745,11 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('unloading notification and can deactivate', () => {
+            beforeEach(() => {
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
+            });
+
             it('should return opposite of pendingChangesCache', () => {
                 comp.pendingChangesCache = true;
                 expect(comp.canDeactivate()).toBe(false);
@@ -762,6 +767,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.pendingChangesCache = false;
                 const canDeactivate = comp.canDeactivate();
                 expect(canDeactivate).toBe(true);
+            });
+
+            it('should always deactivate when quiz is not editable', () => {
+                comp.quizExercise.isEditable = false;
+                comp.pendingChangesCache = true;
+                expect(comp.canDeactivate()).toBe(true);
             });
         });
 
@@ -2148,6 +2159,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
                 const translateService = TestBed.inject(TranslateService);
                 translateSpy = vi.spyOn(translateService, 'instant');
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
             });
 
             it('should prevent default and return warning text when changes are pending', () => {
