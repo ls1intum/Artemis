@@ -134,14 +134,14 @@ public class QuizExerciseRetrievalResource {
             return ResponseEntity.ok(List.of());
         }
 
-        // Compute the latest individual exam end date once for all quizzes in this exam
+        // All quiz exercises share the same exam, so compute editability and end date once
+        boolean isEditable = exam.getStartDate() == null || ZonedDateTime.now().isBefore(exam.getStartDate());
         ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
         ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
         boolean examEnded = latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
 
         List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         for (QuizExercise quizExercise : quizExercises) {
-            boolean isEditable = quizExerciseService.isEditable(quizExercise);
             quizExercise.setQuizBatches(null);
             quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, examEnded));
         }

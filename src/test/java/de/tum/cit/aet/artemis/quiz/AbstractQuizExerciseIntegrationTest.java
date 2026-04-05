@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -160,21 +161,25 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     }
 
     protected QuizExercise createQuizOnServerForExamWithStartedExam() throws Exception {
-        QuizExercise quizExercise = createQuizOnServerForExam();
-        Exam exam = quizExercise.getExerciseGroup().getExam();
         ZonedDateTime now = ZonedDateTime.now();
-        examUtilService.setVisibleStartAndEndDateOfExam(exam, now.minusHours(2), now.minusHours(1), now.plusHours(1));
-        examRepository.save(exam);
-        return quizExercise;
+        return createQuizOnServerForExamWithDates(now.minusHours(2), now.minusHours(1), now.plusHours(1));
     }
 
     protected QuizExercise createQuizOnServerForExamWithEndedExam() throws Exception {
-        QuizExercise quizExercise = createQuizOnServerForExam();
-        Exam exam = quizExercise.getExerciseGroup().getExam();
         ZonedDateTime now = ZonedDateTime.now();
-        examUtilService.setVisibleStartAndEndDateOfExam(exam, now.minusHours(3), now.minusHours(2), now.minusHours(1));
+        return createQuizOnServerForExamWithDates(now.minusHours(3), now.minusHours(2), now.minusHours(1));
+    }
+
+    private QuizExercise createQuizOnServerForExamWithDates(ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) throws Exception {
+        Course course = createEmptyCourse();
+        Exam exam = ExamFactory.generateExam(course, visibleDate, startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
         examRepository.save(exam);
-        return quizExercise;
+
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+        quizExercise.setDuration(3600);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+        return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
     }
 
     /**
