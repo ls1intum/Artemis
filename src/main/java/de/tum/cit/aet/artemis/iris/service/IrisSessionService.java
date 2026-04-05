@@ -189,12 +189,9 @@ public class IrisSessionService {
         if (!settings.enabled()) {
             return List.of();
         }
-
-        // TODO: REFACTORING ASLAN
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
-                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.lastActivityDate(), dao.session().getMode())).toList();
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
-                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode(), dao.session().getExerciseId(), dao.session().getLectureId()))
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream()
+                .map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(), dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(),
+                        dao.lastActivityDate(), dao.session().getMode(), dao.session().getExerciseId(), dao.session().getLectureId()))
                 .toList();
     }
 }

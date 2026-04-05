@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
-// TODO: REFACTORING ASLAN
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
@@ -65,14 +64,6 @@ public class IrisChatWebsocketService {
      */
     public void sendMessage(IrisSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
         // TODO: create DTOs for IrisChatSession and IrisMessage
-        var user = userRepository.findByIdElseThrow(session.getUserId());
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
-        var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, sessionTitle, null, null, citationInfo);
-        websocketService.send(user.getLogin(), topic, payload);
-    }
-
-    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
         var messageDTO = irisMessage != null ? IrisMessageResponseDTO.of(irisMessage) : null;
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);

@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,33 +37,23 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @param userId   The ID of the user.
      * @return A list of chat sessions sorted by last activity (most recent message) in descending order.
      */
-    // TODO: REFACTORING ASLAN
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
-                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1),
-                      COALESCE(e1.shortName, e2.shortName, l.title),
+                      CASE WHEN s.exerciseId IS NOT NULL THEN s.exerciseId
+                           WHEN s.lectureId IS NOT NULL THEN s.lectureId
+                           ELSE s.courseId END,
+                      COALESCE(e.shortName, l.title),
                       MAX(m.sentAt)
                   )
                 FROM IrisChatSession s
-                    LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
-                    LEFT JOIN IrisLectureChatSession lcs ON s.id = lcs.id
-                    LEFT JOIN IrisTextExerciseChatSession tecs ON s.id = tecs.id
-                    LEFT JOIN IrisProgrammingExerciseChatSession pecs ON s.id = pecs.id
-                    LEFT JOIN Lecture l ON l.id = lcs.lectureId
-                    LEFT JOIN Exercise e1 ON e1.id = tecs.exerciseId
-                    LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
+                    LEFT JOIN Exercise e ON e.id = s.exerciseId
+                    LEFT JOIN Lecture l ON l.id = s.lectureId
                     LEFT JOIN s.messages m
-                    LEFT JOIN m.content c
-                WHERE s.userId = :userId AND TYPE(s) IN (
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession,
-                        de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession
-                    )
-                    AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
+                WHERE s.userId = :userId
+                    AND s.courseId = :courseId
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
-                GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
+                GROUP BY s, s.exerciseId, s.lectureId, s.courseId, e.shortName, l.title
                 HAVING COUNT(m) > 0
                 ORDER BY MAX(m.sentAt) DESC
             """)
@@ -71,7 +62,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     // -------------------------------------------------------------------------
     // Session lookup — by ID + user
     // -------------------------------------------------------------------------
-    // TODO: Warum nicht genutzt
     @EntityGraph(type = LOAD, attributePaths = "messages")
     Optional<IrisChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
@@ -140,21 +130,37 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      */
     long countByCourseId(long courseId);
 
-    // TODO: Warum jetzt genutzt und vorher nicht ?
     /**
-     * Find all chat sessions with messages for a given course, ordered by creation date.
+     * Find all chat sessions with messages for a given course.
+     * <p>
+     * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
+     * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
+     * The return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
+     * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
      *
      * @param courseId the id of the course
-     * @return list of chat sessions with their messages
+     * @return set of chat sessions with their messages
      */
     @Query("""
-            SELECT DISTINCT s
+            SELECT s
             FROM IrisChatSession s
                 LEFT JOIN FETCH s.messages
             WHERE s.courseId = :courseId
-            ORDER BY s.creationDate ASC
             """)
-    List<IrisChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+    Set<IrisChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course, sorted by creation date ascending.
+     * Sorting is done in Java because the query returns a {@code Set} to avoid issues with
+     * DISTINCT and PostgreSQL's json columns.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages, sorted by creation date ascending
+     */
+    default List<IrisChatSession> findAllWithMessagesByCourseIdSortedByCreationDate(long courseId) {
+        return findAllWithMessagesByCourseId(courseId).stream().sorted(Comparator.comparing(IrisChatSession::getCreationDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
 
     // -------------------------------------------------------------------------
     // Lecture-context queries

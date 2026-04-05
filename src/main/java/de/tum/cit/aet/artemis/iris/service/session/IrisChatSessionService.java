@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -65,7 +63,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -328,7 +325,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
      * Uses a single switch to collect context-specific data and populate the appropriate fields.
      */
-    @SuppressWarnings("unchecked")
     private PyrisChatPipelineExecutionDTO buildChatDTO(ChatContext context, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles, Object eventObject) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
@@ -376,26 +372,16 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
                 courseDto = PyrisCourseDTO.of(fullCourse);
                 metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
-                eventPayload = resolveEventPayload(eventObject);
+                eventPayload = switch (eventObject) {
+                    case Exercise ex -> pyrisPipelineService.generateEventPayloadFromObjectType(PyrisExerciseWithStudentSubmissionsDTO.class, ex);
+                    case null -> null;
+                    default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + eventObject);
+                };
             }
         }
 
         return new PyrisChatPipelineExecutionDTO(context, session.getTitle(), messages, new PyrisUserDTO(user), executionDto.settings(), executionDto.initialStages(),
                 customInstructions, courseDto, exercise, lectureDto, null, progSubmission, textSubmission, metrics, eventPayload);
-    }
-
-    /**
-     * Resolves an event object into a {@link PyrisEventDTO} for the course chat pipeline.
-     */
-    private PyrisEventDTO<?> resolveEventPayload(Object eventObject) {
-        if (eventObject == null) {
-            return null;
-        }
-        return switch (eventObject) {
-            case CompetencyJol jol -> pyrisPipelineService.generateEventPayloadFromObjectType(CompetencyJolDTO.class, jol);
-            case Exercise ex -> pyrisPipelineService.generateEventPayloadFromObjectType(PyrisExerciseWithStudentSubmissionsDTO.class, ex);
-            default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + eventObject);
-        };
     }
 
     // -------------------------------------------------------------------------
@@ -500,31 +486,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         int lastIndex = scores.size() - 1;
         int startIndex = lastIndex - intervalSize + 1;
         return !hasOverallImprovement(scores, startIndex, lastIndex);
-    }
-
-    /**
-     * Handles the CompetencyJolSetEvent for a course chat session.
-     *
-     * @param competencyJolSetEvent The event containing the CompetencyJol
-     */
-    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
-        var competencyJol = competencyJolSetEvent.getEventObject();
-        var course = competencyJol.getCompetency().getCourse();
-        var user = competencyJol.getUser();
-
-        if (!user.hasOptedIntoLLMUsage()) {
-            return;
-        }
-
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            return;
-        }
-
-        var session = findOrCreateCourseSession(course, user);
-        rateLimitService.checkRateLimitElseThrow(session, user);
-
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("jol"), Optional.of(settings), Optional.empty(), Map.of(), competencyJol));
     }
 
     // -------------------------------------------------------------------------

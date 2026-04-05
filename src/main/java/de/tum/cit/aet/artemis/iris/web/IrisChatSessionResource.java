@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
-// TODO: REFACTORING ASLAN
 /**
  * REST controller for managing {@link IrisChatSession}.
  * Provides endpoints for session CRUD operations, chat history sidebar, and user-global operations.
@@ -102,13 +101,13 @@ public class IrisChatSessionResource {
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
             @RequestParam(required = false) Long lectureId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, exerciseId, lectureId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
@@ -121,13 +120,13 @@ public class IrisChatSessionResource {
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSession> createSession(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
             @RequestParam(required = false) Long lectureId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var session = irisChatSessionService.createSession(courseId, exerciseId, lectureId, user);
         var uriString = "/api/iris/sessions/" + session.getId();
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
     /**
@@ -140,13 +139,13 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSession>> getAllSessions(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
             @RequestParam(required = false) Long lectureId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var sessions = irisChatSessionService.getAllSessions(courseId, exerciseId, lectureId, user);
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions);
+        return ResponseEntity.ok(sessions.stream().map(IrisChatSessionResponseDTO::of).toList());
     }
 
     /**
@@ -190,13 +189,11 @@ public class IrisChatSessionResource {
         boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
-            irisSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(irisSession.getMessages()));
-            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages((IrisChatSession) irisSession));
             if (!(irisSession instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Session is not a chat session");
             }
             chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
-            return ResponseEntity.ok(chatSession);
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(chatSession));
         }
         throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
