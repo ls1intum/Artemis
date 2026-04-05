@@ -29,6 +29,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
+    styleUrls: ['./result-history-dropdown.component.scss'],
     imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ResultHistoryDropdownComponent {

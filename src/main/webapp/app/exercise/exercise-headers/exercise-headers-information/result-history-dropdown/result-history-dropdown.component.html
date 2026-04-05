@@ -19,7 +19,7 @@
             <div
                 class="list-group-item d-flex align-items-center gap-2 px-3 py-2"
                 [class.list-group-item-action]="isRowClickable()"
-                [class.bg-primary-subtle]="result.id === activeResultId()"
+                [class.bg-active-row]="result.id === activeResultId()"
                 [attr.role]="isRowClickable() ? 'button' : undefined"
                 [attr.tabindex]="isRowClickable() ? 0 : undefined"
                 (click)="isRowClickable() && navigateToSubmission(result, $event)"
