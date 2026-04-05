@@ -177,7 +177,7 @@ public class HazelcastConfiguration {
 
     private final EurekaInstanceHelper eurekaInstanceHelper;
 
-    private final MeterRegistry meterRegistry;
+    private final Optional<MeterRegistry> meterRegistry;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")
     private String instanceName;
@@ -217,7 +217,7 @@ public class HazelcastConfiguration {
      * @param env                  Spring environment for profile checking
      */
     public HazelcastConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
-            EurekaInstanceHelper eurekaInstanceHelper, Environment env, MeterRegistry meterRegistry) {
+            EurekaInstanceHelper eurekaInstanceHelper, Environment env, Optional<MeterRegistry> meterRegistry) {
         this.applicationContext = applicationContext;
         this.serverProperties = serverProperties;
         this.registration = registration;
@@ -296,9 +296,10 @@ public class HazelcastConfiguration {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void bindMetricsToMicrometer() {
-        if (meterRegistry == null) {
+        if (meterRegistry.isEmpty()) {
             return;
         }
+        var registry = meterRegistry.get();
 
         // 1. Bind cache metrics
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -314,12 +315,12 @@ public class HazelcastConfiguration {
                 try {
                     if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
                         log.info("Binding JCache metrics for '{}'", name);
-                        new JCacheMetrics<>(cache, List.of()).bindTo(meterRegistry);
+                        new JCacheMetrics<>(cache, List.of()).bindTo(registry);
                         bound++;
                     }
                     else if (distributedObject instanceof IMap<?, ?> map) {
-                        log.info("Binding Hazelcast IMap metrics for '{}'", name);
-                        new HazelcastCacheMetrics(map, List.of()).bindTo(meterRegistry);
+                        log.debug("Binding Hazelcast IMap metrics for '{}'", name);
+                        new HazelcastCacheMetrics(map, List.of()).bindTo(registry);
                         bound++;
                     }
                     else {
@@ -339,7 +340,7 @@ public class HazelcastConfiguration {
             var dataSource = applicationContext.getBean(DataSource.class);
             if (dataSource instanceof HikariDataSource hikariDataSource) {
                 DataSourcePoolMetadataProvider provider = ds -> new HikariDataSourcePoolMetadata((HikariDataSource) ds);
-                new DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(meterRegistry);
+                new DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(registry);
                 log.info("Bound HikariCP pool metrics (active/idle/min/max/pending) to Micrometer for pool '{}'", hikariDataSource.getPoolName());
             }
         }
