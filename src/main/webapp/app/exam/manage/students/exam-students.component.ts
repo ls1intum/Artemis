@@ -5,7 +5,6 @@ import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Subject } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -405,16 +404,6 @@ export class ExamStudentsComponent implements OnDestroy {
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
-
-    /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param user
-     */
-    searchResultFormatter = (user: User) => {
-        const { name, login } = user;
-        return `${name} (${login})`;
-    };
 
     /**
      * Registers all students who are enrolled in the course for the exam

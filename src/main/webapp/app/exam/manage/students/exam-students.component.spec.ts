@@ -233,9 +233,4 @@ describe('ExamStudentsComponent', () => {
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.allRegisteredUsers()).toEqual([]);
     });
-
-    it('should format search result', () => {
-        const resultString = component.searchResultFormatter(user1);
-        expect(resultString).toBe('name (login)');
-    });
 });
