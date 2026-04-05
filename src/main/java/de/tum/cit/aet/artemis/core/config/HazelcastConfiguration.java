@@ -24,8 +24,10 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
@@ -50,6 +52,7 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientConnectionStrategyConfig;
 import com.hazelcast.client.config.RoutingMode;
+import com.hazelcast.config.CacheSimpleConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DiscoveryConfig;
 import com.hazelcast.config.DiscoveryStrategyConfig;
@@ -68,6 +71,7 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
 import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -286,13 +290,48 @@ public class HazelcastConfiguration {
     }
 
     /**
+     * Configures HikariCP with {@link MicrometerMetricsTrackerFactory} before the connection pool starts.
+     * <p>
+     * HikariCP timer metrics (acquire, creation, usage) are only tracked when a {@code MetricsTrackerFactory}
+     * is set before the pool's first {@code getConnection()} call. Spring Boot's auto-configuration
+     * ({@code DataSourcePoolMetricsAutoConfiguration}) attempts to set it via a {@code MeterBinder},
+     * but that runs after JPA/Hibernate initialization has already started the pool.
+     * <p>
+     * This {@code BeanPostProcessor} runs {@code postProcessBeforeInitialization} which executes
+     * after the HikariDataSource constructor but before any dependent bean (like EntityManagerFactory)
+     * can call {@code getConnection()}, ensuring the metrics tracker is configured in time.
+     *
+     * @param meterRegistryProvider lazy provider to avoid circular dependency during early initialization
+     * @return the BeanPostProcessor (must be static to prevent early initialization of enclosing config)
+     */
+    @Bean
+    static BeanPostProcessor hikariMetricsPostProcessor(ObjectProvider<MeterRegistry> meterRegistryProvider) {
+        return new BeanPostProcessor() {
+
+            private static final Logger log = LoggerFactory.getLogger("HikariMetricsPostProcessor");
+
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) {
+                if (bean instanceof HikariDataSource hikari && hikari.getMetricsTrackerFactory() == null) {
+                    MeterRegistry registry = meterRegistryProvider.getIfAvailable();
+                    if (registry != null) {
+                        hikari.setMetricsTrackerFactory(new MicrometerMetricsTrackerFactory(registry));
+                        log.info("Configured HikariCP with MicrometerMetricsTrackerFactory for timer metrics (acquire, creation, usage)");
+                    }
+                }
+                return bean;
+            }
+        };
+    }
+
+    /**
      * Binds cache and datasource metrics to Micrometer after the application is fully started.
      * <p>
-     * Cache: Hazelcast distributed objects include both IMap (Spring CacheManager) and
-     * ICache (Hibernate L2 via JCacheRegionFactory). Each type needs different Micrometer binders.
+     * Cache: Enables JCache statistics on all Hibernate L2 entity caches (created by JCacheRegionFactory)
+     * and binds both IMap (Spring CacheManager) and ICache metrics to Micrometer.
      * <p>
-     * Datasource: Spring Boot 4 does not auto-register HikariCP pool gauges, so we bind them
-     * manually via DataSourcePoolMetrics.
+     * Datasource: Binds HikariCP pool gauges (active, idle, min, max, pending connections).
+     * Timer metrics (acquire, creation, usage) are registered by {@link #hikariMetricsPostProcessor}.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void bindMetricsToMicrometer() {
@@ -301,30 +340,28 @@ public class HazelcastConfiguration {
         }
         var registry = meterRegistry.get();
 
-        // 1. Bind cache metrics
+        // 1. Enable JCache statistics for all Hibernate L2 entity/collection caches.
+        // JCacheRegionFactory creates caches with statistics disabled by default.
+        // Without this, ICache.getLocalCacheStatistics() returns zeros.
+        enableJCacheStatistics();
+
+        // 2. Bind Hazelcast distributed object metrics to Micrometer
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelcastInstance != null) {
             int bound = 0;
-            var distributedObjects = hazelcastInstance.getDistributedObjects();
-            log.debug("Found {} Hazelcast distributed objects for cache metrics binding", distributedObjects.size());
-            for (var distributedObject : distributedObjects) {
+            for (var distributedObject : hazelcastInstance.getDistributedObjects()) {
                 String name = distributedObject.getName();
                 if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
                     continue;
                 }
                 try {
                     if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
-                        log.debug("Binding JCache metrics for '{}'", name);
                         new JCacheMetrics<>(cache, List.of()).bindTo(registry);
                         bound++;
                     }
                     else if (distributedObject instanceof IMap<?, ?> map) {
-                        log.debug("Binding Hazelcast IMap metrics for '{}'", name);
                         new HazelcastCacheMetrics(map, List.of()).bindTo(registry);
                         bound++;
-                    }
-                    else {
-                        log.debug("Skipping distributed object '{}' of type {}", name, distributedObject.getClass().getSimpleName());
                     }
                 }
                 catch (Exception e) {
@@ -334,18 +371,38 @@ public class HazelcastConfiguration {
             log.info("Bound {} cache metrics to Micrometer", bound);
         }
 
-        // 2. Bind HikariCP datasource pool metrics (gauges for active, idle, min, max, pending connections)
-        // Spring Boot 4 does not auto-register these — DataSourcePoolMetricsAutoConfiguration is not auto-discovered.
+        // 3. Bind HikariCP datasource pool gauges (active, idle, min, max, pending connections).
         try {
             var dataSource = applicationContext.getBean(DataSource.class);
             if (dataSource instanceof HikariDataSource hikariDataSource) {
                 DataSourcePoolMetadataProvider provider = ds -> new HikariDataSourcePoolMetadata((HikariDataSource) ds);
                 new DataSourcePoolMetrics(dataSource, provider, "hikaricp", List.of()).bindTo(registry);
-                log.info("Bound HikariCP pool metrics (active/idle/min/max/pending) to Micrometer for pool '{}'", hikariDataSource.getPoolName());
+                log.info("Bound HikariCP pool metrics to Micrometer for pool '{}'", hikariDataSource.getPoolName());
             }
         }
         catch (Exception e) {
             log.warn("Could not bind datasource pool metrics: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Enables JCache statistics on all caches managed by the Hazelcast JCache CacheManager.
+     * This is required because Hibernate's JCacheRegionFactory creates caches with statistics
+     * disabled by default, making {@code ICache.getLocalCacheStatistics()} return zeros.
+     */
+    private void enableJCacheStatistics() {
+        try {
+            var cachingProvider = javax.cache.Caching.getCachingProvider("com.hazelcast.cache.HazelcastMemberCachingProvider");
+            var cacheManager = cachingProvider.getCacheManager();
+            int enabled = 0;
+            for (String cacheName : cacheManager.getCacheNames()) {
+                cacheManager.enableStatistics(cacheName, true);
+                enabled++;
+            }
+            log.info("Enabled JCache statistics on {} Hibernate L2 caches", enabled);
+        }
+        catch (Exception e) {
+            log.debug("Could not enable JCache statistics (expected on build agents): {}", e.getMessage());
         }
     }
 
@@ -1321,7 +1378,9 @@ public class HazelcastConfiguration {
     private void configureCacheMaps(Config config, ArtemisProperties artemisProperties) {
         config.getMapConfigs().put("default", createDefaultMapConfig(artemisProperties));
         config.getMapConfigs().put("files", createFilesMapConfig(artemisProperties));
-        // TODO: does that still work and will it create a cache config map for all entities?
+        // MapConfig for any IMap-based domain caches (e.g., from @Cacheable on repositories).
+        // Note: Hibernate L2 entity caches use JCache (ICache), not IMap — they are configured
+        // via CacheSimpleConfig below.
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(artemisProperties));
         config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(artemisProperties));
@@ -1331,6 +1390,12 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-session-relation-preview", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
+
+        // JCache (ICache) configuration for Hibernate L2 entity/collection caches.
+        // JCacheRegionFactory creates ICaches (not IMaps) — CacheSimpleConfig is the Hazelcast
+        // configuration that applies to these. Statistics must be enabled for the admin metrics page.
+        var entityCacheConfig = new CacheSimpleConfig().setName("de.tum.cit.aet.artemis.*").setStatisticsEnabled(true);
+        config.getCacheConfigs().put(entityCacheConfig.getName(), entityCacheConfig);
     }
 
     /**
