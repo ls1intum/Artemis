@@ -20,6 +20,7 @@ describe('PdfViewerIframeContentComponent', () => {
     let mockEventBus: { dispatch: ReturnType<typeof vi.fn> };
     let mockPdfViewerApp: { eventBus: typeof mockEventBus };
     let postMessageSpy: ReturnType<typeof vi.spyOn>;
+    let translateService: MockTranslateService;
 
     beforeEach(async () => {
         mockEventBus = { dispatch: vi.fn() };
@@ -30,6 +31,8 @@ describe('PdfViewerIframeContentComponent', () => {
             providers: [PDFNotificationService, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
+        translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        translateService.use('en');
         fixture = TestBed.createComponent(PdfViewerIframeContentComponent);
         component = fixture.componentInstance;
         postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -54,9 +57,10 @@ describe('PdfViewerIframeContentComponent', () => {
     });
 
     it('should handle loadPDF message and update signals', () => {
+        const useSpy = vi.spyOn(translateService, 'use');
         window.dispatchEvent(
             new MessageEvent('message', {
-                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 5, isDarkMode: true } },
+                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 5, isDarkMode: true, languageKey: 'de' } },
                 origin: window.location.origin,
                 source: window,
             }),
@@ -65,6 +69,7 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(component.pdfUrl()).toBe('doc.pdf');
         expect(component.currentPage()).toBe(5);
         expect(component.isDarkMode()).toBe(true);
+        expect(useSpy).toHaveBeenCalledWith('de');
     });
 
     it('should reset document-specific state when loadPDF URL changes', () => {
@@ -90,6 +95,12 @@ describe('PdfViewerIframeContentComponent', () => {
     it('should handle themeChange message', () => {
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'themeChange', data: { isDarkMode: true } }, origin: window.location.origin, source: window }));
         expect(component.isDarkMode()).toBe(true);
+    });
+
+    it('should handle languageChange message', () => {
+        const useSpy = vi.spyOn(translateService, 'use');
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'languageChange', data: { languageKey: 'de' } }, origin: window.location.origin, source: window }));
+        expect(useSpy).toHaveBeenCalledWith('de');
     });
 
     it('should handle viewerModeChange message without reloading the PDF', () => {

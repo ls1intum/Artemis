@@ -14,6 +14,7 @@ describe('PdfViewerComponent', () => {
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
     let mockThemeService: { currentTheme: ReturnType<typeof signal<Theme>> };
+    let translateService: MockTranslateService;
 
     function sendIframeMessage(type: string, data?: any) {
         const iframe = component.pdfIframe()?.nativeElement;
@@ -33,6 +34,8 @@ describe('PdfViewerComponent', () => {
             providers: [provideHttpClient(), { provide: ThemeService, useValue: mockThemeService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
+        translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        translateService.use('en');
         fixture = TestBed.createComponent(PdfViewerComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -164,9 +167,26 @@ describe('PdfViewerComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'loadPDF',
-                data: expect.objectContaining({ url: 'test.pdf', initialPage: 5 }),
+                data: expect.objectContaining({ url: 'test.pdf', initialPage: 5, languageKey: 'en' }),
             }),
             window.location.origin,
         );
+    });
+
+    it('should sync language changes to the iframe after it is ready', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+
+        sendIframeMessage('ready');
+        fixture.detectChanges();
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+        postMessageSpy.mockClear();
+
+        translateService.use('de');
+        fixture.detectChanges();
+
+        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'languageChange', data: { languageKey: 'de' } }), window.location.origin);
     });
 });

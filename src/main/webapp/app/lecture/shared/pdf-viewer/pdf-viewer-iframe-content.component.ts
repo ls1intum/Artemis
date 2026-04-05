@@ -14,6 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PdfLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -68,6 +69,7 @@ const TOOLBAR_COMPACT_CLASS_PREFIX = 'artemis-pdf-toolbar__center--compact-';
 })
 export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     private readonly pdfNotificationService = inject(PDFNotificationService);
+    private readonly translateService = inject(TranslateService);
     private readonly injector = inject(Injector);
 
     readonly pdfUrl = signal('');
@@ -186,12 +188,16 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
                 }
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 this.updateDarkMode(data?.isDarkMode);
+                this.updateLanguage(data?.languageKey);
                 break;
             case 'viewerModeChange':
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 break;
             case 'themeChange':
                 this.updateDarkMode(data?.isDarkMode);
+                break;
+            case 'languageChange':
+                this.updateLanguage(data?.languageKey);
                 break;
         }
     }
@@ -386,6 +392,13 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         if (typeof isDarkMode === 'boolean' && isDarkMode !== this.isDarkMode()) {
             this.isDarkMode.set(isDarkMode);
         }
+    }
+
+    private updateLanguage(languageKey?: string): void {
+        if (!languageKey || languageKey === this.translateService.getCurrentLang()) {
+            return;
+        }
+        this.translateService.use(languageKey);
     }
 
     private initializeToolbarResizeObserver(): void {

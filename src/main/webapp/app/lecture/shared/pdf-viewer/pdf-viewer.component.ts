@@ -16,7 +16,9 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import type { Dayjs } from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -56,10 +58,12 @@ export class PdfViewerComponent {
     protected readonly isLoading = signal(false);
 
     private readonly themeService = inject(ThemeService);
+    private readonly translateService = inject(TranslateService);
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
     private readonly injector = inject(Injector);
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
+    private readonly languageChange = toSignal(this.translateService.onLangChange);
     private readonly currentPage = signal(1);
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
@@ -72,6 +76,7 @@ export class PdfViewerComponent {
         this.registerDestroyCleanup();
         this.setupPdfLoadingEffect();
         this.setupThemeSyncEffect();
+        this.setupLanguageSyncEffect();
         this.setupViewerModeSyncEffect();
         this.setupFullscreenFocusEffect();
     }
@@ -100,6 +105,15 @@ export class PdfViewerComponent {
             const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
             if (this.iframeReady()) {
                 this.postMessageToIframe('themeChange', { isDarkMode });
+            }
+        });
+    }
+
+    private setupLanguageSyncEffect(): void {
+        effect(() => {
+            this.languageChange();
+            if (this.iframeReady()) {
+                this.postMessageToIframe('languageChange', { languageKey: this.getCurrentLanguageKey() });
             }
         });
     }
@@ -212,6 +226,7 @@ export class PdfViewerComponent {
 
     private loadPdf(url: string, page: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
+        const languageKey = untracked(() => this.getCurrentLanguageKey());
         this.isLoading.set(true);
         this.currentPage.set(page);
 
@@ -219,8 +234,13 @@ export class PdfViewerComponent {
             url,
             initialPage: page,
             isDarkMode,
+            languageKey,
             viewerMode: this.isFullscreen() ? 'fullscreen' : 'embedded',
         });
+    }
+
+    private getCurrentLanguageKey(): string {
+        return this.translateService.getCurrentLang() || 'en';
     }
 
     private reloadCurrentPdf(): void {

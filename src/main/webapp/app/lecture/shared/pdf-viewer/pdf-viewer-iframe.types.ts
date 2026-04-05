@@ -6,6 +6,7 @@ export type IframeMessageType =
     | 'pageRendered'
     | 'loadPDF'
     | 'themeChange'
+    | 'languageChange'
     | 'viewerModeChange'
     | 'pdfLoadError'
     | 'download'
@@ -17,6 +18,7 @@ export interface IframeMessageData {
     url?: string;
     initialPage?: number;
     isDarkMode?: boolean;
+    languageKey?: string;
     viewerMode?: 'embedded' | 'fullscreen';
 }
 
