@@ -17,7 +17,6 @@ import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PdfLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    faCheck,
     faChevronDown,
     faChevronUp,
     faDownload,
@@ -77,7 +76,6 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     readonly isDarkMode = signal(false);
     readonly isFullscreenMode = signal(false);
     readonly pageInputValue = signal<number | undefined>(1);
-    readonly isPageNavigationPending = signal(false);
 
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly searchNextButtonElement = viewChild<ElementRef<HTMLButtonElement>>('searchNextButton');
@@ -89,7 +87,6 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
-    protected readonly faCheck = faCheck;
     protected readonly faDownload = faDownload;
     protected readonly faExpand = faExpand;
     protected readonly faXmark = faXmark;
@@ -105,7 +102,6 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
             this.searchQuery();
             this.totalPages();
             this.isFullscreenMode();
-            this.isPageNavigationPending();
             this.scheduleToolbarCompressionUpdate();
         });
     }
@@ -315,9 +311,9 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         this.dispatchFindCommand('find', '', false, false);
     }
 
-    protected onPageInputValueChange(value: number | undefined): void {
-        this.pageInputValue.set(value);
-        this.isPageNavigationPending.set(value !== undefined && Number.isInteger(value) && value !== this.currentPage());
+    protected onPageInputEnter(event: Event): void {
+        event.preventDefault();
+        this.pageInputElement()?.input?.nativeElement?.blur();
     }
 
     protected confirmPageNavigation(): void {
@@ -332,17 +328,13 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         if (value === undefined || !Number.isInteger(value) || value < 1 || value > totalPages) {
             const fallbackPage = previousPage > 0 && previousPage <= totalPages ? previousPage : 1;
             this.pageInputValue.set(fallbackPage);
-            this.isPageNavigationPending.set(false);
         } else {
             this.setCurrentPage(value);
         }
-
-        this.pageInputElement()?.input?.nativeElement?.blur();
     }
 
     protected cancelPageNavigation(): void {
         this.pageInputValue.set(this.currentPage());
-        this.isPageNavigationPending.set(false);
     }
 
     protected onPageInputFocus(): void {
@@ -387,7 +379,6 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     private setCurrentPage(page: number): void {
         this.currentPage.set(page);
         this.pageInputValue.set(page);
-        this.isPageNavigationPending.set(false);
     }
 
     /** Updates dark mode only when the value is valid and has changed. */
@@ -435,7 +426,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     }
 
     private shouldCancelPageNavigationOnEscape(eventTarget: EventTarget | null): boolean {
-        return this.isPageNavigationPending() || this.isWithinPageNavigation(eventTarget) || this.isWithinPageNavigation(document.activeElement);
+        return this.isWithinPageNavigation(eventTarget) || this.isWithinPageNavigation(document.activeElement);
     }
 
     private isWithinSearchToolbar(node: EventTarget | null): boolean {

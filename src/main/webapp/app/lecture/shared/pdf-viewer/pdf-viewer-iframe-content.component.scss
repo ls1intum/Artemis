@@ -82,8 +82,7 @@ $toolbar-compact-hidden-selectors: (
     grid-column: 2;
 }
 
-.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active > :not(.artemis-pdf-toolbar__search),
-.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--page-navigation-pending > :not(.artemis-pdf-toolbar__page-navigation) {
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active > :not(.artemis-pdf-toolbar__search) {
     display: none !important;
 }
 
@@ -203,14 +202,6 @@ $toolbar-compact-hidden-selectors: (
 .artemis-pdf-toolbar__page-input {
     width: 100%;
     text-align: center;
-}
-
-.artemis-pdf-toolbar__page-confirm {
-    width: 24px;
-    height: 24px;
-    fa-icon {
-        font-size: 0.85rem;
-    }
 }
 
 .artemis-pdf-toolbar__page-total {

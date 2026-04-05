@@ -37,12 +37,7 @@
             @if (isFullscreenMode()) {
                 <div class="artemis-pdf-toolbar__left-spacer" aria-hidden="true"></div>
             }
-            <div
-                #toolbarCenter
-                class="artemis-pdf-toolbar__center"
-                [class.artemis-pdf-toolbar__center--search-active]="!!searchQuery()"
-                [class.artemis-pdf-toolbar__center--page-navigation-pending]="isPageNavigationPending()"
-            >
+            <div #toolbarCenter class="artemis-pdf-toolbar__center" [class.artemis-pdf-toolbar__center--search-active]="!!searchQuery()">
                 <div class="artemis-pdf-toolbar__search">
                     <div class="artemis-pdf-toolbar__search-field">
                         <fa-icon class="artemis-pdf-toolbar__search-icon" [icon]="faMagnifyingGlass" />
@@ -102,26 +97,16 @@
                         <p-inputNumber
                             #pageInput
                             [ngModel]="pageInputValue()"
-                            (ngModelChange)="onPageInputValueChange($event ?? undefined)"
-                            (keydown.enter)="confirmPageNavigation()"
+                            (ngModelChange)="pageInputValue.set($event ?? undefined)"
+                            (keydown.enter)="onPageInputEnter($event)"
                             (onFocus)="onPageInputFocus()"
                             (click)="onPageInputFocus()"
+                            (onBlur)="confirmPageNavigation()"
                             [showButtons]="false"
                             [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.pageInputPlaceholder' | artemisTranslate"
                             [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate"
                             inputStyleClass="artemis-pdf-toolbar__page-input"
                         />
-                        @if (isPageNavigationPending()) {
-                            <button
-                                class="artemis-pdf-toolbar__button artemis-pdf-toolbar__page-confirm"
-                                type="button"
-                                [title]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
-                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
-                                (click)="confirmPageNavigation()"
-                            >
-                                <fa-icon [icon]="faCheck" />
-                            </button>
-                        }
                         <span class="artemis-pdf-toolbar__page-total">/{{ totalPages() }}</span>
                     </div>
                     <div class="artemis-pdf-toolbar__divider"></div>

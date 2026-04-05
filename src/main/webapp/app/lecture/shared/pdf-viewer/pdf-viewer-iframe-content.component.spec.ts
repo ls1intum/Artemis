@@ -238,9 +238,9 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(toolbarCenter.classList.contains('artemis-pdf-toolbar__center--search-active')).toBe(true);
     });
 
-    it('should cancel pending page navigation when Escape is pressed', () => {
+    it('should cancel page navigation input when Escape is pressed', () => {
         component.totalPages.set(10);
-        (component as any).onPageInputValueChange(6);
+        (component as any).pageInputValue.set(6);
         fixture.detectChanges();
 
         const pageInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-input') as HTMLInputElement;
@@ -252,7 +252,6 @@ describe('PdfViewerIframeContentComponent', () => {
 
         expect(event.defaultPrevented).toBe(true);
         expect((component as any).pageInputValue()).toBe(1);
-        expect((component as any).isPageNavigationPending()).toBe(false);
         expect(document.activeElement).not.toBe(pageInput);
     });
 
@@ -277,19 +276,28 @@ describe('PdfViewerIframeContentComponent', () => {
         expect((component as any).pageInputValue()).toBe(5);
     });
 
-    it('should only show page confirmation button while page navigation is pending', () => {
+    it('should reset to current page when page navigation target is invalid', () => {
+        component.totalPages.set(10);
+        component.currentPage.set(4);
+        (component as any).pageInputValue.set(99);
+        (component as any).confirmPageNavigation();
+
+        expect(component.currentPage()).toBe(4);
+        expect((component as any).pageInputValue()).toBe(4);
+    });
+
+    it('should blur page input when Enter is pressed', () => {
         component.totalPages.set(10);
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeFalsy();
+        const pageInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-input') as HTMLInputElement;
+        const blurSpy = vi.spyOn(pageInput, 'blur');
+        const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true });
 
-        (component as any).onPageInputValueChange(5);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeTruthy();
+        (component as any).onPageInputEnter(event);
 
-        (component as any).confirmPageNavigation();
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.artemis-pdf-toolbar__page-confirm')).toBeFalsy();
+        expect(event.defaultPrevented).toBe(true);
+        expect(blurSpy).toHaveBeenCalledOnce();
     });
 
     it('should set fullscreen mode flag from loadPDF message', () => {
