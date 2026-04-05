@@ -240,7 +240,9 @@ public class LocalCIResultProcessingService {
                 if (participation.getProgrammingExercise() == null) {
                     participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
                 }
-                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+
+                boolean testsExpected = buildJob.buildConfig().areTestsExpected();
+                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
 
             }
             else {
