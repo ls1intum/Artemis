@@ -1402,12 +1402,8 @@
             <column name="student_id" type="bigint"/>
             <column name="team_id" type="bigint"/>
             <column name="exercise_id" type="bigint"/>
-            <column name="initialization_state" type="varchar(255)"/>
             <column name="initialization_date" type="datetime(3)"/>
             <column name="presentation_score" type="double"/>
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
             <column defaultValueBoolean="false" name="test_run" type="boolean"/>
             <column name="individual_due_date" type="datetime(3)"/>
             <column name="branch" type="varchar(16)"/>
@@ -2109,13 +2105,9 @@
             </column>
         </createTable>
         <createTable tableName="submission">
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="jhi_type" type="varchar(255)"/>
             <column name="submitted" type="boolean"/>
             <column name="score_in_points" type="double"/>
             <column name="commit_hash" type="varchar(60)"/>
@@ -2894,11 +2886,6 @@
         <createIndex indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise" unique="true">
             <column name="submission_policy_id"/>
         </createIndex>
-        <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
-            <column name="team_id"/>
-            <column name="exercise_id"/>
-            <column name="initialization_state"/>
-        </createIndex>
         <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
             <column name="quiz_question_statistic_id"/>
         </createIndex>
@@ -2917,12 +2904,6 @@
         <createIndex indexName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation" unique="true">
             <column name="tutor_id"/>
             <column name="assessed_exercise_id"/>
-        </createIndex>
-        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
-            <column name="student_id"/>
-            <column name="exercise_id"/>
-            <column name="initialization_state"/>
-            <column name="attempt"/>
         </createIndex>
         <createIndex indexName="UKScienceSettingTableUserIdSettingId" tableName="science_setting" unique="true">
             <column name="user_id"/>
@@ -3356,9 +3337,6 @@
         <createIndex indexName="iris_session_discriminator" tableName="iris_session">
             <column name="discriminator"/>
         </createIndex>
-        <createIndex indexName="jhi_type" tableName="submission">
-            <column name="jhi_type"/>
-        </createIndex>
         <createIndex indexName="jhi_user_email" tableName="jhi_user">
             <column name="email"/>
         </createIndex>
@@ -3383,9 +3361,6 @@
         </createIndex>
         <createIndex indexName="participant_score_last_modified_date" tableName="participant_score">
             <column name="last_modified_date"/>
-        </createIndex>
-        <createIndex indexName="participation_discriminator" tableName="participation">
-            <column name="discriminator"/>
         </createIndex>
         <createIndex indexName="participation_initialization_date" tableName="participation">
             <column name="initialization_date"/>
@@ -3441,9 +3416,6 @@
         </createIndex>
         <createIndex indexName="submission_date" tableName="submission">
             <column name="submission_date"/>
-        </createIndex>
-        <createIndex indexName="submission_discriminator" tableName="submission">
-            <column name="discriminator"/>
         </createIndex>
         <createIndex indexName="submission_id" tableName="coverage_report" unique="true">
             <column name="submission_id"/>
@@ -3814,10 +3786,42 @@
             <column name="post_id"/>
             <column name="post_type"/>
         </createIndex>
-        <modifyDataType tableName="participation" columnName="initialization_state" newDataType="enum('UNINITIALIZED','REPO_COPIED','REPO_CONFIGURED','INACTIVE','BUILD_PLAN_COPIED','BUILD_PLAN_CONFIGURED','INITIALIZED','FINISHED')"/>
-        <modifyDataType tableName="participation" columnName="discriminator" newDataType="enum('P','SP','PESP','SPEP','TPEP')"/>
-        <modifyDataType tableName="submission" columnName="jhi_type" newDataType="enum('MANUAL','TIMEOUT','TEST','OTHER','INSTRUCTOR','EXTERNAL','ILLEGAL')"/>
-        <modifyDataType tableName="submission" columnName="discriminator" newDataType="enum('P','Q','M','T','F')"/>
+        <addColumn tableName="participation">
+            <column name="initialization_state" type="enum('UNINITIALIZED','REPO_COPIED','REPO_CONFIGURED','INACTIVE','BUILD_PLAN_COPIED','BUILD_PLAN_CONFIGURED','INITIALIZED','FINISHED')"/>
+        </addColumn>
+        <addColumn tableName="participation">
+            <column name="discriminator" type="enum('P','SP','PESP','SPEP','TPEP')">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="jhi_type" type="enum('MANUAL','TIMEOUT','TEST','OTHER','INSTRUCTOR','EXTERNAL','ILLEGAL')"/>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="discriminator" type="enum('P','Q','M','T','F')">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
+            <column name="team_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+        </createIndex>
+        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
+            <column name="student_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+            <column name="attempt"/>
+        </createIndex>
+        <createIndex indexName="jhi_type" tableName="submission">
+            <column name="jhi_type"/>
+        </createIndex>
+        <createIndex indexName="participation_discriminator" tableName="participation">
+            <column name="discriminator"/>
+        </createIndex>
+        <createIndex indexName="submission_discriminator" tableName="submission">
+            <column name="discriminator"/>
+        </createIndex>
     </changeSet>
     <changeSet id="00000000000003" author="krusche">
         <preConditions onFail="MARK_RAN">
@@ -3887,6 +3891,42 @@
             <column name="user_id"/>
             <column name="post_id"/>
             <column name="post_type"/>
+        </createIndex>
+        <addColumn tableName="participation">
+            <column name="initialization_state" type="varchar(255)"/>
+        </addColumn>
+        <addColumn tableName="participation">
+            <column name="discriminator" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="jhi_type" type="varchar(255)"/>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="discriminator" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
+            <column name="team_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+        </createIndex>
+        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
+            <column name="student_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+            <column name="attempt"/>
+        </createIndex>
+        <createIndex indexName="jhi_type" tableName="submission">
+            <column name="jhi_type"/>
+        </createIndex>
+        <createIndex indexName="participation_discriminator" tableName="participation">
+            <column name="discriminator"/>
+        </createIndex>
+        <createIndex indexName="submission_discriminator" tableName="submission">
+            <column name="discriminator"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>
