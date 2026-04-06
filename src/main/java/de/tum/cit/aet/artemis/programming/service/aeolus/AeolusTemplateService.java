@@ -102,7 +102,7 @@ public class AeolusTemplateService {
                 windfile = addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
                 templateCache.put(uniqueKey, windfile);
             }
-            catch (IOException | IllegalArgumentException e) {
+            catch (IOException | IllegalArgumentException | tools.jackson.core.JacksonException e) {
                 log.error("Failed to load windfile {}", resource.getFilename(), e);
             }
         }

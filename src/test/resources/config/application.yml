@@ -162,6 +162,8 @@ spring:
     jackson:
         serialization:
             indent-output: true
+        deserialization:
+            fail-on-null-for-primitives: false
     jmx:
         enabled: false
     jpa:
