@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -42,7 +42,6 @@ type TooltipConfig = {
 })
 export class IrisOnboardingModalComponent {
     private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
     private destroyRef = inject(DestroyRef);
 
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -227,7 +226,7 @@ export class IrisOnboardingModalComponent {
      */
     private findVisibleElement(selector: string): Element | undefined {
         const elements = document.querySelectorAll(selector);
-        for (const el of elements) {
+        for (const el of Array.from(elements)) {
             if (el instanceof HTMLElement && el.offsetParent !== null) {
                 return el;
             }
@@ -262,15 +261,5 @@ export class IrisOnboardingModalComponent {
         // Avoid trapping onboarding on a hidden step when target elements are not available.
         // Target element not found after all retries; fall back to default position.
         readinessSignal.set(true);
-    }
-
-    /**
-     * Moves focus to the first focusable element inside the current modal step.
-     */
-    private moveFocusToModal(): void {
-        this.safeTimeout(() => {
-            const focusable = document.querySelector<HTMLElement>('.onboarding-container .close-button, .onboarding-container .tooltip-footer button');
-            focusable?.focus();
-        });
     }
 }
