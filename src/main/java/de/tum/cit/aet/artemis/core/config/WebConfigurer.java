@@ -153,7 +153,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
      */
     @Override
     public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
-        builder.configureMessageConvertersList(converters -> {
+        builder.registerDefaults().configureMessageConvertersList(converters -> {
             var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
             converters.removeAll(stringConverters);
             converters.addAll(0, stringConverters);

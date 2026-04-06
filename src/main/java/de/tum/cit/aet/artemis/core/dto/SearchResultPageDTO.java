@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
  * @see SearchTermPageableSearchDTO
  * @param <T>
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 // TODO: convert to Record
 public class SearchResultPageDTO<T> {
 
