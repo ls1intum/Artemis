@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -96,6 +97,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean memirisEnabled = true;
 
+    @JsonCreator
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }

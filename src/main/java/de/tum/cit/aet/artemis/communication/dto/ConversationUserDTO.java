@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -20,6 +21,7 @@ public class ConversationUserDTO extends UserPublicInfoDTO {
         super(user);
     }
 
+    @JsonCreator
     public ConversationUserDTO() {
         // Empty constructor needed for Jackson.
     }

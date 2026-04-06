@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.dto;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -30,6 +31,7 @@ public class CourseStatisticsAverageScore {
         this.averageScore = averageScore;
     }
 
+    @JsonCreator
     public CourseStatisticsAverageScore() {
         this.exerciseId = 0L;
         this.exerciseName = "";

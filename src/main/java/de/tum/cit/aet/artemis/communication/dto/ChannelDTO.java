@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -71,6 +72,7 @@ public class ChannelDTO extends ConversationDTO {
         this.isCourseWide = channel.getIsCourseWide();
     }
 
+    @JsonCreator
     public ChannelDTO() {
         this.setType("channel");
     }

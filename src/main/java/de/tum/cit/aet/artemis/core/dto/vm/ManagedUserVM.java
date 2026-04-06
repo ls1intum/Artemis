@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.dto.vm;
 
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -17,6 +18,7 @@ public class ManagedUserVM extends UserDTO {
     @Size(min = Constants.PASSWORD_MIN_LENGTH, max = Constants.PASSWORD_MAX_LENGTH)
     private String password;
 
+    @JsonCreator
     public ManagedUserVM() {
         // Empty constructor needed for Jackson.
     }

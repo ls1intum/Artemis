@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -35,6 +36,7 @@ public class GroupChatDTO extends ConversationDTO {
         this.name = groupChat.getName();
     }
 
+    @JsonCreator
     public GroupChatDTO() {
         this.setType("groupChat");
     }

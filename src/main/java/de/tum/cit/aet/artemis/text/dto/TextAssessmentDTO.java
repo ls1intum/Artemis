@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -19,6 +20,7 @@ public class TextAssessmentDTO {
 
     private String assessmentNote;
 
+    @JsonCreator
     public TextAssessmentDTO() {
         // needed to make Jackson happy
     }

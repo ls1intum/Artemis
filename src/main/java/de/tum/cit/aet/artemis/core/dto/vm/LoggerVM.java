@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.dto.vm;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import ch.qos.logback.classic.Logger;
@@ -21,6 +22,7 @@ public class LoggerVM {
         this.level = logger.getEffectiveLevel().toString();
     }
 
+    @JsonCreator
     public LoggerVM() {
         // Empty public constructor used by Jackson.
     }

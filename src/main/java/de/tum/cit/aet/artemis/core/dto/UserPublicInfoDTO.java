@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.dto;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -35,6 +36,7 @@ public class UserPublicInfoDTO {
 
     private Boolean isStudent;
 
+    @JsonCreator
     public UserPublicInfoDTO() {
         // Empty constructor needed for Jackson.
     }

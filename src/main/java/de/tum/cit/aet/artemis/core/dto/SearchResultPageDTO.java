@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -28,6 +29,7 @@ public class SearchResultPageDTO<T> {
      */
     private int numberOfPages;
 
+    @JsonCreator
     public SearchResultPageDTO() {
     }
 

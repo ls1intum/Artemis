@@ -127,7 +127,7 @@ public class ExamRoomService {
             }
 
         }
-        catch (IOException e) {
+        catch (IOException | tools.jackson.core.JacksonException e) {
             throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 
