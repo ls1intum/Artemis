@@ -193,9 +193,8 @@ public class SecurityConfiguration {
     // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setRoleHierarchy(roleHierarchy());
-        return expressionHandler;
+        // RoleHierarchy bean is auto-detected by Spring Security 7
+        return new DefaultMethodSecurityExpressionHandler();
     }
 
     /**
