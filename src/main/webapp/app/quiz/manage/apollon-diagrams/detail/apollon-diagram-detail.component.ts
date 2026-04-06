@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
@@ -32,6 +32,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private modalService = inject(NgbModal);
     private elementRef = inject(ElementRef);
+    private ngZone = inject(NgZone);
     private changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
@@ -133,6 +134,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
+        (this.elementRef.nativeElement as any).__apollonEditor = undefined;
     }
 
     /**
@@ -153,9 +155,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+        // Wrap callback in NgZone.run() because Apollon's React/Zustand store fires outside Angular's zone.
+        // Without this, programmatic model updates (e.g., from E2E tests) don't trigger change detection,
+        // leaving template bindings like [disabled]="!hasInteractive" stale.
         this.apollonEditor.subscribeToModelChange((newModel) => {
-            this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
-            this.changeDetectorRef.markForCheck();
+            this.ngZone.run(() => {
+                this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
+                this.changeDetectorRef.markForCheck();
+            });
         });
     }
 
