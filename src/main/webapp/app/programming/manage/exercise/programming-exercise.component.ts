@@ -21,7 +21,6 @@ import {
     faCheck,
     faCheckDouble,
     faDownload,
-    faFileSignature,
     faListAlt,
     faPencilAlt,
     faPlus,
@@ -110,7 +109,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faTrash = faTrash;
     faListAlt = faListAlt;
     faPencilAlt = faPencilAlt;
-    faFileSignature = faFileSignature;
     faCheck = faCheck;
     faTimes = faTimes;
 

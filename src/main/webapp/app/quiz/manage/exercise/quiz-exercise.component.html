@@ -65,7 +65,12 @@
                             }
                         </td>
                         <td>
-                            <div>{{ quizExercise.maxPoints }}</div>
+                            <div>
+                                {{ quizExercise.maxPoints }}
+                                @if (quizExercise.bonusPoints && quizExercise.bonusPoints > 0) {
+                                    <span class="text-muted">(+{{ quizExercise.bonusPoints }})</span>
+                                }
+                            </div>
                             <div class="small">
                                 @switch (quizExercise.includedInOverallScore) {
                                     @case ('INCLUDED_COMPLETELY') {
