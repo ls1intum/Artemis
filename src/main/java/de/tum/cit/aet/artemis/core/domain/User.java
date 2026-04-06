@@ -38,6 +38,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -214,6 +215,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
 
+    @JsonCreator
     public User() {
     }
 
