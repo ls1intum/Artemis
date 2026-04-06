@@ -386,7 +386,7 @@
         </createTable>
         <createTable tableName="course_iris_settings">
             <column name="course_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_course_iris_settings"/>
             </column>
             <column name="settings" type="json">
                 <constraints nullable="false"/>
@@ -1138,11 +1138,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="feedback_formality" type="int" defaultValueNumeric="2">
-                <constraints nullable="false"/>
-            </column>
+                </column>
             <column name="feedback_detail" type="int" defaultValueNumeric="2">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </createTable>
         <createTable tableName="learning_path">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1171,7 +1169,7 @@
         </createTable>
         <createTable tableName="lecture_transcription">
             <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_lecture_transcription"/>
             </column>
             <column name="language" type="varchar(2)"/>
             <column name="lecture_unit_id" type="bigint">
@@ -1861,8 +1859,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="thread_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
+                </column>
             <column name="author_id" type="bigint"/>
             <column name="content" type="json">
                 <constraints nullable="false"/>
@@ -2515,10 +2512,6 @@
             <column name="exercise_id"/>
             <column name="build_job_result"/>
         </createIndex>
-        <createIndex indexName="uq_course_learner_profile_pair" tableName="course_learner_profile" unique="true">
-            <column name="learner_profile_id"/>
-            <column name="course_id"/>
-        </createIndex>
         <createIndex indexName="idx_course_request_status" tableName="course_request">
             <column name="status"/>
         </createIndex>
@@ -2526,10 +2519,6 @@
             <column name="exam_id"/>
         </createIndex>
         <createIndex indexName="idx_exam_room_assignment_exam_room_id" tableName="exam_room_exam_assignment">
-            <column name="exam_room_id"/>
-        </createIndex>
-        <createIndex indexName="uc_exam_room_assignment_exam_room" tableName="exam_room_exam_assignment" unique="true">
-            <column name="exam_id"/>
             <column name="exam_room_id"/>
         </createIndex>
         <createIndex indexName="idx_exercise_version_created_date" tableName="exercise_version">
@@ -2541,10 +2530,6 @@
         </createIndex>
         <createIndex indexName="idx_layout_strategy_exam_room_id" tableName="layout_strategy">
             <column name="exam_room_id"/>
-        </createIndex>
-        <createIndex indexName="uc_layout_strategy_exam_room_name" tableName="layout_strategy" unique="true">
-            <column name="exam_room_id"/>
-            <column name="name"/>
         </createIndex>
         <createIndex indexName="idx_processing_state_phase" tableName="lecture_unit_processing_state">
             <column name="phase"/>
@@ -2573,10 +2558,6 @@
             <column name="course_id"/>
             <column name="due_date"/>
         </createIndex>
-        <createIndex indexName="uc_quiz_question_progress_userid_quizquestionid" tableName="quiz_question_progress" unique="true">
-            <column name="user_id"/>
-            <column name="quiz_question_id"/>
-        </createIndex>
         <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
             <column name="drag_and_drop_question_statistic_id"/>
         </createIndex>
@@ -2590,10 +2571,6 @@
             <column name="league"/>
             <column name="course_id"/>
             <column name="show_in_leaderboard"/>
-        </createIndex>
-        <createIndex indexName="uc_quiz_training_leaderboard_user_course" tableName="quiz_training_leaderboard" unique="true">
-            <column name="user_id"/>
-            <column name="course_id"/>
         </createIndex>
         <createIndex indexName="idx_result_exercise_id" tableName="result">
             <column name="exercise_id"/>
@@ -3456,9 +3433,9 @@
         <createIndex indexName="vcs_access_log_participation_id" tableName="vcs_access_log">
             <column name="participation_id"/>
         </createIndex>
-        <createIndex indexName="uk_course_request_short_name" tableName="course_request" unique="true">
-            <column name="short_name"/>
-        </createIndex>
+        <addNotNullConstraint tableName="learner_profile" columnName="feedback_formality" columnDataType="int" constraintName="learner_profile_feedback_followup_summary_not_null"/>
+        <addNotNullConstraint tableName="learner_profile" columnName="feedback_detail" columnDataType="int" constraintName="learner_profile_feedback_brief_detailed_not_null"/>
+        <addNotNullConstraint tableName="review_comment" columnName="thread_id" columnDataType="bigint" constraintName="review_comment_thread_id_not_null1"/>
         <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="created_course_id" baseTableName="course_request" constraintName="fk_course_request_course" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3714,6 +3691,12 @@
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_course_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <loadData encoding="UTF-8" file="config/liquibase/authorities.csv" separator=";" tableName="jhi_authority"/>
+        <addUniqueConstraint tableName="course_learner_profile" columnNames="learner_profile_id, course_id" constraintName="uq_course_learner_profile_pair"/>
+        <addUniqueConstraint tableName="exam_room_exam_assignment" columnNames="exam_id, exam_room_id" constraintName="uc_exam_room_assignment_exam_room"/>
+        <addUniqueConstraint tableName="layout_strategy" columnNames="exam_room_id, name" constraintName="uc_layout_strategy_exam_room_name"/>
+        <addUniqueConstraint tableName="quiz_question_progress" columnNames="user_id, quiz_question_id" constraintName="uc_quiz_question_progress_userid_quizquestionid"/>
+        <addUniqueConstraint tableName="quiz_training_leaderboard" columnNames="user_id, course_id" constraintName="uc_quiz_training_leaderboard_user_course"/>
+        <addUniqueConstraint tableName="course_request" columnNames="short_name" constraintName="uk_course_request_short_name"/>
     </changeSet>
     <changeSet id="00000000000002" author="krusche">
         <preConditions onFail="MARK_RAN">
@@ -3774,10 +3757,6 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-        <createIndex indexName="uk_global_notification_setting_user_type" tableName="global_notification_setting" unique="true">
-            <column name="user_id"/>
-            <column name="global_notification_type"/>
-        </createIndex>
         <createIndex indexName="idx_review_comment_thread_target" tableName="review_comment_thread">
             <column name="target_type"/>
         </createIndex>
@@ -3822,6 +3801,7 @@
         <createIndex indexName="submission_discriminator" tableName="submission">
             <column name="discriminator"/>
         </createIndex>
+        <addUniqueConstraint tableName="global_notification_setting" columnNames="user_id, global_notification_type" constraintName="uk_global_notification_setting_user_type"/>
     </changeSet>
     <changeSet id="00000000000003" author="krusche">
         <preConditions onFail="MARK_RAN">
@@ -3880,10 +3860,6 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-        <createIndex indexName="uk_global_notification_setting_user_type" tableName="global_notification_setting" unique="true">
-            <column name="user_id"/>
-            <column name="global_notification_type"/>
-        </createIndex>
         <createIndex indexName="idx_review_comment_thread_target" tableName="review_comment_thread">
             <column name="target_type"/>
         </createIndex>
@@ -3928,5 +3904,6 @@
         <createIndex indexName="submission_discriminator" tableName="submission">
             <column name="discriminator"/>
         </createIndex>
+        <addUniqueConstraint tableName="global_notification_setting" columnNames="user_id, global_notification_type" constraintName="uk_global_notification_setting_user_type"/>
     </changeSet>
 </databaseChangeLog>
