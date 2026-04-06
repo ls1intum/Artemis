@@ -26,7 +26,7 @@
                             </td>
                         }
                         @if (quizExercise.isAtLeastTutor) {
-                            <td>
+                            <td id="exercise-id-{{ quizExercise.id }}">
                                 <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">
                                     {{ quizExercise.title }}
                                 </a>

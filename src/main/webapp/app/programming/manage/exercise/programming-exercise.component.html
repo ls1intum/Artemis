@@ -99,26 +99,26 @@
                             <div class="d-flex justify-content-between">
                                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
                                 @if (programmingExercise.allowOfflineIde) {
-                                    <fa-icon [icon]="faCheck" class="text-success" />
+                                    <fa-icon [icon]="faCheck" class="text-success" [title]="'artemisApp.exercise.yes' | artemisTranslate" />
                                 } @else {
-                                    <fa-icon [icon]="faTimes" class="text-danger" />
+                                    <fa-icon [icon]="faTimes" class="text-danger" [title]="'artemisApp.exercise.no' | artemisTranslate" />
                                 }
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
                                 @if (programmingExercise.allowOnlineEditor) {
-                                    <fa-icon [icon]="faCheck" class="text-success" />
+                                    <fa-icon [icon]="faCheck" class="text-success" [title]="'artemisApp.exercise.yes' | artemisTranslate" />
                                 } @else {
-                                    <fa-icon [icon]="faTimes" class="text-danger" />
+                                    <fa-icon [icon]="faTimes" class="text-danger" [title]="'artemisApp.exercise.no' | artemisTranslate" />
                                 }
                             </div>
                             @if (onlineIdeEnabled) {
                                 <div class="d-flex justify-content-between">
                                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
                                     @if (programmingExercise.allowOnlineIde) {
-                                        <fa-icon [icon]="faCheck" class="text-success" />
+                                        <fa-icon [icon]="faCheck" class="text-success" [title]="'artemisApp.exercise.yes' | artemisTranslate" />
                                     } @else {
-                                        <fa-icon [icon]="faTimes" class="text-danger" />
+                                        <fa-icon [icon]="faTimes" class="text-danger" [title]="'artemisApp.exercise.no' | artemisTranslate" />
                                     }
                                 </div>
                             }
