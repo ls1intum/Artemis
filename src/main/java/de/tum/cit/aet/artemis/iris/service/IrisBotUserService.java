@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * Service responsible for managing the Iris bot user account.
@@ -80,7 +80,7 @@ public class IrisBotUserService {
                 bot.setActivated(true);
                 bot.setInternal(true);
                 bot.setImageUrl(IRIS_BOT_IMAGE_URL);
-                bot.setPassword(passwordService.hashPassword(RandomUtil.generatePassword()));
+                bot.setPassword(passwordService.hashPassword(UUID.randomUUID().toString()));
                 bot.setAuthorities(new HashSet<>(Set.of(new Authority("ROLE_USER"))));
                 bot.setGroups(new HashSet<>());
                 bot.setLangKey("en");
