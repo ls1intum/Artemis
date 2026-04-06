@@ -53,46 +53,12 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String INTERACTIVE_JS = loadInteractiveJs();
 
+    private static final @Nullable String EMBEDDED_CSS = loadCssResource("problem-statement-css/embedded.css");
+
+    private static final @Nullable String DARK_MODE_CSS = loadCssResource("problem-statement-css/dark-mode.css");
+
     // Dangerous SVG constructs that PlantUML should never generate but we strip as defense-in-depth
     private static final Pattern SVG_DANGEROUS_PATTERN = Pattern.compile("<script|</script|\\bon\\w+\\s*=|javascript:|foreignObject|<image|<use[\\s>]", Pattern.CASE_INSENSITIVE);
-
-    // @formatter:off
-    private static final String EMBEDDED_CSS = """
-            <style>
-            .artemis-problem-statement{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.5;color:var(--body-color,#212529)}
-            .artemis-problem-statement h1,.artemis-problem-statement h2,.artemis-problem-statement h3,.artemis-problem-statement h4{font-weight:400}
-            .artemis-problem-statement ol,.artemis-problem-statement ul{margin-bottom:.75em}
-            .artemis-problem-statement hr{border:none;border-top:1px solid var(--border-color,#dee2e6);margin:16px 0}
-            .artemis-problem-statement svg{max-width:100%;height:auto}
-            .artemis-problem-statement a{color:var(--link-color,#3e8acc)}
-            .artemis-problem-statement pre{background:var(--artemis-pre-background,#f5f5f5);color:var(--artemis-pre-color,#333);border:1px solid var(--artemis-pre-border,#ccc);border-radius:4px;padding:10px;font-size:13px;line-height:1.43;white-space:pre-wrap;overflow-wrap:break-word}
-            .artemis-problem-statement :not(pre)>code{font-size:87.5%;color:#d63384;padding:2px 4px;background:var(--artemis-pre-background,#f5f5f5);border-radius:4px}
-            .artemis-problem-statement blockquote{color:var(--markdown-preview-blockquote,#6a737d);border-left:4px solid var(--markdown-preview-blockquote-border,#dfe2e5);padding:0 1em;margin:0 0 16px}
-            .artemis-problem-statement img{max-width:100%}
-            .artemis-task{cursor:pointer;font-weight:600}
-            i.fa.artemis-icon-success,i.fa.artemis-icon-fail{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;background-size:contain;background-repeat:no-repeat}
-            i.fa.artemis-icon-success{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%2328a745'/%3E%3Cpath d='M5 8l2 2 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")}
-            i.fa.artemis-icon-fail{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%23dc3545'/%3E%3Cpath d='M5.5 5.5l5 5M10.5 5.5l-5 5' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E")}
-            .artemis-task-stats{font-weight:400;font-size:.9em;margin-left:4px;text-decoration:underline}
-            .artemis-task-success .artemis-task-stats{color:var(--success,#28a745)}
-            .artemis-task-fail .artemis-task-stats{color:var(--danger,#dc3545)}
-            .artemis-task-not-executed .artemis-task-stats{color:var(--secondary,#6c757d)}
-            .markdown-alert{border-left:4px solid var(--info,#17a2b8);padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
-            .markdown-alert-title{font-weight:600}
-            .artemis-problem-statement table{border-collapse:collapse;width:100%}
-            .artemis-problem-statement table th,.artemis-problem-statement table td{border:1px solid var(--border-color,#dee2e6);padding:8px}
-            </style>
-            """;
-
-    // @formatter:off
-    private static final String DARK_MODE_CSS = """
-            <style>
-            .artemis-problem-statement{--body-color:#e0e0e0;--border-color:#444;--link-color:#58a6ff;--body-bg:#1e1e1e;--artemis-pre-background:#2d2d2d;--artemis-pre-color:#e0e0e0;--artemis-pre-border:#444;--markdown-preview-blockquote:#999;--markdown-preview-blockquote-border:#555;--success:#28a745;--danger:#dc3545;--secondary:#999;--info:#58a6ff}
-            .artemis-problem-statement{color:#e0e0e0}
-            .artemis-problem-statement :not(pre)>code{background:#2d2d2d}
-            </style>
-            """;
-    // @formatter:on
 
     /**
      * Holds feedback detail for a single test case.
@@ -168,41 +134,45 @@ public class ProblemStatementRenderingService {
 
         String processedMarkdown = markdown;
 
-        // Step 0: Mask code blocks to prevent task/PlantUML extraction inside them
+        // Mask code blocks to prevent task/PlantUML extraction inside them
         List<String> codeBlocks = new ArrayList<>();
         processedMarkdown = maskCodeBlocks(processedMarkdown, codeBlocks);
 
-        // Step 1: Extract PlantUML diagrams (max 10)
+        // Extract PlantUML diagrams (max 10)
         List<String> inlineSvgs = new ArrayList<>();
         processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults, darkMode);
 
-        // Step 2: Extract tasks
+        // Extract tasks
         processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
 
-        // Step 2.5: Restore masked code blocks
+        // Restore masked code blocks
         processedMarkdown = restoreCodeBlocks(processedMarkdown, codeBlocks);
 
-        // Step 3: CommonMark → HTML
+        // CommonMark → HTML
         String html = renderWithCommonMark(processedMarkdown);
 
-        // Step 4: Inject SVGs (after sanitization since jsoup can't handle SVG)
+        // Inject SVGs (after sanitization since jsoup can't handle SVG)
         for (int i = 0; i < inlineSvgs.size(); i++) {
             html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
 
-        // Step 5: Wrap in container div with result summary
+        // Wrap in container div with result summary
         String resultAttr = buildResultAttribute(resultSummary);
         html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
 
-        // Step 6: Strip testid tags
+        // Strip testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 7: Prepend embedded CSS (+ dark mode overrides if needed)
+        // Prepend embedded CSS (+ dark mode overrides if needed)
         if (includeCss) {
-            html = EMBEDDED_CSS + (darkMode ? DARK_MODE_CSS : "") + html;
+            String css = EMBEDDED_CSS != null ? "<style>" + EMBEDDED_CSS + "</style>" : "";
+            if (darkMode && DARK_MODE_CSS != null) {
+                css += "<style>" + DARK_MODE_CSS + "</style>";
+            }
+            html = css + html;
         }
 
-        // Step 8: Content hash (covers HTML + JS)
+        // Content hash (covers HTML + JS)
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
@@ -511,6 +481,16 @@ public class ProblemStatementRenderingService {
         }
         catch (IOException e) {
             log.warn("Could not load interactive JS resource for problem statement rendering");
+            return null;
+        }
+    }
+
+    private static @Nullable String loadCssResource(String path) {
+        try (InputStream is = new ClassPathResource(path).getInputStream()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            log.warn("Could not load CSS resource: {}", path);
             return null;
         }
     }

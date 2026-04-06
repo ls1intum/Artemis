@@ -93,7 +93,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRenderTasksWithTestResults() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "testSort", true, null, 1.0), new TestFeedbackInput(2, "testEdge", false, "Array index out of bounds", 0.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "testSort", true, null, 1.0), new TestFeedbackInput(2L, "testEdge", false, "Array index out of bounds", 0.0));
         var body = new ProblemStatementRenderRequest("[task][Sort Method](<testid>1</testid>,<testid>2</testid>)", testResults, null, "en", false, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -108,7 +108,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldShowSuccessWhenAllTestsPass() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "testA", true, null, 1.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "testA", true, null, 1.0));
         var body = new ProblemStatementRenderRequest("[task][Task A](<testid>1</testid>)", testResults, null, "en", false, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -119,7 +119,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldShowNotExecutedWhenTestMissing() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "testA", true, null, 1.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "testA", true, null, 1.0));
         var body = new ProblemStatementRenderRequest("[task][Task](<testid>1</testid>,<testid>999</testid>)", testResults, null, "en", false, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -141,7 +141,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldEscapeHtmlInFeedbackMessage() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "test", false, "Expected <div>hello</div> but got \"error\"", 0.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "test", false, "Expected <div>hello</div> but got \"error\"", 0.0));
         var body = new ProblemStatementRenderRequest("[task][T](<testid>1</testid>)", testResults, null, "en", false, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -154,7 +154,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldEmbedResultSummary() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "test", true, null, 1.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "test", true, null, 1.0));
         var resultSummary = new ResultSummaryInput(92.3, 10.0, 2.0, "deadbeef123", "2025-12-01T10:00:00Z", "AUTOMATIC");
         var body = new ProblemStatementRenderRequest("[task][T](<testid>1</testid>)", testResults, resultSummary, "en", false, true);
 
@@ -191,7 +191,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldResolveTestsColorInPlantUml() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(42, "testSort", true, null, 1.0));
+        var testResults = List.of(new TestFeedbackInput(42L, "testSort", true, null, 1.0));
         var body = new ProblemStatementRenderRequest("@startuml\n!pragma layout smetana\nclass A\n<color:testsColor(<testid>42</testid>)>colored</color>\n@enduml", testResults,
                 null, "en", false, true);
 
@@ -205,7 +205,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLocalizeTaskStats() throws Exception {
-        var testResults = List.of(new TestFeedbackInput(1, "test", true, null, 1.0));
+        var testResults = List.of(new TestFeedbackInput(1L, "test", true, null, 1.0));
         var body = new ProblemStatementRenderRequest("[task][T](<testid>1</testid>)", testResults, null, "de", false, true);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
