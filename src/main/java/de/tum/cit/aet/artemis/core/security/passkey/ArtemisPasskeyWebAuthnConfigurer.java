@@ -103,7 +103,9 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
+        var jacksonConverter = new MappingJackson2HttpMessageConverter(objectMapper);
+        this.converter = jacksonConverter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;

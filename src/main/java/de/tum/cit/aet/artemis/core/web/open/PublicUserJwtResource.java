@@ -124,6 +124,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("saml2")
     @EnforceNothing
+    @SuppressWarnings("deprecation") // Saml2AuthenticatedPrincipal is deprecated; migrate when replacement API stabilizes
     public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response, HttpServletRequest request) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
