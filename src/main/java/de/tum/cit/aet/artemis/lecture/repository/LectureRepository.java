@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,7 +45,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,
-                lecture.visibleDate,
                 lecture.startDate,
                 lecture.endDate
             )
@@ -54,14 +52,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL) AND NOT lecture.isTutorialLecture
             """)
     Set<LectureCalendarEventDTO> getLectureCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :courseId AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
-            """)
-    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture

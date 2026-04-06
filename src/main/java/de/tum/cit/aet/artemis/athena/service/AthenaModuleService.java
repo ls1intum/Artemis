@@ -20,7 +20,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -74,11 +73,11 @@ public class AthenaModuleService {
      */
     private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
-            var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
+            var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", String.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new NetworkingException("Could not fetch Athena modules");
             }
-            AthenaModuleDTO[] modules = objectMapper.treeToValue(response.getBody(), AthenaModuleDTO[].class);
+            AthenaModuleDTO[] modules = objectMapper.readValue(response.getBody(), AthenaModuleDTO[].class);
             return List.of(modules);
         }
         catch (RestClientException | JsonProcessingException e) {

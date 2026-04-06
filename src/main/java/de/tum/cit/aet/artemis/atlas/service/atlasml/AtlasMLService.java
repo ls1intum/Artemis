@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -71,8 +72,6 @@ public class AtlasMLService {
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     private final FeatureToggleService featureToggleService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // API endpoints
     private static final String HEALTH_ENDPOINT = "/api/v1/health/";
@@ -165,6 +164,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
+                ObjectMapper objectMapper = JsonObjectMapper.get();
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -203,6 +203,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
+            ObjectMapper objectMapper = JsonObjectMapper.get();
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {
@@ -537,6 +538,7 @@ public class AtlasMLService {
         }
 
         try {
+            ObjectMapper objectMapper = JsonObjectMapper.get();
             JsonNode root = objectMapper.readTree(responseBody);
             boolean isHealthy = isHttpHealthy;
 
