@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -282,7 +282,7 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> buildLogs = removeUnnecessaryLogs(buildLogEntries, programmingLanguage);
         // Replace some unnecessary information and hide complex details to make it easier to read the important information
-        return buildLogs.stream().peek(buildLog -> buildLog.setLog(ContinuousIntegrationService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
+        return buildLogs.stream().peek(buildLog -> buildLog.setLog(StatelessCIService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
     }
 
     /**

@@ -1,0 +1,40 @@
+package de.tum.cit.aet.artemis.programming.service.hades.dto;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * Record for a build job in Hades
+ * This record wraps a build request for Hades. It contains the name of a job, volumes, metadata, timestamp, priority, and steps.
+ * The steps are a list of HadesBuildStepDTOs.
+ * The metadata is a hashmap containing key-value pairs for the metadata which should be shared between all build steps.
+ * The API Specification for Hades can be found here: <a href="https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go">...</a>
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps)
+        implements Serializable {
+
+    public record Volume(String name, EmptyDir emptyDir) {
+    }
+
+    public record EmptyDir() {
+    }
+
+    public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps) {
+        if (steps == null) {
+            steps = List.of();
+        }
+
+        List<Volume> volumes = List.of(new Volume("shared", new EmptyDir()));
+        this(name, volumes, metadata, timestamp, priority, steps);
+    }
+
+    @Override
+    public String toString() {
+        return "HadesBuildJobDTO{" + "name='" + name + '\'' + ", volumes=" + volumes + ", metadata=" + metadata + ", timestamp='" + timestamp + '\'' + ", priority=" + priority
+                + ", steps=" + steps + '}';
+    }
+}

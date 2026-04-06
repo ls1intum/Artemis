@@ -305,6 +305,11 @@ public final class Constants {
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**
+     * The name of the Spring profile used to process build jobs in a Stateless Jenkins setup.
+     */
+    public static final String PROFILE_STATELESS_JENKINS = "stateless-jenkins";
+
+    /**
      * The name of the Spring profile used for Artemis functionality.
      */
     public static final String PROFILE_ARTEMIS = "artemis";
@@ -328,6 +333,11 @@ public final class Constants {
      * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
+     * The name of the Spring profile used for the external CI system Hades.
+     */
+    public static final String PROFILE_HADES = "hades";
 
     /**
      * The name of the Spring profile used for the external LDAP system.

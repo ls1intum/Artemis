@@ -120,15 +120,21 @@ public class ProgrammingExerciseDeletionResource {
     @PutMapping("programming-exercises/{exerciseId}/reset")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO)
-            throws JsonProcessingException {
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-            continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
+            continuousIntegrationService.ifPresent(ciService -> {
+                try {
+                    ciService.recreateBuildPlansForExercise(programmingExercise);
+                }
+                catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {

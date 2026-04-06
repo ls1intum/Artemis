@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessaging
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -90,7 +91,7 @@ public class ProgrammingSubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<StatelessCIService> statelessCIService;
 
     private final UserRepository userRepository;
 
@@ -101,8 +102,7 @@ public class ProgrammingSubmissionResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
-            ExerciseDateService exerciseDateService) {
+            SubmissionRepository submissionRepository, Optional<StatelessCIService> statelessCIService, UserRepository userRepository, ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
@@ -114,7 +114,7 @@ public class ProgrammingSubmissionResource {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.submissionRepository = submissionRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.statelessCIService = statelessCIService;
         this.userRepository = userRepository;
         this.exerciseDateService = exerciseDateService;
     }
@@ -186,7 +186,7 @@ public class ProgrammingSubmissionResource {
         // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
         if (programmingExerciseParticipation.getBuildPlanId() != null) {
             // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
-            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
+            ContinuousIntegrationService.BuildStatus buildStatus = statelessCIService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.

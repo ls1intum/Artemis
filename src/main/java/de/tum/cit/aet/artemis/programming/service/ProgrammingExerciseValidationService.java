@@ -327,7 +327,13 @@ public class ProgrammingExerciseValidationService {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-        String errorMessageCis = continuousIntegrationService.orElseThrow().checkIfProjectExists(projectKey, projectName);
+
+        if (continuousIntegrationService.isEmpty()) {
+            log.debug("ContinuousIntegrationService is not available, skipping check if project exists on CI server");
+            return;
+        }
+
+        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
         if (errorMessageCis != null) {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
@@ -352,7 +358,13 @@ public class ProgrammingExerciseValidationService {
         if (projectExists) {
             return true;
         }
-        String errorMessageCis = continuousIntegrationService.orElseThrow().checkIfProjectExists(projectKey, projectName);
+
+        if (continuousIntegrationService.isEmpty()) {
+            log.debug("ContinuousIntegrationService is not available, skipping check if project exists on CI server");
+            return false;
+        }
+
+        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
         // means the project does not exist in version control server and does not exist in continuous integration server
         return errorMessageCis != null;
     }
@@ -366,21 +378,27 @@ public class ProgrammingExerciseValidationService {
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         validateBuildPhaseNames(exercise);
 
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
-        if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
-            throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
-        }
         if (exercise.getVcsTemplateRepositoryUri() == null || !versionControl.repositoryUriIsValid(exercise.getVcsTemplateRepositoryUri())) {
             throw new BadRequestAlertException("The Template Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
-        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
-            throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
-        }
+
         var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
         if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
             throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
+        }
+
+        if (continuousIntegrationService.isPresent()) {
+            ContinuousIntegrationService continuousIntegration = continuousIntegrationService.get();
+
+            if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+                throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
+            }
+
+            if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
+                throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
+            }
         }
 
         // It has already been checked when setting the test case weights that their sum is at least >= 0.

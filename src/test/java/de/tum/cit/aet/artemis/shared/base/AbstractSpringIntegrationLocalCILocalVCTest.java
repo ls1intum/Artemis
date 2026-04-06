@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
@@ -187,7 +187,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
-    protected LocalCIService continuousIntegrationService;
+    protected ContinuousIntegrationService continuousIntegrationService;
 
     @MockitoSpyBean
     protected LocalCITriggerService localCITriggerService;

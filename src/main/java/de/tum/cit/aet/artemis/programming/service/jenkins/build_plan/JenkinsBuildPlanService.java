@@ -56,6 +56,8 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService
 @Lazy
 @Service
 @Profile(PROFILE_JENKINS)
+// TODO: EXTRACTED TO MICROSERVICE - This class has been copied to jenkins-connector/src/main/java/de/tum/cit/aet/artemis/jenkins/connector/service/JenkinsBuildService.java
+// This code will be removed once the microservice migration is complete
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);

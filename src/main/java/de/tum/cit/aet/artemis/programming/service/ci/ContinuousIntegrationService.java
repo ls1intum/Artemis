@@ -1,10 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.ci;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
-
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -16,18 +11,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 /**
  * Abstract service for managing entities related to continuous integration.
  */
-public interface ContinuousIntegrationService {
-
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
-
-    String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
-
-    Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
-
-    enum BuildStatus {
-        INACTIVE, QUEUED, BUILDING
-    }
+public interface ContinuousIntegrationService extends StatelessCIService {
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -36,7 +20,8 @@ public interface ContinuousIntegrationService {
      * @param planKey               the key of the plan
      * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
      * @param testRepositoryUri     the URI of the test repository
-     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with
+     *                                  checkoutSolutionRepository=true. Otherwise, ignored.
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
@@ -51,7 +36,8 @@ public interface ContinuousIntegrationService {
     void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
-     * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
+     * Clones an existing build plan. Illegal characters in the plan key, or name
+     * will be replaced.
      *
      * @param sourceExercise      The exercise from which the build plan should be copied
      * @param sourcePlanName      The name of the source plan
@@ -66,10 +52,12 @@ public interface ContinuousIntegrationService {
             boolean targetProjectExists);
 
     /**
-     * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
+     * Configure the build plan with the given participation on the CI system.
+     * Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
      * <p>
-     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
+     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized,
+     * otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
@@ -94,8 +82,9 @@ public interface ContinuousIntegrationService {
     void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
-     * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * jenkins-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
+     * Get the plan key of the finished build, the information of the build get passed via the requestBody.
+     * The requestBody must match the information passed from the jenkins-server-notification-plugin,
+     * the body is described here: <a href= "https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -103,14 +92,6 @@ public interface ContinuousIntegrationService {
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
-
-    /**
-     * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
-     *
-     * @param participation participation for which to get status
-     * @return build status
-     */
-    BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation);
 
     /**
      * Check if the given build plan ID is valid and accessible.
