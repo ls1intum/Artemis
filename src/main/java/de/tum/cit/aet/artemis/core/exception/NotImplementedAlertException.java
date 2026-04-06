@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.net.URI;
 
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
 
 public class NotImplementedAlertException extends HttpStatusException {
 
@@ -11,6 +11,6 @@ public class NotImplementedAlertException extends HttpStatusException {
     }
 
     public NotImplementedAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
-        super(type, defaultMessage, Status.NOT_IMPLEMENTED, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
+        super(type, defaultMessage, HttpStatus.NOT_IMPLEMENTED, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 }

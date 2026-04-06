@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Conditional(IrisEnabled.class)
 @Lazy
@@ -85,10 +83,6 @@ public class IrisLectureChatSessionResource {
 
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
-
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
@@ -118,10 +112,6 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
-
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
@@ -147,10 +137,6 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
-
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
@@ -161,11 +147,5 @@ public class IrisLectureChatSessionResource {
         // Access check might not even be necessary here -> see comments in hasAccess method
         var filteredSessions = sessions.stream().filter(session -> irisLectureChatSessionService.hasAccess(user, session)).toList();
         return ResponseEntity.ok(filteredSessions.stream().map(IrisChatSessionResponseDTO::of).toList());
-    }
-
-    private static void checkWhetherLectureIsVisibleToStudentsElseThrow(Lecture lecture) {
-        if (!lecture.isVisibleToStudents()) {
-            throw new ConflictException("The lecture is not visible to students yet", "Iris", "irisLecture");
-        }
     }
 }

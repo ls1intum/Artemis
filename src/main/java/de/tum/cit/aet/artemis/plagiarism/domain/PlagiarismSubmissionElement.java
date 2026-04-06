@@ -44,11 +44,12 @@ public class PlagiarismSubmissionElement extends DomainObject {
      * @param submissionDirectory  the directory to which all student submissions have been downloaded / stored
      * @return a new PlagiarismSubmissionElement instance
      */
+    @SuppressWarnings("removal") // Token.getLength() has no replacement in JPlag API
     public static PlagiarismSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission plagiarismSubmission, Exercise exercise, File submissionDirectory) {
         PlagiarismSubmissionElement textSubmissionElement = new PlagiarismSubmissionElement();
 
-        textSubmissionElement.setColumn(token.getColumn());
-        textSubmissionElement.setLine(token.getLine());
+        textSubmissionElement.setColumn(token.getStartColumn());
+        textSubmissionElement.setLine(token.getStartLine());
         if (exercise instanceof ProgrammingExercise) {
             // Note: for text submissions 'file' must be null
             // Note: we want to get the relative path within the repository and not the absolute path

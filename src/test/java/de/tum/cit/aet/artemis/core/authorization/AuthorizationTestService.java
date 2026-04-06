@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.authorization;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.assertj.core.api.Fail.fail;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

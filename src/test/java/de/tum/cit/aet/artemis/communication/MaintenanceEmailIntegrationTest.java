@@ -35,11 +35,11 @@ import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests that verify maintenance email notifications are delivered with correct content
@@ -85,7 +85,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         templateEngine.getTemplateResolvers().forEach(testTemplateEngine::addTemplateResolver);
         testTemplateEngine.setMessageSource(mainMessageSource);
 
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
