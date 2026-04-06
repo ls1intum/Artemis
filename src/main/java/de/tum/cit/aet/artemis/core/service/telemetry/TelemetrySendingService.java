@@ -42,10 +42,13 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
+    private final ObjectMapper objectMapper;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, ObjectMapper objectMapper) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
+        this.objectMapper = objectMapper;
     }
 
     @Value("${artemis.version}")
@@ -93,7 +96,7 @@ public class TelemetrySendingService {
 
         try {
             var telemetryData = buildTelemetryData(sendAdminDetails);
-            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
+            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);

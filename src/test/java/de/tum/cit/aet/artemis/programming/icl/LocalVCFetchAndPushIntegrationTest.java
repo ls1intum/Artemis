@@ -266,7 +266,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     private void testPushSuccessful(Git git, String username, String projectKey, String repositorySlug) {
         try {
             String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
-            git.push().setRemote(repoUri).call();
+            git.push().setRemote(repoUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call();
         }
         catch (GitAPIException e) {
             throw new AssertionError("Push should have succeeded but failed: " + e.getMessage(), e);
@@ -279,7 +279,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     private void testPushReturnsForbidden(Git git, String username, String projectKey, String repositorySlug) {
         String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
         try {
-            git.push().setRemote(repoUri).call();
+            git.push().setRemote(repoUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call();
             throw new AssertionError("Push should have failed but succeeded");
         }
         catch (TransportException e) {
@@ -454,6 +454,12 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             AuxiliaryRepository auxRepo = exercise.getAuxiliaryRepositories().getFirst();
             String auxRepoSlug = projectKey.toLowerCase() + "-" + auxRepo.getName().toLowerCase();
 
+            // First, push an initial commit as instructor to populate the aux repo (empty repos cause DetachedHeadException on push)
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
+                commitFile(git, "initial-aux.txt");
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, auxRepoSlug);
+            }
+
             // Students should NOT be able to fetch or push
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
                 testFetchReturnsForbidden(git, student1.getLogin(), projectKey, auxRepoSlug);
@@ -547,8 +553,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
             request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
-            // Now set due date to the past
+            // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
             exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
             programmingExerciseRepository.save(exercise);
 
@@ -799,8 +806,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
             request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
-            // Now set due date to the past
+            // Now set due date to the past (re-fetch exercise to avoid Hibernate orphan removal of the new participation)
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
             exercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
             programmingExerciseRepository.save(exercise);
 
