@@ -51,7 +51,7 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
         if (resourceLinkClaim != null) {
             JsonNode resourceLinkJson = JsonObjectMapper.get().convertValue(resourceLinkClaim, JsonNode.class);
             JsonNode idNode = resourceLinkJson.get("id");
-            return idNode != null ? idNode.asText() : null;
+            return idNode != null ? idNode.stringValue() : null;
         }
         return null;
     }

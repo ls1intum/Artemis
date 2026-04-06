@@ -307,7 +307,7 @@ public class PyrisConnectorService {
 
     private String tryExtractErrorMessage(HttpStatusCodeException ex) {
         try {
-            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
+            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").stringValue();
         }
         catch (JacksonException | IllegalArgumentException e) {
             log.error("Failed to parse error message from Pyris", e);

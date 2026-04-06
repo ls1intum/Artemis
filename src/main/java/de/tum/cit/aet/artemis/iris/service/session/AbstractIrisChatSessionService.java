@@ -234,7 +234,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && "mcq".equals(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
+                if (jsonNode.has("type") && "mcq".equals(jsonNode.get("type").stringValue()) && isValidMcqNode(jsonNode)) {
                     return new IrisJsonMessageContent(jsonNode);
                 }
             }
@@ -256,7 +256,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      */
     private boolean isValidMcqNode(JsonNode node) {
         JsonNode question = node.get("question");
-        if (question == null || !question.isTextual() || question.asText().isBlank()) {
+        if (question == null || !question.isString() || question.stringValue().isBlank()) {
             return false;
         }
 
@@ -271,7 +271,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             }
             JsonNode text = option.get("text");
             JsonNode correct = option.get("correct");
-            if (text == null || !text.isTextual() || text.asText().isBlank()) {
+            if (text == null || !text.isString() || text.stringValue().isBlank()) {
                 return false;
             }
             if (correct == null || !correct.isBoolean()) {
@@ -286,7 +286,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         }
 
         JsonNode explanation = node.get("explanation");
-        if (explanation == null || !explanation.isTextual() || explanation.asText().isBlank()) {
+        if (explanation == null || !explanation.isString() || explanation.stringValue().isBlank()) {
             return false;
         }
 

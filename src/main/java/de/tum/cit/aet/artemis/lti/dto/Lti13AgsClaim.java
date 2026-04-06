@@ -49,7 +49,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
                 lineItemNode = agsClaimJson.get("lineitem");
             }
 
-            String lineItem = lineItemNode != null ? lineItemNode.asText() : null;
+            String lineItem = lineItemNode != null ? lineItemNode.stringValue() : null;
             return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
         }
         catch (IllegalStateException | ClassCastException ex) {

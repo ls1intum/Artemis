@@ -28,7 +28,7 @@ public class ActionDeserializer extends ValueDeserializer<Action> {
         JsonNode node = context.readTree(parser);
         String className = "not-determined";
         if (node.has("class")) {
-            className = node.get("class").asText();
+            className = node.get("class").stringValue();
         }
         else {
             if (node.has("script")) {

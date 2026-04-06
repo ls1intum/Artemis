@@ -629,7 +629,7 @@ public class AtlasMLService {
         if (child.isMissingNode() || child.isNull() || !child.isValueNode()) {
             return null;
         }
-        String value = child.asText();
+        String value = child.stringValue();
         return value == null || value.isBlank() ? null : value;
     }
 }

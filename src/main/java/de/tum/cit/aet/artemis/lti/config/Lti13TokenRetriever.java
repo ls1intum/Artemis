@@ -90,7 +90,7 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asText();
+            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").stringValue();
         }
         catch (HttpClientErrorException | JacksonException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

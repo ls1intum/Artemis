@@ -130,7 +130,7 @@ public class SbomService {
         Instant timestamp = null;
         if (metadataNode.has("timestamp")) {
             try {
-                timestamp = Instant.parse(metadataNode.get("timestamp").asText());
+                timestamp = Instant.parse(metadataNode.get("timestamp").stringValue());
             }
             catch (Exception e) {
                 log.debug("Failed to parse SBOM timestamp", e);
@@ -207,6 +207,6 @@ public class SbomService {
 
     @Nullable
     private String getTextValue(JsonNode node, String fieldName) {
-        return Optional.ofNullable(node.get(fieldName)).filter(JsonNode::isTextual).map(JsonNode::asText).orElse(null);
+        return Optional.ofNullable(node.get(fieldName)).filter(JsonNode::isString).map(JsonNode::stringValue).orElse(null);
     }
 }
