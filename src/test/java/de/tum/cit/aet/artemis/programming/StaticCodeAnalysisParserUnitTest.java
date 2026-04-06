@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
@@ -25,7 +26,7 @@ class StaticCodeAnalysisParserUnitTest {
 
     private static final Path REPORTS_FOLDER_PATH = Path.of("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JsonObjectMapper.get();
 
     private void testParserWithFile(String toolGeneratedReportFileName, String expectedJSONReportFileName) throws IOException {
         testParserWithFileNamed(toolGeneratedReportFileName, toolGeneratedReportFileName, expectedJSONReportFileName);

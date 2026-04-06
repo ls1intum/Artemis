@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.user;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -294,7 +293,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Create a course and lecture without the super admin or admin being enrolled
         Course course = courseUtilService.createCourse();
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
 
         // Create a regular user who is not enrolled
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
@@ -331,7 +330,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Create a course, lecture, and lecture unit without the super admin or admin being enrolled
         Course course = courseUtilService.createCourse();
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         LectureUnit lectureUnit = lectureUtilService.createTextUnit(lecture);
 
         // Create a regular user who is not enrolled

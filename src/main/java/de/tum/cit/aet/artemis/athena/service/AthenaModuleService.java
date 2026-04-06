@@ -13,14 +13,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -55,10 +53,10 @@ public class AthenaModuleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
             ExerciseRepository exerciseRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -74,11 +72,11 @@ public class AthenaModuleService {
      */
     private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
-            var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
+            var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", String.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new NetworkingException("Could not fetch Athena modules");
             }
-            AthenaModuleDTO[] modules = objectMapper.treeToValue(response.getBody(), AthenaModuleDTO[].class);
+            AthenaModuleDTO[] modules = objectMapper.readValue(response.getBody(), AthenaModuleDTO[].class);
             return List.of(modules);
         }
         catch (RestClientException | JsonProcessingException e) {
