@@ -220,7 +220,7 @@ describe('RequestFeedbackButtonComponent', () => {
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-            setupComponentInputs(exercise);
+            setupComponentInputs(exercise, true);
             component.hasUserAcceptedLLMUsage = true;
 
             await initAndTick();

@@ -1,0 +1,74 @@
+/* stylelint-disable selector-pseudo-element-no-unknown */
+:host {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:host ::ng-deep .gutter.gutter-horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 8px;
+    cursor: col-resize;
+    background-color: transparent;
+
+    &::before {
+        display: none;
+    }
+}
+
+:host ::ng-deep .split-gutter-handle {
+    display: flex;
+    gap: 1px;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+        content: '';
+        display: block;
+        width: 2px;
+        height: 12px;
+        background: var(--bs-body-color);
+        border-radius: 1px;
+    }
+}
+
+:host ::ng-deep {
+    .p-tablist-tab-list {
+        border-width: 0 0 var(--bs-border-width) 0;
+        border-color: var(--bs-border-color);
+        gap: 0.5rem;
+    }
+
+    .p-tablist-active-bar {
+        display: none;
+    }
+
+    .p-tab {
+        border-width: 0 0 var(--bs-border-width) 0;
+        padding: 8px;
+
+        &.p-tab-active {
+            color: var(--bs-body-color);
+            border-color: var(--bs-primary);
+            background: transparent;
+        }
+
+        &:not(.p-disabled):focus-visible {
+            outline: 2px solid var(--bs-primary);
+            outline-offset: 2px;
+        }
+
+        &:not(.p-tab-active):not(.p-disabled):hover {
+            color: var(--bs-body-color);
+            background: transparent;
+            border-color: transparent;
+        }
+    }
+
+    .p-tablist {
+        background: transparent;
+    }
+}

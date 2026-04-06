@@ -43,7 +43,6 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
                 // C builds can take longer under CI parallel load
                 test.slow();
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                await programmingExerciseOverview.openCodeEditor(exercise.id!);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
                     await expect(resultScore).toContainText(submission.expectedResult, { timeout: BUILD_RESULT_TIMEOUT * 2 });
