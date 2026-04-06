@@ -195,14 +195,6 @@
             <column defaultValueNumeric="0.0" name="competency_progress" type="double"/>
             <column defaultValueNumeric="0.0" name="competency_confidence" type="double"/>
         </createTable>
-        <createTable tableName="competency_learning_path">
-            <column name="competency_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="learning_path_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-        </createTable>
         <createTable tableName="competency_lecture_unit">
             <column name="competency_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -416,7 +408,9 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="course_id" type="bigint"/>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
             <column name="type" type="tinyint unsigned">
                 <constraints nullable="false"/>
             </column>
@@ -2085,7 +2079,9 @@
             <column name="student_exam_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="participation_id" type="bigint"/>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
             <column name="participation_order" type="int">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -3466,7 +3462,10 @@
         <createIndex indexName="vcs_access_log_participation_id" tableName="vcs_access_log">
             <column name="participation_id"/>
         </createIndex>
-        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <createIndex indexName="uk_course_request_short_name" tableName="course_request" unique="true">
+            <column name="short_name"/>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="created_course_id" baseTableName="course_request" constraintName="fk_course_request_course" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="requester_id" baseTableName="course_request" constraintName="fk_course_request_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
@@ -3712,6 +3711,14 @@
         <addForeignKeyConstraint baseColumnNames="teaching_assistant_id" baseTableName="tutorial_group" constraintName="fk_tutorial_group_teaching_assistant_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_public_ssh_key" constraintName="fk_user_public_ssh_key_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_notification" constraintName="fk_course_notifications_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="course_notification_parameter" constraintName="fk_course_notification_parameter_notification_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_notification_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <loadData encoding="UTF-8" file="config/liquibase/authorities.csv" separator=";" tableName="jhi_authority"/>
     </changeSet>
     <changeSet id="00000000000002" author="krusche">
@@ -3784,7 +3791,7 @@
         <createIndex indexName="idx_review_comment_thread_target" tableName="review_comment_thread">
             <column name="target_type"/>
         </createIndex>
-        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post" unique="true">
             <column name="user_id"/>
             <column name="post_id"/>
             <column name="post_type"/>
@@ -3857,7 +3864,7 @@
         <createIndex indexName="idx_review_comment_thread_target" tableName="review_comment_thread">
             <column name="target_type"/>
         </createIndex>
-        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post" unique="true">
             <column name="user_id"/>
             <column name="post_id"/>
             <column name="post_type"/>
