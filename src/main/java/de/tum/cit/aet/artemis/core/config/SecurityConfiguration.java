@@ -193,8 +193,10 @@ public class SecurityConfiguration {
     // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
+        var authorizationManagerFactory = new org.springframework.security.authorization.DefaultAuthorizationManagerFactory<org.aopalliance.intercept.MethodInvocation>();
+        authorizationManagerFactory.setRoleHierarchy(roleHierarchy());
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setRoleHierarchy(roleHierarchy());
+        expressionHandler.setAuthorizationManagerFactory(authorizationManagerFactory);
         return expressionHandler;
     }
 
