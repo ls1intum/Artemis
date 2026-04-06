@@ -15,6 +15,5 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * A DTO primarily used to retrieve data about a {@link Lecture} that are needed to create {@link CalendarEventDTO}s.
  */
 @JsonInclude(Include.NON_EMPTY)
-public record LectureCalendarEventDTO(long originEntityId, @NotNull String title, @Nullable ZonedDateTime visibleDate, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate) {
+public record LectureCalendarEventDTO(long originEntityId, @NotNull String title, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate) {
 }

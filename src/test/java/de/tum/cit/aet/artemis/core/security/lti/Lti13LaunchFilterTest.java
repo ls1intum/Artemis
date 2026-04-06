@@ -49,6 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.config.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -148,7 +149,7 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put("iss", "https://some.lms.org");
         idTokenClaims.put("sub", "23423435");
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonObjectMapper.get();
         ObjectNode resourceLinkClaim = mapper.createObjectNode();
         resourceLinkClaim.put("id", "some-resource-id");
         idTokenClaims.put(Claims.RESOURCE_LINK, resourceLinkClaim);
@@ -280,6 +281,6 @@ class Lti13LaunchFilterTest {
 
         String jsonResponseString = argument.getValue();
 
-        return new ObjectMapper().readTree(jsonResponseString);
+        return JsonObjectMapper.get().readTree(jsonResponseString);
     }
 }

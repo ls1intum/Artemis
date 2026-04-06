@@ -5,14 +5,19 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
@@ -24,6 +29,8 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 @Profile(PROFILE_ATHENA)
 public class AthenaHealthIndicator implements HealthIndicator {
 
+    private static final Logger log = LoggerFactory.getLogger(AthenaHealthIndicator.class);
+
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢
 
     private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle 🔴
@@ -34,11 +41,15 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
+    private final ObjectMapper objectMapper;
+
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     private record AthenaModuleHealth(String exerciseType, boolean healthy, String url) {
@@ -59,7 +70,10 @@ public class AthenaHealthIndicator implements HealthIndicator {
         additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
-            final var healthResponse = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", AthenaHealthResponse.class);
+            // Use String.class to avoid Jackson 3 / Jackson 2 incompatibility in RestTemplate,
+            // then deserialize manually with the Jackson 2 ObjectMapper.
+            final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
+            final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
             final var athenaStatus = healthResponse != null ? healthResponse.status() : null;
 
             if (athenaStatus != null) {
@@ -72,6 +86,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
             health = new ConnectorHealth("ok".equals(athenaStatus), additionalInfo);
         }
         catch (Exception ex) {
+            log.warn("Failed to check Athena health", ex);
             health = new ConnectorHealth(false, additionalInfo, ex);
         }
 

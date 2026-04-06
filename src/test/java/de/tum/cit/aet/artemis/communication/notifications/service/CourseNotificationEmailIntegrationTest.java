@@ -28,9 +28,9 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests for course notification email templates.
@@ -86,7 +86,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         templateEngine.getTemplateResolvers().forEach(testTemplateEngine::addTemplateResolver);
         testTemplateEngine.setMessageSource(mainMessageSource);
 
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
