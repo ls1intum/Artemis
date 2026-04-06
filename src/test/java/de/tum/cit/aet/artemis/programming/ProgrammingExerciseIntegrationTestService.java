@@ -1589,7 +1589,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.performMvcRequest(
-                MockMvcRequestBuilders.patch(new URI("/api" + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(updates)))
+                MockMvcRequestBuilders.patch(new URI("/api" + endpoint)).contentType(MediaType.APPLICATION_JSON).content(request.getJsonMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
                 .andExpect(jsonPath("$.testCase").value(testCases.getFirst().getTestName()));

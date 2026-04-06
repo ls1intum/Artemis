@@ -43,7 +43,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     public static final String TEST_CALLBACK_URL = "http://testing/xyz1";
 
-    private final com.fasterxml.jackson.databind.JsonMapper objectMapper = JsonObjectMapper.get();
+    private final tools.jackson.databind.json.JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;

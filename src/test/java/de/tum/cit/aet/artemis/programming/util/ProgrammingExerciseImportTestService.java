@@ -84,8 +84,7 @@ public class ProgrammingExerciseImportTestService {
         zipInputStream.close();
         assertThat(detailsJsonString).isNotNull();
 
-        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
+        // JsonMapper from Spring Boot is already configured with FAIL_ON_UNKNOWN_PROPERTIES=false and module auto-discovery
         ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
 
         if (parsedExercise.getBuildConfig() == null) {

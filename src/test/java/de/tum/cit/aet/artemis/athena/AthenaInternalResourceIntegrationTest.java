@@ -92,7 +92,7 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
 
         String json = request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
-        Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
+        Map<String, String> repoFiles = request.getJsonMapper().readValue(json, new TypeReference<Map<String, String>>() {
         });
         assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
     }

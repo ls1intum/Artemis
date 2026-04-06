@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -81,9 +80,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupJsonMapper() {
-        objectMapper = JsonObjectMapper.get().copy();
-        objectMapper.findAndRegisterModules();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // JsonObjectMapper is already configured with FAIL_ON_UNKNOWN_PROPERTIES=false
+        objectMapper = JsonObjectMapper.get();
     }
 
     @AfterEach

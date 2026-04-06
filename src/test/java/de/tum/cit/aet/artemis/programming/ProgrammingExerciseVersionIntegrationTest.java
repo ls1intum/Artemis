@@ -497,8 +497,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         assertThat(response.getHeader("X-Total-Count")).isNotBlank();
         assertThat(response.getHeader(HttpHeaders.LINK)).isNotBlank();
 
-        List<ExerciseVersionMetadataDTO> versions = request.getObjectMapper().readValue(response.getContentAsString(),
-                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
+        List<ExerciseVersionMetadataDTO> versions = request.getJsonMapper().readValue(response.getContentAsString(),
+                request.getJsonMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
         assertThat(versions).hasSize(1);
     }
 
@@ -517,8 +517,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         assertThat(response.getHeader("X-Total-Count")).isEqualTo("0");
         assertThat(response.getHeader(HttpHeaders.LINK)).isNotNull();
 
-        List<ExerciseVersionMetadataDTO> versions = request.getObjectMapper().readValue(response.getContentAsString(),
-                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
+        List<ExerciseVersionMetadataDTO> versions = request.getJsonMapper().readValue(response.getContentAsString(),
+                request.getJsonMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
         assertThat(versions).isEmpty();
     }
 
