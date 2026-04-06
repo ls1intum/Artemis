@@ -3814,6 +3814,10 @@
             <column name="post_id"/>
             <column name="post_type"/>
         </createIndex>
+        <modifyDataType tableName="participation" columnName="initialization_state" newDataType="enum('UNINITIALIZED','REPO_COPIED','REPO_CONFIGURED','INACTIVE','BUILD_PLAN_COPIED','BUILD_PLAN_CONFIGURED','INITIALIZED','FINISHED')"/>
+        <modifyDataType tableName="participation" columnName="discriminator" newDataType="enum('P','SP','PESP','SPEP','TPEP')"/>
+        <modifyDataType tableName="submission" columnName="jhi_type" newDataType="enum('MANUAL','TIMEOUT','TEST','OTHER','INSTRUCTOR','EXTERNAL','ILLEGAL')"/>
+        <modifyDataType tableName="submission" columnName="discriminator" newDataType="enum('P','Q','M','T','F')"/>
     </changeSet>
     <changeSet id="00000000000003" author="krusche">
         <preConditions onFail="MARK_RAN">
