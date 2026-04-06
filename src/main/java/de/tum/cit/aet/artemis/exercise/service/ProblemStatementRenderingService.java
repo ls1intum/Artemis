@@ -167,8 +167,9 @@ public class ProblemStatementRenderingService {
         // Extract tasks
         processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
 
-        // Restore masked code blocks
+        // Restore masked code blocks and LaTeX formula placeholders before CommonMark
         processedMarkdown = restoreCodeBlocks(processedMarkdown, codeBlocks);
+        processedMarkdown = restoreMathFormulas(processedMarkdown, mathFormulas);
 
         // CommonMark → HTML
         String html = renderWithCommonMark(processedMarkdown);
@@ -177,9 +178,6 @@ public class ProblemStatementRenderingService {
         for (int i = 0; i < inlineSvgs.size(); i++) {
             html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
-
-        // Restore LaTeX formula placeholders as KaTeX-renderable spans
-        html = restoreMathFormulas(html, mathFormulas);
 
         // Wrap in container div with result summary
         String resultAttr = buildResultAttribute(resultSummary);
