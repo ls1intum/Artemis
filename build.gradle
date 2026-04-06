@@ -233,8 +233,8 @@ dependencies {
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
     // Override transitive dependencies from spring-ai to fix security vulnerabilities
     // jackson-bom 3.1.1 fixes GHSA-2m67-wjpj-xhg9 (document length constraint bypass)
-    implementation("tools.jackson.core:jackson-core:3.1.1")
-    implementation("tools.jackson.core:jackson-databind:3.1.1")
+    implementation "tools.jackson.core:jackson-core:3.1.1"
+    implementation "tools.jackson.core:jackson-databind:3.1.1"
     constraints {
         implementation("io.modelcontextprotocol.sdk:mcp-core:1.1.1") {
             because("Fix GHSA-hv2w-8mjj-jw22: hardcoded wildcard CORS")
