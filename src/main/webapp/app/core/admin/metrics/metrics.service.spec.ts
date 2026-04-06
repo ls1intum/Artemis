@@ -8,7 +8,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { MetricsService } from 'app/core/admin/metrics/metrics.service';
-import { ThreadDump, ThreadState } from 'app/core/admin/metrics/metrics.model';
+import { NodeInfo, ThreadDump, ThreadState } from 'app/core/admin/metrics/metrics.model';
 
 describe('MetricsService', () => {
     setupTestBed({ zoneless: true });
@@ -28,7 +28,7 @@ describe('MetricsService', () => {
         httpMock.verify();
     });
 
-    it('should return metrics', () => {
+    it('should return aggregated metrics when no nodeId is provided', () => {
         const metrics = {
             jvm: {},
             'http.server.requests': {},
@@ -45,9 +45,52 @@ describe('MetricsService', () => {
         });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('management/jhimetrics');
+        expect(req.request.url).toBe('management/artemismetrics');
         req.flush(metrics);
         expect(result).toEqual(metrics);
+    });
+
+    it('should return aggregated metrics when nodeId is "all"', () => {
+        let result: any;
+        service.getMetrics('all').subscribe((received) => {
+            result = received;
+        });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('management/artemismetrics');
+        req.flush({});
+        expect(result).toBeDefined();
+    });
+
+    it('should request node-specific metrics when nodeId is provided', () => {
+        const nodeId = '550e8400-e29b-41d4-a716-446655440000';
+        let result: any;
+        service.getMetrics(nodeId).subscribe((received) => {
+            result = received;
+        });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`management/artemismetrics/${nodeId}`);
+        req.flush({});
+        expect(result).toBeDefined();
+    });
+
+    it('should return available nodes', () => {
+        const nodes: NodeInfo[] = [
+            { nodeId: 'node-1', label: '192.168.1.1:8080' },
+            { nodeId: 'node-2', label: '192.168.1.2:8080' },
+        ];
+
+        let result: NodeInfo[] | undefined;
+        service.getAvailableNodes().subscribe((received) => {
+            result = received;
+        });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('management/artemismetrics/nodes');
+        req.flush(nodes);
+        expect(result).toEqual(nodes);
+        expect(result).toHaveLength(2);
     });
 
     it('should return thread dump', () => {

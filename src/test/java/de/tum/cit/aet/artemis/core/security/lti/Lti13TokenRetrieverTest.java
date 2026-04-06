@@ -36,7 +36,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -46,6 +45,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -165,7 +165,7 @@ class Lti13TokenRetrieverTest {
 
         Map<String, String> map = new HashMap<>();
         map.put("access_token", "result");
-        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(new ObjectMapper().writeValueAsString(map)));
+        ResponseEntity<String> responseEntity = ResponseEntity.of(Optional.of(JsonObjectMapper.get().writeValueAsString(map)));
         when(restTemplate.exchange(any(), eq(String.class))).thenReturn(responseEntity);
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);

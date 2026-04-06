@@ -17,14 +17,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.server.servlet.ConfigurableServletWebServerFactory;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
-import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverters;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,7 +36,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -48,11 +49,11 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final Environment env;
 
-    private final JHipsterProperties jHipsterProperties;
+    private final ArtemisProperties jHipsterProperties;
 
     private final ToolsInterceptor toolsInterceptor;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
@@ -144,5 +145,18 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
+    }
+
+    /**
+     * Ensures StringHttpMessageConverter takes priority over Jackson for String responses.
+     * Without this, ResponseEntity&lt;String&gt; would be serialized as JSON strings (wrapped in quotes).
+     */
+    @Override
+    public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
+        builder.configureMessageConvertersList(converters -> {
+            var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
+            converters.removeAll(stringConverters);
+            converters.addAll(0, stringConverters);
+        });
     }
 }

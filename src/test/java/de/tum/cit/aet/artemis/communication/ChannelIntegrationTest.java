@@ -832,12 +832,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var courseWideChannelWhereMember = createCourseWideChannel(TEST_PREFIX + "5");
         addUsersToConversation(courseWideChannelWhereMember.getId(), userLogin);
         var courseWideChannelWhereNotMember = createCourseWideChannel(TEST_PREFIX + "6");
-        var visibleLecture = lectureUtilService.createLecture(exampleCourse, null);
+        var visibleLecture = lectureUtilService.createLecture(exampleCourse);
         var visibleLectureChannel = lectureUtilService.addLectureChannel(visibleLecture);
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // var invisibleLecture = lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1));
-        // var invisibleLectureChannel = lectureUtilService.addLectureChannel(invisibleLecture);
 
         // then
         userUtilService.changeUser(testPrefix + userLogin);
@@ -854,9 +850,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(courseWideChannelWhereMember.getId());
         conversationRepository.deleteById(courseWideChannelWhereNotMember.getId());
         conversationRepository.deleteById(visibleLectureChannel.getId());
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // conversationRepository.deleteById(invisibleLectureChannel.getId());
     }
 
     @Test
@@ -889,7 +882,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
         Course course = courseUtilService.createCourse();
         courseUtilService.enableMessagingForCourse(course);
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
         Channel returnedLectureChannel = request.get("/api/communication/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);

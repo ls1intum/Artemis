@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.exception;
 import java.net.URI;
 import java.util.Map;
 
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
 
 public class BadRequestAlertException extends HttpStatusException {
 
@@ -21,10 +21,10 @@ public class BadRequestAlertException extends HttpStatusException {
     }
 
     public BadRequestAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
-        super(type, defaultMessage, Status.BAD_REQUEST, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
+        super(type, defaultMessage, HttpStatus.BAD_REQUEST, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 
     public BadRequestAlertException(URI type, String defaultMessage, String entityName, String errorKey, Map<String, Object> parameters) {
-        super(type, defaultMessage, Status.BAD_REQUEST, entityName, errorKey, parameters);
+        super(type, defaultMessage, HttpStatus.BAD_REQUEST, entityName, errorKey, parameters);
     }
 }
