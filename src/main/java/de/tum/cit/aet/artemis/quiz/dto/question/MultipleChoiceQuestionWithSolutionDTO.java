@@ -11,8 +11,9 @@ import de.tum.cit.aet.artemis.quiz.dto.AnswerOptionWithSolutionDTO;
 public record MultipleChoiceQuestionWithSolutionDTO(List<AnswerOptionWithSolutionDTO> answerOptions, boolean singleChoice) {
 
     public static MultipleChoiceQuestionWithSolutionDTO of(MultipleChoiceQuestion multipleChoiceQuestion) {
-        return new MultipleChoiceQuestionWithSolutionDTO(multipleChoiceQuestion.getAnswerOptions().stream().map(AnswerOptionWithSolutionDTO::of).toList(),
-                multipleChoiceQuestion.isSingleChoice());
+        var answerOptions = multipleChoiceQuestion.getAnswerOptions().stream().map(AnswerOptionWithSolutionDTO::of).toList();
+        // Use null for empty lists to match JSON round-trip behavior with @JsonInclude(NON_EMPTY)
+        return new MultipleChoiceQuestionWithSolutionDTO(answerOptions.isEmpty() ? null : answerOptions, multipleChoiceQuestion.isSingleChoice());
     }
 
 }

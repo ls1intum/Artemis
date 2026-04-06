@@ -75,6 +75,8 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             FROM Channel channel
                 LEFT JOIN channel.conversationParticipants conversationParticipant
                 LEFT JOIN channel.lecture lecture
+                LEFT JOIN FETCH channel.course
+                LEFT JOIN FETCH channel.creator
             WHERE channel.course.id = :courseId
                 AND (channel.isCourseWide OR (channel.id = conversationParticipant.conversation.id AND conversationParticipant.user.id = :userId))
                 AND (lecture IS NULL OR NOT lecture.isTutorialLecture)

@@ -235,21 +235,16 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     isChangeMadeToPeriodSection() {
-        const { visibleDate, startDate, endDate } = this.lecture();
-        const { visibleDate: visibleDateOnInit, startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
+        const { startDate, endDate } = this.lecture();
+        const { startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
 
         const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
         const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
 
-        const emptyVisibleDateWasCleared = !visibleDateOnInit && isInvalid(visibleDate);
         const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
         const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
 
-        return (
-            (!isSame(visibleDate, visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
-            (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) ||
-            (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared)
-        );
+        return (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) || (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared);
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
@@ -366,16 +361,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     onDatesValuesChanged = () => {
         const startDate = this.lecture().startDate;
         const endDate = this.lecture().endDate;
-        const visibleDate = this.lecture().visibleDate;
 
         // Prevent endDate from being before startDate, if both dates are set
         if (endDate && startDate?.isAfter(endDate)) {
             this.lecture().endDate = startDate.clone();
-        }
-
-        // Prevent visibleDate from being after startDate, if both dates are set
-        if (visibleDate && startDate?.isBefore(visibleDate)) {
-            this.lecture().visibleDate = startDate.clone();
         }
     };
 

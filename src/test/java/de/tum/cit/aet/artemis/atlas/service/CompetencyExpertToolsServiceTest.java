@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Unit tests for {@link CompetencyExpertToolsService}.
@@ -56,7 +57,7 @@ class CompetencyExpertToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = JsonObjectMapper.get();
         competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, sessionCacheService);
 
         // Setup test course

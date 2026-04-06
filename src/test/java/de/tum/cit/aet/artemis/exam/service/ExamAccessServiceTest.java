@@ -397,7 +397,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+                .satisfies(error -> assertThat(error.getBody().getProperties().get("skipAlert")).isEqualTo(Boolean.TRUE));
     }
 
     @Test

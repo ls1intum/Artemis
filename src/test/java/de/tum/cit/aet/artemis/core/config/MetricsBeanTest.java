@@ -88,13 +88,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
             examRepository.save(exam);
         });
 
-        exerciseRepository.findAll().forEach(exercise -> {
-            // Set dates of existing exercises to past to that they are not returned in the metrics
-            exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-            exercise.setStartDate(ZonedDateTime.now().minusHours(2));
-            exercise.setDueDate(ZonedDateTime.now().minusHours(1));
-            exerciseRepository.save(exercise);
-        });
+        // Use bulk update to avoid loading QuizExercise entities, which would trigger
+        // Hibernate 7's strict @OrderColumn validation on quizQuestions
+        exerciseRepository.updateAllExerciseDates(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1));
     }
 
     @Test

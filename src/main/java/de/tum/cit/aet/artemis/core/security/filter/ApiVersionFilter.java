@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.filter;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_PRODUCTION;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 
