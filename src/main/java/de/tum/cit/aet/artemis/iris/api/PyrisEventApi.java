@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.UnsupportedPyrisEventException;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 
 @Conditional(IrisEnabled.class)
 @Controller
@@ -27,7 +27,7 @@ public class PyrisEventApi extends AbstractIrisApi {
      * This method processes the event and delegates the handling to the appropriate service.
      * <p>
      * Note: It's possible that no action is triggered if the event does not fulfill all requirements.
-     * See {@link IrisExerciseChatSessionService#handleNewResultEvent(NewResultEvent)} for more details on the specific
+     * See {@link IrisChatSessionService#handleNewResultEvent(NewResultEvent)} for more details on the specific
      * actions taken for each event type.
      *
      * @param event The event object received to trigger the matching action

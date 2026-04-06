@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -23,10 +22,8 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -100,16 +97,9 @@ public class PyrisJobService {
         return token;
     }
 
-    public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
+    public String addChatJob(long courseId, long sessionId, Long exerciseId, Long lectureId, Long userMessageId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null, null, null);
-        getPyrisJobMap().put(token, job);
-        return token;
-    }
-
-    public String addCourseChatJob(Long courseId, Long sessionId, Long userMessageId) {
-        var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId, null, userMessageId, null);
+        var job = new ChatJob(token, courseId, sessionId, exerciseId, lectureId, null, userMessageId, null);
         getPyrisJobMap().put(token, job);
         return token;
     }
@@ -125,13 +115,6 @@ public class PyrisJobService {
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null, null, null);
-        getPyrisJobMap().put(token, job);
-        return token;
-    }
-
-    public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
-        var token = generateJobIdToken();
-        var job = new LectureChatJob(token, courseId, lectureId, sessionId, null, userMessageId, null);
         getPyrisJobMap().put(token, job);
         return token;
     }
@@ -181,15 +164,6 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         getPyrisJobMap().put(job.jobId(), job);
-    }
-
-    /**
-     * Get all current jobs.
-     *
-     * @return the all current jobs
-     */
-    public Collection<PyrisJob> currentJobs() {
-        return getPyrisJobMap().values();
     }
 
     /**

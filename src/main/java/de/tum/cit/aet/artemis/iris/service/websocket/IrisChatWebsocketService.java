@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
@@ -45,7 +45,7 @@ public class IrisChatWebsocketService {
      * @param irisMessage that should be sent over the websocket
      * @param stages      that should be sent over the websocket
      */
-    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
+    public void sendMessage(IrisSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
         this.sendMessage(session, irisMessage, stages, null, null);
     }
 
@@ -62,7 +62,7 @@ public class IrisChatWebsocketService {
      * @param sessionTitle the session title to send
      * @param citationInfo the citation metadata to send
      */
-    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
+    public void sendMessage(IrisSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
         var messageDTO = irisMessage != null ? IrisMessageResponseDTO.of(irisMessage) : null;
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
@@ -77,7 +77,7 @@ public class IrisChatWebsocketService {
      * @param session the session to send the status update to
      * @param stages  the stages to send
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages) {
+    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages) {
         this.sendStatusUpdate(session, stages, null, null, null);
     }
 
@@ -90,7 +90,7 @@ public class IrisChatWebsocketService {
      * @param suggestions  the suggestions to send
      * @param tokens       token usage and cost send by Pyris
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
+    public void sendStatusUpdate(IrisSession session, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
