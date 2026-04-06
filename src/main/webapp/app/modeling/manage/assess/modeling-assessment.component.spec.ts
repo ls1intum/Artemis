@@ -137,6 +137,12 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // This prevents "window is not defined" and "Should not already be working" React scheduler errors.
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
     });
 
