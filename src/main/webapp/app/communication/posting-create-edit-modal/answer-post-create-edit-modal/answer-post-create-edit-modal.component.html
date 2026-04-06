@@ -10,9 +10,29 @@
                 [isButtonLoading]="isLoading"
                 [isFormGroupValid]="formGroup.valid"
                 [editType]="editType"
-                [showCloseButton]="true"
+                [showCloseButton]="editType !== EditType.UPDATE"
                 (closeEditor)="close()"
             />
+            <div class="col mt-1 text-end">
+                @if (editType === EditType.UPDATE) {
+                    <button
+                        jhi-posting-button
+                        type="button"
+                        [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                        class="btn btn-sm btn-outline-secondary"
+                        (click)="close()"
+                    ></button>
+                    <button
+                        jhi-posting-button
+                        [buttonLoading]="isLoading"
+                        [disabled]="isLoading || !formGroup.valid"
+                        [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                        class="btn btn-sm btn-outline-primary"
+                        id="save"
+                        type="submit"
+                    ></button>
+                }
+            </div>
         </div>
     </form>
 </ng-template>

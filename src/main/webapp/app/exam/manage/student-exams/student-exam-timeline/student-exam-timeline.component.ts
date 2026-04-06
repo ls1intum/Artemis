@@ -54,7 +54,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     // stores if a page component has already been visited (true) or not (false)
     // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
-    selectedTimestamp: number;
+    selectedTimestamp: number = 0;
     timestampIndex = 0;
 
     studentExam: StudentExam;

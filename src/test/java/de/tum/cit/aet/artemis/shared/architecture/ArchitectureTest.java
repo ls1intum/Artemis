@@ -485,15 +485,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
     private ArchCondition<JavaConstructor> notHaveParametersAnnotatedWithLazy() {
         return new ArchCondition<>("not have parameters annotated with @Lazy") {
 
-            // JPA entity listeners are instantiated by Hibernate during EntityManagerFactory construction,
-            // before the full Spring context is available. Using @Lazy on constructor parameters is the
-            // only way to break the circular dependency: EntityManagerFactory → EntityListener → Services
-            // → Repositories → EntityManagerFactory. This exception should NOT be extended to other classes.
-            private static final Set<String> JPA_ENTITY_LISTENER_EXCEPTIONS = Set.of("de.tum.cit.aet.artemis.assessment.ResultListener");
+            // These classes require @Lazy on constructor parameters to break circular dependencies:
+            // - ResultListener: JPA entity listener instantiated during EntityManagerFactory construction,
+            // before the full Spring context is available (EntityManagerFactory → Listener → Services → Repositories → EntityManagerFactory).
+            // - ResultService: Uses bulk JPQL DELETE in deleteResult() which bypasses @PreRemove callbacks,
+            // so it must manually call InstanceMessageSendService.sendParticipantScoreSchedule(). This creates
+            // a circular dependency (ResultService → InstanceMessageSendService → ... → ProgrammingExerciseGradingService → ResultService).
+            private static final Set<String> LAZY_PARAMETER_EXCEPTIONS = Set.of("de.tum.cit.aet.artemis.assessment.ResultListener",
+                    "de.tum.cit.aet.artemis.assessment.service.ResultService");
 
             @Override
             public void check(JavaConstructor constructor, ConditionEvents events) {
-                if (JPA_ENTITY_LISTENER_EXCEPTIONS.contains(constructor.getOwner().getFullName())) {
+                if (LAZY_PARAMETER_EXCEPTIONS.contains(constructor.getOwner().getFullName())) {
                     return;
                 }
                 for (var parameter : constructor.getParameters()) {
