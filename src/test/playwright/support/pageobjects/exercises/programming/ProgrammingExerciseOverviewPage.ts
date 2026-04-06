@@ -72,11 +72,6 @@ export class ProgrammingExerciseOverviewPage {
         return participation.id;
     }
 
-    async openCodeEditor(exerciseId: number) {
-        await Commands.reloadUntilFound(this.page, this.page.locator(`#open-exercise-${exerciseId}`));
-        await this.courseOverview.openRunningProgrammingExercise(exerciseId);
-    }
-
     async openCloneMenu(cloneMethod: GitCloneMethod) {
         const gitCloneMethodSelector = {
             [GitCloneMethod.https]: '#useHTTPSButton',

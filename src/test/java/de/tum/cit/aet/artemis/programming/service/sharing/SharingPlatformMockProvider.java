@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 
 /**
@@ -68,7 +69,7 @@ public class SharingPlatformMockProvider {
      */
     private static final String sharingApiKey = "someSecretlySharedKey1234";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Simulates a connection request from the Sharing Platform to Artemis.

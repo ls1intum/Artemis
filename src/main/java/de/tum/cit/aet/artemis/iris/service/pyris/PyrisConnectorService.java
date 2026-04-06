@@ -196,7 +196,7 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/search/lectures";
         try {
             var requestDTO = new PyrisLectureSearchRequestDTO(query, limit);
-            var response = restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(requestDTO), PyrisLectureSearchResultDTO[].class);
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
             }
@@ -222,7 +222,7 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/search/ask";
         try {
             var requestDTO = new PyrisSearchAskRequestDTO(query, limit);
-            var response = restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(requestDTO), PyrisSearchAskResponseDTO.class);
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisSearchAskResponseDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 throw new PyrisConnectorException("Empty response from Pyris search/ask");
             }
@@ -249,7 +249,7 @@ public class PyrisConnectorService {
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
@@ -268,7 +268,7 @@ public class PyrisConnectorService {
     public void executeLectureAdditionWebhook(PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/ingest";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
@@ -288,7 +288,7 @@ public class PyrisConnectorService {
     public void executeLectureDeletionWebhook(PyrisWebhookLectureDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lectures to Pyris", e);
@@ -327,7 +327,7 @@ public class PyrisConnectorService {
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/ingest";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
@@ -347,7 +347,7 @@ public class PyrisConnectorService {
     public void executeFaqDeletionWebhook(PyrisWebhookFaqDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send faqs to Pyris", e);

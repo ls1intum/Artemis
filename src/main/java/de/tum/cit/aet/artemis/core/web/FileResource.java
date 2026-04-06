@@ -186,7 +186,7 @@ public class FileResource {
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
         var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
@@ -390,12 +390,12 @@ public class FileResource {
      */
     @GetMapping("files/templates/code-of-conduct")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
+    public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
         // TODO: store a Constant
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
         var resource = resourceLoaderService.getResource(templatePath);
-        return ResponseEntity.ok(resource.getInputStream().readAllBytes());
+        return ResponseEntity.ok(new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
