@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -25,18 +24,31 @@ record FileViolation(@JacksonXmlProperty(isAttribute = true, localName = "name")
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-record Violation(String rule, String ruleset, String priority, int beginLine, int endLine, int beginColumn, int endColumn, String message) {
+class Violation {
 
-    // NOTE: we need the json creator here, otherwise parsing does not work with the newest version of Jackson (2.18.0)
-    @JsonCreator
-    public static Violation createViolation(@JacksonXmlProperty(isAttribute = true, localName = "rule") String rule,
-            @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset, @JacksonXmlProperty(isAttribute = true, localName = "priority") String priority,
-            @JacksonXmlProperty(isAttribute = true, localName = "beginline") int beginLine, @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
-            @JacksonXmlProperty(isAttribute = true, localName = "begincolumn") int beginColumn, @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
-            @JacksonXmlProperty(localName = "message") @JacksonXmlText String message  // inner text
-    ) {
-        return new Violation(rule, ruleset, priority, beginLine, endLine, beginColumn, endColumn, message);
-    }
+    @JacksonXmlProperty(isAttribute = true, localName = "rule")
+    String rule;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "ruleset")
+    String ruleset;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "priority")
+    String priority;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "beginline")
+    int beginLine;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "endline")
+    int endLine;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "begincolumn")
+    int beginColumn;
+
+    @JacksonXmlProperty(isAttribute = true, localName = "endcolumn")
+    int endColumn;
+
+    @JacksonXmlText
+    String message;
 }
 
 class PMDParser implements ParserStrategy {
@@ -67,8 +79,8 @@ class PMDParser implements ParserStrategy {
 
             for (Violation violation : fileViolation.violations()) {
                 // The penalty is decided by the course instructor, there is no penalty information in the xml
-                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, violation.beginLine(), violation.endLine(), violation.beginColumn(), violation.endColumn(),
-                        violation.rule(), violation.ruleset(), violation.message().strip(), violation.priority(), null);
+                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(unixPath, violation.beginLine, violation.endLine, violation.beginColumn, violation.endColumn,
+                        violation.rule, violation.ruleset, violation.message.strip(), violation.priority, null);
                 issues.add(issue);
             }
         }
