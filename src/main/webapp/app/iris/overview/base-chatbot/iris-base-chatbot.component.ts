@@ -282,8 +282,43 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
     // Session switcher (widget layout)
-    readonly sessionMenuItems = signal<MenuItem[]>([]);
     readonly sessionMenuOpen = signal(false);
+    readonly sessionMenuItems = computed(() => {
+        const currentId = this.currentSessionId();
+        const newChatLabel = this.newChatTitle();
+        const items: MenuItem[] = [];
+
+        const addGroup = (label: string, groupSessions: IrisSessionDTO[]) => {
+            if (groupSessions.length === 0) {
+                return;
+            }
+            items.push({
+                label,
+                disabled: true,
+                styleClass: 'session-menu-group-label',
+            });
+            for (const session of groupSessions) {
+                const isActive = session.id === currentId;
+                items.push({
+                    label: this.getSessionMenuLabel(session, newChatLabel),
+                    styleClass: isActive ? 'session-menu-item-active' : undefined,
+                    data: { isActive },
+                    command: () => {
+                        this.onSessionClick(session);
+                        this.onSessionMenuHide();
+                    },
+                });
+            }
+        };
+
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), this.todaySessions());
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.yesterday'), this.yesterdaySessions());
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.last7Days'), this.last7DaysSessions());
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.last30Days'), this.last30DaysSessions());
+        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), this.olderSessions());
+
+        return items;
+    });
     readonly currentSessionTitle = computed(() => {
         const currentId = this.currentSessionId();
         const sessions = this.chatSessions();
@@ -794,65 +829,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     toggleSessionMenu(event: Event) {
         event.stopPropagation();
-        const currentId = this.currentSessionId();
-        const newChatLabel = this.newChatTitle();
-
-        const sessions = this.chatSessions();
-        const todaySessions = this.filterSessionsBetween(sessions, 0, 0);
-        const olderSessions = this.filterSessionsBetween(sessions, 1, undefined, true);
-
-        const items: MenuItem[] = [];
-
-        const addGroup = (label: string, groupSessions: IrisSessionDTO[]) => {
-            if (groupSessions.length === 0) {
-                return;
-            }
-            items.push({
-                label,
-                disabled: true,
-                styleClass: 'session-menu-group-label',
-            });
-            for (const session of groupSessions) {
-                const isActive = session.id === currentId;
-                items.push({
-                    label: this.getSessionMenuLabel(session, newChatLabel),
-                    styleClass: isActive ? 'session-menu-item-active' : undefined,
-                    data: { isActive },
-                    command: () => {
-                        if (this.isNewChatSession(session)) {
-                            this.chatService.switchToSession(session);
-                        } else {
-                            this.onSessionClick(session);
-                        }
-                        this.onSessionMenuHide();
-                    },
-                });
-            }
-        };
-
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.today'), todaySessions);
-        addGroup(this.translateService.instant('artemisApp.iris.chatHistory.older'), olderSessions);
-
-        // Fallback: if chatSessions() is empty but we have an active session,
-        // ensure the menu is never empty.
-        if (items.length === 0 && currentId !== undefined) {
-            const currentSession = this.chatSessions().find((s) => s.id === currentId);
-            const fallbackLabel = currentSession ? this.getSessionMenuLabel(currentSession, newChatLabel) : newChatLabel;
-            const groupLabel = this.getSessionGroupLabel(currentSession);
-            items.push({
-                label: groupLabel,
-                disabled: true,
-                styleClass: 'session-menu-group-label',
-            });
-            items.push({
-                label: fallbackLabel,
-                styleClass: 'session-menu-item-active',
-                data: { isActive: true },
-                command: () => this.onSessionMenuHide(),
-            });
-        }
-
-        this.sessionMenuItems.set(items);
         this.sessionMenuOpen.update((open) => !open);
     }
 
@@ -885,19 +861,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
-    }
-
-    private getSessionGroupLabel(session: IrisSessionDTO | undefined): string {
-        if (!session) {
-            return this.translateService.instant('artemisApp.iris.chatHistory.today');
-        }
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const created = new Date(session.creationDate).getTime();
-        if (created >= todayStart.getTime()) {
-            return this.translateService.instant('artemisApp.iris.chatHistory.today');
-        }
-        return this.translateService.instant('artemisApp.iris.chatHistory.older');
     }
 
     private getSessionMenuLabel(session: IrisSessionDTO, newChatLabel: string): string {
