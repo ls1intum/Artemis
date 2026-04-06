@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
-import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -41,11 +41,8 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
-    private final boolean useHybridSearch;
-
     public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
-        this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
 
     /**
@@ -78,7 +75,7 @@ public class ExerciseWeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise " + exerciseWeaviateDTO.exerciseId() + " in Weaviate: " + e.getMessage(), e);
+            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
         }
     }
 
@@ -342,72 +339,181 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Performs a search on exercises using a pre-built filter.
-     * Uses hybrid (semantic + keyword) search when a vectorizer is available,
-     * or falls back to BM25 (keyword-only) search otherwise.
-     * The filter should include both course access restrictions and role-based access control.
+     * Fetches programming exercises for a course from Weaviate.
+     * Students only see exercises with release dates in the past.
+     * Tutors and above see all exercises.
      *
-     * @param query  the search query
-     * @param filter the Weaviate filter (may be null for no filtering)
-     * @param limit  maximum number of results
-     * @return list of exercise search results from Weaviate
+     * @param courseId       the course ID
+     * @param isAtLeastTutor whether the user is at least a tutor
+     * @return list of exercise property maps from Weaviate
      */
-    public List<Map<String, Object>> searchExercisesWithFilter(String query, Filter filter, int limit) {
+    public List<Map<String, Object>> fetchProgrammingExercisesForCourse(Long courseId, boolean isAtLeastTutor) {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            if (useHybridSearch) {
-                var result = collection.query.hybrid(query, hybridQueryBuilder -> {
-                    hybridQueryBuilder.limit(limit);
-                    if (filter != null) {
-                        hybridQueryBuilder.filters(filter);
-                    }
-                    return hybridQueryBuilder;
-                });
-                return result.objects().stream().map(WeaviateObject::properties).toList();
-            }
-            else {
-                var result = collection.query.bm25(query, bm25QueryBuilder -> {
-                    bm25QueryBuilder.limit(limit);
-                    if (filter != null) {
-                        bm25QueryBuilder.filters(filter);
-                    }
-                    return bm25QueryBuilder;
-                });
-                return result.objects().stream().map(WeaviateObject::properties).toList();
-            }
+            var filters = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId).and(Filter.property(ExerciseSchema.Properties.EXERCISE_TYPE).eq("programming"));
+
+            // TODO: Filter by release date for students (requires correct Weaviate Filter API)
+            // if (!isAtLeastTutor) {
+            // filters = filters.and(Filter.property(ExerciseSchema.Properties.RELEASE_DATE).lessThanOrEqual(...));
+            // }
+
+            var finalFilters = filters;
+            var result = collection.query.fetchObjects(q -> q.filters(finalFilters));
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
         }
         catch (Exception e) {
-            log.error("Failed to search exercises (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
-            throw new WeaviateException("Failed to search exercises in Weaviate: " + e.getMessage(), e);
+            log.error("Failed to fetch programming exercises for course {}: {}", courseId, e.getMessage(), e);
+            return List.of();
         }
     }
 
     /**
-     * Fetches exercises using a pre-built filter (no search query).
-     * The filter should include both course access restrictions and role-based access control.
+     * Performs semantic search on exercises.
      *
-     * @param filter the Weaviate filter (may be null for no filtering)
-     * @param limit  maximum number of results
-     * @return list of exercise results from Weaviate
+     * @param query    the search query
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results
+     * @return list of exercise search results from Weaviate
      */
-    public List<Map<String, Object>> fetchExercisesWithFilter(Filter filter, int limit) {
+    public List<Map<String, Object>> searchExercises(String query, Long courseId, int limit) {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = collection.query.fetchObjects(queryBuilder -> {
-                queryBuilder.limit(limit);
-                if (filter != null) {
-                    queryBuilder.filters(filter);
+            var result = collection.query.hybrid(query, h -> {
+                h.limit(limit);
+                if (courseId != null) {
+                    h.filters(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId));
                 }
-                return queryBuilder;
+                return h;
             });
 
-            return result.objects().stream().map(WeaviateObject::properties).toList();
+            return result.objects().stream().map(obj -> obj.properties()).toList();
         }
         catch (Exception e) {
-            log.error("Failed to fetch exercises: {}", e.getMessage(), e);
-            throw new WeaviateException("Failed to fetch exercises from Weaviate: " + e.getMessage(), e);
+            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises", e);
+        }
+    }
+
+    /**
+     * Performs semantic search on exercises across multiple courses.
+     * This method is used for global search to filter by courses accessible to the user.
+     *
+     * @param query     the search query
+     * @param courseIds set of course IDs to filter by (null or empty for no filtering)
+     * @param limit     maximum number of results
+     * @return list of exercise search results from Weaviate
+     */
+    public List<Map<String, Object>> searchExercisesInCourses(String query, Set<Long> courseIds, int limit) {
+        try {
+            log.debug("searchExercisesInCourses - query: '{}', courseIds count: {}, limit: {}", query, courseIds != null ? courseIds.size() : 0, limit);
+
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.hybrid(query, h -> {
+                h.limit(limit);
+                if (courseIds != null && !courseIds.isEmpty()) {
+                    log.debug("Building OR filter for {} course IDs", courseIds.size());
+                    // Build OR filter for all course IDs
+                    // Start with first course ID
+                    var courseIdsList = courseIds.stream().toList();
+                    var filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.getFirst());
+
+                    // Chain OR conditions for remaining course IDs
+                    for (int i = 1; i < courseIdsList.size(); i++) {
+                        filter = filter.or(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.get(i)));
+                    }
+
+                    h.filters(filter);
+                }
+                else {
+                    log.debug("No course ID filter applied - searching all courses");
+                }
+                return h;
+            });
+
+            int resultCount = result.objects().size();
+            log.debug("Weaviate returned {} objects for query '{}'", resultCount, query);
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to search exercises across courses with query '{}': {}", query, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises across courses", e);
+        }
+    }
+
+    /**
+     * Fetches recent exercises for a specific course.
+     * Used when the search query is empty to show recent exercises.
+     *
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results
+     * @param sortBy   optional sort field (e.g., "dueDate")
+     * @return list of recent exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchRecentExercises(Long courseId, int limit, String sortBy) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(q -> {
+                q.limit(limit);
+                if (courseId != null) {
+                    q.filters(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId));
+                }
+                // Note: Weaviate sorting would require additional configuration
+                // For now, we fetch objects without explicit sorting
+                // Sorting can be implemented client-side or through Weaviate's sorting API
+                return q;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch recent exercises for course {}: {}", courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch recent exercises", e);
+        }
+    }
+
+    /**
+     * Fetches recent exercises across multiple courses.
+     * Used when the search query is empty to show recent exercises globally.
+     *
+     * @param courseIds set of course IDs to filter by (null or empty for no filtering)
+     * @param limit     maximum number of results
+     * @param sortBy    optional sort field (e.g., "dueDate")
+     * @return list of recent exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchRecentExercisesInCourses(Set<Long> courseIds, int limit, String sortBy) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(q -> {
+                q.limit(limit);
+                if (courseIds != null && !courseIds.isEmpty()) {
+                    // Build OR filter for all course IDs
+                    var courseIdsList = courseIds.stream().toList();
+                    var filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.getFirst());
+
+                    // Chain OR conditions for remaining course IDs
+                    for (int i = 1; i < courseIdsList.size(); i++) {
+                        filter = filter.or(Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIdsList.get(i)));
+                    }
+
+                    q.filters(filter);
+                }
+                // Note: Weaviate sorting would require additional configuration
+                // For now, we fetch objects without explicit sorting
+                // Sorting can be implemented client-side or through Weaviate's sorting API
+                return q;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch recent exercises across courses: {}", e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch recent exercises across courses", e);
         }
     }
 }

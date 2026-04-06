@@ -9,12 +9,13 @@ import { Observable } from 'rxjs';
 })
 export class LectureSearchService {
     private readonly http = inject(HttpClient);
+    private readonly baseURL = 'api/iris/lecture-search';
 
     search(query: string, limit = 10): Observable<LectureSearchResult[]> {
-        return this.http.post<LectureSearchResult[]>('api/iris/lecture-search', { query, limit });
+        return this.http.post<LectureSearchResult[]>(this.baseURL, { query, limit });
     }
 
     ask(query: string, limit = 5): Observable<IrisSearchResult> {
-        return this.http.post<IrisSearchResult>('api/iris/search-answer', { query, limit });
+        return this.http.post<IrisSearchResult>(`${this.baseURL}/ask`, { query, limit });
     }
 }

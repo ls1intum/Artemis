@@ -1,8 +1,5 @@
 import { Directive, Signal } from '@angular/core';
 
-/**
- * Debounce time in milliseconds for search input
- */
 export const SEARCH_DEBOUNCE_MS = 300;
 
 /**

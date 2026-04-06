@@ -29,7 +29,7 @@
                     @if (result().metadata['dueDate']) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
-                            <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
+                            <span>Due: {{ result().metadata['dueDate'] }}</span>
                         </span>
                     }
                     @if (result().metadata['dueDate'] && result().metadata['points']) {
@@ -38,10 +38,7 @@
                     @if (result().metadata['points']) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
-                            <span
-                                >{{ result().metadata['points'] }}
-                                {{ (result().metadata['points'] === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span
-                            >
+                            <span>{{ result().metadata['points'] }} {{ result().metadata['points'] === 1 ? 'point' : 'points' }}</span>
                         </span>
                     }
                     @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['points'])) {
@@ -65,7 +62,7 @@
     <!-- Navigation hint for selected item (positioned absolutely) -->
     @if (isSelected()) {
         <div class="result-nav-hint position-absolute text-secondary">
-            <kbd class="key-hint-small" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
+            <kbd class="key-hint-small" aria-label="Press Enter to activate">
                 <fa-icon [icon]="faLevelDownAlt" />
             </kbd>
         </div>

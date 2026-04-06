@@ -14,13 +14,6 @@ export interface GlobalSearchResult {
     metadata: Record<string, any>;
 }
 
-export interface GlobalSearchOptions {
-    type?: string;
-    courseId?: number;
-    limit?: number;
-    sortBy?: string;
-}
-
 /**
  * Service for performing global search across different entity types.
  */
@@ -38,7 +31,15 @@ export class GlobalSearchService {
      * @param options - Optional search parameters (type filter, courseId, limit, sortBy)
      * @returns Observable of search results
      */
-    search(query: string, options?: GlobalSearchOptions): Observable<GlobalSearchResult[]> {
+    search(
+        query: string,
+        options?: {
+            type?: string;
+            courseId?: number;
+            limit?: number;
+            sortBy?: string;
+        },
+    ): Observable<GlobalSearchResult[]> {
         let params = new HttpParams().set('q', query);
 
         if (options?.type) {

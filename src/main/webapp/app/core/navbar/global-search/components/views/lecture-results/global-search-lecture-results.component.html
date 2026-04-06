@@ -2,7 +2,7 @@
     <fa-icon [icon]="faArrowLeft" aria-hidden="true" />
     {{ 'entity.action.back' | artemisTranslate }}
 </button>
-@if (irisEnabled && !irisOpen()) {
+@if (!irisOpen()) {
     <div #selectableItem>
         <jhi-global-search-action-item
             [title]="'global.search.askIris' | artemisTranslate"
@@ -35,8 +35,6 @@
         }
     } @else if (!searchQuery().trim()) {
         <span class="d-block text-secondary text-center py-5">{{ 'global.search.searchLectureContentHint' | artemisTranslate }}</span>
-    } @else if (hasError()) {
-        <span class="d-block text-secondary text-center py-5">{{ 'global.search.lectureSearchError' | artemisTranslate }}</span>
     } @else if (lectureResults().length === 0) {
         <span class="d-block text-secondary text-center py-5">{{ 'global.search.noResultsFound' | artemisTranslate }}</span>
     } @else {
@@ -45,7 +43,7 @@
                 #selectableItem
                 class="lecture-result-card border p-3 text-decoration-none d-block"
                 role="listitem"
-                [class.is-selected]="selectedIndex() === $index + (irisEnabled && !irisOpen() ? 1 : 0)"
+                [class.is-selected]="selectedIndex() === $index + (irisOpen() ? 0 : 1)"
                 [routerLink]="result.lectureUnit.link"
             >
                 <div class="d-flex align-items-start gap-2 mb-2">

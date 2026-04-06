@@ -29,6 +29,7 @@
     height: 1.75rem;
     border-radius: 0.25rem;
     font-size: 0.75rem;
+    color: var(--bs-secondary);
     background: transparent;
     border: none;
     transition:
@@ -44,7 +45,6 @@
 
 .iris-answer-content {
     padding: 0.75rem;
-    min-height: 0; // Required: prevents flex-grow-1 from expanding beyond its container, allowing overflow-y-auto to scroll
 }
 
 .iris-answer-text {
@@ -82,8 +82,7 @@
         background 0.15s;
 
     &:hover,
-    &:focus-visible,
-    &.is-selected {
+    &:focus-visible {
         border-color: var(--bs-primary) !important;
         background: rgba(var(--bs-primary-rgb), 0.05);
         text-decoration: none !important;

@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -28,7 +28,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
     styleUrls: ['home.scss'],
     imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent, SetupPasskeyModalComponent],
 })
-export class HomeComponent implements OnInit, AfterViewChecked {
+export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
 
@@ -115,9 +115,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
-            // Once this has loaded and the user is not defined, we know we need the user to log in
+            // Only start conditional mediation after confirming the user is NOT logged in.
+            // Starting it before the identity check resolves causes race conditions during
+            // logout: the component is briefly created while still authenticated, fires a
+            // challenge request, gets destroyed, and a new instance overwrites the cookie.
             if (!user) {
                 this.loading = false;
+                this.prefillPasskeysIfPossible();
             }
         });
         this.registerAuthenticationSuccess();
@@ -125,6 +129,29 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         const prefilledUsername = this.accountService.getAndClearPrefilledUsername();
         if (prefilledUsername) {
             this.username = prefilledUsername;
+        }
+    }
+
+    ngOnDestroy() {
+        this.webauthnService.stopConditionalMediation();
+    }
+
+    /**
+     * Initiates passkey autofill via conditional mediation if the browser supports it.
+     * Delegates lifecycle management to WebauthnService to avoid race conditions
+     * when the component is rapidly destroyed and recreated (e.g., during logout).
+     * @see https://www.w3.org/TR/webauthn-3/#client-side-discoverable-credential
+     */
+    async prefillPasskeysIfPossible() {
+        if (!this.isPasskeyEnabled) {
+            return;
+        }
+        if (!window.PublicKeyCredential?.isConditionalMediationAvailable) {
+            return;
+        }
+        const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
+        if (isAvailable) {
+            this.webauthnService.startConditionalMediation(() => this.handleLoginSuccess());
         }
     }
 

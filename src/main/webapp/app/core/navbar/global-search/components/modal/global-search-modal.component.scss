@@ -1,7 +1,7 @@
 /* Search input section */
 .search-input-container {
     gap: 0.75rem;
-    border-bottom: 1px solid var(--global-search-border-color);
+    border-bottom: 1px solid var(--bs-border-color);
 }
 
 .search-icon {
@@ -32,33 +32,31 @@
     }
 }
 
-/* Iris split view — lecture results on the left, Iris answer slides in from the right */
+/* Iris split layout */
 .iris-split-layout {
     display: flex;
     height: 100%;
-    overflow: hidden;
 }
 
 .iris-split-left {
-    flex: 0 0 50%;
-    min-width: 0;
+    width: 45%;
+    flex-shrink: 0;
     padding: 0.5rem 0.75rem;
 }
 
 .iris-split-right {
-    flex: 0 0 50%;
-    animation: slideInFromRight 250ms ease-out both;
+    flex: 1;
+    animation: slideInFromRight 0.2s ease-out;
 }
 
 @keyframes slideInFromRight {
     from {
-        transform: translateX(100%);
         opacity: 0;
+        transform: translateX(8px);
     }
-
     to {
-        transform: translateX(0);
         opacity: 1;
+        transform: translateX(0);
     }
 }
 
@@ -66,7 +64,7 @@
 .search-footer {
     padding: 0.75rem 1rem;
     background: var(--global-search-modal-footer-bg);
-    border-top: 1px solid var(--global-search-border-color);
+    border-top: 1px solid var(--bs-border-color);
 }
 
 .keyboard-hints {
@@ -75,8 +73,7 @@
 
 .key-hint-small {
     padding: 0.25rem 0.35rem;
-    background: var(--global-search-kbd-bg);
-    border: 1px solid var(--global-search-kbd-border);
+    background: var(--module-bg);
     border-radius: 0.25rem;
     font-size: 0.75rem;
 }

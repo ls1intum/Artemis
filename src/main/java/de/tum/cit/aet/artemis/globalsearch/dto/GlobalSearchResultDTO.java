@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * This DTO provides a consistent structure for search results regardless of the entity type
  * (exercises, pages, features, courses, etc.), making it easy to render in a unified search UI.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record GlobalSearchResultDTO(String id, String type, String title, String description, String badge, Map<String, Object> metadata) {
 
     /**
@@ -34,22 +36,22 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
             metadata.put("courseId", courseId);
         }
 
-        // Add due date if present (raw ISO string — client handles locale-aware formatting)
+        // Add due date if present
         String dueDate = getString(properties, "due_date");
         if (dueDate != null) {
-            metadata.put("dueDate", dueDate);
+            metadata.put("dueDate", formatDateForDisplay(dueDate));
         }
 
-        // Add release date if present (raw ISO string — client handles locale-aware formatting)
+        // Add release date if present
         String releaseDate = getString(properties, "release_date");
         if (releaseDate != null) {
-            metadata.put("releaseDate", releaseDate);
+            metadata.put("releaseDate", formatDateForDisplay(releaseDate));
         }
 
-        // Add points (preserve fractional values like 0.5, 1.5)
+        // Add points
         Double maxPoints = getDouble(properties, "max_points");
         if (maxPoints != null) {
-            metadata.put("points", maxPoints);
+            metadata.put("points", maxPoints.intValue());
         }
 
         // Add course information
@@ -67,8 +69,7 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
         // Add type-specific metadata
         addTypeSpecificMetadata(properties, exerciseType, metadata);
 
-        Long exerciseId = getLong(properties, "exercise_id");
-        String id = exerciseId != null ? exerciseId.toString() : null;
+        String id = getLong(properties, "exercise_id") != null ? getLong(properties, "exercise_id").toString() : null;
 
         return new GlobalSearchResultDTO(id, "exercise", title, problemStatement, badge, metadata);
     }
@@ -119,6 +120,25 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
             case "file-upload", "fileupload" -> "File Upload";
             default -> "Exercise";
         };
+    }
+
+    /**
+     * Formats an ISO date string to a display-friendly format.
+     *
+     * @param isoDate the ISO date string
+     * @return formatted date string (e.g., "Feb 15, 2026")
+     */
+    private static String formatDateForDisplay(String isoDate) {
+        if (isoDate == null) {
+            return null;
+        }
+        try {
+            ZonedDateTime dateTime = ZonedDateTime.parse(isoDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            return dateTime.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+        }
+        catch (Exception e) {
+            return isoDate; // Return original if parsing fails
+        }
     }
 
     private static String getString(Map<String, Object> properties, String key) {

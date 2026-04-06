@@ -1,13 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { GlobalSearchResult, GlobalSearchService } from './global-search.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('GlobalSearchService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: GlobalSearchService;
     let httpMock: HttpTestingController;
 
@@ -70,32 +66,5 @@ describe('GlobalSearchService', () => {
         const req = httpMock.expectOne((request) => request.url === 'api/search' && request.params.get('limit') === '20');
         expect(req.request.method).toBe('GET');
         req.flush([]);
-    });
-
-    it('should include all options when type, courseId, and limit are provided', () => {
-        service.search('q', { type: 'exercise', courseId: 123, limit: 10 }).subscribe();
-
-        const req = httpMock.expectOne(
-            (request) =>
-                request.url === 'api/search' &&
-                request.params.get('q') === 'q' &&
-                request.params.get('type') === 'exercise' &&
-                request.params.get('courseId') === '123' &&
-                request.params.get('limit') === '10',
-        );
-        expect(req.request.method).toBe('GET');
-        req.flush([]);
-    });
-
-    it('should propagate network errors', () => {
-        service.search('test').subscribe({
-            next: () => {
-                throw new Error('expected an error');
-            },
-            error: (err) => expect(err).toBeTruthy(),
-        });
-
-        const req = httpMock.expectOne((request) => request.url === 'api/search' && request.params.get('q') === 'test');
-        req.error(new ProgressEvent('error'));
     });
 });

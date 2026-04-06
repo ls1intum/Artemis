@@ -9,10 +9,18 @@
     [showHeader]="false"
     [closeOnEscape]="false"
     [dismissableMask]="true"
+    [style]="{
+        width: '100%',
+        'max-width': currentView() === SearchView.Iris ? '1100px' : '700px',
+        height: '60vh',
+        'max-height': '600px',
+        'margin-top': '15vh',
+        overflow: 'hidden',
+        background: 'var(--module-bg)',
+    }"
     contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
     position="top"
     styleClass="global-search-dialog"
-    [style.max-width]="currentView() === SearchView.Iris ? '1100px' : '700px'"
 >
     <!-- Search Input Container -->
     <jhi-global-search-input
@@ -33,9 +41,6 @@
                     [results]="results()"
                     [hasSearched]="hasSearched()"
                     [showResults]="showResults()"
-                    [isLoading]="isLoading()"
-                    [searchError]="searchError()"
-                    [activeFilters]="activeFilters()"
                     (viewSelected)="navigateTo($event)"
                     (entityClick)="onEntityClick($event)"
                 />
@@ -56,19 +61,16 @@
                                 (back)="updateIrisSource(SearchView.Navigation)"
                                 (viewSelected)="updateIrisSource($event)"
                                 [searchQuery]="searchQuery()"
-                                [selectedIndex]="activeSplitPanel() === 'left' ? selectedIndex() : -1"
+                                [selectedIndex]="selectedIndex()"
                                 [irisOpen]="true"
                             />
                         } @else {
                             <jhi-global-search-navigation-view
                                 [searchQuery]="searchQuery()"
-                                [selectedIndex]="activeSplitPanel() === 'left' ? selectedIndex() : -1"
+                                [selectedIndex]="selectedIndex()"
                                 [results]="results()"
                                 [hasSearched]="hasSearched()"
                                 [showResults]="showResults()"
-                                [isLoading]="isLoading()"
-                                [searchError]="searchError()"
-                                [activeFilters]="activeFilters()"
                                 (viewSelected)="updateIrisSource($event)"
                                 (entityClick)="onEntityClick($event)"
                                 [irisOpen]="true"
@@ -76,12 +78,7 @@
                         }
                     </div>
                     <div class="iris-split-right overflow-hidden">
-                        <jhi-global-search-iris-answer
-                            [query]="searchQuery()"
-                            [selectedSourceIndex]="activeSplitPanel() === 'right' ? selectedIndex() : -1"
-                            [active]="activeSplitPanel() === 'right'"
-                            (closeDrawer)="navigateTo(irisSourceView())"
-                        />
+                        <jhi-global-search-iris-answer [query]="searchQuery()" (closeDrawer)="navigateTo(irisSourceView())" />
                     </div>
                 </div>
             }

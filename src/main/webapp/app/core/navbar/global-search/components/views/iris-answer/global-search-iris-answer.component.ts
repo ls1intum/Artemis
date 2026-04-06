@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faComments, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Skeleton } from 'primeng/skeleton';
@@ -23,20 +23,16 @@ import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-sea
 })
 export class GlobalSearchIrisAnswerComponent extends SearchResultView {
     readonly query = input.required<string>();
-    readonly selectedSourceIndex = input<number>(-1);
-    readonly active = input<boolean>(false);
     readonly closeDrawer = output<void>();
 
     private readonly lectureSearchService = inject(LectureSearchService);
-    private readonly router = inject(Router);
 
     protected readonly result = signal<IrisSearchResult | undefined>(undefined);
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
 
-    readonly itemCount = computed(() => this.result()?.sources.length ?? 0);
-    private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
-    private readonly contentArea = viewChild<ElementRef<HTMLElement>>('contentArea');
+    // Does not participate in keyboard navigation — nav stays on the lecture results side.
+    readonly itemCount = computed(() => 0);
 
     protected readonly faTimes = faTimes;
     protected readonly faComments = faComments;
@@ -44,18 +40,6 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
 
     constructor() {
         super();
-        effect(() => {
-            const index = this.selectedSourceIndex();
-            if (index < 0) {
-                // Only scroll to top when the panel itself is still focused (ArrowUp past first source).
-                // When the panel is deactivated (ArrowLeft), leave the scroll position as-is.
-                if (this.active()) {
-                    this.contentArea()?.nativeElement.scrollTo({ top: 0 });
-                }
-            } else {
-                this.selectableItems()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
-            }
-        });
         toObservable(this.query)
             .pipe(
                 debounceTime(SEARCH_DEBOUNCE_MS),
@@ -83,17 +67,5 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
                 this.result.set(result);
                 this.isLoading.set(false);
             });
-    }
-
-    @HostListener('window:keydown', ['$event'])
-    handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter') return;
-        const index = this.selectedSourceIndex();
-        if (index < 0) return;
-        const source = this.result()?.sources[index];
-        if (source) {
-            event.preventDefault();
-            this.router.navigateByUrl(source.lectureUnit.link);
-        }
     }
 }

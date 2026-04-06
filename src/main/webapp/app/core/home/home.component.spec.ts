@@ -34,6 +34,7 @@ describe('HomeComponent', () => {
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
     let loginService: LoginService;
+    let webauthnService: WebauthnService;
     let localStorageService: LocalStorageService;
 
     let router: MockRouter;
@@ -76,6 +77,7 @@ describe('HomeComponent', () => {
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         loginService = TestBed.inject(LoginService);
+        webauthnService = TestBed.inject(WebauthnService);
         fixture.detectChanges();
     });
 
@@ -206,6 +208,61 @@ describe('HomeComponent', () => {
             component.openSetupPasskeyModal();
 
             expect(component.showPasskeyModal()).toBe(true);
+        });
+    });
+
+    describe('prefillPasskeysIfPossible', () => {
+        it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
+            component.isPasskeyEnabled = true;
+            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledWith(expect.any(Function));
+        });
+
+        it('should not call startConditionalMediation if passkey is disabled', async () => {
+            component.isPasskeyEnabled = false;
+            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call startConditionalMediation if conditional mediation is unavailable', async () => {
+            component.isPasskeyEnabled = true;
+            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(false),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not throw if PublicKeyCredential is undefined', async () => {
+            component.isPasskeyEnabled = true;
+            (window as any).PublicKeyCredential = undefined;
+
+            await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should stop conditional mediation on destroy', () => {
+            const stopSpy = jest.spyOn(webauthnService, 'stopConditionalMediation');
+
+            component.ngOnDestroy();
+
+            expect(stopSpy).toHaveBeenCalledOnce();
         });
     });
 });

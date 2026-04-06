@@ -3,16 +3,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SkeletonModule } from 'primeng/skeleton';
+import { Skeleton } from 'primeng/skeleton';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
@@ -21,7 +19,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule, GlobalSearchActionItemComponent, IrisLogoComponent],
+    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, Skeleton, GlobalSearchActionItemComponent, IrisLogoComponent],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
@@ -33,12 +31,10 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     private readonly searchService = inject(LectureSearchService);
     private readonly router = inject(Router);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
-    private readonly profileService = inject(ProfileService);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
-    protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    readonly itemCount = computed(() => (this.irisEnabled && !this.irisOpen() ? 1 : 0) + this.lectureResults().length);
+    readonly itemCount = computed(() => (!this.irisOpen() ? 1 : 0) + this.lectureResults().length);
     private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
@@ -86,19 +82,17 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter') return;
         const index = this.selectedIndex();
         if (index < 0) return;
-        // Iris button visible when iris is enabled and the split view is not already open
-        if (this.irisEnabled && !this.irisOpen() && index === 0) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Iris);
+        if (!this.irisOpen() && index === 0) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.viewSelected.emit(SearchView.Iris);
+            }
             return;
         }
-        // Offset by 1 if iris button is visible
-        const resultIndex = this.irisEnabled && !this.irisOpen() ? index - 1 : index;
-        const result = this.lectureResults()[resultIndex];
-        if (result) {
+        const result = this.lectureResults()[index - (this.irisOpen() ? 0 : 1)];
+        if (event.key === 'Enter' && result) {
             event.preventDefault();
             this.router.navigateByUrl(result.lectureUnit.link);
         }

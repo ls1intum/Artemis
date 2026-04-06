@@ -48,12 +48,12 @@ public class IrisLectureSearchResource {
     }
 
     /**
-     * POST api/iris/search-answer: Ask Iris to answer a question using lecture content.
+     * POST api/iris/lecture-search/ask: Ask Iris to answer a question using lecture content.
      *
      * @param requestDTO the request containing the query and result limit
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the answer with sources
      */
-    @PostMapping("search-answer")
+    @PostMapping("lecture-search/ask")
     @EnforceAtLeastStudent
     public ResponseEntity<PyrisSearchAskResponseDTO> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO) {
         return ResponseEntity.ok(pyrisConnectorService.searchAsk(requestDTO.query(), requestDTO.limit()));

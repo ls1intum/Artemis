@@ -6,5 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     standalone: true,
     imports: [ArtemisTranslatePipe],
     templateUrl: './keyboard-hints.component.html',
+    styleUrls: ['./keyboard-hints.component.scss'],
 })
 export class KeyboardHintsComponent {}
