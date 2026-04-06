@@ -1,31 +1,31 @@
 /**
  * Vitest tests for ExamRoomsComponent.
- * Tests the admin view for managing exam room data including file uploads,
+ * Tests the view for managing exam room data including file uploads,
  * room overview, and data deletion functionality.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
-import { ExamRoomsComponent } from 'app/core/admin/exam-rooms/exam-rooms.component';
-import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { ExamRoomsComponent } from 'app/exam/manage/students/room-distribution/exam-rooms.component';
+import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import {
-    ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
     ExamRoomDeletionSummaryDTO,
     ExamRoomLayoutStrategyDTO,
+    ExamRoomOverviewDTO,
     ExamRoomUploadInformationDTO,
-} from 'app/core/admin/exam-rooms/exam-rooms.model';
+} from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamRoomsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -51,15 +51,12 @@ describe('ExamRoomsComponent', () => {
         component = fixture.componentInstance;
         service = TestBed.inject(ExamRoomsService);
 
-        // getAdminOverview is called on page load, provide default mock
-        vi.spyOn(service, 'getAdminOverview').mockReturnValue(
+        // getRoomOverview is called on page load, provide default mock
+        vi.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 createHttpResponse({
-                    numberOfStoredExamRooms: 0,
-                    numberOfStoredExamSeats: 0,
-                    numberOfStoredLayoutStrategies: 0,
                     newestUniqueExamRooms: [],
-                } as ExamRoomAdminOverviewDTO),
+                } as ExamRoomOverviewDTO),
             ),
         );
     });
@@ -101,14 +98,11 @@ describe('ExamRoomsComponent', () => {
             ],
         } as ExamRoomDTO;
 
-        vi.spyOn(service, 'getAdminOverview').mockReturnValue(
+        vi.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 createHttpResponse({
-                    numberOfStoredExamRooms: 1,
-                    numberOfStoredExamSeats: 50,
-                    numberOfStoredLayoutStrategies: 1,
                     newestUniqueExamRooms: [examRoom],
-                } as ExamRoomAdminOverviewDTO),
+                } as ExamRoomOverviewDTO),
             ),
         );
 
@@ -139,35 +133,26 @@ describe('ExamRoomsComponent', () => {
     it('should load exam room overview on page load', () => {
         fixture.detectChanges();
 
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        // THEN
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasOverview()).toBe(true);
-        expect(component.numberOf()!.examRooms).toBe(0);
-        expect(component.numberOf()!.examSeats).toBe(0);
-        expect(component.numberOf()!.layoutStrategies).toBe(0);
-        expect(component.numberOf()!.uniqueExamRooms).toBe(0);
-        expect(component.numberOf()!.uniqueExamSeats).toBe(0);
-        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(0);
-
-        expect(component.distinctLayoutStrategyNames()).toBe('');
+        expect(component.numberOfAvailable()!.examRooms).toBe(0);
+        expect(component.numberOfAvailable()!.examSeats).toBe(0);
         expect(component.hasExamRoomData()).toBe(false);
     });
 
-    it('should properly extract values from admin overview', () => {
-        const uploadedRoom = mockServiceWithSingleRoom();
+    it('should properly extract values from room overview', () => {
+        // GIVEN
+        const uploadedRoom: ExamRoomDTO = mockServiceWithSingleRoom();
 
         fixture.detectChanges();
 
         expect(component.hasOverview()).toBe(true);
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
 
-        expect(component.numberOf()!.examRooms).toBe(1);
-        expect(component.numberOf()!.examSeats).toBe(50);
-        expect(component.numberOf()!.layoutStrategies).toBe(1);
-        expect(component.numberOf()!.uniqueExamRooms).toBe(1);
-        expect(component.numberOf()!.uniqueExamSeats).toBe(50);
-        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(1);
+        expect(component.numberOfAvailable()!.examRooms).toBe(1);
+        expect(component.numberOfAvailable()!.examSeats).toBe(50);
 
-        expect(component.distinctLayoutStrategyNames()).toBe('default');
         expect(component.hasExamRoomData()).toBe(true);
         expect(component.examRoomData()).toHaveLength(1);
         expect(component.examRoomData()![0]).toEqual({
@@ -178,11 +163,12 @@ describe('ExamRoomsComponent', () => {
     });
 
     it('should show error message on loadExamRoomOverview fail', () => {
-        vi.spyOn(service, 'getAdminOverview').mockReturnValue(throwError(() => new Error()));
+        vi.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
 
         fixture.detectChanges();
 
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        // THEN
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasOverview()).toBe(false);
     });
 
@@ -265,7 +251,7 @@ describe('ExamRoomsComponent', () => {
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
         expect(component.hasSelectedFile()).toBe(false);
         // Once from initial load, once from upload button click
-        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+        expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
 
     it('should not show upload information on failure', () => {
@@ -282,7 +268,7 @@ describe('ExamRoomsComponent', () => {
 
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasUploadInformation()).toBe(false);
     });
 
@@ -321,7 +307,7 @@ describe('ExamRoomsComponent', () => {
 
         expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
         // Once from initial load, once from button click
-        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+        expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
 
     it('should not reload overview if deletion fails', () => {
@@ -334,7 +320,7 @@ describe('ExamRoomsComponent', () => {
 
         expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
         // Only once from initial load
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
     });
 
     it('should show deletion summary on successful deletion', () => {

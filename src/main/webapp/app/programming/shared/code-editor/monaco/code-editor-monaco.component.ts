@@ -97,6 +97,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();
+    readonly secondaryHeader = input<boolean>(false);
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
