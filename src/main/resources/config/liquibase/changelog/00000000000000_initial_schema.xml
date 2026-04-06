@@ -3444,7 +3444,6 @@
         <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="exam_room_exam_assignment" constraintName="fk_exam_room_assignment_room" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="exercise_version" constraintName="fk_exercise_version_author_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_version" constraintName="fk_exercise_version_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="global_notification_setting" constraintName="fk_global_notification_setting_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="post" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="layout_strategy" constraintName="fk_strategy_room" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_transcription" constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
@@ -3803,6 +3802,7 @@
             <column name="discriminator"/>
         </createIndex>
         <addUniqueConstraint tableName="global_notification_setting" columnNames="user_id, global_notification_type" constraintName="uk_global_notification_setting_user_type"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="global_notification_setting" constraintName="fk_global_notification_setting_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
     </changeSet>
     <changeSet id="00000000000003" author="krusche">
         <preConditions onFail="MARK_RAN">
