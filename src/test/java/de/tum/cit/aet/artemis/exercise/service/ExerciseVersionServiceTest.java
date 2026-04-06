@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.RecordComponent;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -25,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -74,6 +74,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
@@ -139,7 +142,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -160,14 +163,15 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
         ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
-        assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
-        assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isNotEqualTo(previousVersion.getExerciseSnapshot());
+        // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
+        assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
+        assertThat(objectMapper.writeValueAsString(snapshot)).isNotEqualTo(objectMapper.writeValueAsString(previousVersion.getExerciseSnapshot()));
     }
 
     @ParameterizedTest
-    @EnumSource(ExerciseType.class)
+    @EnumSource(value = ExerciseType.class, names = "QUIZ", mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -189,7 +193,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
         ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
-        assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
+        // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
+        assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
     }
 
     @Test

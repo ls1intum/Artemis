@@ -14,7 +14,9 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2AuthorizationRequestRedirectFilter;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OIDCInitiatingLoginRequestResolver;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
 
 /**
@@ -85,6 +87,22 @@ public class CustomLti13Configurer extends Lti13Configurer {
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
         http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
+    }
+
+    /**
+     * Override the library's initiation filter configuration to use {@link Lti13PathRegistrationResolver}
+     * instead of the library's {@code PathOIDCInitiationRegistrationResolver} which depends on
+     * {@code AntPathRequestMatcher} (removed in Spring Security 7).
+     */
+    @Override
+    protected OAuth2AuthorizationRequestRedirectFilter configureInitiationFilter(ClientRegistrationRepository clientRegistrationRepository,
+            OptimisticAuthorizationRequestRepository authorizationRequestRepository) {
+        // Use our Spring Security 7 compatible resolver instead of the library's PathOIDCInitiationRegistrationResolver
+        var registrationResolver = new Lti13PathRegistrationResolver(ltiPath + loginInitiationPath);
+        var resolver = new OIDCInitiatingLoginRequestResolver(clientRegistrationRepository, registrationResolver);
+        var filter = new OAuth2AuthorizationRequestRedirectFilter(resolver);
+        filter.setAuthorizationRequestRepository(authorizationRequestRepository);
+        return filter;
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {
