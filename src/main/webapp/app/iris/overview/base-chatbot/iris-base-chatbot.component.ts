@@ -269,7 +269,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
     readonly fullSize = input<boolean>();
-    readonly hasAvailableExercises = input(true);
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
@@ -464,30 +463,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
 
-        void this.onboardingService
-            .showOnboardingIfNeeded(this.hasAvailableExercises())
-            .then((result) => {
-                if (result?.action === 'promptSelected') {
-                    this.applyPromptStarter(result.promptKey);
-                }
-            })
-            .catch(() => undefined);
-    }
-
-    /**
-     * Inserts a translated onboarding prompt starter into the chat textarea.
-     */
-    applyPromptStarter(promptKey: string): void {
-        const text = this.translateService.instant(promptKey);
-        this.newMessageTextContent.set(text);
-        setTimeout(() => {
-            const textarea = this.messageTextarea()?.nativeElement;
-            if (textarea) {
-                textarea.focus();
-                textarea.setSelectionRange(text.length, text.length);
-            }
-            this.adjustTextareaRows();
-        });
+        void this.onboardingService.showOnboardingIfNeeded().catch(() => undefined);
     }
 
     checkIfUserAcceptedLLMUsage(): void {

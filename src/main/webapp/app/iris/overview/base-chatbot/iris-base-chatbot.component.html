@@ -32,6 +32,7 @@
                             <button
                                 type="button"
                                 class="collapsed-icon-button"
+                                data-onboarding-target="info-icon"
                                 (click)="openAboutIrisModal()"
                                 [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
                             >
@@ -134,6 +135,7 @@
                                 <button
                                     type="button"
                                     class="collapsed-icon-button"
+                                    data-onboarding-target="info-icon"
                                     (click)="openAboutIrisModal()"
                                     [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
                                 >
@@ -373,6 +375,7 @@
                 <div class="chat-input">
                     <div class="chat-input-inner">
                         <div class="textarea-wrapper">
+                            <div class="context-selector-placeholder" data-onboarding-target="context-selector" aria-hidden="true"></div>
                             <textarea
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
@@ -395,6 +398,7 @@
                                 [disabled]="isSendDisabled()"
                             />
                         </div>
+                        <div class="suggestion-chip-placeholder" data-onboarding-target="suggestion-chips" aria-hidden="true"></div>
                     </div>
                     @if (!isChatGptWrapper()) {
                         <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>

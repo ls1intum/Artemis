@@ -3,7 +3,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
-export type OnboardingResult = { action: 'finish' } | { action: 'promptSelected'; promptKey: string };
+export type OnboardingResult = { action: 'finish' };
 
 const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
@@ -66,7 +66,7 @@ export class IrisOnboardingService {
      * Opens the onboarding modal if the user hasn't completed it yet.
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async showOnboardingIfNeeded(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
+    async showOnboardingIfNeeded(): Promise<OnboardingResult | undefined> {
         if (!this.accountService.userIdentity()?.id) {
             return undefined;
         }
@@ -79,14 +79,14 @@ export class IrisOnboardingService {
             return undefined;
         }
 
-        return this.openOnboardingModal(hasAvailableExercises);
+        return this.openOnboardingModal();
     }
 
     /**
      * Forces the onboarding modal to open regardless of completion state.
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async openOnboardingModal(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
+    async openOnboardingModal(): Promise<OnboardingResult | undefined> {
         if (!this.accountService.userIdentity()?.id) {
             return undefined;
         }
@@ -96,9 +96,6 @@ export class IrisOnboardingService {
         }
 
         // If a modal is already open, return the same pending result promise.
-        // This handles the case where the chatbot component is destroyed and
-        // re-created during navigation (e.g., exercises tour steps 1-3) — the
-        // new component instance receives the modal result from the existing modal.
         if (this.dialogRef) {
             return this.pendingResult;
         }
@@ -110,15 +107,12 @@ export class IrisOnboardingService {
                 showHeader: false,
                 styleClass: 'iris-onboarding-dialog',
                 maskStyleClass: 'iris-onboarding-mask',
-                data: { hasAvailableExercises },
             }) ?? undefined;
 
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
                 this.markOnboardingCompleted();
-                if (result && typeof result === 'object' && result.action === 'promptSelected') {
-                    resolve(result);
-                } else if (result) {
+                if (result) {
                     resolve({ action: 'finish' });
                 } else {
                     // Modal was dismissed (e.g., clicked X button)

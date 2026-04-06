@@ -9,28 +9,18 @@
                 "getStarted": "Take the tour",
                 "next": "Next",
                 "stepOf": "Step {{current}} of {{total}}",
+                "finish": "Finish",
                 "step1": {
-                    "description": "Click Exercises to continue."
+                    "title": "Start with a prompt",
+                    "description": "Use one of the suggested prompts below to start chatting with Iris."
                 },
                 "step2": {
-                    "header": "Inside programming exercises",
-                    "description": "Iris can explain concepts, help locate errors, and offer hints, without giving away full answers."
+                    "title": "Focus Iris on what matters",
+                    "description": "By default, Iris considers your entire course. Switch the context to a specific lecture or exercise to get more relevant answers."
                 },
                 "step3": {
-                    "description": "Return to Iris to complete the tour."
-                },
-                "step4": {
-                    "title": "Try a first question",
-                    "description": "Choose a suggested prompt below to begin.",
-                    "prompts": {
-                        "explainConcept": "Explain a concept",
-                        "explainConceptStarter": "Help me understand the concept of ",
-                        "quizTopic": "Quiz me on a topic",
-                        "quizTopicStarter": "Generate 5 multiple choice questions to quiz me on the topic of ",
-                        "studyTips": "Give me study tips",
-                        "studyTipsStarter": "Give me 3 tips to be effective at learning "
-                    },
-                    "promptSuggestions": "Prompt suggestions"
+                    "title": "What can Iris help with?",
+                    "description": "Iris guides you through concepts and exercises, but does not give away solutions. Tap the info icon to see the full list of capabilities."
                 }
             },
             "settings": {

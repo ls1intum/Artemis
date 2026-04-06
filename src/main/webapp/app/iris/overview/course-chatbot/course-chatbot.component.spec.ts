@@ -16,7 +16,6 @@ class MockIrisBaseChatbotComponent {
     // Provide signal inputs that the template binds to
     readonly showDeclineButton = input<boolean>();
     readonly isChatHistoryAvailable = input<boolean>();
-    readonly hasAvailableExercises = input<boolean>();
 }
 
 describe('CourseChatbotComponent', () => {

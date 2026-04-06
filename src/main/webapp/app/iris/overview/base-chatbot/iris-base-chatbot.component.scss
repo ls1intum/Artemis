@@ -468,13 +468,29 @@ pre {
 
     &-inner {
         display: flex;
-        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
     }
 
     .textarea-wrapper {
         position: relative;
         display: flex;
         flex: 1;
+    }
+
+    .context-selector-placeholder {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        width: 24px;
+        height: 24px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .suggestion-chip-placeholder {
+        min-height: 36px;
+        border-radius: $iris-border-radius-lg;
     }
 }
 

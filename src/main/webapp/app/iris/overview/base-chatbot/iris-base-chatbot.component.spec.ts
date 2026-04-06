@@ -152,17 +152,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
     });
 
-    it('should apply prompt starter from onboarding result', async () => {
-        const promptKey = 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter';
-        mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'promptSelected', promptKey });
-
-        component.ngAfterViewInit();
-        await fixture.whenStable();
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(component.newMessageTextContent()).toBe(promptKey);
-    });
-
     describe('when user has not accepted LLM usage policy', () => {
         it('should set userAccepted to undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);

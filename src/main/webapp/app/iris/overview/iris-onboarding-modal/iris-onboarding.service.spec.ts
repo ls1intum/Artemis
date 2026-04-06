@@ -115,32 +115,6 @@ describe('IrisOnboardingService', () => {
             expect(result).toEqual({ action: 'finish' });
         });
 
-        it('should pass hasAvailableExercises via dialog data', async () => {
-            const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
-
-            const resultPromise = service.openOnboardingModal(false);
-            closeSubject.next({ action: 'finish' });
-            closeSubject.complete();
-            await resultPromise;
-
-            const openCall = vi.mocked(dialogService.open).mock.calls[0];
-            expect(openCall[1]).toEqual(expect.objectContaining({ data: { hasAvailableExercises: false } }));
-        });
-
-        it('should return promptSelected result when modal closes with prompt selection', async () => {
-            const promptResult: OnboardingResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
-            const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
-
-            const resultPromise = service.openOnboardingModal();
-            closeSubject.next(promptResult);
-            closeSubject.complete();
-            const result = await resultPromise;
-
-            expect(result).toEqual(promptResult);
-        });
-
         it('should mark onboarding as completed after modal closes', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
@@ -170,24 +144,18 @@ describe('IrisOnboardingService', () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            // Start first modal (won't resolve yet)
             const firstCall = service.openOnboardingModal();
-
-            // Try opening second modal — should NOT open a new modal
             const secondCall = service.openOnboardingModal();
 
             expect(dialogService.open).toHaveBeenCalledOnce();
 
-            // Resolve the modal with a prompt selection
-            const promptResult: OnboardingResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
-            closeSubject.next(promptResult);
+            closeSubject.next({ action: 'finish' });
             closeSubject.complete();
 
-            // Both calls should receive the same result
             const firstResult = await firstCall;
             const secondResult = await secondCall;
-            expect(firstResult).toEqual(promptResult);
-            expect(secondResult).toEqual(promptResult);
+            expect(firstResult).toEqual({ action: 'finish' });
+            expect(secondResult).toEqual({ action: 'finish' });
         });
 
         it('should clear dialogRef after modal closes', async () => {
@@ -200,7 +168,6 @@ describe('IrisOnboardingService', () => {
             closeSubject1.complete();
             await firstPromise;
 
-            // Should be able to open again
             const secondPromise = service.openOnboardingModal();
             closeSubject2.next({ action: 'finish' });
             closeSubject2.complete();
