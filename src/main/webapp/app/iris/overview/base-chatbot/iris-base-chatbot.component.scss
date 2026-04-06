@@ -444,7 +444,7 @@ pre {
     flex: 0 1 auto;
 
     textarea {
-        background-color: transparent;
+        background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
         padding: 16px;
         resize: none;
@@ -459,8 +459,10 @@ pre {
             box-shadow: none;
         }
 
+        // Override dark theme's .form-control:disabled { background-color: $gray-800 !important }
+        // so the textarea stays consistent with the wrapper background when disabled.
         &:disabled {
-            opacity: 0.25;
+            background-color: var(--iris-secondary-background) !important;
             cursor: not-allowed;
         }
     }
@@ -480,6 +482,11 @@ pre {
 
         &:focus-within {
             border-color: var(--primary);
+        }
+
+        &:has(textarea:disabled) {
+            opacity: 0.25;
+            cursor: not-allowed;
         }
     }
 
