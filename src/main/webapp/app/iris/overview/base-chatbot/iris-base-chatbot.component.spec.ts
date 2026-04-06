@@ -1592,7 +1592,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should render all three chips in fixed order: learn, quiz, tips', () => {
             fixture.detectChanges();
-            const chipKeys = component.suggestionChips.map((c) => c.translationKey);
+            const chipKeys = (component as any).suggestionChips.map((c: any) => c.translationKey);
             expect(chipKeys).toEqual(['artemisApp.iris.chat.suggestions.learn', 'artemisApp.iris.chat.suggestions.quiz', 'artemisApp.iris.chat.suggestions.tips']);
         });
 
