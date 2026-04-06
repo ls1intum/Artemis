@@ -1,0 +1,16 @@
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler install
+- name: static_code_analysis
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler exec rake ci:rubocop
+  resultPaths:
+    - '${testWorkingDirectory}/rubocop.sarif'
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler exec rake ci:test
+  resultPaths:
+    - '${testWorkingDirectory}/report.xml'

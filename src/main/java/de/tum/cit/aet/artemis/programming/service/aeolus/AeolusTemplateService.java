@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
  */
 @Lazy
 @Service
-@Profile("aeolus | localci")
+@Profile("localci")
 public class AeolusTemplateService {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusTemplateService.class);

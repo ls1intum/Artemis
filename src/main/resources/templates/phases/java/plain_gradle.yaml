@@ -1,0 +1,6 @@
+- name: gradle
+  script: |-
+    chmod +x ./gradlew
+    ./gradlew clean test
+  resultPaths:
+    - '**/test-results/test/*.xml'

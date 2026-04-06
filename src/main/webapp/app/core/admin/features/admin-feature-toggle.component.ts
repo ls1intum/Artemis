@@ -27,7 +27,6 @@ import {
     MODULE_FEATURE_THEIA,
     MODULE_FEATURE_TUTORIALGROUP,
     ModuleFeature,
-    PROFILE_AEOLUS,
     PROFILE_APOLLON,
     PROFILE_ATHENA,
     PROFILE_BUILDAGENT,
@@ -87,16 +86,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
-    private readonly displayedProfiles: ProfileFeature[] = [
-        PROFILE_ATHENA,
-        PROFILE_APOLLON,
-        PROFILE_LDAP,
-        PROFILE_SAML2,
-        PROFILE_LOCALCI,
-        PROFILE_BUILDAGENT,
-        PROFILE_AEOLUS,
-        PROFILE_JENKINS,
-    ];
+    private readonly displayedProfiles: ProfileFeature[] = [PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_LDAP, PROFILE_SAML2, PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
     /** Module features to display */
     private readonly displayedModuleFeatures: ModuleFeature[] = [
@@ -141,7 +131,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [PROFILE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
         [PROFILE_BUILDAGENT]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
-        [PROFILE_AEOLUS]: 'https://docs.artemis.tum.de/developer/aeolus',
         [PROFILE_JENKINS]: 'https://docs.artemis.tum.de/developer/jenkins-localvc',
     };
 

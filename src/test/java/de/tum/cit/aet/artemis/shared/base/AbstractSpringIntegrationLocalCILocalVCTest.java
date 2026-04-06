@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
@@ -84,8 +83,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_AEOLUS,
-        PROFILE_ATHENA })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_ATHENA })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
         "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",

@@ -51,10 +51,6 @@
                     "name": "Integrierter Build-Agent",
                     "description": "Aktiviert den integrierten Build-Agent auf dem Server-Knoten für Local CI, wodurch keine separaten Build-Agent-Knoten benötigt werden."
                 },
-                "aeolus": {
-                    "name": "Aeolus (Build-Pläne)",
-                    "description": "Aktiviert Aeolus für die dynamische Build-Plan-Generierung und -Anpassung für Programmieraufgaben."
-                },
                 "jenkins": {
                     "name": "Jenkins CI",
                     "description": "Aktiviert Jenkins als Continuous-Integration-System für Programmieraufgaben-Builds."

@@ -109,9 +109,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         if (windfile != null) {
             exercise.getBuildConfig().setBuildPlanConfiguration(mapper.writeValueAsString(windfile));
         }
-        if (profileService.isAeolusActive()) {
-            programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
-        }
     }
 
     @Override

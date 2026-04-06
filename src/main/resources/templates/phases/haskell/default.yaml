@@ -1,0 +1,8 @@
+- name: build_and_test_the_code
+  script: |-
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s
+  resultPaths:
+    - 'test-reports/results.xml'

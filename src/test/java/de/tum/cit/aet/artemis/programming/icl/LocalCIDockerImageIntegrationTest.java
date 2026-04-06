@@ -170,7 +170,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     @AfterEach
     void tearDownRealDockerClient() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
-        aeolusRequestMockProvider.reset();
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();

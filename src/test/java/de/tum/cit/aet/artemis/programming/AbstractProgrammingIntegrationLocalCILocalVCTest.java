@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
-import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -87,9 +86,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
-
-    @Autowired
-    protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @Autowired
     protected AeolusTemplateService aeolusTemplateService;

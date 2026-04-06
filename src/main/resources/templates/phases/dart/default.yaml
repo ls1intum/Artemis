@@ -1,0 +1,10 @@
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart pub get
+- name: test
+  script: |-
+    cd "${testWorkingDirectory}"
+    dart test --reporter=json | tojunit | xmlstarlet ed -d '//failure/@message' -d '//error/@message' > report.xml
+  resultPaths:
+    - '${testWorkingDirectory}/report.xml'

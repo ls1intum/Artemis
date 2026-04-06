@@ -51,10 +51,6 @@
                     "name": "Integrated Build Agent",
                     "description": "Enables the integrated build agent on the server node for Local CI, eliminating the need for separate build agent nodes."
                 },
-                "aeolus": {
-                    "name": "Aeolus (Build Plans)",
-                    "description": "Enables Aeolus for dynamic build plan generation and customization for programming exercises."
-                },
                 "jenkins": {
                     "name": "Jenkins CI",
                     "description": "Enables Jenkins as the continuous integration system for programming exercise builds."

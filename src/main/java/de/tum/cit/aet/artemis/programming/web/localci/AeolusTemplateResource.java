@@ -7,9 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
  * the different options (static analysis, sequential runs) as well as the default
  * image for the programming language and project type for the artemis instance.
  */
-@Profile("aeolus | localci")
+@Profile("localci")
 @Lazy
 @RestController
 @RequestMapping("api/programming/aeolus/")
@@ -39,8 +36,6 @@ public class AeolusTemplateResource {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final BuildScriptProviderService buildScriptProviderService;
-
     /**
      * Constructor for the AeolusTemplateResource
      *
@@ -48,7 +43,6 @@ public class AeolusTemplateResource {
      */
     public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProviderService buildScriptProviderService) {
         this.aeolusTemplateService = aeolusTemplateService;
-        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     /**
@@ -74,31 +68,6 @@ public class AeolusTemplateResource {
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
-    }
-
-    /**
-     * GET /api/aeolus/template-scripts/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/template-scripts/:language : Get the aeolus template file with the given filename
-     * <p>
-     * The windfile contains the default build plan configuration for new programming exercises.
-     *
-     * @param language       The programming language for which the aeolus template file should be returned
-     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis Whether the static analysis template should be used
-     * @param sequentialRuns Whether the sequential runs template should be used
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    @GetMapping({ "template-scripts/{language}/{projectType}", "template-scripts/{language}" })
-    @EnforceAtLeastEditor
-    public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
-            @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
-        log.debug("REST request to get aeolus template script for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
-                staticAnalysis, sequentialRuns);
-
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
-
-        return getAeolusTemplateScriptWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
     }
 
     /**
@@ -129,33 +98,6 @@ public class AeolusTemplateResource {
         catch (IOException ex) {
             log.warn("Error when retrieving aeolus template file", ex);
             return ResponseEntity.notFound().build();
-        }
-    }
-
-    /**
-     * Returns the file content of the template script for the given language and project type as JSON.
-     *
-     * @param language          The programming language for which the template file should be returned
-     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis    Whether the static analysis template should be used
-     * @param sequentialRuns    Whether the sequential runs template should be used
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    private ResponseEntity<String> getAeolusTemplateScriptWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns) {
-        try {
-            Optional<ProjectType> optionalProjectType = Optional.empty();
-            if (!projectTypePrefix.isEmpty()) {
-                optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
-            }
-            String script = buildScriptProviderService.getScriptFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);
-        }
-        catch (IOException ex) {
-            log.warn("Error when retrieving aeolus template script", ex);
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
     }
 }
