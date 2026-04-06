@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.module.SimpleModule;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
@@ -58,7 +59,8 @@ public class AeolusTemplateService {
     static {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Action.class, new ActionDeserializer());
-        yamlMapper = YAMLMapper.builder().addModule(module).build();
+        yamlMapper = YAMLMapper.builder().addModule(module).disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .build();
     }
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
