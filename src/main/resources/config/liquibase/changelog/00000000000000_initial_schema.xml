@@ -730,7 +730,7 @@
             <column name="quiz_point_statistic_id" type="bigint">
                 <constraints unique="true"/>
             </column>
-            <column name="max_points" type="double">
+            <column name="max_points" type="double" defaultValueNumeric="1">
                 <constraints nullable="false"/>
             </column>
             <column name="diagram_type" type="varchar(255)"/>
@@ -757,7 +757,7 @@
             <column name="presentation_score_enabled" type="boolean"/>
             <column name="team_assignment_config_id" type="bigint"/>
             <column name="exercise_group_id" type="bigint"/>
-            <column name="bonus_points" type="double">
+            <column name="bonus_points" type="double" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
             <column defaultValue="INCLUDED_COMPLETELY" name="included_in_overall_score" type="varchar(255)">
@@ -1137,8 +1137,12 @@
             <column defaultValueBoolean="false" name="has_setup_feedback_preferences" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="feedback_formality" type="tinyint"/>
-            <column name="feedback_detail" type="tinyint"/>
+            <column name="feedback_formality" type="int" defaultValueNumeric="2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="feedback_detail" type="int" defaultValueNumeric="2">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="learning_path">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1402,7 +1406,7 @@
             <column name="initialization_date" type="datetime(3)"/>
             <column name="presentation_score" type="double"/>
             <column name="discriminator" type="varchar(31)">
-                <constraints nullable="true"/>
+                <constraints nullable="false"/>
             </column>
             <column defaultValueBoolean="false" name="test_run" type="boolean"/>
             <column name="individual_due_date" type="datetime(3)"/>
@@ -1430,7 +1434,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="credential_id" type="varchar(255)">
-                <constraints nullable="true" unique="true"/>
+                <constraints nullable="false" unique="true"/>
             </column>
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
@@ -1462,7 +1466,7 @@
             </column>
             <column name="last_modified_by" type="varchar(45)"/>
             <column name="last_modified_date" type="datetime(3)"/>
-            <column name="is_approved" type="boolean">
+            <column name="is_approved" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -2106,7 +2110,7 @@
         </createTable>
         <createTable tableName="submission">
             <column name="discriminator" type="varchar(31)">
-                <constraints nullable="true"/>
+                <constraints nullable="false"/>
             </column>
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -3483,7 +3487,7 @@
         <createIndex indexName="uk_course_request_short_name" tableName="course_request" unique="true">
             <column name="short_name"/>
         </createIndex>
-        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="created_course_id" baseTableName="course_request" constraintName="fk_course_request_course" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="requester_id" baseTableName="course_request" constraintName="fk_course_request_user" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
@@ -3821,13 +3825,14 @@
         </addColumn>
         <addColumn tableName="global_notification_setting">
             <column name="global_notification_type" type="varchar(32)">
-                </column>
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
         <addColumn tableName="jhi_user">
-            <column name="ai_selection_decision" type="varchar(20)"/>
+            <column name="ai_selection_decision" type="text"/>
         </addColumn>
         <addColumn tableName="lecture_transcription">
-            <column name="transcription_status" type="varchar(20)" defaultValue="PENDING">
+            <column name="transcription_status" type="text" defaultValue="PENDING">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
@@ -3845,12 +3850,12 @@
             <column name="attestation_object" type="bytea"/>
         </addColumn>
         <addColumn tableName="review_comment">
-            <column name="type" type="varchar(20)">
+            <column name="type" type="text">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
         <addColumn tableName="review_comment_thread">
-            <column name="target_type" type="varchar(50)">
+            <column name="target_type" type="text">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
@@ -3863,7 +3868,7 @@
                 </column>
         </addColumn>
         <addColumn tableName="spring_ai_chat_memory">
-            <column name="type" type="varchar(20)">
+            <column name="type" type="text">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
