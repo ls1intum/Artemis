@@ -354,7 +354,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check the file size
         if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
             // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
         }
     }
 }

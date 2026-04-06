@@ -38,8 +38,18 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long studentExamId);
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.exerciseGroup
+                LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH se.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH se.user
+            WHERE se.id = :studentExamId
+            """)
+    Optional<StudentExam> findWithExercisesById(@Param("studentExamId") Long studentExamId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
     Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);

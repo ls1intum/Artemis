@@ -17,12 +17,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -283,7 +282,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         String exerciseJson = extractExerciseJsonFromZip(result);
         assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();
 
-        var objectMapper = new ObjectMapper();
+        var objectMapper = JsonObjectMapper.get();
         var json = objectMapper.readTree(exerciseJson);
 
         assertThat(json.has("categories")).as("Exported exercise JSON should contain a 'categories' field").isTrue();
@@ -345,7 +344,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         String exerciseJson = extractExerciseJsonFromZip(result);
         assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();
 
-        var objectMapper = new ObjectMapper();
+        var objectMapper = JsonObjectMapper.get();
         var json = objectMapper.readTree(exerciseJson);
 
         // Verify categories are not present
