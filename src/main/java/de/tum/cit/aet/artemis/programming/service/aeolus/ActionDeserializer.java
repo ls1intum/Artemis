@@ -8,7 +8,6 @@ import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ValueDeserializer;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Deserializer for {@link Action} that determines the type of the action based on the content of the JSON.
@@ -38,10 +37,9 @@ public class ActionDeserializer extends ValueDeserializer<Action> {
                 className = "platform-action";
             }
         }
-        JsonMapper mapper = (JsonMapper) parser.objectReadContext();
         return switch (className) {
-            case "script-action" -> mapper.treeToValue(node, ScriptAction.class);
-            case "platform-action" -> mapper.treeToValue(node, PlatformAction.class);
+            case "script-action" -> context.readTreeAsValue(node, ScriptAction.class);
+            case "platform-action" -> context.readTreeAsValue(node, PlatformAction.class);
             default -> throw new JacksonException("Cannot determine Action type from JSON") {
             };
         };
