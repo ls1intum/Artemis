@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
@@ -162,15 +163,15 @@ public class ExerciseMappingToolsService {
 
     private final UserRepository userRepository;
 
-    private final AtlasMLApi atlasMLApi;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     private final AtlasAgentSessionCacheService sessionCacheService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, AtlasMLApi atlasMLApi, AtlasAgentSessionCacheService sessionCacheService) {
+            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
@@ -369,7 +370,7 @@ public class ExerciseMappingToolsService {
                 log.info("Created {} new competency links for exercise {}", linksToCreate.size(), exerciseId);
                 // Notify AtlasML so the exercise's vector embedding reflects the new competency links
                 for (CompetencyExerciseLink link : linksToCreate) {
-                    atlasMLApi.mapCompetencyToExercise(exerciseId, link.getCompetency().getId());
+                    atlasMLApi.ifPresent(api -> api.mapCompetencyToExercise(exerciseId, link.getCompetency().getId()));
                 }
             }
 
@@ -437,8 +438,12 @@ public class ExerciseMappingToolsService {
      * @return set of suggested competency IDs, or {@code null} if AtlasML is unavailable (callers should fall back to LLM judgment)
      */
     private Set<Long> fetchSuggestedCompetencyIds(Long courseId, String description) {
+        if (atlasMLApi.isEmpty()) {
+            return null;
+        }
+
         try {
-            SuggestCompetencyResponseDTO response = atlasMLApi.suggestCompetencies(new SuggestCompetencyRequestDTO(description, courseId));
+            SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetencies(new SuggestCompetencyRequestDTO(description, courseId));
             if (response == null || response.competencies() == null) {
                 return Set.of();
             }
