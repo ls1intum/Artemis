@@ -324,8 +324,15 @@ dependencies {
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.34.1"
 
-    // Jackson 2 annotations — shared between Jackson 2 and 3 (Jackson 3 depends on them transitively)
+    // Jackson 2 — kept temporarily during Jackson 2→3 migration; remove once all code uses Jackson 3 types
+    // TODO: remove these once Phase 3 migration is complete
     implementation "com.fasterxml.jackson.core:jackson-annotations"
+    implementation "com.fasterxml.jackson.core:jackson-core"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.2"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
 
     // Avoid outdated version of json-smart to prevent security issues, we only use this as transitive dependency for third party dependencies
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
