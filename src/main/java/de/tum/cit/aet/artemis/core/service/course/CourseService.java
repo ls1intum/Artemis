@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -188,7 +189,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
         examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
+        lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
@@ -244,9 +245,19 @@ public class CourseService {
         }
 
         long startFilterAll = System.nanoTime();
+        // Pre-assign the course back-reference on all exercises to prevent Hibernate 7 lazy proxy initialization.
+        // findByCourseIds only returns course exercises (not exam exercises), so we can safely set the course directly.
+        Map<Long, Course> courseById = userVisibleCourses.stream().collect(Collectors.toMap(DomainObject::getId, c -> c));
+        allExercises.forEach(ex -> {
+            Course c = courseById.get(ex.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (c != null) {
+                ex.setCourse(c);
+            }
+        });
+
         var courses = userVisibleCourses.stream().peek(course -> {
             // connect the exercises with the course
-            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setExercises(allExercises.stream().filter(ex -> course.equals(ex.getCourseViaExerciseGroupOrCourseMember())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user, false));
             exerciseService.loadExerciseDetailsIfNecessary(course, user, false);
             // we do not send actual lectures or exams to the client, not needed

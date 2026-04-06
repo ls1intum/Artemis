@@ -25,11 +25,10 @@ import io.sentry.SentryEvent;
 import io.sentry.protocol.Request;
 import io.sentry.protocol.SentryException;
 import io.sentry.protocol.SentryTransaction;
-import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
 @Lazy
-@Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
+@Profile({ ArtemisConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
