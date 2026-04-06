@@ -6,7 +6,8 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * Represents an LTI 1.3 Launch Request, encapsulating the necessary information
@@ -48,7 +49,7 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
     private static String extractResourceLinkId(OidcIdToken ltiIdToken) {
         Object resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
         if (resourceLinkClaim != null) {
-            JsonNode resourceLinkJson = new ObjectMapper().convertValue(resourceLinkClaim, JsonNode.class);
+            JsonNode resourceLinkJson = JsonObjectMapper.get().convertValue(resourceLinkClaim, JsonNode.class);
             JsonNode idNode = resourceLinkJson.get("id");
             return idNode != null ? idNode.asText() : null;
         }

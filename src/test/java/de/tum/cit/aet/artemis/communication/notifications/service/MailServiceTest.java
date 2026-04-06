@@ -24,8 +24,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.User;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * This is a very basic testing class for the mail service
@@ -43,10 +43,10 @@ class MailServiceTest {
     private MimeMessage mimeMessage;
 
     @Mock
-    private JHipsterProperties jHipsterProperties;
+    private ArtemisProperties jHipsterProperties;
 
     @Mock
-    private JHipsterProperties.Mail mail;
+    private ArtemisProperties.Mail mail;
 
     @Mock
     private MessageSource messageSource;
@@ -84,11 +84,11 @@ class MailServiceTest {
         javaMailSender = mock(JavaMailSender.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
 
-        mail = mock(JHipsterProperties.Mail.class);
+        mail = mock(ArtemisProperties.Mail.class);
         String EMAIL_ADDRESS_B = "alex2713@gmail.com";
         when(mail.getFrom()).thenReturn(EMAIL_ADDRESS_B);
 
-        jHipsterProperties = mock(JHipsterProperties.class);
+        jHipsterProperties = mock(ArtemisProperties.class);
         when(jHipsterProperties.getMail()).thenReturn(mail);
 
         messageSource = mock(MessageSource.class);
