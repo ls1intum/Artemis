@@ -33,7 +33,7 @@ record Violation(String rule, String ruleset, String priority, int beginLine, in
             @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset, @JacksonXmlProperty(isAttribute = true, localName = "priority") String priority,
             @JacksonXmlProperty(isAttribute = true, localName = "beginline") int beginLine, @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
             @JacksonXmlProperty(isAttribute = true, localName = "begincolumn") int beginColumn, @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
-            @JacksonXmlProperty() @JacksonXmlText String message  // inner text
+            @JacksonXmlProperty(localName = "message") @JacksonXmlText String message  // inner text
     ) {
         return new Violation(rule, ruleset, priority, beginLine, endLine, beginColumn, endColumn, message);
     }

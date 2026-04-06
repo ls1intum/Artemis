@@ -22,7 +22,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class JsonObjectMapper {
 
-    private static final JsonMapper INSTANCE = JsonMapper.builder().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
+    private static final JsonMapper INSTANCE = JsonMapper.builder().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build();
 
     private JsonObjectMapper() {
     }

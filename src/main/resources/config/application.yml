@@ -231,6 +231,9 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    jackson:
+        deserialization:
+            fail-on-null-for-primitives: false # Jackson 3 defaults to true; keep Jackson 2 behavior
     ai:
         model:
             chat: none # possible values: openai, azure-openai, none
