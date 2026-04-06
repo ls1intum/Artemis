@@ -93,11 +93,28 @@ artemis:
 spring:
     liquibase:
         enabled: false #not needed for build agents
+    # Override datasource and JPA from application-prod.yml to prevent Hibernate from trying to connect
+    datasource:
+        url: ""
+        driver-class-name: ""
+    jpa:
+        database: default
+        properties:
+            hibernate.cache.use_second_level_cache: false
+            hibernate.cache.use_query_cache: false
+    data:
+        jpa:
+            repositories:
+                enabled: false
     autoconfigure:
         exclude:
             # Hibernate and DataSource are not needed in the build agent
             - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
             - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+            - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.JdbcClientAutoConfiguration
             # These exclusions are repeated from application-core.yml because overriding the `exclude` array is not possible
             # Important: Keep in sync with application-core.yml, except for build agent specific exclusions
             - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
