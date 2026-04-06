@@ -76,6 +76,7 @@ public class Post extends Posting {
     @Column(name = "has_forwarded_messages")
     private boolean hasForwardedMessages;
 
+    @com.fasterxml.jackson.annotation.JsonCreator
     public Post() {
     }
 
