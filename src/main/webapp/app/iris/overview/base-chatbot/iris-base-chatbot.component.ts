@@ -94,6 +94,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
     host: {
         '[class.layout-client]': "layout() === 'client'",
         '[class.layout-widget]': "layout() === 'widget'",
+        '[class.layout-embedded]': "layout() === 'embedded'",
     },
     imports: [
         IrisLogoComponent,
@@ -270,7 +271,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
-    readonly layout = input<'client' | 'widget'>('client');
+    readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 

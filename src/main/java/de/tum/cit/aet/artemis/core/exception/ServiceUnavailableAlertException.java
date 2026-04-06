@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.net.URI;
 
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
 
 public class ServiceUnavailableAlertException extends HttpStatusException {
 
@@ -11,6 +11,6 @@ public class ServiceUnavailableAlertException extends HttpStatusException {
     }
 
     public ServiceUnavailableAlertException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
-        super(type, defaultMessage, Status.SERVICE_UNAVAILABLE, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
+        super(type, defaultMessage, HttpStatus.SERVICE_UNAVAILABLE, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 }

@@ -23,4 +23,24 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'practice/:participationId',
+        loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        data: {
+            authorities: [],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'practice',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'practice/:participationId/submission/:submissionId',
+        loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        data: {
+            authorities: [],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'practice',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];
