@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -24,6 +22,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import tools.jackson.core.JacksonException;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -66,7 +65,7 @@ public class LocalCIService implements ContinuousIntegrationService {
      * @param exercise for which the build plans should be recreated
      */
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JacksonException {
         // TODO: implement this differently for LocalCI in the future
         if (exercise == null) {
             return;

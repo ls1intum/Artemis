@@ -13,9 +13,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
@@ -25,6 +22,8 @@ import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContent
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Renders existing consistency-check review-thread context into deterministic JSON for Hyperion prompts.
@@ -48,9 +47,9 @@ public class HyperionReviewCommentContextRendererService {
 
     private final CommentThreadRepository commentThreadRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, ObjectMapper objectMapper) {
+    public HyperionReviewCommentContextRendererService(CommentThreadRepository commentThreadRepository, JsonMapper objectMapper) {
         this.commentThreadRepository = commentThreadRepository;
         this.objectMapper = objectMapper;
     }
@@ -115,7 +114,7 @@ public class HyperionReviewCommentContextRendererService {
         try {
             return objectMapper.writeValueAsString(payload);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to serialize existing review threads for exercise {}", exerciseId, e);
             return "{\"threads\":[]}";
         }

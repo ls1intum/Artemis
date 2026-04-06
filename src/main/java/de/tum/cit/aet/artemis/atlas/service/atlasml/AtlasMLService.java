@@ -22,10 +22,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -45,6 +41,9 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for communicating with the AtlasML microservice.
@@ -164,7 +163,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -203,7 +202,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {
@@ -538,7 +537,7 @@ public class AtlasMLService {
         }
 
         try {
-            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonMapper objectMapper = JsonObjectMapper.get();
             JsonNode root = objectMapper.readTree(responseBody);
             boolean isHealthy = isHttpHealthy;
 
@@ -555,7 +554,7 @@ public class AtlasMLService {
 
             return new ConnectorHealth(isHealthy, additionalInfo);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("AtlasML health payload has invalid JSON", e);
             return createFailedHealth(additionalInfo, "Incorrect format from AtlasML");
         }

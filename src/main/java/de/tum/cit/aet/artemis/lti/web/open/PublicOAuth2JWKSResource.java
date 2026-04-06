@@ -9,13 +9,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import tools.jackson.core.JacksonException;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
@@ -46,7 +45,7 @@ public class PublicOAuth2JWKSResource {
         try {
             keysAsJson = JsonObjectMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
         }
-        catch (JsonProcessingException exception) {
+        catch (JacksonException exception) {
             log.debug("Error occurred parsing jwkSet: {}", exception.getMessage());
         }
         return new ResponseEntity<>(keysAsJson, HttpStatus.OK);

@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.ProcessM
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.RequestCount;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.RequestStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.TimerSummary;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Periodically collects local metrics and stores them in a shared Hazelcast IMap
@@ -57,9 +57,9 @@ public class NodeMetricsCollector {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, HazelcastInstance hazelcastInstance, ObjectMapper objectMapper) {
+    public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, HazelcastInstance hazelcastInstance, JsonMapper objectMapper) {
         this.metricsEndpoint = metricsEndpoint;
         this.hazelcastInstance = hazelcastInstance;
         this.objectMapper = objectMapper;

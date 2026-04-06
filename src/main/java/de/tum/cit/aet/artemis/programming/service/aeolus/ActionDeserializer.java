@@ -2,20 +2,19 @@ package de.tum.cit.aet.artemis.programming.service.aeolus;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Action;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.PlatformAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Deserializer for {@link Action} that determines the type of the action based on the content of the JSON.
  */
-public class ActionDeserializer extends JsonDeserializer<Action> {
+public class ActionDeserializer extends ValueDeserializer<Action> {
 
     /**
      * Deserializes a JSON object into an {@link Action} object. This method determines the specific
@@ -50,7 +49,7 @@ public class ActionDeserializer extends JsonDeserializer<Action> {
                 className = "platform-action";
             }
         }
-        ObjectMapper mapper = (ObjectMapper) parser.getCodec();
+        JsonMapper mapper = (JsonMapper) parser.getCodec();
         return switch (className) {
             case "script-action" -> mapper.treeToValue(node, ScriptAction.class);
             case "platform-action" -> mapper.treeToValue(node, PlatformAction.class);

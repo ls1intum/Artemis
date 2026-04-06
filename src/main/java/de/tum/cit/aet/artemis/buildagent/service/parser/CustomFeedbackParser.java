@@ -8,17 +8,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class CustomFeedbackParser {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFeedbackParser.class);
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     // Default value, will be overridden when customized below in setMaxFeedbackLength
     private static int maxFeedbackLength = 20_000;

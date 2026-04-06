@@ -37,8 +37,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -125,6 +123,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service Implementation for managing exams.
@@ -186,7 +185,7 @@ public class ExamService {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final ObjectMapper defaultObjectMapper;
+    private final JsonMapper defaultJsonMapper;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -232,7 +231,7 @@ public class ExamService {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.defaultObjectMapper = JsonObjectMapper.get();
+        this.defaultJsonMapper = JsonObjectMapper.get();
         this.quizResultService = quizResultService;
         this.exerciseRepository = exerciseRepository;
         this.quizQuestionRepository = quizQuestionRepository;
@@ -1090,7 +1089,7 @@ public class ExamService {
             case ModelingExercise ignored -> {
                 ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
                 try {
-                    return !modelingSubmission.isEmpty(this.defaultObjectMapper);
+                    return !modelingSubmission.isEmpty(this.defaultJsonMapper);
                 }
                 catch (Exception e) {
                     // Then the student most likely submitted something which breaks the model, if parsing fails

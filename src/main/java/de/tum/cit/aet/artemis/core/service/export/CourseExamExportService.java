@@ -27,8 +27,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseExamExportErrorCause;
@@ -56,6 +54,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service Implementation for exporting courses and exams.
@@ -92,13 +91,13 @@ public class CourseExamExportService {
 
     private final CourseOperationProgressService progressService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             Optional<TextSubmissionExportApi> textSubmissionExportApi, Optional<FileSubmissionExportApi> fileSubmissionExportApi,
             Optional<ModelingSubmissionExportApi> modelingSubmissionExportApi, QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService,
             WebsocketMessagingService websocketMessagingService, Optional<ExamRepositoryApi> examRepositoryApi, CourseStudentDataExportService courseStudentDataExportService,
-            CourseOperationProgressService progressService, ObjectMapper objectMapper) {
+            CourseOperationProgressService progressService, JsonMapper objectMapper) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileSubmissionExportApi = fileSubmissionExportApi;

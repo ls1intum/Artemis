@@ -59,8 +59,6 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -73,6 +71,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import tools.jackson.databind.json.JsonMapper;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -89,7 +88,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final TokenProvider tokenProvider;
 
@@ -113,7 +112,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+    public WebsocketConfiguration(JsonMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
             Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = objectMapper;

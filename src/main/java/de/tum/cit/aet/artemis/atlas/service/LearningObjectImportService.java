@@ -25,8 +25,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -66,6 +64,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import tools.jackson.core.JacksonException;
 
 /**
  * Service for importing learning objects related to competencies.
@@ -193,7 +192,7 @@ public class LearningObjectImportService {
         }
     }
 
-    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JacksonException {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
@@ -224,7 +223,7 @@ public class LearningObjectImportService {
         };
     }
 
-    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JsonProcessingException {
+    private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JacksonException {
         Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findWithCompetenciesByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
         Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(programmingExercise.getShortName(),
                 course.getId());

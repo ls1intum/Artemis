@@ -18,13 +18,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.core.dto.SbomComponentDTO;
 import de.tum.cit.aet.artemis.core.dto.SbomDTO;
 import de.tum.cit.aet.artemis.core.dto.SbomMetadataDTO;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for reading and parsing Software Bill of Materials (SBOM) files.
@@ -41,9 +40,9 @@ public class SbomService {
 
     private static final String CLIENT_SBOM_PATH = "sbom/client-sbom.json";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public SbomService(ObjectMapper objectMapper) {
+    public SbomService(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

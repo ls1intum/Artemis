@@ -19,10 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -38,6 +34,10 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service implementation for managing exam rooms.
@@ -51,9 +51,9 @@ public class ExamRoomService {
 
     private final ExamRoomRepository examRoomRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, JsonMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
     }
@@ -422,7 +422,7 @@ public class ExamRoomService {
             seatInputs = objectMapper.readValue(layoutStrategy.getParametersJson(), new TypeReference<>() {
             });
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("Invalid fixed-selection layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
@@ -485,7 +485,7 @@ public class ExamRoomService {
         try {
             relativeDistanceInput = objectMapper.readValue(layoutStrategy.getParametersJson(), RelativeDistanceInput.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("Invalid relative-distance layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }

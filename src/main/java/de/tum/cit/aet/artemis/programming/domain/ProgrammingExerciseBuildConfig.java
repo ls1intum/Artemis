@@ -17,11 +17,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import tools.jackson.core.JacksonException;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -243,7 +243,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         try {
             return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
@@ -266,7 +266,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
                 return Optional.of(phases);
             }
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             // Not in phases format
         }
         return Optional.empty();

@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * A ModelingSubmission.
@@ -85,10 +85,10 @@ public class ModelingSubmission extends Submission {
      * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements/nodes in the json description are empty.
      * Supports Apollon v3 (with 'elements') and v4 (with 'nodes').
      *
-     * @param jacksonObjectMapper a predefined jackson object mapper
+     * @param jacksonJsonMapper a predefined jackson object mapper
      * @return true if the submission is empty, false otherwise
      */
-    public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
+    public boolean isEmpty(JsonMapper jacksonJsonMapper) {
         try {
             // in case there is an explanation, we should
             if (StringUtils.hasText(explanationText)) {
@@ -97,7 +97,7 @@ public class ModelingSubmission extends Submission {
             if (model == null || model.isBlank()) {
                 return true;
             }
-            var jsonNode = jacksonObjectMapper.readTree(getModel());
+            var jsonNode = jacksonJsonMapper.readTree(getModel());
 
             // Check for v3 (elements)
             var elements = jsonNode.get("elements");
@@ -109,7 +109,7 @@ public class ModelingSubmission extends Submission {
             var nodes = jsonNode.get("nodes");
             return nodes == null || nodes.isEmpty();
         }
-        catch (JsonProcessingException ex) {
+        catch (JacksonException ex) {
             log.warn("Failed to parse model JSON", ex);
             return false;
         }

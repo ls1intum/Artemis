@@ -11,9 +11,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
@@ -33,6 +30,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.SarifLog;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ToolComponent;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserStrategy;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Implements parts of the SARIF OASIS standard version 2.1.0.
@@ -60,7 +59,7 @@ public class SarifParser implements ParserStrategy {
     private record FileLocation(String path, int startLine, int endLine, int startColumn, int endColumn) {
     }
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final StaticCodeAnalysisTool tool;
 
@@ -84,7 +83,7 @@ public class SarifParser implements ParserStrategy {
         try {
             sarifLog = objectMapper.readValue(reportContent, SarifLog.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException(e);
         }
 

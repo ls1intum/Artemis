@@ -26,8 +26,6 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -39,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Configurer for WebAuthn passkey authentication in Artemis.
@@ -96,7 +95,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, ObjectMapper objectMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, JsonMapper objectMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,

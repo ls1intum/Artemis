@@ -7,16 +7,16 @@ import java.util.List;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Converter
 public class LectureTranscriptionSegmentConverter implements AttributeConverter<List<LectureTranscriptionSegment>, String> {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Override
     public String convertToDatabaseColumn(List<LectureTranscriptionSegment> transcriptionSegments) {
@@ -26,7 +26,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
         try {
             return objectMapper.writeValueAsString(transcriptionSegments);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert list of transcription segments to JSON", e);
         }
     }

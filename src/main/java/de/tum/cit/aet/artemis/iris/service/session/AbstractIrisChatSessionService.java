@@ -7,10 +7,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.context.MessageSource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -33,6 +29,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
 
@@ -52,7 +51,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final Optional<IrisCitationService> irisCitationService;
 
@@ -61,7 +60,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             Optional<IrisCitationService> irisCitationService) {
         this.irisSessionRepository = irisSessionRepository;
@@ -80,7 +79,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
      */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, JsonMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -110,7 +109,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             session.setLatestSuggestions(suggestions);
             irisSessionRepository.save(session);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException("Could not update latest suggestions for session " + session.getId(), e);
         }
     }
@@ -239,7 +238,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
                     return new IrisJsonMessageContent(jsonNode);
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 // Not valid JSON, fall through to text content
             }
         }

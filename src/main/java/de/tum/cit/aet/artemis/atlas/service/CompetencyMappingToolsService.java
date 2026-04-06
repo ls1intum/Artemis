@@ -14,9 +14,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -39,6 +36,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service providing LLM-callable tools for the Competency Mapper Agent using Spring AI's function calling API.
@@ -55,7 +54,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 @Conditional(AtlasEnabled.class)
 public class CompetencyMappingToolsService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -85,10 +84,9 @@ public class CompetencyMappingToolsService {
     // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
 
-    public CompetencyMappingToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService, CourseRepository courseRepository,
-            AtlasAgentSessionCacheService atlasAgentSessionCacheService, Optional<AtlasMLApi> atlasMLApi, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository) {
+    public CompetencyMappingToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CompetencyRelationRepository competencyRelationRepository,
+            CompetencyRelationService competencyRelationService, CourseRepository courseRepository, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
+            Optional<AtlasMLApi> atlasMLApi, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -507,13 +505,13 @@ public class CompetencyMappingToolsService {
     }
 
     /**
-     * Convert object to JSON using Jackson ObjectMapper.
+     * Convert object to JSON using Jackson JsonMapper.
      */
     private String toJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

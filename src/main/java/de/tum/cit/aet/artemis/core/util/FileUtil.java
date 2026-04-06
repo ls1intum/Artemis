@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -51,6 +50,7 @@ import de.tum.cit.aet.artemis.core.domain.FilePathInformation;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import tools.jackson.databind.json.JsonMapper;
 
 public class FileUtil {
 
@@ -811,7 +811,7 @@ public class FileUtil {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public static Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) throws IOException {
+    public static Path writeObjectToJsonFile(Object object, JsonMapper objectMapper, Path path) throws IOException {
         objectMapper.writeValue(path.toFile(), object);
         return path;
     }

@@ -15,10 +15,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import ch.qos.logback.classic.LoggerContext;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /*
  * Configures the console and Logstash log appender from the app properties
@@ -29,7 +28,7 @@ import ch.qos.logback.classic.LoggerContext;
 public class LoggingConfiguration {
 
     public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, ArtemisProperties jHipsterProperties,
-            ObjectMapper mapper) throws JsonProcessingException {
+            JsonMapper mapper) throws JacksonException {
 
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 

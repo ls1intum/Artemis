@@ -16,9 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service determining the health of the Athena service and its assessment modules.
@@ -40,12 +39,12 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper) {
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, JsonMapper objectMapper) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = objectMapper;
     }
@@ -69,7 +68,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
         ConnectorHealth health;
         try {
             // Use String.class to avoid Jackson 3 / Jackson 2 incompatibility in RestTemplate,
-            // then deserialize manually with the Jackson 2 ObjectMapper.
+            // then deserialize manually with the Jackson 2 JsonMapper.
             final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
             final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
             final var athenaStatus = healthResponse != null ? healthResponse.status() : null;

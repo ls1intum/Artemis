@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.structureoraclegenerator;
 
 import java.util.HashSet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -13,6 +10,9 @@ import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaMethod;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * This class is used to serialize the elements that are generally defined in types, e.g. methods and various properties of the types. These properties are defined as the hierarchy
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  */
 record JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     /**
      * This method is used to serialize the class properties of each type defined in the types diff into a JSON object containing the following information:

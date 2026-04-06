@@ -26,7 +26,6 @@ import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
+import tools.jackson.core.JacksonException;
 
 @Lazy
 @Service
@@ -251,7 +251,7 @@ public class JenkinsBuildPlanService {
      * @param testResultsDTO the test results from Jenkins
      * @return the build plan key
      */
-    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
+    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JacksonException {
         final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
@@ -434,7 +434,7 @@ public class JenkinsBuildPlanService {
                 throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
             }
         }
-        catch (ContinuousIntegrationBuildPlanException | JsonProcessingException e) {
+        catch (ContinuousIntegrationBuildPlanException | JacksonException e) {
             log.error("Custom build plan creation for exercise {} with id {} failed -> use default build plan", programmingExercise.getTitle(), programmingExercise.getId(), e);
         }
         return null;

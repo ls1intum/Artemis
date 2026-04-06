@@ -5,9 +5,9 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Represents an LTI 1.3 Launch Request, encapsulating the necessary information

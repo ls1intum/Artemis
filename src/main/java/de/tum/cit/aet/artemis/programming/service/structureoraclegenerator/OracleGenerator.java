@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaType;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * This generator is used to parse the structure of a programming exercise to be then assessed from Artemis.
@@ -65,7 +65,7 @@ public class OracleGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(OracleGenerator.class);
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
@@ -123,7 +123,7 @@ public class OracleGenerator {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonArray);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             var error = "Error pretty printing JSON";
             log.error(error, e);
             throw new InternalServerErrorException(error);

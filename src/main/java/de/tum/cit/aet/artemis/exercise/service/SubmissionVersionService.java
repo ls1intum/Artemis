@@ -8,9 +8,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -19,6 +16,8 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -31,9 +30,9 @@ public class SubmissionVersionService {
 
     protected final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, JsonMapper objectMapper) {
         this.submissionVersionRepository = submissionVersionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
@@ -94,7 +93,7 @@ public class SubmissionVersionService {
                     // however directly manipulating the object is dangerous because it will be returned to the client.
                     return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
                     return submission.toString();
                 }

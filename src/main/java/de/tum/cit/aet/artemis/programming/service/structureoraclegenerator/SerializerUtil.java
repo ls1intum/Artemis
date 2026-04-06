@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.structureoraclegenerator;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaMember;
@@ -13,6 +10,9 @@ import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly throughout the other serializers in order to avoid code
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
  */
 class SerializerUtil {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.

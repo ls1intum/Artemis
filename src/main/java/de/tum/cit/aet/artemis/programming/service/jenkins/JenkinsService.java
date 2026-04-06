@@ -15,9 +15,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -35,6 +32,8 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Profile(PROFILE_JENKINS)
 @Lazy
@@ -43,7 +42,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
@@ -78,7 +77,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JacksonException {
         final String projectKey = exercise.getProjectKey();
 
         if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
@@ -101,7 +100,7 @@ public class JenkinsService implements ContinuousIntegrationService {
      *
      * @param exercise the programming exercise for which the build plan should be reset
      */
-    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) throws JsonProcessingException {
+    private void resetCustomBuildPlanToTemplate(ProgrammingExercise exercise) throws JacksonException {
         if (aeolusTemplateService.isEmpty()) {
             return;
         }
@@ -150,7 +149,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             TestResultsDTO dto = TestResultsDTO.convert(requestBody);
             return jenkinsBuildPlanService.getBuildPlanKeyFromTestResults(dto);
         }
-        catch (JsonProcessingException jsonProcessingException) {
+        catch (JacksonException jsonProcessingException) {
             throw new JenkinsException("Something went wrong trying to parse the requestBody while getting the PlanKey from Jenkins!");
         }
     }

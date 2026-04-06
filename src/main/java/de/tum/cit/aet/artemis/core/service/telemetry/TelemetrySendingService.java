@@ -19,10 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Lazy
 @Service
@@ -42,9 +42,9 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, ObjectMapper objectMapper) {
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, JsonMapper objectMapper) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
@@ -106,8 +106,8 @@ public class TelemetrySendingService {
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data. {}", response.getBody());
         }
-        catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry.", e);
+        catch (JacksonException e) {
+            log.warn("JacksonException in sendTelemetry.", e);
         }
         catch (Exception e) {
             log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);

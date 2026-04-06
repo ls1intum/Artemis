@@ -19,8 +19,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
@@ -43,6 +41,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service orchestrating AI-assisted structural and semantic consistency analysis for {@link ProgrammingExercise} instances.
@@ -87,7 +86,7 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
@@ -100,11 +99,11 @@ public class HyperionConsistencyCheckService {
      * @param observationRegistry           Micrometer observation registry
      * @param llmTokenUsageService          service for persisting token usage
      * @param userRepository                repository for resolving current user id
-     * @param objectMapper                  Spring-managed Jackson ObjectMapper
+     * @param objectMapper                  Spring-managed Jackson JsonMapper
      */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ObjectMapper objectMapper) {
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, JsonMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;

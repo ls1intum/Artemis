@@ -6,19 +6,19 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @JsonInclude()
 public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     /**
      * Converts a {@link Windfile} into the {@link BuildPlanPhasesDTO} format.
@@ -51,11 +51,11 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
         return "cd \"" + workdir + "\"\n" + script;
     }
 
-    public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+    public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JacksonException {
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
     }
 
-    public String toBuildPlanConfiguration() throws JsonProcessingException {
+    public String toBuildPlanConfiguration() throws JacksonException {
         return mapper.writeValueAsString(this);
     }
 }

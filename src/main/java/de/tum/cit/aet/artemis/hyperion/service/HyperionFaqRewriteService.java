@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -21,6 +20,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service to handle the rewriting of FAQs.
@@ -54,7 +54,7 @@ public class HyperionFaqRewriteService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * Creates a new HyperionFaqRewriteService.
@@ -66,7 +66,7 @@ public class HyperionFaqRewriteService {
      * @param objectMapper        object mapper
      */
     public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-            ObjectMapper objectMapper) {
+            JsonMapper objectMapper) {
         this.faqRepository = faqRepository;
         this.chatClient = chatClient;
         this.templateService = templateService;

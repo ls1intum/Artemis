@@ -17,9 +17,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
@@ -35,6 +32,8 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -44,7 +43,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 @Service
 public class StandardizedCompetencyService {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyService.class);
 
@@ -201,7 +200,7 @@ public class StandardizedCompetencyService {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(catalog);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             var error = "Error pretty printing JSON";
             log.error(error, e);
             throw new InternalServerErrorException(error);

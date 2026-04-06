@@ -40,15 +40,14 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for importing/exporting programming exercises between Artemis and the Sharing Platform.
@@ -89,12 +88,12 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
-     * Local {@link ObjectMapper} instance that ignores unknown JSON fields.
+     * Local {@link JsonMapper} instance that ignores unknown JSON fields.
      * <p>
      * Allows the Sharing Platform to evolve its metadata format without breaking imports.
      * </p>
      */
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
@@ -103,7 +102,7 @@ public class ExerciseSharingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.restTemplate = restTemplate;
 
-        // Configure ObjectMapper to ignore unknown properties
+        // Configure JsonMapper to ignore unknown properties
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.objectMapper.findAndRegisterModules();
     }

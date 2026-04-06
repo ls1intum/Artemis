@@ -7,12 +7,12 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.service.aeolus.ActionDeserializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that can then be used to generate a Jenkinsfile.
@@ -30,7 +30,7 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
         }
     }
 
-    private static final ObjectMapper mapper;
+    private static final JsonMapper mapper;
 
     static {
         mapper = JsonObjectMapper.get().copy();
@@ -65,9 +65,9 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
      *
      * @param json the json string to deserialize.
      * @return the deserialized windfile.
-     * @throws JsonProcessingException if the json string is not valid.
+     * @throws JacksonException if the json string is not valid.
      */
-    public static Windfile deserialize(String json) throws JsonProcessingException {
+    public static Windfile deserialize(String json) throws JacksonException {
         return mapper.readValue(json, Windfile.class);
     }
 

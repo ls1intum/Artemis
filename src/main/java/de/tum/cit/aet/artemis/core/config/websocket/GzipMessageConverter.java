@@ -16,7 +16,7 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public class GzipMessageConverter extends MappingJackson2MessageConverter {
 
@@ -26,7 +26,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
 
     public static final Map<String, Object> COMPRESSION_HEADER = Map.of(COMPRESSION_HEADER_KEY, true);
 
-    public GzipMessageConverter(ObjectMapper objectMapper) {
+    public GzipMessageConverter(JsonMapper objectMapper) {
         super(objectMapper);
     }
 

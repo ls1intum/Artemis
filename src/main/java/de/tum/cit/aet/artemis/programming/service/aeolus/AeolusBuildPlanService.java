@@ -28,9 +28,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -41,6 +38,8 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for publishing custom build plans using Aeolus
@@ -71,7 +70,7 @@ public class AeolusBuildPlanService {
     @Value("${artemis.continuous-integration.url:#{null}}")
     private String ciUrl;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Constructor for the AeolusBuildPlanService
@@ -129,7 +128,7 @@ public class AeolusBuildPlanService {
      * @param target   the target to publish to jenkins
      * @return the key of the published build plan
      */
-    public String publishBuildPlan(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
+    public String publishBuildPlan(Windfile windfile, AeolusTarget target) throws JacksonException {
         String url = getCiUrl();
         String buildPlan = objectMapper.writeValueAsString(windfile);
         if (url == null) {
@@ -168,7 +167,7 @@ public class AeolusBuildPlanService {
      * @param target   the target to generate the build script for jenkins or cli
      * @return the generated build script
      */
-    public String generateBuildScript(Windfile windfile, AeolusTarget target) throws JsonProcessingException {
+    public String generateBuildScript(Windfile windfile, AeolusTarget target) throws JacksonException {
         String buildPlan = objectMapper.writeValueAsString(windfile);
         String requestUrl = aeolusUrl + "/generate/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);

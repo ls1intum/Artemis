@@ -22,8 +22,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
@@ -34,6 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import tools.jackson.core.JacksonException;
 
 /**
  * Service Implementation for managing TutorParticipation.
@@ -223,8 +222,8 @@ public class TutorParticipationService {
                 var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(feedback.getReference(), validationError.get()));
                 return Stream.of(feedbackCorrectionErrorJSON);
             }
-            catch (JsonProcessingException e) {
-                log.warn("JsonProcessingException in validateTutorialExampleSubmission: {}", e.getMessage());
+            catch (JacksonException e) {
+                log.warn("JacksonException in validateTutorialExampleSubmission: {}", e.getMessage());
                 return Stream.empty();
             }
         }).collect(Collectors.joining(","));

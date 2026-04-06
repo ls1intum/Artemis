@@ -12,10 +12,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
@@ -24,6 +20,9 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for embedding and extracting preview data in Atlas Agent chat responses.
@@ -39,7 +38,7 @@ public class AtlasAgentPreviewService {
 
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final ChatMemory chatMemory;
 
@@ -92,7 +91,7 @@ public class AtlasAgentPreviewService {
 
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return response;
         }
     }
@@ -119,7 +118,7 @@ public class AtlasAgentPreviewService {
 
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return response;
         }
     }
@@ -143,7 +142,7 @@ public class AtlasAgentPreviewService {
 
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return response;
         }
     }
@@ -189,7 +188,7 @@ public class AtlasAgentPreviewService {
             PreviewDataContainer container = objectMapper.treeToValue(node, PreviewDataContainer.class);
             return new PreviewDataResult(cleanedText, container.previews(), null, null, null);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return new PreviewDataResult(cleanedText, null, null, null, null);
         }
     }

@@ -77,12 +77,12 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final com.fasterxml.jackson.databind.JsonMapper objectMapper;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher, com.fasterxml.jackson.databind.JsonMapper objectMapper) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;

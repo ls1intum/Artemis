@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -28,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service to handle the lecture chat subsystem of Iris.
@@ -54,7 +53,7 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
     public IrisLectureChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, ObjectMapper objectMapper, IrisCitationService irisCitationService) {
+            AuthorizationCheckService authCheckService, JsonMapper objectMapper, IrisCitationService irisCitationService) {
         super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService,
                 Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;

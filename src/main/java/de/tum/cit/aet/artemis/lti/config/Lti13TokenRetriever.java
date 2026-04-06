@@ -25,7 +25,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -37,6 +36,7 @@ import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import tools.jackson.core.JacksonException;
 
 /**
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
@@ -92,7 +92,7 @@ public class Lti13TokenRetriever {
             }
             return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asText();
         }
-        catch (HttpClientErrorException | JsonProcessingException e) {
+        catch (HttpClientErrorException | JacksonException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }

@@ -11,15 +11,14 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
@@ -43,13 +42,13 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(JsonMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -92,7 +91,7 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Convert object to JSON using Jackson ObjectMapper.
+     * Convert object to JSON using Jackson JsonMapper.
      *
      * @param object the object to serialize
      * @return JSON string representation
@@ -101,7 +100,7 @@ public class AtlasAgentToolsService {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

@@ -20,9 +20,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -37,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -51,7 +49,7 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
+    private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
 
@@ -226,7 +224,7 @@ public abstract class HyperionCodeGenerationService {
                     return response;
                 }
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 log.debug("Failed to parse AI response candidate {}/{} as code generation JSON", index + 1, candidates.size(), e);
                 // Try the next candidate.
             }
@@ -270,7 +268,7 @@ public abstract class HyperionCodeGenerationService {
         while (current != null) {
             // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
             // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
-            if (current instanceof JsonProcessingException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
+            if (current instanceof JacksonException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
                 return true;
             }
             current = current.getCause();

@@ -25,9 +25,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -50,6 +47,8 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for creating feedback for programming exercises.
@@ -81,7 +80,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final JsonMapper mapper = JsonObjectMapper.get();
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -193,7 +192,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Feedback objects representing the static code analysis findings
      */
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         List<Feedback> feedbackList = new ArrayList<>();
         for (final StaticCodeAnalysisReportDTO report : reports) {
             StaticCodeAnalysisTool tool = report.tool();
@@ -216,7 +215,7 @@ public class ProgrammingExerciseFeedbackCreationService {
                 try {
                     feedback.setDetailTextTruncated(mapper.writeValueAsString(updatedIssue));
                 }
-                catch (JsonProcessingException e) {
+                catch (JacksonException e) {
                     log.warn("Skipping feedback creation for static code analysis issue due to JSON processing error:", e);
                     continue;  // Skip this feedback if JSON processing fails
                 }
@@ -433,7 +432,7 @@ public class ProgrammingExerciseFeedbackCreationService {
                     // Keep feedback
                 }
             }
-            catch (JsonProcessingException exception) {
+            catch (JacksonException exception) {
                 log.debug("Error occurred parsing feedback {} to static code analysis issue: {}", scaFeedback, exception.getMessage());
                 // Remove invalid feedback
                 result.removeFeedback(scaFeedback);

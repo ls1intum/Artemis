@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import tools.jackson.databind.JsonNode;
 
 /**
  * DTO for a submission patch. Represents changes conducted by a peer while collaborating

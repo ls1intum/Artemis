@@ -16,13 +16,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for creating Iris (AI tutor) data exports for GDPR compliance.
@@ -39,9 +38,9 @@ public class DataExportIrisService {
 
     private final Optional<IrisDataExportApi> irisDataExportApi;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, ObjectMapper objectMapper) {
+    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, JsonMapper objectMapper) {
         this.irisDataExportApi = irisDataExportApi;
         this.objectMapper = objectMapper;
     }

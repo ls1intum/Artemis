@@ -16,10 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -33,6 +29,9 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.yaml.YAMLFactory;
 
 /**
  * Handles the request to {@link AeolusTemplateResource} and Artemis internal
@@ -55,7 +54,7 @@ public class AeolusTemplateService {
 
     private final ProfileService profileService;
 
-    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private static final JsonMapper yamlMapper = new JsonMapper(new YAMLFactory());
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService, ProfileService profileService) {
@@ -106,7 +105,7 @@ public class AeolusTemplateService {
 
     /**
      * Reads a YAML representation of a Windfile from a string and deserializes it into a {@link Windfile} object.
-     * This method leverages the Jackson {@code ObjectMapper} configured with {@code YAMLFactory} to parse
+     * This method leverages the Jackson {@code JsonMapper} configured with {@code YAMLFactory} to parse
      * the YAML content directly. It registers a custom deserializer for handling instances of {@link Action}
      * to accommodate polymorphic deserialization based on the specific fields present in the YAML content.
      *

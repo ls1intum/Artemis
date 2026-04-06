@@ -11,11 +11,10 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
+import tools.jackson.databind.json.JsonMapper;
 
 @Conditional(PlagiarismEnabled.class)
 @Lazy
@@ -26,9 +25,9 @@ public class PlagiarismWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, ObjectMapper objectMapper) {
+    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, JsonMapper objectMapper) {
         this.websocketMessagingService = websocketMessagingService;
         this.objectMapper = objectMapper;
     }

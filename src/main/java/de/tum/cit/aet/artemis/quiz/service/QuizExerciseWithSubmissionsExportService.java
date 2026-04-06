@@ -13,8 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.export.DataExportQuizExerciseCreationService;
@@ -23,6 +21,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service responsible for exporting quiz exercises with their submissions.
@@ -35,11 +34,11 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, ObjectMapper objectMapper,
+    public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, JsonMapper objectMapper,
             DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.objectMapper = objectMapper;
