@@ -63,7 +63,6 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
 
     private final WebAuthnRelyingPartyOperations rpOperations;
 
-    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration; requires JacksonJsonHttpMessageConverter + JsonMapper
     private final HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
             Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module(), new JavaTimeModule()).build());
 

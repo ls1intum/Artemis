@@ -50,7 +50,6 @@ public class LectureImportService {
      * @param importLectureUnits Whether to import the lecture units of the lecture
      * @return The lecture in the new course
      */
-    @SuppressWarnings("deprecation") // Lecture attachments are deprecated; migrate to AttachmentUnit
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 

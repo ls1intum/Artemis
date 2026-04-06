@@ -266,7 +266,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @NonNull
     @Override
-    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
     protected MappingJackson2MessageConverter createJacksonConverter() {
         return new GzipMessageConverter(objectMapper);
     }
