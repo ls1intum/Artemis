@@ -52,13 +52,12 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     private routerSubscription?: Subscription;
 
     ngOnInit() {
-        const profileInfo = this.profileService.getProfileInfo();
-        this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
-        this.examEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM));
-        this.localCIActive.set(profileInfo.activeProfiles.includes(PROFILE_LOCALCI));
-        this.ltiEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_LTI));
-        this.passkeyEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY));
-        this.passkeyRequiredForAdmin.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN));
+        this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
+        this.examEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM));
+        this.localCIActive.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
+        this.passkeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
+        this.passkeyRequiredForAdmin.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN));
         this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {

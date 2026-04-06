@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import tech.jhipster.config.JHipsterConstants;
+import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
 
 @Lazy
 @Service
@@ -35,7 +35,7 @@ public class PushNotificationDeviceConfigurationCleanupService {
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
         final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        if (!activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
