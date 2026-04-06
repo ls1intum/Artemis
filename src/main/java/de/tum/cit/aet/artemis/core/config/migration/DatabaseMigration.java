@@ -107,6 +107,7 @@ public class DatabaseMigration {
         migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
         migrationPaths.add(new MigrationPath("6.9.6"));  // required for migration to 7.0.0 until 8.0.0
         migrationPaths.add(new MigrationPath("7.10.5"));  // required for migration to 8.0.0 until 9.0.0
+        migrationPaths.add(new MigrationPath("8.8.6"));  // required for migration to 9.0.0 until 10.0.0
 
         // Add more migrations here as needed
     }
@@ -225,7 +226,7 @@ public class DatabaseMigration {
                 SET MD5SUM = null,
                     DATEEXECUTED = now(),
                     DESCRIPTION = ?,
-                    LIQUIBASE = '4.27.0',
+                    LIQUIBASE = '5.0.2',
                     FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
                 WHERE ID = '00000000000001';
                 """;
