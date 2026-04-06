@@ -1,0 +1,54 @@
+@if (sortedHistoryResults().length > 0) {
+    <span #dropdownArrow>
+        <fa-icon [icon]="faAngleDown" class="ms-1 fw-bold" style="font-size: 0.875rem" />
+    </span>
+}
+<p-popover #resultsPopover [pt]="{ root: { style: 'margin-left: -8px' }, content: { style: 'padding: 0' } }">
+    <div class="d-flex align-items-center justify-content-between px-3 bg-light border-bottom" style="height: 40px">
+        <div class="d-flex align-items-center gap-2">
+            <fa-icon [icon]="faClock" class="text-body-tertiary" style="font-size: 14px" />
+            <span class="fw-medium text-body-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
+        </div>
+        <span class="text-body-tertiary" style="font-size: 12px">{{
+            (sortedHistoryResults().length === 1 ? 'artemisApp.result.progressString.resultsCount.one' : 'artemisApp.result.progressString.resultsCount.other')
+                | artemisTranslate: { count: sortedHistoryResults().length }
+        }}</span>
+    </div>
+    <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
+        @for (result of displayedResults(); track result.id) {
+            <div
+                class="list-group-item d-flex align-items-center gap-2 px-3 py-2"
+                [class.list-group-item-action]="isRowClickable()"
+                [class.bg-active-row]="result.id === activeResultId()"
+                [attr.role]="isRowClickable() ? 'button' : undefined"
+                [attr.tabindex]="isRowClickable() ? 0 : undefined"
+                (click)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.enter)="isRowClickable() && navigateToSubmission(result, $event)"
+                (keydown.space)="isRowClickable() && navigateToSubmission(result, $event)"
+            >
+                <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
+                <fa-icon [icon]="getResultIcon(result)" [class]="getResultColorClass(result)" class="flex-shrink-0" style="font-size: 14px" />
+                <div class="flex-grow-1 d-flex flex-column overflow-hidden" style="gap: 3px">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
+                        <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadgeSeverity(result)" />
+                        <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
+                    </div>
+                </div>
+                @if (exercise().type === ExerciseType.PROGRAMMING) {
+                    <p-button
+                        [label]="'artemisApp.result.progressString.feedbackButton' | artemisTranslate"
+                        [outlined]="true"
+                        size="small"
+                        class="flex-shrink-0"
+                        (onClick)="showFeedback(result, $event)"
+                    />
+                }
+            </div>
+        }
+    </div>
+</p-popover>

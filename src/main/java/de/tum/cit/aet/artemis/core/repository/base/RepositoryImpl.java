@@ -15,7 +15,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
-public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
+public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements ArtemisJpaRepositoryCustom<T, ID> {
 
     private final JpaEntityInformation<T, ?> entityInformation;
 
@@ -156,7 +156,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     @NonNull
     public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {
         Optional<T> optional = findOneById(spec, id);
-        return optional.orElseThrow();
+        return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), String.valueOf(id)));
     }
 
     /**
@@ -168,6 +168,6 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
     @NonNull
     public T findOneBySpecOrElseThrow(Specification<T> spec) {
         Optional<T> optional = findOneBySpec(spec);
-        return optional.orElseThrow();
+        return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName()));
     }
 }

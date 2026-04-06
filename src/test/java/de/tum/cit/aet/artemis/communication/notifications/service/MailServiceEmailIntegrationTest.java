@@ -27,6 +27,7 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.core.dto.ComponentWithVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.core.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests for emails sent via {@link MailService} and {@link MailSendingService}.
@@ -77,7 +77,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         testTemplateEngine.setMessageSource(mainMessageSource);
 
         // Explicitly enable mail sending (bypass the "artemis@localhost" guard)
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);

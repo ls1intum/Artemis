@@ -26,6 +26,8 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -94,15 +96,14 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService,
-            UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, ObjectMapper objectMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
+            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService,
-            de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = converter;
+        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;

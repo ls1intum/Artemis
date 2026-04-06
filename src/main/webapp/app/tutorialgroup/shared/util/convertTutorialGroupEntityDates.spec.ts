@@ -13,7 +13,7 @@ import {
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Dayjs } from 'dayjs/esm';
 
@@ -51,7 +51,7 @@ describe('convertTutorialGroupEntityDates', () => {
                 start: rawServerDate(NEXT_START),
                 end: rawServerDate(NEXT_END),
             } as TutorialGroupFreePeriod,
-        } as TutorialGroupSession;
+        } as LegacyTutorialGroupSession;
 
         const result = convertTutorialGroupSessionDatesFromServer(session);
 
@@ -97,12 +97,12 @@ describe('convertTutorialGroupEntityDates', () => {
                 {
                     start: rawServerDate(START),
                     end: rawServerDate(END),
-                } as TutorialGroupSession,
+                } as LegacyTutorialGroupSession,
             ],
             nextSession: {
                 start: rawServerDate(NEXT_START),
                 end: rawServerDate(NEXT_END),
-            } as TutorialGroupSession,
+            } as LegacyTutorialGroupSession,
             course: {
                 tutorialGroupsConfiguration: {
                     tutorialPeriodStartInclusive: rawServerDate(VALID_FROM),
@@ -131,7 +131,7 @@ describe('convertTutorialGroupEntityDates', () => {
                 nextSession: {
                     start: rawServerDate(START),
                     end: rawServerDate(END),
-                } as TutorialGroupSession,
+                } as LegacyTutorialGroupSession,
             } as TutorialGroup,
         ];
 
@@ -148,7 +148,7 @@ describe('convertTutorialGroupEntityDates', () => {
                     nextSession: {
                         start: rawServerDate(START),
                         end: rawServerDate(END),
-                    } as TutorialGroupSession,
+                    } as LegacyTutorialGroupSession,
                 } as TutorialGroup,
             ],
         });
