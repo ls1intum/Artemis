@@ -232,9 +232,13 @@ dependencies {
     // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
     // Override transitive dependencies from spring-ai to fix security vulnerabilities
-    // jackson-bom 3.1.1 fixes GHSA-2m67-wjpj-xhg9 (document length constraint bypass)
+    // Jackson 3 core — version pinned to fix GHSA-2m67-wjpj-xhg9
     implementation "tools.jackson.core:jackson-core:3.1.1"
     implementation "tools.jackson.core:jackson-databind:3.1.1"
+    // Jackson 3 datatype/dataformat modules
+    implementation "tools.jackson.datatype:jackson-datatype-hibernate7:3.1.0"
+    implementation "tools.jackson.dataformat:jackson-dataformat-xml:3.1.0"
+    implementation "tools.jackson.dataformat:jackson-dataformat-yaml:3.1.0"
     constraints {
         implementation("io.modelcontextprotocol.sdk:mcp-core:1.1.1") {
             because("Fix GHSA-hv2w-8mjj-jw22: hardcoded wildcard CORS")
@@ -320,21 +324,8 @@ dependencies {
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.34.1"
 
-    // Jackson 2 core modules — versions managed by Spring Boot BOM
+    // Jackson 2 annotations — shared between Jackson 2 and 3 (Jackson 3 depends on them transitively)
     implementation "com.fasterxml.jackson.core:jackson-annotations"
-    implementation "com.fasterxml.jackson.core:jackson-core"
-    implementation "com.fasterxml.jackson.core:jackson-databind"
-    // Java Time (JSR310) support for Jackson
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
-    // Use hibernate7 variant for Hibernate 7.x compatibility
-    // NOTE: version pinned because the Spring Boot BOM does not include the hibernate7 variant.
-    // Must be kept in sync with the Jackson 2.x version managed by the BOM.
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.2"
-    // Support XML serialization and deserialization
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
-    // Support YML serialization and deserialization
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
 
     // Avoid outdated version of json-smart to prevent security issues, we only use this as transitive dependency for third party dependencies
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
