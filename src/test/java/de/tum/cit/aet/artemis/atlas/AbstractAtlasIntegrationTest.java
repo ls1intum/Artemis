@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -175,13 +177,15 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected TeamUtilService teamUtilService;
 
     @Autowired
-    protected AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    protected Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
 
     @BeforeEach
     void setupAtlasMLMocks() {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        atlasMLRequestMockProvider.ifPresent(provider -> {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+        });
     }
 
 }

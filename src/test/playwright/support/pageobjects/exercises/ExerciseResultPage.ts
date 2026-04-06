@@ -25,25 +25,11 @@ export class ExerciseResultPage {
     }
 
     async shouldShowScore(percentage: number) {
-        await Commands.reloadUntilFound(this.page, this.page.locator('jhi-course-exercise-details #submission-result-graded'), 4000, 60000);
-        // The score percentage appears in the exercise headers information box after Angular's
-        // ngOnChanges fires on the headers component with the updated participation/result data.
-        // Under load, there can be a delay between the graded result element appearing and the
-        // score text rendering, so use a generous timeout instead of the default 5s.
-        await expect(this.page.locator('#exercise-headers-information').getByText(`${percentage}%`)).toBeVisible({ timeout: 30000 });
-    }
-
-    async clickOpenExercise(exerciseId: number) {
-        await this.page.locator(`#open-exercise-${exerciseId}`).click();
-    }
-
-    async clickOpenExerciseAndAwaitRatingResponse(exerciseId: number) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/results/*/rating`);
-        await this.clickOpenExercise(exerciseId);
-        await responsePromise;
-    }
-
-    async clickOpenCodeEditor(exerciseId: number) {
-        await this.page.locator(`#open-exercise-${exerciseId}`).click();
+        // Reload until the score text is actually rendered inside the result component.
+        // Using reloadUntilTextFound instead of reloadUntilFound + separate text check
+        // avoids a race where the graded-result element exists but Angular hasn't computed
+        // the resultString yet after the last reload.
+        const resultScore = this.page.locator('jhi-course-exercise-details #submission-result-graded');
+        await Commands.reloadUntilTextFound(this.page, resultScore, `${percentage}%`, 4000, 60000);
     }
 }

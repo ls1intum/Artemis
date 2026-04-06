@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -481,6 +482,38 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         participationUtilService.addResultToSubmission(participation, submission2);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_processCompileOnlyResult_doesNotMarkSubmissionAsBuildFailed_whenBuildScriptSucceeds() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
+        BuildResult buildResult = new BuildResult(defaultBranch, "commit0", null, true, ZonedDateTime.now(), List.of(), List.of(), List.of(), false, 0);
+
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
+        assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_processCompileOnlyResult_marksSubmissionAsBuildFailed_whenBuildScriptFails() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
+        BuildResult buildResult = new BuildResult(defaultBranch, "commit0", null, false, ZonedDateTime.now(), List.of(), List.of(), List.of(), false, 1);
+
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
+        assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isTrue();
     }
 
     private void test_getSubmissionPolicyOfProgrammingExercise_forbidden() throws Exception {
