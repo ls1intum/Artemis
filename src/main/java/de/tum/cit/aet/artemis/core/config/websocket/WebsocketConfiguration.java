@@ -37,7 +37,7 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -265,7 +265,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @NonNull
     @Override
-    protected MappingJackson2MessageConverter createJacksonConverter() {
+    protected JacksonJsonMessageConverter createJacksonConverter() {
         return new GzipMessageConverter(objectMapper);
     }
 

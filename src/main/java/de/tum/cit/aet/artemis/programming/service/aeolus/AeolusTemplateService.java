@@ -29,9 +29,8 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
-import tools.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
  * Handles the request to {@link AeolusTemplateResource} and Artemis internal
@@ -54,7 +53,13 @@ public class AeolusTemplateService {
 
     private final ProfileService profileService;
 
-    private static final JsonMapper yamlMapper = new JsonMapper(new YAMLFactory());
+    private static final YAMLMapper yamlMapper;
+
+    static {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
+        yamlMapper = YAMLMapper.builder().addModule(module).build();
+    }
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
             BuildScriptProviderService buildScriptProviderService, ProfileService profileService) {
@@ -124,9 +129,6 @@ public class AeolusTemplateService {
      *                         does not match the expected schema.
      */
     private static Windfile readWindfile(String yaml) throws IOException {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Action.class, new ActionDeserializer());
-        yamlMapper.registerModule(module);
         return yamlMapper.readValue(yaml, Windfile.class);
     }
 

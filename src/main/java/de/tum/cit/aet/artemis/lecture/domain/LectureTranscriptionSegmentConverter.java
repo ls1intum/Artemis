@@ -1,16 +1,14 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-import com.fasterxml.jackson.databind.JavaType;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
 
 @Converter
@@ -46,7 +44,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
 
             return objectMapper.readValue(jsonData, type);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert JSON to list of transcription segments", e);
         }
     }

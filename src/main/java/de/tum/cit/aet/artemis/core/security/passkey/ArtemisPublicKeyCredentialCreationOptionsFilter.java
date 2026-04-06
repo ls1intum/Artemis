@@ -12,8 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -25,7 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
-import org.springframework.security.web.webauthn.jackson.WebauthnJackson2Module;
+import org.springframework.security.web.webauthn.jackson.WebauthnJacksonModule;
 import org.springframework.security.web.webauthn.management.ImmutablePublicKeyCredentialCreationOptionsRequest;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.HttpSessionPublicKeyCredentialCreationOptionsRepository;
@@ -33,7 +32,7 @@ import org.springframework.security.web.webauthn.registration.PublicKeyCredentia
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * <p>
@@ -63,8 +62,7 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
 
     private final WebAuthnRelyingPartyOperations rpOperations;
 
-    private final HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
-            Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module(), new JavaTimeModule()).build());
+    private final HttpMessageConverter<Object> converter = new JacksonJsonHttpMessageConverter(JsonMapper.builder().addModule(new WebauthnJacksonModule()).build());
 
     /**
      * Creates a new instance.

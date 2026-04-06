@@ -17,7 +17,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
@@ -102,7 +102,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        this.converter = new JacksonJsonHttpMessageConverter(objectMapper);
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;

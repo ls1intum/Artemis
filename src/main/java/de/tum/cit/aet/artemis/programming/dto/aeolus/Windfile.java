@@ -33,10 +33,9 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
     private static final JsonMapper mapper;
 
     static {
-        mapper = JsonObjectMapper.get().copy();
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Action.class, new ActionDeserializer());
-        mapper.registerModule(module);
+        mapper = JsonObjectMapper.get().rebuild().addModule(module).build();
     }
 
     /**

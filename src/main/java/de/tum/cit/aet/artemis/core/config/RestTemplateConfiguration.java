@@ -18,7 +18,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
+import org.springframework.http.converter.xml.JacksonXmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
@@ -159,10 +159,10 @@ public class RestTemplateConfiguration {
         interceptors.add(interceptor);
         restTemplate.setInterceptors(interceptors);
 
-        // we do not want to use MappingJackson2XmlHttpMessageConverter here because it would lead to problems with the tests
+        // we do not want to use JacksonXmlHttpMessageConverter here because it would lead to problems with the tests
         HttpMessageConverter<?> messageConverterToRemove = null;
         for (HttpMessageConverter<?> messageConverter : restTemplate.getMessageConverters()) {
-            if (messageConverter instanceof MappingJackson2XmlHttpMessageConverter) {
+            if (messageConverter instanceof JacksonXmlHttpMessageConverter) {
                 messageConverterToRemove = messageConverter;
             }
         }
