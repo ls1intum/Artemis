@@ -25,7 +25,13 @@ public class JacksonConfiguration {
      */
     @Bean
     public Hibernate7Module hibernateModule() {
-        return new Hibernate7Module();
+        Hibernate7Module module = new Hibernate7Module();
+        // Do not serialize lazy-loaded proxies — they should not appear in JSON responses.
+        // FORCE_LAZY_LOADING=false (default) means uninitialized lazy proxies are serialized as null.
+        module.disable(Hibernate7Module.Feature.FORCE_LAZY_LOADING);
+        // Write lazy-not-loaded objects as null to avoid "_valueDeserializer assigned" errors
+        module.enable(Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
+        return module;
     }
 
     /**
