@@ -4,6 +4,7 @@ import { GroupChat } from 'app/communication/shared/entities/conversation/group-
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
+import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
 import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
@@ -91,7 +92,7 @@ export class CourseMessagesPage {
      * @param name - The name to be set.
      */
     async setName(name: string) {
-        const locator = this.page.locator('.modal-content #name');
+        const locator = this.page.locator('.p-dialog-content #name');
         await locator.clear();
         await locator.fill(name);
     }
@@ -101,44 +102,44 @@ export class CourseMessagesPage {
      * @param description - The description to be set.
      */
     async setDescription(description: string) {
-        const locator = this.page.locator('.modal-content #description');
+        const locator = this.page.locator('.p-dialog-content #description');
         await locator.clear();
         await locator.fill(description);
     }
 
     /**
-     * Sets a channel to be private in the modal dialog.
+     * Sets a channel to be private in the modal dialog (PrimeNG SelectButton).
      */
     async setPrivate() {
-        await this.page.locator('.modal-content label[for="private"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Private').click();
     }
 
     /**
-     * Sets a channel to be public in the modal dialog.
+     * Sets a channel to be public in the modal dialog (PrimeNG SelectButton).
      */
     async setPublic() {
-        await this.page.locator('.modal-content label[for="public"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Public').click();
     }
 
     /**
-     * Marks a channel as course-wide in the modal dialog.
+     * Marks a channel as course-wide in the modal dialog (PrimeNG SelectButton).
      */
     async setCourseWideChannel() {
-        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(1).getByText('Course-wide Channel').click();
     }
 
     /**
-     * Marks a channel as an announcement channel in the modal dialog.
+     * Marks a channel as an announcement channel in the modal dialog (PrimeNG SelectButton).
      */
     async setAnnouncementChannel() {
-        await this.page.locator('.modal-content label[for="isAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Announcement Channel').click();
     }
 
     /**
-     * Marks a channel as unrestricted in the modal dialog.
+     * Marks a channel as unrestricted in the modal dialog (PrimeNG SelectButton).
      */
     async setUnrestrictedChannel() {
-        await this.page.locator('.modal-content label[for="isNotAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Unrestricted Channel').click();
     }
 
     /**
@@ -150,7 +151,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
         );
-        await this.page.locator('.modal-content #submitButton').click();
+        await this.page.locator('.p-dialog-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
         await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
@@ -183,51 +184,52 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Edits the name of the conversation to a new name.
+     * Edits the name of the conversation inline with auto-save.
+     * Opens the detail dialog via the header name click (which opens the Info tab).
      * @param newName - The new name for the conversation.
      */
     async editName(newName: string) {
         await this.getName().click();
-        await this.page.locator('#name-section .action-button').click();
-        const nameField = this.page.locator('.channels-overview #name');
-        await nameField.clear();
-        await nameField.fill(newName);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#name-section textarea')).toHaveValue(newName);
+        const nameInput = this.page.locator('#name-input');
+        await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+        await nameInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await nameInput.fill(newName);
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
-     * Edits the topic of the conversation to a new topic.
+     * Edits the topic of the conversation inline with auto-save.
      * @param newTopic - The new topic for the conversation.
      */
     async editTopic(newTopic: string) {
         await this.getName().click();
-        await this.page.locator('#topic-section .action-button').click();
-        const topicField = this.page.locator('.channels-overview #topic');
-        await topicField.clear();
-        await topicField.fill(newTopic);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
+        const topicInput = this.page.locator('#topic-input');
+        await topicInput.waitFor({ state: 'visible', timeout: 5000 });
+        await topicInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await topicInput.fill(newTopic);
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
-     * Edits the description of the conversation to a new description.
+     * Edits the description of the conversation inline with auto-save.
      * @param newDescription - The new description for the conversation.
      */
     async editDescription(newDescription: string) {
         await this.getName().click();
-        await this.page.locator('#description-section .action-button').click();
-        const descriptionField = this.page.locator('.channels-overview #description');
-        await descriptionField.clear();
-        await descriptionField.fill(newDescription);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#description-section textarea')).toHaveValue(newDescription);
+        const descInput = this.page.locator('#description-input');
+        await descInput.waitFor({ state: 'visible', timeout: 5000 });
+        await descInput.clear();
+        // Register response listener before triggering the auto-save to avoid race conditions
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await descInput.fill(newDescription);
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
@@ -247,8 +249,8 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         course: Course,
-        communicationAPIRequests,
-    ): Channel {
+        communicationAPIRequests: CommunicationAPIRequests,
+    ): Promise<Channel> {
         await login(user, `/courses/${course.id}/communication`);
         await this.acceptCodeOfConductButton();
         const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
@@ -269,7 +271,7 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         courseId: number,
-        channelId: string,
+        channelId: number,
         messageText: string,
     ) {
         await login(user, `/courses/${courseId}/communication?conversationId=${channelId}`);
@@ -590,6 +592,261 @@ export class CourseMessagesPage {
         } else {
             await expect(groupChat).toBeHidden({ timeout: 15000 });
         }
+    }
+
+    /**
+     * Right-clicks a message to open context menu, then clicks the bookmark button.
+     * @param messageId - The ID of the message to bookmark.
+     */
+    async bookmarkMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with bookmark option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('/saved-posts') && (resp.request().method() === 'POST' || resp.request().method() === 'DELETE'),
+        );
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /bookmark|save/i }).click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is bookmarked or not.
+     * @param messageId - The ID of the message to check.
+     * @param isBookmarked - Whether the message should be bookmarked.
+     */
+    async checkMessageBookmarked(messageId: number, isBookmarked: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isBookmarked) {
+            await expect(postLocator.locator('.is-saved').first()).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.is-saved')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Adds an emoji reaction to a message via the reaction bar.
+     * @param messageId - The ID of the message to react to.
+     * @param emoji - The emoji search term (e.g., 'thumbsup').
+     */
+    async addReactionToMessage(messageId: number, emoji: string) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu which has "Add reaction"
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click the "Add reaction" item — this opens the emoji picker at the click location
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /reaction/i }).click();
+        // Search for the emoji and click it
+        await this.page.locator('.emoji-mart').waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/postings/reactions') && resp.request().method() === 'POST');
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks that a reaction badge exists on a message.
+     * @param messageId - The ID of the message to check.
+     */
+    async checkReactionOnMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        // Reactions are displayed inside .emoji-container within the emoji-count reaction bar
+        await expect(postLocator.locator('.emoji-container').first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens the thread sidebar for a message by clicking the reply button.
+     * @param messageId - The ID of the message to open thread for.
+     */
+    async openThreadForMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with reply option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /reply/i }).click();
+        // Wait for the thread sidebar to become visible
+        await this.page.locator('.expanded-thread').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Types a reply in the thread sidebar and saves it.
+     * @param content - The reply content.
+     * @returns Promise<Post> representing the created reply.
+     */
+    async replyInThread(content: string): Promise<Post> {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyContainer = threadSidebar.locator('jhi-message-reply-inline-input jhi-posting-markdown-editor');
+        await setMonacoEditorContentByLocator(this.page, replyContainer, content);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
+        await threadSidebar.locator('jhi-message-reply-inline-input #save').click();
+        const response = await responsePromise;
+        return response.json();
+    }
+
+    /**
+     * Checks that a reply is visible in the thread sidebar.
+     * @param replyId - The ID of the reply to check.
+     * @param content - The expected content of the reply.
+     */
+    async checkThreadReply(replyId: number, content: string) {
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await expect(replyLocator).toBeVisible({ timeout: 10000 });
+        await expect(replyLocator.locator('.markdown-preview')).toContainText(content);
+    }
+
+    /**
+     * Clicks the "+" button and selects "Create direct message".
+     */
+    async createDirectMessageButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        const createBtn = this.page.locator('button', { hasText: 'Direct message' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
+    }
+
+    /**
+     * Forwards a message via the context menu.
+     * @param messageId - The ID of the message to forward.
+     */
+    async forwardMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with forward option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.locator('.dropdown-menu.show .forward').click();
+        // Wait for the forward dialog to appear
+        await this.page.locator('jhi-forward-message-dialog').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Pins or unpins a message via the context menu.
+     * @param messageId - The ID of the message to pin/unpin.
+     */
+    async pinMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/messages/') && resp.request().method() === 'PUT');
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /pin/i }).click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is pinned.
+     * @param messageId - The ID of the message to check.
+     * @param isPinned - Whether the message should be pinned.
+     */
+    async checkMessagePinned(messageId: number, isPinned: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isPinned) {
+            await expect(postLocator.locator('.pinned-message, .pin-icon')).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.pinned-message')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Edits a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to edit.
+     * @param newContent - The new content for the reply.
+     */
+    async editThreadReply(replyId: number, newContent: string) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click "Edit Message" from the dropdown by matching translated text
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /edit/i }).click();
+
+        await setMonacoEditorContentByLocator(this.page, replyLocator, newContent);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
+        await replyLocator.locator('#save').click();
+        await responsePromise;
+    }
+
+    /**
+     * Deletes a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to delete.
+     */
+    async deleteThreadReply(replyId: number) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'DELETE');
+        // Click "Delete Message" from the dropdown by matching translated text
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /delete/i }).click();
+        await responsePromise;
     }
 
     toggleSidebarAccordion(sidebarTitle: string) {
