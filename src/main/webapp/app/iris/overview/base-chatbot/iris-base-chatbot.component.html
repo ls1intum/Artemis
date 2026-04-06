@@ -387,7 +387,7 @@
                             >
                             </textarea>
                             <div class="textarea-controls">
-                                <jhi-context-selection />
+                                <jhi-context-selection [disabled]="isInputDisabled()" />
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>

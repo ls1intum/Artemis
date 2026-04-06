@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -46,6 +46,8 @@ export class ContextSelectionComponent {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly chatService = inject(IrisChatService);
     private readonly destroyRef = inject(DestroyRef);
+
+    readonly disabled = input<boolean>(false);
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 

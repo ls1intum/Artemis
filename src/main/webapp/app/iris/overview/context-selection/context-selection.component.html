@@ -1,5 +1,7 @@
 <p-select
     [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
+    [disabled]="disabled()"
+    [pt]="{ header: { style: 'padding-left: 12px; padding-right: 12px;' } }"
     [options]="allGroups()"
     [group]="true"
     optionGroupLabel="label"
