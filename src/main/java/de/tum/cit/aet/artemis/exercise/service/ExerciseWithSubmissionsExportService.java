@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,9 +62,8 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            SubmissionExportService submissionExportService) {
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+    protected ExerciseWithSubmissionsExportService(FileService fileService, ObjectMapper objectMapper, SubmissionExportService submissionExportService) {
+        this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
     }
 
