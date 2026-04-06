@@ -17,8 +17,4 @@ export class ExerciseCreateButtonComponent extends ExerciseManageButtonComponent
         this.modalService.dismissAll();
         this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', 'new']);
     }
-
-    protected getTranslationSuffix(): string {
-        return 'createLabel';
-    }
 }

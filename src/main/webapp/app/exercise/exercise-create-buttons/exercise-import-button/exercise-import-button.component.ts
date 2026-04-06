@@ -64,8 +64,4 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
             this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
         }
     }
-
-    protected getTranslationSuffix(): string {
-        return 'importLabel';
-    }
 }

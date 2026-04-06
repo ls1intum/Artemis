@@ -76,7 +76,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
-    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected exerciseService = inject(ExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private courseExerciseService = inject(CourseExerciseService);
     private accountService = inject(AccountService);
