@@ -5,7 +5,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -80,6 +80,13 @@ export class CourseExerciseRowComponent implements OnInit {
     readonly routerLink = computed(() => {
         const course = this.course();
         const exercise = this.exercise();
+        if (exercise?.type === ExerciseType.QUIZ) {
+            const participation = this.gradedStudentParticipation();
+            if (isPracticeMode(participation)) {
+                return ['/courses', course?.id?.toString() ?? '', 'exercises', 'quiz-exercises', exercise?.id?.toString() ?? '', 'practice', participation!.id!.toString()];
+            }
+            return ['/courses', course?.id?.toString() ?? '', 'exercises', 'quiz-exercises', exercise?.id?.toString() ?? '', 'live'];
+        }
         return ['/courses', course?.id?.toString() ?? '', 'exercises', exercise?.id?.toString() ?? ''];
     });
 
