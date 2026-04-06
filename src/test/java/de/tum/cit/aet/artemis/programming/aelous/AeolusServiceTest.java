@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
@@ -40,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.core.JacksonException;
 
 class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -83,7 +82,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      * Publishes a build plan using Aeolus
      */
     @Test
-    void testSuccessfulPublishBuildPlan() throws JsonProcessingException {
+    void testSuccessfulPublishBuildPlan() throws JacksonException {
         var expectedPlanKey = "PLAN";
         var metadata = new WindfileMetadata(null, "PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
         Windfile mockWindfile = new Windfile(null, metadata, null, null);
@@ -97,7 +96,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
      * Fails in publishing a build plan using Aeolus
      */
     @Test
-    void testFailedPublishBuildPlan() throws JsonProcessingException {
+    void testFailedPublishBuildPlan() throws JacksonException {
         var expectedPlanKey = "PLAN";
         var metadata = new WindfileMetadata(null, "PROJECT-" + expectedPlanKey, null, null, null, null, null, null);
         Windfile mockWindfile = new Windfile(null, metadata, null, null);
@@ -170,13 +169,13 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testReturnsNullonUrlNull() throws JsonProcessingException {
+    void testReturnsNullonUrlNull() throws JacksonException {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
         assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(null, null, null, null), AeolusTarget.JENKINS)).isNull();
     }
 
     @Test
-    void testBuildScriptGeneration() throws JsonProcessingException {
+    void testBuildScriptGeneration() throws JacksonException {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         String script = aeolusBuildPlanService.generateBuildScript(getWindfile(), AeolusTarget.CLI);
         assertThat(script).isNotNull();
@@ -188,12 +187,12 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
         return new Windfile("v0.0.1", new WindfileMetadata("test", "test", "test", null, null, null, null, null), List.of(action), null);
     }
 
-    private String getSerializedWindfile() throws JsonProcessingException {
+    private String getSerializedWindfile() throws JacksonException {
         return JsonObjectMapper.get().writeValueAsString(getWindfile());
     }
 
     @Test
-    void testShouldNotGenerateAnything() throws JsonProcessingException {
+    void testShouldNotGenerateAnything() throws JacksonException {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(getSerializedWindfile());

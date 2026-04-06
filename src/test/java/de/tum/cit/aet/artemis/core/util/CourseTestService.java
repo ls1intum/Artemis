@@ -61,10 +61,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
@@ -190,6 +186,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 @Lazy
 @Service
@@ -266,7 +265,7 @@ public class CourseTestService {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -3352,11 +3351,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JacksonException {
         return buildCreateCourse(course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JacksonException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
@@ -3384,11 +3383,11 @@ public class CourseTestService {
                 course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JacksonException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + id).file(coursePart);
         if (fileContent != null) {

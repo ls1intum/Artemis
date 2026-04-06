@@ -32,8 +32,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -72,6 +70,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -244,7 +243,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         return mapper.convertValue(requestBodyMap, Object.class);
     }
 

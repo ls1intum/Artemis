@@ -44,10 +44,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.util.WebUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -55,6 +51,9 @@ import de.tum.cit.aet.artemis.lti.config.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -149,7 +148,7 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put("iss", "https://some.lms.org");
         idTokenClaims.put("sub", "23423435");
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         ObjectNode resourceLinkClaim = mapper.createObjectNode();
         resourceLinkClaim.put("id", "some-resource-id");
         idTokenClaims.put(Claims.RESOURCE_LINK, resourceLinkClaim);

@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.programming;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -36,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import tools.jackson.databind.json.JsonMapper;
 
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -47,7 +46,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected String localVCPassword;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     // Repositories
     @Autowired

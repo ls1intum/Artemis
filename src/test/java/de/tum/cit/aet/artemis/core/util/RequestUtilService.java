@@ -45,13 +45,12 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
-// NOTE: Do NOT add @Lazy to this class. The ObjectMapper must be properly configured with Jackson modules
-// (HibernateModule, JavaTimeModule, etc.) before this service is used. With @Lazy, the ObjectMapper might
+// NOTE: Do NOT add @Lazy to this class. The JsonMapper must be properly configured with Jackson modules
+// (HibernateModule, JavaTimeModule, etc.) before this service is used. With @Lazy, the JsonMapper might
 // not have all modules registered, causing "No _valueDeserializer assigned" errors when deserializing entities.
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -65,12 +64,11 @@ public class RequestUtilService {
 
     private final MockMvc mvc;
 
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
 
     private final RequestPostProcessor requestPostProcessor;
 
-    public RequestUtilService(MockMvc mvc, ObjectMapper mapper, @Autowired(required = false) FixMissingServletPathProcessor fixMissingServletPathProcessor)
-            throws ServletException {
+    public RequestUtilService(MockMvc mvc, JsonMapper mapper, @Autowired(required = false) FixMissingServletPathProcessor fixMissingServletPathProcessor) throws ServletException {
         this.mvc = mvc;
         this.mapper = mapper;
         this.requestPostProcessor = fixMissingServletPathProcessor;
@@ -87,7 +85,7 @@ public class RequestUtilService {
         return mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder));
     }
 
-    public ObjectMapper getObjectMapper() {
+    public JsonMapper getJsonMapper() {
         return mapper;
     }
 

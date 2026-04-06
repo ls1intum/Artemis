@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -65,6 +63,7 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import tools.jackson.databind.json.JsonMapper;
 
 class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -76,7 +75,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;

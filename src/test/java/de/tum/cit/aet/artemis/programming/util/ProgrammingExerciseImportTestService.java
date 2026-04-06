@@ -21,12 +21,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test service for handling programming exercise imports
@@ -40,7 +39,7 @@ public class ProgrammingExerciseImportTestService {
     private RequestUtilService request;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     /**
      * Functional interface to modify the exercise before import

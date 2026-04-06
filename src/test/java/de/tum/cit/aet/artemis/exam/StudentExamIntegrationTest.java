@@ -55,9 +55,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
@@ -140,6 +137,8 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
@@ -196,7 +195,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
@@ -1621,7 +1620,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
                     JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
                 }
-                catch (JsonProcessingException | JSONException e) {
+                catch (JacksonException | JSONException e) {
                     fail("Exception thrown while serializing submitted answers", e);
                 }
                 assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());

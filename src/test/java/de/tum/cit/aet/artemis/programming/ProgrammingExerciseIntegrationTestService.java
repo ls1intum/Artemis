@@ -56,8 +56,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -119,6 +117,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:

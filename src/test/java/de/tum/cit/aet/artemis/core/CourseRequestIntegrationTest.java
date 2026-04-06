@@ -17,8 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
@@ -30,6 +28,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.databind.json.JsonMapper;
 
 class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -286,7 +285,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> performPostAndGetErrorResponse(CourseRequestCreateDTO createDTO) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getJsonMapper();
         String jsonBody = mapper.writeValueAsString(createDTO);
         MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/core/course-requests")).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().isBadRequest()).andReturn();

@@ -16,16 +16,15 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 class GzipMessageConverterTest {
 
     private GzipMessageConverter converter;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @BeforeEach
     void setUp() {

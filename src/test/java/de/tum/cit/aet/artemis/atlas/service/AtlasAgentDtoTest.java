@@ -8,11 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -25,6 +20,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Unit tests for Atlas Agent DTOs.
@@ -32,13 +29,13 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequest
  */
 class AtlasAgentDtoTest {
 
-    private final ObjectMapper objectMapper = JsonMapper.builder().addModule(new JavaTimeModule()).build();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     @Nested
     class CompetencyGraphNodeDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyGraphNodeDTO dto = new CompetencyGraphNodeDTO("1", "OOP Basics", ZonedDateTime.now(), 85.5, CompetencyNodeValueType.MASTERY_PROGRESS);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -50,7 +47,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"id\":\"2\",\"label\":\"Design Patterns\",\"value\":72.3,\"valueType\":\"AVERAGE_MASTERY_PROGRESS\"}";
 
             CompetencyGraphNodeDTO dto = objectMapper.readValue(json, CompetencyGraphNodeDTO.class);
@@ -77,7 +74,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleNullValues() throws JsonProcessingException {
+        void shouldHandleNullValues() throws JacksonException {
             CompetencyGraphNodeDTO dto = new CompetencyGraphNodeDTO("3", "Test", null, null, null);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -101,7 +98,7 @@ class AtlasAgentDtoTest {
     class CompetencyGraphEdgeDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyGraphEdgeDTO dto = new CompetencyGraphEdgeDTO("edge-1", "1", "2", RelationType.ASSUMES);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -113,7 +110,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"id\":\"edge-2\",\"source\":\"3\",\"target\":\"4\",\"relationType\":\"EXTENDS\"}";
 
             CompetencyGraphEdgeDTO dto = objectMapper.readValue(json, CompetencyGraphEdgeDTO.class);
@@ -146,7 +143,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleAllRelationTypes() throws JsonProcessingException {
+        void shouldHandleAllRelationTypes() throws JacksonException {
             for (RelationType relationType : RelationType.values()) {
                 CompetencyGraphEdgeDTO dto = new CompetencyGraphEdgeDTO("edge-test", "1", "2", relationType);
                 String json = objectMapper.writeValueAsString(dto);
@@ -161,7 +158,7 @@ class AtlasAgentDtoTest {
     class CompetencyRelationPreviewDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyRelationPreviewDTO dto = new CompetencyRelationPreviewDTO(1L, 10L, "Head Title", 20L, "Tail Title", RelationType.ASSUMES, false);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -176,7 +173,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"relationId\":2,\"headCompetencyId\":30,\"headCompetencyTitle\":\"OOP\",\"tailCompetencyId\":40,\"tailCompetencyTitle\":\"Patterns\",\"relationType\":\"EXTENDS\",\"viewOnly\":true}";
 
             CompetencyRelationPreviewDTO dto = objectMapper.readValue(json, CompetencyRelationPreviewDTO.class);
@@ -191,7 +188,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleNullRelationId() throws JsonProcessingException {
+        void shouldHandleNullRelationId() throws JacksonException {
             CompetencyRelationPreviewDTO dto = new CompetencyRelationPreviewDTO(null, 10L, "Head", 20L, "Tail", RelationType.MATCHES, null);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -205,7 +202,7 @@ class AtlasAgentDtoTest {
     class SingleRelationPreviewResponseDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyRelationPreviewDTO relation = new CompetencyRelationPreviewDTO(1L, 10L, "Head", 20L, "Tail", RelationType.ASSUMES, false);
             SingleRelationPreviewResponseDTO dto = new SingleRelationPreviewResponseDTO(true, relation, false);
 
@@ -217,7 +214,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"preview\":true,\"relation\":{\"relationId\":1,\"headCompetencyId\":10,\"headCompetencyTitle\":\"OOP\",\"tailCompetencyId\":20,\"tailCompetencyTitle\":\"Patterns\",\"relationType\":\"EXTENDS\"},\"viewOnly\":true}";
 
             SingleRelationPreviewResponseDTO dto = objectMapper.readValue(json, SingleRelationPreviewResponseDTO.class);
@@ -229,7 +226,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandlePreviewFalse() throws JsonProcessingException {
+        void shouldHandlePreviewFalse() throws JacksonException {
             SingleRelationPreviewResponseDTO dto = new SingleRelationPreviewResponseDTO(false, null, false);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -242,7 +239,7 @@ class AtlasAgentDtoTest {
     class BatchRelationPreviewResponseDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyRelationPreviewDTO rel1 = new CompetencyRelationPreviewDTO(null, 1L, "A", 2L, "B", RelationType.ASSUMES, null);
             CompetencyRelationPreviewDTO rel2 = new CompetencyRelationPreviewDTO(null, 3L, "C", 4L, "D", RelationType.EXTENDS, null);
             BatchRelationPreviewResponseDTO dto = new BatchRelationPreviewResponseDTO(true, 2, List.of(rel1, rel2), false);
@@ -256,7 +253,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"batchPreview\":true,\"count\":2,\"relations\":[{\"headCompetencyId\":1,\"headCompetencyTitle\":\"A\",\"tailCompetencyId\":2,\"tailCompetencyTitle\":\"B\",\"relationType\":\"ASSUMES\"},{\"headCompetencyId\":3,\"headCompetencyTitle\":\"C\",\"tailCompetencyId\":4,\"tailCompetencyTitle\":\"D\",\"relationType\":\"EXTENDS\"}],\"viewOnly\":true}";
 
             BatchRelationPreviewResponseDTO dto = objectMapper.readValue(json, BatchRelationPreviewResponseDTO.class);
@@ -268,7 +265,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleEmptyRelationsList() throws JsonProcessingException {
+        void shouldHandleEmptyRelationsList() throws JacksonException {
             BatchRelationPreviewResponseDTO dto = new BatchRelationPreviewResponseDTO(false, 0, List.of(), false);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -279,7 +276,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleNullRelationsList() throws JsonProcessingException {
+        void shouldHandleNullRelationsList() throws JacksonException {
             BatchRelationPreviewResponseDTO dto = new BatchRelationPreviewResponseDTO(true, 0, null, false);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -292,7 +289,7 @@ class AtlasAgentDtoTest {
     class RelationGraphPreviewDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyGraphNodeDTO node1 = new CompetencyGraphNodeDTO("1", "Node1", null, null, null);
             CompetencyGraphNodeDTO node2 = new CompetencyGraphNodeDTO("2", "Node2", null, null, null);
             CompetencyGraphEdgeDTO edge = new CompetencyGraphEdgeDTO("edge-1", "1", "2", RelationType.ASSUMES);
@@ -307,7 +304,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"nodes\":[{\"id\":\"1\",\"label\":\"A\"},{\"id\":\"2\",\"label\":\"B\"}],\"edges\":[{\"id\":\"edge-1\",\"source\":\"1\",\"target\":\"2\",\"relationType\":\"EXTENDS\"}],\"viewOnly\":true}";
 
             RelationGraphPreviewDTO dto = objectMapper.readValue(json, RelationGraphPreviewDTO.class);
@@ -318,7 +315,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleEmptyNodesAndEdges() throws JsonProcessingException {
+        void shouldHandleEmptyNodesAndEdges() throws JacksonException {
             RelationGraphPreviewDTO dto = new RelationGraphPreviewDTO(List.of(), List.of(), null);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -328,7 +325,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleNullViewOnly() throws JsonProcessingException {
+        void shouldHandleNullViewOnly() throws JacksonException {
             CompetencyGraphNodeDTO node = new CompetencyGraphNodeDTO("1", "Node1", null, null, null);
             CompetencyGraphEdgeDTO edge = new CompetencyGraphEdgeDTO("edge-1", "1", "1", RelationType.MATCHES);
 
@@ -344,7 +341,7 @@ class AtlasAgentDtoTest {
     class MapCompetencyToCompetencyRequestDTOTests {
 
         @Test
-        void shouldSerializeToJsonWithCorrectPropertyNames() throws JsonProcessingException {
+        void shouldSerializeToJsonWithCorrectPropertyNames() throws JacksonException {
             MapCompetencyToCompetencyRequestDTO dto = new MapCompetencyToCompetencyRequestDTO(1L, 2L);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -354,7 +351,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"source_competency_id\":10,\"target_competency_id\":20}";
 
             MapCompetencyToCompetencyRequestDTO dto = objectMapper.readValue(json, MapCompetencyToCompetencyRequestDTO.class);
@@ -364,7 +361,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldRoundTripSuccessfully() throws JsonProcessingException {
+        void shouldRoundTripSuccessfully() throws JacksonException {
             MapCompetencyToCompetencyRequestDTO original = new MapCompetencyToCompetencyRequestDTO(100L, 200L);
 
             String json = objectMapper.writeValueAsString(original);
@@ -379,7 +376,7 @@ class AtlasAgentDtoTest {
     class CompetencyRelationDTOTests {
 
         @Test
-        void shouldSerializeToJson() throws JsonProcessingException {
+        void shouldSerializeToJson() throws JacksonException {
             CompetencyRelationDTO dto = new CompetencyRelationDTO(1L, 10L, 20L, RelationType.ASSUMES);
 
             String json = objectMapper.writeValueAsString(dto);
@@ -391,7 +388,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldDeserializeFromJson() throws JsonProcessingException {
+        void shouldDeserializeFromJson() throws JacksonException {
             String json = "{\"id\":2,\"headCompetencyId\":30,\"tailCompetencyId\":40,\"relationType\":\"EXTENDS\"}";
 
             CompetencyRelationDTO dto = objectMapper.readValue(json, CompetencyRelationDTO.class);
@@ -424,7 +421,7 @@ class AtlasAgentDtoTest {
         }
 
         @Test
-        void shouldHandleNullId() throws JsonProcessingException {
+        void shouldHandleNullId() throws JacksonException {
             CompetencyRelationDTO dto = new CompetencyRelationDTO(null, 10L, 20L, RelationType.ASSUMES);
 
             String json = objectMapper.writeValueAsString(dto);

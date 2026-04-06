@@ -11,12 +11,11 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptor;
+import tools.jackson.core.JacksonException;
 
 class SarifParserTest {
 
@@ -307,7 +306,7 @@ class SarifParserTest {
                 """;
 
         SarifParser parser = new SarifParser(StaticCodeAnalysisTool.OTHER, new IdCategorizer());
-        assertThatThrownBy(() -> parser.parse(report)).hasCauseInstanceOf(JsonProcessingException.class);
+        assertThatThrownBy(() -> parser.parse(report)).hasCauseInstanceOf(JacksonException.class);
     }
 
     @Test

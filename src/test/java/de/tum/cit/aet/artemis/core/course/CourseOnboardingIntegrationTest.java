@@ -12,10 +12,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.databind.json.JsonMapper;
 
 class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -31,7 +30,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     private Course updateCourse(Course courseToUpdate) throws Exception {
-        ObjectMapper mapper = request.getObjectMapper();
+        JsonMapper mapper = request.getJsonMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);

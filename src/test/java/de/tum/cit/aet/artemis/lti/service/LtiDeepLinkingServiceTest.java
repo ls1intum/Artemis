@@ -30,10 +30,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -46,6 +42,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
 class LtiDeepLinkingServiceTest {
@@ -109,10 +108,10 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException, MalformedURLException, URISyntaxException {
+    void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JacksonException, MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        ObjectMapper mapper = JsonObjectMapper.get();
+        JsonMapper mapper = JsonObjectMapper.get();
         String deepLinkingSettingsAsJsonString = """
                 {
                   "deep_link_return_url": "",

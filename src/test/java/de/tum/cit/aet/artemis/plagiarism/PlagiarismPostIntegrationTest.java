@@ -23,8 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -43,6 +41,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import tools.jackson.databind.JsonNode;
 
 class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

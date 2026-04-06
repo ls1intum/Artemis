@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import tools.jackson.core.JacksonException;
 
 /**
  * This adds upon the {@link AbstractProgrammingIntegrationLocalCILocalVCTest} by providing additional
@@ -175,7 +175,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected abstract String getTestPrefix();
 
     @BeforeEach
-    void initUsersAndExercise() throws JsonProcessingException {
+    void initUsersAndExercise() throws JacksonException {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);

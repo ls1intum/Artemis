@@ -40,8 +40,6 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -59,6 +57,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.databind.json.JsonMapper;
 
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -96,7 +95,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private Competency competency;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     @BeforeEach
     void initTestCase() {
@@ -237,7 +236,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         MockMultipartHttpServletRequestBuilder attachmentVideoUnitBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment(), null);
         MockMultipartFile file = new MockMultipartFile("file", fileName, "application/json", "test".getBytes());
         attachmentVideoUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
-        AttachmentVideoUnit updatedAttachmentVideoUnit = request.getObjectMapper().readValue(
+        AttachmentVideoUnit updatedAttachmentVideoUnit = request.getJsonMapper().readValue(
                 request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentVideoUnit.class);
         String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.getAttachment().getLink());
         request.getFile(requestUrl, HttpStatus.OK);

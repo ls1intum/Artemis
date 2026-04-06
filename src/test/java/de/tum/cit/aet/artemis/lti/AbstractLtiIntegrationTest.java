@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.lti;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -13,6 +11,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.databind.json.JsonMapper;
 
 public abstract class AbstractLtiIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -46,5 +45,5 @@ public abstract class AbstractLtiIntegrationTest extends AbstractSpringIntegrati
 
     // Misc
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 }

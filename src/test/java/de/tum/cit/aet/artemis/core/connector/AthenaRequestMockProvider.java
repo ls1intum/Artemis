@@ -25,9 +25,9 @@ import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Component
 @Profile(PROFILE_ATHENA)
@@ -50,7 +50,7 @@ public class AthenaRequestMockProvider {
     private String athenaUrl;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     private AutoCloseable closeable;
 

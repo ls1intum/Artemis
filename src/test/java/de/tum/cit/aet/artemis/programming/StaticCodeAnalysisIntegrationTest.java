@@ -15,9 +15,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -32,6 +29,8 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -294,7 +293,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    void shouldCategorizeFeedback() throws JsonProcessingException {
+    void shouldCategorizeFeedback() throws JacksonException {
         var result = new Result();
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);

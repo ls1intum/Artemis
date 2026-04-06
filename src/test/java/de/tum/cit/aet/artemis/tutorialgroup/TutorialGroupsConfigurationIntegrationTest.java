@@ -17,9 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -30,6 +27,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
+import tools.jackson.databind.json.JsonMapper;
 
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -439,7 +437,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldSerializeAndDeserializeCorrectly() throws Exception {
-                ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+                JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
                 var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, false, Set.of());
 

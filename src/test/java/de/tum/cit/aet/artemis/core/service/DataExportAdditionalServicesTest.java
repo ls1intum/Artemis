@@ -19,9 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -47,6 +44,8 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Tests for the additional data export services:
@@ -268,7 +267,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
@@ -296,7 +295,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = JsonObjectMapper.get();
+                JsonMapper objectMapper = JsonObjectMapper.get();
 
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });

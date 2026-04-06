@@ -4,14 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 class IrisCourseSettingsTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
     void of_trimsBlankInstructionsAndDefaultsVariant() {
@@ -33,7 +32,7 @@ class IrisCourseSettingsTest {
     }
 
     @Test
-    void jsonRoundtrip_preservesSanitizedPayload() throws JsonProcessingException {
+    void jsonRoundtrip_preservesSanitizedPayload() throws JacksonException {
         var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(10, 5));
 
         String serialized = objectMapper.writeValueAsString(original);

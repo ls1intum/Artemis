@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.programming;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -30,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import tools.jackson.databind.json.JsonMapper;
 
 public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTemplateTest {
 
@@ -37,7 +36,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTemplateTest e
     protected RestTemplate restTemplate;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     // Repositories
     @Autowired

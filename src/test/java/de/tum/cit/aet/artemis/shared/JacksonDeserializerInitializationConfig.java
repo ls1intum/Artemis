@@ -6,11 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -36,9 +35,9 @@ public class JacksonDeserializerInitializationConfig {
 
     private static final Logger log = LoggerFactory.getLogger(JacksonDeserializerInitializationConfig.class);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public JacksonDeserializerInitializationConfig(ObjectMapper objectMapper) {
+    public JacksonDeserializerInitializationConfig(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

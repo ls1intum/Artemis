@@ -9,13 +9,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service responsible for initializing the database with specific testdata related to searches for use in integration tests.
@@ -143,7 +142,7 @@ public class PageableSearchUtilService {
      * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search, String parentKey) {
-        final ObjectMapper objectMapper = JsonObjectMapper.get();
+        final JsonMapper objectMapper = JsonObjectMapper.get();
         try {
             // Serialize the DTO into a JSON string and then deserialize it into a Map
             final String json = objectMapper.writeValueAsString(search);

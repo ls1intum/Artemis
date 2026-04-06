@@ -23,10 +23,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
+import tools.jackson.databind.node.ObjectNode;
 
 class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 

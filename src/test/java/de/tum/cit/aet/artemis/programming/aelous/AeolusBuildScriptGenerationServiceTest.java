@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
@@ -27,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import tools.jackson.core.JacksonException;
 
 class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -64,7 +63,7 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    void testBuildScriptGeneration() throws JsonProcessingException {
+    void testBuildScriptGeneration() throws JacksonException {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         String script = aeolusBuildPlanService.generateBuildScript(getWindfile(), AeolusTarget.CLI);
         assertThat(script).isNotNull();
@@ -75,12 +74,12 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
         return new Windfile("v0.0.1", new WindfileMetadata("test", "test", "test", null, null, null, null, null), null, null);
     }
 
-    private String getSerializedWindfile() throws JsonProcessingException {
+    private String getSerializedWindfile() throws JacksonException {
         return JsonObjectMapper.get().writeValueAsString(getWindfile());
     }
 
     @Test
-    void testBuildScriptGenerationUsingBuildPlanGenerationService() throws JsonProcessingException {
+    void testBuildScriptGenerationUsingBuildPlanGenerationService() throws JacksonException {
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
@@ -104,14 +103,14 @@ class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    void testFailedBuildPlanPublish() throws JsonProcessingException {
+    void testFailedBuildPlanPublish() throws JacksonException {
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.CLI);
         String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);
         assertThat(key).isNull();
     }
 
     @Test
-    void testNoAuthRestCall() throws JsonProcessingException {
+    void testNoAuthRestCall() throws JacksonException {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "token", "secret-token");
         aeolusRequestMockProvider.mockAuthenticatedRequest(aeolusUrl + "/publish/" + AeolusTarget.CLI.getName(), "secret-token");
         String key = aeolusBuildPlanService.publishBuildPlan(getWindfile(), AeolusTarget.CLI);

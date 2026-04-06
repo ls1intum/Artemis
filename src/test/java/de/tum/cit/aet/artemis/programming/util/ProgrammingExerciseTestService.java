@@ -67,8 +67,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -147,6 +145,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
@@ -263,7 +262,7 @@ public class ProgrammingExerciseTestService {
     private BuildPlanRepository buildPlanRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;

@@ -14,12 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import tools.jackson.core.JacksonException;
 
 class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -98,13 +97,13 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
             Windfile.deserialize(invalidWindfile);
             fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             assertThat(e.getMessage()).startsWith("Cannot determine type");
         }
     }
 
     @Test
-    void testValidWindfileDeserializationWithClass() throws JsonProcessingException {
+    void testValidWindfileDeserializationWithClass() throws JacksonException {
         String validWindfile = """
                 {
                   "api": "v0.0.1",
@@ -163,7 +162,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
             Windfile.deserialize(invalidWindfile);
             fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
-        catch (JsonProcessingException exception) {
+        catch (JacksonException exception) {
             assertThat(exception.getMessage()).startsWith("Cannot determine type");
         }
     }

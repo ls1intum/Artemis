@@ -23,12 +23,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Mocks requests to Aeolus
@@ -45,7 +44,7 @@ public class AeolusRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Constructor for the AeolusRequestMockProvider
@@ -69,7 +68,7 @@ public class AeolusRequestMockProvider {
      * @param target      the target to publish to
      * @param expectedKey the expected key
      */
-    public void mockSuccessfulPublishBuildPlan(AeolusTarget target, String expectedKey) throws JsonProcessingException {
+    public void mockSuccessfulPublishBuildPlan(AeolusTarget target, String expectedKey) throws JacksonException {
         final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();
@@ -108,7 +107,7 @@ public class AeolusRequestMockProvider {
      *
      * @param target the target to generate for
      */
-    public void mockGeneratePreview(AeolusTarget target) throws JsonProcessingException {
+    public void mockGeneratePreview(AeolusTarget target) throws JacksonException {
         final var uriPattern = Pattern.compile(aeolusUrl + "/generate/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();

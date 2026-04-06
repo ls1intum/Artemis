@@ -6,10 +6,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -23,13 +19,15 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 class AtlasMLDtoTest {
 
-    private final ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
+    private final JsonMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
 
     @Test
-    void testSuggestCompetencyRequestDTO_jsonRoundTrip() throws JsonProcessingException {
+    void testSuggestCompetencyRequestDTO_jsonRoundTrip() throws JacksonException {
         SuggestCompetencyRequestDTO dto = new SuggestCompetencyRequestDTO("desc", 42L);
         String json = objectMapper.writeValueAsString(dto);
         assertThat(json).contains("course_id");
@@ -70,7 +68,7 @@ class AtlasMLDtoTest {
     }
 
     @Test
-    void testAtlasMLExerciseDTO_json() throws JsonProcessingException {
+    void testAtlasMLExerciseDTO_json() throws JacksonException {
         AtlasMLExerciseDTO dto = new AtlasMLExerciseDTO(7L, "ex", "desc", List.of(1L, 2L), 9L);
         String json = objectMapper.writeValueAsString(dto);
         AtlasMLExerciseDTO back = objectMapper.readValue(json, AtlasMLExerciseDTO.class);
@@ -83,7 +81,7 @@ class AtlasMLDtoTest {
     }
 
     @Test
-    void testAtlasMLCompetencyRelationDTO_mappingAndJson() throws JsonProcessingException {
+    void testAtlasMLCompetencyRelationDTO_mappingAndJson() throws JacksonException {
         CompetencyRelation relation = new CompetencyRelation();
         relation.setType(RelationType.EXTENDS);
         // Set tail and head competencies to avoid null pointer when mapping ids
@@ -148,7 +146,7 @@ class AtlasMLDtoTest {
     }
 
     @Test
-    void testSaveCompetencyRequestDTO_nullBranches() throws JsonProcessingException {
+    void testSaveCompetencyRequestDTO_nullBranches() throws JacksonException {
         SaveCompetencyRequestDTO r1 = SaveCompetencyRequestDTO.fromCompetencies(List.of(), SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
         assertThat(r1.competencies()).isNull();
 
@@ -177,7 +175,7 @@ class AtlasMLDtoTest {
     }
 
     @Test
-    void testMapCompetencyToExerciseRequestDTO_jsonRoundTrip() throws JsonProcessingException {
+    void testMapCompetencyToExerciseRequestDTO_jsonRoundTrip() throws JacksonException {
         MapCompetencyToExerciseRequestDTO dto = new MapCompetencyToExerciseRequestDTO(10L, 5L);
         String json = objectMapper.writeValueAsString(dto);
         assertThat(json).contains("exercise_id").contains("competency_id");

@@ -31,9 +31,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -41,6 +38,8 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * this class tests all import features of the ExerciseSharingResource class
@@ -78,10 +77,10 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @BeforeEach
-    void setupObjectMapper() {
+    void setupJsonMapper() {
         objectMapper = JsonObjectMapper.get().copy();
         objectMapper.findAndRegisterModules();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

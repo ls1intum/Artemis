@@ -20,10 +20,9 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test utility class that provides infrastructure to mock the sharing platform
@@ -69,7 +68,7 @@ public class SharingPlatformMockProvider {
      */
     private static final String sharingApiKey = "someSecretlySharedKey1234";
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     /**
      * Simulates a connection request from the Sharing Platform to Artemis.

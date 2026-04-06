@@ -23,12 +23,11 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetrySendingService;
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -44,7 +43,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
+    private final JsonMapper mapper = JsonObjectMapper.get();
 
     private TelemetryService telemetryServiceSpy;
 
