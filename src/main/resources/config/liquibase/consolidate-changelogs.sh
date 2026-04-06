@@ -148,7 +148,7 @@ PG_OK=true
 
 echo ""
 echo "--- MySQL ---"
-diff "$DUMP_DIR/mysql-develop-schema.sql" "$DUMP_DIR/mysql-new-schema.sql" > "$DUMP_DIR/mysql-diff.txt" 2>&1
+diff "$DUMP_DIR/mysql-develop-schema.sql" "$DUMP_DIR/mysql-new-schema.sql" > "$DUMP_DIR/mysql-diff.txt" 2>&1 || true
 MYSQL_DIFF_LINES=$(grep -v 'GTID_PURGED' "$DUMP_DIR/mysql-diff.txt" | grep -c '^[<>]' 2>/dev/null || echo 0)
 if [ "$MYSQL_DIFF_LINES" -eq 0 ]; then
     echo "  IDENTICAL ✓"
@@ -160,12 +160,12 @@ fi
 
 echo ""
 echo "--- PostgreSQL ---"
-diff "$DUMP_DIR/pg-develop-schema.sql" "$DUMP_DIR/pg-new-schema.sql" > "$DUMP_DIR/pg-diff.txt" 2>&1
+diff "$DUMP_DIR/pg-develop-schema.sql" "$DUMP_DIR/pg-new-schema.sql" > "$DUMP_DIR/pg-diff.txt" 2>&1 || true
 PG_DIFF_LINES=$(grep -v 'restrict\|unrestrict' "$DUMP_DIR/pg-diff.txt" | grep -c '^[<>]' 2>/dev/null || echo 0)
 if [ "$PG_DIFF_LINES" -eq 0 ]; then
     echo "  IDENTICAL ✓"
 else
-    echo "  $PG_DIFF_LINES differences (excluding session tokens):"
+    echo "  $PG_DIFF_LINES differences (excluding per-instance session identifiers):"
     grep -v 'restrict\|unrestrict' "$DUMP_DIR/pg-diff.txt" | head -40
     PG_OK=false
 fi

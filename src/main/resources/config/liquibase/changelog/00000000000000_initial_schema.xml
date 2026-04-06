@@ -3711,7 +3711,8 @@
         </addColumn>
         <addColumn tableName="global_notification_setting">
             <column name="global_notification_type" type="ENUM('NEW_LOGIN','NEW_PASSKEY_ADDED','VCS_TOKEN_EXPIRED','SSH_KEY_EXPIRED','MAINTENANCE')">
-                </column>
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
         <addColumn tableName="jhi_user">
             <column name="ai_selection_decision" type="ENUM('NO_AI','LOCAL_AI','CLOUD_AI')"/>
