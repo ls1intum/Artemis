@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.aopalliance.intercept.MethodInvocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +24,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.DefaultAuthorizationManagerFactory;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -193,7 +195,7 @@ public class SecurityConfiguration {
     // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        var authorizationManagerFactory = new org.springframework.security.authorization.DefaultAuthorizationManagerFactory<org.aopalliance.intercept.MethodInvocation>();
+        var authorizationManagerFactory = new DefaultAuthorizationManagerFactory<MethodInvocation>();
         authorizationManagerFactory.setRoleHierarchy(roleHierarchy());
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setAuthorizationManagerFactory(authorizationManagerFactory);
