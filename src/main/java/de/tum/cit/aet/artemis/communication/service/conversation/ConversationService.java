@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -231,6 +233,28 @@ public class ConversationService {
 
     public void markAsRead(Long conversationId, Long userId) {
         conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+    }
+
+    /**
+     * Marks a conversation as unread for the user starting from the given message.
+     *
+     * @param conversationId the conversation ID
+     * @param userId         the user ID
+     * @param messageId      the message from which unread status begins
+     */
+    public void markAsUnread(Long conversationId, Long userId, Long messageId) {
+        Post post = postRepository.findByIdElseThrow(messageId);
+        if (!post.getConversation().getId().equals(conversationId)) {
+            throw new EntityNotFoundException("Message with id \"" + messageId + "\" does not exist in the conversation");
+        }
+        if (post.getAuthor().getId().equals(userId)) {
+            throw new BadRequestAlertException("You cannot mark your own message as unread", "post", "cannotMarkOwnAsUnread");
+        }
+        ZonedDateTime messageDate = post.getCreationDate();
+        // Subtract 1ms so that lastRead falls just before the target message, ensuring the target message itself appears as unread.
+        ZonedDateTime lastRead = messageDate.minusNanos(1_000_000);
+        // Recalculate unread count from this message onwards
+        conversationParticipantRepository.markFromMessageAsUnread(conversationId, userId, messageDate, lastRead);
     }
 
     /**
@@ -531,19 +555,13 @@ public class ConversationService {
     /**
      * Determines whether the provided channel is visible to students.
      * <p>
-     * If the channel is not associated with a lecture/exam/exercise, then this method returns true.
-     * If it is connected to a lecture/exam/exercise, then the
-     * channel visibility depends on the visible date of the lecture/exam/exercise.
+     * If the channel is not associated with an exam/exercise, then this method returns true (including lecture channels, which are always visible).
+     * If it is connected to an exam/exercise, then the channel visibility depends on the visible date of the exam/exercise.
      *
      * @param channel the channel under consideration
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // if (channel.getLecture() != null) {
-        // return channel.getLecture().isVisibleToStudents();
-        // }
         if (channel.getExercise() != null) {
             return channel.getExercise().isVisibleToStudents();
         }

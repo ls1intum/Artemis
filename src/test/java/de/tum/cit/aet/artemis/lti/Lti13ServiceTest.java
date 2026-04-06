@@ -41,7 +41,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -153,7 +153,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
@@ -245,7 +245,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformCompetencyLaunch(1L, true);
@@ -261,7 +261,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformCompetencyLaunch(1L, false);
@@ -500,7 +500,7 @@ class Lti13ServiceTest {
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
-        JsonNode body = new ObjectMapper().readTree(Objects.requireNonNull(httpEntity.getBody()));
+        JsonNode body = JsonObjectMapper.get().readTree(Objects.requireNonNull(httpEntity.getBody()));
         assertThat(body.get("userId").asText()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
         assertThat(body.get("timestamp").asText()).as("Parameter missing in score publish request: timestamp").isNotNull();
         assertThat(body.get("activityProgress").asText()).as("Parameter missing in score publish request: activityProgress").isNotNull();

@@ -45,7 +45,7 @@ public class MessageSpecs {
             boolean hasAuthors = authorIds != null && authorIds.length > 0;
             // no author ids and no search text means no filtering
             if (!hasText && !hasAuthors) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             // if only a search text is given, use the search text specification
             if (hasText && !hasAuthors) {
@@ -82,7 +82,7 @@ public class MessageSpecs {
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             // search by text or #message
             else if (searchText.startsWith("#") && StringUtils.isNumeric(searchText.substring(1))) {
@@ -112,7 +112,7 @@ public class MessageSpecs {
     public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
             if (conversationIds == null || conversationIds.length == 0) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 return root.get(Post_.CONVERSATION).get(Conversation_.ID).in(Arrays.stream(conversationIds).boxed().toList());
@@ -131,11 +131,13 @@ public class MessageSpecs {
     public static Specification<Post> getCourseWideChannelsSpecification(boolean filterToCourseWide, Long courseId) {
         return (root, query, criteriaBuilder) -> {
             if (!filterToCourseWide) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
-            final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
-            final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
+            // Use treat() to downcast the Conversation join to Channel for accessing subclass attributes (required by Hibernate 7)
+            final var channelJoin = criteriaBuilder.treat(conversationJoin, Channel.class);
+            final var isInCoursePredicate = criteriaBuilder.equal(channelJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
+            final var isCourseWidePredicate = criteriaBuilder.isTrue(channelJoin.get(Channel_.IS_COURSE_WIDE));
             // make sure we only fetch channels (which are sub types of conversations)
             // this avoids the creation of sub queries
             final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
@@ -153,7 +155,7 @@ public class MessageSpecs {
     public static Specification<Post> getAuthorSpecification(long[] authorIds) {
         return ((root, query, criteriaBuilder) -> {
             if (authorIds == null || authorIds.length == 0) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
@@ -176,7 +178,7 @@ public class MessageSpecs {
     public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (!answeredOrReacted) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -203,13 +205,15 @@ public class MessageSpecs {
     public static Specification<Post> getUnresolvedSpecification(boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
             if (!unresolved) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 // Post should not have any answer that resolves
                 Predicate noResolvingAnswer = criteriaBuilder.isFalse(root.get(Post_.resolved));
                 // Posts in announcement channels can not be answered, therefore they can not be unresolved
-                Predicate notAnnouncementChannel = criteriaBuilder.isFalse(root.get(Post_.conversation).get(Channel_.IS_ANNOUNCEMENT_CHANNEL));
+                // Use treat() to downcast Conversation to Channel for accessing subclass attributes (required by Hibernate 7)
+                var channelPath = criteriaBuilder.treat(root.get(Post_.conversation), Channel.class);
+                Predicate notAnnouncementChannel = criteriaBuilder.isFalse(channelPath.get(Channel_.IS_ANNOUNCEMENT_CHANNEL));
 
                 return criteriaBuilder.and(noResolvingAnswer, notAnnouncementChannel);
             }
@@ -246,7 +250,7 @@ public class MessageSpecs {
                 query.orderBy(orderList);
             }
 
-            return null;
+            return criteriaBuilder.conjunction();
         });
     }
 
@@ -263,7 +267,7 @@ public class MessageSpecs {
             if (query != null) {
                 query.groupBy(root.get(Post_.ID));
             }
-            return null;
+            return criteriaBuilder.conjunction();
         };
     }
 
@@ -277,7 +281,7 @@ public class MessageSpecs {
     public static Specification<Post> getPinnedSpecification(boolean pinnedOnly) {
         return (root, query, criteriaBuilder) -> {
             if (!pinnedOnly) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), DisplayPriority.PINNED.name());
         };

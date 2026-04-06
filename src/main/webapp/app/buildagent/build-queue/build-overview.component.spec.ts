@@ -23,6 +23,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
@@ -299,6 +300,12 @@ describe('BuildQueueComponent', () => {
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                {
+                    provide: BuildAgentsService,
+                    useValue: {
+                        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
+                    },
+                },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });

@@ -64,12 +64,18 @@ public class IrisCitationService {
         }
         var unitMap = lectureUnitRepositoryApi.get().findAllByIdsWithLecture(entityIds).stream().collect(Collectors.toMap(LectureUnit::getId, unit -> unit));
         var citations = entityIds.stream().map(unitMap::get).filter(Objects::nonNull).map(unit -> {
-            var lectureTitle = unit.getLecture() != null ? unit.getLecture().getTitle() : null;
+            var lecture = unit.getLecture();
+            var lectureTitle = lecture != null ? lecture.getTitle() : null;
             var lectureUnitTitle = unit.getName();
-            if (lectureTitle == null || lectureTitle.isBlank() || lectureUnitTitle == null || lectureUnitTitle.isBlank()) {
+            if (lecture == null || lectureTitle == null || lectureTitle.isBlank() || lectureUnitTitle == null || lectureUnitTitle.isBlank()) {
                 return null;
             }
-            return new IrisCitationMetaDTO(unit.getId(), lectureTitle, lectureUnitTitle);
+            var lectureId = lecture.getId();
+            var courseId = lecture.getCourse() != null ? lecture.getCourse().getId() : null;
+            if (courseId == null) {
+                return null;
+            }
+            return new IrisCitationMetaDTO(unit.getId(), lectureTitle, lectureUnitTitle, lectureId, courseId);
         }).filter(Objects::nonNull).toList();
         return citations;
     }

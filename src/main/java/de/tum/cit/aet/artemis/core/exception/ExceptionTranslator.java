@@ -19,30 +19,28 @@ import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.zalando.problem.DefaultProblem;
-import org.zalando.problem.Problem;
-import org.zalando.problem.ProblemBuilder;
-import org.zalando.problem.Status;
-import org.zalando.problem.spring.web.advice.ProblemHandling;
-import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
-import org.zalando.problem.violations.ConstraintViolationProblem;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import tech.jhipster.web.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows
- * <a href="https://tools.ietf.org/html/rfc7807">RFC7807 - Problem Details for HTTP APIs</a>
+ * <a href="https://tools.ietf.org/html/rfc9457">RFC 9457 - Problem Details for HTTP APIs</a>
  */
 @ControllerAdvice
-public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
+public class ExceptionTranslator extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
 
@@ -52,102 +50,155 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
 
     private static final String PATH_KEY = "path";
 
-    private static final String VIOLATIONS_KEY = "violations";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     /**
-     * Post-process the Problem payload to add the message key for the front-end if needed.
+     * Post-process a ProblemDetail to add the request path and a default message key if not already present.
      */
-    @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NonNull NativeWebRequest request) {
-        if (entity == null) {
+    private ProblemDetail postProcess(@Nullable ProblemDetail detail, @NonNull NativeWebRequest request) {
+        if (detail == null) {
             return null;
         }
-        Problem problem = entity.getBody();
-        if (!(problem instanceof ConstraintViolationProblem || problem instanceof DefaultProblem)) {
-            return entity;
+        HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
+        if (servletRequest != null) {
+            detail.setProperty(PATH_KEY, servletRequest.getRequestURI());
         }
-        ProblemBuilder builder = Problem.builder().withType(Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType())
-                .withStatus(problem.getStatus()).withTitle(problem.getTitle()).with(PATH_KEY, request.getNativeRequest(HttpServletRequest.class).getRequestURI());
+        if (detail.getProperties() == null || !detail.getProperties().containsKey(MESSAGE_KEY)) {
+            HttpStatusCode statusCode = HttpStatusCode.valueOf(detail.getStatus());
+            detail.setProperty(MESSAGE_KEY, "error.http." + statusCode.value());
+        }
+        return detail;
+    }
 
-        if (problem instanceof ConstraintViolationProblem) {
-            builder.with(VIOLATIONS_KEY, ((ConstraintViolationProblem) problem).getViolations()).with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
+    /**
+     * Override the internal exception handler to ensure all responses from the parent {@link ResponseEntityExceptionHandler}
+     * (e.g. for {@link org.springframework.http.converter.HttpMessageNotReadableException}) also include the
+     * {@code message} property in the ProblemDetail body.
+     */
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(@NonNull Exception ex, @Nullable Object body, @NonNull HttpHeaders headers, @NonNull HttpStatusCode statusCode,
+            @NonNull WebRequest request) {
+        ResponseEntity<Object> response = super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        if (response != null && response.getBody() instanceof ProblemDetail detail && request instanceof NativeWebRequest nativeWebRequest) {
+            postProcess(detail, nativeWebRequest);
         }
-        else {
-            builder.withCause(((DefaultProblem) problem).getCause()).withDetail(problem.getDetail()).withInstance(problem.getInstance());
-            problem.getParameters().forEach(builder::with);
-            if (!problem.getParameters().containsKey(MESSAGE_KEY) && problem.getStatus() != null) {
-                builder.with(MESSAGE_KEY, "error.http." + problem.getStatus().getStatusCode());
-            }
-        }
-        return new ResponseEntity<>(builder.build(), entity.getHeaders(), entity.getStatusCode());
+        return response;
     }
 
     @Override
-    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NonNull NativeWebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex, @NonNull HttpHeaders headers, @NonNull HttpStatusCode status,
+            @NonNull WebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
                 .toList();
 
-        Problem problem = Problem.builder().withType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE).withTitle("Method argument not valid").withStatus(defaultConstraintViolationStatus())
-                .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION).with(FIELD_ERRORS_KEY, fieldErrors).build();
-        return create(ex, problem, request);
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE);
+        detail.setTitle("Method argument not valid");
+        detail.setProperty(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
+        detail.setProperty(FIELD_ERRORS_KEY, fieldErrors);
+
+        if (request instanceof NativeWebRequest nativeWebRequest) {
+            postProcess(detail, nativeWebRequest);
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(headers).body(detail);
     }
 
+    /**
+     * Handles {@link EmailAlreadyUsedException} and returns a 400 response with failure alert headers.
+     *
+     * @param ex      the exception indicating the email is already in use
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details
+     */
     @ExceptionHandler
-    public ResponseEntity<Problem> handleEmailAlreadyUsedException(EmailAlreadyUsedException ex, NativeWebRequest request) {
+    public ResponseEntity<ProblemDetail> handleEmailAlreadyUsedException(EmailAlreadyUsedException ex, NativeWebRequest request) {
         EmailAlreadyUsedException problem = new EmailAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getBody().getTitle());
+        ProblemDetail detail = problem.getBody();
+        postProcess(detail, request);
+        return ResponseEntity.status(problem.getStatusCode()).headers(headers).body(detail);
     }
 
+    /**
+     * Handles {@link UsernameAlreadyUsedException} and returns a 400 response with failure alert headers.
+     *
+     * @param ex      the exception indicating the username is already in use
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details
+     */
     @ExceptionHandler
-    public ResponseEntity<Problem> handleUsernameAlreadyUsedException(UsernameAlreadyUsedException ex, NativeWebRequest request) {
+    public ResponseEntity<ProblemDetail> handleUsernameAlreadyUsedException(UsernameAlreadyUsedException ex, NativeWebRequest request) {
         LoginAlreadyUsedException problem = new LoginAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getBody().getTitle());
+        ProblemDetail detail = problem.getBody();
+        postProcess(detail, request);
+        return ResponseEntity.status(problem.getStatusCode()).headers(headers).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handlePasswordViolatesRequirementsException(PasswordViolatesRequirementsException ex, NativeWebRequest request) {
-        return create(new PasswordViolatesRequirementsException(), request);
+    public ResponseEntity<ProblemDetail> handlePasswordViolatesRequirementsException(PasswordViolatesRequirementsException ex, NativeWebRequest request) {
+        ProblemDetail detail = ex.getBody();
+        postProcess(detail, request);
+        return ResponseEntity.status(ex.getStatusCode()).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
-        return create(ex, request, HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
+    public ResponseEntity<ProblemDetail> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getBody().getTitle());
+        ProblemDetail detail = ex.getBody();
+        postProcess(detail, request);
+        return ResponseEntity.status(ex.getStatusCode()).headers(headers).body(detail);
+    }
+
+    /**
+     * Handles {@link ConflictException} and returns a 409 Conflict response.
+     *
+     * @param ex      the conflict exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and HTTP 409 status
+     */
+    @ExceptionHandler
+    public ResponseEntity<ProblemDetail> handleConflictException(ConflictException ex, NativeWebRequest request) {
+        ProblemDetail detail = ex.getBody();
+        detail.setProperty("X-" + applicationName + "-error", "error." + ex.getErrorKey());
+        detail.setProperty("X-" + applicationName + "-params", ex.getEntityName());
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleConflictException(ConflictException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ex.getMessage()).with("X-" + applicationName + "-error", "error." + ex.getErrorKey())
-                .with("X-" + applicationName + "-params", ex.getEntityName()).build();
-        return create(ex, problem, request);
+    public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        detail.setProperty(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE);
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE).build();
-        return create(ex, problem, request);
+    public ResponseEntity<ProblemDetail> handleEntityNotFoundException(EntityNotFoundException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setProperty(MESSAGE_KEY, ErrorConstants.REQ_404_REASON);
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleEntityNotFoundException(EntityNotFoundException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.NOT_FOUND).with(MESSAGE_KEY, ErrorConstants.REQ_404_REASON).build();
-        return create(ex, problem, request);
+    public ResponseEntity<ProblemDetail> handleBadRequest(BadRequestException exception, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setProperty(MESSAGE_KEY, StringUtils.firstNonBlank(exception.getMessage(), ErrorConstants.REQ_400_REASON));
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(detail);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleBadRequest(BadRequestException exception, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.BAD_REQUEST).with(MESSAGE_KEY, StringUtils.firstNonBlank(exception.getMessage(), ErrorConstants.REQ_400_REASON))
-                .build();
-        return create(exception, problem, request);
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleNotAllowedException(NotAllowedException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.METHOD_NOT_ALLOWED).with(MESSAGE_KEY, StringUtils.firstNonBlank(ex.getMessage(), "Method not allowed")).build();
-        return create(ex, problem, request);
+    public ResponseEntity<ProblemDetail> handleNotAllowedException(NotAllowedException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.METHOD_NOT_ALLOWED);
+        detail.setProperty(MESSAGE_KEY, StringUtils.firstNonBlank(ex.getMessage(), "Method not allowed"));
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(detail);
     }
 
     /**
@@ -169,11 +220,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         }
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
-        final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
-        return create(ex, problem, request);
-    }
+    // NoResourceFoundException is handled by the parent ResponseEntityExceptionHandler
 
     /**
      * Handles {@link RateLimitExceededException} exceptions that occur when a client
@@ -199,10 +246,93 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return new ResponseEntity<>("Too Many Requests", headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
+    /**
+     * Handles {@link WeaviateException} and returns a 500 response.
+     *
+     * @param ex      the Weaviate operation exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and HTTP 500 status
+     */
+    @ExceptionHandler
+    public ResponseEntity<ProblemDetail> handleWeaviateException(WeaviateException ex, NativeWebRequest request) {
+        log.error("Weaviate operation failed: {}", ex.getMessage(), ex);
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        detail.setTitle("Weaviate Error");
+        detail.setDetail("An internal error occurred while processing the request");
+        detail.setProperty(MESSAGE_KEY, "error.weaviateOperationFailed");
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(detail);
+    }
+
+    /**
+     * Handles Spring Security access denied exceptions (including {@link org.springframework.security.authorization.AuthorizationDeniedException}
+     * from Spring Security 7's method-level authorization) and returns a 403 Forbidden response.
+     *
+     * @param ex      the access denied exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and HTTP 403 status
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        detail.setTitle("Forbidden");
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(MESSAGE_KEY, "error.http.403");
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(detail);
+    }
+
+    /**
+     * Handles {@link PasskeyAuthenticationException} and returns a 403 Forbidden response.
+     *
+     * @param ex      the passkey authentication exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and HTTP 403 status
+     */
     @ExceptionHandler(PasskeyAuthenticationException.class)
-    public ResponseEntity<Problem> handlePasskeyAuthenticationException(PasskeyAuthenticationException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).withTitle("Forbidden").withDetail(ex.getMessage()).with(MESSAGE_KEY, ex.getErrorKey())
-                .with("reason", ex.getReason().name()).build();
-        return create(ex, problem, request);
+    public ResponseEntity<ProblemDetail> handlePasskeyAuthenticationException(PasskeyAuthenticationException ex, NativeWebRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        detail.setTitle("Forbidden");
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(MESSAGE_KEY, ex.getErrorKey());
+        detail.setProperty("reason", ex.getReason().name());
+        postProcess(detail, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(detail);
+    }
+
+    /**
+     * Catch-all handler for any unhandled exceptions that are not covered by more specific handlers.
+     * This replaces the generic exception handling previously provided by the Zalando problem-spring-web library.
+     * Respects {@link ResponseStatus} annotations on exception classes to determine the HTTP status code.
+     *
+     * @param ex      the unhandled exception
+     * @param request the current web request
+     * @return a {@link ResponseEntity} with problem details and the appropriate HTTP status
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleGenericException(Exception ex, NativeWebRequest request) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        ResponseStatus responseStatus = ex.getClass().getAnnotation(ResponseStatus.class);
+        if (responseStatus != null) {
+            status = responseStatus.value();
+        }
+        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
+            log.error("Unhandled exception occurred: {}", ex.getMessage(), ex);
+        }
+        else {
+            log.warn("Exception with status {}: {}", status.value(), ex.getMessage());
+        }
+        ProblemDetail detail = ProblemDetail.forStatus(status);
+        detail.setTitle(status.getReasonPhrase());
+        // Only include exception message for client errors (4xx); never leak internal details for server errors (5xx)
+        if (status.is4xxClientError()) {
+            detail.setDetail(ex.getMessage());
+        }
+        else {
+            detail.setDetail("An internal server error occurred");
+        }
+        detail.setProperty(MESSAGE_KEY, "error.http." + status.value());
+        postProcess(detail, request);
+        return ResponseEntity.status(status).body(detail);
     }
 }

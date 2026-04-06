@@ -27,9 +27,10 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         const page = await context.newPage();
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);
-        // Initialize deadlines after login so the short windows aren't consumed by setup
-        dueDate = dayjs().add(5, 'seconds');
-        assessmentDueDate = dueDate.add(5, 'seconds');
+        // Initialize deadlines after login so the short windows aren't consumed by setup.
+        // Use generous windows to avoid flakiness under CI parallel load.
+        dueDate = dayjs().add(10, 'seconds');
+        assessmentDueDate = dueDate.add(10, 'seconds');
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
@@ -37,7 +38,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
-            await page.waitForTimeout(dueDate.diff(now, 'ms'));
+            await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
         }
     });
 
@@ -62,7 +63,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         test('Student sees feedback after assessment due date and complains', async ({ login, page, courseManagementAPIRequests, exerciseResult, textExerciseFeedback }) => {
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
-                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
+                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
             }
             // Reset complaint limit to avoid "complaint limit reached" on shared seed courses
             await login(admin);
@@ -73,7 +74,6 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await exerciseResult.shouldShowExerciseTitle(exercise.title!);
             await exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             await exerciseResult.shouldShowScore(percentage);
-            await exerciseResult.clickOpenExercise(exercise.id!);
             await textExerciseFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             await textExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             await textExerciseFeedback.shouldShowScore(percentage);

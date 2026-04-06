@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static tech.jhipster.config.logging.LoggingUtils.addContextListener;
-import static tech.jhipster.config.logging.LoggingUtils.addJsonConsoleAppender;
-import static tech.jhipster.config.logging.LoggingUtils.addLogstashTcpSocketAppender;
+import static de.tum.cit.aet.artemis.core.config.logging.LoggingUtils.addContextListener;
+import static de.tum.cit.aet.artemis.core.config.logging.LoggingUtils.addJsonConsoleAppender;
+import static de.tum.cit.aet.artemis.core.config.logging.LoggingUtils.addLogstashTcpSocketAppender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.LoggerContext;
-import tech.jhipster.config.JHipsterProperties;
 
 /*
  * Configures the console and Logstash log appender from the app properties
@@ -29,7 +28,7 @@ import tech.jhipster.config.JHipsterProperties;
 @Lazy(false)
 public class LoggingConfiguration {
 
-    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties,
+    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, ArtemisProperties jHipsterProperties,
             ObjectMapper mapper) throws JsonProcessingException {
 
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -39,8 +38,8 @@ public class LoggingConfiguration {
         map.put("app_port", serverPort);
         String customFields = mapper.writeValueAsString(map);
 
-        JHipsterProperties.Logging loggingProperties = jHipsterProperties.getLogging();
-        JHipsterProperties.Logging.Logstash logstashProperties = loggingProperties.getLogstash();
+        ArtemisProperties.Logging loggingProperties = jHipsterProperties.getLogging();
+        ArtemisProperties.Logging.Logstash logstashProperties = loggingProperties.getLogstash();
 
         if (loggingProperties.isUseJsonFormat()) {
             addJsonConsoleAppender(context, customFields);

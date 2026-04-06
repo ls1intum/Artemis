@@ -19,12 +19,14 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { Observable } from 'rxjs';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -37,7 +39,7 @@ describe('Exercise Service', () => {
         id: 23,
         type: ExerciseType.MODELING,
         studentParticipations: [],
-        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
         exampleSolutionExplanation: 'Solution<br>Explanation',
     } as unknown as ModelingExercise;
 
@@ -394,9 +396,7 @@ describe('Exercise Service', () => {
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
 
-    it.each(['create', 'update'])('should send %s request for the exercise', (action: string) => {
-        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
-
+    it('should convert exercise dates and categories from client', () => {
         const category = {
             color: '#6ae8ac',
             category: 'category1',
@@ -408,42 +408,14 @@ describe('Exercise Service', () => {
             categories: [category],
             releaseDate,
         });
-        const expectedReturnedExercise = { id: exercise.id } as Exercise;
 
-        const expectedUrl = `api/exercise/exercises`;
-        let result$: Observable<EntityResponseType>;
-        let method: string;
-        if (action === 'create') {
-            result$ = service.create(exercise);
-            method = 'POST';
-        } else if (action === 'update') {
-            result$ = service.update(exercise);
-            method = 'PUT';
-        } else {
-            throw new Error(`Unexpected action: ${action}`);
-        }
+        const converted = ExerciseService.convertExerciseFromClient(exercise);
 
-        let actualReturnedExercise = undefined;
-        result$.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
+        expect(converted.categories).toHaveLength(1);
+        expect(converted.categories![0]).toBe(JSON.stringify(category));
 
-        const testRequest = httpMock.expectOne({
-            url: expectedUrl,
-            method,
-        });
-
-        testRequest.flush(expectedReturnedExercise);
-
-        const sentBody = testRequest.request.body;
-
-        expect(sentBody.categories).toHaveLength(1);
-        expect(sentBody.categories[0]).toBe(JSON.stringify(category));
-
-        expect(sentBody.releaseDate).toBe(releaseDate.toJSON());
-        expect(sentBody.startDate).toBeUndefined();
-
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
-        expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
+        expect(converted.releaseDate).toBe(releaseDate.toJSON());
+        expect(converted.startDate).toBeUndefined();
     });
 
     it('should get exercise details', () => {
@@ -520,6 +492,115 @@ describe('Exercise Service', () => {
         httpMock.expectOne({
             url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
+        });
+    });
+
+    describe('getDeletionSummary', () => {
+        const exerciseId = 128;
+
+        it('should fetch and transform deletion summary for programming exercise', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 50,
+                numberOfBuilds: 100,
+                numberOfAssessments: 25,
+                numberOfCommunicationPosts: 10,
+                numberOfAnswerPosts: 5,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 50,
+                'artemisApp.exercise.delete.summary.numberOfBuilds': 100,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 25,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 10,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 5,
+            });
+        });
+
+        it('should exclude numberOfBuilds for non-programming exercises', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.TEXT } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 30,
+                numberOfBuilds: 50,
+                numberOfAssessments: 20,
+                numberOfCommunicationPosts: 8,
+                numberOfAnswerPosts: 3,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 30,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 20,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 8,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 3,
+            });
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+        });
+
+        it('should exclude numberOfBuilds and numberOfAssessments for quiz exercises', () => {
+            const testExercise = { id: exerciseId, type: ExerciseType.QUIZ } as Exercise;
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 0,
+                numberOfBuilds: 0,
+                numberOfAssessments: 0,
+                numberOfCommunicationPosts: 0,
+                numberOfAnswerPosts: 0,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 0,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 0,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 0,
+            });
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfAssessments');
+        });
+
+        it('should return empty object for exercise without id', () => {
+            const testExercise = { type: ExerciseType.TEXT } as Exercise;
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual({});
+        });
+
+        it('should return empty object for exercise without type', () => {
+            const testExercise = { id: exerciseId } as Exercise;
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual({});
         });
     });
 });

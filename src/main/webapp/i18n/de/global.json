@@ -38,8 +38,57 @@
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
+            "searching": "Suche läuft...",
             "toNavigate": "zum Navigieren",
-            "toClose": "zum Schließen"
+            "toSelect": "zum Auswählen",
+            "toClose": "zum Schließen",
+            "toAddFilter": "um Filter hinzuzufügen",
+            "tipTitle": "Schnellsuche",
+            "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
+            "arrowUpAriaLabel": "Pfeil nach oben",
+            "arrowDownAriaLabel": "Pfeil nach unten",
+            "searchLectureContentHint": "Tippe, um Vorlesungstranskripte und Materialien zu durchsuchen",
+            "lectureResultsAriaLabel": "Vorlesungsergebnisse",
+            "lectureSearchError": "Suche fehlgeschlagen. Bitte versuche es erneut.",
+            "pageAbbreviation": "S.",
+            "filterChipAriaLabel": "Filter: {{ filter }}",
+            "actionBadge": "Aktion",
+            "actions": {
+                "askIrisTitle": "Iris fragen",
+                "askIrisDescription": "Mit Iris KI-Assistent chatten",
+                "lectureSearchTitle": "Vorlesungssuche",
+                "lectureSearchDescription": "Vorlesungsinhalte und Folien durchsuchen"
+            },
+            "entities": {
+                "exercisesTitle": "Aufgaben",
+                "exercisesDescription": "Kursaufgaben ansehen und bearbeiten",
+                "lecturesTitle": "Vorlesungsdetails",
+                "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
+                "communicationTitle": "Kommunikation",
+                "communicationDescription": "Mit Kommilitonen und Dozenten chatten",
+                "irisTitle": "Dashboard mit Iris",
+                "irisDescription": "Mit Iris KI-Assistent chatten",
+                "usersTitle": "Benutzerverwaltung",
+                "usersDescription": "Benutzer und Berechtigungen verwalten",
+                "statisticsTitle": "Statistiken",
+                "statisticsDescription": "Kursstatistiken und Analysen ansehen",
+                "calendarTitle": "Kalender",
+                "calendarDescription": "Termine und Fristen ansehen"
+            },
+            "results": {
+                "due": "Fällig: {{ date }}",
+                "point": "Punkt",
+                "points": "Punkte"
+            },
+            "comingSoon": "Demnächst verfügbar",
+            "enterToActivate": "Eingabetaste drücken zum Aktivieren",
+            "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
+            "askIris": "Iris KI fragen",
+            "askIrisDescription": "KI-generierte Antwort aus deinen Vorlesungsinhalten",
+            "irisAnswerTitle": "Iris KI-Antwort",
+            "irisAnswerSources": "Quellen",
+            "irisAnswerError": "Iris konnte keine Antwort generieren. Bitte versuche es erneut.",
+            "continueInIris": "Gespräch in Iris fortsetzen"
         },
         "menu": {
             "home": "Startseite",
@@ -194,8 +243,7 @@
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst",
-                "lectureTranscription": "Vorlesungstranskription",
-                "examRooms": "Prüfungsräume"
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
             "settings": "Einstellungen"
@@ -220,7 +268,8 @@
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
             "refresh": "Aktualisieren",
-            "invalidInput": "Ungültige Eingabe"
+            "invalidInput": "Ungültige Eingabe",
+            "requiredLabel": "* benötigt"
         },
         "messages": {
             "info": {
@@ -280,6 +329,7 @@
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
             "cancel": "Abbrechen",
+            "continue": "Fortfahren",
             "delete": "Löschen",
             "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",
@@ -356,8 +406,10 @@
             "show": "Anzeigen",
             "addExercise": "Aufgabe hinzufügen",
             "addLecture": "Vorlesung hinzufügen",
-            "addFaq": "FAQ hinzufügen",
+            "addTutorial": "Tutorium hinzufügen",
             "addExam": "Klausur hinzufügen",
+            "addCompetency": "Kompetenz hinzufügen",
+            "addFaq": "FAQ hinzufügen",
             "addStudent": "Studierenden hinzufügen",
             "addTutor": "Tutor:in hinzufügen",
             "addEditor": "Editor:in hinzufügen",

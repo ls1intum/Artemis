@@ -2,16 +2,17 @@ import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/co
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import type { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faBoxArchive, faBoxOpen, faHashtag, faLock, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { catchError } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -56,7 +57,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     canChangeChannelPrivacyState: boolean;
     canDeleteChannel: boolean;
 
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
     private alertService = inject(AlertService);
@@ -154,22 +155,24 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private openModal(modalRef: NgbModalRef, unArchiveObservable: () => void) {
-        from(modalRef.result)
+    private openModal(ref: DynamicDialogRef | null, callback: () => void) {
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
-            .subscribe(unArchiveObservable);
+            .subscribe(callback);
     }
 
-    private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = { channelName: channel.name };
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.initialize();
-        return modalRef;
+    private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }) {
+        return this.dialogService.open(GenericConfirmationDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: {
+                translationParameters: { channelName: channel.name },
+                translationKeys: keys,
+                canBeUndone: true,
+            },
+        });
     }
 
     deleteChannel() {
@@ -210,8 +213,8 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     private openPrivacyChangeModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }) {
-        const modalRef = this.createModal(channel, keys);
-        this.openModal(modalRef, () => {
+        const ref = this.createModal(channel, keys);
+        this.openModal(ref, () => {
             this.channelService
                 .toggleChannelPrivacy(this.course().id!, channel.id!)
                 .pipe(takeUntil(this.ngUnsubscribe))

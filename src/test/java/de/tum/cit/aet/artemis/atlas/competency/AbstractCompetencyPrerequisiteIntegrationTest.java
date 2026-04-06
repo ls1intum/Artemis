@@ -66,8 +66,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // BeforeEach
     void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        atlasMLRequestMockProvider.ifPresent(provider -> {
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+        });
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
@@ -379,6 +381,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate(CourseCompetency newCompetency) throws Exception {
         newCompetency.setTitle("Example Title");
+        newCompetency.setMasteryThreshold(42);
         createCall(course.getId(), newCompetency, HttpStatus.FORBIDDEN);
     }
 
@@ -424,11 +427,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
 
-        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
-        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
-        lecture.setVisibleDate(visibleDate);
-        lectureRepository.save(lecture);
-
         ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
         long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
         textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
@@ -443,12 +441,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit’s release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test
@@ -580,10 +576,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
 
-        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
-        lecture.setVisibleDate(visibleDate);
-        lectureRepository.save(lecture);
-
         ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
         long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
         textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
@@ -597,12 +589,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit’s release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 
     // Test
@@ -710,11 +700,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
 
-        ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
-        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
-        lecture.setVisibleDate(visibleDate);
-        lectureRepository.save(lecture);
-
         ZonedDateTime releaseDateTextUnit = ZonedDateTime.of(2022, 7, 10, 20, 0, 0, 0, ZoneId.of("UTC"));
         long releaseDateDiff = releaseDateTextUnit.toEpochSecond() - releaseDate.toEpochSecond();
         textUnitOfLectureOne.setReleaseDate(releaseDateTextUnit);
@@ -729,11 +714,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
-        assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
-                .isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
+        // Verify that the text unit’s release date was adjusted correctly (find it by name since all lecture units may be imported)
+        var importedTextUnit = course2.getLectures().stream().findFirst().get().getLectureUnits().stream().filter(lu -> "TextUnitOfLectureOne".equals(lu.getName())).findFirst()
+                .orElseThrow();
+        assertThat(importedTextUnit.getReleaseDate()).isCloseTo(newReleaseDate.plusSeconds(releaseDateDiff), HalfSecond());
     }
 }

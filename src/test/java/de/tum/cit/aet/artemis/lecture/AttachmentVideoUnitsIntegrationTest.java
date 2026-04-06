@@ -75,7 +75,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
-        this.invalidLecture = lectureUtilService.createLecture(null, null);
+        this.invalidLecture = lectureUtilService.createLecture(null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitSplitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
