@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="krusche" id="00000000000001">
         <createTable tableName="answer_option">
@@ -194,6 +194,14 @@
             </column>
             <column defaultValueNumeric="0.0" name="competency_progress" type="double"/>
             <column defaultValueNumeric="0.0" name="competency_confidence" type="double"/>
+        </createTable>
+        <createTable tableName="competency_learning_path">
+            <column name="competency_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="learning_path_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
         </createTable>
         <createTable tableName="competency_lecture_unit">
             <column name="competency_id" type="bigint">
@@ -722,7 +730,7 @@
             <column name="quiz_point_statistic_id" type="bigint">
                 <constraints unique="true"/>
             </column>
-            <column name="max_points" type="double" defaultValueNumeric="1.0">
+            <column name="max_points" type="double">
                 <constraints nullable="false"/>
             </column>
             <column name="diagram_type" type="varchar(255)"/>
@@ -749,7 +757,7 @@
             <column name="presentation_score_enabled" type="boolean"/>
             <column name="team_assignment_config_id" type="bigint"/>
             <column name="exercise_group_id" type="bigint"/>
-            <column name="bonus_points" type="double" defaultValueNumeric="0.0">
+            <column name="bonus_points" type="double">
                 <constraints nullable="false"/>
             </column>
             <column defaultValue="INCLUDED_COMPLETELY" name="included_in_overall_score" type="varchar(255)">
@@ -1394,7 +1402,7 @@
             <column name="initialization_date" type="datetime(3)"/>
             <column name="presentation_score" type="double"/>
             <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column defaultValueBoolean="false" name="test_run" type="boolean"/>
             <column name="individual_due_date" type="datetime(3)"/>
@@ -1422,17 +1430,27 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="credential_id" type="varchar(255)">
-                <constraints nullable="false" unique="true"/>
+                <constraints nullable="true" unique="true"/>
             </column>
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="label" type="varchar(64)"/>
-            <column defaultValueNumeric="0" name="signature_count" type="bigint"/>
-            <column defaultValueBoolean="false" name="uv_initialized" type="boolean"/>
-            <column name="transports" type="varchar(50)" defaultValue=""/>
-            <column defaultValueBoolean="false" name="backup_eligible" type="boolean"/>
-            <column defaultValueBoolean="false" name="backup_state" type="boolean"/>
+            <column defaultValueNumeric="0" name="signature_count" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="uv_initialized" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transports" type="varchar(50)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="backup_eligible" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="backup_state" type="boolean">
+                <constraints nullable="false"/>
+            </column>
             <column name="last_used" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
@@ -1444,7 +1462,7 @@
             </column>
             <column name="last_modified_by" type="varchar(45)"/>
             <column name="last_modified_date" type="datetime(3)"/>
-            <column defaultValueBoolean="false" name="is_approved" type="boolean">
+            <column name="is_approved" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -2088,7 +2106,7 @@
         </createTable>
         <createTable tableName="submission">
             <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -3465,42 +3483,42 @@
         <createIndex indexName="uk_course_request_short_name" tableName="course_request" unique="true">
             <column name="short_name"/>
         </createIndex>
-        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="created_course_id" baseTableName="course_request" constraintName="fk_course_request_course" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="requester_id" baseTableName="course_request" constraintName="fk_course_request_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_room_exam_assignment" constraintName="fk_exam_room_assignment_exam" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="exam_room_exam_assignment" constraintName="fk_exam_room_assignment_exam_room" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="exercise_version" constraintName="fk_exercise_version_author_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_version" constraintName="fk_exercise_version_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="global_notification_setting" constraintName="fk_global_notification_setting_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="post" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="layout_strategy" constraintName="fk_layout_strategy_exam_room" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_transcription" constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_unit_processing_state" constraintName="fk_processing_state_lecture_unit" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="passkey_credential" constraintName="FK_passkey_credential_userId" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_quiz_question" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="created_course_id" baseTableName="course_request" constraintName="fk_course_request_course" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="requester_id" baseTableName="course_request" constraintName="fk_course_request_user" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_room_exam_assignment" constraintName="fk_exam_room_assignment_exam" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="exam_room_exam_assignment" constraintName="fk_exam_room_assignment_room" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="exercise_version" constraintName="fk_exercise_version_author_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_version" constraintName="fk_exercise_version_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="global_notification_setting" constraintName="fk_global_notification_setting_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="post" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exam_room_id" baseTableName="layout_strategy" constraintName="fk_strategy_room" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exam_room" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_transcription" constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_unit_processing_state" constraintName="fk_processing_state_lecture_unit" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="passkey_credential" constraintName="FK_passkey_credential_userId" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_quiz_question" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="competency_user" constraintName="FK1903cc755394da0466c4ec0934" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="lecture_unit_user" constraintName="FK1af36a86bcc816f7ce70a9ef1" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="quiz_statistic_counter" constraintName="FK2bses6ev8komaj0jw4gcyl8te" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="drop_location" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="result" constraintName="fk_result_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="review_comment" constraintName="fk_comment_author" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="initial_version_id" baseTableName="review_comment" constraintName="fk_comment_initial_version" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise_version" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="thread_id" baseTableName="review_comment" constraintName="fk_comment_thread" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="review_comment_thread" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_exercise" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_group" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="review_comment_thread_group" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="initial_version_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_initial_version" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise_version" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="review_comment_thread_group" constraintName="fk_comment_thread_group_exercise" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="result" constraintName="fk_result_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="review_comment" constraintName="fk_comment_author" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="initial_version_id" baseTableName="review_comment" constraintName="fk_comment_initial_version" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise_version" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="thread_id" baseTableName="review_comment" constraintName="fk_comment_thread" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="review_comment_thread" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_exercise" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_group" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="review_comment_thread_group" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="initial_version_id" baseTableName="review_comment_thread" constraintName="fk_comment_thread_initial_version" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise_version" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="review_comment_thread_group" constraintName="fk_comment_thread_group_exercise" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_spot" constraintName="FK2kwul05ckvpi145gc0bmf7obh" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_lecture_unit" constraintName="FK34nd0arw9mr0ei8quno6u4sw3" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK3bqk45run356e20sqmf3sak1o" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="slide" constraintName="fk_slide_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="slide" constraintName="fk_slide_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_exam_exercise" constraintName="FK48u8v93a8nmwv58c7eyjp25nt" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="solution_participation_id" baseTableName="exercise" constraintName="FK4ldf9949g6c5n7a79sr6rkt5n" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="participation" validate="true"/>
@@ -3520,13 +3538,13 @@
         <addForeignKeyConstraint baseColumnNames="plagiarism_detection_config_id" baseTableName="exercise" constraintName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="plagiarism_detection_config" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="destination_answer_id" baseTableName="forwarded_message" constraintName="FK_FORWARDED_MESSAGES_ANSWER_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="answer_post" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="destination_post_id" baseTableName="forwarded_message" constraintName="FK_FORWARDED_MESSAGES_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="post" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_COURSE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_EXERCISE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="iris_message_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_IRIS_MESSAGE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="trace_id" baseTableName="llm_token_usage_request" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="llm_token_usage_trace" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="saved_post" constraintName="FK_SAVED_POST_USER" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="saved_post" constraintName="FK_SAVED_POST_USER" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_jol" constraintName="FK_competency_jol_competency" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="competency_jol" constraintName="FK_competency_jol_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="conversation" constraintName="FK_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3540,7 +3558,7 @@
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="participation_vcs_access_token" constraintName="FK_participation_vcs_access_token_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_groups" constraintName="FK_qhsd8ovn89o4usyr3fgaqkdjt" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="assessment_note" constraintName="FK_result_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="attachment_unit_id" baseTableName="slide" constraintName="FK_slide_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="attachment_unit_id" baseTableName="slide" constraintName="FK_slide_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="exam_user" constraintName="FK_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="data_export" constraintName="FK_student_id_data_export" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FK_tail_competency_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
@@ -3711,14 +3729,14 @@
         <addForeignKeyConstraint baseColumnNames="teaching_assistant_id" baseTableName="tutorial_group" constraintName="fk_tutorial_group_teaching_assistant_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_public_ssh_key" constraintName="fk_user_public_ssh_key_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_notification" constraintName="fk_course_notifications_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="course_notification_parameter" constraintName="fk_course_notification_parameter_notification_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_notification_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_user_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_course_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_notification" constraintName="fk_course_notifications_course_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="course_notification_parameter" constraintName="fk_course_notification_parameter_notification_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_notification_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_notification_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course_notification" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_status" constraintName="fk_user_course_notification_status_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_preset" constraintName="fk_user_course_notification_setting_preset_course_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="user_course_notification_setting_specification" constraintName="fk_user_course_notification_setting_specification_course_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <loadData encoding="UTF-8" file="config/liquibase/authorities.csv" separator=";" tableName="jhi_authority"/>
     </changeSet>
     <changeSet id="00000000000002" author="krusche">
@@ -3730,13 +3748,11 @@
         </preConditions>
         <addColumn tableName="forwarded_message">
             <column name="source_type" type="enum('POST','ANSWER')">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="global_notification_setting">
             <column name="global_notification_type" type="ENUM('NEW_LOGIN','NEW_PASSKEY_ADDED','VCS_TOKEN_EXPIRED','SSH_KEY_EXPIRED','MAINTENANCE')">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="jhi_user">
             <column name="ai_selection_decision" type="ENUM('NO_AI','LOCAL_AI','CLOUD_AI')"/>
@@ -3771,13 +3787,11 @@
         </addColumn>
         <addColumn tableName="saved_post">
             <column name="post_type" type="enum('POST','ANSWER')">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="saved_post">
             <column name="status" type="enum('IN_PROGRESS','COMPLETED','ARCHIVED')">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="spring_ai_chat_memory">
             <column name="type" type="enum('USER','ASSISTANT','SYSTEM','TOOL')">
@@ -3803,13 +3817,11 @@
         </preConditions>
         <addColumn tableName="forwarded_message">
             <column name="source_type" type="varchar(15)">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="global_notification_setting">
             <column name="global_notification_type" type="varchar(32)">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="jhi_user">
             <column name="ai_selection_decision" type="varchar(20)"/>
@@ -3844,13 +3856,11 @@
         </addColumn>
         <addColumn tableName="saved_post">
             <column name="post_type" type="varchar(15)">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="saved_post">
             <column name="status" type="varchar(15)">
-                <constraints nullable="false"/>
-            </column>
+                </column>
         </addColumn>
         <addColumn tableName="spring_ai_chat_memory">
             <column name="type" type="varchar(20)">
