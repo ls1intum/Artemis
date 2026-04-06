@@ -51,11 +51,11 @@ public class ProblemStatementRenderingService {
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
-    private static final @Nullable String INTERACTIVE_JS = loadInteractiveJs();
+    private static final @Nullable String INTERACTIVE_JS = loadClasspathResource("problem-statement-js/interactive.js");
 
-    private static final @Nullable String EMBEDDED_CSS = loadCssResource("problem-statement-css/embedded.css");
+    private static final @Nullable String EMBEDDED_CSS = loadClasspathResource("problem-statement-css/embedded.css");
 
-    private static final @Nullable String DARK_MODE_CSS = loadCssResource("problem-statement-css/dark-mode.css");
+    private static final @Nullable String DARK_MODE_CSS = loadClasspathResource("problem-statement-css/dark-mode.css");
 
     // Dangerous SVG constructs that PlantUML should never generate but we strip as defense-in-depth
     private static final Pattern SVG_DANGEROUS_PATTERN = Pattern.compile("<script|</script|\\bon\\w+\\s*=|javascript:|foreignObject|<image|<use[\\s>]", Pattern.CASE_INSENSITIVE);
@@ -72,6 +72,21 @@ public class ProblemStatementRenderingService {
     public record ResultSummary(@Nullable Double score, @Nullable Double maxPoints, @Nullable Double bonusPoints, @Nullable String commitHash, @Nullable String submissionDate,
             @Nullable String assessmentType) {
     }
+
+    private static final @Nullable String KATEX_AUTO_RENDER_JS = loadClasspathResource("problem-statement-js/katex-auto-render.js");
+
+    /** Matches a line where $$...$$ appears with other text before or after (inline formula convention). */
+    private static final Pattern INLINE_FORMULA_LINE = Pattern.compile(".+\\$\\$[^$]+\\$\\$|\\$\\$[^$]+\\$\\$.+");
+
+    /** Display math: $$...$$ on its own line (after formula compatibility transform). */
+    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$([\\s\\S]+?)\\$\\$$", Pattern.MULTILINE);
+
+    /** Inline math: $...$, but not inside other $ signs. */
+    private static final Pattern INLINE_MATH_PATTERN = Pattern.compile("(?<!\\$)\\$(?!\\$)(.+?)(?<!\\$)\\$(?!\\$)");
+
+    private static final String MATH_PLACEHOLDER_PREFIX = "\u0000MATH_";
+
+    private static final String MATH_PLACEHOLDER_SUFFIX = "\u0000";
 
     private static final String CODE_BLOCK_PLACEHOLDER_PREFIX = "\u0000CODE_BLOCK_";
 
@@ -142,6 +157,13 @@ public class ProblemStatementRenderingService {
         List<String> inlineSvgs = new ArrayList<>();
         processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults, darkMode);
 
+        // Apply formula compatibility ($$inline$$ with surrounding text → $inline$)
+        processedMarkdown = applyFormulaCompatibility(processedMarkdown);
+
+        // Extract LaTeX formulas to protect them from CommonMark parsing
+        List<MathFormula> mathFormulas = new ArrayList<>();
+        processedMarkdown = extractMathFormulas(processedMarkdown, mathFormulas);
+
         // Extract tasks
         processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
 
@@ -156,6 +178,9 @@ public class ProblemStatementRenderingService {
             html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
 
+        // Restore LaTeX formula placeholders as KaTeX-renderable spans
+        html = restoreMathFormulas(html, mathFormulas);
+
         // Wrap in container div with result summary
         String resultAttr = buildResultAttribute(resultSummary);
         html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
@@ -163,13 +188,27 @@ public class ProblemStatementRenderingService {
         // Strip testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Prepend embedded CSS (+ dark mode overrides if needed)
+        // Prepend embedded CSS (+ dark mode overrides if needed) and KaTeX stylesheet
         if (includeCss) {
-            String css = EMBEDDED_CSS != null ? "<style>" + EMBEDDED_CSS + "</style>" : "";
+            String css = "";
+            if (!mathFormulas.isEmpty()) {
+                css += "<link rel=\"stylesheet\" href=\"" + serverUrl + "/katex/katex.min.css\">";
+            }
+            if (EMBEDDED_CSS != null) {
+                css += "<style>" + EMBEDDED_CSS + "</style>";
+            }
             if (darkMode && DARK_MODE_CSS != null) {
                 css += "<style>" + DARK_MODE_CSS + "</style>";
             }
             html = css + html;
+        }
+
+        // Append KaTeX script tags if formulas were found
+        if (!mathFormulas.isEmpty()) {
+            html += "<script src=\"" + serverUrl + "/katex/katex.min.js\"></script>";
+            if (KATEX_AUTO_RENDER_JS != null) {
+                html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
+            }
         }
 
         // Content hash (covers HTML + JS)
@@ -388,6 +427,65 @@ public class ProblemStatementRenderingService {
         return success;
     }
 
+    private record MathFormula(String latex, boolean displayMode) {
+    }
+
+    /**
+     * Ports the Angular FormulaCompatibilityPlugin: if a line contains $$...$$ with surrounding text,
+     * convert all $$ to $ on that line (making it inline math). Also normalizes \\begin/\\end to \begin/\end.
+     */
+    private static String applyFormulaCompatibility(String markdown) {
+        String[] lines = markdown.split("\n", -1);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (INLINE_FORMULA_LINE.matcher(line).find()) {
+                line = line.replace("$$", "$");
+            }
+            if (line.contains("\\\\begin") || line.contains("\\\\end")) {
+                line = line.replace("\\\\begin", "\\begin").replace("\\\\end", "\\end");
+            }
+            if (i > 0) {
+                sb.append("\n");
+            }
+            sb.append(line);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Extracts LaTeX formulas from markdown and replaces them with placeholders.
+     * Display math ($$...$$) is extracted first, then inline math ($...$).
+     */
+    private static String extractMathFormulas(String markdown, List<MathFormula> formulas) {
+        // Extract display math first
+        String result = DISPLAY_MATH_PATTERN.matcher(markdown).replaceAll(match -> {
+            int index = formulas.size();
+            formulas.add(new MathFormula(match.group(1).trim(), true));
+            return Matcher.quoteReplacement(MATH_PLACEHOLDER_PREFIX + index + MATH_PLACEHOLDER_SUFFIX);
+        });
+        // Then extract inline math
+        result = INLINE_MATH_PATTERN.matcher(result).replaceAll(match -> {
+            int index = formulas.size();
+            formulas.add(new MathFormula(match.group(1), false));
+            return Matcher.quoteReplacement(MATH_PLACEHOLDER_PREFIX + index + MATH_PLACEHOLDER_SUFFIX);
+        });
+        return result;
+    }
+
+    /**
+     * Restores math formula placeholders as KaTeX-renderable span elements.
+     */
+    private static String restoreMathFormulas(String html, List<MathFormula> formulas) {
+        String result = html;
+        for (int i = 0; i < formulas.size(); i++) {
+            MathFormula formula = formulas.get(i);
+            String span = "<span class=\"katex-formula\" data-formula=\"" + escapeHtmlAttribute(formula.latex()) + "\" data-display-mode=\"" + formula.displayMode() + "\"></span>";
+            result = result.replace(MATH_PLACEHOLDER_PREFIX + i + MATH_PLACEHOLDER_SUFFIX, span);
+        }
+        return result;
+    }
+
     private String renderWithCommonMark(String markdown) {
         var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
         Parser parser = Parser.builder().extensions(extensions).build();
@@ -424,7 +522,7 @@ public class ProblemStatementRenderingService {
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
         safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url", "data-result");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index");
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
         safelist.addAttributes("p", "class");
@@ -475,22 +573,12 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static @Nullable String loadInteractiveJs() {
-        try (InputStream is = new ClassPathResource("problem-statement-js/interactive.js").getInputStream()) {
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        }
-        catch (IOException e) {
-            log.warn("Could not load interactive JS resource for problem statement rendering");
-            return null;
-        }
-    }
-
-    private static @Nullable String loadCssResource(String path) {
+    private static @Nullable String loadClasspathResource(String path) {
         try (InputStream is = new ClassPathResource(path).getInputStream()) {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
-            log.warn("Could not load CSS resource: {}", path);
+            log.warn("Could not load classpath resource: {}", path);
             return null;
         }
     }

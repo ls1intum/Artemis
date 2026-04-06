@@ -40,5 +40,15 @@ processResources {
 }
 
 test.dependsOn webapp_test
-processResources.dependsOn webapp
+tasks.register("copyKatexResources", Copy) {
+    dependsOn "npm_install"
+    from("node_modules/katex/dist") {
+        include "katex.min.js"
+        include "katex.min.css"
+        include "fonts/*.woff2"
+    }
+    into "build/resources/main/static/katex"
+}
+
+processResources.dependsOn webapp, copyKatexResources
 bootJar.dependsOn processResources
