@@ -192,6 +192,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
+    readonly hasSessionSwitcher = computed(() => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader());
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
         const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
@@ -199,7 +200,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
         const hasSizeToggle = this.fullSize() !== undefined;
         const hasCloseButton = this.showCloseButton();
-        const hasSessionSwitcher = this.layout() === 'widget' && this.showWidgetHeader();
+        const hasSessionSwitcher = this.hasSessionSwitcher();
         return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton || hasSessionSwitcher;
     });
 
