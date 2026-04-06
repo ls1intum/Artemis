@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,6 +28,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Column(name = "branch")
     private String branch;
 
+    @JsonCreator
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
     }

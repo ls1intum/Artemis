@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -34,6 +35,7 @@ public class Source extends DomainObject {
     @JsonIgnoreProperties("source")
     private Set<StandardizedCompetency> competencies = new HashSet<>();
 
+    @JsonCreator
     public Source() {
 
     }

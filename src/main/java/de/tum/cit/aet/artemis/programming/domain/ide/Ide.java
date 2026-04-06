@@ -10,6 +10,8 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
@@ -28,6 +30,7 @@ public class Ide extends DomainObject {
     @OneToMany(mappedBy = "ide")
     private Set<UserIdeMapping> userIdeMappings;
 
+    @JsonCreator
     public Ide() {
         // empty constructor for Jackson
         // public for server tests

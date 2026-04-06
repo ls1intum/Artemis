@@ -16,6 +16,8 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -72,6 +74,7 @@ public class PushNotificationDeviceConfiguration {
         this.versionCode = versionCode;
     }
 
+    @JsonCreator
     public PushNotificationDeviceConfiguration() {
         // needed for JPA
     }

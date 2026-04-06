@@ -23,6 +23,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ConcreteProxy;
 import org.springframework.data.annotation.CreatedDate;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -93,6 +94,7 @@ public abstract class Conversation extends DomainObject {
         this.lastMessageDate = lastMessageDate;
     }
 
+    @JsonCreator
     public Conversation() {
     }
 

@@ -10,6 +10,7 @@ import jakarta.persistence.UniqueConstraint;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -36,6 +37,7 @@ public class ScienceSetting extends DomainObject {
     @JsonIgnoreProperties("scienceSetting")
     private User user;
 
+    @JsonCreator
     public ScienceSetting() {
         // Default empty constructor
     }

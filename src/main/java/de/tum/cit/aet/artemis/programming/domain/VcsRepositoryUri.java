@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * Represents a Version Control System (VCS) repository URI with capabilities to manipulate and extract information from it.
  * This class supports handling both local file references and remote repository URIs.
@@ -20,6 +22,7 @@ public class VcsRepositoryUri {
      * Default constructor, intended for internal use only to prevent compile errors.
      * IMPORTANT: It is discouraged to use it as it creates an uninitialized object.
      */
+    @JsonCreator
     public VcsRepositoryUri() {
     }
 

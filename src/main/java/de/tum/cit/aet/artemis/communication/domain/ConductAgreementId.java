@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.communication.domain;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * The primary key for ConductAgreement
  */
@@ -17,6 +19,7 @@ public class ConductAgreementId implements Serializable {
         this.user = user;
     }
 
+    @JsonCreator
     public ConductAgreementId() {
         // Needed for JPA
     }

@@ -15,6 +15,8 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
@@ -48,6 +50,7 @@ public class LectureTranscription extends DomainObject {
     @Column(name = "transcription_status", nullable = false)
     private TranscriptionStatus transcriptionStatus = TranscriptionStatus.PENDING;
 
+    @JsonCreator
     public LectureTranscription() {
     }
 

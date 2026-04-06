@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -23,6 +24,7 @@ public class IrisTextMessageContent extends IrisMessageContent {
     private String textContent;
 
     // Required by JPA
+    @JsonCreator
     public IrisTextMessageContent() {
     }
 

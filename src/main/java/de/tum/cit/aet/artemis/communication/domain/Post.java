@@ -21,6 +21,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
@@ -76,7 +77,7 @@ public class Post extends Posting {
     @Column(name = "has_forwarded_messages")
     private boolean hasForwardedMessages;
 
-    @com.fasterxml.jackson.annotation.JsonCreator
+    @JsonCreator
     public Post() {
     }
 

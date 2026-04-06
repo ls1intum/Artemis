@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.communication.domain.push_notification;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -22,6 +24,7 @@ public class PushNotificationDeviceConfigurationId implements Serializable {
         this.deviceType = deviceType;
     }
 
+    @JsonCreator
     public PushNotificationDeviceConfigurationId() {
         // needed for JPA
     }

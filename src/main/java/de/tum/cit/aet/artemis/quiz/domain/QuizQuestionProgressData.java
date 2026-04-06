@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * The class ist used to track the progress of a quiz question for a user.
  * The attributes are based on the SM-2 algorithm and the Leitner system.
@@ -65,6 +67,7 @@ public class QuizQuestionProgressData {
         }
     }
 
+    @JsonCreator
     public QuizQuestionProgressData() {
     }
 

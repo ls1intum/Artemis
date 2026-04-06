@@ -8,6 +8,7 @@ import java.util.Set;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -25,6 +26,7 @@ public class OneToOneChat extends Conversation {
         super(id, creator, conversationParticipants, posts, course, creationDate, lastMessageDate);
     }
 
+    @JsonCreator
     public OneToOneChat() {
     }
 

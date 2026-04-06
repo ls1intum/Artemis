@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -107,6 +108,7 @@ public class LectureUnitProcessingState extends DomainObject {
     @Column(name = "retry_eligible_at")
     private ZonedDateTime retryEligibleAt;
 
+    @JsonCreator
     public LectureUnitProcessingState() {
         // Default constructor for JPA
     }

@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -56,6 +57,7 @@ public class KnowledgeArea extends DomainObject {
     @JsonIgnoreProperties("knowledgeArea")
     private Set<StandardizedCompetency> competencies = new HashSet<>();
 
+    @JsonCreator
     public KnowledgeArea() {
 
     }

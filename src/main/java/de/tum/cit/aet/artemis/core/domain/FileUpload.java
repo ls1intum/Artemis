@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.service.file.FileUploadScheduleService;
 
 @Entity
@@ -44,6 +46,7 @@ public class FileUpload extends DomainObject {
     private ZonedDateTime creationDate;
 
     // Constructors
+    @JsonCreator
     public FileUpload() {
     }
 

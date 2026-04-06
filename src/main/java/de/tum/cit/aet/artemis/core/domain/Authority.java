@@ -14,6 +14,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -48,6 +49,7 @@ public class Authority implements Serializable {
     @Column(length = 50)
     private String name;
 
+    @JsonCreator
     public Authority() {
         // empty constructor would not be available otherwise
     }

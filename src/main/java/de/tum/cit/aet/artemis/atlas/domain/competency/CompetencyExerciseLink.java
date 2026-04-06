@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,6 +37,7 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
         this.exercise = exercise;
     }
 
+    @JsonCreator
     public CompetencyExerciseLink() {
         // Empty constructor for Spring
     }

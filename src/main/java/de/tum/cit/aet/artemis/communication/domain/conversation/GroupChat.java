@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -39,6 +40,7 @@ public class GroupChat extends Conversation {
         this.name = StringUtils.isBlank(name) ? generateName() : name;
     }
 
+    @JsonCreator
     public GroupChat() {
     }
 

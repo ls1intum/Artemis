@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -37,6 +38,7 @@ public class ForwardedMessage extends DomainObject {
     @JsonIncludeProperties({ "id" })
     private AnswerPost destinationAnswerPost;
 
+    @JsonCreator
     public ForwardedMessage() {
     }
 

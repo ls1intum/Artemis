@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -22,6 +23,7 @@ public class ProgrammingExerciseBuildStatistics extends DomainObject {
     @Column(name = "exercise_id")
     private Long exerciseId;
 
+    @JsonCreator
     public ProgrammingExerciseBuildStatistics() {
     }
 

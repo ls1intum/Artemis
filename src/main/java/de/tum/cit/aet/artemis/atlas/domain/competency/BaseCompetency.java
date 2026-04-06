@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.MappedSuperclass;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -37,6 +38,7 @@ public abstract class BaseCompetency extends DomainObject {
         this.taxonomy = taxonomy;
     }
 
+    @JsonCreator
     public BaseCompetency() {
 
     }

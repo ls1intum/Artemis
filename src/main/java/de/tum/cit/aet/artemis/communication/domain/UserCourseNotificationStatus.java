@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -46,6 +47,7 @@ public class UserCourseNotificationStatus implements Serializable {
     /**
      * Default constructor.
      */
+    @JsonCreator
     public UserCourseNotificationStatus() {
     }
 

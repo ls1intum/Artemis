@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -38,6 +39,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
         this.lectureUnit = lectureUnit;
     }
 
+    @JsonCreator
     public CompetencyLectureUnitLink() {
         // Empty constructor for Spring
     }

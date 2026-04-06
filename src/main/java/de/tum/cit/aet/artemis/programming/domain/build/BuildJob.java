@@ -13,6 +13,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -81,6 +82,7 @@ public class BuildJob extends DomainObject {
     @Column(name = "docker_image")
     private String dockerImage;
 
+    @JsonCreator
     public BuildJob() {
     }
 

@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -38,6 +39,7 @@ public class CourseNotificationParameter implements Serializable {
     /**
      * Default constructor.
      */
+    @JsonCreator
     public CourseNotificationParameter() {
     }
 

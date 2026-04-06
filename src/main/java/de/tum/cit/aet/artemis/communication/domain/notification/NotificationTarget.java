@@ -5,6 +5,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -42,6 +43,7 @@ public class NotificationTarget {
 
     private Long conversationId; // will stay "conversationId" in toJsonString()
 
+    @JsonCreator
     public NotificationTarget() {
         // intentionally empty. e.g. used for cases without courseId
     }

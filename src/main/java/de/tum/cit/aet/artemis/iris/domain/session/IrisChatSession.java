@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.domain.session;
 
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
@@ -13,6 +15,7 @@ public abstract class IrisChatSession extends IrisSession {
         this.userId = user.getId();
     }
 
+    @JsonCreator
     public IrisChatSession() {
     }
 

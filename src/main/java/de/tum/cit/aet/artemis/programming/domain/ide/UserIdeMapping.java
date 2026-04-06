@@ -20,6 +20,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -43,6 +44,7 @@ public class UserIdeMapping {
     @JoinColumn(name = "ide_id", nullable = false)
     private Ide ide;
 
+    @JsonCreator
     public UserIdeMapping() {
         // empty constructor for Jackson
         // public for server tests

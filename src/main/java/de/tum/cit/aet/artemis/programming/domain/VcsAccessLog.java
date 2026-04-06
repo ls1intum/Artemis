@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -70,6 +71,7 @@ public class VcsAccessLog extends DomainObject {
         this.timestamp = ZonedDateTime.now();
     }
 
+    @JsonCreator
     public VcsAccessLog() {
     }
 

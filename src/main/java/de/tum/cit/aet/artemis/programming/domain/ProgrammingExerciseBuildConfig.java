@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -85,6 +86,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_access_secret", length = 36)
     private String buildPlanAccessSecret;
 
+    @JsonCreator
     public ProgrammingExerciseBuildConfig() {
     }
 

@@ -6,6 +6,8 @@ import java.util.Objects;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Entity
@@ -21,6 +23,7 @@ public class Competency extends CourseCompetency {
                 courseCompetency.getTaxonomy(), courseCompetency.isOptional());
     }
 
+    @JsonCreator
     public Competency() {
     }
 

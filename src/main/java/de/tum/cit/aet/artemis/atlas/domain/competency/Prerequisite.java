@@ -5,6 +5,8 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * A competency that students are expected to have mastered before participating in a course.
  */
@@ -27,6 +29,7 @@ public class Prerequisite extends CourseCompetency {
         }
     }
 
+    @JsonCreator
     public Prerequisite() {
     }
 

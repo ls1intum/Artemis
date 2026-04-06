@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -48,6 +49,7 @@ public class CourseNotification extends DomainObject {
     /**
      * Default constructor.
      */
+    @JsonCreator
     public CourseNotification() {
     }
 

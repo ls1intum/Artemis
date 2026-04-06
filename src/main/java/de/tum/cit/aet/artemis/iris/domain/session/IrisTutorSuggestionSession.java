@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.domain.session;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,6 +26,7 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
         this.postId = postId;
     }
 
+    @JsonCreator
     public IrisTutorSuggestionSession() {
     }
 

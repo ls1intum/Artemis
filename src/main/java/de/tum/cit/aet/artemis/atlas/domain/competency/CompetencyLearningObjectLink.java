@@ -7,6 +7,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.MapsId;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 @MappedSuperclass
 public abstract class CompetencyLearningObjectLink implements Serializable {
 
@@ -22,6 +24,7 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
         this.weight = weight;
     }
 
+    @JsonCreator
     public CompetencyLearningObjectLink() {
         // Empty constructor for Spring
     }

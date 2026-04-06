@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain.build;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import java.time.ZonedDateTime;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -49,6 +51,7 @@ public class BuildLogEntry extends DomainObject {
         this.programmingSubmission = programmingSubmission;
     }
 
+    @JsonCreator
     public BuildLogEntry() {
         // added for Hibernate and Jackson, because we have custom constructors
     }

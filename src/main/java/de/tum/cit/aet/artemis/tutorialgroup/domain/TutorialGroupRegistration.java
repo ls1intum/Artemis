@@ -12,6 +12,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -40,6 +41,7 @@ public class TutorialGroupRegistration extends DomainObject {
     @Column(name = "type")
     private TutorialGroupRegistrationType type;
 
+    @JsonCreator
     public TutorialGroupRegistration() {
         // Empty constructor needed for Jackson.
     }

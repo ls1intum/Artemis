@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -35,6 +37,7 @@ public class SavedPost extends DomainObject {
     @Column(name = "completed_at")
     private ZonedDateTime completedAt;
 
+    @JsonCreator
     public SavedPost() {
     }
 

@@ -9,6 +9,7 @@ import jakarta.persistence.Transient;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,6 +38,7 @@ public class IrisJsonMessageContent extends IrisMessageContent {
     private JsonNode jsonNode = JsonObjectMapper.get().createObjectNode();
 
     // Required by JPA
+    @JsonCreator
     public IrisJsonMessageContent() {
     }
 
