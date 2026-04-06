@@ -1,4 +1,4 @@
-@if (quizExercise && quizExercise.isEditable) {
+@if (quizExercise) {
     <div class="row">
         <div class="col-lg-12">
             <div class="title">
@@ -32,15 +32,30 @@
                     </span>
                 </h4>
             </div>
-            @if (hasSavedQuizStarted) {
-                <div>
-                    <div class="quiz-is-active-background"></div>
-                    <div class="quiz-is-active-overlay alert alert-warning">
-                        <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
+            @if (!quizExercise.isEditable && quizExercise.id) {
+                <div class="mt-3">
+                    <div class="alert alert-warning">
+                        @if (quizExercise.quizEnded) {
+                            <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
+                        } @else {
+                            <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
+                        }
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-secondary" (click)="navigateBack()">
+                            <fa-icon [icon]="faArrowLeft" class="me-1" />
+                            <span jhiTranslate="entity.action.back"></span>
+                        </button>
+                        @if (quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
+                            <a [routerLink]="reEvaluateUrl" class="btn btn-warning">
+                                <fa-icon [icon]="faWrench" />
+                                <span jhiTranslate="entity.action.re-evaluate"></span>
+                            </a>
+                        }
                     </div>
                 </div>
             }
-            <div class="edit-quiz">
+            <div class="edit-quiz" [hidden]="!quizExercise.isEditable && quizExercise.id">
                 <form name="editForm" role="form" novalidate>
                     <jhi-exercise-title-channel-name
                         [exercise]="quizExercise"
@@ -249,7 +264,7 @@
                 }
             </div>
         </div>
-        <div class="edit-quiz-footer">
+        <div class="edit-quiz-footer" [hidden]="!quizExercise.isEditable && quizExercise.id">
             <div class="container">
                 <div class="edit-quiz-footer-content">
                     @if (!isExamMode && quizExercise.id) {
@@ -332,10 +347,16 @@
                             (click)="validateItemLimit()"
                             [disabled]="isSaveDisabled()"
                             jhiTranslate="entity.action.save"
-                            [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"
+                            [ngbTooltip]="!quizExercise.isEditable ? saveButtonTooltip : !quizIsValid ? tooltipTranslate : ''"
                             tooltip-placement="top-right auto"
                             tooltip-class="invalid-reasons-tooltip"
                         ></button>
+                        @if (!quizExercise.isEditable && quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
+                            <a [routerLink]="reEvaluateUrl" class="btn btn-warning me-2">
+                                <fa-icon [icon]="faWrench" />
+                                <span jhiTranslate="entity.action.re-evaluate"></span>
+                            </a>
+                        }
                     </div>
                 </div>
             </div>

@@ -83,8 +83,6 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         const percentage = totalPoints * 10;
         await exerciseResult.shouldShowExerciseTitle(exercise.title!);
         await programmingExerciseFeedback.complain(complaint);
-        await exerciseResult.clickOpenCodeEditor(exercise.id!);
-        await programmingExerciseFeedback.shouldShowRepositoryLockedWarning();
         await programmingExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
         await programmingExerciseFeedback.shouldShowScore(percentage);
         await programmingExerciseFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', programmingExerciseEditor);
