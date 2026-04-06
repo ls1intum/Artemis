@@ -386,15 +386,10 @@
                                 #messageTextarea
                             >
                             </textarea>
-                            <jhi-context-selection class="context-selection" />
-                            <jhi-button
-                                id="irisSendButton"
-                                class="send-button"
-                                (onClick)="onSend()"
-                                [btnType]="ButtonType.SUCCESS_OUTLINE"
-                                [icon]="faPaperPlane"
-                                [disabled]="isSendDisabled()"
-                            />
+                            <div class="textarea-controls">
+                                <jhi-context-selection />
+                                <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
+                            </div>
                         </div>
                     </div>
                     @if (!isChatGptWrapper()) {
