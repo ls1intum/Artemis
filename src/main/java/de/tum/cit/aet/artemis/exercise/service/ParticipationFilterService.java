@@ -35,8 +35,8 @@ public class ParticipationFilterService {
     }
 
     /**
-     * Finds all participations of a student in the given exercise. For non-programming exercises, there should only be
-     * at most one participation. For programming exercises, an additional practice participation can exist.
+     * Finds all participations of a student in the given exercise. For file upload exercises, there should only be
+     * at most one participation. For programming, quiz, text, and modeling exercises, an additional practice participation can exist.
      *
      * @param participationsAcrossAllExercises all participations of the student in all exercises of the course
      * @param exercise                         the exercise for which we want the participations
@@ -53,7 +53,8 @@ public class ParticipationFilterService {
             return Set.of();
         }
 
-        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())) {
+        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())
+                || ExerciseType.TEXT.equals(exercise.getExerciseType()) || ExerciseType.MODELING.equals(exercise.getExerciseType())) {
             return findStudentParticipationsForMultipleParticipationExercises(participationsInExercise);
         }
         else {
@@ -97,7 +98,7 @@ public class ParticipationFilterService {
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow multiple participations (programming and quiz),
+     * Validates and returns the student participations for exercises that allow multiple participations (programming, quiz, text, and modeling),
      * which may include at most one graded and one practice participation.
      *
      * @param participations the set of participations in the exercise to validate
@@ -107,18 +108,18 @@ public class ParticipationFilterService {
     private Set<StudentParticipation> findStudentParticipationsForMultipleParticipationExercises(Set<StudentParticipation> participations) {
         var gradedParticipations = participations.stream().filter(p -> !p.isPracticeMode()).collect(Collectors.toSet());
         if (gradedParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming or quiz exercises");
+            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming, quiz, text, or modeling exercises");
         }
         var practiceParticipations = participations.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
         if (practiceParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming or quiz exercises");
+            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming, quiz, text, or modeling exercises");
         }
 
         return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow only a single participation (non-programming and non-quiz).
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming, non-quiz, non-text, and non-modeling).
      *
      * @param participations the set of participations in the exercise to validate
      * @return the valid set of participations (empty or singleton set)
@@ -126,7 +127,7 @@ public class ParticipationFilterService {
      */
     private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
         if (participations.size() > 1) {
-            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming or quiz.");
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming, quiz, text or modeling.");
         }
         return participations.iterator().next();
     }

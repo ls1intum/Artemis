@@ -27,12 +27,6 @@
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent() && !userTokenStillValid()) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip()"></div>
         }
-        @if (participations().length > 1) {
-            <div class="form-check form-switch">
-                <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="effectivePracticeMode()" (click)="switchPracticeMode()" />
-                <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
-            </div>
-        }
         <h5 [jhiTranslate]="clonedHeadline()"></h5>
 
         <div class="d-flex" style="margin: 0; max-width: 100%">
