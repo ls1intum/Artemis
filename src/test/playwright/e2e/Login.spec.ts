@@ -5,7 +5,7 @@ import { BASE_API } from '../support/constants';
 
 test.describe('Login page tests', { tag: '@fast' }, () => {
     test('Logs in via the UI', async ({ page, loginPage }) => {
-        await page.goto('/');
+        await page.goto('/sign-in');
         await loginPage.login(studentOne);
         await page.waitForURL('**/courses**');
 
@@ -30,10 +30,10 @@ test.describe('Login page tests', { tag: '@fast' }, () => {
     });
 
     test('Displays error messages on wrong password', async ({ page, loginPage }) => {
-        await page.goto('/');
+        await page.goto('/sign-in');
         await loginPage.login({ username: 'some_user_name', password: 'lorem-ipsum' });
 
-        await page.waitForURL('/');
+        await page.waitForURL('/sign-in');
 
         const alertElement = await page.waitForSelector('.alert');
         expect(await alertElement.isVisible()).toBeTruthy();
@@ -46,11 +46,11 @@ test.describe('Login page tests', { tag: '@fast' }, () => {
 
     test('Fails to access protected resource without login', async ({ page }) => {
         await page.goto('/course-management');
-        await page.waitForURL('/');
+        await page.waitForURL('/sign-in');
     });
 
     test('Verify footer content', async ({ page, loginPage }) => {
-        await page.goto('/');
+        await page.goto('/sign-in');
         await loginPage.shouldShowFooter();
         await loginPage.shouldShowAboutUsInFooter();
         await loginPage.shouldShowRequestChangeInFooter();
