@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
@@ -29,7 +28,7 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             await page.waitForLoadState('networkidle');
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
-            await expect(page.locator(MODELING_EDITOR_CANVAS).locator('g').nth(0)).toBeAttached();
+            await expect(page.locator('.react-flow__node').first()).toBeAttached();
             await modelingExerciseCreation.save();
 
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
