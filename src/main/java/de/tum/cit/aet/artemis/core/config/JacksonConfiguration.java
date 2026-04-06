@@ -7,10 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
+
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.cfg.ConstructorDetector;
-import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -23,15 +24,14 @@ public class JacksonConfiguration {
      * Support for Hibernate types in Jackson 3.
      * JavaTimeModule is built into Jackson 3 databind and auto-registered — no explicit bean needed.
      */
+    /**
+     * Support for Hibernate types in Jackson.
+     * Uses Jackson 2's Hibernate7Module which is compatible with Jackson 3 and doesn't have the
+     * _valueDeserializer cache corruption bug present in tools.jackson.datatype:jackson-datatype-hibernate7:3.1.0.
+     */
     @Bean
     public Hibernate7Module hibernateModule() {
-        Hibernate7Module module = new Hibernate7Module();
-        // Do not serialize lazy-loaded proxies — they should not appear in JSON responses.
-        // FORCE_LAZY_LOADING=false (default) means uninitialized lazy proxies are serialized as null.
-        module.disable(Hibernate7Module.Feature.FORCE_LAZY_LOADING);
-        // Write lazy-not-loaded objects as null to avoid "_valueDeserializer assigned" errors
-        module.enable(Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
-        return module;
+        return new Hibernate7Module();
     }
 
     /**
