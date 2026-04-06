@@ -42,6 +42,6 @@ public class JacksonConfiguration {
     @Bean
     public JsonMapperBuilderCustomizer artemisJsonMapperCustomizer() {
         return builder -> builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).enable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)
-                .constructorDetector(ConstructorDetector.DEFAULT);
+                .enable(DeserializationFeature.EAGER_DESERIALIZER_FETCH).constructorDetector(ConstructorDetector.DEFAULT);
     }
 }
