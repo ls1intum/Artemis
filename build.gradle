@@ -494,6 +494,8 @@ dependencies {
     // use newest version of plexus to avoid security issues through outdated dependencies
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
     checkstyle "org.codehaus.plexus:plexus-classworlds:2.9.0"
+    // Override plexus-utils to fix Zip Slip vulnerability (GHSA-6fmv-xxpf-w3cw)
+    checkstyle "org.codehaus.plexus:plexus-utils:4.0.3"
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
 
 
