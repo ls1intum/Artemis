@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +53,7 @@ class SpotbugsParser implements ParserStrategy {
             BugCollection bugCollection = xmlMapper.readValue(reportContent, BugCollection.class);
             return createReportFromBugCollection(bugCollection);
         }
-        catch (IOException e) {
+        catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to parse XML", e);
         }
     }

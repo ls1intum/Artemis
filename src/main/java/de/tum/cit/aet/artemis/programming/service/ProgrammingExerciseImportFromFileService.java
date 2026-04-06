@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 @Profile(PROFILE_CORE)
@@ -301,7 +302,7 @@ public class ProgrammingExerciseImportFromFileService {
         try {
             return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
     }

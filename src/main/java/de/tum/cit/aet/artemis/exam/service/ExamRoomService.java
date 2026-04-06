@@ -247,13 +247,13 @@ public class ExamRoomService {
         List<LayoutStrategy> layouts = new ArrayList<>();
 
         layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
-            if (layoutNode == null || !layoutNode.fieldNames().hasNext()) {
+            if (layoutNode == null || layoutNode.properties().isEmpty()) {
                 throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
                         "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
             }
 
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
-            final String layoutType = layoutNode.fieldNames().next();
+            final String layoutType = layoutNode.properties().iterator().next().getKey();
             final JsonNode layoutDetailNode = layoutNode.path(layoutType);
 
             LayoutStrategy layoutStrategy = new LayoutStrategy();

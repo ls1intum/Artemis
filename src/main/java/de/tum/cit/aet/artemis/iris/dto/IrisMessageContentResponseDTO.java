@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
-import java.io.IOException;
-
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,7 +40,7 @@ public record IrisMessageContentResponseDTO(@Nullable Long id, String type, @Nul
     static class RawValueDeserializer extends ValueDeserializer<String> {
 
         @Override
-        public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public String deserialize(JsonParser p, DeserializationContext ctxt) {
             return p.readValueAsTree().toString();
         }
     }

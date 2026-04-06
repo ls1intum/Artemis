@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -102,9 +101,7 @@ public class ExerciseSharingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.restTemplate = restTemplate;
 
-        // Configure JsonMapper to ignore unknown properties
-        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        this.objectMapper.findAndRegisterModules();
+        // Spring Boot auto-configures JsonMapper with FAIL_ON_UNKNOWN_PROPERTIES=false and module auto-discovery
     }
 
     /**

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +47,7 @@ class PMDCPDParser implements ParserStrategy {
             PmdCpc duplication = xmlMapper.readValue(reportContent, PmdCpc.class);
             return createReportFromDuplication(duplication);
         }
-        catch (IOException e) {
+        catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to parse XML", e);
         }
     }

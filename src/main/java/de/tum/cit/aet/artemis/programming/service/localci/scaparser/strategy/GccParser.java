@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -45,7 +44,7 @@ public class GccParser implements ParserStrategy {
             GccRoot root = xmlMapper.readValue(reportContent, GccRoot.class);
             return root.content != null ? root.content : "";
         }
-        catch (IOException e) {
+        catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to parse GCC XML report", e);
         }
     }

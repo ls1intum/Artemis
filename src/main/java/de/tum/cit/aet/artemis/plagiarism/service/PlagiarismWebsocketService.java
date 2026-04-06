@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 @Conditional(PlagiarismEnabled.class)
@@ -47,7 +47,7 @@ public class PlagiarismWebsocketService {
         try {
             websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             log.info("Couldn't notify the user about the plagiarism state for topic {}: {}", topic, e.getMessage());
         }
     }

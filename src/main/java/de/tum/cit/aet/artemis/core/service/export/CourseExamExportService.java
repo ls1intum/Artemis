@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -568,7 +569,7 @@ public class CourseExamExportService {
         try {
             websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());
         }
     }

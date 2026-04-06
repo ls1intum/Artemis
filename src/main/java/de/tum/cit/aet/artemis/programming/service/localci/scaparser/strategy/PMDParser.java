@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +49,7 @@ class PMDParser implements ParserStrategy {
             PMDReport pmdReport = xmlMapper.readValue(reportContent, PMDReport.class);
             return createReportFromPMDReport(pmdReport);
         }
-        catch (IOException e) {
+        catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to parse XML: " + e.getMessage(), e);
         }
     }

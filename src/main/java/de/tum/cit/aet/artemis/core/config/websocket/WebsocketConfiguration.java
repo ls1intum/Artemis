@@ -265,7 +265,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @NonNull
     @Override
-    protected JacksonJsonMessageConverter createJacksonConverter() {
+    protected JacksonJsonMessageConverter createJacksonJsonConverter() {
         return new GzipMessageConverter(objectMapper);
     }
 

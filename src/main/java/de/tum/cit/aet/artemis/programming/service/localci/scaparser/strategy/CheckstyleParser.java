@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +41,11 @@ public class CheckstyleParser implements ParserStrategy {
     @Override
     public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new com.fasterxml.jackson.core.type.TypeReference<>() {
+            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new tools.jackson.core.type.TypeReference<>() {
             });
             return createReportFromFiles(files);
         }
-        catch (IOException e) {
+        catch (tools.jackson.core.JacksonException e) {
             throw new RuntimeException("Failed to parse XML", e);
         }
     }

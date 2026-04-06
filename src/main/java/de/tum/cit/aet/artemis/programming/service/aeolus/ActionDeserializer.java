@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.aeolus;
 
-import java.io.IOException;
-
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Action;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.PlatformAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JsonNode;
@@ -20,23 +19,13 @@ public class ActionDeserializer extends ValueDeserializer<Action> {
      * Deserializes a JSON object into an {@link Action} object. This method determines the specific
      * type of {@code Action} to instantiate based on the content of the JSON object.
      *
-     * <p>
-     * If the JSON object contains a {@code class} field, this method uses its value to determine
-     * the specific {@code Action} subclass to instantiate. If there is no {@code class} field, the
-     * method looks for other specific fields (like {@code script} or {@code platform}) to infer the
-     * action type. Currently, it supports deserialization into {@code ScriptAction} and
-     * {@code PlatformAction} based on the presence of these fields.
-     * </p>
-     *
      * @param parser  the {@link JsonParser} used to parse the JSON content
      * @param context the {@link DeserializationContext} providing configuration and caching capabilities
-     * @return an instance of a subclass of {@code Action}, specifically {@code ScriptAction} or
-     *         {@code PlatformAction}, based on the JSON object content
-     * @throws IOException if an input/output error occurs during parsing
+     * @return an instance of a subclass of {@code Action}
      */
     @Override
-    public Action deserialize(JsonParser parser, DeserializationContext context) throws IOException {
-        JsonNode node = parser.getCodec().readTree(parser);
+    public Action deserialize(JsonParser parser, DeserializationContext context) {
+        JsonNode node = context.readTree(parser);
         String className = "not-determined";
         if (node.has("class")) {
             className = node.get("class").asText();
@@ -49,11 +38,12 @@ public class ActionDeserializer extends ValueDeserializer<Action> {
                 className = "platform-action";
             }
         }
-        JsonMapper mapper = (JsonMapper) parser.getCodec();
+        JsonMapper mapper = (JsonMapper) parser.objectReadContext();
         return switch (className) {
             case "script-action" -> mapper.treeToValue(node, ScriptAction.class);
             case "platform-action" -> mapper.treeToValue(node, PlatformAction.class);
-            default -> throw new IOException("Cannot determine type");
+            default -> throw new JacksonException("Cannot determine Action type from JSON") {
+            };
         };
     }
 }
