@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
@@ -20,15 +22,17 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {
+    setupTestBed({ zoneless: true });
+
     let component: HeaderExercisePageWithDetailsComponent;
 
     let exam: Exam;
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 HeaderExercisePageWithDetailsComponent,
                 MockComponent(DifficultyBadgeComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -38,20 +42,18 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ExerciseTypePipe),
             ],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
 
-                exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.dueDate = undefined;
-                exercise.assessmentType = AssessmentType.AUTOMATIC;
-                component.exercise = exercise;
+        const fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
+        component = fixture.componentInstance;
 
-                exam = new Exam();
-                participation = new StudentParticipation(ParticipationType.PROGRAMMING);
-            });
+        exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.dueDate = undefined;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        component.exercise = exercise;
+
+        exam = new Exam();
+        participation = new StudentParticipation(ParticipationType.PROGRAMMING);
     });
 
     it('should initialise badges, icons, and categories', () => {
@@ -122,7 +124,7 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
         expect(component.nextRelevantDate).toBeUndefined();
         expect(component.nextRelevantDateStatusBadge).toBeUndefined();
-        expect(component.canComplainLaterOn).toBeTrue();
+        expect(component.canComplainLaterOn).toBe(true);
 
         exercise.assessmentDueDate = dayjs().subtract(2, 'months');
         const submission3 = { results: [{ rated: true, completionDate: dayjs().subtract(1, 'month') }] } as ProgrammingSubmission;
@@ -130,7 +132,7 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
         expect(component.nextRelevantDate).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
         expect(component.nextRelevantDateStatusBadge).toBe('bg-danger');
-        expect(component.canComplainLaterOn).toBeFalse();
+        expect(component.canComplainLaterOn).toBe(false);
     });
 
     it('should not show an earlier date than the dueDate once over', () => {

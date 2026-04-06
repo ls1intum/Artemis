@@ -316,7 +316,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // Verify search results heading appears
             await expect(page.getByRole('heading', { name: /search results/i })).toBeVisible({ timeout: 15000 });
             // Verify the matching message text is displayed in results
-            await expect(page.getByText(uniqueSearchText)).toBeVisible({ timeout: 10000 });
+            await expect(page.getByText(uniqueSearchText, { exact: true })).toBeVisible({ timeout: 10000 });
         });
 
         test('Search should return no results for non-existent text', async ({ login, page }) => {
