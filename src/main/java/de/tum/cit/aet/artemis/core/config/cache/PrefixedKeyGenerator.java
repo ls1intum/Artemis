@@ -33,7 +33,7 @@ public class PrefixedKeyGenerator implements KeyGenerator {
         if (buildProperties != null && buildProperties.getTime() != null) {
             return DateTimeFormatter.ISO_INSTANT.format(buildProperties.getTime());
         }
-        return RandomStringUtils.randomAlphanumeric(12);
+        return RandomStringUtils.secure().nextAlphanumeric(12);
     }
 
     @Override
