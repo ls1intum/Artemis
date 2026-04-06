@@ -50,7 +50,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
     private sortService = inject(SortService);
 
     readonly ActionType = ActionType;
-    readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
     readonly quizExercises = model<QuizExercise[]>([]);
