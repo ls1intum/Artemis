@@ -1,6 +1,6 @@
 <div class="editor-wrapper" [class.assessment-wrapper]="isTutorAssessment">
     <!-- Top bar -->
-    <nav class="editor-statusbar">
+    <nav class="editor-statusbar" [hidden]="!showEditorNavbar">
         <ng-content select="[editorNavbar]" />
     </nav>
     <div class="editor-main">
@@ -23,7 +23,7 @@
                 <ng-content select="[editorCenter]" />
             </div>
             <!-- Instructions -->
-            <div #instructions class="editor-sidebar-right collapsable">
+            <div #instructions class="editor-sidebar-right collapsable" [hidden]="!showEditorSidebarRight">
                 @if (!rightPanelIsCollapsed) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
                         <span></span>

@@ -1,7 +1,7 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -28,35 +28,18 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
-import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseDetailsStudentActionsComponent } from './student-actions/exercise-details-student-actions.component';
-import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
-import { ResultComponent } from 'app/exercise/result/result.component';
-import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { LtiInitializerComponent } from './lti-initializer/lti-initializer.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
-import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
+import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -68,39 +51,14 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
-    imports: [
-        FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        RouterLink,
-        TranslateDirective,
-        ExerciseDetailsStudentActionsComponent,
-        ExerciseHeadersInformationComponent,
-        ResultHistoryComponent,
-        ResultComponent,
-        ProblemStatementComponent,
-        ResetRepoButtonComponent,
-        ModelingEditorComponent,
-        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
-        NgbTooltip,
-        ExerciseInfoComponent,
-        ComplaintsStudentViewComponent,
-        RatingComponent,
-        IrisExerciseChatbotButtonComponent,
-        DiscussionSectionComponent,
-        LtiInitializerComponent,
-        ArtemisDatePipe,
-        ArtemisTranslatePipe,
-        CompetencyContributionComponent,
-    ],
+    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
@@ -110,6 +68,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
+
+    protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
+
+    protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
+    protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+
+    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -163,6 +128,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return this.practiceStudentParticipation()?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
     });
 
+    readonly participationMode = signal<ParticipationMode>('graded');
+
+    readonly activeParticipation = computed(() => {
+        return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
+    });
+
     // Sorted results signal
     private readonly _sortedHistoryResults = signal<Result[]>([]);
     public get sortedHistoryResults(): Result[] {
@@ -199,9 +170,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     private readonly _submissionPolicy = signal<SubmissionPolicy | undefined>(undefined);
     readonly submissionPolicy = this._submissionPolicy.asReadonly();
-
-    private readonly _exampleSolutionCollapsed = signal<boolean | undefined>(undefined);
-    readonly exampleSolutionCollapsed = this._exampleSolutionCollapsed.asReadonly();
 
     private readonly _plagiarismCaseInfo = signal<PlagiarismCaseInfo | undefined>(undefined);
     readonly plagiarismCaseInfo = this._plagiarismCaseInfo.asReadonly();
@@ -259,6 +227,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
+        this.participationMode.set('graded');
         this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
         this._resultWithComplaint.set(
             getFirstResultWithComplaintFromResults(
@@ -267,6 +236,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
+            if (!this.gradedStudentParticipation() && this.practiceStudentParticipation()) {
+                this.participationMode.set('practice');
+            }
             this.loadComplaintAndLatestRatedResult();
         });
     }
@@ -287,9 +259,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
             this._allowComplaintsForAutomaticAssessments.set(!!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint);
             this._submissionPolicy.set(programmingExercise.submissionPolicy);
+        }
 
+        if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
-            if (this.irisEnabled() && !this.exercise.exerciseGroup && this.courseId) {
+            if (this.irisEnabled()) {
                 this.irisSettingsService
                     .getCourseSettingsWithRateLimit(this.courseId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
@@ -318,8 +292,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
         this._exampleSolutionInfo.set(ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown));
-        // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
-        this._exampleSolutionCollapsed.set(!!newExercise?.isAtLeastTutor);
     }
 
     /**
@@ -417,12 +389,29 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                        updatedParticipations = currentParticipations.map((participation) => (participation.id === changedParticipation.id ? changedParticipation : participation));
+                        updatedParticipations = currentParticipations.map((participation) => {
+                            if (participation.id !== changedParticipation.id) {
+                                return participation;
+                            }
+
+                            const existingSubmissions = participation.submissions ?? [];
+                            const incomingSubmissions = changedParticipation.submissions ?? [];
+                            const existingIds = new Set(existingSubmissions.map((s) => s.id));
+
+                            const updatedExisting = existingSubmissions.map((existing) => {
+                                const incoming = incomingSubmissions.find((s) => s.id === existing.id);
+                                return incoming ?? existing;
+                            });
+                            const newSubmissions = incomingSubmissions.filter((s) => !existingIds.has(s.id));
+
+                            return { ...participation, submissions: [...updatedExisting, ...newSubmissions] };
+                        });
                     } else {
                         updatedParticipations = [...currentParticipations, changedParticipation];
                     }
                     this._studentParticipations.set(updatedParticipations);
-                    this.mergeResultsAndSubmissionsForParticipations();
+                    this.sortResults();
+                    this.navigateToAthenaResult(changedParticipation);
                 }
             });
     }
@@ -447,17 +436,28 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
     }
 
-    exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'bg-success' : 'bg-info';
+    onNewParticipation(participation: StudentParticipation) {
+        const current = this._studentParticipations();
+        if (current.some((p) => p.id === participation.id)) {
+            this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
+        } else {
+            this._studentParticipations.set([...current, participation]);
+
+            if (this.exercise) {
+                this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+            }
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
+            }
+        }
+        this.sortResults();
+        if (participation.testRun) {
+            this.participationMode.set('practice');
+        }
     }
 
-    get hasMoreResults(): boolean {
-        const participations = this._studentParticipations();
-        const sorted = this._sortedHistoryResults();
-        if (!participations?.length || !sorted.length) {
-            return false;
-        }
-        return sorted.length > MAX_RESULT_HISTORY_LENGTH;
+    exerciseRatedBadge(result: Result): string {
+        return result.rated ? 'bg-success' : 'bg-info';
     }
 
     /**
@@ -510,13 +510,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     toggleShowMoreResults() {
         this._showMoreResults.update((v) => !v);
-    }
-
-    /**
-     * Used to change the boolean value for the example solution dropdown menu
-     */
-    changeExampleSolution() {
-        this._exampleSolutionCollapsed.update((v) => !v);
     }
 
     // INSTRUCTOR ACTIONS
@@ -627,6 +620,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
+    }
+
+    private navigateToAthenaResult(changedParticipation: StudentParticipation) {
+        const athenaSubmission = changedParticipation.submissions?.find((s) => s.results?.some((r) => r.assessmentType === AssessmentType.AUTOMATIC_ATHENA && r.successful));
+
+        const submissionId = athenaSubmission?.id;
+        if (!submissionId || !this.exercise?.type || !changedParticipation.id) {
+            return;
+        }
+        let exerciseTypePath: string;
+        if (this.exercise.type === ExerciseType.TEXT) {
+            exerciseTypePath = 'text-exercises';
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            exerciseTypePath = 'modeling-exercises';
+        } else {
+            return;
+        }
+        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {
