@@ -1,28 +1,82 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Entity
-public abstract class IrisChatSession extends IrisSession {
+@DiscriminatorValue("CHAT")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class IrisChatSession extends IrisSession {
+    // TODO: REFACTORING ASLAN: JSONIGNORE ODER NICHT ?
 
-    private long userId;
+    @JsonIgnore
+    private long courseId;
 
-    public IrisChatSession(User user) {
-        this.userId = user.getId();
-    }
+    @JsonIgnore
+    private Long exerciseId;
+
+    @JsonIgnore
+    private Long lectureId;
 
     public IrisChatSession() {
     }
 
-    public long getUserId() {
-        return userId;
+    public IrisChatSession(Course course, User user) {
+        setUserId(user.getId());
+        this.courseId = course.getId();
     }
 
-    public void setUserId(long userId) {
-        this.userId = userId;
+    public IrisChatSession(Exercise exercise, User user) {
+        setUserId(user.getId());
+        this.exerciseId = exercise.getId();
+        this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
-    public abstract IrisChatMode getMode();
+    public IrisChatSession(Lecture lecture, User user) {
+        setUserId(user.getId());
+        this.lectureId = lecture.getId();
+        this.courseId = lecture.getCourse().getId();
+    }
+
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    public Long getLectureId() {
+        return lectureId;
+    }
+
+    public void setLectureId(Long lectureId) {
+        this.lectureId = lectureId;
+    }
+
+    @Override
+    public boolean shouldSelectLLMUsage() {
+        return true;
+    }
+
+    @Override
+    public IrisChatMode getMode() {
+        return IrisChatMode.CHAT;
+    }
 }
