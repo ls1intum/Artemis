@@ -21,29 +21,10 @@ export abstract class ExerciseManageButtonComponent implements OnInit {
 
     course = input.required<Course>();
     exerciseType = input.required<ExerciseType>();
-    translationLabel: string;
-    translationKey = input<string | undefined>();
     featureToggle = input<FeatureToggle | undefined>();
     icon: IconProp;
 
     ngOnInit(): void {
         this.icon = getIcon(this.exerciseType());
-
-        if (this.translationKey()) {
-            this.translationLabel = this.translationKey()!;
-        } else {
-            this.setTranslationLabel();
-        }
-    }
-
-    protected abstract getTranslationSuffix(): string;
-
-    setTranslationLabel(): void {
-        const translationSuffix = this.getTranslationSuffix();
-        if (this.exerciseType() === ExerciseType.FILE_UPLOAD) {
-            this.translationLabel = `artemisApp.fileUploadExercise.home.${translationSuffix}`;
-        } else {
-            this.translationLabel = 'artemisApp.' + this.exerciseType() + `Exercise.home.${translationSuffix}`;
-        }
     }
 }
