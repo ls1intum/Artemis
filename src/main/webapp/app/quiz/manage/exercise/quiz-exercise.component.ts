@@ -4,10 +4,10 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -43,7 +43,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
     protected quizExerciseService = inject(QuizExerciseService); // needed in html code
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
