@@ -1063,13 +1063,6 @@ components:
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
       required: [reasoning, question]
-    ProblemStatementGenerationRequest:
-      type: object
-      description: Request to generate a problem statement
-      properties:
-        userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, maxLength: 1000, minLength: 0}
-      required: [userPrompt]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1078,23 +1071,6 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
-    GeneratedQuizAnswerOption:
-      type: object
-      description: One generated answer option
-      properties:
-        text: {type: string, description: Answer option text, minLength: 1}
-        correct: {type: boolean, description: Whether this option is correct}
-        hint: {type: string, description: Optional hint}
-        explanation: {type: string, description: Optional explanation}
-      required: [text]
-    TutorialGroupFreePeriod:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        start: {type: string}
-        end: {type: string}
-        reason: {type: string}
-      required: [end, start]
     Channel:
       type: object
       properties:
@@ -1349,6 +1325,30 @@ components:
           items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
           minItems: 1
       required: [questions]
+    ProblemStatementGenerationRequest:
+      type: object
+      description: Request to generate a problem statement
+      properties:
+        userPrompt: {type: string, description: User prompt describing the problem
+            statement requirements, maxLength: 1000, minLength: 0}
+      required: [userPrompt]
+    GeneratedQuizAnswerOption:
+      type: object
+      description: One generated answer option
+      properties:
+        text: {type: string, description: Answer option text, minLength: 1}
+        correct: {type: boolean, description: Whether this option is correct}
+        hint: {type: string, description: Optional hint}
+        explanation: {type: string, description: Optional explanation}
+      required: [text]
+    TutorialGroupFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement
