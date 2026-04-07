@@ -14,7 +14,7 @@
                 (click)="selectOption($index)"
             >
                 <span class="mcq-option-label">{{ optionLabel($index) }}</span>
-                <span class="mcq-option-text">{{ option.text }}</span>
+                <span class="mcq-option-text">{{ cleanOptionText(option.text) }}</span>
             </button>
         }
     </div>
@@ -31,7 +31,7 @@
         </div>
         <div class="mcq-explanation">
             <strong jhiTranslate="artemisApp.iris.mcq.explanation"></strong>
-            {{ mcqData().explanation }}
+            <jhi-iris-citation-text [text]="mcqData().explanation" [citationInfo]="citationInfo()" />
         </div>
     }
 </div>

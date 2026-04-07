@@ -143,7 +143,11 @@
                 "submit": "Submit Answer",
                 "correct": "Correct!",
                 "incorrect": "Incorrect.",
-                "explanation": "Explanation:"
+                "explanation": "Explanation:",
+                "questionOf": "Question {{ current }} of {{ total }}",
+                "viewScore": "View Score",
+                "reviewQuestions": "Review Questions",
+                "score": "Score"
             },
             "citation": {
                 "unitLabel": "Unit:",

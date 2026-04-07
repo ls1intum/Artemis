@@ -143,7 +143,11 @@
                 "submit": "Antwort abschicken",
                 "correct": "Richtig!",
                 "incorrect": "Falsch.",
-                "explanation": "Erklärung:"
+                "explanation": "Erklärung:",
+                "questionOf": "Frage {{ current }} von {{ total }}",
+                "viewScore": "Ergebnis anzeigen",
+                "reviewQuestions": "Fragen überprüfen",
+                "score": "Ergebnis"
             },
             "contextSelection": {
                 "label": "Chat-Kontext auswählen",

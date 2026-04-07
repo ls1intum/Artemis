@@ -45,10 +45,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContent, IrisMessageContentType, IrisTextMessageContent, McqData, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
+import {
+    IrisMessageContent,
+    IrisMessageContentType,
+    IrisTextMessageContent,
+    McqData,
+    McqResponseData,
+    McqSetData,
+    getMcqData,
+    getMcqSetData,
+    isMcqContent,
+    isMcqSetContent,
+} from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
+import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
@@ -68,6 +81,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
@@ -112,7 +126,9 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         SearchFilterComponent,
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
+        IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
+        IrisThinkingBubbleComponent,
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
@@ -138,6 +154,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly clipboard = inject(Clipboard);
+    private readonly irisChatHttpService = inject(IrisChatHttpService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -167,7 +184,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // MCQ helpers
     protected readonly isMcqContent = isMcqContent;
+    protected readonly isMcqSetContent = isMcqSetContent;
     protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
+    protected readonly getMcqSetData = (content: IrisMessageContent): McqSetData | undefined => getMcqSetData(content);
+    protected messageHasMcq(message: IrisMessage): boolean {
+        return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
+    }
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
@@ -191,6 +213,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly shouldShowStatusBar = computed(
+        () => this.stages()?.some((stage) => !stage.internal && ![IrisStageStateDTO.DONE, IrisStageStateDTO.SKIPPED].includes(stage.state)) ?? false,
+    );
+    readonly activeChatMessage = computed(() => {
+        const stages = this.stages();
+        if (!stages) return undefined;
+        const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
+        return active?.chatMessage;
+    });
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasSessionSwitcher = computed(() => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader());
     readonly hasHeaderContent = computed(() => {
@@ -421,7 +452,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Reset clicked suggestion when new suggestions arrive
+        // Scroll when thinking bubble appears, only if user is already at the bottom
+        effect(() => {
+            if (this.activeChatMessage() && this.isScrolledToBottom()) {
+                this.scrollToBottom('smooth');
+            }
+        });
+
+        // Reset clicked suggestion when new suggestions arrive and scroll to show them
         effect(() => {
             this.suggestions();
             this.clickedSuggestion.set(undefined);
@@ -572,6 +610,28 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         message.helpful = !!helpful;
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
+
+    onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
+        if (!event.submitted || event.selectedIndex === undefined || !message.id) {
+            return;
+        }
+        const sessionId = this.currentSessionId();
+        if (!sessionId) {
+            return;
+        }
+        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true }).subscribe();
+    }
+
+    onMcqResponseSaved(message: IrisMessage, response: McqResponseData): void {
+        if (!response.submitted || !message.id) {
+            return;
+        }
+        const sessionId = this.currentSessionId();
+        if (!sessionId) {
+            return;
+        }
+        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, response).subscribe();
     }
 
     copyMessage(message: IrisMessage, messageIndex?: number) {
