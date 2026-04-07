@@ -730,7 +730,7 @@
             <column name="quiz_point_statistic_id" type="bigint">
                 <constraints unique="true"/>
             </column>
-            <column name="max_points" type="double" defaultValueNumeric="1">
+            <column name="max_points" type="double">
                 <constraints nullable="false"/>
             </column>
             <column name="diagram_type" type="varchar(255)"/>
@@ -757,7 +757,7 @@
             <column name="presentation_score_enabled" type="boolean"/>
             <column name="team_assignment_config_id" type="bigint"/>
             <column name="exercise_group_id" type="bigint"/>
-            <column name="bonus_points" type="double" defaultValueNumeric="0">
+            <column name="bonus_points" type="double">
                 <constraints nullable="false"/>
             </column>
             <column defaultValue="INCLUDED_COMPLETELY" name="included_in_overall_score" type="varchar(255)">
@@ -1137,10 +1137,6 @@
             <column defaultValueBoolean="false" name="has_setup_feedback_preferences" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="feedback_formality" type="int" defaultValueNumeric="2">
-                </column>
-            <column name="feedback_detail" type="int" defaultValueNumeric="2">
-                </column>
         </createTable>
         <createTable tableName="learning_path">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1460,7 +1456,7 @@
             </column>
             <column name="last_modified_by" type="varchar(45)"/>
             <column name="last_modified_date" type="datetime(3)"/>
-            <column name="is_approved" type="boolean" defaultValueBoolean="false">
+            <column name="is_approved" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -2018,7 +2014,7 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="conversation_id" type="varchar(255)">
+            <column name="conversation_id" type="varchar(255)" remarks="Server-generated session ID in format: course_{courseId}_user_{userId}">
                 <constraints nullable="false"/>
             </column>
             <column name="content" type="text">
@@ -3433,8 +3429,6 @@
         <createIndex indexName="vcs_access_log_participation_id" tableName="vcs_access_log">
             <column name="participation_id"/>
         </createIndex>
-        <addNotNullConstraint tableName="learner_profile" columnName="feedback_formality" columnDataType="int" constraintName="learner_profile_feedback_followup_summary_not_null"/>
-        <addNotNullConstraint tableName="learner_profile" columnName="feedback_detail" columnDataType="int" constraintName="learner_profile_feedback_brief_detailed_not_null"/>
         <addNotNullConstraint tableName="review_comment" columnName="thread_id" columnDataType="bigint" constraintName="review_comment_thread_id_not_null1"/>
         <addForeignKeyConstraint baseColumnNames="jhi_user_id" baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_iris_settings" constraintName="fk_course_iris_settings_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3784,6 +3778,16 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
+        <addColumn tableName="learner_profile">
+            <column name="feedback_formality" type="tinyint" defaultValueNumeric="2">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="learner_profile">
+            <column name="feedback_detail" type="tinyint" defaultValueNumeric="2">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
         <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
             <column name="team_id"/>
             <column name="exercise_id"/>
@@ -3911,6 +3915,20 @@
         <createIndex indexName="submission_discriminator" tableName="submission">
             <column name="discriminator"/>
         </createIndex>
+        <addColumn tableName="learner_profile">
+            <column name="feedback_formality" type="int" defaultValueNumeric="2">
+                <constraints nullable="false" notNullConstraintName="learner_profile_feedback_followup_summary_not_null"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="learner_profile">
+            <column name="feedback_detail" type="int" defaultValueNumeric="2">
+                <constraints nullable="false" notNullConstraintName="learner_profile_feedback_brief_detailed_not_null"/>
+            </column>
+        </addColumn>
+        <addDefaultValue tableName="exercise" columnName="max_points" columnDataType="double precision" defaultValueNumeric="1"/>
+        <addDefaultValue tableName="exercise" columnName="bonus_points" columnDataType="double precision" defaultValueNumeric="0"/>
+        <addNotNullConstraint tableName="passkey_credential" columnName="credential_id" columnDataType="varchar(255)"/>
+        <addDefaultValue tableName="passkey_credential" columnName="is_approved" columnDataType="boolean" defaultValueBoolean="false"/>
         <addUniqueConstraint tableName="global_notification_setting" columnNames="user_id, global_notification_type" constraintName="uk_global_notification_setting_user_type"/>
     </changeSet>
 </databaseChangeLog>
