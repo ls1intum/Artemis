@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.aspects;
 
-import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -53,7 +52,7 @@ class EnforceRoleInLectureTest extends AbstractEnforceRoleInResourceTest {
     @Override
     void customSetup() {
         // Add a lecture to the course
-        lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        lecture = lectureUtilService.createLecture(course);
     }
 
     private void callEndpoint(String endpoint, HttpStatus expectedStatus) throws Exception {

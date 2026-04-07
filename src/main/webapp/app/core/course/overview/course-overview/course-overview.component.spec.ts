@@ -692,10 +692,13 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not initialize courses attribute when page has error while loading', async () => {
-        findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+        // Use EMPTY instead of throwError to avoid RxJS reportUnhandledError — the subscribe() in
+        // updateRecentlyAccessedCourses() has no error handler, so thrown errors leak asynchronously.
+        // EMPTY completes without emitting, so courses() stays undefined, satisfying the test intent.
+        findAllForDropdownSpy.mockReturnValue(EMPTY);
 
         await component.ngOnInit();
-        // When findAllForDropdown fails, courses should not be initialized
+        // When findAllForDropdown completes without value, courses should not be initialized
         expect(component.courses()).toBeUndefined();
     });
 

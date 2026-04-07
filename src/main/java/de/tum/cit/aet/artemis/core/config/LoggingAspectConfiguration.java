@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
-import tech.jhipster.config.JHipsterConstants;
-
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
@@ -19,7 +17,7 @@ public class LoggingAspectConfiguration {
 
     @Bean
     @Lazy
-    @Profile(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)
+    @Profile(ArtemisConstants.SPRING_PROFILE_DEVELOPMENT)
     public LoggingAspect loggingAspect(Environment env) {
         return new LoggingAspect(env);
     }

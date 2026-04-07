@@ -4,6 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobDetailComponent } from './build-job-detail.component';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { ActivatedRoute } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -90,6 +91,12 @@ describe('BuildJobDetailComponent', () => {
                     provide: AlertService,
                     useValue: {
                         error: vi.fn(),
+                    },
+                },
+                {
+                    provide: BuildAgentsService,
+                    useValue: {
+                        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -531,6 +538,12 @@ describe('BuildJobDetailComponent', () => {
                     provide: AlertService,
                     useValue: {
                         error: vi.fn(),
+                    },
+                },
+                {
+                    provide: BuildAgentsService,
+                    useValue: {
+                        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
