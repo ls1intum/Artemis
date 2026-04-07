@@ -75,7 +75,7 @@ class LectureContentProcessingServiceTest {
         WebsocketMessagingService websocketMessagingService = mock(WebsocketMessagingService.class);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi), websocketMessagingService);
 
-        service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
+        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
         testLecture = new Lecture();
         testLecture.setId(1L);
@@ -140,7 +140,7 @@ class LectureContentProcessingServiceTest {
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.empty(),
                     mock(WebsocketMessagingService.class));
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), fts, noIrisCallback);
+            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
             service.triggerProcessing(testUnit);
 

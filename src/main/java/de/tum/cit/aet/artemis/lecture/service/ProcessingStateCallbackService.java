@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * <li>Failure handling with retry logic (reset to IDLE for re-dispatch)</li>
  * </ul>
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Service
 @Lazy
 public class ProcessingStateCallbackService {

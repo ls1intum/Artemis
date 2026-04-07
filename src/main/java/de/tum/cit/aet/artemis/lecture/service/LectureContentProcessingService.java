@@ -20,11 +20,10 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -42,7 +41,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Artemis sends ONE request to Iris with all available data. Iris orchestrates what processing
  * is needed (transcription, ingestion, or both) and sends checkpoint callbacks to advance the state.
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Service
 @Lazy
 public class LectureContentProcessingService {
@@ -51,18 +50,15 @@ public class LectureContentProcessingService {
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
-    private final LectureTranscriptionRepository transcriptionRepository;
-
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final FeatureToggleService featureToggleService;
 
     private final ProcessingStateCallbackService processingStateCallbackService;
 
-    public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<IrisLectureApi> irisLectureApi, FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService) {
+    public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
+            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService) {
         this.processingStateRepository = processingStateRepository;
-        this.transcriptionRepository = transcriptionRepository;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
         this.processingStateCallbackService = processingStateCallbackService;
@@ -296,12 +292,12 @@ public class LectureContentProcessingService {
             log.info("Content changed for unit {}, video: {}, attachment: {}", unit.getId(), videoChanged, attachmentChanged);
 
             if (videoChanged) {
-                cleanupForReprocessing(unit, true);
+                cleanupForReprocessing(unit);
                 state.setVideoSourceHash(currentVideoHash);
             }
 
             if (attachmentChanged && !videoChanged) {
-                cleanupForReprocessing(unit, false);
+                cleanupForReprocessing(unit);
             }
 
             state.setAttachmentVersion(currentAttachmentVersion);
@@ -311,14 +307,7 @@ public class LectureContentProcessingService {
         return false;
     }
 
-    private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
-        if (deleteTranscription) {
-            transcriptionRepository.findByLectureUnit_Id(unit.getId()).ifPresent(transcription -> {
-                log.info("Deleting existing transcription for unit {}", unit.getId());
-                transcriptionRepository.delete(transcription);
-            });
-        }
-
+    private void cleanupForReprocessing(AttachmentVideoUnit unit) {
         // When a new job starts, Iris terminates old processes automatically
         if (irisLectureApi.isPresent()) {
             try {
