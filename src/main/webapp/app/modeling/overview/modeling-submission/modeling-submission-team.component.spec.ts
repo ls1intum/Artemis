@@ -19,6 +19,7 @@ import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/ad
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
@@ -117,10 +118,15 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent],
+                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(HeaderParticipationPageComponent), MockComponent(TeamParticipateInfoBoxComponent)],
+                imports: [
+                    StubModelingEditorComponent,
+                    MockComponent(HeaderParticipationPageComponent),
+                    MockComponent(TeamParticipateInfoBoxComponent),
+                    MockComponent(RatingComponent),
+                ],
             },
         });
 
@@ -200,6 +206,7 @@ describe('ModelingSubmissionComponent', () => {
         submission.model = undefined;
         submission.participation!.initializationDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.dueDate = undefined;
+        (<StudentParticipation>submission.participation).exercise!.exerciseGroup = undefined;
 
         // Cleanup the component if it exists
         if (comp) {
@@ -256,7 +263,15 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         // Initialize submission
-        submission.model = '{"version": "3.0.0", "elements": {"1": {"id": 1}}, "relationships": {}}';
+        submission.model = JSON.stringify({
+            version: '3.0.0',
+            type: 'ClassDiagram',
+            size: { width: 100, height: 100 },
+            interactive: { elements: {}, relationships: {} },
+            elements: { '1': { id: '1', type: 'Class', name: 'TestClass', bounds: { x: 0, y: 0, width: 100, height: 100 } } },
+            relationships: {},
+            assessments: {},
+        });
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize the component
@@ -272,10 +287,11 @@ describe('ModelingSubmissionComponent', () => {
         expect(editorImportSpy).toHaveBeenCalledWith(patchData);
     });
 
-    it('should allow to submit when exercise due date not set', async () => {
+    it('should allow to submit in exam mode when exercise due date not set', async () => {
         createComponent();
 
-        // GIVEN
+        // GIVEN — make this an exam exercise so ngOnInit sets examMode = true
+        (<StudentParticipation>submission.participation).exercise!.exerciseGroup = new ExerciseGroup();
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // WHEN
@@ -285,55 +301,24 @@ describe('ModelingSubmissionComponent', () => {
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
-        expect(comp.isActive).toBe(true);
+        expect(comp.examMode).toBe(true);
     });
 
-    it('should not allow to submit after the due date if the initialization date is before the due date', async () => {
+    it('should not allow to submit in exam mode if there is a non-automatic result', async () => {
         createComponent();
 
-        submission.participation!.initializationDate = dayjs().subtract(2, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled()).toBe(true);
-    });
-
-    it('should allow to submit after the due date if the initialization date is after the due date and not submitted', async () => {
-        createComponent();
-
-        submission.participation!.initializationDate = dayjs().add(1, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
-        submission.submitted = false;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isLate).toBe(true);
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled()).toBe(false);
-        submission.submitted = true;
-    });
-
-    it('should not allow to submit if there is a result and no due date', async () => {
-        createComponent();
-
+        // GIVEN — make this an exam exercise so ngOnInit sets examMode = true
+        (<StudentParticipation>submission.participation).exercise!.exerciseGroup = new ExerciseGroup();
         comp.result = result;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
+        const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(true);
     });

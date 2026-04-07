@@ -1,5 +1,5 @@
 <div id="cardFiles" class="card file-browser resizable-filebrowser" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
-    <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
+    <div class="card-header d-flex justify-content-center bg-primary text-white" [class.d-none]="!showHeader()" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
             @if (!collapsed) {
                 <span>

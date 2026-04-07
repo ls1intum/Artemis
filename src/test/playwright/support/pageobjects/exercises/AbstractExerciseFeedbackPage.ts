@@ -25,7 +25,7 @@ export abstract class AbstractExerciseFeedback {
     }
 
     async shouldShowScore(percentage: number) {
-        const resultPercentage = this.page.locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
+        const resultPercentage = this.page.locator('#exercise-header').locator(this.RESULT_SELECTOR, { hasText: `${percentage}%` });
         await expect(resultPercentage).toBeVisible();
     }
 

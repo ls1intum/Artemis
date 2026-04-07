@@ -309,7 +309,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
+                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE.plusDays(1), null);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -326,7 +326,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
+                Lecture lecture = lectureUtilService.createLecture(course, null, PAST_DATE);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -343,7 +343,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
             void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -357,24 +357,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the commented out code OR comment back in */
-            // @Test
-            // @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-            // void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
-            // Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
-            // Long courseId = course.getId();
-            // String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-            // + TEST_LANGUAGE_STRING;
-            // Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-            // Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            // assertEventMapsEqual(actualResponse, expectedResponse);
-            // }
-
             @Test
             @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
             void shouldReturnCorrectEventsForVisibleLectureTakingLongerThanTwelveHoursAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE, PAST_DATE.plusDays(1));
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE, PAST_DATE.plusDays(1));
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -392,7 +378,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
             void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsCourseStaffMember() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
+                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE.plusDays(1), null);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -409,7 +395,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
             void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsCourseStaffMember() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
+                Lecture lecture = lectureUtilService.createLecture(course, null, PAST_DATE);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -426,7 +412,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
             void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsCourseStaffMember() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                         + TEST_LANGUAGE_STRING;
@@ -443,7 +429,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             @Test
             @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
             void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
                 Long courseId = course.getId();
                 String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
                         + "&language=" + TEST_LANGUAGE_STRING;
@@ -1515,7 +1501,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldGenerateStableIdsForVeventsInICSFile() throws Exception {
-            lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+            lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
 
             String expectedToken = UUID.randomUUID().toString().replace("-", "");
             ;
@@ -1548,7 +1534,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
                     tutor, new HashSet<>(Set.of(student)));
             tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2), 5);
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
                     PAST_DATE.plusDays(3), "Test-Examiner");
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
@@ -1579,7 +1565,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
                     tutor, new HashSet<>(Set.of(student)));
             tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2), 5);
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusHours(2), PAST_DATE);
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
                     PAST_DATE.plusDays(3), "Test-Examiner");
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);

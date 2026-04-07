@@ -85,7 +85,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.exercise().id) {
             this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                    this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
+                    const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                    const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
+                    const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+                    // Prefer practice participation when it exists (student is working in practice mode)
+                    this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
                         this.currentFeedbackRequestCount =
                             getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
@@ -102,7 +106,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     setUserAcceptedLLMUsage(): void {
-        this.hasUserAcceptedLLMUsage = this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI;
+        const selection = this.accountService.userIdentity()?.selectedLLMUsage;
+        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -171,10 +176,21 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     requestFeedback() {
-        if (!this.assureConditionsSatisfied()) {
-            return;
-        }
-        this.processFeedbackRequest();
+        this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+            next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
+                const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+                this.participation = practiceParticipation ?? gradedParticipation;
+                if (!this.assureConditionsSatisfied()) {
+                    return;
+                }
+                this.processFeedbackRequest();
+            },
+            error: (error: HttpErrorResponse) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
     }
 
     private processFeedbackRequest() {

@@ -28,13 +28,15 @@ import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
     standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
+    styleUrl: './students-room-distribution-dialog.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, RouterLink],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;

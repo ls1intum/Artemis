@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + modelingExercise?.id">
-    @if (displayHeader()) {
+    @if (displayHeader() && examMode) {
         <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
@@ -23,29 +23,22 @@
                                 [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
-                    } @else {
-                        @if (modelingExercise.allowFeedbackRequests && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))) {
-                            <jhi-request-feedback-button
-                                [exercise]="modelingExercise"
-                                [pendingChanges]="isChanged"
-                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
-                                [isGeneratingFeedback]="isGeneratingFeedback"
-                                (generatingFeedback)="this.isGeneratingFeedback = true"
-                                [isSubmitted]="submission.submitted || false"
-                            />
-                        }
                     }
                 }
                 @if (!this.isFeedbackView) {
-                    <jhi-button
+                    <jhi-exercise-submit-button
+                        id="submit"
                         class="submission-button"
-                        id="submit-modeling-submission"
-                        [disabled]="(!isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"
+                        [exercise]="modelingExercise"
+                        [disabled]="(!examMode && !isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                        (onClick)="submit()"
+                        (onSubmit)="submit()"
                         [isLoading]="isSaving"
+                        [isSubmitted]="!!submission?.submitted"
                         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                         [tooltip]="submitButtonTooltip"
+                        [isGeneratingFeedback]="isGeneratingFeedback"
+                        (generatingFeedback)="isGeneratingFeedback = true"
                     />
                 }
             </ng-container>
@@ -66,7 +59,13 @@
     }
 
     @if (modelingExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting()" [expandProblemStatement]="expandProblemStatement()" [collapsed]="isFeedbackView">
+        <jhi-resizeable-container
+            [isExerciseParticipation]="true"
+            [isBeingPrinted]="isPrinting()"
+            [expandProblemStatement]="expandProblemStatement()"
+            [collapsed]="isFeedbackView"
+            [showRightPanel]="showProblemStatement() && examMode"
+        >
             <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission || submission.submitted || !isExamSummary()) {

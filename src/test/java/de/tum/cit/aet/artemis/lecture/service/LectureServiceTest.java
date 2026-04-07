@@ -64,16 +64,6 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
                 .orElseThrow();
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // Lecture hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
-        // Set one lecture only visible in the future for filtering tests
-        // ZonedDateTime future = ZonedDateTime.now().plusDays(3);
-        // hiddenLecture.setVisibleDate(future);
-        // hiddenLecture.setStartDate(future.plusDays(1));
-        // hiddenLecture.setEndDate(future.plusWeeks(1));
-        // lectureRepository.save(hiddenLecture);
-
         // Add a custom attachment for filtering tests
         testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         lecture.addAttachments(testAttachment);
@@ -83,15 +73,12 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lecture.getLectureUnits()).isNotEmpty();
         assertThat(lecture.getAttachments()).isNotEmpty();
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(lecture.getId()).isLessThan(hiddenLecture.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
-        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), editor);
+        Set<Lecture> testLectures = lectureService.filterLecturesWithActiveAttachments(course, course.getLectures(), editor);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
@@ -102,18 +89,13 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
-        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), student);
+        Set<Lecture> testLectures = lectureService.filterLecturesWithActiveAttachments(course, course.getLectures(), student);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).isNotEmpty();
         assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
         // Ensure that the attachment with future release date was filtered
         assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
-        // Ensure that hidden lecture is filtered out for students
-
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(testLectures.size()).isEqualTo(1);
     }
 
     @Test
