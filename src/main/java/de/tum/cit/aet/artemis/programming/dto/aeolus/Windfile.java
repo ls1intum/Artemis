@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.programming.service.aeolus.ActionDeserializer;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that can then be used to generate a Jenkinsfile.
@@ -35,7 +34,6 @@ public record Windfile(String api, WindfileMetadata metadata, List<Action> actio
     static {
         mapper = JsonObjectMapper.get().copy();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(Action.class, new ActionDeserializer());
         mapper.registerModule(module);
     }
 

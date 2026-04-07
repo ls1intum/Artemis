@@ -19,10 +19,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
@@ -37,7 +36,7 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    private final Optional<AeolusTemplateService> aeolusTemplateService;
+    private final Optional<BuildPhasesTemplateService> buildPhasesTemplateService;
 
     private final ProfileService profileService;
 
@@ -47,12 +46,12 @@ public class ProgrammingExerciseBuildPlanService {
 
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
-            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            Optional<BuildPhasesTemplateService> buildPhasesTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.aeolusTemplateService = aeolusTemplateService;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
@@ -110,21 +109,19 @@ public class ProgrammingExerciseBuildPlanService {
             return;
         }
 
-        // existing config in Windfile format, convert to phases
-        Windfile windfile = buildConfig.getWindfile();
+        BuildPlanPhasesDTO buildPlanPhasesDTO = null;
 
-        // no config at all, load default windfile template
-        if (windfile == null && buildConfig.getBuildPlanConfiguration() == null && aeolusTemplateService.isPresent()) {
-            windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
+        // no config at all, load default build plan phases template
+        if (buildConfig.getBuildPlanConfiguration() == null && buildPhasesTemplateService.isPresent()) {
+            buildPlanPhasesDTO = new BuildPlanPhasesDTO(buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise), null);
         }
 
-        if (windfile != null) {
-            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
-            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+        if (buildPlanPhasesDTO != null) {
+            buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {
-            log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+            log.warn("No build plan phases for the settings of exercise {}", programmingExercise.getId());
         }
     }
 

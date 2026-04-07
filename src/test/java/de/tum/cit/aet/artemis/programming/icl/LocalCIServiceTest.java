@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,8 +28,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
@@ -111,34 +111,30 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
     @Test
     void testRecreateBuildPlanForExercise() throws IOException {
-        String script = "echo 'Hello, World!'";
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.getBuildConfig().setBuildScript(script);
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                exercise.getBuildConfig().hasSequentialTestRuns());
-        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-        String expectedBuildConfig = JsonObjectMapper.get().writeValueAsString(windfile);
+        String expectedBuildConfig = new BuildPlanPhasesDTO(phases, null).toBuildPlanConfiguration();
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
-        assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
+        assertThat(exercise.getBuildConfig().getBuildScript()).isNull();
         // test that the method does not throw an exception when the exercise is null
         continuousIntegrationService.recreateBuildPlansForExercise(null);
     }
 
     @Test
-    void testGetScriptForWithoutCache() {
-        ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());
+    void testGetBuildPlanPhasesForWithoutCache() {
+        ReflectionTestUtils.setField(buildPhasesTemplateService, "templateCache", new ConcurrentHashMap<>());
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        String script = buildScriptProviderService.getScriptFor(programmingExercise);
-        assertThat(script).isNotNull();
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        assertThat(phases).isNotNull();
     }
 
     @Test

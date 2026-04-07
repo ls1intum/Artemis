@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -231,25 +230,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
-     * This method parses the JSON string and returns a {@link Windfile} object.
-     *
-     * @return the {@link Windfile} object or null if the JSON string could not be parsed
-     */
-    public Windfile getWindfile() {
-        if (buildPlanConfiguration == null) {
-            return null;
-        }
-        try {
-            return Windfile.deserialize(buildPlanConfiguration);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
-        }
-        return null;
-    }
-
-    /**
      * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
      * This provides discrimination between the new phases format and the old Windfile format:
      * BuildPlanPhases JSON has a "phases" root key, while Windfile JSON has "api", "metadata", "actions".
@@ -262,9 +242,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         }
         try {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
-            if (phases.phases() != null) {
-                return Optional.of(phases);
-            }
+            return Optional.of(phases);
         }
         catch (JsonProcessingException e) {
             // Not in phases format

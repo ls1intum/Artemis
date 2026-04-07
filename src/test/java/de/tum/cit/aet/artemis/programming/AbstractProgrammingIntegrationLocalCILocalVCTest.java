@@ -21,12 +21,11 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -88,10 +87,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
 
     @Autowired
-    protected AeolusTemplateService aeolusTemplateService;
-
-    @Autowired
-    protected BuildScriptProviderService buildScriptProviderService;
+    protected BuildPhasesTemplateService buildPhasesTemplateService;
 
     @Autowired
     protected ProgrammingExerciseFeedbackCreationService feedbackCreationService;

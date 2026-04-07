@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.localci;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -17,49 +18,49 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.service.aeolus.BuildPhasesTemplateService;
 
 /**
- * Service for retrieving aeolus template files based on the programming language, project type, and
+ * Service for retrieving build phases template files based on the programming language, project type, and
  * the different options (static analysis, sequential runs) as well as the default
  * image for the programming language and project type for the artemis instance.
  */
 @Profile("localci")
 @Lazy
 @RestController
-@RequestMapping("api/programming/aeolus/")
-public class AeolusTemplateResource {
+@RequestMapping("api/programming/phases/")
+public class BuildPhasesTemplateResource {
 
-    private static final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
+    private static final Logger log = LoggerFactory.getLogger(BuildPhasesTemplateResource.class);
 
-    private final AeolusTemplateService aeolusTemplateService;
+    private final BuildPhasesTemplateService buildPhasesTemplateService;
 
     /**
-     * Constructor for the AeolusTemplateResource
+     * Constructor for the BuildPhasesTemplateResource
      *
-     * @param aeolusTemplateService the service for retrieving the aeolus template files
+     * @param buildPhasesTemplateService the service for retrieving the build phases template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProviderService buildScriptProviderService) {
-        this.aeolusTemplateService = aeolusTemplateService;
+    public BuildPhasesTemplateResource(BuildPhasesTemplateService buildPhasesTemplateService) {
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
     }
 
     /**
-     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /api/programming/phases/templates/:language/:projectType : Get the build phases template file with the given filename<br/>
+     * GET /api/programming/phases/templates/:language : Get the build phases template file with the given filename
      * <p>
-     * The windfile contains the default build plan configuration for new programming exercises.
+     * The build plan phases contain the default build plan configuration for new programming exercises.
      *
-     * @param language       The programming language for which the aeolus template file should be returned
+     * @param language       The programming language for which the build phases template file should be returned
      * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis Whether the static analysis template should be used
      * @param sequentialRuns Whether the sequential runs template should be used
-     * @return The requested file, or 404 if the file doesn't exist
+     * @return The requested build plan phases, or 404 if the file doesn't exist
      */
     @GetMapping({ "templates/{language}/{projectType}", "templates/{language}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<Windfile> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
+    public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
         log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
@@ -67,12 +68,12 @@ public class AeolusTemplateResource {
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
+        return getBuildPhasesTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
     }
 
     /**
-     * Returns the file content of the template file for the given language and project type as JSON. The windfile in
-     * the templates directory only specifies the actual actions, since an Artemis admin is allowed to change the
+     * Returns the content of the template file for the given language and project type as JSON. The build phases in
+     * the templates directory only specify the actual actions, since an Artemis admin is allowed to change the
      * docker image and flags we intersect and inject the values for the particular instance before sending it to the
      * client.
      *
@@ -80,20 +81,22 @@ public class AeolusTemplateResource {
      * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis    Whether the static analysis template should be used
      * @param sequentialRuns    Whether the sequential runs template should be used
-     * @return The requested file, or 404 if the file doesn't exist
+     * @return The requested build plan phases, or 404 if the phases don't exist
      */
-    private ResponseEntity<Windfile> getAeolusTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
+    private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
             boolean sequentialRuns) {
         try {
             Optional<ProjectType> optionalProjectType = Optional.empty();
             if (!projectTypePrefix.isEmpty()) {
                 optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
             }
-            Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
-            if (windfile == null) {
+            List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
+            if (phases == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(windfile);
+            final String image = buildPhasesTemplateService.getDefaultDockerImageFor(language, optionalProjectType);
+
+            return ResponseEntity.ok(new BuildPlanPhasesDTO(phases, image));
         }
         catch (IOException ex) {
             log.warn("Error when retrieving aeolus template file", ex);
