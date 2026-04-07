@@ -220,7 +220,8 @@ public class DatabaseMigration {
     private void updateInitialChecksum(String newVersion) {
         String description = "Initial schema generation for version " + newVersion;
 
-        // SQL statement with a placeholder for the newVersion parameter
+        // SQL statement that nullifies checksums for all initial schema changesets (00000000000001, 00000000000002, 00000000000003)
+        // so that Liquibase recalculates them instead of re-executing the DDL
         String updateSqlStatement = """
                 UPDATE DATABASECHANGELOG
                 SET MD5SUM = null,
@@ -228,7 +229,7 @@ public class DatabaseMigration {
                     DESCRIPTION = ?,
                     LIQUIBASE = '5.0.2',
                     FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
-                WHERE ID = '00000000000001';
+                WHERE ID LIKE '0000000000000%';
                 """;
 
         // Use try-with-resources to ensure resources are closed properly
