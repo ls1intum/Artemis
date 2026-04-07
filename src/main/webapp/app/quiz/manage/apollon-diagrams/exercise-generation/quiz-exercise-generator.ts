@@ -184,7 +184,12 @@ export async function generateDragAndDropItemForNode(
     files.set(imageName, image);
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageName;
-    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
+
+    // In Apollon v4, exportModelAsSvg ignores include/exclude and computes the clip from all nodes,
+    // so renderedElement.clip equals the full diagram clip for every element. Use the node's actual
+    // model position instead to get correct relative drop location coordinates.
+    const elementLocation = element.position ? { x: element.position.x, y: element.position.y, width: element.width, height: element.height } : renderedElement.clip;
+    const dropLocation = computeDropLocation(elementLocation, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }

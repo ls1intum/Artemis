@@ -214,6 +214,15 @@
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
             "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
+            "aiFeedbackPopover": {
+                "title": "AI Feedback",
+                "description": "You can request AI-generated feedback for your submission. This feedback is preliminary and can include mistakes. Consider checking important information.",
+                "selectedAiType": "Your current AI selection: {{ type }}",
+                "aiType": {
+                    "CLOUD_AI": "Cloud AI",
+                    "LOCAL_AI": "Local AI"
+                }
+            },
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",

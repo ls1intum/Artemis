@@ -190,10 +190,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.gitBranchName = profileInfo.git.branch;
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
         this.gitUsername = profileInfo.git.commit.user.name;
-        this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
-        this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-        this.ltiEnabled = profileInfo?.activeModuleFeatures.includes(MODULE_FEATURE_LTI);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;

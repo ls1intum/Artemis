@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -23,10 +23,10 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthContributor;
-import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.actuate.health.NamedContributor;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthContributor;
+import org.springframework.boot.health.contributor.HealthContributors;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -292,10 +292,10 @@ public class MetricsBean {
 
             // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
             if (healthContributor instanceof DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor) {
-                for (NamedContributor<HealthContributor> discoveryHealthContributor : discoveryCompositeHealthContributor) {
-                    if (discoveryHealthContributor.getContributor() instanceof HealthIndicator healthIndicator) {
+                for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
+                    if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
                         Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.getName().toLowerCase()).register(meterRegistry);
+                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase()).register(meterRegistry);
                     }
                 }
             }
@@ -762,7 +762,11 @@ public class MetricsBean {
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {
-        dataSource.setMetricRegistry(meterRegistry);
+        // Only set the metric registry if no metrics tracker factory is already configured,
+        // as HikariCP does not allow both to be set simultaneously (Spring Boot may auto-configure one).
+        if (dataSource.getMetricsTrackerFactory() == null) {
+            dataSource.setMetricRegistry(meterRegistry);
+        }
     }
 
     /**

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
@@ -1230,26 +1231,34 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             var params = new LinkedMultiValueMap<String, String>();
             params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
             String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
-            String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+            List<TutorialGroupExportDataDTO> exportData = request.getList(url, HttpStatus.OK, TutorialGroupExportDataDTO.class);
 
-            assertThat(jsonResponse).contains("id");
-            assertThat(jsonResponse).contains("title");
-            assertThat(jsonResponse).contains("campus");
-            assertThat(jsonResponse).contains("language");
-            assertThat(jsonResponse).contains("additionalInformation");
-            assertThat(jsonResponse).contains("capacity");
-            assertThat(jsonResponse).contains("isOnline");
-            assertThat(jsonResponse).contains("dayOfWeek");
-            assertThat(jsonResponse).contains("\"dayOfWeek\" : \"None\"");
-            assertThat(jsonResponse).contains("students");
-            assertThat(jsonResponse).contains("SampleTitle1");
-            assertThat(jsonResponse).contains("SampleInfo1");
-            assertThat(jsonResponse).contains("ENGLISH");
-            assertThat(jsonResponse).contains("10");
-            assertThat(jsonResponse).contains("SampleTitle2");
-            assertThat(jsonResponse).contains("SampleInfo2");
-            assertThat(jsonResponse).contains("GERMAN");
-            assertThat(jsonResponse).contains("20");
+            assertThat(exportData).isNotEmpty();
+
+            // createTutorialGroup signature: (courseId, title, additionalInformation, capacity, isOnline, campus, language, tutor, students)
+            // Verify sample group 1
+            assertThat(exportData).anySatisfy(dto -> {
+                assertThat(dto.title()).isEqualTo("SampleTitle1");
+                assertThat(dto.additionalInformation()).isEqualTo("SampleCampus1");
+                assertThat(dto.campus()).isEqualTo("SampleInfo1");
+                assertThat(dto.language()).isEqualTo("ENGLISH");
+                assertThat(dto.capacity()).isEqualTo(10);
+                assertThat(dto.isOnline()).isFalse();
+                assertThat(dto.dayOfWeek()).isEqualTo("None");
+                assertThat(dto.students()).isNotEmpty();
+            });
+
+            // Verify sample group 2
+            assertThat(exportData).anySatisfy(dto -> {
+                assertThat(dto.title()).isEqualTo("SampleTitle2");
+                assertThat(dto.additionalInformation()).isEqualTo("SampleCampus2");
+                assertThat(dto.campus()).isEqualTo("SampleInfo2");
+                assertThat(dto.language()).isEqualTo("GERMAN");
+                assertThat(dto.capacity()).isEqualTo(20);
+                assertThat(dto.isOnline()).isTrue();
+                assertThat(dto.dayOfWeek()).isEqualTo("None");
+                assertThat(dto.students()).isNotEmpty();
+            });
         }
 
         private void assertUserIsRegisteredInTutorialWithTitle(String title, User user) {

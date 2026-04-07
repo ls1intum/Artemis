@@ -16,8 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -30,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
@@ -408,7 +407,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
             var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
             request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+                    .content(JsonObjectMapper.get().writeValueAsString(requestBody))).andExpect(status().isForbidden());
         }
 
         @Test

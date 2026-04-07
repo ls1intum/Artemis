@@ -243,8 +243,7 @@
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst",
-                "lectureTranscription": "Vorlesungstranskription",
-                "examRooms": "Prüfungsräume"
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
             "settings": "Einstellungen"
@@ -330,6 +329,7 @@
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
             "cancel": "Abbrechen",
+            "continue": "Fortfahren",
             "delete": "Löschen",
             "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",

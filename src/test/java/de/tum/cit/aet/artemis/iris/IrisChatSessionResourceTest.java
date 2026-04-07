@@ -101,7 +101,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         team.setOwner(users.get(1));
         teamRepository.save(team);
 
-        lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        lecture = lectureUtilService.createLecture(course);
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(textExercise);
