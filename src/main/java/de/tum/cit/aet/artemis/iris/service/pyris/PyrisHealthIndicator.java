@@ -3,11 +3,15 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +28,14 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 @Component
 @Lazy
 @Conditional(IrisEnabled.class)
 public class PyrisHealthIndicator implements HealthIndicator {
+
+    private static final Logger log = LoggerFactory.getLogger(PyrisHealthIndicator.class);
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢
 
@@ -43,6 +50,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final RestTemplate restTemplate;
 
+    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
+
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     private static final String IRIS_URL_KEY = "url";
@@ -54,8 +63,16 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private Health cachedHealth = null;
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate) {
+    /**
+     * Tracks whether Iris was UP on the last health check.
+     * Starts as {@code true} so that the first successful check after Artemis
+     * startup is NOT treated as a restart — only a genuine DOWN → UP transition triggers a reset.
+     */
+    private boolean previouslyUp = true;
+
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.restTemplate = restTemplate;
+        this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
     /**
@@ -113,6 +130,12 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         var newHealth = connectorHealth.asActuatorHealth();
+        boolean currentlyUp = newHealth.getStatus() == Status.UP;
+        if (currentlyUp && !previouslyUp) {
+            log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
+            processingStateCallbackApi.ifPresent(ProcessingStateCallbackApi::handleIrisReset);
+        }
+        previouslyUp = currentlyUp;
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
         return newHealth;

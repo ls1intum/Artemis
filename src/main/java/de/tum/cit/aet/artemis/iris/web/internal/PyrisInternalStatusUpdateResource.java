@@ -251,4 +251,5 @@ public class PyrisInternalStatusUpdateResource {
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
+
 }
