@@ -15,6 +15,7 @@ import jakarta.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -57,13 +58,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ToolsInterceptor toolsInterceptor;
 
-    private final ObjectMapper objectMapper;
+    private final ObjectProvider<ObjectMapper> objectMapperProvider;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor, @Lazy ObjectMapper objectMapper) {
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor, ObjectProvider<ObjectMapper> objectMapperProvider) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
-        this.objectMapper = objectMapper;
+        this.objectMapperProvider = objectMapperProvider;
     }
 
     @Override
@@ -172,7 +173,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         // Spring Framework 7 defaults to a Jackson 3.x converter that doesn't support the Hibernate7Module
         // (which is only available for Jackson 2.x). Without this, serializing entities with uninitialized lazy
         // collections throws LazyInitializationException.
-        var jackson2Converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        var jackson2Converter = new MappingJackson2HttpMessageConverter(objectMapperProvider.getObject());
         converters.addFirst(jackson2Converter);
 
         // Collect all StringHttpMessageConverters and remove them from their current positions
