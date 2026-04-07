@@ -312,7 +312,15 @@ export class ExamParticipationLiveEventsService {
      * the WebSocket message was already emitted).
      */
     private fetchPreviousExamEvents() {
+        // Capture the current student exam ID at request time so we can discard the response
+        // if the user has since navigated to a different exam (prevents stale event contamination).
+        const requestStudentExamId = this.studentExamId;
         this.httpClient.get<ExamLiveEvent[]>(`/api/exam/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((fetchedEvents: ExamLiveEvent[]) => {
+            // Guard: if the student exam changed while the request was in flight, discard the response
+            if (this.studentExamId !== requestStudentExamId) {
+                return;
+            }
+
             fetchedEvents.forEach((event) => {
                 event.createdDate = convertDateFromServer(event.createdDate)!;
             });
@@ -429,9 +437,9 @@ export class ExamParticipationLiveEventsService {
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),
         );
-        // Schedule a replay in a microtask so the caller can subscribe to the returned observable
-        // before events start flowing. Without this, events already in memory would not reach
-        // a subscriber that was just created.
+        // Schedule a replay after the current call stack completes (via setTimeout/macrotask)
+        // so the caller can subscribe to the returned observable before events start flowing.
+        // Without this, events already in memory would not reach a subscriber that was just created.
         setTimeout(() => this.replayEvents());
         return observable;
     }

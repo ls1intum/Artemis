@@ -2491,14 +2491,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         for (var exercise : testRunResponse.getExercises()) {
             if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
+                assertThat(exercise.getStudentParticipations()).as("Text exercise should have participations").isNotEmpty();
                 var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getSubmissions()).as("Participation should have submissions").isNotEmpty();
                 textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
                 break;
             }
         }
 
         assertThat(textExercise).as("Test run should contain a text exercise").isNotNull();
-        assertThat(textSubmission).as("Text exercise should have a submission").isNotNull();
 
         // Simulate the student saving the text submission during the exam (the code path that was broken for test runs)
         textSubmission.setText("Updated text submission during test run");
@@ -2519,7 +2520,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         for (var exercise : testRunResponse.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
+                assertThat(exercise.getStudentParticipations()).as("Modeling exercise should have participations").isNotEmpty();
                 var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getSubmissions()).as("Participation should have submissions").isNotEmpty();
                 modelingSubmission = (ModelingSubmission) participation.getSubmissions().iterator().next();
                 break;
             }
