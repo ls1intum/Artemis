@@ -8,15 +8,15 @@
         "hero": {
             "tagline": "Für Universitäten & Bildungseinrichtungen",
             "title": "Eine Lernplattform für die universitäre Lehre.",
-            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Selbst gehostet und vollständig unter deiner Kontrolle."
+            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Auf Wunsch selbst hostbar für volle Kontrolle über deine Daten."
         },
         "spotlight": {
             "title": "KI, die lehrt, nicht nur antwortet",
-            "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-LLMs, sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können.",
+            "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können.",
             "steps": {
                 "tutor": {
                     "title": "KI, die lehrt, nicht nur antwortet",
-                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-LLMs, sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können."
+                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme, basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell. Iris unterstützt Open-Source-Sprachmodelle (LLMs), sodass Institutionen alle Interaktionen innerhalb der eigenen Infrastruktur halten können."
                 },
                 "feedback": {
                     "title": "Sofortiges Feedback bei jeder Abgabe",
@@ -103,7 +103,7 @@
                 },
                 "scale": {
                     "question": "Kann ich Prüfungen für 1000+ Studierende durchführen?",
-                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2000 gleichzeitige Studierende erprobt. Der Prüfungsmodus verwendet Aufgabenpools zur Generierung einzigartiger Prüfungsvarianten pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal."
+                    "answer": "Ja. Artemis wurde mit Online-Prüfungen für über 2.000 gleichzeitige Studierende erprobt. Der Prüfungsmodus verwendet Aufgabenpools zur Generierung einzigartiger Prüfungsvarianten pro Studierendem, unterstützt Echtzeit-Überwachung und skaliert horizontal."
                 },
                 "iris": {
                     "question": "Wie unterscheidet sich Iris von ChatGPT?",

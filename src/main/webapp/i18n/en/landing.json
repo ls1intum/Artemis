@@ -12,11 +12,11 @@
         },
         "spotlight": {
             "title": "AI that teaches, not just answers",
-            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source LLMs, so institutions can keep all interactions within their own infrastructure.",
+            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure.",
             "steps": {
                 "tutor": {
                     "title": "AI that teaches, not just answers",
-                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source LLMs, so institutions can keep all interactions within their own infrastructure."
+                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions, drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically. Iris supports open-source large language models (LLMs), so institutions can keep all interactions within their own infrastructure."
                 },
                 "feedback": {
                     "title": "Instant feedback, every submission",
