@@ -26,6 +26,8 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     @ViewChild('instructions') instructionsElement: ElementRef;
 
     @Input() isTutorAssessment = false;
+    @Input() showEditorNavbar = true;
+    @Input() showEditorSidebarRight = true;
     @Output() onResize = new EventEmitter<ResizeType>();
 
     fileBrowserIsCollapsed = false;
