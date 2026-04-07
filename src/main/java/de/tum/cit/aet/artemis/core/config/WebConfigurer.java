@@ -28,12 +28,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
@@ -54,10 +57,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ToolsInterceptor toolsInterceptor;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
+    private final ObjectMapper objectMapper;
+
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor, @Lazy ObjectMapper objectMapper) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -162,6 +168,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                                                     // causes converter registration issues
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // Add a Jackson 2.x converter with the Hibernate7Module-aware ObjectMapper before the Jackson 3.x converter.
+        // Spring Framework 7 defaults to a Jackson 3.x converter that doesn't support the Hibernate7Module
+        // (which is only available for Jackson 2.x). Without this, serializing entities with uninitialized lazy
+        // collections throws LazyInitializationException.
+        var jackson2Converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        converters.addFirst(jackson2Converter);
+
         // Collect all StringHttpMessageConverters and remove them from their current positions
         var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
         converters.removeAll(stringConverters);
