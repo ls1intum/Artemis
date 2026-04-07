@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug App",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/sorting_algorithms.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
