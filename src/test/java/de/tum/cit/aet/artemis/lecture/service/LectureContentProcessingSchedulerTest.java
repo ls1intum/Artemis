@@ -86,7 +86,7 @@ class LectureContentProcessingSchedulerTest {
             // Only return state for TRANSCRIBING phase query
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -112,7 +112,7 @@ class LectureContentProcessingSchedulerTest {
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -136,7 +136,7 @@ class LectureContentProcessingSchedulerTest {
 
             // The query should not return this state (startedAt is not past cutoff)
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
 
             // When
             scheduler.processScheduledRetries();
@@ -159,8 +159,8 @@ class LectureContentProcessingSchedulerTest {
 
             // Query returns the state because retryEligibleAt <= now
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any(ZonedDateTime.class))).thenReturn(List.of(testState));
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.TRANSCRIBING)).thenReturn(List.of(testState));
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.INGESTING)).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
 
             // When
@@ -179,7 +179,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Query should NOT return this state (retryEligibleAt > now)
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
 
             // When
             scheduler.processScheduledRetries();
@@ -198,7 +198,7 @@ class LectureContentProcessingSchedulerTest {
 
             // Query should NOT return this state (retryEligibleAt IS NULL)
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
 
             // When
             scheduler.processScheduledRetries();
@@ -220,8 +220,8 @@ class LectureContentProcessingSchedulerTest {
 
             // Batch query returns the state
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any())).thenReturn(List.of(testState));
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.TRANSCRIBING)).thenReturn(List.of(testState));
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.INGESTING)).thenReturn(List.of());
 
             // But when we re-fetch, the state is now IDLE (user changed it)
             LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
@@ -236,6 +236,31 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
+        void shouldRescheduleRetryWhenRetryThrowsException() {
+            // Given: A claimed state whose retryTranscription throws an unexpected exception
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(2);
+            testState.setRetryEligibleAt(null); // Already cleared by claim step
+
+            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.TRANSCRIBING)).thenReturn(List.of(testState));
+            when(processingService.claimRetryEligibleStates(ProcessingPhase.INGESTING)).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            // retryTranscription throws
+            doThrow(new RuntimeException("Connection refused")).when(processingService).retryTranscription(testState);
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then: Should re-schedule retry so the job is not lost
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            assertThat(testState.getRetryEligibleAt()).isAfter(ZonedDateTime.now());
+            verify(processingStateRepository).save(testState);
+        }
+
+        @Test
         void shouldSkipRecoveryWhenStateChangedSinceBatchRead() {
             // Given: State was TRANSCRIBING when batch was read, but user reset it to IDLE
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
@@ -246,7 +271,7 @@ class LectureContentProcessingSchedulerTest {
             // Batch query returns the state
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
 
             // But when we re-fetch, the state is now IDLE (user changed it)
             LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
@@ -277,7 +302,7 @@ class LectureContentProcessingSchedulerTest {
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingService.claimRetryEligibleStates(any())).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

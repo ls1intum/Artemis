@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -90,6 +91,29 @@ public class LectureContentProcessingService {
         boolean canTranscribe = transcriptionApi.isPresent() && tumLiveApi.isPresent();
         boolean canIngest = irisLectureApi.isPresent();
         return canTranscribe || canIngest;
+    }
+
+    /**
+     * Atomically claim retry-eligible processing states for a given phase.
+     * <p>
+     * Uses {@code SELECT ... FOR UPDATE SKIP LOCKED} to prevent multiple nodes from
+     * claiming the same jobs. Within the same transaction, clears {@code retryEligibleAt}
+     * so that no other node can re-select these rows after the transaction commits.
+     * <p>
+     * The caller should process the returned states <b>outside</b> this transaction
+     * to avoid holding row locks during external HTTP calls.
+     *
+     * @param phase the processing phase to claim retry-eligible states for
+     * @return the list of claimed states with {@code retryEligibleAt} already cleared
+     */
+    @Transactional
+    public List<LectureUnitProcessingState> claimRetryEligibleStates(ProcessingPhase phase) {
+        List<LectureUnitProcessingState> states = processingStateRepository.findStatesReadyForRetry(phase.name(), ZonedDateTime.now());
+        for (LectureUnitProcessingState state : states) {
+            state.clearRetryEligibility();
+        }
+        processingStateRepository.saveAll(states);
+        return states;
     }
 
     // -------------------- Public API --------------------

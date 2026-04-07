@@ -114,13 +114,12 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Find and retry all states in a specific phase that are ready for retry.
-     * The query handles the backoff check via retryEligibleAt timestamp.
+     * Uses an atomic claim step to prevent multiple nodes from retrying the same job.
      *
      * @param phase the processing phase to check
      */
     private void retryFailedStates(ProcessingPhase phase) {
-        ZonedDateTime now = ZonedDateTime.now();
-        List<LectureUnitProcessingState> states = processingStateRepository.findStatesReadyForRetry(phase, now);
+        List<LectureUnitProcessingState> states = processingService.claimRetryEligibleStates(phase);
 
         for (LectureUnitProcessingState state : states) {
             retryState(state, phase);
@@ -166,6 +165,10 @@ public class LectureContentProcessingScheduler {
         }
         catch (Exception e) {
             log.error("Failed to retry {} for unit {}: {}", phase, freshState.getLectureUnit().getId(), e.getMessage());
+            // Re-schedule so the claimed job is not lost (retryEligibleAt was cleared during claim)
+            long backoffMinutes = ProcessingStateCallbackService.calculateBackoffMinutes(freshState.getRetryCount());
+            freshState.scheduleRetry(backoffMinutes);
+            processingStateRepository.save(freshState);
         }
     }
 
