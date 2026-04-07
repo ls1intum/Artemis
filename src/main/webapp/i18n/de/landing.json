@@ -8,7 +8,7 @@
         "hero": {
             "tagline": "Für Universitäten & Bildungseinrichtungen",
             "title": "Eine Lernplattform für die universitäre Lehre.",
-            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Selbst gehostet und vollständig unter Ihrer Kontrolle."
+            "subtitle": "Artemis ist eine Open-Source-Lernplattform für die universitäre Lehre. Sofortiges Feedback bei Übungen, KI-gestütztes Tutoring und kollaborative Werkzeuge halten Studierende und Lehrende synchron. Selbst gehostet und vollständig unter deiner Kontrolle."
         },
         "spotlight": {
             "title": "KI, die lehrt, nicht nur antwortet",
@@ -60,7 +60,7 @@
                 },
                 "examMode": {
                     "category": "Prüfungsmodus",
-                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien. Vollständig konfigurierbar für die Prüfungsabläufe Ihrer Institution.",
+                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien. Vollständig konfigurierbar für die Prüfungsabläufe deiner Institution.",
                     "imageAlt": "Prüfungsmodus"
                 },
                 "communication": {
