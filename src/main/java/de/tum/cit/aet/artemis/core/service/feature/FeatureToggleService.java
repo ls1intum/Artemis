@@ -33,6 +33,9 @@ public class FeatureToggleService {
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
+    @Value("${artemis.iris.lecture-content-processing.enabled:false}")
+    private boolean lectureContentProcessingEnabledOnStart;
+
     private final boolean globalSearchEnabledOnStart;
 
     private final RateLimitConfigurationService rateLimitConfigurationService;
@@ -117,7 +120,7 @@ public class FeatureToggleService {
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
-        if (profileService.isDevActive()) {
+        if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
             features.put(Feature.LectureContentProcessing, false);
         }
 
