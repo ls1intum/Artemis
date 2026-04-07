@@ -1,5 +1,4 @@
 import { Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -12,7 +11,7 @@ import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'jhi-quiz-exercise-create-buttons',
     templateUrl: './quiz-exercise-create-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, ButtonModule],
+    imports: [FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, ButtonModule],
 })
 export class QuizExerciseCreateButtonsComponent {
     course = input.required<Course>();
