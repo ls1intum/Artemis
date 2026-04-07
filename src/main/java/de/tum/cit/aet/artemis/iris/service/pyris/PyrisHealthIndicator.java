@@ -137,7 +137,14 @@ public class PyrisHealthIndicator implements HealthIndicator {
         boolean wasUp = previouslyUp.getAndSet(currentlyUp);
         if (currentlyUp && !wasUp) {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
-            processingStateCallbackApi.ifPresent(ProcessingStateCallbackApi::handleIrisReset);
+            processingStateCallbackApi.ifPresent(api -> {
+                try {
+                    api.handleIrisReset();
+                }
+                catch (Exception e) {
+                    log.error("Failed to reset in-flight jobs after Iris restart", e);
+                }
+            });
         }
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();

@@ -492,6 +492,44 @@ public class ProcessingStateCallbackService {
         return token.substring(0, 3) + "..." + token.substring(len - 3);
     }
 
+    /**
+     * Delete the stored transcription for a lecture unit so stale text is not re-ingested.
+     * <p>
+     * Called when the unit's video source changes. Without this, {@link #dispatchPendingJobs()}
+     * would find the old {@code COMPLETED} transcription and dispatch the job as {@code INGESTING},
+     * ingesting text from the previous video into the vector database.
+     *
+     * @param unitId the ID of the lecture unit whose transcription should be removed
+     */
+    void deleteTranscriptionForUnit(long unitId) {
+        transcriptionRepository.findByLectureUnit_Id(unitId).ifPresent(transcription -> {
+            log.info("Deleting existing transcription for unit {} (video content changed)", unitId);
+            transcriptionRepository.delete(transcription);
+        });
+    }
+
+    /**
+     * Reset a stuck processing state directly to IDLE without touching the retry budget.
+     * <p>
+     * Used by stuck-job recovery in {@link de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingScheduler}.
+     * A job that missed a heartbeat due to a transient network gap is not a content-processing
+     * failure — it should be re-queued immediately, not penalised with backoff.
+     *
+     * @param state the stuck processing state to reset
+     */
+    void resetToIdleForRecovery(LectureUnitProcessingState state) {
+        log.info("Recovering stuck unit {} (was {}) — resetting to IDLE, retry budget preserved", state.getLectureUnit().getId(), state.getPhase());
+        state.setPhase(ProcessingPhase.IDLE);
+        state.setIngestionJobToken(null);
+        state.setStartedAt(null);
+        state.setRetryEligibleAt(null);
+        state.setLastUpdated(ZonedDateTime.now());
+        processingStateRepository.save(state);
+
+        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+        notifyProcessingStateChange(state, txStatus);
+    }
+
     // -------------------- Iris Reset --------------------
 
     /**

@@ -164,8 +164,9 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
-        // Use unified failure handling: reset to IDLE with backoff for re-dispatch
-        callbackService.handleProcessingFailure(freshState);
+        // Use recovery reset: re-queue to IDLE without burning the retry budget.
+        // A missed heartbeat (e.g. transient network gap) is not a content-processing failure.
+        callbackService.resetToIdleForRecovery(freshState);
     }
 
     /**

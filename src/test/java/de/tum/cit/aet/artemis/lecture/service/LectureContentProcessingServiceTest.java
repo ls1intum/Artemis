@@ -176,7 +176,7 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldDispatchIdleJobWithVideoAsTranscribing() {
             // Given: One IDLE job, one slot available, unit has video, no existing transcription
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(9L); // 1 slot available
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L); // 1 slot available (MAX_CONCURRENT_PROCESSING - 1)
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);

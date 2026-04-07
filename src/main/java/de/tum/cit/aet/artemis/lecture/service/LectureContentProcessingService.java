@@ -292,6 +292,10 @@ public class LectureContentProcessingService {
             log.info("Content changed for unit {}, video: {}, attachment: {}", unit.getId(), videoChanged, attachmentChanged);
 
             if (videoChanged) {
+                // Delete stored transcription before Iris cleanup: dispatchPendingJobs() checks
+                // for a COMPLETED transcription to decide whether to skip straight to INGESTING.
+                // Leaving the old record would cause stale text from the previous video to be ingested.
+                processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
                 cleanupForReprocessing(unit);
                 state.setVideoSourceHash(currentVideoHash);
             }
