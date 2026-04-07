@@ -649,6 +649,14 @@ public class ParticipationService {
                 return practiceParticipation;
             }
         }
+        // For regular exam exercises (not test exams), if no graded participation was found,
+        // fall back to looking for a test run participation. This handles the case where an
+        // instructor performs a test run on a regular exam — their participation has testRun=true
+        // but the exercise is not a test exam exercise, so it isn't caught by the check above.
+        // Without this fallback, submissions during test runs fail with a "no participation found" error.
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise()) {
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, true);
+        }
         return gradedParticipation;
     }
 
