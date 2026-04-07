@@ -140,7 +140,7 @@ public class DatabaseMigration {
                     optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
                     System.exit(15);
                 }
-                else if (previousVersion.isGreaterThanOrEqualTo(path.requiredVersion)) {
+                else if (previousVersion.isEqualTo(path.requiredVersion)) {
                     updateInitialChecksum(path.upgradeVersion.toString());
                     log.info("Successfully cleaned up initial schema during migration");
                     break; // Exit after handling the required migration step
@@ -219,47 +219,25 @@ public class DatabaseMigration {
      */
     private void updateInitialChecksum(String newVersion) {
         String description = "Initial schema generation for version " + newVersion;
-        String filename = "config/liquibase/changelog/00000000000000_initial_schema.xml";
 
-        // Nullify checksums for all existing initial schema changesets so Liquibase recalculates them
+        // Nullify checksums for all existing initial schema changesets (ID pattern 0000000000000%)
+        // so that Liquibase recalculates them instead of reporting a checksum mismatch.
+        // On upgrade from 8.8.6, only 00000000000001 exists in DATABASECHANGELOG — the new
+        // DB-specific changesets (00000000000002, 00000000000003) use preConditions to handle
+        // the case where their columns already exist.
         String updateSqlStatement = """
                 UPDATE DATABASECHANGELOG
                 SET MD5SUM = null,
                     DATEEXECUTED = now(),
                     DESCRIPTION = ?,
                     LIQUIBASE = '5.0.2',
-                    FILENAME = ?
+                    FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
                 WHERE ID LIKE '0000000000000%';
                 """;
 
-        // Insert placeholder entries for new initial schema changesets (00000000000002, 00000000000003) if they don't exist yet.
-        // This handles upgrades from test servers that already run 9.0.0 but don't have these changesets in DATABASECHANGELOG.
-        // The null MD5SUM causes Liquibase to recalculate the checksum without re-executing the DDL.
-        String insertSqlStatement = """
-                INSERT INTO DATABASECHANGELOG (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE, MD5SUM, DESCRIPTION, LIQUIBASE)
-                SELECT ?, 'krusche', ?, now(), 0, 'EXECUTED', null, ?, '5.0.2'
-                WHERE NOT EXISTS (SELECT 1 FROM DATABASECHANGELOG WHERE ID = ?);
-                """;
-
-        try (var connection = dataSource.getConnection()) {
-            // Nullify checksums for existing entries
-            try (var updateStmt = connection.prepareStatement(updateSqlStatement)) {
-                updateStmt.setString(1, description);
-                updateStmt.setString(2, filename);
-                updateStmt.executeUpdate();
-            }
-
-            // Insert placeholder entries for new changesets if they don't exist
-            for (String changesetId : new String[] { "00000000000002", "00000000000003" }) {
-                try (var insertStmt = connection.prepareStatement(insertSqlStatement)) {
-                    insertStmt.setString(1, changesetId);
-                    insertStmt.setString(2, filename);
-                    insertStmt.setString(3, description);
-                    insertStmt.setString(4, changesetId);
-                    insertStmt.executeUpdate();
-                }
-            }
-
+        try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(updateSqlStatement)) {
+            preparedStatement.setString(1, description);
+            preparedStatement.executeUpdate();
             connection.commit();
             log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
         }
