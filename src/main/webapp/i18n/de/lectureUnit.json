@@ -216,12 +216,21 @@
                 "loading": "Lädt..."
             },
             "pdfViewer": {
+                "title": "PDF-Betrachter",
                 "loadingPdf": "PDF wird geladen...",
                 "loadFailed": "PDF konnte nicht geladen werden",
-                "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut.",
                 "zoomOut": "Verkleinern",
                 "zoomIn": "Vergrößern",
-                "resetZoom": "Zoom zurücksetzen"
+                "search": "Im Dokument suchen",
+                "searchPlaceholder": "Suchen...",
+                "nextMatch": "Nächster Treffer",
+                "previousMatch": "Vorheriger Treffer",
+                "clearSearch": "Suche löschen",
+                "goToPage": "Gehe zu Seite",
+                "pageInputPlaceholder": "Seite",
+                "downloadPdf": "PDF herunterladen",
+                "openFullscreen": "Vollbild öffnen",
+                "closeFullscreen": "Vollbild schließen"
             }
         },
         "exerciseUnit": {

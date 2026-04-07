@@ -16,7 +16,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -39,6 +39,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -48,6 +49,8 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -85,6 +88,8 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(ContextSelectionComponent),
+                MockComponent(IrisThinkingBubbleComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -100,6 +105,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
+                MockProvider(CourseStorageService),
             ],
         })
             .compileComponents()
@@ -994,6 +1000,26 @@ describe('IrisBaseChatbotComponent', () => {
             expect(relatedEntityButton).not.toBeNull();
             expect(component.relatedEntityRoute()).toBe('../exercises/99');
         });
+
+        it('should display correct related entity button when text exercise session selected', async () => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.TEXT_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(77));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/77');
+            expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
+        });
     });
 
     describe('LLM Selection Modal', () => {
@@ -1242,12 +1268,6 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.currentSessionTitle()).toBe('artemisApp.iris.chatHistory.newChat');
         });
 
-        it('should filter context sessions to matching chatMode and entityId', () => {
-            const contextSessions = component.contextSessions();
-            expect(contextSessions).toHaveLength(2);
-            expect(contextSessions.map((s) => s.id)).toEqual([10, 11]);
-        });
-
         it('should render session title trigger in widget layout', () => {
             const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
             expect(trigger).not.toBeNull();
@@ -1261,18 +1281,20 @@ describe('IrisBaseChatbotComponent', () => {
             expect(trigger).toBeNull();
         });
 
-        it('should build menu items with group labels and context sessions on toggle', () => {
+        it('should build menu items with group labels and all sessions on toggle', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            // "Today" group label + session1 + "Older" group label + session2
-            expect(component.sessionMenuItems()).toHaveLength(4);
+            // "Today" group label + 3 today sessions + "Older" group label + 1 older session
+            expect(component.sessionMenuItems()).toHaveLength(6);
             expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
-            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion');
+            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion'); // most recent today
             expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
-            expect(component.sessionMenuItems()[2].disabled).toBe(true); // "Older" group label
-            expect(component.sessionMenuItems()[3].label).toBe('Array sorting question');
-            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[2].label).toBe('Other exercise chat');
+            expect(component.sessionMenuItems()[3].label).toBe('Lecture question');
+            expect(component.sessionMenuItems()[4].disabled).toBe(true); // "Older" group label
+            expect(component.sessionMenuItems()[5].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[5].data?.isActive).toBe(false);
         });
 
         it('should still build grouped menu when current session id is undefined', () => {
@@ -1311,7 +1333,8 @@ describe('IrisBaseChatbotComponent', () => {
             const mockEvent = new MouseEvent('click');
             component.toggleSessionMenu(mockEvent);
 
-            component.sessionMenuItems()[3].command!({} as any);
+            // index 5: "Older" label is at [4], exerciseSession2 (the only older session) is at [5]
+            component.sessionMenuItems()[5].command!({} as any);
 
             expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
         });
@@ -1466,6 +1489,114 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('activeChatMessage computed signal', () => {
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        it('should show thinking bubble when a stage has IN_PROGRESS state and chatMessage', () => {
+            const stageWithChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+                chatMessage: 'Analyzing your code...',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Analyzing your code...');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
+        });
+
+        it('should not show thinking bubble when no stage has chatMessage', () => {
+            const stageWithoutChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithoutChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should not show thinking bubble when all stages are DONE', () => {
+            const doneStage: IrisStageDTO = {
+                name: 'Complete',
+                weight: 1,
+                state: IrisStageStateDTO.DONE,
+                message: 'Done',
+                internal: false,
+                chatMessage: 'Finished analysis',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([doneStage]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should update thinking bubble message when chatMessage changes', () => {
+            const stagesSubject = new BehaviorSubject<IrisStageDTO[]>([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Initial message',
+                },
+            ]);
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(stagesSubject.asObservable());
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Initial message');
+
+            // Update the chatMessage
+            stagesSubject.next([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Updated message',
+                },
+            ]);
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Updated message');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
+        });
+    });
+
     describe('processMessages newline handling', () => {
         it('should not apply newline doubling to any messages', () => {
             const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';
@@ -1497,6 +1628,56 @@ describe('IrisBaseChatbotComponent', () => {
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);
+        });
+    });
+
+    describe('shouldShowStatusBar', () => {
+        function createComponentWithStages(stages: IrisStageDTO[]): IrisBaseChatbotComponent {
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of(stages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            const comp = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            return comp;
+        }
+
+        it('should return false when stages are empty', () => {
+            const comp = createComponentWithStages([]);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return false when all stages are DONE or SKIPPED', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.SKIPPED, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return true when a non-internal stage is IN_PROGRESS', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return true when a non-internal stage is ERROR', () => {
+            const stages: IrisStageDTO[] = [{ name: 'Stage 1', weight: 1, state: IrisStageStateDTO.ERROR, message: '', internal: false } as IrisStageDTO];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return false when only internal stages are unfinished', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Internal Stage', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: true } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
         });
     });
 });

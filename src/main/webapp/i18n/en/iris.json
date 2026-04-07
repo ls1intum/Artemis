@@ -143,11 +143,23 @@
                 "submit": "Submit Answer",
                 "correct": "Correct!",
                 "incorrect": "Incorrect.",
-                "explanation": "Explanation:"
+                "explanation": "Explanation:",
+                "questionOf": "Question {{ current }} of {{ total }}",
+                "viewScore": "View Score",
+                "reviewQuestions": "Review Questions",
+                "score": "Score"
             },
             "citation": {
                 "unitLabel": "Unit:",
                 "lectureLabel": "Lecture:"
+            },
+            "contextSelection": {
+                "label": "Select chat context",
+                "search": "Search...",
+                "placeholder": "Select context...",
+                "courseGroup": "Course",
+                "lecturesGroup": "Lectures",
+                "exercisesGroup": "Exercises"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
@@ -202,6 +214,7 @@
                 "older": "Older",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
+                    "textExercise": "This chat is related to a text exercise.",
                     "lecture": "This chat is related to a lecture."
                 },
                 "deleteSession": "Delete",
