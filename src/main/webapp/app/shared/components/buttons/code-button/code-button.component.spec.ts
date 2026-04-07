@@ -62,7 +62,7 @@ describe('CodeButtonComponent', () => {
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
-                LocalStorageService,
+                MockProvider(LocalStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -197,6 +197,7 @@ describe('CodeButtonComponent', () => {
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
+        component.onClick();
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
@@ -269,6 +270,7 @@ describe('CodeButtonComponent', () => {
             testRun: true,
         };
         fixture.componentRef.setInput('participations', [participation1, participation2]);
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -287,6 +289,7 @@ describe('CodeButtonComponent', () => {
     it('should handle no participation', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.isTeamParticipation()).toBe(false);
