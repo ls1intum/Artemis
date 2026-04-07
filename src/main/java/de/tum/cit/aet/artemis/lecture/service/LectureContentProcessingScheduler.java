@@ -164,9 +164,10 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
-        // Use recovery reset: re-queue to IDLE without burning the retry budget.
-        // A missed heartbeat (e.g. transient network gap) is not a content-processing failure.
-        callbackService.resetToIdleForRecovery(freshState);
+        // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
+        // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
+        // ensures poison-pill jobs eventually fail permanently instead of looping forever.
+        callbackService.handleProcessingFailure(freshState);
     }
 
     /**

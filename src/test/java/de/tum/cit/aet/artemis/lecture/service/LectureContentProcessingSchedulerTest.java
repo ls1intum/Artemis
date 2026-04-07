@@ -89,8 +89,8 @@ class LectureContentProcessingSchedulerTest {
             // When
             scheduler.processScheduledRetries();
 
-            // Then: Should delegate to callbackService.resetToIdleForRecovery
-            verify(callbackService).resetToIdleForRecovery(testState);
+            // Then: Should delegate to callbackService.handleProcessingFailure
+            verify(callbackService).handleProcessingFailure(testState);
         }
 
         @Test
@@ -106,7 +106,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should not attempt recovery
-            verify(callbackService, never()).resetToIdleForRecovery(any());
+            verify(callbackService, never()).handleProcessingFailure(any());
         }
 
         @Test
@@ -124,7 +124,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should skip (already scheduled)
-            verify(callbackService, never()).resetToIdleForRecovery(any());
+            verify(callbackService, never()).handleProcessingFailure(any());
         }
 
         @Test
@@ -146,7 +146,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should NOT attempt recovery because phase changed
-            verify(callbackService, never()).resetToIdleForRecovery(any());
+            verify(callbackService, never()).handleProcessingFailure(any());
         }
     }
 
