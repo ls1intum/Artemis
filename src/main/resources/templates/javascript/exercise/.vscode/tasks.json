@@ -8,14 +8,6 @@
             "group": { "kind": "build", "isDefault": true },
             "options": { "cwd": "${workspaceFolder}" },
             "presentation": { "reveal": "always", "panel": "shared" }
-        },
-        {
-            "label": "Test",
-            "type": "shell",
-            "command": "npm test",
-            "group": "test",
-            "options": { "cwd": "${workspaceFolder}" },
-            "presentation": { "reveal": "always", "panel": "shared" }
         }
     ]
 }

@@ -4,7 +4,7 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "make && ./main",
+            "command": "make && ./helloWorld",
             "group": { "kind": "build", "isDefault": true },
             "options": { "cwd": "${workspaceFolder}" },
             "presentation": { "reveal": "always", "panel": "shared" }
@@ -13,14 +13,6 @@
             "label": "Build",
             "type": "shell",
             "command": "make",
-            "group": "build",
-            "options": { "cwd": "${workspaceFolder}" },
-            "presentation": { "reveal": "always", "panel": "shared" }
-        },
-        {
-            "label": "Clean",
-            "type": "shell",
-            "command": "make clean",
             "group": "build",
             "options": { "cwd": "${workspaceFolder}" },
             "presentation": { "reveal": "always", "panel": "shared" }
