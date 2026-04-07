@@ -53,6 +53,7 @@ export class CourseNotificationComponent {
     protected authorName: string | undefined;
     protected authorId: number | undefined;
     protected authorImageUrl: string | undefined;
+    protected isAuthorBot: boolean = false;
 
     constructor() {
         effect(() => {
@@ -91,13 +92,13 @@ export class CourseNotificationComponent {
                     this.authorName = this.notificationParameters.authorName as string;
                     this.authorId = this.notificationParameters.authorId as number;
                     this.authorImageUrl = this.notificationParameters.authorImageUrl as string;
-                    this.isAuthorBot = this.authorImageUrl === 'images/iris/iris-logo-small.png';
+                    this.isAuthorBot = this.authorImageUrl === '/public/images/iris/iris-logo-small.png';
                     this.isShowProfilePicture = true;
                 } else if ('replyAuthorName' in this.notificationParameters && 'replyImageUrl' in this.notificationParameters && 'replyAuthorId' in this.notificationParameters) {
                     this.authorName = this.notificationParameters.replyAuthorName as string;
                     this.authorId = this.notificationParameters.replyAuthorId as number;
                     this.authorImageUrl = this.notificationParameters.replyImageUrl as string;
-                    this.isAuthorBot = this.authorImageUrl === 'images/iris/iris-logo-small.png';
+                    this.isAuthorBot = this.authorImageUrl === '/public/images/iris/iris-logo-small.png';
                     this.isShowProfilePicture = true;
                 } else {
                     this.isAuthorBot = false;

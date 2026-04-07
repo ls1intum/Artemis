@@ -36,7 +36,7 @@ public class IrisBotUserService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisBotUserService.class);
 
-    public static final String IRIS_BOT_IMAGE_URL = "images/iris/iris-logo-small.png";
+    public static final String IRIS_BOT_IMAGE_URL = "/public/images/iris/iris-logo-small.png";
 
     private final UserRepository userRepository;
 
