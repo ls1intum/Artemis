@@ -1,0 +1,103 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Upgrade Guide
+
+This page documents the required upgrade path for Artemis. Due to database migration consolidation at each major version, administrators **must deploy specific intermediate versions** before upgrading to the next major release.
+
+## Why Intermediate Versions Are Required
+
+With every major release (e.g., 8.0.0, 9.0.0), Artemis consolidates all incremental database changelogs from the previous release cycle into a single initial schema. This dramatically improves application startup time (especially for tests) and simplifies the migration history.
+
+However, this means the new major version's schema **assumes all previous incremental migrations have already been applied**. If you skip the required intermediate version, the consolidated schema will conflict with your existing database and Artemis will refuse to start.
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>Important:</strong> If Artemis detects that the required intermediate version was not deployed, it will exit with error code 15 and a message indicating which version must be deployed first.
+</Callout>
+
+## Upgrade Path Table
+
+The table below shows the required intermediate version for each major release. You must deploy and start the **Required Version** at least once before upgrading to the **Target Version**.
+
+| Target Version | Required Intermediate Version | Valid Until |
+|----------------|-------------------------------|-------------|
+| 6.0.0          | 5.12.9                        | 7.0.0       |
+| 7.0.0          | 6.9.6                         | 8.0.0       |
+| 8.0.0          | 7.10.5                        | 9.0.0       |
+| 9.0.0          | 8.8.6                         | 10.0.0      |
+
+### How to Read This Table
+
+- **Target Version**: The major version you want to upgrade to.
+- **Required Intermediate Version**: The minimum version your database must have been running before upgrading to the target version. Deploy this version, start Artemis, wait for it to fully initialize, then upgrade to the target version.
+- **Valid Until**: The migration path is removed at this version. For example, the 5.12.9 → 6.0.0 path is available until 7.0.0, after which upgrading from 5.x is no longer supported.
+
+## Upgrade Scenarios
+
+### Fresh Installation
+
+A fresh installation (empty database) can always use the latest version directly. No intermediate versions are needed.
+
+### Upgrading Within a Major Version (e.g., 8.5.0 → 8.8.6)
+
+Minor and patch version upgrades within the same major version require **no special steps**. Simply deploy the new version. All incremental Liquibase changelogs will be applied automatically.
+
+### Upgrading Across One Major Version (e.g., 8.8.6 → 9.0.0)
+
+1. Deploy and start the **required intermediate version** (e.g., 8.8.6) to ensure all incremental migrations are applied.
+2. Wait for Artemis to fully start (check logs for "Started ArtemisApp").
+3. Stop Artemis.
+4. Deploy and start the new major version (e.g., 9.0.0).
+5. The migration system will automatically:
+   - Detect the previous version from the `artemis_version` table.
+   - Nullify the initial schema checksum so Liquibase recalculates it.
+   - Apply a cleanup changeset that removes old changelog entries from `DATABASECHANGELOG`.
+   - Apply any new incremental changelogs.
+   - Update the `artemis_version` table.
+
+### Upgrading Across Multiple Major Versions (e.g., 6.5.0 → 9.0.0)
+
+You must upgrade through each intermediate version sequentially:
+
+1. **6.5.0 → 6.9.6** (deploy 6.9.6, start, wait for full initialization)
+2. **6.9.6 → 7.10.5** (deploy 7.10.5, start, wait for full initialization)
+3. **7.10.5 → 8.8.6** (deploy 8.8.6, start, wait for full initialization)
+4. **8.8.6 → 9.0.0** (deploy 9.0.0, start, wait for full initialization)
+
+<Callout variant={CalloutVariant.info}>
+  Each intermediate version must be fully started at least once so that all database migrations are applied before proceeding to the next version.
+</Callout>
+
+### Skipping a Required Version
+
+If you attempt to start a major version without having deployed the required intermediate version, Artemis will:
+
+1. Log an error message: *"Cannot start Artemis because the migration path was not followed. Please deploy and start the release X.Y.Z first, otherwise the migration will fail"*
+2. Exit with code **15**.
+3. No database changes will be made.
+
+To resolve this, deploy the required intermediate version first, start Artemis, wait for it to fully initialize, stop it, and then deploy the desired major version.
+
+## Database Compatibility
+
+Artemis supports both **MySQL** and **PostgreSQL**. The migration system works identically on both databases. The initial schema uses database-agnostic Liquibase types with additional database-specific changesets for:
+
+- **MySQL**: Columns with `enum` types for data integrity and storage optimization.
+- **PostgreSQL**: Columns with `varchar`/`text`/`bytea` types as appropriate for PostgreSQL.
+
+<Callout variant={CalloutVariant.info}>
+  Ensure your database is backed up before performing any major version upgrade.
+</Callout>
+
+## Technical Details
+
+The migration path logic is implemented in `DatabaseMigration.java`. It runs before Liquibase on every application startup and checks the `artemis_version` table to determine the previous version. The `MigrationPath` class defines version boundaries:
+
+```
+MigrationPath("8.8.6")
+  → requiredVersion = 8.8.6
+  → upgradeVersion  = 9.0.0  (next major)
+  → nextUpgradeVersion = 10.0.0  (major after that)
+```
+
+When `currentVersion ∈ [upgradeVersion, nextUpgradeVersion)` and `previousVersion >= requiredVersion`, the system nullifies the initial schema checksum (once) to allow Liquibase to recalculate it against the consolidated schema. This runs only on the first startup after the schema consolidation — subsequent startups detect that the consolidation is already complete and skip this step.
