@@ -1669,22 +1669,28 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chips).toHaveLength(0);
         });
 
-        it('should call applyChipText with valid starter keys when chips are clicked', () => {
+        it('should call applyChipText with correct starter key when Learn chip is clicked', () => {
             fixture.detectChanges();
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
-            const validStarterKeys = new Set([
-                'artemisApp.iris.chat.suggestions.learnStarter',
-                'artemisApp.iris.chat.suggestions.quizTopicStarter',
-                'artemisApp.iris.chat.suggestions.tipsStarter',
-            ]);
+            chips[0].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+        });
 
-            const calledKeys = new Set<string>();
-            for (const chip of chips) {
-                chip.click();
-                calledKeys.add(applyChipTextSpy.mock.lastCall![0] as string);
-            }
-            expect(calledKeys).toEqual(validStarterKeys);
+        it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
+        });
+
+        it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[2].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {

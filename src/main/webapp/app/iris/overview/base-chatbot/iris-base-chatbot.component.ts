@@ -430,11 +430,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     });
 
     readonly textareaPlaceholder = computed(() => {
-        if (this.isInputDisabled()) {
-            return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
-        }
         if (this.chipPreviewText()) return '';
-        if (this.shouldUseRotatingPlaceholder() && this.currentPlaceholder()) {
+        if (this.shouldUseRotatingPlaceholder() && !this.isInputDisabled() && this.currentPlaceholder()) {
             return this.currentPlaceholder();
         }
         return this.translateService.instant('artemisApp.exerciseChatbot.inputMessage');
@@ -635,7 +632,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Shuffle labels once when chat mode or entity changes (not on every computed read)
         effect(() => {
             const mode = this.currentChatMode();
-            this.currentRelatedEntityId(); // track entity changes to reshuffle
             let keys: readonly string[];
             if (this.isExerciseMode()) {
                 keys = EXERCISE_PLACEHOLDER_LABEL_KEYS;
@@ -652,7 +648,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 [labels[i], labels[j]] = [labels[j], labels[i]];
             }
             untracked(() => this.interpolatedLabels.set(labels));
-            untracked(() => this.placeholderIndex.set(0));
         });
     }
 
