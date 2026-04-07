@@ -153,6 +153,14 @@
                 "unitLabel": "Unit:",
                 "lectureLabel": "Lecture:"
             },
+            "contextSelection": {
+                "label": "Select chat context",
+                "search": "Search...",
+                "placeholder": "Select context...",
+                "courseGroup": "Course",
+                "lecturesGroup": "Lectures",
+                "exercisesGroup": "Exercises"
+            },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
@@ -206,6 +214,7 @@
                 "older": "Older",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
+                    "textExercise": "This chat is related to a text exercise.",
                     "lecture": "This chat is related to a lecture."
                 },
                 "deleteSession": "Delete",
