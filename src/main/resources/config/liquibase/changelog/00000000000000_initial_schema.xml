@@ -3703,6 +3703,9 @@
                 <dbms type="mysql"/>
                 <dbms type="h2"/>
             </or>
+            <not>
+                <columnExists tableName="forwarded_message" columnName="source_type"/>
+            </not>
         </preConditions>
         <addColumn tableName="forwarded_message">
             <column name="source_type" type="enum('POST','ANSWER')">
@@ -3807,6 +3810,9 @@
     <changeSet id="00000000000003" author="krusche">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
+            <not>
+                <columnExists tableName="forwarded_message" columnName="source_type"/>
+            </not>
         </preConditions>
         <addColumn tableName="forwarded_message">
             <column name="source_type" type="varchar(15)">
