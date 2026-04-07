@@ -85,6 +85,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
              * @return the corresponding DTO
              */
             public static FeedbackDTO of(Feedback feedback) {
+                Objects.requireNonNull(feedback, "The feedback must be set");
                 String testCaseName = null;
                 if (feedback.getTestCase() != null && Hibernate.isInitialized(feedback.getTestCase())) {
                     testCaseName = feedback.getTestCase().getTestName();

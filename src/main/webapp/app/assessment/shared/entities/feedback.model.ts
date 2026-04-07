@@ -332,6 +332,9 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
     }
 };
 
+/**
+ * DTO representing feedback returned by the server.
+ */
 export class FeedbackDTO {
     public id?: number;
     public text?: string;

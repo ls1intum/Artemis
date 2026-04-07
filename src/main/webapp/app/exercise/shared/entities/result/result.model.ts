@@ -62,6 +62,9 @@ export function isPracticeResult(result: Result | undefined): boolean {
     return studentParticipation?.testRun ?? false;
 }
 
+/**
+ * DTO representing a simple result which is used in complaint dto.
+ */
 export class ResultSimpleDTO {
     public id?: number;
     public completionDate?: dayjs.Dayjs;
