@@ -137,6 +137,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
