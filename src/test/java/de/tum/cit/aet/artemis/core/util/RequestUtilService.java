@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.net.URI;
@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -50,7 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
 // NOTE: Do NOT add @Lazy to this class. The ObjectMapper must be properly configured with Jackson modules
-// (Hibernate6Module, JavaTimeModule, etc.) before this service is used. With @Lazy, the ObjectMapper might
+// (HibernateModule, JavaTimeModule, etc.) before this service is used. With @Lazy, the ObjectMapper might
 // not have all modules registered, causing "No _valueDeserializer assigned" errors when deserializing entities.
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -82,7 +83,7 @@ public class RequestUtilService {
      * @param requestBuilder the request to execute
      * @return the result actions
      */
-    public ResultActions performMvcRequest(MockHttpServletRequestBuilder requestBuilder) throws Exception {
+    public ResultActions performMvcRequest(AbstractMockHttpServletRequestBuilder<?> requestBuilder) throws Exception {
         return mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder));
     }
 
@@ -90,9 +91,9 @@ public class RequestUtilService {
         return mapper;
     }
 
-    private MockHttpServletRequestBuilder addRequestPostProcessorIfAvailable(MockHttpServletRequestBuilder request) {
+    private AbstractMockHttpServletRequestBuilder<?> addRequestPostProcessorIfAvailable(AbstractMockHttpServletRequestBuilder<?> request) {
         if (requestPostProcessor != null) {
-            return request.with(requestPostProcessor);
+            request.with(requestPostProcessor);
         }
         return request;
     }
@@ -196,7 +197,7 @@ public class RequestUtilService {
     }
 
     public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
-        final var mapper = new ObjectMapper();
+        final var mapper = JsonObjectMapper.get();
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();
@@ -207,7 +208,7 @@ public class RequestUtilService {
     }
 
     public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
-        final var mapper = new ObjectMapper();
+        final var mapper = JsonObjectMapper.get();
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();
@@ -557,6 +558,18 @@ public class RequestUtilService {
         String jsonBody = mapper.writeValueAsString(body);
 
         var request = MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+
+        restoreSecurityContext();
+
+        return res.getResponse();
+    }
+
+    public MockHttpServletResponse patchWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+
+        var request = MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
 
         MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
 

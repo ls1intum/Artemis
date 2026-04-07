@@ -23,10 +23,11 @@
             [isProblemStatementVisible]="false"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
-            [showEditorInstructions]="showEditorInstructions"
+            [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"
             [readOnlyManualFeedback]="true"
             [course]="course"
+            [showNavbar]="!lightweight()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -80,6 +81,7 @@
               />
             </div>
             <jhi-programming-exercise-instructions
+                [class.d-none]="lightweight()"
                 editorSidebar
                 (onNoInstructionsAvailable)="showEditorInstructions = false"
                 [exercise]="exercise"

@@ -1,6 +1,0 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
-    <h3 jhiTranslate="artemisApp.pages.editTutorialGroup.title"></h3>
-    @if (course) {
-        <jhi-tutorial-group-form [formData]="formData" [course]="course" [isEditMode]="true" (formSubmitted)="updateTutorialGroup($event)" />
-    }
-</jhi-loading-indicator-container>

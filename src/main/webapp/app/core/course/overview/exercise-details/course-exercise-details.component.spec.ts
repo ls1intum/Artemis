@@ -86,6 +86,7 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -207,6 +208,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).overrideComponent(CourseExerciseDetailsComponent, {
@@ -260,7 +262,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exerciseId).toBe(42);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
-        expect(comp.hasMoreResults).toBe(false);
+        expect(comp.showMoreResults()).toBe(false);
         comp.ngOnDestroy();
     });
 
@@ -274,6 +276,7 @@ describe('CourseExerciseDetailsComponent', () => {
         result.completionDate = dayjs();
         const submission = new TextSubmission();
         submission.results = [result];
+        submission.participation = studentParticipation;
         studentParticipation.submissions = [submission];
         studentParticipation.type = ParticipationType.STUDENT;
         studentParticipation.id = 42;
@@ -316,7 +319,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.studentParticipations[0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo()).toEqual(plagiarismCaseInfo);
-        expect(comp.hasMoreResults).toBe(false);
+        expect(comp.showMoreResults()).toBe(false);
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     });
 
@@ -337,24 +340,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exampleSolutionInfo()).toBe(exampleSolutionInfo);
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();
         expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise, artemisMarkdown);
-    });
-
-    it('should collapse example solution for tutors', () => {
-        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
-        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
-        expect(comp.exampleSolutionCollapsed()).toBe(true);
-
-        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
-        expect(comp.exampleSolutionCollapsed()).toBe(false);
-    });
-
-    it('should collapse/expand example solution when clicked', () => {
-        expect(comp.exampleSolutionCollapsed()).toBeUndefined();
-        comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed()).toBe(true);
-
-        comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed()).toBe(false);
     });
 
     it('should sort results by completion date in ascending order', () => {
@@ -496,6 +481,59 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.irisEnabled()).toBe(false);
             expect(comp.irisChatEnabled()).toBe(false);
         }
+    });
+
+    it('should load iris settings for text exercise when Iris module feature is active', async () => {
+        vi.useFakeTimers();
+        const textExerciseWithCourse = {
+            id: 42,
+            type: ExerciseType.TEXT,
+            studentParticipations: [],
+            course: { id: 1 },
+        } as unknown as TextExercise;
+
+        const fakeSettings = mockCourseSettings(1, true);
+
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: textExerciseWithCourse } }));
+
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+        const irisSettingsService = TestBed.inject(IrisSettingsService);
+        const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
+
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
+        expect(comp.irisEnabled()).toBe(true);
+        expect(comp.irisChatEnabled()).toBe(true);
+    });
+
+    it('should not load iris settings when exercise is in an exam group', async () => {
+        vi.useFakeTimers();
+        const examExercise = {
+            id: 42,
+            type: ExerciseType.TEXT,
+            studentParticipations: [],
+            course: { id: 1 },
+            exerciseGroup: { id: 10 },
+        } as unknown as TextExercise;
+
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: examExercise } }));
+
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+        const irisSettingsService = TestBed.inject(IrisSettingsService);
+        const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
+
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(getCourseSettingsSpy).not.toHaveBeenCalled();
+        expect(comp.irisEnabled()).toBe(false);
+        expect(comp.irisChatEnabled()).toBe(false);
     });
 
     it('should log event on init', () => {

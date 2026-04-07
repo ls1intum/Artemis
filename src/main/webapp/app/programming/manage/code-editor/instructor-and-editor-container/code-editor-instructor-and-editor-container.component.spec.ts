@@ -50,6 +50,7 @@ import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@forta
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -94,6 +95,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
         { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+        { provide: ExerciseEditorSyncService, useValue: { connect: jest.fn(), disconnect: jest.fn(), subscribeToUpdates: jest.fn() } },
         ...additionalProviders,
     ];
 }
@@ -332,9 +334,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     describe('Code Generation', () => {
+        const selectCodeGenerationRepositories = (...repositories: RepositoryType[]) => {
+            comp.setCodeGenerationRepositoryEnabled(RepositoryType.TEMPLATE, repositories.includes(RepositoryType.TEMPLATE));
+            comp.setCodeGenerationRepositoryEnabled(RepositoryType.SOLUTION, repositories.includes(RepositoryType.SOLUTION));
+            comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
+        };
+
         it('should not generate when no exercise id', async () => {
             comp.exercise = undefined as any;
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
 
             comp.generateCode();
             await Promise.resolve();
@@ -350,21 +359,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
         });
 
-        it('should warn on unsupported repository types', () => {
+        it('should warn when no repository is selected', () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-            comp.selectedRepository = RepositoryType.ASSIGNMENT; // unsupported
+            comp.selectedRepository = RepositoryType.ASSIGNMENT;
 
             comp.generateCode();
 
             expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
             expect(addAlertSpy).toHaveBeenCalledWith(
-                expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' }),
+                expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.noRepositorySelected' }),
             );
         });
 
         it('should call API, subscribe, and show success alert on DONE success', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
 
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-1' }));
             const job$ = new Subject<any>();
@@ -376,7 +386,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
 
             // Emit DONE success event
-            job$.next({ type: 'DONE', success: true });
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
 
             expect(comp.isGeneratingCode()).toBeFalse();
             expect(addAlertSpy).toHaveBeenCalledWith(
@@ -388,9 +398,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             );
         });
 
-        it('should call API, subscribe, and show partial success alert on DONE failure', async () => {
+        it('should mark the repository as warning and preserve the message on DONE partial completion', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
 
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-2' }));
             const job$ = new Subject<any>();
@@ -401,13 +412,49 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
-            job$.next({ type: 'DONE', success: false });
+            job$.next({ type: 'DONE', success: false, completionStatus: 'PARTIAL', message: 'Generation completed, but the build failed' });
 
             expect(comp.isGeneratingCode()).toBeFalse();
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                expect.objectContaining({
+                    state: 'warning',
+                    message: 'Generation completed, but the build failed',
+                }),
+            );
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: AlertType.WARNING,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.warning',
+                    translationParams: { repositoryType: RepositoryType.SOLUTION },
+                }),
+            );
+        });
+
+        it('should mark the repository as error and show error alert on DONE failure', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
+
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-2b' }));
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            job$.next({ type: 'DONE', success: false, completionStatus: 'ERROR', message: 'Generation finished without producing files' });
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                expect.objectContaining({
+                    state: 'error',
+                    message: 'Generation finished without producing files',
+                }),
+            );
+            expect(addAlertSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                     translationParams: { repositoryType: RepositoryType.SOLUTION },
                 }),
             );
@@ -416,6 +463,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should show error alert on API error', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TESTS;
+            selectCodeGenerationRepositories(RepositoryType.TESTS);
 
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
 
@@ -450,9 +498,131 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBeFalse();
         });
 
-        it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
+        it('should debounce repository pulls across FILE_UPDATED and NEW_FILE events', fakeAsync(() => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            const pullSpy = jest.spyOn(repoService, 'pull');
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
+
+            expect(pullSpy).not.toHaveBeenCalled();
+
+            tick(250);
+
+            expect(pullSpy).toHaveBeenCalledOnce();
+            expect(comp.codeGenerationActivityLog()).toEqual([
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
+            ]);
+            expect(
+                comp.getCodeGenerationIterationActivityGroups(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities),
+            ).toEqual([
+                {
+                    iteration: 2,
+                    activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],
+                },
+                {
+                    iteration: 1,
+                    activities: [expect.objectContaining({ path: 'src/main/java/App.java', iteration: 1 })],
+                },
+            ]);
+        }));
+
+        it('should flush a pending repository pull when DONE arrives before the debounce window elapses', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            const pullSpy = jest.spyOn(repoService, 'pull');
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            expect(pullSpy).not.toHaveBeenCalled();
+
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            tick();
+
+            expect(pullSpy).toHaveBeenCalledOnce();
+
+            tick(250);
+
+            expect(pullSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should keep the final repository pull alive on DONE until the pull completes', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3b' }));
+
+            const job$ = new Subject<any>();
+            const pull$ = new Subject<void>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            jest.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            tick(250);
+
+            const trackedPullSubscription = (comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
+            expect(trackedPullSubscription?.closed).toBeFalse();
+
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            tick();
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(trackedPullSubscription?.closed).toBeFalse();
+            expect((comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE)).toBe(trackedPullSubscription);
+
+            pull$.complete();
+            tick();
+
+            expect((comp as any).codeGenerationPullSubscriptions.has(RepositoryType.TEMPLATE)).toBeFalse();
+        }));
+
+        it('should unsubscribe in-flight repository pulls during cleanup', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+            const job$ = new Subject<any>();
+            const pull$ = new Subject<void>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            jest.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            tick(250);
+
+            const trackedPullSubscription = (comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
+            expect(trackedPullSubscription?.closed).toBeFalse();
+
+            (comp as any).clearCodeGenerationRepositoryPulls();
+
+            expect(trackedPullSubscription?.closed).toBeTrue();
+            expect((comp as any).codeGenerationPullSubscriptions.size).toBe(0);
+            expect((comp as any).repositoriesWithInFlightCodeGenerationPull.size).toBe(0);
+        }));
+
+        it('should not pull the repository when file events belong to a non-selected repository', async () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-template' }));
 
             const job$ = new Subject<any>();
             (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
@@ -461,10 +631,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            job$.next({ type: 'FILE_UPDATED' });
-            job$.next({ type: 'NEW_FILE' });
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 });
 
-            expect(pullSpy).toHaveBeenCalledTimes(2);
+            expect(pullSpy).not.toHaveBeenCalled();
+            expect(comp.codeGenerationActivityLog()).toEqual([
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 }),
+            ]);
         });
 
         it('should show modal when code generation is already running', async () => {
@@ -472,6 +644,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const modalService = TestBed.inject(NgbModal);
             const openSpy = jest.spyOn(modalService, 'open');
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
 
             const conflict = new HttpErrorResponse({
                 status: 409,
@@ -497,6 +670,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
             const job$ = new Subject<any>();
             (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
@@ -506,7 +680,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            job$.next({ type: 'DONE', success: true });
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
             await Promise.resolve();
 
             expect(executeRefresh).toHaveBeenCalled();
@@ -517,6 +691,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should show danger alert and cleanup on ERROR event', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-5' }));
             const job$ = new Subject<any>();
             (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
@@ -532,9 +707,36 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
         });
 
+        it('should mark queued repositories as skipped when the active repository errors', async () => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-template' }));
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            job$.next({ type: 'ERROR', message: 'Template generation failed' });
+
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
+                expect.objectContaining({
+                    state: 'error',
+                    message: 'Template generation failed',
+                }),
+            );
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                expect.objectContaining({
+                    state: 'skipped',
+                    message: 'artemisApp.programmingExercise.codeGeneration.status.skippedMessage',
+                }),
+            );
+        });
+
         it('should show danger alert and cleanup when job stream errors', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TESTS;
+            selectCodeGenerationRepositories(RepositoryType.TESTS);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-6' }));
             (ws.subscribeToJob as jest.Mock).mockReturnValue(throwError(() => new Error('ws')));
 
@@ -549,6 +751,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should show danger alert when response has no job id', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
 
             comp.generateCode();
@@ -561,6 +764,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
 
             // Intercept setTimeout to capture the scheduled callback and invoke it immediately
@@ -593,6 +797,161 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             }
         });
 
+        it('should preserve the timed-out repository error state when that repository is still present in the queue', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-timeout' }));
+
+            const originalSetTimeout = window.setTimeout;
+            let timeoutCallback: (() => void) | undefined;
+            // @ts-ignore
+            window.setTimeout = ((fn: () => void, _delay?: number) => {
+                timeoutCallback = fn;
+                return 1 as any;
+            }) as any;
+
+            try {
+                (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+                comp.generateCode();
+                await Promise.resolve();
+
+                // Simulate stale queue bookkeeping where the active repository is still present.
+                (comp as any).queuedCodeGenerationRepositories = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION];
+
+                if (timeoutCallback) {
+                    timeoutCallback();
+                }
+
+                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
+                    expect.objectContaining({
+                        state: 'error',
+                        message: 'artemisApp.programmingExercise.codeGeneration.timeoutDetails',
+                    }),
+                );
+                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                    expect.objectContaining({
+                        state: 'skipped',
+                        message: 'artemisApp.programmingExercise.codeGeneration.status.skippedMessage',
+                    }),
+                );
+                expect(addAlertSpy).toHaveBeenCalledWith(
+                    expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }),
+                );
+            } finally {
+                window.setTimeout = originalSetTimeout;
+            }
+        });
+
+        it('should generate selected repositories consecutively in template-solution-test order', async () => {
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
+
+            const templateJob$ = new Subject<any>();
+            const solutionJob$ = new Subject<any>();
+            const testsJob$ = new Subject<any>();
+            (codeGenerationApi.generateCode as jest.Mock)
+                .mockReturnValueOnce(of({ jobId: 'job-template' }))
+                .mockReturnValueOnce(of({}))
+                .mockReturnValueOnce(of({ jobId: 'job-solution' }))
+                .mockReturnValueOnce(of({}))
+                .mockReturnValueOnce(of({ jobId: 'job-tests' }));
+            (ws.subscribeToJob as jest.Mock)
+                .mockReturnValueOnce(templateJob$.asObservable())
+                .mockReturnValueOnce(solutionJob$.asObservable())
+                .mockReturnValueOnce(testsJob$.asObservable());
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+
+            templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            await Promise.resolve();
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+
+            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            await Promise.resolve();
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
+
+            testsJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            await Promise.resolve();
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(comp.codeGenerationStatuses().map((status) => [status.repositoryType, status.state])).toEqual([
+                [RepositoryType.TEMPLATE, 'success'],
+                [RepositoryType.SOLUTION, 'success'],
+                [RepositoryType.TESTS, 'success'],
+            ]);
+        });
+
+        it('should wait until the previous job slot is released before starting the next repository', fakeAsync(() => {
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
+
+            const templateJob$ = new Subject<any>();
+            const solutionJob$ = new Subject<any>();
+            (codeGenerationApi.generateCode as jest.Mock)
+                .mockReturnValueOnce(of({ jobId: 'job-template' }))
+                .mockReturnValueOnce(of({ jobId: 'job-template-still-active' }))
+                .mockReturnValueOnce(of({}))
+                .mockReturnValueOnce(of({ jobId: 'job-solution' }));
+            (ws.subscribeToJob as jest.Mock).mockReturnValueOnce(templateJob$.asObservable()).mockReturnValueOnce(solutionJob$.asObservable());
+
+            comp.generateCode();
+            tick();
+
+            templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            tick();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledTimes(2);
+
+            tick(1000);
+
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+
+            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            tick();
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+        }));
+
+        it('should realign the code generation status popover when status content changes while visible', fakeAsync(() => {
+            const align = jest.fn();
+            const container = document.createElement('div');
+            container.style.insetInlineStart = '';
+            const setPropertySpy = jest.spyOn(container.style, 'setProperty');
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                value: () => ({ left: 80, width: 200 }),
+            });
+            jest.spyOn(comp, 'codeGenerationStatusPopover').mockReturnValue({
+                overlayVisible: true,
+                align,
+                target: {
+                    getBoundingClientRect: () => ({ left: 120, width: 20 }),
+                    querySelector: () =>
+                        ({
+                            getBoundingClientRect: () => ({ left: 118, width: 12 }),
+                        }) as any,
+                },
+                container,
+            } as any);
+
+            (comp as any).updateCodeGenerationStatus(RepositoryType.TEMPLATE, (status: any) => ({
+                ...status,
+                state: 'running',
+                message: 'Generating...',
+            }));
+
+            tick();
+
+            expect(align).toHaveBeenCalledOnce();
+            expect(container.style.insetInlineStart).toBe('20px');
+            expect(setPropertySpy).toHaveBeenCalledWith('--p-popover-arrow-left', '102px');
+        }));
+
         it('should clear subscription when restore check-only has no active job', () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
@@ -600,8 +959,45 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             (comp as any).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
             expect(clearSpy).toHaveBeenCalledWith(true);
+        });
+
+        it('should not cancel an in-flight status subscription while generation is still running', () => {
+            const unsubscribe = jest.fn();
+            comp.isGeneratingCode.set(true);
+            (comp as any).statusSubscription = { unsubscribe };
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(unsubscribe).not.toHaveBeenCalled();
+            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+        });
+
+        it('should restore the running repository from the check-only response instead of the selected tab', () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            const subscribeSpy = jest.spyOn(comp as any, 'subscribeToJob').mockImplementation();
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect((comp as any).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
+            expect(subscribeSpy).toHaveBeenCalledWith('job-1', RepositoryType.TEMPLATE);
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)?.state).toBe('running');
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)?.state).not.toBe('running');
+        });
+
+        it('should clear the restore subscription when the check-only response contains an unsupported repository type', () => {
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            const subscribeSpy = jest.spyOn(comp as any, 'subscribeToJob').mockImplementation();
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.ASSIGNMENT }));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(clearSpy).toHaveBeenCalledWith(true);
+            expect(subscribeSpy).not.toHaveBeenCalled();
         });
     });
 

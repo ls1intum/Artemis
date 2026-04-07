@@ -1,0 +1,31 @@
+@if (isAiFeedbackEnabled()) {
+    <span
+        [ngbPopover]="popContent"
+        [autoClose]="false"
+        placement="bottom-end bottom-start bottom auto"
+        container="body"
+        triggers="manual"
+        popoverClass="ai-feedback-popover"
+        #popoverRef="ngbPopover"
+    >
+        <jhi-button [title]="title()" [disabled]="disabled()" [isLoading]="isLoading()" [btnType]="btnType()" [tooltip]="tooltip()" (onClick)="submitAndShowPopover()" />
+    </span>
+} @else {
+    <jhi-button [title]="title()" [disabled]="disabled()" [isLoading]="isLoading()" [btnType]="btnType()" [tooltip]="tooltip()" (onClick)="onSubmit.emit()" />
+}
+
+<ng-template #popContent>
+    <div class="d-flex align-items-center mb-2">
+        <fa-icon [icon]="faRobot" class="me-2" />
+        <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+    </div>
+    <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+    <span (click)="popover()?.close()">
+        <jhi-request-feedback-button
+            [exercise]="exercise()"
+            [isGeneratingFeedback]="isGeneratingFeedback()"
+            (generatingFeedback)="generatingFeedback.emit()"
+            [isSubmitted]="isSubmitted()"
+        />
+    </span>
+</ng-template>

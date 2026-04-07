@@ -25,11 +25,10 @@ import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entitie
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from '../../shared/entities/course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/core/course/shared/entities/course-update-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
@@ -67,8 +66,6 @@ export class CourseManagementService {
     private lectureService = inject(LectureService);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
-    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
     private courseNotificationService = inject(CourseNotificationService);
     private localStorageService = inject(LocalStorageService);
@@ -618,7 +615,7 @@ export class CourseManagementService {
 
     private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {
         if (courseRes.body?.tutorialGroups) {
-            courseRes.body.tutorialGroups = this.tutorialGroupsService.convertTutorialGroupArrayDatesFromServer(courseRes.body.tutorialGroups);
+            courseRes.body.tutorialGroups = convertTutorialGroupArrayDatesFromServer(courseRes.body.tutorialGroups);
         }
         return courseRes;
     }
@@ -627,7 +624,7 @@ export class CourseManagementService {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 if (course.tutorialGroups) {
-                    course.tutorialGroups = this.tutorialGroupsService.convertTutorialGroupArrayDatesFromServer(course.tutorialGroups);
+                    course.tutorialGroups = convertTutorialGroupArrayDatesFromServer(course.tutorialGroups);
                 }
             });
         }
@@ -636,9 +633,7 @@ export class CourseManagementService {
 
     private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
         if (courseRes.body?.tutorialGroupsConfiguration) {
-            courseRes.body.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
-                courseRes.body.tutorialGroupsConfiguration,
-            );
+            courseRes.body.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(courseRes.body.tutorialGroupsConfiguration);
         }
         return courseRes;
     }
@@ -647,9 +642,7 @@ export class CourseManagementService {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 if (course.tutorialGroupsConfiguration) {
-                    course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
-                        course.tutorialGroupsConfiguration,
-                    );
+                    course.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(course.tutorialGroupsConfiguration);
                 }
             });
         }

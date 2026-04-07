@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -138,18 +139,20 @@ public class ExerciseReviewService {
      * For each consistency issue, all related locations with existing repository files are persisted as threads.
      * A thread group is created only when an issue has multiple persisted locations.
      * Invalid issues are ignored to keep consistency-check processing resilient.
+     * The returned list contains only persisted threads with non-null ids so callers can safely treat them as created entities.
      *
      * @param exerciseId the programming exercise id that owns the review comments
      * @param issues     the newly detected consistency issues to persist as review comments
+     * @return the persisted consistency-check threads created from the given issues
      */
-    public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
+    public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming");
         }
 
         if (issues == null || issues.isEmpty()) {
-            return;
+            return List.of();
         }
 
         ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
@@ -158,6 +161,7 @@ public class ExerciseReviewService {
 
         List<CommentThread> threadsToPersist = new ArrayList<>();
         List<CommentThreadGroup> groupsToPersist = new ArrayList<>();
+        List<CommentThread> createdThreads = new ArrayList<>();
         for (ConsistencyIssueDTO issue : issues) {
             Optional<String> validationError = ExerciseReviewValidationUtil.validateConsistencyIssue(issue);
             if (validationError.isPresent()) {
@@ -183,6 +187,7 @@ public class ExerciseReviewService {
                 }
                 group.setThreads(groupedThreads);
                 groupsToPersist.add(group);
+                createdThreads.addAll(groupedThreads);
                 continue;
             }
 
@@ -191,6 +196,7 @@ public class ExerciseReviewService {
                 Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
+                createdThreads.add(thread);
             }
         }
 
@@ -203,6 +209,11 @@ public class ExerciseReviewService {
             // Grouped threads are persisted via CommentThreadGroup save with cascade.
             commentThreadRepository.saveAll(threadsToPersist);
         }
+        List<CommentThread> persistedThreads = createdThreads.stream().filter(thread -> thread.getId() != null).toList();
+        if (persistedThreads.size() != createdThreads.size()) {
+            log.warn("Skipping {} consistency-check threads without ids after persistence for exercise {}", createdThreads.size() - persistedThreads.size(), exerciseId);
+        }
+        return persistedThreads;
     }
 
     /**
@@ -237,7 +248,18 @@ public class ExerciseReviewService {
     public void deleteComment(long exerciseId, long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
-        commentRepository.deleteCommentWithCascade(comment);
+
+        long threadId = comment.getThread().getId();
+        Long groupId = comment.getThread().getGroup() != null ? comment.getThread().getGroup().getId() : null;
+
+        commentRepository.deleteById(comment.getId());
+
+        if (commentRepository.countByThreadId(threadId) == 0) {
+            commentThreadRepository.deleteById(threadId);
+            if (groupId != null && commentThreadRepository.countByGroupId(groupId) == 0) {
+                commentThreadGroupRepository.deleteById(groupId);
+            }
+        }
     }
 
     /**
@@ -380,23 +402,27 @@ public class ExerciseReviewService {
      *
      * @param exerciseId the exercise id from the request path
      * @param groupId    the group id
+     * @return ids of threads that were detached from the deleted group
      * @throws EntityNotFoundException  if the group does not exist
      * @throws BadRequestAlertException if the group exercise does not match the request exercise
      */
-    public void deleteGroup(long exerciseId, long groupId) {
+    public List<Long> deleteGroup(long exerciseId, long groupId) {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
 
         ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
 
         List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);
+        List<Long> threadIds = new ArrayList<>();
         if (!threads.isEmpty()) {
             for (CommentThread thread : threads) {
                 thread.setGroup(null);
+                threadIds.add(thread.getId());
             }
             commentThreadRepository.saveAll(threads);
         }
 
         commentThreadGroupRepository.delete(group);
+        return List.copyOf(threadIds);
     }
 
     /**
@@ -668,7 +694,7 @@ public class ExerciseReviewService {
      */
     private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         return issue.relatedLocations().stream().map(location -> mapConsistencyIssueLocation(location, exerciseId, repositoryUrisByTarget)).flatMap(Optional::stream).distinct()
-                .toList();
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**

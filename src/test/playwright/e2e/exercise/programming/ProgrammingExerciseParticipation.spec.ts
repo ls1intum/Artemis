@@ -10,7 +10,7 @@ import { SshEncryptionAlgorithm } from '../../../support/pageobjects/exercises/p
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { GitCloneMethod } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { GitCloneMethod, ProgrammingExerciseOverviewPage } from 'src/test/playwright/support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
@@ -20,9 +20,6 @@ const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
 // Basic submission tests: use seed course, only create exercises per test.
 test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => {
-    // Optimized test matrix: C builds are fast (~5s) so we test code editor + git with C.
-    // Java/Python builds are slow (~30-50s) and use the same git flow, so we skip them.
-    // The code editor test (failing C) verifies error display. The git test (successful C) verifies the full flow.
     const testCases = [
         {
             description: 'Makes a failing C submission',
@@ -43,27 +40,26 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             });
 
             test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+                // C builds can take longer under CI parallel load
+                test.slow();
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                await programmingExerciseOverview.openCodeEditor(exercise.id!);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
                     await expect(resultScore).toContainText(submission.expectedResult, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
             });
 
-            test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview }) => {
-                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
+                test.slow();
+                const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, submission, commitMessage);
-                await programmingExerciseOverview.checkResultScore(submission.expectedResult);
+                const participation = await waitForParticipationBuildToFinish(participationId);
+                ProgrammingExerciseOverviewPage.verifyResultScore(participation, submission.expectedResult);
             });
         });
     }
-
-    // Seed courses are persistent — no cleanup needed
 });
 
-// Tests that require sequential execution: secure git (shared SSH keys), team exercises
-// (shared repository), and instructor submissions (multiple queued builds).
 test.describe('Programming exercise advanced participation', { tag: '@slow' }, () => {
     test.describe('Programming exercise participation using secure git', () => {
         let exercise: ProgrammingExercise;
@@ -73,26 +69,24 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
-        test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview }) => {
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+        test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
+            test.slow();
+            const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.httpsWithToken);
-            await programmingExerciseOverview.checkResultScore(cAllSuccessful.expectedResult);
+            const participation = await waitForParticipationBuildToFinish(participationId);
+            ProgrammingExerciseOverviewPage.verifyResultScore(participation, cAllSuccessful.expectedResult);
         });
 
         test.describe.serial('Programming exercise participation using SSH', () => {
-            // Clean up SSH keys before each test to ensure clean state
-            // This is defensive - the afterEach should clean up, but if it fails or
-            // there's server-side caching, this ensures we start with no SSH key
             test.beforeEach('Ensure no SSH key exists', async ({ login, accountManagementAPIRequests }) => {
                 await login(studentOne);
                 await accountManagementAPIRequests.deleteSshPublicKey();
             });
 
             for (const sshAlgorithm of [SshEncryptionAlgorithm.rsa, SshEncryptionAlgorithm.ed25519]) {
-                test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview }) => {
-                    // SSH key setup + git clone/push + CI build takes longer under parallel load
+                test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
                     test.slow();
-                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                    const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCloneMenu(GitCloneMethod.ssh);
                     await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
                     const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
@@ -100,7 +94,8 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);
                     await page.reload();
                     await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.ssh, sshAlgorithm);
-                    await programmingExerciseOverview.checkResultScore(cAllSuccessful.expectedResult);
+                    const participation = await waitForParticipationBuildToFinish(participationId);
+                    ProgrammingExerciseOverviewPage.verifyResultScore(participation, cAllSuccessful.expectedResult);
                 });
             }
 
@@ -147,11 +142,13 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             team = await response.json();
         });
 
-        test('Team members make git submissions', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+        test('Team members make git submissions', async ({ login, page, courseList, courseOverview, programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
+            test.slow();
             const firstSubmission = submissions[0];
-            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, firstSubmission.student);
+            const firstParticipationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, firstSubmission.student);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, firstSubmission.student, firstSubmission.submission, firstSubmission.commitMessage);
-            await programmingExerciseOverview.checkResultScore(firstSubmission.submission.expectedResult);
+            const firstParticipation = await waitForParticipationBuildToFinish(firstParticipationId);
+            ProgrammingExerciseOverviewPage.verifyResultScore(firstParticipation, firstSubmission.submission.expectedResult);
 
             for (let i = 1; i < submissions.length; i++) {
                 const { student, submission, commitMessage } = submissions[i];
@@ -161,7 +158,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                 await courseOverview.openExercise(exercise.title!);
                 submission.deleteFiles = [];
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, student, submission, commitMessage);
-                await programmingExerciseOverview.checkResultScore(submission.expectedResult);
+                await programmingExerciseOverview.checkResultScoreAfterBuild(course.id!, exercise.id!, submission.expectedResult);
             }
 
             await login(studentFour, '/');
@@ -207,13 +204,11 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
 
         test.describe('Check team participation', () => {
             test.beforeEach('Each team member makes a submission', async ({ login, waitForParticipationBuildToFinish, exerciseAPIRequests }) => {
-                // Track files that have been created across all submissions (for team exercises, all members share the same repository)
                 const createdFiles = new Set<string>();
                 for (const { student, submission } of submissions) {
                     await login(student);
                     const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
                     participation = await response.json();
-                    // Only create files that haven't been created yet
                     for (const file of submission.files) {
                         const packageName = (submission as any).packageName;
                         const filename = packageName ? `src/${packageName.replace(/\./g, '/')}/${file.name}` : file.name;
@@ -223,7 +218,6 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                         }
                     }
                     await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
-                    // Use student-accessible endpoint (by participation ID) instead of tutor-only endpoint (by exercise ID)
                     await waitForParticipationBuildToFinish(participation.id!);
                 }
             });
@@ -263,21 +257,16 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             programmingExerciseSubmissions,
             waitForExerciseBuildToFinish,
         }) => {
-            // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
-            // now instructor commits to the student participation
             await login(instructor);
             await waitForExerciseBuildToFinish(exercise.id!);
             await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
-            // check the submission
             await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
             await programmingExerciseSubmissions.checkInstructorSubmission(60000);
             await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });
-
-    // Seed courses are persistent — no cleanup needed
 });
