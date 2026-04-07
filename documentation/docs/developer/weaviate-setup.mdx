@@ -34,7 +34,7 @@ In the future Artemis will also directly communicate with Weaviate to offer a gl
 
 ### Starting Weaviate
 
-There are two configurations available:
+There are three configurations available:
 
 #### Basic Setup (No Embeddings)
 
@@ -68,10 +68,53 @@ docker compose -f weaviate-embeddings.yml build
 docker compose -f weaviate-embeddings.yml up -d
 ```
 
-<Callout variant={CalloutVariant.danger}>
-  In the current version we do not support authenticated access to Weaviate (see `docker/weaviate/embeddings.env`).
-  This means that if you enable the embedding model, anyone with access to your machine could potentially query Weaviate and generate embeddings.
-  For local development this is usually not a concern, but be cautious when running this setup on shared or public machines.
+#### Setup with OpenAI-Compatible API (e.g. Ollama)
+
+For semantic search using an OpenAI-compatible embedding API such as [Ollama](https://ollama.com/). This is useful when you have access to a GPU server or want to use a different embedding model locally.
+
+**Local Ollama setup:**
+
+1. Install and start Ollama:
+   ```bash
+   brew install ollama   # macOS
+   ollama serve
+   ollama pull qwen3-embedding:8b
+   ```
+
+2. Verify Ollama is serving embeddings:
+   ```bash
+   curl http://localhost:11434/v1/embeddings -H 'Content-Type: application/json' \
+     -d '{"model":"qwen3-embedding:8b","input":"test"}'
+   ```
+
+3. Start Weaviate with the OpenAI module:
+   ```bash
+   docker compose -f weaviate.yml down -v
+   ```
+
+   Edit `docker/weaviate.yml` to use `./weaviate/openai.env` instead of `./weaviate/default.env`, then:
+   ```bash
+   docker compose -f weaviate.yml up -d
+   ```
+
+   Alternatively, temporarily update `docker/weaviate/default.env`:
+   ```bash
+   DEFAULT_VECTORIZER_MODULE=text2vec-openai
+   ENABLE_MODULES=text2vec-openai
+   ```
+
+**GPU server setup (e.g. TUM GPU server):**
+
+If you have access to a remote GPU server running Ollama, you only need to start Weaviate with the OpenAI module (step 3 above) and point the Artemis configuration to the remote server (see [Integration with Artemis](#integration-with-artemis)).
+
+<Callout variant={CalloutVariant.info}>
+  When using Ollama locally, Weaviate (running in Docker) needs to reach Ollama on your host machine.
+  Use `http://host.docker.internal:11434` as the `open-ai-base-url` in your Artemis configuration (no `/v1` suffix — Weaviate appends it automatically).
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  By default, anonymous access is enabled for development convenience. For shared or production environments,
+  enable API key authentication — see [Authentication](#authentication) for setup instructions.
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
@@ -80,8 +123,20 @@ docker compose -f weaviate-embeddings.yml up -d
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  You need to delete the existing Weaviate collection or reset the Docker volume when switching between `weaviate.yml` and `weaviate-embeddings.yml`, as otherwise Artemis will not create the collection with the new vectorizer settings.
-  Either to it directly via curl `curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"`, or reset the [docker volume](#resetting-data)
+  <p><strong>Collections must be recreated when changing vectorizer settings.</strong> Weaviate does not update the vectorizer configuration of existing collections.
+  When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`open-ai-base-url`, `open-ai-embedding-model`, `gpu-api-key`),
+  you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.</p>
+
+  <p>On startup, if a collection already exists and its vectorizer configuration differs from the application config, Artemis will log a warning like:<br/>
+  <code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: open-ai-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code></p>
+
+  <p>To delete all Artemis collections:</p>
+
+  ```bash
+  curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"
+  ```
+
+  <p>Or reset the entire Weaviate volume (see <a href="#resetting-data">Resetting Data</a>).</p>
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -174,14 +229,16 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 
 ### Choosing Between Configurations
 
-| Use Case                                                            | Command                                           |
-|---------------------------------------------------------------------|---------------------------------------------------|
-| Development without semantic search                                 | `docker compose -f weaviate.yml up -d`            |
-| Global search with semantic search (automatic embedding generation) | `docker compose -f weaviate-embeddings.yml up -d` |
+| Use Case                                                            | Vectorizer Module        | Docker Setup                                        |
+|---------------------------------------------------------------------|--------------------------|-----------------------------------------------------|
+| Development without semantic search                                 | `none`                   | `docker compose -f weaviate.yml up -d`              |
+| Semantic search with local transformer model                        | `text2vec-transformers`  | `docker compose -f weaviate-embeddings.yml up -d`   |
+| Semantic search with Ollama or GPU server                           | `text2vec-openai`        | `weaviate.yml` with `openai.env` + Ollama running   |
 
 <Callout variant={CalloutVariant.info}>
   Remember to run all commands from the `docker` directory.
   For `weaviate-embeddings.yml`, ensure you have completed the prerequisites (accept model license, set `HF_TOKEN`) and built the image first.
+  For `text2vec-openai`, ensure Ollama (or a remote GPU server) is reachable from the Weaviate Docker container.
 </Callout>
 
 ---
@@ -201,10 +258,17 @@ QUERY_DEFAULTS_LIMIT=25
 AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
 PERSISTENCE_DATA_PATH=/var/lib/weaviate
 DEFAULT_VECTORIZER_MODULE=none
-ENABLE_MODULES=
+#ENABLE_MODULES=
 CLUSTER_HOSTNAME=artemis
 LIMIT_RESOURCES=true
 DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
 #### Embeddings Configuration (`docker/weaviate/embeddings.env`)
@@ -221,28 +285,112 @@ TRANSFORMERS_INFERENCE_API=http://t2v-transformers:8080
 CLUSTER_HOSTNAME=artemis
 LIMIT_RESOURCES=true
 DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
+```
+
+#### OpenAI-Compatible API Configuration (`docker/weaviate/openai.env`)
+
+Used with `weaviate.yml` (swap the env file) - enables text2vec-openai for Ollama or other OpenAI-compatible APIs:
+
+```bash
+QUERY_DEFAULTS_LIMIT=25
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+PERSISTENCE_DATA_PATH=/var/lib/weaviate
+DEFAULT_VECTORIZER_MODULE=text2vec-openai
+ENABLE_MODULES=text2vec-openai
+CLUSTER_HOSTNAME=artemis
+LIMIT_RESOURCES=true
+DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
 ### Configuration Options
 
-| Variable                                  | Default                         | Description                                                                       |
-|-------------------------------------------|---------------------------------|-----------------------------------------------------------------------------------|
-| `QUERY_DEFAULTS_LIMIT`                    | 25                              | Default limit for query results                                                   |
-| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                            | Allow anonymous access (development only - we do not support an auth version yet) |
-| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate               | Path for data persistence inside container                                        |
-| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers    | Default vectorizer module                                                         |
-| `ENABLE_MODULES`                          | (empty) / text2vec-transformers | Modules to enable                                                                 |
-| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080    | URL of the transformer inference service (embeddings only)                        |
-| `CLUSTER_HOSTNAME`                        | artemis                         | Hostname for the Weaviate cluster node                                            |
-| `LIMIT_RESOURCES`                         | true                            | Enable resource limiting                                                          |
-| `DISK_USE_WARNING_PERCENTAGE`             | 80                              | Warn when disk usage exceeds this percentage                                      |
+| Variable                                  | Default                                           | Description                                                                       |
+|-------------------------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------|
+| `QUERY_DEFAULTS_LIMIT`                    | 25                                                | Default limit for query results                                                   |
+| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                                              | Allow anonymous access (set to `false` when using API key auth)                   |
+| `AUTHENTICATION_APIKEY_ENABLED`           | (not set)                                         | Enable API key authentication (see [Authentication](#authentication))             |
+| `AUTHENTICATION_APIKEY_ALLOWED_KEYS`      | (not set)                                         | Comma-separated list of allowed API keys                                          |
+| `AUTHENTICATION_APIKEY_USERS`             | (not set)                                         | Comma-separated list of user identities mapped to API keys (by position)          |
+| `AUTHORIZATION_ADMINLIST_ENABLED`         | (not set)                                         | Enable admin list authorization                                                   |
+| `AUTHORIZATION_ADMINLIST_USERS`           | (not set)                                         | Comma-separated list of admin users                                               |
+| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate                                 | Path for data persistence inside container                                        |
+| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers / text2vec-openai    | Default vectorizer module                                                         |
+| `ENABLE_MODULES`                          | (empty) / text2vec-transformers / text2vec-openai | Modules to enable                                                                 |
+| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080                      | URL of the transformer inference service (embeddings only)                        |
+| `CLUSTER_HOSTNAME`                        | artemis                                           | Hostname for the Weaviate cluster node                                            |
+| `LIMIT_RESOURCES`                         | true                                              | Enable resource limiting                                                          |
+| `DISK_USE_WARNING_PERCENTAGE`             | 80                                                | Warn when disk usage exceeds this percentage                                      |
+
+### Authentication
+
+By default, anonymous access is enabled for local development. For shared or production environments, you can enable API key authentication to secure your Weaviate instance.
+
+#### Enabling API Key Authentication on the Weaviate Server
+
+Edit your Weaviate environment file (e.g. `docker/weaviate/default.env`) and uncomment the authentication lines:
+
+```bash
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false
+AUTHENTICATION_APIKEY_ENABLED=true
+AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+AUTHENTICATION_APIKEY_USERS=admin@example.com
+AUTHORIZATION_ADMINLIST_ENABLED=true
+AUTHORIZATION_ADMINLIST_USERS=admin@example.com
+```
+
+Replace `admin-key` with a secure key and `admin@example.com` with your admin username. Multiple keys/users can be provided as comma-separated values (keys and users are mapped by position).
+
+After changing authentication settings, restart Weaviate:
+
+```bash
+docker compose -f weaviate.yml down && docker compose -f weaviate.yml up -d
+```
+
+#### Configuring the Artemis Client
+
+Add the `api-key` property to your Artemis configuration. The value must match one of the keys in `AUTHENTICATION_APIKEY_ALLOWED_KEYS`:
+
+```yaml
+artemis:
+    weaviate:
+        enabled: true
+        api-key: admin-key    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
+```
+
+#### Verifying Authentication
+
+You can verify that API key authentication is working correctly:
+
+```bash
+# This should fail with 401 Unauthorized:
+curl -v http://localhost:8001/v1/.well-known/ready
+
+# This should succeed:
+curl -v -H "Authorization: Bearer admin-key" http://localhost:8001/v1/.well-known/ready
+```
+
+See the [Weaviate authentication documentation](https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication) for more details.
 
 ### Data Persistence
 
 Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Anonymous access is enabled by default for development convenience. For production deployments, configure proper authentication.</p>
+    <p>Anonymous access is enabled by default for development convenience. For production deployments, configure API key authentication — see <a href="#authentication">Authentication</a>.</p>
 </Callout>
 
 ---
@@ -260,7 +408,34 @@ artemis:
         grpc-port: 50051                         # Weaviate gRPC port for better performance
         scheme: http                             # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_              # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
-        vectorizer-module: text2vec-transformers # Vectorizer module: "none" (docker/weaviate.yml) or "text2vec-transformers" (docker/weaviate-embeddings.yml)
+        vectorizer-module: text2vec-transformers # Vectorizer module: "none", "text2vec-transformers", or "text2vec-openai"
+        # api-key: admin-key                    # Optional: API key for Weaviate server authentication (see Authentication section)
+```
+
+#### Additional Properties for `text2vec-openai`
+
+When using `text2vec-openai`, you must also configure the following properties:
+
+```yaml
+artemis:
+    weaviate:
+        enabled: true
+        http-host: localhost
+        http-port: 8001
+        grpc-port: 50051
+        scheme: http
+        collection-prefix: Artemis_
+        vectorizer-module: text2vec-openai
+        open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by Ollama / OpenAI-compatible API
+        open-ai-base-url: http://host.docker.internal:11434        # Base URL for the API (no /v1 suffix); use host.docker.internal for local Ollama
+        gpu-api-key: dummy                                         # API key for GPU server (use any non-empty value for Ollama)
+```
+
+For a remote GPU server (e.g. TUM GPU server), use:
+
+```yaml
+        open-ai-base-url: https://gpu.aet.cit.tum.de/api/
+        gpu-api-key: <your-api-key>
 ```
 
 ### Vectorizer Configuration
@@ -277,9 +452,15 @@ The `vectorizer-module` setting determines how vectors (embeddings) are generate
   - Developing or testing semantic search features
   - You want Weaviate to automatically generate embeddings for text content
 
+- **`text2vec-openai`**: OpenAI-compatible API embedding generation. Choose this when:
+  - Using Ollama locally or a remote GPU server for embeddings
+  - You want to use a specific embedding model (e.g. `qwen3-embedding:8b`) not bundled with Weaviate
+  - You need GPU-accelerated embeddings without running a local transformer container
+
 <Callout variant={CalloutVariant.warning}>
   The `vectorizer-module` setting must match your Docker setup.
-  Using `text2vec-transformers` requires the transformer service from `weaviate-embeddings.yml` to be running, otherwise collection creation will fail.
+  Using `text2vec-transformers` requires the transformer service from `weaviate-embeddings.yml` to be running.
+  Using `text2vec-openai` requires Weaviate started with the `text2vec-openai` module enabled (use `openai.env`) and the OpenAI-compatible API (e.g. Ollama) to be reachable.
 </Callout>
 
 Ensure that Weaviate is running before starting Artemis.
@@ -380,7 +561,7 @@ docker compose -f weaviate-embeddings.yml up -d
 ```
 
 ```bash
-# For basic setup without embeddings (no semantic search)
+# For basic setup or OpenAI setup
 docker compose -f weaviate.yml down -v
 docker compose -f weaviate.yml up -d
 ```

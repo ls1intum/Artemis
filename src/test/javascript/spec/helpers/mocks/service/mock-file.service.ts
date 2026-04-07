@@ -16,6 +16,10 @@ export class MockFileService {
         return of();
     };
 
+    getBlobFromUrl = () => {
+        return of(new Blob());
+    };
+
     createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
         return 'attachments/' + downloadName.replace(' ', '-') + '.pdf';
     }

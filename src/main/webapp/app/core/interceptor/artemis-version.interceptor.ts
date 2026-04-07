@@ -54,7 +54,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     }
 
                     // only invoke the time call if the call was not already the time call to prevent recursion here
-                    if (!request.url.includes('time')) {
+                    if (!request.url.includes('time') && !this.isPdfViewerIframeRoute()) {
                         this.serverDateService.updateTime();
                     }
                 }
@@ -105,5 +105,10 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                 }
             }
         });
+    }
+
+    private isPdfViewerIframeRoute(): boolean {
+        // The PDF viewer iframe host route intentionally avoids global app side effects (e.g. periodic server time updates).
+        return this.injectedWindow.location?.pathname?.includes('/pdf-viewer-iframe') ?? false;
     }
 }
