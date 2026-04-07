@@ -89,8 +89,8 @@ class LectureContentProcessingSchedulerTest {
             // When
             scheduler.processScheduledRetries();
 
-            // Then: Should delegate to callbackService.handleProcessingFailure
-            verify(callbackService).handleProcessingFailure(testState);
+            // Then: Should delegate to callbackService.resetToIdleForRecovery
+            verify(callbackService).resetToIdleForRecovery(testState);
         }
 
         @Test
@@ -106,7 +106,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should not attempt recovery
-            verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).resetToIdleForRecovery(any());
         }
 
         @Test
@@ -124,7 +124,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should skip (already scheduled)
-            verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).resetToIdleForRecovery(any());
         }
 
         @Test
@@ -146,7 +146,7 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should NOT attempt recovery because phase changed
-            verify(callbackService, never()).handleProcessingFailure(any());
+            verify(callbackService, never()).resetToIdleForRecovery(any());
         }
     }
 
@@ -207,12 +207,14 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldLimitToAvailableSlots() {
-            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(7L);
+            // MAX_CONCURRENT_PROCESSING is 2, so 1 active leaves 1 available slot
+            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(1L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             scheduler.backfillUnprocessedUnits();
 
-            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), eq(org.springframework.data.domain.PageRequest.of(0, 3)));
+            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class),
+                    eq(org.springframework.data.domain.PageRequest.of(0, MAX_CONCURRENT_PROCESSING - 1)));
         }
 
         @Test

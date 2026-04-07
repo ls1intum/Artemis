@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -60,18 +61,25 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * - retryEligibleAt has passed (backoff period complete)
      * <p>
      * This query is mutually exclusive with findStuckStates (which requires retryEligibleAt IS NULL).
+     * <p>
+     * Uses {@code FOR UPDATE SKIP LOCKED} to prevent multiple Artemis nodes from claiming
+     * the same retry-eligible job simultaneously. Each row is locked by the first node that
+     * reads it; concurrent nodes silently skip already-locked rows.
      *
-     * @param phase the processing phase to check
+     * @param phase the processing phase to check (enum name as string, e.g. "FAILED")
      * @param now   the current time to compare against retryEligibleAt
-     * @return list of states ready for retry
+     * @return list of states ready for retry, locked for the duration of the calling transaction
      */
-    @Query("""
-            SELECT ps FROM LectureUnitProcessingState ps
-            WHERE ps.phase = :phase
-            AND ps.retryEligibleAt IS NOT NULL
-            AND ps.retryEligibleAt <= :now
-            """)
-    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") ProcessingPhase phase, @Param("now") ZonedDateTime now);
+    @Transactional
+    @Query(value = """
+            SELECT *
+            FROM lecture_unit_processing_state
+            WHERE phase = :phase
+            AND retry_eligible_at IS NOT NULL
+            AND retry_eligible_at <= :now
+            FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") String phase, @Param("now") ZonedDateTime now);
 
     /**
      * Find all processing states for a course.

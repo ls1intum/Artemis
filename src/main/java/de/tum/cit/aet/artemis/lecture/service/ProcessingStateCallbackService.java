@@ -124,7 +124,7 @@ public class ProcessingStateCallbackService {
             ZonedDateTime now = ZonedDateTime.now();
 
             // Pick up FAILED jobs that are eligible for retry (backoff expired)
-            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED, now);
+            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now);
 
             for (LectureUnitProcessingState state : retryJobs) {
                 if (availableSlots <= 0) {
