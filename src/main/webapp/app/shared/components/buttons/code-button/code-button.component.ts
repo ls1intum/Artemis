@@ -116,9 +116,9 @@ export class CodeButtonComponent implements OnInit {
     ideName = signal('');
     // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
     authenticationMechanisms = signal<RepositoryAuthenticationMethod[]>([
-        RepositoryAuthenticationMethod.Password,
         RepositoryAuthenticationMethod.Token,
         RepositoryAuthenticationMethod.SSH,
+        RepositoryAuthenticationMethod.Password,
     ]);
 
     // Computed/Derived States
@@ -140,7 +140,7 @@ export class CodeButtonComponent implements OnInit {
         return this.participationService.getSpecificStudentParticipation(participations, this.isPractice()) ?? participations[0];
     });
     selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(
-        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? RepositoryAuthenticationMethod.Password,
+        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? this.authenticationMechanisms()[0],
     );
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
