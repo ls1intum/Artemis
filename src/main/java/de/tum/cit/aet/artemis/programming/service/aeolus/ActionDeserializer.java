@@ -40,7 +40,7 @@ public class ActionDeserializer extends ValueDeserializer<Action> {
         return switch (className) {
             case "script-action" -> context.readTreeAsValue(node, ScriptAction.class);
             case "platform-action" -> context.readTreeAsValue(node, PlatformAction.class);
-            default -> throw new JacksonException("Cannot determine Action type from JSON") {
+            default -> throw new JacksonException("Cannot determine type") {
             };
         };
     }
