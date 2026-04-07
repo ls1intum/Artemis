@@ -147,10 +147,15 @@ public class PyrisWebhookService {
             return videoSource;
         }
         if (tumLiveApi.isPresent()) {
-            Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
-            if (resolved.isPresent()) {
-                log.info("Resolved TUM Live URL to HLS playlist for Iris ingestion");
-                return resolved.get();
+            try {
+                Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
+                if (resolved.isPresent()) {
+                    log.info("Resolved TUM Live URL to HLS playlist for Iris ingestion");
+                    return resolved.get();
+                }
+            }
+            catch (Exception e) {
+                log.warn("Could not resolve TUM Live URL for Iris ingestion, falling back to original video source", e);
             }
         }
         return videoSource;
@@ -202,7 +207,7 @@ public class PyrisWebhookService {
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
         if (irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
             String videoSource = attachmentVideoUnit.getVideoSource();
-            if ((videoSource != null && !videoSource.isEmpty()) || (attachmentVideoUnit.getAttachment() != null
+            if ((videoSource != null && !videoSource.isBlank()) || (attachmentVideoUnit.getAttachment() != null
                     && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
                 return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
             }

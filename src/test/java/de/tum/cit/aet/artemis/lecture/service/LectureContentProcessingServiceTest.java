@@ -465,8 +465,7 @@ class LectureContentProcessingServiceTest {
                 savedState.set(inv.getArgument(0));
                 return inv.getArgument(0);
             });
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenReturn(Optional.empty())
-                    .thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             // Mock dispatch — no slots
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 

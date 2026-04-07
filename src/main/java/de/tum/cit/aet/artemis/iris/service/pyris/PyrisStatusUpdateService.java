@@ -167,11 +167,10 @@ public class PyrisStatusUpdateService {
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
-            pyrisJobService.removeJob(job);
-
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             log.info("[Ingestion] Terminal callback for unitId={}, success={}", job.lectureUnitId(), success);
             processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
+            pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);

@@ -330,22 +330,26 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private subscribeToProcessingStateUpdates(lectureId: number): void {
         const topic = `/topic/lectures/${lectureId}/unit-processing-state`;
         this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
-            this.processingStatus.update((current) => ({
-                ...current,
-                [status.lectureUnitId]: {
+            this.processingStatus.update((current) => {
+                const updated = Object.assign({}, current);
+                updated[status.lectureUnitId] = {
                     lectureUnitId: status.lectureUnitId,
                     phase: status.processingPhase,
                     retryCount: status.retryCount,
                     startedAt: status.startedAt,
                     errorKey: status.processingErrorKey,
-                },
-            }));
-            if (status.transcriptionStatus) {
-                this.transcriptionStatus.update((current) => ({
-                    ...current,
-                    [status.lectureUnitId]: status.transcriptionStatus!,
-                }));
-            }
+                };
+                return updated;
+            });
+            this.transcriptionStatus.update((current) => {
+                const updated = Object.assign({}, current);
+                if (status.transcriptionStatus) {
+                    updated[status.lectureUnitId] = status.transcriptionStatus;
+                } else {
+                    delete updated[status.lectureUnitId];
+                }
+                return updated;
+            });
         });
     }
 

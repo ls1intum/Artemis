@@ -428,6 +428,7 @@ public class ProcessingStateCallbackService {
             log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
             state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
             processingStateRepository.save(state);
+            notifyProcessingStateChange(state, null);
             return;
         }
 
@@ -436,6 +437,7 @@ public class ProcessingStateCallbackService {
         state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         state.scheduleRetry(backoffMinutes);
         processingStateRepository.save(state);
+        notifyProcessingStateChange(state, null);
 
         log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
                 MAX_PROCESSING_RETRIES);
@@ -513,8 +515,16 @@ public class ProcessingStateCallbackService {
         log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
 
         for (LectureUnitProcessingState state : activeStates) {
-            log.info("Iris reset: marking unit {} as failed for re-dispatch (was {})", state.getLectureUnit().getId(), state.getPhase());
-            handleProcessingFailure(state);
+            log.info("Iris reset: re-queuing unit {} (was {}), retry budget preserved", state.getLectureUnit().getId(), state.getPhase());
+            // Do NOT call handleProcessingFailure here — Iris restarts are infrastructure events,
+            // not content-processing failures. Incrementing retryCount would burn the retry
+            // budget and could permanently fail otherwise healthy jobs after a few rollouts.
+            state.setPhase(ProcessingPhase.IDLE);
+            state.setIngestionJobToken(null);
+            state.setStartedAt(null);
+            state.setRetryEligibleAt(null);
+            state.setLastUpdated(ZonedDateTime.now());
+            processingStateRepository.save(state);
 
             // Notify UI
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus)

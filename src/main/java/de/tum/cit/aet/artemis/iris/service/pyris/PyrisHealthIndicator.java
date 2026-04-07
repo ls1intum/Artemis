@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,8 +68,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
      * Tracks whether Iris was UP on the last health check.
      * Starts as {@code true} so that the first successful check after Artemis
      * startup is NOT treated as a restart — only a genuine DOWN → UP transition triggers a reset.
+     * AtomicBoolean ensures that concurrent health checks cannot both observe the same
+     * DOWN → UP transition and trigger duplicate resets.
      */
-    private boolean previouslyUp = true;
+    private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
     public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.restTemplate = restTemplate;
@@ -131,11 +134,11 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
         var newHealth = connectorHealth.asActuatorHealth();
         boolean currentlyUp = newHealth.getStatus() == Status.UP;
-        if (currentlyUp && !previouslyUp) {
+        boolean wasUp = previouslyUp.getAndSet(currentlyUp);
+        if (currentlyUp && !wasUp) {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
             processingStateCallbackApi.ifPresent(ProcessingStateCallbackApi::handleIrisReset);
         }
-        previouslyUp = currentlyUp;
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
         return newHealth;
