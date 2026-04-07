@@ -17,7 +17,7 @@ set -euo pipefail
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$PROJECT_DIR"
 
 MYSQL_DEV_PORT=3310; MYSQL_NEW_PORT=3311
@@ -62,6 +62,10 @@ for i in $(seq 1 60); do
     docker exec av-pg-dev pg_isready -U artemis -q 2>/dev/null || ALL=false
     docker exec av-pg-new pg_isready -U artemis -q 2>/dev/null || ALL=false
     if $ALL; then echo "  All databases ready!"; break; fi
+    if [ "$i" -eq 60 ]; then
+        echo "  ERROR: Databases did not become ready in time. Aborting."
+        exit 1
+    fi
     sleep 2
 done
 
@@ -70,7 +74,13 @@ echo "  PostgreSQL: $(docker exec av-pg-dev psql -U artemis -t -A -c 'SELECT ver
 
 # --- Step 2: Create develop worktree ---
 echo "=== Step 2: Creating develop worktree ==="
-git worktree add "$WORKTREE_DIR" develop --quiet 2>/dev/null || true
+if ! git worktree add "$WORKTREE_DIR" develop --quiet 2>/dev/null; then
+    echo "  Worktree already exists, reusing..."
+    if [ ! -d "$WORKTREE_DIR" ]; then
+        echo "  ERROR: Cannot create worktree at $WORKTREE_DIR. Aborting."
+        exit 1
+    fi
+fi
 
 # --- Step 3: Create Gradle init script ---
 cat > /tmp/lb-verify-init.gradle << 'EOF'

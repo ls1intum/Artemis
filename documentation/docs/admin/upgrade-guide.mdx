@@ -100,4 +100,4 @@ MigrationPath("8.8.6")
   → nextUpgradeVersion = 10.0.0  (major after that)
 ```
 
-When `currentVersion ∈ [upgradeVersion, nextUpgradeVersion)` and `previousVersion == requiredVersion`, the system nullifies the initial schema checksum to allow Liquibase to recalculate it against the consolidated schema.
+When `currentVersion ∈ [upgradeVersion, nextUpgradeVersion)` and `previousVersion >= requiredVersion`, the system nullifies the initial schema checksum (once) to allow Liquibase to recalculate it against the consolidated schema. This runs only on the first startup after the schema consolidation — subsequent startups detect that the consolidation is already complete and skip this step.

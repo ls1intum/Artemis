@@ -39,8 +39,9 @@ The initial schema contains three changesets:
 
 ```
 Fresh install:     No artemis_version → apply schema + cleanup (no-op) + new changelogs → store version
-Upgrade (correct): previousVersion == requiredVersion → nullify checksum → recalculate → cleanup → new changelogs → store version
+Upgrade (correct): previousVersion >= requiredVersion → nullify checksum (once) → recalculate → cleanup → new changelogs → store version
 Upgrade (too old): previousVersion < requiredVersion → ERROR + System.exit(15)
+Subsequent runs:   Cleanup already applied → skip checksum nullification entirely
 ```
 
 ## Step-by-Step Consolidation Process
