@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
@@ -33,13 +32,12 @@ class SecurityConfigurationTest {
         Optional<CustomLti13Configurer> customLti13Configurer = Optional.empty();
         Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer = Optional.empty();
         PasswordService passwordService = mock(PasswordService.class);
-        ProfileService profileService = mock(ProfileService.class);
         TokenProvider tokenProvider = mock(TokenProvider.class);
         JWTCookieService jwtCookieService = mock(JWTCookieService.class);
         moduleFeatureService = mock(ModuleFeatureService.class);
 
-        securityConfiguration = new SecurityConfiguration(corsFilter, customLti13Configurer, passkeyWebAuthnConfigurer, passwordService, profileService, tokenProvider,
-                jwtCookieService, moduleFeatureService);
+        securityConfiguration = new SecurityConfiguration(corsFilter, customLti13Configurer, passkeyWebAuthnConfigurer, passwordService, tokenProvider, jwtCookieService,
+                moduleFeatureService);
     }
 
     @Test

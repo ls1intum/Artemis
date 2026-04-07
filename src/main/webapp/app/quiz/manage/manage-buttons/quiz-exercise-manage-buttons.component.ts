@@ -12,15 +12,16 @@ import { Observable, Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ButtonComponent, DeleteButtonDirective, NgbTooltip],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);

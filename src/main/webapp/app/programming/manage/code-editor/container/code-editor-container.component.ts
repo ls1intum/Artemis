@@ -87,6 +87,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     isProblemStatementVisible = input<boolean>(true);
+    showNavbar = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
@@ -398,6 +399,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     getText(): string {
         return this.monacoEditor?.getText() ?? '';
+    }
+
+    commit(): void {
+        this.actions?.commit();
     }
 
     getNumberOfLines(): number {

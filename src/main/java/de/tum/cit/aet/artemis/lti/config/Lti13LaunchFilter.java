@@ -19,10 +19,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
 import de.tum.cit.aet.artemis.lti.dto.Lti13AuthenticationResponse;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
@@ -127,7 +126,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(new ObjectMapper().writeValueAsString(jsonResponse));
+        writer.print(JsonObjectMapper.get().writeValueAsString(jsonResponse));
         writer.flush();
     }
 }
