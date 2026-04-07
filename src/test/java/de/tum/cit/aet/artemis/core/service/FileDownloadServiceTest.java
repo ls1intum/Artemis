@@ -7,11 +7,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ class FileDownloadServiceTest {
     void shouldPrepareFullDownloadForUnknownExtensionWithOctetStream() throws IOException {
         byte[] expectedContent = "dummy unknown content".getBytes();
         Path filePath = tempDir.resolve("dummy.unknownext");
-        Files.write(filePath, expectedContent);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), expectedContent);
         when(fileService.getFileForPath(filePath)).thenReturn(expectedContent);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), List.of(), 200_000);
@@ -64,7 +64,7 @@ class FileDownloadServiceTest {
     void shouldPrepareHtmlDownloadAsAttachment() throws IOException {
         byte[] expectedContent = "<html><body>dummy</body></html>".getBytes();
         Path filePath = tempDir.resolve("dummy.html");
-        Files.write(filePath, expectedContent);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), expectedContent);
         when(fileService.getFileForPath(filePath)).thenReturn(expectedContent);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), List.of(), 200_000);
@@ -86,7 +86,7 @@ class FileDownloadServiceTest {
     void shouldPreparePartialContentForValidPdfRange() throws IOException {
         byte[] content = "0123456789".getBytes();
         Path filePath = tempDir.resolve("dummy.pdf");
-        Files.write(filePath, content);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), content);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), HttpRange.parseRanges("bytes=2-5"), 100);
 
@@ -101,7 +101,7 @@ class FileDownloadServiceTest {
     void shouldReturnRangeNotSatisfiableForOutOfBoundsPdfRange() throws IOException {
         byte[] content = "0123456789".getBytes();
         Path filePath = tempDir.resolve("dummy.pdf");
-        Files.write(filePath, content);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), content);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), HttpRange.parseRanges("bytes=25-30"), 100);
 
@@ -115,7 +115,7 @@ class FileDownloadServiceTest {
     void shouldReturnRangeNotSatisfiableWhenPdfRangeExceedsConfiguredLimit() throws IOException {
         byte[] content = "0123456789".getBytes();
         Path filePath = tempDir.resolve("dummy.pdf");
-        Files.write(filePath, content);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), content);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), HttpRange.parseRanges("bytes=0-9"), 5);
 
@@ -129,7 +129,7 @@ class FileDownloadServiceTest {
     void shouldPrepareFullPdfDownloadWhenNoRangeHeaderIsPresent() throws IOException {
         byte[] expectedContent = "dummy pdf".getBytes();
         Path filePath = tempDir.resolve("dummy.pdf");
-        Files.write(filePath, expectedContent);
+        FileUtils.writeByteArrayToFile(filePath.toFile(), expectedContent);
         when(fileService.getFileForPath(filePath)).thenReturn(expectedContent);
 
         var payload = fileDownloadService.prepareAttachmentDownload(tempDir, filePath.getFileName().toString(), Optional.empty(), List.of(), 200_000);
