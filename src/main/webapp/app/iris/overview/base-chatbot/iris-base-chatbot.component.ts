@@ -211,6 +211,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly shouldShowStatusBar = computed(
+        () => this.stages()?.some((stage) => !stage.internal && ![IrisStageStateDTO.DONE, IrisStageStateDTO.SKIPPED].includes(stage.state)) ?? false,
+    );
     readonly activeChatMessage = computed(() => {
         const stages = this.stages();
         if (!stages) return undefined;
