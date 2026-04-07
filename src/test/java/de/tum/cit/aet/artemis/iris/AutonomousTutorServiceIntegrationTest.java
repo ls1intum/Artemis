@@ -76,6 +76,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
     @AfterEach
     void cleanUp() throws Exception {
+        answerPostRepository.deleteAll(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()));
         featureToggleService.disableFeature(Feature.AutonomousTutor);
     }
 
@@ -96,11 +97,10 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
-        var botAnswers = answerPostRepository.findAnswerPostsByAuthorId(botUser.getId());
+        var botAnswers = answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()).stream().filter(a -> a.getPost().getId().equals(post.getId())).toList();
         assertThat(botAnswers).hasSize(1);
-        var answer = botAnswers.iterator().next();
+        var answer = botAnswers.getFirst();
         assertThat(answer.getContent()).isEqualTo("Recursion is a technique where a function calls itself.");
-        assertThat(answer.getPost().getId()).isEqualTo(post.getId());
     }
 
     @Test

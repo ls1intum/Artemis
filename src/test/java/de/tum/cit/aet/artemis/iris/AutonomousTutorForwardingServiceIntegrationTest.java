@@ -81,6 +81,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
 
     @AfterEach
     void cleanUp() {
+        answerPostRepository.deleteAll(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId()));
         featureToggleService.disableFeature(Feature.AutonomousTutor);
     }
 
