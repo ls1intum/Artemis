@@ -398,18 +398,50 @@
                                 class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
+                                (focus)="onTextareaFocus()"
+                                (blur)="onTextareaBlur()"
                                 [disabled]="isInputDisabled()"
                                 (keydown)="handleKey($event)"
-                                placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                                [placeholder]="textareaPlaceholder()"
+                                [class.placeholder-fade-in]="placeholderVisible()"
+                                [class.placeholder-fade-out]="!placeholderVisible()"
                                 #messageTextarea
                             >
                             </textarea>
+                            @if (ghostText()) {
+                                <div class="ghost-text-overlay" aria-hidden="true">
+                                    <span class="ghost-text-mirror">{{ newMessageTextContent() }}</span
+                                    ><span class="ghost-text-suggestion">{{ ghostText() }}</span>
+                                </div>
+                            }
+                            @if (chipPreviewText() && !isInputDisabled()) {
+                                <div class="chip-preview-overlay" aria-hidden="true">
+                                    <span class="chip-preview-text">{{ chipPreviewText() }}</span>
+                                </div>
+                            }
                             <div class="textarea-controls">
                                 <jhi-context-selection [disabled]="isInputDisabled()" />
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>
                     </div>
+                    @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && !isExerciseOrLectureMode()) {
+                        <div class="prompt-suggestion-chips">
+                            @for (chip of suggestionChips; track chip.translationKey) {
+                                <button
+                                    type="button"
+                                    class="prompt-suggestion-chip"
+                                    [disabled]="isInputDisabled()"
+                                    (click)="applyChipText(chip.starterKey)"
+                                    (mouseenter)="onChipMouseEnter(chip.starterKey)"
+                                    (mouseleave)="onChipMouseLeave()"
+                                >
+                                    <fa-icon [icon]="chip.icon" aria-hidden="true" />
+                                    <span [jhiTranslate]="chip.translationKey"></span>
+                                </button>
+                            }
+                        </div>
+                    }
                     @if (!isChatGptWrapper()) {
                         <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>
                     } @else {
