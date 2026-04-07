@@ -1,4 +1,21 @@
-.video-player-container {
-    padding-top: 20px;
-    padding-bottom: 20px;
+.video-player-container,
+.pdf-viewer-spacing {
+    padding-block: 20px;
+}
+
+.pdf-viewer-spacing {
+    position: relative;
+}
+
+.pdf-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+jhi-pdf-viewer.pdf-viewer-loading {
+    opacity: 0;
+    pointer-events: none;
 }
