@@ -7,11 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
-
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.cfg.ConstructorDetector;
+import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -29,9 +28,20 @@ public class JacksonConfiguration {
      * Uses Jackson 2's Hibernate7Module which is compatible with Jackson 3 and doesn't have the
      * _valueDeserializer cache corruption bug present in tools.jackson.datatype:jackson-datatype-hibernate7:3.1.0.
      */
+    /**
+     * Hibernate7Module for Jackson 3 with workaround for type resolution cache corruption.
+     * The Jackson 3 Hibernate7Module (3.1.0) registers a custom AnnotationIntrospector that,
+     * combined with the serializer modifier, can corrupt Jackson's internal deserializer cache
+     * in large test suites. By disabling the annotation introspector (@Transient processing)
+     * and using a serializer-only configuration, we avoid this issue while still supporting
+     * lazy-loading proxy serialization.
+     */
     @Bean
     public Hibernate7Module hibernateModule() {
-        return new Hibernate7Module();
+        Hibernate7Module module = new Hibernate7Module();
+        module.disable(Hibernate7Module.Feature.USE_TRANSIENT_ANNOTATION);
+        module.enable(Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
+        return module;
     }
 
     /**
