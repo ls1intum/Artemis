@@ -4,21 +4,15 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService;
 
 /**
- * API for processing state callbacks.
- * This class allows other modules (e.g., nebula, iris) to notify the lecture
- * content processing pipeline about transcription and ingestion completion
- * without creating circular dependencies.
- * <p>
- * This API was extracted from {@link LectureContentProcessingApi} to break the circular dependency:
- * LectureContentProcessingApi → LectureContentProcessingService → LectureTranscriptionApi →
- * LectureTranscriptionService → LectureContentProcessingApi
+ * API for processing state callbacks from Iris.
+ * Allows the iris module to notify the lecture content processing pipeline
+ * about ingestion completion without creating circular dependencies.
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Controller
 @Lazy
 public class ProcessingStateCallbackApi extends AbstractLectureApi {
@@ -27,16 +21,6 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
 
     public ProcessingStateCallbackApi(ProcessingStateCallbackService processingStateCallbackService) {
         this.processingStateCallbackService = processingStateCallbackService;
-    }
-
-    /**
-     * Called when a transcription completes (from the polling scheduler).
-     * This advances the processing to the ingestion phase.
-     *
-     * @param transcription the completed transcription
-     */
-    public void handleTranscriptionComplete(LectureTranscription transcription) {
-        processingStateCallbackService.handleTranscriptionComplete(transcription);
     }
 
     /**

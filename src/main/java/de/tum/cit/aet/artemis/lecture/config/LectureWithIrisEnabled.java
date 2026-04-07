@@ -7,24 +7,23 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
- * Condition to check if the lecture module is enabled AND either Iris or Nebula is enabled.
+ * Condition to check if the lecture module is enabled AND Iris is enabled.
  * Based on this condition, Spring components that require lecture functionality together with
- * either Iris or Nebula can be enabled.
+ * Iris can be enabled.
  */
-public class LectureWithIrisOrNebulaEnabled implements Condition {
+public class LectureWithIrisEnabled implements Condition {
 
     private final ArtemisConfigHelper artemisConfigHelper;
 
-    public LectureWithIrisOrNebulaEnabled() {
+    public LectureWithIrisEnabled() {
         this.artemisConfigHelper = new ArtemisConfigHelper();
     }
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         boolean irisEnabled = artemisConfigHelper.isIrisEnabled(context.getEnvironment());
-        boolean nebulaEnabled = artemisConfigHelper.isNebulaEnabled(context.getEnvironment());
         boolean lectureEnabled = artemisConfigHelper.isLectureEnabled(context.getEnvironment());
 
-        return lectureEnabled && (irisEnabled || nebulaEnabled);
+        return lectureEnabled && irisEnabled;
     }
 }

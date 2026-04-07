@@ -1,11 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -22,18 +19,12 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
-import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
-import de.tum.cit.aet.artemis.nebula.api.LectureTranscriptionApi;
-import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
 
 /**
  * Service that orchestrates the automated lecture content processing pipeline.
@@ -41,13 +32,12 @@ import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
  * Uses a state machine pattern to manage processing phases:
  * <ul>
  * <li>IDLE: Initial state, not processing</li>
- * <li>TRANSCRIBING: Transcription in progress with Nebula</li>
  * <li>INGESTING: Ingestion in progress with Pyris</li>
  * <li>DONE: Processing completed successfully</li>
  * <li>FAILED: Processing failed after max retries</li>
  * </ul>
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Service
 @Lazy
 public class LectureContentProcessingService {
@@ -56,25 +46,15 @@ public class LectureContentProcessingService {
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
-    private final LectureTranscriptionRepository transcriptionRepository;
-
-    private final Optional<LectureTranscriptionApi> transcriptionApi;
-
-    private final Optional<TumLiveApi> tumLiveApi;
-
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final FeatureToggleService featureToggleService;
 
     private final ProcessingStateCallbackService processingStateCallbackService;
 
-    public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi, FeatureToggleService featureToggleService,
-            ProcessingStateCallbackService processingStateCallbackService) {
+    public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
+            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService) {
         this.processingStateRepository = processingStateRepository;
-        this.transcriptionRepository = transcriptionRepository;
-        this.transcriptionApi = transcriptionApi;
-        this.tumLiveApi = tumLiveApi;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
         this.processingStateCallbackService = processingStateCallbackService;
@@ -84,12 +64,10 @@ public class LectureContentProcessingService {
      * Check if any processing service is available.
      * Used by the scheduler to skip backfill when no services are configured.
      *
-     * @return true if either transcription or ingestion is possible
+     * @return true if ingestion is possible
      */
     public boolean hasProcessingCapabilities() {
-        boolean canTranscribe = transcriptionApi.isPresent() && tumLiveApi.isPresent();
-        boolean canIngest = irisLectureApi.isPresent();
-        return canTranscribe || canIngest;
+        return irisLectureApi.isPresent();
     }
 
     // -------------------- Public API --------------------
@@ -100,10 +78,8 @@ public class LectureContentProcessingService {
      * <p>
      * Processing behavior depends on available services:
      * <ul>
-     * <li>Nebula ON, Iris ON: Full pipeline (transcription + ingestion)</li>
-     * <li>Nebula ON, Iris OFF: Transcription only</li>
-     * <li>Nebula OFF, Iris ON: PDF ingestion only</li>
-     * <li>Neither available: Skip processing</li>
+     * <li>Iris ON: Ingestion (transcription + vector DB)</li>
+     * <li>Iris OFF: Skip processing</li>
      * </ul>
      *
      * @param unit the attachment video unit to process
@@ -150,10 +126,9 @@ public class LectureContentProcessingService {
         }
 
         // Check service availability
-        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent();
-        boolean canIngest = irisLectureApi.isPresent() && (hasPdf || canTranscribe);
+        boolean canIngest = irisLectureApi.isPresent() && hasPdf;
 
-        if (!canTranscribe && !canIngest) {
+        if (!canIngest) {
             log.debug("No processing services available for unit {}", unit.getId());
             return false;
         }
@@ -195,7 +170,7 @@ public class LectureContentProcessingService {
         }
 
         // Start the state machine (will save state when actually starting processing)
-        advanceProcessing(unit, state, hasVideo, hasPdf);
+        advanceProcessing(unit, state, hasPdf);
         return true;
     }
 
@@ -216,11 +191,6 @@ public class LectureContentProcessingService {
 
         log.info("Handling deletion cleanup for {} units", units.size());
 
-        // Cancel any ongoing transcription on Nebula for each unit
-        for (AttachmentVideoUnit unit : units) {
-            cancelTranscriptionOnNebula(unit.getId());
-        }
-
         // Batch delete from Pyris vector database
         if (irisLectureApi.isPresent()) {
             try {
@@ -235,8 +205,8 @@ public class LectureContentProcessingService {
 
     /**
      * Manually retry processing for a unit that failed.
-     * This is synchronous - the external API calls (Nebula/Pyris) are just job submissions
-     * which are fast. The actual processing happens on those external systems.
+     * This is synchronous - the external API call (Pyris) is just a job submission
+     * which is fast. The actual processing happens on Pyris.
      *
      * @param lectureUnit the unit to retry (must be in FAILED state)
      * @return the processing state after retry attempt, or null if retry not possible
@@ -292,9 +262,9 @@ public class LectureContentProcessingService {
     /**
      * Advance the processing state machine based on current phase.
      */
-    private void advanceProcessing(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
+    private void advanceProcessing(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasPdf) {
         switch (state.getPhase()) {
-            case IDLE -> startProcessingFromIdle(unit, state, hasVideo, hasPdf);
+            case IDLE -> startProcessingFromIdle(unit, state, hasPdf);
             case TRANSCRIBING, INGESTING -> {
                 // Wait for callbacks
             }
@@ -307,40 +277,10 @@ public class LectureContentProcessingService {
 
     /**
      * Start processing from IDLE state.
-     * Checks for playlist availability inline and transitions directly to TRANSCRIBING or INGESTING.
      */
-    private void startProcessingFromIdle(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
+    private void startProcessingFromIdle(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasPdf) {
         log.info("Starting processing for unit {}", unit.getId());
 
-        // Check if we already have a completed transcription (e.g., only PDF was re-uploaded)
-        Optional<LectureTranscription> existingTranscription = transcriptionRepository.findByLectureUnit_Id(unit.getId());
-        if (existingTranscription.isPresent() && existingTranscription.get().getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
-            log.info("Existing completed transcription found for unit {}, skipping to ingestion", unit.getId());
-            if (irisLectureApi.isPresent()) {
-                processingStateCallbackService.startIngestion(state);
-            }
-            else {
-                log.debug("Iris not available, marking unit {} as done", unit.getId());
-                state.transitionTo(ProcessingPhase.DONE);
-                processingStateRepository.save(state);
-            }
-            return;
-        }
-
-        if (hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent()) {
-            // Try to get playlist URL and start transcription
-            Optional<String> playlistUrl = fetchPlaylistUrl(unit);
-
-            if (playlistUrl.isPresent()) {
-                startTranscription(unit, state, playlistUrl.get());
-                return;
-            }
-            else {
-                log.debug("No playlist URL available for unit {}", unit.getId());
-            }
-        }
-
-        // No transcription possible - try PDF ingestion
         if (hasPdf && irisLectureApi.isPresent()) {
             processingStateCallbackService.startIngestion(state);
         }
@@ -358,32 +298,16 @@ public class LectureContentProcessingService {
                     processingStateRepository.save(state);
                 }
             }
-            log.debug("No processing possible for unit {} (no playlist and no PDF)", unit.getId());
+            log.debug("No processing possible for unit {} (no PDF)", unit.getId());
         }
     }
 
     // -------------------- Phase Handlers --------------------
 
-    private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
-        try {
-            NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl, unit.getLecture().getId(), unit.getId());
-            transcriptionApi.get().startNebulaTranscription(unit.getLecture().getId(), unit.getId(), request);
-            // Transition AFTER successful API call
-            state.transitionTo(ProcessingPhase.TRANSCRIBING);
-            processingStateRepository.save(state);
-            log.info("Transcription job started for unit {}", unit.getId());
-        }
-        catch (Exception e) {
-            // Transition to TRANSCRIBING so scheduler can find and retry it
-            state.transitionTo(ProcessingPhase.TRANSCRIBING);
-            log.error("Failed to start transcription for unit {}: {}", unit.getId(), e.getMessage());
-            processingStateCallbackService.handleTranscriptionFailure(state);
-        }
-    }
-
     /**
-     * Retry transcription for a state that failed.
-     * Called by the scheduler after exponential backoff period.
+     * Retry for a state stuck in the legacy TRANSCRIBING phase.
+     * Nebula transcription is no longer used; attempt PDF fallback or mark as failed.
+     * Called by the scheduler for states that were in TRANSCRIBING before migration.
      *
      * @param state the processing state to retry
      */
@@ -395,42 +319,18 @@ public class LectureContentProcessingService {
             return;
         }
 
-        // Clear retry eligibility - we're starting the retry now
         state.clearRetryEligibility();
 
-        // Refetch playlist URL
-        Optional<String> playlistUrl = fetchPlaylistUrl(attachmentUnit);
-
-        if (playlistUrl.isPresent()) {
-            log.info("Retrying transcription for unit {} (attempt {}/{})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-            // Update timestamps to mark retry start
-            state.setStartedAt(ZonedDateTime.now());
-            state.setLastUpdated(ZonedDateTime.now());
-            processingStateRepository.save(state);
-
-            try {
-                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), attachmentUnit.getLecture().getId(), attachmentUnit.getId());
-                transcriptionApi.get().startNebulaTranscription(attachmentUnit.getLecture().getId(), attachmentUnit.getId(), request);
-                log.info("Transcription retry job started for unit {}", unit.getId());
-            }
-            catch (Exception e) {
-                log.error("Failed to start transcription retry for unit {}: {}", unit.getId(), e.getMessage());
-                processingStateCallbackService.handleTranscriptionFailure(state);
-            }
+        boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
+        if (hasPdf && irisLectureApi.isPresent()) {
+            log.info("Recovering legacy TRANSCRIBING state for unit {}, falling back to PDF ingestion", unit.getId());
+            state.resetRetryCount();
+            processingStateCallbackService.startIngestion(state);
         }
         else {
-            // No playlist available anymore - try PDF fallback
-            boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
-                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
-            if (hasPdf && irisLectureApi.isPresent()) {
-                log.info("Playlist no longer available, falling back to PDF-only for unit {}", unit.getId());
-                state.resetRetryCount();
-                processingStateCallbackService.startIngestion(state);
-            }
-            else {
-                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
-                processingStateRepository.save(state);
-            }
+            log.warn("Cannot recover legacy TRANSCRIBING state for unit {}, marking as failed", unit.getId());
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed");
+            processingStateRepository.save(state);
         }
     }
 
@@ -445,23 +345,6 @@ public class LectureContentProcessingService {
     }
 
     // -------------------- Helper Methods --------------------
-
-    /**
-     * Fetch playlist URL from TUM Live API.
-     */
-    private Optional<String> fetchPlaylistUrl(AttachmentVideoUnit unit) {
-        if (tumLiveApi.isEmpty()) {
-            return Optional.empty();
-        }
-
-        try {
-            return tumLiveApi.get().getTumLivePlaylistLink(unit.getVideoSource());
-        }
-        catch (Exception e) {
-            log.error("Failed to fetch playlist URL for unit {}: {}", unit.getId(), e.getMessage());
-            return Optional.empty();
-        }
-    }
 
     /**
      * Detect content changes and perform cleanup if needed.
@@ -489,12 +372,12 @@ public class LectureContentProcessingService {
             log.info("Content changed for unit {}, video: {}, attachment: {}", unit.getId(), videoChanged, attachmentChanged);
 
             if (videoChanged) {
-                cleanupForReprocessing(unit, true);
+                cleanupForReprocessing(unit);
                 state.setVideoSourceHash(currentVideoHash);
             }
 
             if (attachmentChanged && !videoChanged) {
-                cleanupForReprocessing(unit, false);
+                cleanupForReprocessing(unit);
             }
 
             state.setAttachmentVersion(currentAttachmentVersion);
@@ -504,19 +387,8 @@ public class LectureContentProcessingService {
         return false;
     }
 
-    private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
-        if (deleteTranscription) {
-            // Cancel FIRST (needs transcription record to get jobId)
-            cancelTranscriptionOnNebula(unit.getId());
-            // Then delete
-            transcriptionRepository.findByLectureUnit_Id(unit.getId()).ifPresent(transcription -> {
-                log.info("Deleting existing transcription for unit {}", unit.getId());
-                transcriptionRepository.delete(transcription);
-            });
-        }
-
+    private void cleanupForReprocessing(AttachmentVideoUnit unit) {
         // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
-
         if (irisLectureApi.isPresent()) {
             try {
                 irisLectureApi.get().deleteLectureFromPyrisDB(java.util.List.of(unit));
@@ -525,20 +397,6 @@ public class LectureContentProcessingService {
             catch (Exception e) {
                 log.warn("Failed to delete unit {} from Pyris: {}", unit.getId(), e.getMessage());
             }
-        }
-    }
-
-    private void cancelTranscriptionOnNebula(Long lectureUnitId) {
-        if (transcriptionApi.isEmpty()) {
-            return;
-        }
-
-        try {
-            transcriptionApi.get().cancelNebulaTranscription(lectureUnitId);
-            log.info("Cancelled transcription on Nebula for unit {}", lectureUnitId);
-        }
-        catch (Exception e) {
-            log.warn("Failed to cancel transcription on Nebula for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
 

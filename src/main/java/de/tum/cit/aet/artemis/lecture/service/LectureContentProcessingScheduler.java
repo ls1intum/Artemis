@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Component
 @Lazy
 public class LectureContentProcessingScheduler {

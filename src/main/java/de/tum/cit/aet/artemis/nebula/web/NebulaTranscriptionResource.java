@@ -17,11 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 
 /**
- * REST controller for managing Nebula-powered lecture transcriptions and related utilities.
+ * REST controller for Nebula-related utilities.
  */
 @Conditional(NebulaEnabled.class)
 @Lazy
@@ -33,11 +32,8 @@ public class NebulaTranscriptionResource {
 
     private final TumLiveService tumLiveService;
 
-    private final LectureTranscriptionService lectureTranscriptionService;
-
-    public NebulaTranscriptionResource(TumLiveService tumLiveService, LectureTranscriptionService lectureTranscriptionService) {
+    public NebulaTranscriptionResource(TumLiveService tumLiveService) {
         this.tumLiveService = tumLiveService;
-        this.lectureTranscriptionService = lectureTranscriptionService;
     }
 
     /**

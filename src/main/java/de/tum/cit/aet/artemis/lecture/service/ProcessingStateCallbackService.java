@@ -13,29 +13,24 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
-import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
  * Service that handles callbacks and state transitions for the lecture content processing pipeline.
  * <p>
- * This service is extracted from {@link LectureContentProcessingService} to break the circular dependency
- * between the lecture and nebula modules. It handles:
+ * This service handles:
  * <ul>
- * <li>Transcription completion callbacks from {@link de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService}</li>
- * <li>Ingestion completion callbacks from Pyris webhooks</li>
- * <li>Starting ingestion jobs with Pyris</li>
+ * <li>Ingestion completion callbacks from Iris webhooks</li>
+ * <li>Starting ingestion jobs with Iris</li>
  * <li>Failure handling and retry logic</li>
  * </ul>
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Service
 @Lazy
 public class ProcessingStateCallbackService {
@@ -44,58 +39,11 @@ public class ProcessingStateCallbackService {
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
-    private final LectureTranscriptionRepository transcriptionRepository;
-
     private final Optional<IrisLectureApi> irisLectureApi;
 
-    public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<IrisLectureApi> irisLectureApi) {
+    public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi) {
         this.processingStateRepository = processingStateRepository;
-        this.transcriptionRepository = transcriptionRepository;
         this.irisLectureApi = irisLectureApi;
-    }
-
-    /**
-     * Called when a transcription completes (from the polling scheduler).
-     *
-     * @param transcription the completed transcription
-     */
-    public void handleTranscriptionComplete(LectureTranscription transcription) {
-        if (transcription.getLectureUnit() == null) {
-            log.warn("Transcription {} has no associated lecture unit", transcription.getId());
-            return;
-        }
-
-        Long unitId = transcription.getLectureUnit().getId();
-        processingStateRepository.findByLectureUnit_Id(unitId).ifPresent(state -> {
-            if (state.getPhase() != ProcessingPhase.TRANSCRIBING) {
-                return;
-            }
-
-            // Race condition check: verify this is the current transcription
-            Optional<LectureTranscription> currentTranscription = transcriptionRepository.findByLectureUnit_Id(unitId);
-            if (currentTranscription.isEmpty() || !currentTranscription.get().getId().equals(transcription.getId())) {
-                log.warn("Ignoring stale transcription callback for unit {}", unitId);
-                return;
-            }
-
-            if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
-                log.info("Transcription completed for unit {}", unitId);
-                if (irisLectureApi.isPresent()) {
-                    state.resetRetryCount(); // Fresh retries for ingestion phase
-                    startIngestion(state);
-                }
-                else {
-                    log.info("Iris not available, marking unit {} as done after transcription", unitId);
-                    state.transitionTo(ProcessingPhase.DONE);
-                    processingStateRepository.save(state);
-                }
-            }
-            else if (transcription.getTranscriptionStatus() == TranscriptionStatus.FAILED) {
-                log.warn("Transcription failed for unit {}", unitId);
-                handleTranscriptionFailure(state);
-            }
-        });
     }
 
     /**
@@ -142,7 +90,6 @@ public class ProcessingStateCallbackService {
 
     /**
      * Starts ingestion for a processing state.
-     * Called after transcription completes or for PDF-only units.
      *
      * @param state the processing state to start ingestion for
      */
@@ -185,42 +132,6 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.INGESTING);
             log.error("Failed to start ingestion for unit {}: {}", unit.getId(), e.getMessage());
             handleIngestionFailure(state);
-        }
-    }
-
-    /**
-     * Handles transcription failure with retry logic.
-     * If max retries reached, attempts fallback to PDF-only ingestion.
-     *
-     * @param state the processing state that failed
-     */
-    public void handleTranscriptionFailure(LectureUnitProcessingState state) {
-        state.incrementRetryCount();
-
-        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            // Try to fall back to PDF-only ingestion
-            LectureUnit unit = state.getLectureUnit();
-            boolean hasPdf = unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
-                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
-
-            if (hasPdf && irisLectureApi.isPresent()) {
-                log.info("Max transcription retries reached, falling back to PDF-only for unit {}", unit.getId());
-                state.resetRetryCount();
-                startIngestion(state);
-            }
-            else {
-                log.warn("Max transcription retries reached, marking as failed for unit {}", unit.getId());
-                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed");
-                processingStateRepository.save(state);
-            }
-        }
-        else {
-            // Stay in TRANSCRIBING phase, scheduler will retry after backoff period
-            long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-            state.scheduleRetry(backoffMinutes);
-            log.info("Transcription failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
-                    MAX_PROCESSING_RETRIES);
-            processingStateRepository.save(state);
         }
     }
 
