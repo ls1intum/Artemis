@@ -316,7 +316,7 @@ describe('CodeButtonComponent', () => {
 
         component.sshEnabled = true;
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH, RepositoryAuthenticationMethod.Password]);
 
         fixture.changeDetectorRef.detectChanges();
 
