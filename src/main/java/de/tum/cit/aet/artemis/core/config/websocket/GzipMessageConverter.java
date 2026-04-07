@@ -18,7 +18,6 @@ import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@SuppressWarnings("removal") // Blocked by Jackson 2→3 migration; requires JacksonJsonMessageConverter + JsonMapper
 public class GzipMessageConverter extends MappingJackson2MessageConverter {
 
     private static final Logger log = LoggerFactory.getLogger(GzipMessageConverter.class);

@@ -253,7 +253,6 @@ public class AttachmentVideoUnitService {
      * @param attachmentVideoUnit The attachment video unit to clean.
      */
     // TODO: use a DTO for sending data to the client instead of manipulating entity objects
-    @SuppressWarnings("deprecation") // Lecture.setAttachments is deprecated; migrate to AttachmentUnit
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         var lecture = attachmentVideoUnit.getLecture();
         var lectureUnits = lecture.getLectureUnits();
