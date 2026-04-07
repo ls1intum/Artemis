@@ -49,6 +49,7 @@ import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -102,6 +103,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
+                MockProvider(CourseStorageService),
             ],
         })
             .compileComponents()

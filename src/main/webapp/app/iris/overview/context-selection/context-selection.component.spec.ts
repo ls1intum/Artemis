@@ -2,11 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 import { ContextSelectionComponent } from './context-selection.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -27,30 +25,27 @@ describe('ContextSelectionComponent', () => {
         switchToNewSession: ReturnType<typeof vi.fn>;
     };
     let courseStorageServiceMock: { getCourse: ReturnType<typeof vi.fn> };
-    let courseManagementServiceMock: { findWithExercisesAndLecturesAndCompetencies: ReturnType<typeof vi.fn> };
 
     let chatModeSubject: BehaviorSubject<ChatServiceMode | undefined>;
     let entityIdSubject: BehaviorSubject<number | undefined>;
 
     const courseId = 42;
 
-    function buildCourseResponse(overrides = {}) {
-        return new HttpResponse({
-            body: {
-                id: courseId,
-                title: 'Test Course',
-                lectures: [
-                    { id: 1, title: 'Lecture 1' },
-                    { id: 2, title: 'Lecture 2' },
-                ],
-                exercises: [
-                    { id: 10, title: 'Programming Ex', type: ExerciseType.PROGRAMMING },
-                    { id: 11, title: 'Text Ex', type: ExerciseType.TEXT },
-                    { id: 12, title: 'File Upload Ex', type: ExerciseType.FILE_UPLOAD },
-                ],
-                ...overrides,
-            },
-        });
+    function buildCachedCourse(overrides = {}) {
+        return {
+            id: courseId,
+            title: 'Test Course',
+            lectures: [
+                { id: 1, title: 'Lecture 1' },
+                { id: 2, title: 'Lecture 2' },
+            ],
+            exercises: [
+                { id: 10, title: 'Programming Ex', type: ExerciseType.PROGRAMMING },
+                { id: 11, title: 'Text Ex', type: ExerciseType.TEXT },
+                { id: 12, title: 'File Upload Ex', type: ExerciseType.FILE_UPLOAD },
+            ],
+            ...overrides,
+        };
     }
 
     beforeEach(async () => {
@@ -65,11 +60,7 @@ describe('ContextSelectionComponent', () => {
         };
 
         courseStorageServiceMock = {
-            getCourse: vi.fn().mockReturnValue(undefined),
-        };
-
-        courseManagementServiceMock = {
-            findWithExercisesAndLecturesAndCompetencies: vi.fn().mockReturnValue(of(buildCourseResponse())),
+            getCourse: vi.fn().mockReturnValue(buildCachedCourse()),
         };
 
         await TestBed.configureTestingModule({
@@ -77,7 +68,6 @@ describe('ContextSelectionComponent', () => {
             providers: [
                 { provide: IrisChatService, useValue: chatServiceMock },
                 { provide: CourseStorageService, useValue: courseStorageServiceMock },
-                { provide: CourseManagementService, useValue: courseManagementServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -92,67 +82,42 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('data loading', () => {
-        it('should load course data from API when cache is empty', () => {
-            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(courseId);
+        it('should read course data from cache', () => {
+            expect(courseStorageServiceMock.getCourse).toHaveBeenCalledWith(courseId);
             expect(component.courseName()).toBe('Test Course');
             expect(component.lectures()).toHaveLength(2);
             expect(component.exercises()).toHaveLength(3);
         });
 
-        it('should use cached course data when available and skip the API call', async () => {
-            const cachedCourse = {
-                id: courseId,
-                title: 'Cached Course',
-                lectures: [{ id: 5, title: 'Cached Lecture' }],
-                exercises: [{ id: 50, title: 'Cached Exercise', type: ExerciseType.PROGRAMMING }],
-            };
-
-            courseStorageServiceMock.getCourse.mockReturnValue(cachedCourse);
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockClear();
-
-            // Recreate the component so the constructor runs with the new mock
+        it('should return empty data when cache has no course', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue(undefined);
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
-            await fixture.whenStable();
-
-            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).not.toHaveBeenCalled();
-            expect(component.courseName()).toBe('Cached Course');
-            expect(component.lectures()).toHaveLength(1);
-        });
-
-        it('should use cached course data even when lectures and exercises are empty', async () => {
-            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Empty Course', lectures: [], exercises: [] });
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockClear();
-
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
-            await fixture.whenStable();
-
-            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).not.toHaveBeenCalled();
-            expect(component.courseName()).toBe('Empty Course');
-        });
-
-        it('should handle API error gracefully and reset to empty state', async () => {
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(throwError(() => new Error('Network error')));
-
-            fixture = TestBed.createComponent(ContextSelectionComponent);
-            component = fixture.componentInstance;
-            await fixture.whenStable();
 
             expect(component.courseName()).toBe('');
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
 
-        it('should not call API when courseId is undefined', async () => {
+        it('should handle cached course with empty lectures and exercises', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Empty Course', lectures: [], exercises: [] });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+
+            expect(component.courseName()).toBe('Empty Course');
+            expect(component.lectures()).toHaveLength(0);
+            expect(component.exercises()).toHaveLength(0);
+        });
+
+        it('should return empty data when courseId is undefined', () => {
             chatServiceMock.getCourseId.mockReturnValue(undefined);
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockClear();
 
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
-            await fixture.whenStable();
 
-            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).not.toHaveBeenCalled();
+            expect(component.courseName()).toBe('');
+            expect(component.lectures()).toHaveLength(0);
+            expect(component.exercises()).toHaveLength(0);
         });
     });
 
@@ -233,40 +198,35 @@ describe('ContextSelectionComponent', () => {
             expect(textItem?.mode).toBe(ChatServiceMode.TEXT_EXERCISE);
         });
 
-        it('should not include course group when courseName is empty', async () => {
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: { title: '', lectures: [], exercises: [] } })));
-
+        it('should not include course group when courseName is empty', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: '', lectures: [], exercises: [] });
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
-            await fixture.whenStable();
 
             const groups = component.allGroups();
             const courseGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
             expect(courseGroup).toBeUndefined();
         });
 
-        it('should not include lectures group when there are no lectures', async () => {
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(
-                of(new HttpResponse({ body: { title: 'Course', lectures: [], exercises: [] } })),
-            );
-
+        it('should not include lectures group when there are no lectures', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({ id: courseId, title: 'Course', lectures: [], exercises: [] });
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
-            await fixture.whenStable();
 
             const groups = component.allGroups();
             const lecturesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.lecturesGroup');
             expect(lecturesGroup).toBeUndefined();
         });
 
-        it('should not include exercises group when there are no supported exercises', async () => {
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(
-                of(new HttpResponse({ body: { title: 'Course', lectures: [], exercises: [{ id: 99, type: ExerciseType.FILE_UPLOAD }] } })),
-            );
-
+        it('should not include exercises group when there are no supported exercises', () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({
+                id: courseId,
+                title: 'Course',
+                lectures: [],
+                exercises: [{ id: 99, type: ExerciseType.FILE_UPLOAD }],
+            });
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
-            await fixture.whenStable();
 
             const groups = component.allGroups();
             const exercisesGroup = groups.find((g) => g.label === 'artemisApp.iris.contextSelection.exercisesGroup');
@@ -283,7 +243,6 @@ describe('ContextSelectionComponent', () => {
 
     describe('onSelectionChange', () => {
         it('should call chatService.switchToNewSession with the correct mode and entityId', () => {
-            // id:11 (TEXT) is already loaded in beforeEach via the API mock
             const value = `${ChatServiceMode.TEXT_EXERCISE}:11`;
             component.onSelectionChange(value);
 
@@ -291,13 +250,10 @@ describe('ContextSelectionComponent', () => {
         });
 
         it('should call switchToNewSession for a lecture option', () => {
-            // id:3 is not in the default mock data (only ids 1 and 2), so we add it explicitly
-            component.lectures.set([{ id: 3, title: 'Some Lecture' }]);
-
-            const value = `${ChatServiceMode.LECTURE}:3`;
+            const value = `${ChatServiceMode.LECTURE}:1`;
             component.onSelectionChange(value);
 
-            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 3);
+            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1);
         });
 
         it('should not call switchToNewSession when value does not match any option', () => {
