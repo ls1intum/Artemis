@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -70,7 +69,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * @param now   the current time to compare against retryEligibleAt
      * @return list of states ready for retry, locked for the duration of the calling transaction
      */
-    @Transactional
     @Query(value = """
             SELECT *
             FROM lecture_unit_processing_state
