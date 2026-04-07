@@ -140,7 +140,7 @@ public class DatabaseMigration {
                     optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
                     System.exit(15);
                 }
-                else if (previousVersion.isEqualTo(path.requiredVersion)) {
+                else if (previousVersion.isGreaterThanOrEqualTo(path.requiredVersion) && !isSchemaConsolidationCompleted()) {
                     updateInitialChecksum(path.upgradeVersion.toString());
                     log.info("Successfully cleaned up initial schema during migration");
                     break; // Exit after handling the required migration step
@@ -246,6 +246,27 @@ public class DatabaseMigration {
             optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
             System.exit(11);
         }
+    }
+
+    /**
+     * Checks whether the schema consolidation for this major version has already been completed
+     * by looking for the cleanup changeset in DATABASECHANGELOG. Once the cleanup has run,
+     * the consolidation is done and we don't need to nullify checksums again.
+     * This prevents unnecessary work on every subsequent startup.
+     *
+     * @return true if the cleanup changeset (20260406120000) is already in DATABASECHANGELOG
+     */
+    private boolean isSchemaConsolidationCompleted() {
+        try (var statement = createStatement()) {
+            var result = statement.executeQuery("SELECT COUNT(*) FROM DATABASECHANGELOG WHERE ID = '20260406120000';");
+            if (result.next()) {
+                return result.getInt(1) > 0;
+            }
+        }
+        catch (SQLException e) {
+            log.warn("Could not check if schema consolidation is completed: {}", e.getMessage());
+        }
+        return false;
     }
 
     /**
