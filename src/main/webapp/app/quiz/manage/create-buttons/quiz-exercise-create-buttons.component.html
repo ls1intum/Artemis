@@ -1,14 +1,11 @@
-<div class="d-flex flex-wrap justify-content-end">
-    <jhi-exercise-create-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
+<div class="d-flex flex-wrap justify-content-end gap-2">
     <jhi-exercise-import-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
     @if (quizExercisesCount()) {
-        <button
-            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
-            [routerLink]="['/course-management', course()?.id, 'quiz-exercises', 'export']"
-        >
+        <p-button size="small" severity="secondary" [routerLink]="['/course-management', course()?.id, 'quiz-exercises', 'export']">
             <fa-icon [icon]="faFileExport" />
             <span jhiTranslate="artemisApp.exercise.exportAction"></span>
             <fa-icon [icon]="faCheckDouble" />
-        </button>
+        </p-button>
     }
+    <jhi-exercise-create-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
 </div>
