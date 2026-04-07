@@ -23,6 +23,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         end: dayjs('2026-04-20T11:45:00').toISOString(),
         location: 'Room 101',
         isCancelled: false,
+        isCancelledByFreePeriod: false,
         locationChanged: false,
         timeChanged: false,
         dateChanged: false,

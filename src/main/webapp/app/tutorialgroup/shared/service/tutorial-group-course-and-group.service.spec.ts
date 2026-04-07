@@ -57,6 +57,7 @@ describe('TutorialGroupCourseAndGroupService', () => {
             end,
             location: 'Room 101',
             isCancelled,
+            isCancelledByFreePeriod: false,
             locationChanged: false,
             timeChanged: false,
             dateChanged: false,
