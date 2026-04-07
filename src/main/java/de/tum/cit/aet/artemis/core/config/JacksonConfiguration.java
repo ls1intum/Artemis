@@ -41,6 +41,8 @@ public class JacksonConfiguration {
      * </ul>
      * This is required because {@code spring.jpa.open-in-view} is {@code false}, meaning
      * the Hibernate session is closed before Jackson serializes the response.
+     *
+     * @return the configured Hibernate7Module
      */
     @Bean
     public Hibernate7Module hibernateModule() {
