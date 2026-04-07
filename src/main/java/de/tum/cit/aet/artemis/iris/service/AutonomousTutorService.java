@@ -150,7 +150,7 @@ public class AutonomousTutorService {
             var notification = new NewAnswerNotification(course.getId(), course.getTitle(), course.getCourseIcon(), originalPost.getContent(),
                     originalPost.getCreationDate().toString(), originalPost.getAuthor().getName(), originalPost.getId(), answerPost.getContent(),
                     answerPost.getCreationDate().toString(), answerPost.getAuthor().getName(), answerPost.getAuthor().getId(), answerPost.getAuthor().getImageUrl(),
-                    answerPost.getId(), conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()), conversation.getId());
+                    answerPost.getId(), conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()), conversation.getId(), answerPost.getAuthor().isBot());
             courseNotificationService.sendCourseNotification(notification, filteredUsers);
         }
     }

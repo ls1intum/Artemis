@@ -131,7 +131,7 @@ public class AnswerMessageService extends PostingService {
         var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
                 newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
-                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId, newAnswerMessage.getAuthor().isBot());
 
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
@@ -154,7 +154,8 @@ public class AnswerMessageService extends PostingService {
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
                 newAnswerMessage.getCreationDate().toString(), newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(),
-                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId,
+                newAnswerMessage.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
