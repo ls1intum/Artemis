@@ -97,7 +97,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
 
         PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new PyrisTranscriptionSegmentDTO(0.0, 5.0, "Hello world", 1)));
         String resultJson = mapper.writeValueAsString(result);
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)),
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
                 resultJson, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -120,8 +120,8 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         transcription.setLectureUnit(unit);
         lectureTranscriptionRepository.save(transcription);
 
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "failed", false)), null,
-                unit.getId());
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "failed", false, null)),
+                null, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/transcription/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
@@ -142,7 +142,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         lectureTranscriptionRepository.save(transcription);
 
         PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(
-                List.of(new PyrisStageDTO("processing", 1, PyrisStageState.IN_PROGRESS, "running", false)), null, unit.getId());
+                List.of(new PyrisStageDTO("processing", 1, PyrisStageState.IN_PROGRESS, "running", false, null)), null, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/transcription/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
@@ -157,8 +157,8 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
     void testRunIdMismatch_returns409() throws Exception {
         String tokenA = pyrisJobService.addTranscriptionWebhookJob(course.getId(), lecture.getId(), unit.getId());
         String tokenB = pyrisJobService.addTranscriptionWebhookJob(course.getId(), lecture.getId(), unit.getId());
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)), null,
-                unit.getId());
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
+                null, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + tokenB))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/transcription/runs/" + tokenA + "/status", statusUpdate,
@@ -169,8 +169,8 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
     @Test
     void testWrongJobType_returns409() throws Exception {
         String chatJobToken = pyrisJobService.addCourseChatJob(course.getId(), 123L, 123L);
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)), null,
-                unit.getId());
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
+                null, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/transcription/runs/" + chatJobToken + "/status", statusUpdate,
@@ -187,8 +187,8 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         transcription.setLectureUnit(unit);
         lectureTranscriptionRepository.save(transcription);
 
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)), null,
-                unit.getId());
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
+                null, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/transcription/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
@@ -206,7 +206,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
 
         PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new PyrisTranscriptionSegmentDTO(0.0, 5.0, "Hello world", 1)));
         String resultJson = mapper.writeValueAsString(result);
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)),
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
                 resultJson, unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -226,7 +226,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         transcription.setLectureUnit(unit);
         lectureTranscriptionRepository.save(transcription);
 
-        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)),
+        PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false, null)),
                 "not-valid-json{{{", unit.getId());
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
