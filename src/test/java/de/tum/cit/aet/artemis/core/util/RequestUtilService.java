@@ -47,12 +47,11 @@ import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 // NOTE: Do NOT add @Lazy to this class. The JsonMapper must be properly configured with Jackson modules
-// before this service is used. With @Lazy, the JsonMapper might not have all modules registered.
+// (HibernateModule, JavaTimeModule, etc.) before this service is used. With @Lazy, the JsonMapper might
+// not have all modules registered, causing "No _valueDeserializer assigned" errors when deserializing entities.
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class RequestUtilService {
@@ -65,26 +64,13 @@ public class RequestUtilService {
 
     private final MockMvc mvc;
 
-    /**
-     * Spring-managed JsonMapper (with Hibernate module) — used for serializing request bodies.
-     */
     private final JsonMapper mapper;
-
-    /**
-     * Clean JsonMapper WITHOUT Hibernate module — used for deserializing HTTP response bodies.
-     * The Jackson 3 Hibernate7Module (3.1.0) has a bug where its AnnotationIntrospector
-     * corrupts the internal deserializer cache when many entity types are processed, causing
-     * "_valueDeserializer assigned" errors on basic String properties in large test suites.
-     */
-    private final JsonMapper readMapper;
 
     private final RequestPostProcessor requestPostProcessor;
 
     public RequestUtilService(MockMvc mvc, JsonMapper mapper, @Autowired(required = false) FixMissingServletPathProcessor fixMissingServletPathProcessor) throws ServletException {
         this.mvc = mvc;
         this.mapper = mapper;
-        this.readMapper = JsonMapper.builder().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-                .enable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS).build();
         this.requestPostProcessor = fixMissingServletPathProcessor;
     }
 
@@ -126,7 +112,7 @@ public class RequestUtilService {
             return null;
         }
 
-        return readMapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     /**
@@ -178,7 +164,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        return readMapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {
@@ -298,7 +284,7 @@ public class RequestUtilService {
             return null;
         }
         verifyExpectedResponseHeaders(expectedResponseHeaders, res);
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public <T, R> Set<R> postSetWithResponseBody(String path, T body, Class<R> setElementType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
@@ -315,7 +301,7 @@ public class RequestUtilService {
             return null;
         }
         verifyExpectedResponseHeaders(expectedResponseHeaders, res);
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
@@ -460,7 +446,7 @@ public class RequestUtilService {
         if (res.getResponse().getStatus() >= 299) {
             return null;
         }
-        return readMapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     /**
@@ -517,7 +503,7 @@ public class RequestUtilService {
         }
         MvcResult res = performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
-        return readMapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable Map<String, String> expectedResponseHeaders)
@@ -563,7 +549,7 @@ public class RequestUtilService {
             return (R) res.getResponse().getContentAsString();
         }
         // default encoding is iso-8859-1 since v5.2.0, but we want utf-8
-        return readMapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
     public MockHttpServletResponse putWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -619,7 +605,7 @@ public class RequestUtilService {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -639,7 +625,7 @@ public class RequestUtilService {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public void put(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -779,7 +765,7 @@ public class RequestUtilService {
             return null;
         }
 
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, @NonNull MultiValueMap<String, String> params) throws Exception {
@@ -793,7 +779,7 @@ public class RequestUtilService {
             return null;
         }
 
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType, @NonNull MultiValueMap<String, String> params) throws Exception {
@@ -807,7 +793,7 @@ public class RequestUtilService {
             return null;
         }
 
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
     }
 
     public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType) throws Exception {
@@ -830,7 +816,7 @@ public class RequestUtilService {
             return null;
         }
 
-        return readMapper.readValue(res.getResponse().getContentAsString(), readMapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
@@ -882,7 +868,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        return readMapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     /**
