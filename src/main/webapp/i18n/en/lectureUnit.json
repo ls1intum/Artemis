@@ -216,12 +216,21 @@
                 "loading": "Loading..."
             },
             "pdfViewer": {
+                "title": "PDF Viewer",
                 "loadingPdf": "Loading PDF...",
                 "loadFailed": "Failed to load PDF",
-                "loadFailedDetail": "Failed to load PDF document. Please try again.",
                 "zoomOut": "Zoom out",
                 "zoomIn": "Zoom in",
-                "resetZoom": "Reset zoom"
+                "search": "Search in document",
+                "searchPlaceholder": "Search...",
+                "nextMatch": "Next match",
+                "previousMatch": "Previous match",
+                "clearSearch": "Clear search",
+                "goToPage": "Go to page",
+                "pageInputPlaceholder": "Page",
+                "downloadPdf": "Download PDF",
+                "openFullscreen": "Open fullscreen",
+                "closeFullscreen": "Close fullscreen"
             }
         },
         "exerciseUnit": {

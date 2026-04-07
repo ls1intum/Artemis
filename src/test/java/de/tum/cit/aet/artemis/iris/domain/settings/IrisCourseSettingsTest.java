@@ -7,9 +7,11 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+
 class IrisCourseSettingsTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Test
     void of_trimsBlankInstructionsAndDefaultsVariant() {

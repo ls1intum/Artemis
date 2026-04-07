@@ -49,7 +49,10 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         // Build is already confirmed complete via API. Use reloadUntilFound as a fallback
         // in case the page needs a moment to render the result.
         await Commands.reloadUntilFound(page, expectedScore, 5000, BUILD_RESULT_TIMEOUT);
+        // Open the result history dropdown by clicking the submission status area, then click
+        // the "Feedback" button for the latest result to open the SCA feedback modal.
         await resultScore.click();
+        await page.getByRole('button', { name: 'Feedback' }).first().click();
         await programmingExerciseScaFeedback.shouldShowPointChart();
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_x'", '0.2');
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_y'", '0.2');

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -182,6 +182,130 @@ describe('IrisMcqQuestionComponent', () => {
 
         component.selectOption(0);
         expect(component.selectedIndex()).toBe(1);
+    });
+
+    it('should emit answerChanged on option select', () => {
+        const el = render();
+        const spy = vi.fn();
+        component.answerChanged.subscribe(spy);
+
+        const options = el.querySelectorAll('.mcq-option');
+        (options[2] as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledWith({ selectedIndex: 2, submitted: false });
+    });
+
+    it('should emit answerChanged on submit', () => {
+        const el = render();
+        const spy = vi.fn();
+        component.answerChanged.subscribe(spy);
+
+        const options = el.querySelectorAll('.mcq-option');
+        (options[1] as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledWith({ selectedIndex: 1, submitted: true });
+    });
+
+    it('should restore state from initialSelectedIndex and initialSubmitted', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 2);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(2);
+        expect(component.submitted()).toBe(true);
+    });
+
+    it('should restore state from persisted response in mcqData', () => {
+        const mcqWithResponse: McqData = {
+            ...sampleMcq,
+            response: { selectedIndex: 0, submitted: true },
+        };
+        render(mcqWithResponse);
+
+        expect(component.selectedIndex()).toBe(0);
+        expect(component.submitted()).toBe(true);
+    });
+
+    it('should reset submitted state when initialSubmitted changes to false', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        expect(component.submitted()).toBe(true);
+        expect(component.selectedIndex()).toBe(1);
+
+        // Simulate navigating to an unanswered question in the carousel
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(component.submitted()).toBe(false);
+        expect(component.selectedIndex()).toBeUndefined();
+    });
+
+    it('should reset selectedIndex when initialSelectedIndex changes to undefined', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 2);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(2);
+
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBeUndefined();
+    });
+
+    it('should show submit button and hide feedback after resetting from submitted state', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('.mcq-submit')).toBeFalsy();
+        expect(el.querySelector('.mcq-feedback')).toBeTruthy();
+
+        // Navigate to unanswered question
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(el.querySelector('.mcq-submit')).toBeTruthy();
+        expect(el.querySelector('.mcq-feedback')).toBeFalsy();
+        expect(el.querySelector('.mcq-explanation')).toBeFalsy();
+    });
+
+    it('should allow interaction after resetting from submitted state', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        // Navigate to unanswered question
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        // Should be able to select and submit
+        const el = fixture.nativeElement as HTMLElement;
+        const options = el.querySelectorAll('.mcq-option');
+        options.forEach((option) => {
+            expect((option as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        (options[0] as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(0);
+        expect(component.submitted()).toBe(false);
     });
 
     it('should not submit when no option is selected', () => {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostBinding, HostListener, Input, OnDestroy, effect, viewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, HostListener, OnDestroy, effect, input, model, viewChild } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -24,23 +24,24 @@ import { NgTemplateOutlet } from '@angular/common';
 })
 export class ResizeableContainerComponent implements OnDestroy {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
-    @Input() collapsed = false;
-    @Input() isExerciseParticipation = false;
-    @Input() examTimeline = false;
+    readonly collapsed = model<boolean>(false);
+    readonly isExerciseParticipation = input<boolean>(false);
+    readonly examTimeline = input<boolean>(false);
+    readonly showRightPanel = input<boolean>(true);
 
     /**
      * Expected to be set to true while the component is printed as PDF.
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() isBeingPrinted = false;
+    readonly isBeingPrinted = input<boolean>(false);
 
     /**
      * Forces the problem statement to be expanded when the component is printed as PDF
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() expandProblemStatement = false;
+    readonly expandProblemStatement = input<boolean>(false);
 
     readonly expandedPanel = viewChild<ElementRef<HTMLElement>>('expandedPanel');
 
@@ -96,7 +97,7 @@ export class ResizeableContainerComponent implements OnDestroy {
     @HostListener('window:resize', ['$event'])
     onWindowResize(event: any) {
         if (event.target.innerWidth <= 992) {
-            this.collapsed = false;
+            this.collapsed.set(false);
         }
     }
 }

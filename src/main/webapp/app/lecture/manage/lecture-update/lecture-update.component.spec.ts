@@ -304,7 +304,7 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
-    it('should set lecture visible date, start date and end date correctly', async () => {
+    it('should set lecture start date and end date correctly', async () => {
         await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
 
         await lectureUpdateComponentFixture.whenStable();
@@ -312,44 +312,34 @@ describe('LectureUpdateComponent', () => {
 
         const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
-        lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(3).date(7);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
         lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(3).date(1);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().endDate);
-        expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().visibleDate);
+        // endDate was before startDate, so endDate gets corrected to equal startDate
+        expect(lectureUpdateComponent.lecture().endDate).toEqual(lectureUpdateComponent.lecture().startDate);
 
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().startDate = undefined;
         lectureUpdateComponent.lecture().endDate = undefined;
-        lectureUpdateComponent.lecture().visibleDate = undefined;
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(2);
         expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
 
         await lectureUpdateComponentFixture.whenStable();
 
-        lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(1).date(1);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
         lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(1).date(3);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        if (lectureUpdateComponent.lecture().visibleDate && lectureUpdateComponent.lecture().startDate) {
-            expect(lectureUpdateComponent.lecture().visibleDate!.toDate() < lectureUpdateComponent.lecture().startDate!.toDate()).toBe(true);
-        } else {
-            throw new Error('visibleDate and startDate should not be undefined');
-        }
-
         if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
             expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
         } else {
@@ -390,12 +380,11 @@ describe('LectureUpdateComponent', () => {
     describe('isChangeMadeToPeriodSection', () => {
         it('should detect changes made to the period section', async () => {
             await configureActiveRouteMockAndCompileComponents();
-            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
-            lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs() } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
-                visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
                 startDate: lectureUpdateComponent.lectureOnInit.startDate,
                 endDate: lectureUpdateComponent.lectureOnInit.endDate,
             } as Lecture);
@@ -404,12 +393,11 @@ describe('LectureUpdateComponent', () => {
 
         it('should not consider resetting an undefined date as a change', async () => {
             await configureActiveRouteMockAndCompileComponents();
-            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
-            lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { startDate: undefined, endDate: undefined } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
-                visibleDate: dayjs('undefined'),
                 startDate: dayjs('undefined'),
                 endDate: dayjs('undefined'),
             } as Lecture);
