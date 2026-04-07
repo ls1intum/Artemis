@@ -69,7 +69,6 @@ export class ResultSimpleDTO {
     public rated?: boolean;
     public feedbacks?: FeedbackDTO[];
     public assessmentType?: AssessmentType;
-    public hasComplaint?: boolean;
     public submissionId?: number;
     public participationId?: number;
     public exerciseId?: number;

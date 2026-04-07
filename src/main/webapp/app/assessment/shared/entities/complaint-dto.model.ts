@@ -4,12 +4,11 @@ import { ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.mode
 import { ComplaintResponseDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 
 export class ComplaintDTO {
-    public id: number;
+    public id?: number;
     public complaintText?: string;
     public submittedTime?: dayjs.Dayjs;
     public complaintType?: ComplaintType;
     public complaintIsAccepted?: boolean;
     public complaintResponse?: ComplaintResponseDTO;
     public result?: ResultSimpleDTO;
-    public participantId?: number;
 }

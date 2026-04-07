@@ -7,6 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { User } from 'app/core/user/user.model';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 
@@ -74,18 +75,23 @@ export class ComplaintResponseService {
         return res;
     }
 
-    public convertComplaintResponseDTODatesFromServer(complaintResponseDTO: ComplaintResponseDTO): ComplaintResponseDTO {
-        if (complaintResponseDTO) {
-            complaintResponseDTO.submittedTime = convertDateFromServer(complaintResponseDTO.submittedTime);
-            complaintResponseDTO.lockEndDate = convertDateFromServer(complaintResponseDTO.lockEndDate);
-        }
-        return complaintResponseDTO;
-    }
-
     public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
         if (complaintResponse) {
             complaintResponse.submittedTime = convertDateFromServer(complaintResponse.submittedTime);
             complaintResponse.lockEndDate = convertDateFromServer(complaintResponse.lockEndDate);
+        }
+        return complaintResponse;
+    }
+
+    public convertComplaintResponseFromServer(dto: ComplaintResponseDTO): ComplaintResponse {
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = dto.id;
+        complaintResponse.responseText = dto.responseText ?? '';
+        complaintResponse.submittedTime = convertDateFromServer(dto.submittedTime);
+        complaintResponse.isCurrentlyLocked = dto.isCurrentlyLocked;
+        complaintResponse.lockEndDate = convertDateFromServer(dto.lockEndDate);
+        if (dto.reviewer) {
+            complaintResponse.reviewer = new User(dto.reviewer.id, dto.reviewer.login);
         }
         return complaintResponse;
     }

@@ -397,18 +397,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1")
-    void getComplaintByResultId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        complaintRepo.save(complaint);
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("submissionId", modelingSubmission.getId().toString());
-
-        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-        assertThat(received.participantId()).as("Tutors should not see the student of a complaint").isNull();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultId_student_sensitiveDataHidden() throws Exception {
         complaint = complaintRepo.save(complaint);
@@ -418,8 +406,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("submissionId", modelingSubmission.getId().toString());
 
         final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-
-        assertThat(received.participantId()).as("The participant should always be hidden").isNull();
         assertThat(received.complaintResponse().reviewer()).as("Students should not see the complaint reviewer").isNull();
     }
 
@@ -437,40 +423,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
 
         request.getList("/api/assessment/complaints", HttpStatus.FORBIDDEN, ComplaintDTO.class, params);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getComplaintsByCourseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        complaintRepo.save(complaint);
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
-        params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-
-        final var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-
-        complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getComplaintsByCourseId_tutor_allComplaintsForTutor() throws Exception {
-        complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
-        resultRepository.save(complaint.getResult());
-        complaintRepo.save(complaint);
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
-        params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
-
-        final var tutorComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-        assertThat(tutorComplaints).isEmpty();
-
-        params.add("allComplaintsForTutor", "true");
-        final var allComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-
-        assertThat(allComplaints).hasSize(1);
-        allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
 
     @Test
@@ -545,7 +497,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaints.forEach(comp -> {
             assertThat(comp.result().id()).isEqualTo(complaint.getResult().getId());
             assertThat(comp.complaintText()).isEqualTo(complaint.getComplaintText());
-            assertThat(comp.participantId()).as("No student information").isNull();
         });
     }
 
@@ -657,16 +608,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);
     }
 
-    private void checkComplaintContainsNoSensitiveData(ComplaintDTO receivedComplaint, boolean shouldStudentBeFilteredOut) {
-        if (shouldStudentBeFilteredOut) {
-            checkIfNoStudentInformationPresent(receivedComplaint);
-        }
-    }
-
-    private void checkIfNoStudentInformationPresent(ComplaintDTO receivedComplaint) {
-        assertThat(receivedComplaint.participantId()).as("Student should not be contained").isNull();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByExerciseIdTutorIsNotTutorForCourse() throws Exception {
@@ -679,20 +620,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         params.add("exerciseId", complaint.getResult().getSubmission().getParticipation().getExercise().getId().toString());
         request.getList("/api/assessment/complaints", HttpStatus.FORBIDDEN, ComplaintDTO.class, params);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        complaintRepo.save(complaint);
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
-        var exercise = complaint.getResult().getSubmission().getParticipation().getExercise();
-        params.add("exerciseId", exercise.getId().toString());
-
-        var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
-        complaints.forEach(complaint -> checkComplaintContainsNoSensitiveData(complaint, true));
     }
 
     @Test
