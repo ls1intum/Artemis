@@ -2,24 +2,28 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 /**
  * Represents the current phase of automated lecture content processing.
- * This includes transcription generation via Nebula and ingestion into Pyris/Iris.
+ * <p>
+ * The {@code lecture_unit_processing_state} table acts as a database-backed job queue.
+ * Iris handles both transcription and ingestion; Artemis tracks progress via these phases.
  */
 public enum ProcessingPhase {
 
     /**
-     * Initial state - not currently being processed.
-     * Processing will be triggered automatically when content changes.
+     * Queued state — waiting for dispatch to Iris.
+     * Jobs sit in IDLE with {@code startedAt=null} until a slot opens.
+     * Also used as the re-entry point after failures (with backoff via retryEligibleAt).
      */
     IDLE,
 
     /**
-     * Transcription is in progress with Nebula.
-     * The system polls Nebula for completion status.
+     * Iris is generating a transcription for the video.
+     * Includes video download, audio extraction, Whisper transcription, and slide alignment.
+     * Checkpoint callbacks update the transcription in the database as it progresses.
      */
     TRANSCRIBING,
 
     /**
-     * Content is being ingested into Pyris for Iris AI features.
+     * Iris is ingesting content into the vector database for AI features.
      * This happens after transcription completes (if applicable) or directly for PDF-only units.
      */
     INGESTING,

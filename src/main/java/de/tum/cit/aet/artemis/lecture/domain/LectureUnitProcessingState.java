@@ -237,7 +237,7 @@ public class LectureUnitProcessingState extends DomainObject {
         this.phase = ProcessingPhase.FAILED;
         this.errorKey = key;
         this.lastUpdated = ZonedDateTime.now();
-        this.retryEligibleAt = null; // No more retries in failed state
+        this.retryEligibleAt = null;
     }
 
     /**
