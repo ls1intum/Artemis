@@ -464,23 +464,24 @@ pre {
     textarea {
         background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
-        padding: 16px 56px 36px 16px;
+        padding: 16px;
         resize: none;
-        border-radius: $iris-border-radius-lg;
-        min-height: 72px;
-        max-height: 200px;
+        border: none;
+        border-radius: $iris-border-radius-lg $iris-border-radius-lg 0 0;
+        min-height: 40px;
+        max-height: 160px;
         overflow-y: auto;
 
         &:focus {
             outline: none;
             box-shadow: none;
-            border-color: var(--primary);
         }
 
+        // Override dark theme's .form-control:disabled { background-color: $gray-800 !important }
+        // so the textarea stays consistent with the wrapper background when disabled.
         &:disabled {
-            opacity: 0.25;
+            background-color: var(--iris-secondary-background) !important;
             cursor: not-allowed;
-            background-color: var(--iris-secondary-background);
         }
     }
 
@@ -490,9 +491,28 @@ pre {
     }
 
     .textarea-wrapper {
-        position: relative;
         display: flex;
+        flex-direction: column;
         flex: 1;
+        background-color: var(--iris-secondary-background);
+        border: 1px solid var(--bs-border-color);
+        border-radius: $iris-border-radius-lg;
+
+        &:focus-within {
+            border-color: var(--primary);
+        }
+
+        &:has(textarea:disabled) {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+    }
+
+    .textarea-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 6px 6px 8px;
     }
 }
 
@@ -699,9 +719,6 @@ pre {
 }
 
 #irisSendButton {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
     margin-bottom: 0;
     transform: none;
 }

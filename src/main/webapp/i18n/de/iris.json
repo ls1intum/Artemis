@@ -149,6 +149,14 @@
                 "reviewQuestions": "Fragen überprüfen",
                 "score": "Ergebnis"
             },
+            "contextSelection": {
+                "label": "Chat-Kontext auswählen",
+                "search": "Suchen...",
+                "placeholder": "Kontext auswählen...",
+                "courseGroup": "Kurs",
+                "lecturesGroup": "Vorlesungen",
+                "exercisesGroup": "Aufgaben"
+            },
             "citation": {
                 "unitLabel": "Einheit:",
                 "lectureLabel": "Vorlesung:"
@@ -206,6 +214,7 @@
                 "older": "Älter",
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "textExercise": "Diese Konversation bezieht sich auf eine Textaufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
                 },
                 "deleteSession": "Löschen",
