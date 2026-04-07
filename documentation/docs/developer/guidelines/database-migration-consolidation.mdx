@@ -59,9 +59,14 @@ This section describes the complete process for consolidating changelogs when cr
 Compare `master.xml` between the release branch and `develop` to determine which changelogs exist only on `develop` (these must be kept as incremental migrations):
 
 ```bash
-# Changelogs on release but not develop = to fold into initial schema
-# Changelogs on develop but not release = to keep as incremental
+# List changelogs that exist on develop but NOT on the release branch.
+# These are the ones to KEEP as incremental migrations (not fold).
 comm -13 \
+  <(git show release/8.8.x:src/main/resources/config/liquibase/master.xml | grep 'include file' | sed 's/.*changelog\///' | sed 's/".*//' | sort) \
+  <(grep 'include file' src/main/resources/config/liquibase/master.xml | sed 's/.*changelog\///' | sed 's/".*//' | sort)
+
+# To identify the changelogs to FOLD (on release but shared with develop), use:
+comm -12 \
   <(git show release/8.8.x:src/main/resources/config/liquibase/master.xml | grep 'include file' | sed 's/.*changelog\///' | sed 's/".*//' | sort) \
   <(grep 'include file' src/main/resources/config/liquibase/master.xml | sed 's/.*changelog\///' | sed 's/".*//' | sort)
 ```
@@ -139,6 +144,10 @@ In `20240331151800_cleanup.xml`, update the changeset ID to a new timestamp (e.g
 ```
 
 The `WHERE ID not like '0000000000000%'` preserves all three initial schema changesets (IDs `00000000000001`, `00000000000002`, `00000000000003`).
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>Important:</strong> The cleanup changeset ID is also referenced in <code>DatabaseMigration.java</code> in the <code>isSchemaConsolidationCompleted()</code> method. When you change the cleanup ID here, you <strong>must also update</strong> the hardcoded ID in that method to match. Similarly, update the <code>DELETE</code> statement to preserve any develop-only changelogs that may already be applied on test/staging servers.
+</Callout>
 
 ### Step 5: Update `master.xml`
 
