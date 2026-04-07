@@ -5,8 +5,7 @@
             "type": "java",
             "name": "Debug App",
             "request": "launch",
-            "mainClass": "${packageName}.Client",
-            "projectName": "${exerciseNamePomXml}"
+            "mainClass": "${packageName}.Client"
         }
     ]
 }
