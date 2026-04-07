@@ -136,6 +136,11 @@ test {
     reports.html.required = false
     minHeapSize = "2g" // initial heap size
     maxHeapSize = "6g" // maximum heap size
+    // Restart the test JVM after every 3000 test classes to prevent Jackson 3's internal
+    // type resolution cache from becoming corrupted. The jackson-datatype-hibernate7:3.1.0
+    // module's AnnotationIntrospector can cause "_valueDeserializer assigned" errors when
+    // too many entity types are processed in a single JVM.
+    forkEvery = 3000
 }
 
 // Convenience tasks for running the full test suite against specific databases via Testcontainers:
