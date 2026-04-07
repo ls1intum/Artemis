@@ -29,5 +29,5 @@ sourceSets {
 }
 
 application {
-    mainClass = 'src/${packageNameFolder}/${packageName}'
+    mainClass = '${packageName}.Client'
 }
