@@ -1,0 +1,172 @@
+<div class="iframe-pdf-container" [class.dark-mode]="isDarkMode()">
+    <ngx-extended-pdf-viewer
+        class="iframe-pdf-viewer"
+        [src]="pdfUrl()"
+        [page]="currentPage()"
+        [customToolbar]="customToolbar"
+        (pageChange)="onPageChange($event)"
+        (pageRendered)="onPageRendered()"
+        (pdfLoaded)="onPdfLoaded($event)"
+        (pdfLoadingFailed)="onPdfLoadingFailed()"
+        (updateFindMatchesCount)="onFindMatchesCountUpdate($event)"
+        [ignoreKeyboard]="true"
+        [zoom]="'page-width'"
+        [textLayer]="true"
+        [sidebarVisible]="false"
+        [showSidebarButton]="false"
+        [showFindButton]="false"
+        [showOpenFileButton]="false"
+        [showPrintButton]="false"
+        [showDownloadButton]="false"
+        [showSecondaryToolbarButton]="false"
+        [showRotateButton]="false"
+        [showSpreadButton]="false"
+        [showPropertiesButton]="false"
+        [showScrollingButtons]="false"
+        [showTextEditor]="false"
+        [showStampEditor]="false"
+        [showCommentEditor]="false"
+        [showDrawEditor]="false"
+        [showHighlightEditor]="false"
+        [showSignatureEditor]="false"
+        [showPagingButtons]="false"
+        [showZoomDropdown]="false"
+    />
+    <ng-template #customToolbar>
+        <div id="toolbarViewer" class="artemis-pdf-toolbar" [class.artemis-pdf-toolbar--fullscreen]="isFullscreenMode()">
+            @if (isFullscreenMode()) {
+                <div class="artemis-pdf-toolbar__left-spacer" aria-hidden="true"></div>
+            }
+            <div #toolbarCenter class="artemis-pdf-toolbar__center" [class.artemis-pdf-toolbar__center--search-active]="!!searchQuery()">
+                <div class="artemis-pdf-toolbar__search">
+                    <div class="artemis-pdf-toolbar__search-field">
+                        <fa-icon class="artemis-pdf-toolbar__search-icon" [icon]="faMagnifyingGlass" />
+                        <input
+                            pInputText
+                            type="text"
+                            class="artemis-pdf-toolbar__search-input"
+                            [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder' | artemisTranslate"
+                            [ngModel]="searchQuery()"
+                            (ngModelChange)="performSearch($event)"
+                            (keydown.enter)="onSearchInputEnter($event)"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.search' | artemisTranslate"
+                        />
+                    </div>
+                    @if (searchQuery()) {
+                        <div class="artemis-pdf-toolbar__search-controls">
+                            @let matchesCount = searchMatchesCount();
+                            @if (matchesCount) {
+                                <span class="artemis-pdf-toolbar__search-count"> {{ matchesCount.current }}/{{ matchesCount.total }} </span>
+                            }
+                            <button
+                                class="artemis-pdf-toolbar__button"
+                                type="button"
+                                [title]="'artemisApp.attachmentVideoUnit.pdfViewer.previousMatch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.previousMatch' | artemisTranslate"
+                                [disabled]="!searchMatchesCount()?.total"
+                                (click)="search(true)"
+                            >
+                                <fa-icon [icon]="faChevronUp" />
+                            </button>
+                            <button
+                                #searchNextButton
+                                class="artemis-pdf-toolbar__button"
+                                type="button"
+                                [title]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"
+                                [disabled]="!searchMatchesCount()?.total"
+                                (click)="search(false)"
+                            >
+                                <fa-icon [icon]="faChevronDown" />
+                            </button>
+                            <button
+                                class="artemis-pdf-toolbar__button"
+                                type="button"
+                                [title]="'artemisApp.attachmentVideoUnit.pdfViewer.clearSearch' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.clearSearch' | artemisTranslate"
+                                (click)="clearSearch()"
+                            >
+                                <fa-icon [icon]="faTimes" />
+                            </button>
+                        </div>
+                    }
+                </div>
+                <div class="artemis-pdf-toolbar__divider"></div>
+                @if (totalPages() > 0) {
+                    <div class="artemis-pdf-toolbar__page-navigation">
+                        <p-inputNumber
+                            #pageInput
+                            [ngModel]="pageInputValue()"
+                            (ngModelChange)="pageInputValue.set($event ?? undefined)"
+                            (keydown.enter)="onPageInputEnter($event)"
+                            (onFocus)="onPageInputFocus()"
+                            (click)="onPageInputFocus()"
+                            (onBlur)="confirmPageNavigation()"
+                            [showButtons]="false"
+                            [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.pageInputPlaceholder' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate"
+                            inputStyleClass="artemis-pdf-toolbar__page-input"
+                        />
+                        <span class="artemis-pdf-toolbar__page-total">/{{ totalPages() }}</span>
+                    </div>
+                    <div class="artemis-pdf-toolbar__divider"></div>
+                }
+                <div class="artemis-pdf-toolbar__zoom-controls">
+                    <button
+                        class="artemis-pdf-toolbar__button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                        (click)="zoomOut()"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlassMinus" />
+                    </button>
+                    <button
+                        class="artemis-pdf-toolbar__button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                        (click)="zoomIn()"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlassPlus" />
+                    </button>
+                </div>
+                <div class="artemis-pdf-toolbar__divider"></div>
+                <button
+                    class="artemis-pdf-toolbar__button artemis-pdf-toolbar__download-button"
+                    type="button"
+                    [title]="'artemisApp.attachmentVideoUnit.pdfViewer.downloadPdf' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.downloadPdf' | artemisTranslate"
+                    (click)="triggerDownload()"
+                >
+                    <fa-icon [icon]="faDownload" />
+                </button>
+                @if (!isFullscreenMode()) {
+                    <div class="artemis-pdf-toolbar__divider"></div>
+                    <button
+                        class="artemis-pdf-toolbar__button artemis-pdf-toolbar__fullscreen-button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
+                        (click)="requestFullscreen()"
+                    >
+                        <fa-icon [icon]="faExpand" />
+                    </button>
+                }
+            </div>
+            @if (isFullscreenMode()) {
+                <div class="artemis-pdf-toolbar__right">
+                    <button
+                        class="artemis-pdf-toolbar__button artemis-pdf-toolbar__close-fullscreen-button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
+                        (click)="closeFullscreen()"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                </div>
+            }
+        </div>
+    </ng-template>
+</div>
