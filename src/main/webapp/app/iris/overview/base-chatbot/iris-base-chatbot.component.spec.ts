@@ -16,7 +16,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -39,6 +39,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -85,6 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(IrisThinkingBubbleComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -1463,6 +1465,114 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textBubble = fixture.nativeElement.querySelector('.bubble-left');
             expect(textBubble).toBeFalsy();
+        });
+    });
+
+    describe('activeChatMessage computed signal', () => {
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        it('should show thinking bubble when a stage has IN_PROGRESS state and chatMessage', () => {
+            const stageWithChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+                chatMessage: 'Analyzing your code...',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Analyzing your code...');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
+        });
+
+        it('should not show thinking bubble when no stage has chatMessage', () => {
+            const stageWithoutChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithoutChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should not show thinking bubble when all stages are DONE', () => {
+            const doneStage: IrisStageDTO = {
+                name: 'Complete',
+                weight: 1,
+                state: IrisStageStateDTO.DONE,
+                message: 'Done',
+                internal: false,
+                chatMessage: 'Finished analysis',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([doneStage]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should update thinking bubble message when chatMessage changes', () => {
+            const stagesSubject = new BehaviorSubject<IrisStageDTO[]>([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Initial message',
+                },
+            ]);
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(stagesSubject.asObservable());
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Initial message');
+
+            // Update the chatMessage
+            stagesSubject.next([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Updated message',
+                },
+            ]);
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Updated message');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
         });
     });
 

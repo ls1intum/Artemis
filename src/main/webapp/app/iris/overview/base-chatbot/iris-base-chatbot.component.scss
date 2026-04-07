@@ -269,6 +269,24 @@ $iris-z-index-dropdown: 1050;
     }
 }
 
+jhi-iris-mcq-carousel,
+jhi-iris-mcq-question {
+    display: block;
+    margin-bottom: 12px;
+}
+
+.mcq-intro-text {
+    color: var(--body-color);
+    margin-bottom: 8px;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+.llm-message-wrapper {
+    width: fit-content;
+    position: relative;
+}
+
 .bubble-left {
     --_d: 0%;
 
