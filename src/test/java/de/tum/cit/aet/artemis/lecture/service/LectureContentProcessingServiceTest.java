@@ -265,8 +265,8 @@ class LectureContentProcessingServiceTest {
 
             callbackService.dispatchPendingJobs();
 
-            // Then: Should reset to IDLE with retry backoff
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Then: Should mark as FAILED with retry backoff scheduled
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(1);
             assertThat(testState.getRetryEligibleAt()).isNotNull();
             assertThat(testState.getStartedAt()).isNull(); // Back in queue
@@ -393,7 +393,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldResetToIdleOnFailure() {
+        void shouldMarkAsFailedWithRetryOnFailure() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
@@ -403,8 +403,8 @@ class LectureContentProcessingServiceTest {
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
 
-            // Should reset to IDLE with backoff for re-dispatch
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Should mark as FAILED with backoff scheduled for re-dispatch
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(1);
             assertThat(testState.getStartedAt()).isNull();
             assertThat(testState.getRetryEligibleAt()).isNotNull();
@@ -580,7 +580,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldResetToIdleOnFailureWithCorrectBackoff() {
+        void shouldMarkAsFailedWithCorrectBackoff() {
             // Given: Ingestion fails (not at max retries)
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
@@ -593,8 +593,8 @@ class LectureContentProcessingServiceTest {
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
 
-            // Then: Should reset to IDLE with backoff (2^2 = 4 minutes)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Then: Should mark as FAILED with backoff scheduled (2^2 = 4 minutes)
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(2);
             assertThat(testState.getRetryEligibleAt()).isNotNull();
             ZonedDateTime expectedEligibleAt = beforeCall.plusMinutes(4);
