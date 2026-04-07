@@ -279,8 +279,13 @@ $iris-z-index-dropdown: 1050;
         background-color 0.2s,
         border-color 0.2s;
 
-    &:hover {
+    &:not(:disabled):hover {
         background-color: var(--iris-tertiary-background);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 }
 

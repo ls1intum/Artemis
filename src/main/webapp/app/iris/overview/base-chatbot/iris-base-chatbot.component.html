@@ -425,12 +425,13 @@
                             </div>
                         </div>
                     </div>
-                    @if (!messages()?.length && !isEmbeddedChat() && !isExerciseOrLectureMode()) {
+                    @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && !isExerciseOrLectureMode()) {
                         <div class="prompt-suggestion-chips">
                             @for (chip of suggestionChips; track chip.translationKey) {
                                 <button
                                     type="button"
                                     class="prompt-suggestion-chip"
+                                    [disabled]="isInputDisabled()"
                                     (click)="applyChipText(chip.starterKey)"
                                     (mouseenter)="onChipMouseEnter(chip.starterKey)"
                                     (mouseleave)="onChipMouseLeave()"

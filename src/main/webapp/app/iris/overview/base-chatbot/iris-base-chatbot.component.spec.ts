@@ -1354,6 +1354,84 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('Session switcher (embedded layout)', () => {
+        const embeddedSession: IrisSessionDTO = {
+            id: 20,
+            title: 'Embedded session',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const embeddedPastSession: IrisSessionDTO = {
+            id: 21,
+            title: 'Older embedded session',
+            creationDate: new Date('2025-10-05T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const unrelatedSession: IrisSessionDTO = {
+            id: 22,
+            title: 'Unrelated session',
+            creationDate: new Date('2025-10-05T08:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 99,
+            entityName: 'Lecture 99',
+        };
+
+        it('should not render session title trigger in empty embedded mode without related sessions', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it('should render session title trigger in empty embedded mode with related sessions', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, embeddedPastSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
+
+        it('should not render session title trigger when only unrelated past sessions exist in embedded mode', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, unrelatedSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+    });
+
     describe('onDeleteSession', () => {
         let confirmationService: ConfirmationService;
         let alertService: AlertService;
@@ -1650,8 +1728,34 @@ describe('IrisBaseChatbotComponent', () => {
             expect(chips).toHaveLength(3);
         });
 
+        it('should disable suggestion chips when iris is unavailable', () => {
+            statusMock.getActiveStatus.mockReturnValue(of(false));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const chips: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(3);
+            chips.forEach((chip) => expect(chip.disabled).toBe(true));
+        });
+
         it('should not render suggestion chips when isEmbeddedChat is true', () => {
             fixture.componentRef.setInput('isEmbeddedChat', true);
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips in embedded layout empty state', () => {
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips in widget layout empty state', () => {
+            fixture.componentRef.setInput('layout', 'widget');
             fixture.detectChanges();
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             expect(chips).toHaveLength(0);

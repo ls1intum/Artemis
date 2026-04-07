@@ -381,11 +381,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     });
     readonly hasPastSessions = computed(() => {
         const currentId = this.currentSessionId();
-        return this.chatSessions().some((s) => s.id !== currentId);
+        return this.chatSessions().some((s) => s.id !== currentId && this.isSessionRelatedToCurrentContext(s));
     });
 
     readonly showWidgetHeader = computed(() => {
-        if (this.layout() !== 'widget') {
+        if (this.layout() !== 'widget' && this.layout() !== 'embedded') {
             return true;
         }
         return !this.isEmptyState() || this.hasPastSessions();
@@ -959,6 +959,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     applyChipText(translationKey: string): void {
+        if (this.isInputDisabled()) return;
         const text = this.translateService.instant(translationKey);
         this.chipPreviewText.set('');
         this.isChipTextApplied.set(true);
@@ -974,6 +975,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onChipMouseEnter(starterKey: string): void {
+        if (this.isInputDisabled()) return;
         if (this.isChipTextApplied()) return;
         this.chipPreviewText.set(this.translateService.instant(starterKey));
     }
@@ -1029,6 +1031,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return false;
         }
         return IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
+    }
+
+    private isSessionRelatedToCurrentContext(session: IrisSessionDTO): boolean {
+        const currentMode = this.currentChatMode();
+        if (!currentMode || session.chatMode !== currentMode) {
+            return false;
+        }
+
+        const currentEntityId = this.currentRelatedEntityId();
+        if (currentEntityId === undefined) {
+            return session.entityId === undefined;
+        }
+        return session.entityId === currentEntityId;
     }
 
     /**
