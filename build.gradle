@@ -235,8 +235,7 @@ dependencies {
     // Jackson 3 core — version pinned to fix GHSA-2m67-wjpj-xhg9
     implementation "tools.jackson.core:jackson-core:3.1.1"
     implementation "tools.jackson.core:jackson-databind:3.1.1"
-    // Jackson 3 datatype/dataformat modules
-    implementation "tools.jackson.datatype:jackson-datatype-hibernate7:3.1.0"
+    // Jackson 3 dataformat modules
     implementation "tools.jackson.dataformat:jackson-dataformat-xml:3.1.0"
     implementation "tools.jackson.dataformat:jackson-dataformat-yaml:3.1.0"
     constraints {
