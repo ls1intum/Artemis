@@ -140,7 +140,7 @@ test {
     // type resolution cache from becoming corrupted. The jackson-datatype-hibernate7:3.1.0
     // module's AnnotationIntrospector can cause "_valueDeserializer assigned" errors when
     // too many entity types are processed in a single JVM.
-    forkEvery = 3000
+    forkEvery = 250
 }
 
 // Convenience tasks for running the full test suite against specific databases via Testcontainers:
