@@ -4,6 +4,7 @@
     border-radius: 12px;
     background: var(--iris-received-message-background);
     border: 1px solid var(--border-color);
+    color: var(--body-color);
 }
 
 .mcq-question {
@@ -14,6 +15,7 @@
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    color: var(--body-color);
 }
 
 .mcq-options {
@@ -71,6 +73,7 @@
     height: 1.5rem;
     border-radius: 50%;
     background: var(--border-color);
+    color: var(--body-color);
     font-weight: 600;
     font-size: 0.8rem;
     flex-shrink: 0;
@@ -81,6 +84,7 @@
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    color: var(--body-color);
 }
 
 .mcq-submit {
@@ -129,6 +133,8 @@
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    position: relative;
+    z-index: 100;
 
     strong {
         margin-right: 0.25rem;
