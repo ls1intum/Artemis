@@ -276,7 +276,7 @@
                                             <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                         </button>
                                     }
-                                    @if (session.isCancelled) {
+                                    @if (session.isCancelled && !session.isCancelledByFreePeriod) {
                                         <button
                                             [pTooltip]="activateSessionButtonTooltipLabel()"
                                             tooltipPosition="left"

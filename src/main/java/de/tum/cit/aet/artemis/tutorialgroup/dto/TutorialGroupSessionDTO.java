@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDT
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull @Size(min = 1, max = 255) String location,
-        @NotNull Boolean isCancelled, @NotNull Boolean locationChanged, @NotNull Boolean timeChanged, @NotNull Boolean dateChanged,
+        @NotNull Boolean isCancelled, @NotNull Boolean isCancelledByFreePeriod, @NotNull Boolean locationChanged, @NotNull Boolean timeChanged, @NotNull Boolean dateChanged,
         @Nullable @Range(min = 1, max = 5000) Integer attendanceCount) {
 
     /**
@@ -42,13 +42,13 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      */
     public static TutorialGroupSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd,
             String scheduleLocation, ZoneId courseTimeZone) {
-        boolean isCancelled = rawDto.status() == TutorialGroupSessionStatus.CANCELLED;
         boolean sameLocation = rawDto.location().equals(scheduleLocation);
         ZonedDateTime sessionStart = rawDto.start().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = rawDto.end().withZoneSameInstant(courseTimeZone);
         boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
         boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
-        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, !sameLocation, !sameTime, !sameDay, rawDto.attendanceCount());
+        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), rawDto.isCancelled(), rawDto.isCancelledByFreePeriod(), !sameLocation,
+                !sameTime, !sameDay, rawDto.attendanceCount());
     }
 
     /**
@@ -59,8 +59,8 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      * @return a DTO with session details and flags for schedule deviations
      */
     public static TutorialGroupSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto) {
-        boolean isCancelled = rawDto.status() == TutorialGroupSessionStatus.CANCELLED;
-        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, false, false, false, rawDto.attendanceCount());
+        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), rawDto.isCancelled(), rawDto.isCancelledByFreePeriod(), false, false,
+                false, rawDto.attendanceCount());
     }
 
     /**
@@ -72,6 +72,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      */
     public static TutorialGroupSessionDTO from(TutorialGroupSession session, TutorialGroupSchedule schedule) {
         boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
+        boolean isCancelledByFreePeriod = session.getTutorialGroupFreePeriod() != null;
         boolean sameLocation = true;
         boolean sameTime = true;
         boolean sameDate = true;
@@ -82,7 +83,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
             sameTime = session.getStart().toLocalTime().equals(scheduleStart) && session.getEnd().toLocalTime().equals(scheduleEnd);
             sameDate = session.getStart().getDayOfWeek().getValue() == schedule.getDayOfWeek();
         }
-        return new TutorialGroupSessionDTO(session.getId(), session.getStart(), session.getEnd(), session.getLocation(), isCancelled, !sameLocation, !sameTime, !sameDate,
-                session.getAttendanceCount());
+        return new TutorialGroupSessionDTO(session.getId(), session.getStart(), session.getEnd(), session.getLocation(), isCancelled, isCancelledByFreePeriod, !sameLocation,
+                !sameTime, !sameDate, session.getAttendanceCount());
     }
 }
