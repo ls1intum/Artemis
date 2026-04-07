@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,8 +23,6 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 @Profile(PROFILE_JENKINS)
 @Component
@@ -65,10 +65,17 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
         final var entity = new HttpEntity<>(headers);
 
         try {
-            final var response = restTemplate.exchange(jenkinsServerUri.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity, JsonNode.class);
-            final var sessionId = response.getHeaders().get("Set-Cookie").getFirst();
-            headersToAuthenticate.add("Jenkins-Crumb", response.getBody().get("crumb").asText());
-            headersToAuthenticate.add("Cookie", sessionId);
+            final var response = restTemplate.exchange(jenkinsServerUri.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    });
+            final var body = response.getBody();
+            final var cookies = response.getHeaders().get("Set-Cookie");
+            if (body == null || !body.containsKey("crumb") || cookies == null || cookies.isEmpty()) {
+                log.warn("Incomplete Jenkins crumb response: body={}, cookies={}", body, cookies);
+                return;
+            }
+            headersToAuthenticate.add("Jenkins-Crumb", String.valueOf(body.get("crumb")));
+            headersToAuthenticate.add("Cookie", cookies.getFirst());
         }
         catch (RestClientException e) {
             log.error("Cannot get Jenkins crumb from crumb issuer: {}", e.getMessage());

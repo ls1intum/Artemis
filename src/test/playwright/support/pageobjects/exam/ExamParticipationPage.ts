@@ -60,7 +60,8 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        await this.page.waitForTimeout(300);
+        // Wait for the text to be processed by Angular change detection
+        await this.page.waitForTimeout(1000);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
@@ -75,7 +76,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({ timeout: 60000 });
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
+                timeout: BUILD_RESULT_TIMEOUT * 2,
+            });
         }
     }
 
@@ -94,7 +97,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
         await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        // Use a permissive glob so Angular sub-path routing (e.g. /exams/{id}/start)
+        // does not cause waitForURL to time out.
+        await this.page.waitForURL(`**/exams/${exam.id}**`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
@@ -116,10 +121,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(exerciseID: number, expectedResult: string) {
+    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
         // In exam mode, page.reload() navigates away from the active exercise tab,
         // so we rely on WebSocket to push build results and use Playwright's auto-retry.
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await expect(resultScore).toContainText(expectedResult, { timeout: BUILD_RESULT_TIMEOUT });
+        await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }

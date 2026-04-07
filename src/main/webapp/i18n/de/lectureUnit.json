@@ -85,10 +85,7 @@
             "created": "Neuer Datei-/Video-Inhalt erstellt",
             "updated": "Datei-/Video-Inhalt aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "transcriptAvailable": "Transkription möglich",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
-            "generateTranscription": "Transkription generieren",
-            "transcriptionPossible": "Transkription möglich",
             "transcriptionProcessing": "Transkription wird verarbeitet",
             "transcriptionFailed": "Transkription fehlgeschlagen",
             "hasTranscription": "Transkription vollständig",
@@ -178,7 +175,7 @@
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
                 "videoTranscription": "Video Transkription",
                 "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
-                "generateTranscriptLabel": "Transkript nach dem Speichern erzeugen"
+                "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen."
             },
             "editAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt bearbeiten"
@@ -219,12 +216,21 @@
                 "loading": "Lädt..."
             },
             "pdfViewer": {
+                "title": "PDF-Betrachter",
                 "loadingPdf": "PDF wird geladen...",
                 "loadFailed": "PDF konnte nicht geladen werden",
-                "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut.",
                 "zoomOut": "Verkleinern",
                 "zoomIn": "Vergrößern",
-                "resetZoom": "Zoom zurücksetzen"
+                "search": "Im Dokument suchen",
+                "searchPlaceholder": "Suchen...",
+                "nextMatch": "Nächster Treffer",
+                "previousMatch": "Vorheriger Treffer",
+                "clearSearch": "Suche löschen",
+                "goToPage": "Gehe zu Seite",
+                "pageInputPlaceholder": "Seite",
+                "downloadPdf": "PDF herunterladen",
+                "openFullscreen": "Vollbild öffnen",
+                "closeFullscreen": "Vollbild schließen"
             }
         },
         "exerciseUnit": {
