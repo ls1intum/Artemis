@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { of } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

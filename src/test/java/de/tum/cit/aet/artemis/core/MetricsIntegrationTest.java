@@ -345,7 +345,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnLectureUnitInformation() throws Exception {
-            final var testLecture = lectureUtilService.createLecture(course, null);
+            final var testLecture = lectureUtilService.createLecture(course);
             final var lectureUnit = lectureUtilService.createTextUnit(testLecture);
             Competency competency = competencyUtilService.createCompetency(course);
             lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)));

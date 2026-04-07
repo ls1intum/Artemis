@@ -2,19 +2,6 @@
     <h3 id="artemisApp.lecture.sections.period" jhiTranslate="artemisApp.lecture.sections.period"></h3>
     <p jhiTranslate="artemisApp.lecture.sections.periodDescription"></p>
     <div class="d-flex gap-3">
-        <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
-        <!-- TODO: #11479 - remove the commented out code OR comment back in -->
-        <!--
-        <div class="form-group flex-grow-1">
-            <jhi-date-time-picker
-                labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                [(ngModel)]="lecture().visibleDate"
-                (valueChange)="validateDatesFunction()"
-                name="visibleDate"
-                id="visible-date"
-            />
-        </div>
-        -->
         <div class="form-group flex-grow-1">
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"

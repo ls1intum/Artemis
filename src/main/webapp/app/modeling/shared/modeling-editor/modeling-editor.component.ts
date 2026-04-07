@@ -1,25 +1,24 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Patch } from '@ls1intum/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
@@ -33,16 +32,16 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     showHelpButton = input(true);
     withExplanation = input(false);
+    scrollLock = input(false);
     savedStatus = input<{
         isChanged?: boolean;
         isSaving?: boolean;
     }>();
 
     onModelChanged = output<UMLModel>();
-    onModelPatch = output<Patch>();
+    onModelPatch = output<string>();
 
-    private modelSubscription: number;
-    private modelPatchSubscription: number;
+    private modelSubscription: number | undefined;
     private isDestroyed = false;
 
     readonlyApollonDiagram?: SVG;
@@ -86,14 +85,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
         if (this.readOnly()) {
-            await this.apollonEditor?.nextRender;
-            this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
-            if (this.readonlyApollonDiagram?.svg) {
-                this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+            if (this.apollonEditor) {
+                this.readonlyApollonDiagram = await this.apollonEditor.exportAsSVG();
+                if (this.readonlyApollonDiagram?.svg) {
+                    this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+                }
             }
-
-            // Destroy the Apollon editor after exporting the SVG, to avoid SVG <marker> id collisions
-            this.destroyApollonEditor();
         } else {
             this.setupInteract();
         }
@@ -104,8 +101,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private initializeApollonEditor(): void {
         if (this.apollonEditor) {
-            this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
-            this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+            if (this.modelSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelSubscription);
+            }
             this.apollonEditor.destroy();
         }
 
@@ -121,6 +119,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 model: umlModel,
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly(),
+                scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
             });
@@ -136,7 +135,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 this.onModelChanged.emit(model);
             });
 
-            this.modelPatchSubscription = this.apollonEditor.subscribeToModelChangePatches((patch: Patch) => {
+            this.apollonEditor.sendBroadcastMessage((patch) => {
                 if (this.isDestroyed) {
                     return;
                 }
@@ -150,11 +149,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private destroyApollonEditor(): void {
         if (this.apollonEditor) {
-            if (this.modelSubscription) {
-                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
-            }
-            if (this.modelPatchSubscription) {
-                this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+            if (this.modelSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelSubscription);
             }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
@@ -209,33 +205,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
-     * Return the UMLModelElement of the type class with the @param name
-     * @param name class name
-     * @param umlModel current model that is assessed
-     */
-    elementWithClass(name: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
-    }
-
-    /**
-     * Return the UMLModelElement of the type ClassAttribute with the @param attribute
-     * @param attribute name
-     * @param umlModel current model that is assessed
-     */
-    elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
-    }
-
-    /**
-     * Return the UMLModelElement of the type ClassMethod with the @param method
-     * @param method name
-     * @param umlModel current model that is assessed
-     */
-    elementWithMethod(method: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
-    }
-
-    /**
      * checks if this component is the current fullscreen component
      */
     get isFullScreen() {
@@ -243,10 +212,37 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
+     * Return the UMLModelElement of the type Class with the @param name
+     * @param name the name of the UML class
+     * @param umlModel the UML model to search in
+     */
+    elementWithClass(name: string, umlModel: UMLModel) {
+        return getModelNodes(umlModel).find((element: any) => element.name?.trim() === name && element.type === 'Class');
+    }
+
+    /**
+     * Return the UMLModelElement of the type ClassAttribute with the @param attribute
+     * @param attribute the name of the attribute
+     * @param umlModel the UML model to search in
+     */
+    elementWithAttribute(attribute: string, umlModel: UMLModel) {
+        return getModelNodes(umlModel).find((element: any) => element.name?.includes(attribute) && element.type === 'ClassAttribute');
+    }
+
+    /**
+     * Return the UMLModelElement of the type ClassMethod with the @param method
+     * @param method the name of the method
+     * @param umlModel the UML model to search in
+     */
+    elementWithMethod(method: string, umlModel: UMLModel) {
+        return getModelNodes(umlModel).find((element: any) => element.name?.includes(method) && element.type === 'ClassMethod');
+    }
+
+    /**
      * Import a patch into the Apollon editor
      * @param patch the patch to import
      */
-    importPatch(patch: Patch) {
-        this.apollonEditor?.importPatch(patch);
+    importPatch(patch: string) {
+        this.apollonEditor?.receiveBroadcastedMessage(patch);
     }
 }

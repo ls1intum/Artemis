@@ -19,6 +19,8 @@
 @import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
 @import 'markdown-it-github-alerts/styles/github-base.css';
 
+@import 'primeicons/primeicons.css';
+
 // Smooth transition between themes
 * {
     transition:
@@ -808,6 +810,18 @@ Course Info Bar
     ul {
         margin-bottom: 0.75em;
     }
+
+    h1 {
+        font-size: 1.125rem;
+    }
+
+    h2 {
+        font-size: 1.05rem;
+    }
+
+    h3 {
+        font-size: 0.975rem;
+    }
 }
 
 /* Make PlantUML outputs responsive */
@@ -1454,6 +1468,11 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     font-size: 12px;
     min-width: 200px;
     white-space: pre-line;
+}
+
+// Override Bootstrap's default popover max-width for AI feedback popover.
+.ai-feedback-popover {
+    max-width: 500px;
 }
 
 // Compact metadata layout for the narrow left panel in Iris split view

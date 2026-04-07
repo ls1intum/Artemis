@@ -1,6 +1,5 @@
 import { Page } from 'playwright';
 import { BASE_API } from '../../../constants';
-import { expect } from '@playwright/test';
 import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class FileUploadEditorPage {
@@ -24,19 +23,5 @@ export class FileUploadEditorPage {
         const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/exercises/*/file-upload-submissions`);
         await this.page.click('#save');
         await responsePromise;
-    }
-
-    async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/exercises/*/file-upload-submissions`);
-        await this.page.click('#submit');
-        return await responsePromise;
-    }
-
-    async shouldShowExerciseTitleInHeader(exerciseTitle: string) {
-        await expect(this.page.locator('#participation-header').getByText(exerciseTitle)).toBeVisible();
-    }
-
-    async shouldShowProblemStatement() {
-        await expect(this.page.locator('#problem-statement')).toBeVisible();
     }
 }

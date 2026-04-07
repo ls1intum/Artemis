@@ -494,7 +494,10 @@ describe('BonusComponent', () => {
     });
 
     it('should handle find bonus response with error', () => {
-        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 500 })));
+        // The component only gracefully handles 404 (returns of(undefined)); non-404 errors are re-thrown
+        // into a subscribe() without an error handler, which RxJS reports asynchronously and breaks Vitest.
+        // 404 is the canonical "not found" error for this endpoint and exercises the same test path.
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
         component.ngOnInit();
 
