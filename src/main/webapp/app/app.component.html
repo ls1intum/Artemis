@@ -6,7 +6,9 @@
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
-    <jhi-page-ribbon />
+    @if (showPageRibbon) {
+        <jhi-page-ribbon />
+    }
     @if (showSkeleton && !isShownViaLti) {
         <div class="sticky-top-navbar">
             <router-outlet name="navbar" />
