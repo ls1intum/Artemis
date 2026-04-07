@@ -4,11 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -37,17 +34,4 @@ public class JacksonConfiguration {
         return new Hibernate7Module();
     }
 
-    /**
-     * Exposes a MappingJackson2HttpMessageConverter bean using the auto-configured ObjectMapper.
-     * In Spring Boot 4, this converter is no longer directly injectable as a named bean — it's only registered
-     * in the converter list. Several Artemis services inject it directly, so we provide it here.
-     *
-     * @param objectMapper the auto-configured Jackson ObjectMapper
-     * @return the HTTP message converter
-     */
-    @Lazy
-    @Bean
-    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
-        return new MappingJackson2HttpMessageConverter(objectMapper);
-    }
 }
