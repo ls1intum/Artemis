@@ -534,6 +534,7 @@ pre {
         display: flex;
         flex-direction: column;
         flex: 1;
+        position: relative;
         background-color: var(--iris-secondary-background);
         border: 1px solid var(--bs-border-color);
         border-radius: $iris-border-radius-lg;

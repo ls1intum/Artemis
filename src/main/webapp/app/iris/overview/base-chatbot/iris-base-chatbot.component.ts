@@ -483,10 +483,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     onTextareaBlur(): void {
         this.isFocused.set(false);
         if (!this.newMessageTextContent() && this.shouldUseRotatingPlaceholder()) {
-            const labels = this.interpolatedLabels();
-            if (labels.length) {
-                this.placeholderIndex.update((i) => (i + 1) % labels.length);
-            }
             this.startCycling();
         }
     }
@@ -871,7 +867,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @param event - The keyboard event.
      */
     handleKey(event: KeyboardEvent): void {
-        if ((event.key === 'Tab' || event.key === 'ArrowRight') && this.ghostText()) {
+        if (((event.key === 'Tab' && !event.shiftKey) || event.key === 'ArrowRight') && this.ghostText()) {
             const textarea = this.messageTextarea()?.nativeElement;
             // Only accept ghost text on ArrowRight if cursor is at end of input
             if (event.key === 'ArrowRight' && textarea && textarea.selectionStart !== this.newMessageTextContent().length) {

@@ -1803,25 +1803,25 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(chips).toHaveLength(0);
             });
 
-            it('should advance placeholder index on blur with empty input', () => {
+            it('should not advance placeholder index immediately on blur with empty input', () => {
                 expect(component.placeholderIndex()).toBe(0);
 
-                // Simulate focus then blur to advance index
+                // Simulate focus then blur; cycling should restart without immediate index change
                 component.onTextareaFocus();
                 component.onTextareaBlur();
 
-                expect(component.placeholderIndex()).toBe(1);
+                expect(component.placeholderIndex()).toBe(0);
             });
 
-            it('should track focus state and advance index on blur', () => {
+            it('should track focus state without immediate index change on blur', () => {
                 component.onTextareaFocus();
                 expect(component.isFocused()).toBeTruthy();
                 const indexAtFocus = component.placeholderIndex();
 
-                // Blur with empty input resumes from next label
+                // Blur with empty input restarts cycling without jumping to next label
                 component.onTextareaBlur();
                 expect(component.isFocused()).toBeFalsy();
-                expect(component.placeholderIndex()).toBe((indexAtFocus + 1) % component.interpolatedLabels().length);
+                expect(component.placeholderIndex()).toBe(indexAtFocus);
             });
 
             it('should not advance index on blur when input has text', () => {
