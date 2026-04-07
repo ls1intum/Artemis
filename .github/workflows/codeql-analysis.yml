@@ -67,8 +67,6 @@ jobs:
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     - name: Autobuild
       uses: github/codeql-action/autobuild@v4
-      env:
-        NODE_OPTIONS: '--max-old-space-size=4096'
 
     - run: rm -rf build/resources/main/static
 

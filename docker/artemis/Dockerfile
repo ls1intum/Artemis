@@ -63,10 +63,8 @@ RUN \
   --mount=type=cache,target=/opt/artemis/.npm \
   # Mount cache for the Angular CLI
   --mount=type=cache,target=/opt/artemis/.cache \
-  # Increase Node.js heap for Angular production build with esbuild
-  export NODE_OPTIONS='--max-old-space-size=4096' \
   # Build the .war file
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage

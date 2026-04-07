@@ -112,8 +112,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
       - name: Production Build
         run: ./gradlew -Pprod -Pwar clean bootWar
-        env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
         with:
