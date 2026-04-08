@@ -83,7 +83,13 @@
                         {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                     </span>
                     @if (result?.buildJobId) {
-                        <a class="detail-link" (click)="viewBuildLogs(result.buildJobId)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                        <button
+                            type="button"
+                            class="btn btn-link detail-link p-0"
+                            style="text-decoration: none"
+                            (click)="viewBuildLogs(result.buildJobId)"
+                            jhiTranslate="artemisApp.result.buildLogs.viewLogs"
+                        ></button>
                     }
                 }
             </div>

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -22,6 +22,8 @@ import { MockParticipationService } from 'test/helpers/mocks/service/mock-partic
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
@@ -35,6 +37,7 @@ describe('Exercise Scores Component', () => {
     let programmingSubmissionService: ProgrammingSubmissionService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
+    let profileService: ProfileService;
 
     const exercise: Exercise = {
         id: 1,
@@ -94,6 +97,7 @@ describe('Exercise Scores Component', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -105,6 +109,7 @@ describe('Exercise Scores Component', () => {
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 courseService = TestBed.inject(CourseManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
+                profileService = TestBed.inject(ProfileService);
                 component.exercise.set(exercise);
                 vi.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
                 component.paramSub = new Subscription();
@@ -254,12 +259,8 @@ describe('Exercise Scores Component', () => {
         });
     });
 
-    describe('DTO accessors', () => {
-        it('should return build plan id', () => {
-            expect(component.buildPlanId(sampleDto)).toBe('1');
-        });
-
-        it('should return project key', () => {
+    describe('getBuildPlanUrl', () => {
+        it('should construct build plan URL from template', () => {
             component.exercise.set({
                 type: ExerciseType.PROGRAMMING,
                 numberOfAssessmentsOfCorrectionRounds: [],
@@ -268,11 +269,23 @@ describe('Exercise Scores Component', () => {
                 projectKey: 'key',
             } as ProgrammingExercise);
 
-            expect(component.projectKey()).toBe('key');
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'https://example.com/job/{projectKey}/job/{buildPlanId}' });
+
+            expect(component.getBuildPlanUrl(sampleDto)).toBe('https://example.com/job/key/job/1');
         });
 
-        it('should return repository link', () => {
-            expect(component.getRepositoryLink(sampleDto)).toBe('url');
+        it('should return undefined when no template available', () => {
+            component.exercise.set({
+                type: ExerciseType.PROGRAMMING,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                projectKey: 'key',
+            } as ProgrammingExercise);
+
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({});
+
+            expect(component.getBuildPlanUrl(sampleDto)).toBeUndefined();
         });
     });
 

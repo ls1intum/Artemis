@@ -119,16 +119,6 @@
     }
 </ng-template>
 
-<ng-template #buildPlanCellTemplate let-cell>
-    @if (cell.data.buildPlanId) {
-        @if (!isLocalCIEnabled()) {
-            <span>{{ cell.data.buildPlanId }}</span>
-        } @else {
-            {{ cell.data.buildPlanId }}
-        }
-    }
-</ng-template>
-
 <ng-template #initStateCellTemplate let-cell>
     {{ 'artemisApp.InitializationState.' + cell.data.initializationState | artemisTranslate }}
 </ng-template>

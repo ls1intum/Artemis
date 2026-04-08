@@ -126,12 +126,8 @@ export class ParticipationService {
                 map((res: HttpResponse<ParticipationManagementDTO[]>) => {
                     const content = res.body ?? [];
                     content.forEach((dto) => {
-                        if (dto.initializationDate) {
-                            dto.initializationDate = dayjs(dto.initializationDate as unknown as string);
-                        }
-                        if (dto.individualDueDate) {
-                            dto.individualDueDate = dayjs(dto.individualDueDate as unknown as string);
-                        }
+                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                     });
                     return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
                 }),
@@ -161,10 +157,14 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationScoreDTO[]>) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
+                    const content = res.body ?? [];
+                    content.forEach((dto) => {
+                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.completionDate = convertDateFromServer(dto.completionDate);
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
             );
     }
 

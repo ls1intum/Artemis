@@ -153,6 +153,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly isExamExercise = computed(() => !!this.exercise()?.exerciseGroup);
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
+    private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub: Subscription;
     private gradeStepsDTOSub: Subscription;
@@ -178,7 +179,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Template refs
     readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('idCellTemplate');
     readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('repositoryCellTemplate');
-    readonly buildPlanCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('buildPlanCellTemplate');
     readonly initStateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initStateCellTemplate');
     readonly initDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initDateCellTemplate');
     readonly submissionCountCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('submissionCountCellTemplate');
@@ -375,16 +375,31 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (!ex?.id || !this.lastLazyEvent) return;
 
         this.isLoading.set(true);
+        const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationSearch = {
             ...base,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
         };
 
-        this.participationService.searchParticipations(ex.id, search).subscribe((result) => {
-            this.participations.set(result.content);
-            this.totalRows.set(result.totalElements);
-            this.isLoading.set(false);
+        this.participationService.searchParticipations(ex.id, search).subscribe({
+            next: (result) => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.participations.set(result.content);
+                    this.totalRows.set(result.totalElements);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.alertService.error('artemisApp.participation.loadError');
+                    this.isLoading.set(false);
+                }
+            },
+            complete: () => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.isLoading.set(false);
+                }
+            },
         });
     }
 
@@ -507,21 +522,27 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     saveIndividualDueDate(dto: ParticipationManagementDTO) {
-        dto.individualDueDate = this.pendingDueDates.get(dto.participationId);
-        this.pendingDueDates.delete(dto.participationId);
-        this.editingDueDateIds.update((s) => {
-            const next = new Set(s);
-            next.delete(dto.participationId);
-            return next;
-        });
+        const previousDueDate = dto.individualDueDate;
+        const newDueDate = this.pendingDueDates.get(dto.participationId);
+        const participation = this.toStudentParticipation(dto);
+        participation.individualDueDate = newDueDate;
         this.isSaving.set(true);
-        this.participationService.updateIndividualDueDates(this.exercise()!, [this.toStudentParticipation(dto)]).subscribe({
-            next: (response) => {
+        this.participationService.updateIndividualDueDates(this.exercise()!, [participation]).subscribe({
+            next: () => {
+                dto.individualDueDate = newDueDate;
+                this.pendingDueDates.delete(dto.participationId);
+                this.editingDueDateIds.update((s) => {
+                    const next = new Set(s);
+                    next.delete(dto.participationId);
+                    return next;
+                });
                 this.isSaving.set(false);
                 this.alertService.success('artemisApp.participation.updateDueDates.success', { name: dto.participantName ?? dto.participantIdentifier });
                 this.loadPage();
             },
             error: () => {
+                dto.individualDueDate = previousDueDate;
+                this.pendingDueDates.delete(dto.participationId);
                 this.alertService.error('artemisApp.participation.updateDueDates.error');
                 this.isSaving.set(false);
             },

@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal, viewChild } from '@angular
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, take } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -33,6 +33,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -51,6 +52,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     private textAssessmentService = inject(TextAssessmentService);
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
 
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
@@ -165,61 +167,63 @@ export class ParticipationSubmissionComponent implements OnInit {
         this.isLoading.set(true);
 
         // If no query parameters are set, this.route.queryParams will be undefined so we need a fallback dummy observable
-        combineLatest([this.route.params, this.route.queryParams ?? of(undefined)]).subscribe(([params, queryParams]) => {
-            this._participationId = +params['participationId'];
-            if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
-                this.isTmpOrSolutionProgrParticipation.set(queryParams['isTmpOrSolutionProgrParticipation'] === 'true');
-            }
-            this.participationService.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
-                this.resultIdToBuildJobIdMap.set(buildJobIdMap);
-                if (this.isTmpOrSolutionProgrParticipation()) {
-                    // Find programming exercise of template and solution programming participation
-                    this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
-                        const exercise = exerciseResponse.body!;
-                        this.exercise.set(exercise);
-                        this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate!)) ? 'bg-danger' : 'bg-success');
-                        const templateParticipation = (exercise as ProgrammingExercise).templateParticipation;
-                        const solutionParticipation = (exercise as ProgrammingExercise).solutionParticipation;
-
-                        let submissions: ProgrammingSubmission[] | undefined;
-                        // Check if requested participationId belongs to the template or solution participation
-                        if (this._participationId === templateParticipation?.id) {
-                            this.participation.set(templateParticipation);
-                            // This is needed to access the exercise in the result details
-                            templateParticipation.programmingExercise = exercise;
-                            submissions = templateParticipation.submissions as ProgrammingSubmission[];
-                        } else if (this._participationId === solutionParticipation?.id) {
-                            this.participation.set(solutionParticipation);
-                            // This is needed to access the exercise in the result details
-                            solutionParticipation.programmingExercise = exercise;
-                            submissions = solutionParticipation.submissions as ProgrammingSubmission[];
-                        } else {
-                            // Should not happen
-                            alert(this.translateService.instant('artemisApp.participation.noParticipation'));
-                        }
-
-                        if (submissions) {
-                            submissions.forEach((submission: ProgrammingSubmission) => {
-                                submission.results?.forEach((result: Result) => {
-                                    result.submission = submission;
-                                    result.buildJobId = buildJobIdMap?.[result.id!];
-                                });
-                            });
-                            this.submissions.set(submissions);
-                        }
-
-                        this.isLoading.set(false);
-                    });
-                } else {
-                    // Get exercise for release and due dates
-                    this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                        this.exercise.set(exerciseResponse.body!);
-                        this.updateStatusBadgeColor();
-                    });
-                    this.fetchParticipationAndSubmissionsForStudent();
+        combineLatest([this.route.params, this.route.queryParams ?? of(undefined)])
+            .pipe(take(1))
+            .subscribe(([params, queryParams]) => {
+                this._participationId = +params['participationId'];
+                if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
+                    this.isTmpOrSolutionProgrParticipation.set(queryParams['isTmpOrSolutionProgrParticipation'] === 'true');
                 }
+                this.participationService.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
+                    this.resultIdToBuildJobIdMap.set(buildJobIdMap);
+                    if (this.isTmpOrSolutionProgrParticipation()) {
+                        // Find programming exercise of template and solution programming participation
+                        this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
+                            const exercise = exerciseResponse.body!;
+                            this.exercise.set(exercise);
+                            this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate!)) ? 'bg-danger' : 'bg-success');
+                            const templateParticipation = (exercise as ProgrammingExercise).templateParticipation;
+                            const solutionParticipation = (exercise as ProgrammingExercise).solutionParticipation;
+
+                            let submissions: ProgrammingSubmission[] | undefined;
+                            // Check if requested participationId belongs to the template or solution participation
+                            if (this._participationId === templateParticipation?.id) {
+                                this.participation.set(templateParticipation);
+                                // This is needed to access the exercise in the result details
+                                templateParticipation.programmingExercise = exercise;
+                                submissions = templateParticipation.submissions as ProgrammingSubmission[];
+                            } else if (this._participationId === solutionParticipation?.id) {
+                                this.participation.set(solutionParticipation);
+                                // This is needed to access the exercise in the result details
+                                solutionParticipation.programmingExercise = exercise;
+                                submissions = solutionParticipation.submissions as ProgrammingSubmission[];
+                            } else {
+                                // Should not happen
+                                this.alertService.error('artemisApp.participation.noParticipation');
+                            }
+
+                            if (submissions) {
+                                submissions.forEach((submission: ProgrammingSubmission) => {
+                                    submission.results?.forEach((result: Result) => {
+                                        result.submission = submission;
+                                        result.buildJobId = buildJobIdMap?.[result.id!];
+                                    });
+                                });
+                                this.submissions.set(submissions);
+                            }
+
+                            this.isLoading.set(false);
+                        });
+                    } else {
+                        // Get exercise for release and due dates
+                        this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+                            this.exercise.set(exerciseResponse.body!);
+                            this.updateStatusBadgeColor();
+                        });
+                        this.fetchParticipationAndSubmissionsForStudent();
+                    }
+                });
             });
-        });
     }
 
     fetchParticipationAndSubmissionsForStudent() {

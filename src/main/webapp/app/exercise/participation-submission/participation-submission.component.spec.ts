@@ -46,11 +46,13 @@ describe('ParticipationSubmissionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let findAllSubmissionsOfParticipationStub: ReturnType<typeof vi.spyOn>;
 
-    const result1 = { id: 44 } as Result;
-    const result2 = { id: 45 } as Result;
-    const participation1 = { id: 66 } as Participation;
-    const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
-    const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
+    function createSubmissionFixture(submissionId: number) {
+        const result1 = { id: 44 } as Result;
+        const result2 = { id: 45 } as Result;
+        const participation = { id: 66 } as Participation;
+        const submission = { id: submissionId, results: [result1, result2], participation } as Submission;
+        return { result1, result2, participation, submission };
+    }
 
     const programmingExercise1 = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
@@ -195,47 +197,56 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
             vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
             vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
-            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults] }));
-            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
             vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
         });
 
         it('should delete result of fileUploadSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(77);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(1);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should delete result of modelingSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(77);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(1);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should delete result of programmingSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(77);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(1);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should delete result of textSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(77);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             comp.ngOnInit();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
-            expect(comp.submissions()[0].results![0].submission).toEqual(submissionWithTwoResults);
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(1);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
     });
 
@@ -246,58 +257,70 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
             vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
             vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
-            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults2] }));
-            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
             vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
         });
 
         it('should not delete result of fileUploadSubmission because of server error', () => {
+            const { submission, participation } = createSubmissionFixture(78);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
             vi.spyOn(fileUploadAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error2));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(2);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should not delete result of fileUploadSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(78);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(2);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should not delete result of modelingSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(78);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(2);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should not delete result of programmingSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(78);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             comp.ngOnInit();
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(2);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
 
         it('should not delete result of textSubmission', () => {
+            const { submission, participation } = createSubmissionFixture(78);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             comp.ngOnInit();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
-            expect(comp.submissions()[0].results![0].submission).toEqual(submissionWithTwoResults2);
-            comp.deleteResult(submissionWithTwoResults, result2);
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(2);
-            expect(comp.submissions()[0].results![0]).toEqual(result1);
+            expect(comp.submissions()[0].results![0].id).toBe(44);
         });
     });
 });

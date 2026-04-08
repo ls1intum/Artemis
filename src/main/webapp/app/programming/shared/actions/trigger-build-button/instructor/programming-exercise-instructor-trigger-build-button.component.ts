@@ -40,8 +40,10 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
         modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.resubmitConfirmManualResultOverride');
-        modalRef.result.then(() => {
-            super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
-        });
+        modalRef.result
+            .then(() => {
+                super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
+            })
+            .catch(() => {});
     };
 }

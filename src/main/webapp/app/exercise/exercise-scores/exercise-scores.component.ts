@@ -3,6 +3,8 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -13,6 +15,7 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { faComment, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
@@ -43,6 +46,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/shared/service/alert.service';
 
 /**
  * Filter properties for a result
@@ -103,6 +107,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
     private readonly participationService = inject(ParticipationService);
     private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -259,14 +264,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.rangeFilter.set(this.scoreRanges[Number(filterValue)]);
             }
 
-            forkJoin([this.courseService.find(params['courseId']), this.exerciseService.find(params['exerciseId'])]).subscribe(([courseRes, exerciseRes]) => {
-                this.course.set(courseRes.body!);
-                const ex = exerciseRes.body!;
-                this.exercise.set(ex);
-                this.afterDueDate.set(!!ex.dueDate && dayjs().isAfter(ex.dueDate));
-                this.newManualResultAllowed.set(areManualResultsAllowed(ex));
-                // Initial data load will be triggered by the table's lazy load event
-                this.isLoading.set(false);
+            forkJoin({ course: this.courseService.find(params['courseId']), exercise: this.exerciseService.find(params['exerciseId']) }).subscribe({
+                next: ({ course: courseRes, exercise: exerciseRes }) => {
+                    this.course.set(courseRes.body!);
+                    const ex = exerciseRes.body!;
+                    this.exercise.set(ex);
+                    this.afterDueDate.set(!!ex.dueDate && dayjs().isAfter(ex.dueDate));
+                    this.newManualResultAllowed.set(areManualResultsAllowed(ex));
+                    // Initial data load will be triggered by the table's lazy load event
+                    this.isLoading.set(false);
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isLoading.set(false);
+                    onError(this.alertService, error);
+                },
             });
         });
     }
@@ -289,10 +300,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             scoreRangeUpper: this.rangeFilter()?.upperBound,
         };
 
-        this.participationService.searchParticipationScores(ex.id, search).subscribe((result) => {
-            this.participations.set(result.content);
-            this.totalRows.set(result.totalElements);
-            this.isLoading.set(false);
+        this.participationService.searchParticipationScores(ex.id, search).subscribe({
+            next: (result) => {
+                this.participations.set(result.content);
+                this.totalRows.set(result.totalElements);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
         });
     }
 
@@ -320,25 +337,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.loadPage();
     }
 
-    /**
-     * Returns the build plan id for a participation
-     */
-    buildPlanId(dto: ParticipationScoreDTO) {
-        return dto.buildPlanId;
-    }
-
-    /**
-     * Returns the project key of the exercise
-     */
-    projectKey(): string {
-        return (this.exercise() as ProgrammingExercise).projectKey!;
-    }
-
-    /**
-     * Returns the link to the repository of a participation
-     */
-    getRepositoryLink(dto: ParticipationScoreDTO) {
-        return dto.repositoryUri;
+    getBuildPlanUrl(dto: ParticipationScoreDTO): string | undefined {
+        const template = this.profileService.getProfileInfo().buildPlanURLTemplate;
+        const projectKey = (this.exercise() as ProgrammingExercise).projectKey;
+        if (template && projectKey && dto.buildPlanId) {
+            return createBuildPlanUrl(template, projectKey, dto.buildPlanId);
+        }
+        return undefined;
     }
 
     /**

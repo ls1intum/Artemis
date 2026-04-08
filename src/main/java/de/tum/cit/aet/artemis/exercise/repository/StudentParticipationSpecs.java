@@ -160,18 +160,6 @@ public class StudentParticipationSpecs {
     }
 
     /**
-     * Builds a subquery that returns the ID of the latest non-Athena result for a given submission.
-     */
-    private static Subquery<Long> latestNonAthenaResultIdSubquery(Root<Result> resultRoot, jakarta.persistence.criteria.CriteriaQuery<?> query, CriteriaBuilder cb) {
-        Subquery<Long> sub = query.subquery(Long.class);
-        Root<Result> subResultRoot = sub.from(Result.class);
-        sub.select(cb.max(subResultRoot.get(DomainObject_.ID)));
-        sub.where(cb.equal(subResultRoot.get(Result_.SUBMISSION), resultRoot.get(Result_.SUBMISSION)),
-                cb.notEqual(subResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA));
-        return sub;
-    }
-
-    /**
      * Creates an EXISTS predicate matching the latest submission's latest non-Athena result with an additional condition.
      *
      * @param root            the participation root

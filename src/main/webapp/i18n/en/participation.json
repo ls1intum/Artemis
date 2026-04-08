@@ -26,6 +26,7 @@
                 "label": "Remove presentation",
                 "error": "Could not remove presentation. Please try again."
             },
+            "loadError": "Could not load participations. Please try again.",
             "updateDueDates": {
                 "success": "Updated the individual due date for {{ name }}.",
                 "error": "The individual due date could not be updated."

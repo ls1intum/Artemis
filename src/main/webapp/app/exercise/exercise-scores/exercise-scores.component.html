@@ -169,21 +169,21 @@
 </ng-template>
 
 <ng-template #durationTemplate let-cell>
-    {{ cell.data.durationInSeconds ? (cell.data.durationInSeconds | artemisDurationFromSeconds: true) : '-' }}
+    {{ cell.data.durationInSeconds !== undefined && cell.data.durationInSeconds !== null ? (cell.data.durationInSeconds | artemisDurationFromSeconds: true) : '-' }}
 </ng-template>
 
 <ng-template #actionsTemplate let-dto>
     <div class="btn-group gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
-            @if (getRepositoryLink(dto)) {
+            @if (dto.repositoryUri) {
                 <jhi-code-button
                     [smallButtons]="true"
-                    [repositoryUri]="getRepositoryLink(dto) || ''"
+                    [repositoryUri]="dto.repositoryUri"
                     [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
                 />
             }
-            @if (buildPlanId(dto) && !localCIEnabled()) {
-                <a target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+            @if (dto.buildPlanId && !localCIEnabled()) {
+                <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
                     <fa-icon class="me-1" [icon]="farFileCode" />
                     Build plan
                 </a>
