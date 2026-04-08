@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
@@ -44,6 +42,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -236,7 +236,7 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
         int minutesUntilDeletion = 30;
-        String originalFilename = file.getOriginalFilename();
+        String originalFilename = FileUtil.sanitizeFilename(file.getOriginalFilename());
         log.debug("REST request to upload file: {}", originalFilename);
         checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
@@ -244,7 +244,8 @@ public class AttachmentVideoUnitResource {
         }
         try {
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
-            return ResponseEntity.ok().body(new ObjectMapper().writeValueAsString(filename));
+            // Explicitly set JSON content type to prevent XSS — the filename derives from user input
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(filename));
         }
         catch (IOException e) {
             log.error("Could not save file {}", originalFilename, e);

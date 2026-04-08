@@ -18,7 +18,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
-import tech.jhipster.config.JHipsterProperties;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 
 /**
  * This filter is used in production, to put HTTP cache headers with a long (4 years) expiration time.
@@ -33,16 +33,16 @@ public class CachingHttpHeadersFilter implements Filter {
 
     private long cacheTimeToLive = DEFAULT_SECONDS_TO_LIVE;
 
-    private final JHipsterProperties jHipsterProperties;
+    private final ArtemisProperties jHipsterProperties;
 
     /**
      * <p>
      * Constructor for CachingHttpHeadersFilter.
      * </p>
      *
-     * @param jHipsterProperties a {@link JHipsterProperties} object.
+     * @param jHipsterProperties a {@link ArtemisProperties} object.
      */
-    public CachingHttpHeadersFilter(JHipsterProperties jHipsterProperties) {
+    public CachingHttpHeadersFilter(ArtemisProperties jHipsterProperties) {
         this.jHipsterProperties = jHipsterProperties;
     }
 

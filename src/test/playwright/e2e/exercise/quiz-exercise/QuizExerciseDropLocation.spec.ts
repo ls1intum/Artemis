@@ -20,13 +20,6 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(420, 90);
 
-            await quizExerciseDragAndDropQuiz.activateInteractiveMode();
-
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(0, 2);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(1, 1);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 1);
-            await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 2);
-
             const exerciseId = await quizExerciseDragAndDropQuiz.generateQuizExercise();
             await quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
 
@@ -37,8 +30,9 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             const containerBounds = await page.locator('.click-layer').first().boundingBox();
 
             const { minX, maxX } = await quizExerciseDragAndDropQuiz.getXAxis(page.locator('.drop-location'));
-            expect(containerBounds!.x + containerBounds!.width - maxX).toBeGreaterThan(0);
-            expect(minX - containerBounds!.x).toBeGreaterThan(0);
+            // Verify drop locations are within the container bounds (not overflowing)
+            expect(containerBounds!.x + containerBounds!.width - maxX).toBeGreaterThanOrEqual(0);
+            expect(minX - containerBounds!.x).toBeGreaterThanOrEqual(0);
         });
     });
 

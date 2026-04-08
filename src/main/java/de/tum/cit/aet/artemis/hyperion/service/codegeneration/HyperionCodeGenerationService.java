@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import tools.jackson.core.JacksonException;
 
 /**
  * Abstract base class for AI-powered code generation strategies.
@@ -49,7 +51,7 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
 
@@ -266,7 +268,9 @@ public abstract class HyperionCodeGenerationService {
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof JsonProcessingException || current instanceof IllegalArgumentException) {
+            // Check for both Jackson 2 (com.fasterxml) and Jackson 3 (tools.jackson) exceptions,
+            // since Spring AI's BeanOutputConverter uses Jackson 3 internally.
+            if (current instanceof JsonProcessingException || current instanceof JacksonException || current instanceof IllegalArgumentException) {
                 return true;
             }
             current = current.getCause();

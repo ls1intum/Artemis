@@ -53,20 +53,13 @@ describe('ExerciseCreateButtonComponent', () => {
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
     });
     it.each([
-        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.createLabel' },
-        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.createLabel' },
-        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.createLabel' },
-        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.createLabel' },
-    ])('should determine correct translation key and icon', ({ exerciseType, expectedIcon, expectedTranslationLabel }) => {
+        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram },
+        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload },
+        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont },
+        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard },
+    ])('should determine correct icon for exercise type', ({ exerciseType, expectedIcon }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         component.ngOnInit();
         expect(component.icon).toEqual(expectedIcon);
-        expect(component.translationLabel).toEqual(expectedTranslationLabel);
-    });
-    it('should use translation key when provided', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
-        fixture.componentRef.setInput('translationKey', 'custom.translation.key');
-        component.ngOnInit();
-        expect(component.translationLabel).toBe('custom.translation.key');
     });
 });
