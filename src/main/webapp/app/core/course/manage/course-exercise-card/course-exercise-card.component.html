@@ -1,7 +1,9 @@
 <div class="question card rounded-4">
     <div class="question-options card-header">
         <h5 class="mb-0">
-            <fa-icon [icon]="leadingIcon()" [fixedWidth]="true" />
+            @if (leadingIcon(); as icon) {
+                <fa-icon [icon]="icon" [fixedWidth]="true" />
+            }
             <span [jhiTranslate]="headingJhiTranslate()"></span>
             <span> ({{ exerciseCount() }}) </span>
         </h5>
