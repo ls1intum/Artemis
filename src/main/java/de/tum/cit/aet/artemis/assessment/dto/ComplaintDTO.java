@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
  * without exposing the full {@link de.tum.cit.aet.artemis.assessment.domain.Complaint} entity.
  * </p>
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submittedTime, ComplaintType complaintType, Boolean complaintIsAccepted,
         ComplaintResponseDTO complaintResponse, @NotNull ResultSimpleDTO result) {
 
