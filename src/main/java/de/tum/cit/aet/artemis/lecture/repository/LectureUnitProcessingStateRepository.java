@@ -67,6 +67,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      *
      * @param phase the processing phase to check (enum name as string, e.g. "FAILED")
      * @param now   the current time to compare against retryEligibleAt
+     * @param limit maximum number of rows to return
      * @return list of states ready for retry, locked for the duration of the calling transaction
      */
     @Query(value = """
