@@ -52,6 +52,7 @@ interface TutorialGroupDetailSession {
     time: string;
     location: string;
     isCancelled: boolean;
+    isCancelledByFreePeriod: boolean;
     locationChanged: boolean;
     timeChanged: boolean;
     dateChanged: boolean;
@@ -452,6 +453,7 @@ export class TutorialGroupDetailComponent {
         const time = session.start.format('HH:mm') + '-' + session.end.format('HH:mm');
         const location = session.location;
         const isCancelled = session.isCancelled;
+        const isCancelledByFreePeriod = session.isCancelledByFreePeriod;
         const locationChanged = session.locationChanged;
         const timeChanged = session.timeChanged;
         const dateChanged = session.dateChanged;
@@ -463,7 +465,7 @@ export class TutorialGroupDetailComponent {
                 attendance = session.attendance.toString();
             }
         }
-        return { id, date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
+        return { id, date, time, location, isCancelled, isCancelledByFreePeriod, locationChanged, timeChanged, dateChanged, attendance };
     }
 
     private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {
