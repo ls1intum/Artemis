@@ -120,10 +120,12 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             return;
         }
 
-        if (options != null) {
+        boolean storeNewChallenge = options != null;
+        if (storeNewChallenge) {
             getCreationOptionsMap().put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
         }
         else {
+            // cleanup old challenge
             getCreationOptionsMap().remove(userId);
         }
     }
