@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -55,15 +54,11 @@ class RateLimitServiceTest {
     @Mock
     private FeatureToggleService featureToggleService;
 
-    @SuppressWarnings("unchecked")
-    private final ObjectProvider<FeatureToggleService> featureToggleServiceProvider = Mockito.mock(ObjectProvider.class);
-
     private RateLimitService rateLimitService;
 
     @BeforeEach
     void setUp() {
-        when(featureToggleServiceProvider.getObject()).thenReturn(featureToggleService);
-        rateLimitService = new RateLimitService(proxyManager, configurationService, featureToggleServiceProvider);
+        rateLimitService = new RateLimitService(proxyManager, configurationService, featureToggleService);
     }
 
     @Test

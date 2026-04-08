@@ -26,6 +26,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -89,7 +90,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final ObjectMapper objectMapper;
+    private final ObjectProvider<ObjectMapper> objectMapperProvider;
 
     private final TokenProvider tokenProvider;
 
@@ -113,10 +114,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+    public WebsocketConfiguration(ObjectProvider<ObjectMapper> objectMapperProvider, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
             Optional<ExamRepositoryApi> examRepositoryApi) {
-        this.objectMapper = objectMapper;
+        this.objectMapperProvider = objectMapperProvider;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -167,7 +168,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
+        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapperProvider.getObject());
         messageConverters.add(gzipMessageConverter);
         return false;
     }
@@ -268,7 +269,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
     protected MappingJackson2MessageConverter createJacksonConverter() {
-        return new GzipMessageConverter(objectMapper);
+        return new GzipMessageConverter(objectMapperProvider.getObject());
     }
 
     /**
