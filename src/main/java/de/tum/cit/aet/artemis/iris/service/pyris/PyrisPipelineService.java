@@ -129,8 +129,8 @@ public class PyrisPipelineService {
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
-        var preparing = new PyrisStageDTO("Preparing", 10, null, null, false);
-        var executing = new PyrisStageDTO("Executing pipeline", 30, null, null, false);
+        var preparing = new PyrisStageDTO("artemisApp.iris.stages.thinking", 10, null, null, false, null);
+        var executing = new PyrisStageDTO("artemisApp.iris.stages.analyzing", 30, null, null, false, null);
 
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
@@ -148,12 +148,12 @@ public class PyrisPipelineService {
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
-                statusUpdater.accept(List.of(preparing.done(), executing.error("An internal error occurred")));
+                statusUpdater.accept(List.of(preparing.done(), executing.error("artemisApp.iris.stages.error.internal")));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
-            statusUpdater.accept(List.of(preparing.error("An internal error occurred"), executing.notStarted()));
+            statusUpdater.accept(List.of(preparing.error("artemisApp.iris.stages.error.internal"), executing.notStarted()));
         }
     }
 

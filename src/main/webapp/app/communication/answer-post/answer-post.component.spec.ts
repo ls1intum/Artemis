@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement } from '@angular/core';
@@ -30,8 +32,11 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AnswerPostComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AnswerPostComponent;
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;
@@ -42,9 +47,9 @@ describe('AnswerPostComponent', () => {
         mainContainer.classList.add('thread-answer-post');
         document.body.appendChild(mainContainer);
 
-        return TestBed.configureTestingModule({
-            imports: [OverlayModule],
-            declarations: [
+        await TestBed.configureTestingModule({
+            imports: [
+                OverlayModule,
                 AnswerPostComponent,
                 FaIconComponent,
                 MockPipe(HtmlForMarkdownPipe),
@@ -65,23 +70,25 @@ describe('AnswerPostComponent', () => {
                 SessionStorageService,
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AnswerPostComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+        }).overrideComponent(AnswerPostComponent, {
+            remove: { imports: [PostingContentComponent] },
+            add: { imports: [MockComponent(PostingContentComponent)] },
+        });
+
+        fixture = TestBed.createComponent(AnswerPostComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should contain the posting header when isConsecutive is false', () => {
         fixture.componentRef.setInput('isConsecutive', false);
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -90,7 +97,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not contain the posting header when isConsecutive is true', () => {
         fixture.componentRef.setInput('isConsecutive', true);
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -98,14 +105,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         expect(component.containerRef).not.toBeNull();
     });
 
     it('should contain component to edit answer post', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const answerPostCreateEditModal = debugElement.query(By.css('jhi-answer-post-create-edit-modal'));
@@ -113,7 +120,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain an answer post reactions bar', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
@@ -121,7 +128,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should have correct content in posting-content component', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const postingContentDebugElement = debugElement.query(By.directive(PostingContentComponent));
@@ -133,38 +140,40 @@ describe('AnswerPostComponent', () => {
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
             showDropdown: true,
-            enableBodyScroll: jest.fn(),
-            changeDetector: { detectChanges: jest.fn() },
+            enableBodyScroll: vi.fn(),
+            changeDetector: { detectChanges: vi.fn() },
         } as any as AnswerPostComponent;
 
         AnswerPostComponent.activeDropdownPost = previousComponent;
 
+        const target = fixture.nativeElement;
         const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+        Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBeFalse();
+        expect(previousComponent.showDropdown).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
         expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(AnswerPostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBeTrue();
+        expect(component.showDropdown).toBe(true);
     });
 
     it('should handle click outside and hide dropdown', () => {
         component.showDropdown = true;
-        const enableBodyScrollSpy = jest.spyOn(component, 'enableBodyScroll' as any);
+        const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBeFalse();
+        expect(component.showDropdown).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
     it('should disable body scroll', () => {
-        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        const setStyleSpy = vi.spyOn(component.renderer, 'setStyle');
         (component as any).disableBodyScroll();
         expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'thread-answer-post' }), 'overflow', 'hidden');
     });
 
     it('should enable body scroll', () => {
-        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        const setStyleSpy = vi.spyOn(component.renderer, 'setStyle');
         (component as any).enableBodyScroll();
         expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'thread-answer-post' }), 'overflow-y', 'auto');
     });
@@ -191,14 +200,15 @@ describe('AnswerPostComponent', () => {
         const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
         component.onPostingUpdated(updatedPosting);
 
-        expect(component.posting).toEqual(updatedPosting);
+        expect(component.posting()).toEqual(updatedPosting);
     });
 
     it('should update reactions when onReactionsUpdated is called', () => {
+        component.posting.set(metisResolvingAnswerPostUser1);
         const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
         component.onReactionsUpdated(updatedReactions);
 
-        expect(component.posting.reactions).toEqual(updatedReactions);
+        expect(component.posting()!.reactions).toEqual(updatedReactions);
     });
 
     it('should handle onRightClick correctly based on cursor style', () => {
@@ -223,11 +233,11 @@ describe('AnswerPostComponent', () => {
             const targetElement = document.createElement('div');
             Object.defineProperty(event, 'target', { value: targetElement });
 
-            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+            vi.spyOn(window, 'getComputedStyle').mockReturnValue({
                 cursor,
             } as CSSStyleDeclaration);
 
-            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+            const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.onRightClick(event);
 
@@ -249,19 +259,19 @@ describe('AnswerPostComponent', () => {
             postingType: PostingType.ANSWER,
         };
         // @ts-ignore method is private
-        const spy = jest.spyOn(component, 'assignPostingToAnswerPost');
-        component.posting = mockPost;
+        const spy = vi.spyOn(component, 'assignPostingToAnswerPost');
+        component.posting.set(mockPost);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.posting).toBeInstanceOf(AnswerPost);
+        expect(component.posting()).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
     });
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
-        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
 
         const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
@@ -275,9 +285,9 @@ describe('AnswerPostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
-        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
@@ -285,9 +295,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
-        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
         component.showDropdown = true;
-        component.posting = post;
+        component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
         const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));

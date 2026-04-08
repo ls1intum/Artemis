@@ -75,6 +75,12 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v2/memiris")
     private URL memirisApiV2URL;
 
+    @Value("${artemis.iris.url}/api/v1/search/lectures")
+    private URL lectureSearchApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/search/ask")
+    private URL lectureSearchAskApiURL;
+
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
 
@@ -339,6 +345,44 @@ public class IrisRequestMockProvider {
         if (mockServer != null) {
             mockServer.verify();
         }
+    }
+
+    // -------------------- Lecture search endpoints --------------------
+
+    public void mockSearchLectures(Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockSearchLecturesError(HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockSearchAsk(Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockSearchAskError(HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
     }
 
     // -------------------- Memiris endpoints --------------------

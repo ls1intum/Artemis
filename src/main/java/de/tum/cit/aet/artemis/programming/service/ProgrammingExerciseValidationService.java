@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRE
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +25,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -121,6 +125,7 @@ public class ProgrammingExerciseValidationService {
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
+        validateBuildPhaseNames(programmingExercise);
         validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
@@ -274,6 +279,38 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Validates custom build phase names in phases-based build plan configurations.
+     * Phase names must match the configured pattern and be unique case-insensitively.
+     *
+     * @param programmingExercise the programming exercise to validate
+     */
+    public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
+        Optional<BuildPlanPhasesDTO> buildPlanPhasesOptional = programmingExercise.getBuildConfig().getBuildPlanPhases();
+        if (buildPlanPhasesOptional.isEmpty()) {
+            return;
+        }
+        BuildPlanPhasesDTO buildPlanPhases = buildPlanPhasesOptional.orElseThrow();
+        if (buildPlanPhases.phases() == null || buildPlanPhases.phases().isEmpty()) {
+            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
+        }
+
+        Set<String> normalizedNames = new HashSet<>();
+        for (BuildPhaseDTO phase : buildPlanPhasesOptional.orElseThrow().phases()) {
+            if (phase == null || phase.name() == null || !BuildPhaseDTO.BUILD_PHASE_NAME_PATTERN.matcher(phase.name()).matches()) {
+                throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
+            }
+
+            String normalizedName = phase.name().toLowerCase(Locale.ROOT);
+            if (BuildPhaseDTO.RESERVED_PHASE_NAMES.contains(normalizedName)) {
+                throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
+            }
+            if (!normalizedNames.add(normalizedName)) {
+                throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
+            }
+        }
+    }
+
+    /**
      * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
      * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
      * This prevents errors then the actual projects will be generated later on.
@@ -327,6 +364,8 @@ public class ProgrammingExerciseValidationService {
      * @throws BadRequestAlertException if one of the references is invalid
      */
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
+        validateBuildPhaseNames(exercise);
+
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
 

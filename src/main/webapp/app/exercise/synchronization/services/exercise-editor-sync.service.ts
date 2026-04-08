@@ -4,6 +4,9 @@ import { concatMap, filter, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
@@ -16,6 +19,7 @@ export enum ExerciseEditorSyncTarget {
     TESTS_REPOSITORY = 'TESTS_REPOSITORY',
     AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
     EXERCISE_METADATA = 'EXERCISE_METADATA',
+    REVIEW_COMMENTS = 'REVIEW_COMMENTS',
 }
 
 /**
@@ -35,6 +39,7 @@ export enum ExerciseEditorSyncEventType {
     FILE_RENAMED = 'FILE_RENAMED',
     NEW_COMMIT_ALERT = 'NEW_COMMIT_ALERT',
     NEW_EXERCISE_VERSION_ALERT = 'NEW_EXERCISE_VERSION_ALERT',
+    REVIEW_THREAD_UPDATE = 'REVIEW_THREAD_UPDATE',
 }
 
 /**
@@ -140,6 +145,21 @@ export interface ExerciseNewVersionAlertEvent extends ExerciseEditorSyncEventBas
 }
 
 /**
+ * Event payload describing an incremental review-thread update.
+ */
+export interface ReviewThreadSyncUpdateEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE;
+    target: ExerciseEditorSyncTarget.REVIEW_COMMENTS;
+    action: ReviewThreadSyncAction;
+    exerciseId: number;
+    thread?: CommentThread;
+    comment?: Comment;
+    commentId?: number;
+    threadIds?: number[];
+    groupId?: number;
+}
+
+/**
  * Union of all synchronization events received by the editor.
  */
 export type ExerciseEditorSyncEvent =
@@ -155,7 +175,8 @@ export type ExerciseEditorSyncEvent =
     | FileDeletedEvent
     | FileRenamedEvent
     | ExerciseNewVersionAlertEvent
-    | ExerciseNewCommitAlertEvent;
+    | ExerciseNewCommitAlertEvent
+    | ReviewThreadSyncUpdateEvent;
 
 /**
  * Maps a RepositoryType to the corresponding ExerciseEditorSyncTarget.

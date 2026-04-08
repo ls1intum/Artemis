@@ -266,11 +266,10 @@ export class MetisService implements OnDestroy {
                     // Update the answers of the cached post, if the answer is not already included in the list of answers
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === createdAnswerPost.id) ?? -1;
                     if (indexOfAnswer === -1) {
-                        if (!this.cachedPosts[indexOfCachedPost].answers) {
-                            // Need to create a new message object since Angular doesn't detect changes otherwise
-                            this.cachedPosts[indexOfCachedPost] = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
-                        }
-                        this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
+                        const post = this.cachedPosts[indexOfCachedPost];
+                        // Always create new array+post to make sure Angular detects changes
+                        const answers = [...(post.answers ?? []), createdAnswerPost];
+                        this.cachedPosts[indexOfCachedPost] = { ...post, answers: answers };
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }

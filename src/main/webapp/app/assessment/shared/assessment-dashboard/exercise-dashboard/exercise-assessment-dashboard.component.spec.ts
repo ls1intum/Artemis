@@ -134,7 +134,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseGroup,
         type: ExerciseType.MODELING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
-        exampleSolutionModel: '{"elements": [{"id": 1}]}',
+        exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
         exampleSolutionExplanation: 'explanation',
     } as ModelingExercise;
     const textExercise = {

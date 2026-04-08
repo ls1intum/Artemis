@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -103,24 +104,28 @@ public class AdminLtiConfigurationResource {
     /**
      * Updates an existing LTI platform configuration.
      *
-     * @param platform the updated LTI platform configuration to be saved.
+     * @param updateDTO the LTI platform configuration update DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PutMapping("lti-platform")
-    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
         log.debug("REST request to update configured LTI platform");
 
-        if (platform.getId() == null) {
+        if (updateDTO.id() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(platform.getId());
-        if (!existingPlatform.getRegistrationId().equals(platform.getRegistrationId())) {
+        // Fetch the existing configuration from the database (this is the managed entity)
+        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(updateDTO.id());
+        if (!existingPlatform.getRegistrationId().equals(updateDTO.registrationId())) {
             return ResponseEntity.badRequest().build();
         }
 
-        ltiPlatformConfigurationRepository.save(platform);
+        // Apply DTO values to the managed entity
+        updateDTO.applyTo(existingPlatform);
+
+        ltiPlatformConfigurationRepository.save(existingPlatform);
 
         return ResponseEntity.ok().build();
     }
@@ -128,13 +133,14 @@ public class AdminLtiConfigurationResource {
     /**
      * Adds a new LTI platform configuration.
      *
-     * @param platform the new LTI platform configuration to be saved.
+     * @param dto the LTI platform configuration DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
     @PostMapping("lti-platform")
-    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO dto) {
         log.debug("REST request to add new LTI platform");
 
+        LtiPlatformConfiguration platform = dto.toEntity();
         String clientRegistrationId = "artemis-" + UUID.randomUUID();
         platform.setRegistrationId(clientRegistrationId);
 

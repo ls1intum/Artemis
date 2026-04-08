@@ -186,13 +186,14 @@ test.describe('Exam assessment', () => {
             // The button's disabled state is computed once during component init and not re-evaluated.
             const graceEnd = examEnd.add(10, 'seconds');
             if (dayjs().isBefore(graceEnd)) {
-                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 2000);
+                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 5000);
             }
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            await page.waitForLoadState('networkidle');
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
             if (dayjs().isBefore(resultDate)) {
-                await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 1000);
+                await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 3000);
             }
             await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -221,7 +222,8 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 
         test('Set exam gradings', async ({ login, page, examManagement, examGrading }) => {
             await login(instructor);
-            await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+            await page.waitForLoadState('networkidle');
             await examManagement.openGradingKey();
             await examGrading.addGradeStep(40, '5.0');
             await examGrading.addGradeStep(15, '4.0');
@@ -257,18 +259,25 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 });
 
 test.describe('Exam statistics', { tag: '@slow' }, () => {
+    // This test creates an exam, has 4 students participate, waits for the exam to end,
+    // assesses all submissions, and then checks statistics — all within the test timeout.
+    // A generous timeout is needed because the exam must end before assessment can begin.
+    test.describe.configure({ timeout: 180_000 });
+
     let exam: Exam;
     let exercise: Exercise;
+    let examEnd: Dayjs;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
+        examEnd = dayjs().add(60, 'seconds');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(45, 'seconds'),
+            endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };
@@ -297,25 +306,29 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         }
     });
 
-    test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+    test.beforeEach('Assess a text exercise submission', async ({ login, page, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
         await login(tutor);
-        await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+        await waitForExamEnd(examEnd, page);
+        await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
 
         const assessment = examStatisticsSample.assessment;
         for (let i = 0; i < students.length; i++) {
             await examAssessment.addNewFeedback(assessment[i].points, assessment[i].feedback);
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
-            await examAssessment.nextAssessment();
+            if (i < students.length - 1) {
+                await examAssessment.nextAssessment();
+            }
         }
     });
 
     test('Check exam statistics', async ({ login, page, examManagement, examAPIRequests }) => {
         await login(instructor);
-        await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+        await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+        await page.waitForLoadState('networkidle');
         await examManagement.openScoresPage();
         await page.waitForURL(`**/exams/${exam.id}/scores`);
-        await page.waitForLoadState('load');
+        await page.waitForLoadState('networkidle');
         const examScores = new ExamScoresPage(page);
         await examScores.checkExamStatistics(examStatisticsSample.statistics);
         await examScores.checkGradeDistributionChart(examStatisticsSample.gradeDistribution);

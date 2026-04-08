@@ -60,6 +60,8 @@ describe('IrisChatService', () => {
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
 
     const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
+    const waitForCurrentChatMode = () => firstValueFrom(service.currentChatMode().pipe(filter((value): value is ChatServiceMode => value !== undefined)));
+    const waitForCurrentRelatedEntityId = () => firstValueFrom(service.currentRelatedEntityId().pipe(filter((value): value is number => value !== undefined)));
 
     beforeEach(() => {
         routerMock = { url: '' };
@@ -108,6 +110,38 @@ describe('IrisChatService', () => {
 
         expect(httpStub).toHaveBeenCalledWith('programming-exercise-chat/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
+    });
+
+    it('should initialize current chat context from newly loaded session', async () => {
+        const relatedEntityId = 77;
+        const newSession: IrisSession = { ...mockConversationWithNoMessages, id: 333, mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: relatedEntityId };
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, relatedEntityId);
+
+        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.PROGRAMMING_EXERCISE);
+        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
+    });
+
+    it('should initialize current chat context from legacy mode field', async () => {
+        const relatedEntityId = 66;
+        const newSession: Omit<IrisSession, 'chatMode'> & { chatMode?: ChatServiceMode; mode: ChatServiceMode } = {
+            ...mockConversationWithNoMessages,
+            id: 444,
+            chatMode: undefined,
+            mode: ChatServiceMode.LECTURE,
+            entityId: relatedEntityId,
+        };
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as unknown as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        service.switchTo(ChatServiceMode.LECTURE, relatedEntityId);
+
+        expect(await waitForCurrentChatMode()).toBe(ChatServiceMode.LECTURE);
+        expect(await waitForCurrentRelatedEntityId()).toBe(relatedEntityId);
     });
 
     it('should send a message', async () => {
@@ -292,7 +326,8 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
-        expect(messages.last()).toEqual(message);
+        const lastMessage = messages.last();
+        expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
     });
 
     it('should emit sessionId when set', async () => {

@@ -1,13 +1,21 @@
-import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { SelectButton } from 'primeng/selectbutton';
 
 describe('ChannelFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ChannelFormComponent;
     let fixture: ComponentFixture<ChannelFormComponent>;
     const validName = 'group-1';
@@ -16,13 +24,24 @@ describe('ChannelFormComponent', () => {
     const validIsAnnouncementChannel = false;
     const validIsCourseWideChannel = false;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
-            declarations: [ChannelFormComponent, MockComponent(ChannelIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal)],
-        }).compileComponents();
-    }));
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                ChannelFormComponent,
+                MockComponent(ChannelIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                SelectButton,
+            ],
+            providers: [
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ChannelFormComponent);
@@ -31,14 +50,14 @@ describe('ChannelFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should block submit when channel name is missing', fakeAsync(() => {
+    it('should block submit when channel name is missing', () => {
         setFormValid();
         setName(undefined);
         checkFormIsInvalid();
@@ -46,9 +65,9 @@ describe('ChannelFormComponent', () => {
         setFormValid();
         setName('');
         checkFormIsInvalid();
-    }));
+    });
 
-    it('should block submit when channel name pattern is invalid', fakeAsync(() => {
+    it('should block submit when channel name pattern is invalid', () => {
         setFormValid();
         setName('has space');
         checkFormIsInvalid();
@@ -64,9 +83,9 @@ describe('ChannelFormComponent', () => {
         setFormValid();
         setName('long-channel-with-31-characters');
         checkFormIsInvalid();
-    }));
+    });
 
-    it('should not block submit when description is missing', fakeAsync(() => {
+    it('should not block submit when description is missing', () => {
         setFormValid();
         setDescription(undefined);
 
@@ -79,19 +98,19 @@ describe('ChannelFormComponent', () => {
         };
 
         clickSubmitButton(true, expectChannelData);
-    }));
+    });
 
-    it('should block submit when description is too long', fakeAsync(() => {
+    it('should block submit when description is too long', () => {
         setFormValid();
         setDescription('a'.repeat(256));
         checkFormIsInvalid();
-    }));
+    });
 
-    it('should submit valid form', fakeAsync(() => {
+    it('should submit valid form', () => {
         setValidFormValues();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         const expectChannelData: ChannelFormData = {
             name: validName,
@@ -102,13 +121,13 @@ describe('ChannelFormComponent', () => {
         };
 
         clickSubmitButton(true, expectChannelData);
-    }));
+    });
 
-    it('should emit channel type change event when channel type is changed', fakeAsync(() => {
-        const channelTypeChangeSpy = jest.spyOn(component.channelTypeChanged, 'emit');
+    it('should emit channel type change event when channel type is changed', () => {
+        const channelTypeChangeSpy = vi.spyOn(component.channelTypeChanged, 'emit');
         component.channelTypeChanged.emit('PRIVATE');
         expect(channelTypeChangeSpy).toHaveBeenCalledWith('PRIVATE');
-    }));
+    });
 
     function setDescription(description?: string) {
         component!.descriptionControl!.setValue(description);
@@ -128,32 +147,31 @@ describe('ChannelFormComponent', () => {
 
     function checkFormIsInvalid() {
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
+        expect(component.form.invalid).toBe(true);
+        expect(component.isSubmitPossible).toBe(false);
         clickSubmitButton(false);
     }
     function setFormValid() {
         setValidFormValues();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
     }
     const clickSubmitButton = (expectSubmitEvent: boolean, expectedFormData?: ChannelFormData) => {
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(component, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(component.formSubmitted, 'emit');
 
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
+        fixture.changeDetectorRef.detectChanges();
 
-        return fixture.whenStable().then(() => {
-            if (expectSubmitEvent) {
-                expect(submitFormSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
-            } else {
-                expect(submitFormSpy).not.toHaveBeenCalled();
-                expect(submitFormEventSpy).not.toHaveBeenCalled();
-            }
-        });
+        if (expectSubmitEvent) {
+            expect(submitFormSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
+        } else {
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
+        }
     };
 });

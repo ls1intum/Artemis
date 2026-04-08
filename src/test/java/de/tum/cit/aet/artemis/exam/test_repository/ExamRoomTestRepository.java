@@ -22,21 +22,11 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
     // PostgreSQL's json type does not support equality operators, so SELECT DISTINCT fails
     // when Hibernate includes json columns in the SQL. The Set return type deduplicates in Java instead.
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber
-            )
-            SELECT examRoom
-            FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
-            LEFT JOIN FETCH examRoom.layoutStrategies
+            SELECT er
+            FROM ExamRoom er
+            LEFT JOIN FETCH er.layoutStrategies
             """)
-    Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
+    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     // TODO: Add DISTINCT back once the json columns (exam_seats, parameters) are migrated to jsonb.
     // See comment on findAllNewestExamRoomVersionsWithEagerLayoutStrategies.

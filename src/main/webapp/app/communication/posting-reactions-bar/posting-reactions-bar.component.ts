@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -10,7 +10,8 @@ import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
@@ -30,6 +31,7 @@ import { MetisConversationService } from '../service/metis-conversation.service'
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
@@ -89,7 +91,29 @@ interface ReactionMetaDataMap {
         PostCreateEditModalComponent,
     ],
 })
-export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
+export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            const postingValue = this.posting();
+            this.isReadOnlyMode();
+            this.previewMode();
+            untracked(() => {
+                if (!postingValue) return;
+                this.updatePostingWithReactions();
+                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
+                this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false;
+                if (this.getPostingType() === 'post') {
+                    this.resetTooltipsAndPriority();
+                }
+                this.setMayDelete();
+                this.setMayEdit();
+                this.setCanMarkAsUnread();
+            });
+        });
+    }
+
     readonly onBookmarkClicked = output<void>();
     readonly DisplayPriority = DisplayPriority;
     readonly faBookmark = faBookmark;
@@ -151,7 +175,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
     private conversationService = inject(ConversationService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private metisConversationService = inject(MetisConversationService);
     private courseSidebarService = inject(CourseSidebarService);
 
@@ -176,20 +200,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.setMayDelete();
         this.setMayEdit();
         this.setCanMarkAsUnread();
-    }
-
-    /**
-     * on changes: updates the current posting and its reactions,
-     * invokes metis service to check user authority
-     */
-    ngOnChanges() {
-        this.updatePostingWithReactions();
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        if (this.getPostingType() === 'post') {
-            this.resetTooltipsAndPriority();
-        }
-        this.setMayDelete();
-        this.setMayEdit();
     }
 
     /*
@@ -540,19 +550,19 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                         }
                     });
 
-                    // Open the forward message dialog
-                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
-                        size: 'lg',
-                        backdrop: 'static',
+                    // Open the forward message dialog using PrimeNG DialogService
+                    const ref = this.dialogService.open(ForwardMessageDialogComponent, {
+                        ...defaultFirstLayerDialogOptions,
+                        closable: false,
+                        data: {
+                            users: [],
+                            channels: this.channels,
+                            postToForward: post,
+                            courseId: this.course()?.id,
+                        },
                     });
 
-                    // Pass initial data to the dialog
-                    modalRef.componentInstance.users.set([]);
-                    modalRef.componentInstance.channels.set(this.channels);
-                    modalRef.componentInstance.postToForward.set(post);
-                    modalRef.componentInstance.courseId.set(this.course()?.id);
-
-                    modalRef.result.then(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                    ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
                         if (selection) {
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);
