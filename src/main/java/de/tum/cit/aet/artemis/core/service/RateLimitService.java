@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,13 @@ public class RateLimitService {
 
     private final RateLimitConfigurationService configurationService;
 
-    private final FeatureToggleService featureToggleService;
+    private final ObjectProvider<FeatureToggleService> featureToggleServiceProvider;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
+    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService,
+            ObjectProvider<FeatureToggleService> featureToggleServiceProvider) {
         this.proxyManager = proxyManager;
         this.configurationService = configurationService;
-        this.featureToggleService = featureToggleService;
+        this.featureToggleServiceProvider = featureToggleServiceProvider;
     }
 
     /**
@@ -60,7 +62,7 @@ public class RateLimitService {
      */
     public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
         // Skip rate limiting if disabled globally or disabled via feature toggle
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
+        if (!configurationService.isRateLimitingEnabled() || !featureToggleServiceProvider.getObject().isFeatureEnabled(Feature.RateLimit)) {
             log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
             return;
         }

@@ -26,12 +26,28 @@ public class JacksonConfiguration {
         return new JavaTimeModule();
     }
 
-    /*
+    /**
      * Support for Hibernate types in Jackson.
+     * <p>
+     * Configures the module to safely handle lazy-loaded proxies:
+     * <ul>
+     * <li>{@code REPLACE_PERSISTENT_COLLECTIONS} converts Hibernate collections to standard
+     * Java collections before serialization, so uninitialized proxies become empty
+     * collections instead of triggering {@code LazyInitializationException}.</li>
+     * <li>{@code WRITE_MISSING_ENTITIES_AS_NULL} serializes unloaded entity proxies
+     * ({@code @ManyToOne}, {@code @OneToOne}) as {@code null}.</li>
+     * </ul>
+     * This is required because {@code spring.jpa.open-in-view} is {@code false}, meaning
+     * the Hibernate session is closed before Jackson serializes the response.
+     *
+     * @return the configured Hibernate7Module
      */
     @Bean
     public Hibernate7Module hibernateModule() {
-        return new Hibernate7Module();
+        Hibernate7Module module = new Hibernate7Module();
+        module.enable(Hibernate7Module.Feature.REPLACE_PERSISTENT_COLLECTIONS);
+        module.enable(Hibernate7Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL);
+        return module;
     }
 
 }
