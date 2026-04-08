@@ -24,7 +24,7 @@ export interface IComplaintService {
     isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
     isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
     isComplaintLocked: (complaint: Complaint) => boolean | undefined;
-    create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
+    create: (complaintRequest: ComplaintRequestDTO) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
