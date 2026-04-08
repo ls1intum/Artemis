@@ -74,11 +74,21 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 session.start,
                 session.end,
                 session.location,
-                session.status,
+                CASE
+                    WHEN session.status = de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus.CANCELLED
+                    THEN true
+                    ELSE false
+                END,
+                CASE
+                    WHEN session.tutorialGroupFreePeriod IS NOT NULL
+                    THEN true
+                    ELSE false
+                END,
                 session.attendanceCount
             )
             FROM TutorialGroupSession session
                 JOIN session.tutorialGroup tutorialGroup
+                LEFT JOIN session.tutorialGroupFreePeriod
             WHERE tutorialGroup.id = :tutorialGroupId
             ORDER BY session.start ASC
             """)
