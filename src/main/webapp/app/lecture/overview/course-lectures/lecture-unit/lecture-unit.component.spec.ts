@@ -7,12 +7,16 @@ import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('LectureUnitComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: LectureUnitComponent;
     let fixture: ComponentFixture<LectureUnitComponent>;
+    let mockActivatedRoute: { snapshot: { queryParams: Record<string, any> } };
+    let mockProfileService: { profileInfo: any; isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
     const lectureUnit: LectureUnit = {
         id: 1,
@@ -22,12 +26,31 @@ describe('LectureUnitComponent', () => {
     };
 
     beforeEach(async () => {
+        mockActivatedRoute = {
+            snapshot: {
+                queryParams: {},
+            },
+        };
+
+        mockProfileService = {
+            profileInfo: { activeModuleFeatures: [] },
+            isModuleFeatureActive: vi.fn().mockReturnValue(false),
+        };
+
         await TestBed.configureTestingModule({
             imports: [LectureUnitComponent],
             providers: [
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: mockActivatedRoute,
+                },
+                {
+                    provide: ProfileService,
+                    useValue: mockProfileService,
                 },
             ],
         }).compileComponents();
@@ -39,6 +62,7 @@ describe('LectureUnitComponent', () => {
         fixture.componentRef.setInput('showViewIsolatedButton', true);
         fixture.componentRef.setInput('isPresentationMode', false);
         fixture.componentRef.setInput('icon', faVideo);
+        fixture.componentRef.setInput('courseId', 1);
     });
 
     afterEach(() => {
@@ -104,5 +128,59 @@ describe('LectureUnitComponent', () => {
 
         expect(handleOriginalVersionViewSpy).toHaveBeenCalledTimes(1);
         expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    describe('Deeplinking scroll behavior', () => {
+        let mockScrollIntoView: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            mockScrollIntoView = vi.fn();
+            Element.prototype.scrollIntoView = mockScrollIntoView;
+        });
+
+        it('should scroll to video player when timestamp parameter is present', async () => {
+            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
+            fixture.componentRef.setInput('initiallyExpanded', true);
+
+            const mockVideoPlayer = document.createElement('jhi-video-player');
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockReturnValue(mockVideoPlayer);
+
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        it('should scroll to PDF viewer when page parameter is present', async () => {
+            mockActivatedRoute.snapshot.queryParams = { page: '5' };
+            fixture.componentRef.setInput('initiallyExpanded', true);
+
+            const mockPdfViewer = document.createElement('jhi-pdf-viewer');
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockReturnValue(mockPdfViewer);
+
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        it('should not scroll to PDF viewer when only timestamp parameter is present', async () => {
+            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
+            fixture.componentRef.setInput('initiallyExpanded', true);
+
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
+                if (selector === 'jhi-video-player') return null;
+                if (selector === 'jhi-pdf-viewer') return document.createElement('jhi-pdf-viewer');
+                return null;
+            });
+
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+            });
+        });
     });
 });
