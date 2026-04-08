@@ -22,6 +22,7 @@ test.describe('Course exercise', { tag: '@fast' }, () => {
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {
             await page.goto(`/courses/${course.id}/exercises`);
+            await page.waitForLoadState('networkidle');
             // All quiz exercises should be hidden initially, as the default accordion status is collapsed when there is no due date.
             await expect(courseOverview.getExercise(exercise1.title!)).toBeHidden();
             await expect(courseOverview.getExercise(exercise2.title!)).toBeHidden();

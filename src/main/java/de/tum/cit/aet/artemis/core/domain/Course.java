@@ -32,6 +32,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -156,8 +157,8 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_enabled")
     private boolean unenrollmentEnabled = false;
 
-    @Column(name = "faq_enabled")
-    private boolean faqEnabled = false;
+    @Column(name = "onboarding_done", nullable = false)
+    private boolean onboardingDone = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -254,6 +255,9 @@ public class Course extends DomainObject {
     private Long numberOfPrerequisitesTransient;
 
     @Transient
+    private Long numberOfAcceptedFaqsTransient;
+
+    @Transient
     private boolean trainingEnabledTransient;
 
     public boolean isTrainingEnabled() {
@@ -278,6 +282,14 @@ public class Course extends DomainObject {
 
     public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
         this.numberOfTutorialGroupsTransient = numberOfTutorialGroups;
+    }
+
+    public Long getNumberOfAcceptedFaqs() {
+        return numberOfAcceptedFaqsTransient;
+    }
+
+    public void setNumberOfAcceptedFaqs(Long numberOfAcceptedFaqs) {
+        this.numberOfAcceptedFaqsTransient = numberOfAcceptedFaqs;
     }
 
     public void setNumberOfCompetencies(Long numberOfCompetencies) {
@@ -579,12 +591,18 @@ public class Course extends DomainObject {
         this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public boolean isFaqEnabled() {
-        return faqEnabled;
+    public boolean isOnboardingDone() {
+        return onboardingDone;
     }
 
-    public void setFaqEnabled(boolean faqEnabled) {
-        this.faqEnabled = faqEnabled;
+    public void setOnboardingDone(boolean onboardingDone) {
+        this.onboardingDone = onboardingDone;
+    }
+
+    // TODO: Remove this method once the mobile iOS app no longer reads faqEnabled and all users have updated to the latest app version.
+    @JsonProperty("faqEnabled")
+    public boolean isFaqEnabled() {
+        return true;
     }
 
     public String getEnrollmentConfirmationMessage() {
@@ -677,7 +695,7 @@ public class Course extends DomainObject {
                 + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
                 + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
                 + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + ", faqEnabled='" + isFaqEnabled() + "'" + "}";
+                + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

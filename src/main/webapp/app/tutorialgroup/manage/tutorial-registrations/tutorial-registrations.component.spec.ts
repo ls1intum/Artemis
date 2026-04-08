@@ -12,12 +12,12 @@ import { TutorialRegistrationsImportModalMockComponent } from 'src/test/javascri
 import { TutorialRegistrationsRegisterModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-register-modal-mock.component';
 import { TutorialRegistrationsStudentsTableMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-students-table-mock.component';
 import { PrimeNgConfirmDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsComponent } from './tutorial-registrations.component';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 interface ConfirmationServiceMock {
     confirm: ReturnType<typeof vi.fn>;
@@ -36,7 +36,7 @@ describe('TutorialRegistrationsComponent', () => {
     let confirmationServiceMock: ConfirmationServiceMock;
     let tutorialGroupRegisteredStudentsServiceMock: TutorialGroupRegisteredStudentsServiceMock;
 
-    const firstStudent: TutorialGroupRegisteredStudentDTO = {
+    const firstStudent: TutorialGroupStudent = {
         id: 1,
         name: 'Ada Lovelace',
         login: 'ada',
@@ -45,7 +45,7 @@ describe('TutorialRegistrationsComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const secondStudent: TutorialGroupRegisteredStudentDTO = {
+    const secondStudent: TutorialGroupStudent = {
         id: 2,
         name: 'Alan Turing',
         login: 'alan',
@@ -54,7 +54,7 @@ describe('TutorialRegistrationsComponent', () => {
         profilePictureUrl: undefined,
     };
 
-    const thirdStudent: TutorialGroupRegisteredStudentDTO = {
+    const thirdStudent: TutorialGroupStudent = {
         id: 3,
         name: undefined,
         login: 'grace',

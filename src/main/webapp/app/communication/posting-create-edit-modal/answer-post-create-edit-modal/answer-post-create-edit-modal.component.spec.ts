@@ -46,21 +46,21 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should init modal with correct content and title for answer post with id', { timeout: 30000 }, () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
         component.ngOnInit();
         expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
         expect(component.content).toEqual(metisResolvingAnswerPostUser1.content);
     });
 
     it('should init modal with correct content and title for answer post without id', () => {
-        component.posting = metisAnswerPostToCreateUser1;
+        component.posting.set(metisAnswerPostToCreateUser1);
         component.ngOnInit();
         expect(component.modalTitle).toBe('artemisApp.metis.createModalTitleAnswer');
         expect(component.content).toEqual(metisAnswerPostToCreateUser1.content);
     });
 
     it('should invoke create embedded view', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
         const mockClear = vi.fn();
         const mockCreateEmbeddedView = vi.fn();
 
@@ -74,7 +74,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke clear embedded view', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
         const mockClear = vi.fn();
         const mockCreateEmbeddedView = vi.fn();
 
@@ -88,51 +88,51 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke updatePosting when confirming', () => {
-        component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnChanges();
+        component.posting.set(metisResolvingAnswerPostUser1);
+        fixture.detectChanges();
         component.confirm();
         expect(updatePostingMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
-        component.posting = metisResolvingAnswerPostUser1;
-        component.ngOnChanges();
+        const createPostingMock = vi.spyOn(component, 'createPosting');
+        component.posting.set(metisAnswerPostToCreateUser1);
+        fixture.detectChanges();
         component.confirm();
-        expect(updatePostingMock).toHaveBeenCalledOnce();
+        expect(createPostingMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service with created answer post', () => {
         const metisServiceCreateSpy = vi.spyOn(metisService, 'createAnswerPost');
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
-        component.posting = metisAnswerPostToCreateUser1;
-        component.ngOnChanges();
+        component.posting.set(metisAnswerPostToCreateUser1);
+        fixture.detectChanges();
         const newContent = 'New Content';
         component.formGroup.setValue({
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: newContent });
+        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting()!, content: newContent });
         expect(component.isLoading).toBeFalsy();
         expect(onCreateSpy).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service with updated answer post', () => {
         const metisServiceCreateSpy = vi.spyOn(metisService, 'updateAnswerPost');
-        component.posting = metisAnswerPostUser2;
-        component.ngOnChanges();
+        component.posting.set(metisAnswerPostUser2);
+        fixture.detectChanges();
         const updatedContent = 'Updated Content';
         component.formGroup.setValue({
             content: updatedContent,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: updatedContent });
+        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting()!, content: updatedContent });
         expect(component.isLoading).toBeFalsy();
     });
 
     it('should update content when posting content changed', () => {
-        component.posting = metisAnswerPostUser2;
-        component.posting.content = 'New content';
-        component.ngOnChanges();
-        expect(component.content).toEqual(component.posting.content);
+        component.posting.set({ ...metisAnswerPostUser2, content: 'New content' });
+        fixture.detectChanges();
+        expect(component.content).toEqual(component.posting()!.content);
     });
 });

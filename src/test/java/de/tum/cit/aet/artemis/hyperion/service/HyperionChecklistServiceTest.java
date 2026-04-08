@@ -21,13 +21,12 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
@@ -80,7 +79,7 @@ class HyperionChecklistServiceTest {
 
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper(), llmTokenUsageService, userRepository);
+                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, JsonObjectMapper.get(), llmTokenUsageService, userRepository);
     }
 
     @Test

@@ -1,0 +1,38 @@
+<p-select
+    [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
+    [disabled]="disabled()"
+    [pt]="{ header: { style: 'padding-left: 12px; padding-right: 12px;' } }"
+    [options]="allGroups()"
+    [group]="true"
+    optionGroupLabel="label"
+    optionGroupChildren="items"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="selectedValue()"
+    (onChange)="onSelectionChange($event.value)"
+    [filter]="true"
+    filterBy="label"
+    [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
+    [resetFilterOnHide]="true"
+    [placeholder]="'artemisApp.iris.contextSelection.placeholder' | artemisTranslate"
+    scrollHeight="40vh"
+    [panelStyle]="{ 'min-width': '250px' }"
+    variant="outlined"
+    size="small"
+>
+    <ng-template #selectedItem let-selectedOption>
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="selectedOption.faIcon" />
+            <span>{{ selectedOption.label }}</span>
+        </div>
+    </ng-template>
+    <ng-template #item let-option>
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="option.faIcon" />
+            <span>{{ option.label }}</span>
+        </div>
+    </ng-template>
+    <ng-template #group let-group>
+        <span [jhiTranslate]="group.label"></span>
+    </ng-template>
+</p-select>

@@ -70,14 +70,30 @@ export class ExerciseTeamsPage {
         }
 
         try {
-            // Use fill() for a single input emission — with the route intercept serving
-            // instant cached responses, the HTTP completes before Angular's change detection
-            // can interfere via inputFormatter/writeValue.
-            await inputLocator.fill(username);
-            await listbox.waitFor({ state: 'visible', timeout: 30000 });
-            const option = listbox.getByText(new RegExp(username, 'i')).first();
-            await option.waitFor({ state: 'visible', timeout: 5000 });
-            await option.click();
+            // Retry with different input strategies — fill() can fail to trigger
+            // Angular's typeahead if change detection doesn't pick up the event.
+            for (let attempt = 0; attempt < 3; attempt++) {
+                if (attempt > 0) {
+                    await this.page.waitForTimeout(500);
+                    await inputLocator.clear();
+                }
+                // First attempt: fill() (fast). Subsequent: pressSequentially (reliable).
+                if (attempt === 0) {
+                    await inputLocator.fill(username);
+                } else {
+                    await inputLocator.click();
+                    await inputLocator.pressSequentially(username, { delay: 50 });
+                }
+                try {
+                    await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                    const option = listbox.getByText(new RegExp(username, 'i')).first();
+                    await option.waitFor({ state: 'visible', timeout: 5000 });
+                    await option.click();
+                    break;
+                } catch {
+                    if (attempt === 2) throw new Error(`Tutor search autocomplete did not appear after 3 attempts for '${username}'`);
+                }
+            }
         } finally {
             if (routeInstalled && courseId) {
                 await this.page.unroute(`**/api/core/courses/${courseId}/tutors`);

@@ -40,6 +40,8 @@
             },
             "manage": {
                 "title": "Competency Management",
+                "search": "Search Competencies",
+                "noSearchResults": "No competencies match your search",
                 "importButton": "Import competencies",
                 "importFromCoursesButton": "Import from other courses",
                 "importAllButton": "Import all competencies of a course",
@@ -370,6 +372,8 @@
                     "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
                 },
+                "search": "Search Prerequisites",
+                "noSearchResults": "No prerequisites match your search",
                 "importAllButton": "Import all prerequisites of a course",
                 "importStandardizedButton": "Import standardized competencies",
                 "empty": "No prerequisites exist for this course"

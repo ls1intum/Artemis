@@ -1,4 +1,4 @@
-import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
+import { Directive, OnInit, effect, inject, model, output, untracked } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -10,11 +10,11 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
-export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
+export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit {
     protected metisService = inject(MetisService);
     protected formBuilder = inject(FormBuilder);
 
-    @Input() posting: T;
+    readonly posting = model<T>();
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 
@@ -26,25 +26,33 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
 
     readonly EditType = PostingEditType;
 
+    constructor() {
+        effect(() => {
+            this.posting();
+            untracked(() => this.onPostingChanged());
+        });
+    }
+
     get editType(): PostingEditType {
-        return this.posting?.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
+        return this.posting()?.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
     }
 
     /**
      * on initialization: sets the content, and the modal title (edit or create)
      */
     ngOnInit(): void {
-        this.content = this.posting?.content ?? '';
+        this.content = this.posting()?.content ?? '';
     }
 
     /**
-     * on changes: sets the content, and the modal title (edit or create), resets the form
+     * Called when the posting signal changes. Override in subclasses and call super.
      */
-    ngOnChanges() {
-        if (!this.posting) {
+    protected onPostingChanged(): void {
+        const posting = this.posting();
+        if (!posting) {
             return;
         }
-        this.content = this.posting?.content ?? '';
+        this.content = posting.content ?? '';
         this.resetFormGroup();
     }
 

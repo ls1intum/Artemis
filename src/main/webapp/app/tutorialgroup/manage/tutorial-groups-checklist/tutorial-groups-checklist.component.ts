@@ -12,7 +12,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({

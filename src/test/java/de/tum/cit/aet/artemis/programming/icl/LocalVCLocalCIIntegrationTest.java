@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
@@ -9,6 +10,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -48,8 +50,11 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
@@ -567,6 +572,56 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Invalid network: invalid");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPhaseBuildPlanBeforeDueDate_excludesAfterDueDatePhases() throws Exception {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            when(exerciseDateService.isAfterDueDate(studentParticipation)).thenReturn(false);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().buildScript()).contains("set -e").contains("./gradlew testClasses\n").doesNotContain("./gradlew test\n");
+            assertThat(buildJobQueueItem.buildConfig().resultPaths()).isEmpty();
+            assertThat(buildJobQueueItem.buildConfig().areTestsExpected()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPhaseBuildPlanAfterDueDate_includesAfterDueDatePhases() throws Exception {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            when(exerciseDateService.isAfterDueDate(studentParticipation)).thenReturn(true);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().buildScript()).contains("set -e").contains("./gradlew testClasses\n").contains("./gradlew test\n");
+            assertThat(buildJobQueueItem.buildConfig().resultPaths()).containsExactly(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/build/test-results/test/*.xml");
+            assertThat(buildJobQueueItem.buildConfig().areTestsExpected()).isTrue();
         }
     }
 }

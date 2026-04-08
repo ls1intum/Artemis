@@ -115,7 +115,23 @@
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
-            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise."
+            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
+            "unsupportedExerciseType": "This exercise type does not support practice mode.",
+            "notAvailableInExam": "Practice mode is not available for exam exercises.",
+            "notSupportedForTeams": "Practice mode is not supported for team exercises.",
+            "programmingExercisesDisabled": "Practice mode for programming exercises is disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Practice mode for text and modeling exercises is unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active.",
+            "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
+        },
+        "feedbackRequest": {
+            "notAvailableInExam": "Feedback requests are not available for exam exercises.",
+            "unsupportedExerciseType": "This exercise type does not support feedback requests.",
+            "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Feedback requests for text and modeling exercises are unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active."
         },
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
@@ -167,6 +183,7 @@
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
         "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
+        "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",

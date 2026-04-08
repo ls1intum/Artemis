@@ -2,8 +2,6 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
-import { Buffer } from 'buffer';
 import { SEED_COURSES } from '../../support/seedData';
 import { generateUUID } from '../../support/utils';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
@@ -174,22 +172,8 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
                 duration: 15,
-            });
-
-            // Add competency link to the quiz exercise via PUT
-            const updateDTO = {
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
-            };
-            const putResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}`, {
-                multipart: {
-                    exercise: {
-                        name: 'exercise',
-                        mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(updateDTO)),
-                    },
-                },
             });
-            expect(putResponse.ok(), `PUT competency link failed: ${putResponse.status()}`).toBeTruthy();
 
             // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
@@ -197,7 +181,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Login as student and navigate to quiz exercise
             await login(studentOne, `/courses/${nestedCourse.id}/exercises/${quizExercise.id!}`);
-            await courseOverview.startExercise(quizExercise.id!);
 
             // Answer the multiple choice question - tick the first two options (correct answers)
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);

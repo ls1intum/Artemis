@@ -24,10 +24,10 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests that verify course request emails are actually delivered with correct content.
@@ -82,7 +82,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Explicitly configure a non-default mail.from to ensure MailSendingService's mailConfigured guard
         // allows sending. The default "artemis@localhost" would cause emails to be silently skipped.
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);

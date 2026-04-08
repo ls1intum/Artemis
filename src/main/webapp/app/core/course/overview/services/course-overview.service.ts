@@ -58,6 +58,7 @@ const GROUP_DECISION_MATRIX: Record<StartDateGroup, Record<EndDateGroup, TimeGro
 };
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
+    unreadMessages: { entityData: [] },
     favoriteChannels: { entityData: [] },
     recents: { entityData: [] },
     generalChannels: { entityData: [] },
@@ -295,6 +296,15 @@ export class CourseOverviewService {
         for (const conversation of conversations) {
             const conversationGroups = this.getConversationGroup(conversation);
             const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
+            const isDmOrGroupChat = conversation.type === ConversationType.ONE_TO_ONE || conversation.type === ConversationType.GROUP_CHAT;
+
+            const isUnreadDmOrGroupChat = (conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden && isDmOrGroupChat;
+
+            // Add all unread messages from DMs or Groupchats to the "unreadMessages" group, remove them from all other sidebar groups
+            if (isUnreadDmOrGroupChat) {
+                groupedConversationGroups.unreadMessages.entityData.push(conversationCardItem);
+                continue;
+            }
 
             // Add the conversation card to all applicable sidebar groups
             for (const group of conversationGroups) {
@@ -302,15 +312,67 @@ export class CourseOverviewService {
             }
         }
 
+        const sortStrategies: Record<string, (items: SidebarCardElement[]) => void> = {
+            directMessages: (items) => this.sortDirectOrGroupMessages(items),
+            groupChats: (items) => this.sortDirectOrGroupMessages(items),
+            unreadMessages: (items) => this.sortUnreadMessages(items),
+            savedPosts: () => {},
+        };
+
+        // Apply sorting strategies for specific groups, and default sorting for the rest
         for (const group in groupedConversationGroups) {
-            // Sort conversations within each group so that favorites are shown on top
-            groupedConversationGroups[group].entityData.sort((a, b) => {
-                const aIsFavorite = a.conversation?.isFavorite ? 1 : 0;
-                const bIsFavorite = b.conversation?.isFavorite ? 1 : 0;
-                return bIsFavorite - aIsFavorite;
-            });
+            const items = groupedConversationGroups[group].entityData;
+            const strategy = sortStrategies[group] ?? ((defaultItems) => this.sortDefault(defaultItems));
+            strategy(items);
         }
+
         return groupedConversationGroups;
+    }
+
+    // Sorts direct or group messages with the following priority:
+    // 1. Favorites first
+    // 2. Then by last message date (most recent first)
+    private sortDirectOrGroupMessages(items: SidebarCardElement[]): void {
+        items.sort((a, b) => this.isFavorite(b) - this.isFavorite(a) || (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0));
+    }
+
+    // Sorts unread messages with the following priority:
+    // 1. Favorites first
+    // 2. Then by type (DM > GroupChat)
+    // 3. Then by last message date (most recent first)
+    private sortUnreadMessages(items: SidebarCardElement[]): void {
+        items.sort(
+            (a, b) =>
+                this.isFavorite(b) - this.isFavorite(a) ||
+                this.typeRank(b) - this.typeRank(a) ||
+                (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0),
+        );
+    }
+
+    // Default sorting: Favorites first, then by unread messages, then alphabetically by title
+    private sortDefault(items: SidebarCardElement[]): void {
+        items.sort(
+            (a, b) =>
+                this.isFavorite(b) - this.isFavorite(a) ||
+                this.hasUnread(b) - this.hasUnread(a) ||
+                (a.title ?? '').localeCompare(b.title ?? '', undefined, { sensitivity: 'base' }),
+        );
+    }
+
+    private isFavorite(item: SidebarCardElement): number {
+        return item.conversation?.isFavorite ? 1 : 0;
+    }
+
+    private hasUnread(item: SidebarCardElement): number {
+        return (item.conversation?.unreadMessagesCount ?? 0) > 0 ? 1 : 0;
+    }
+
+    private typeRank(item: SidebarCardElement): number {
+        const ranks: Partial<Record<ConversationType, number>> = {
+            [ConversationType.ONE_TO_ONE]: 3,
+            [ConversationType.GROUP_CHAT]: 2,
+        };
+        return ranks[item.type as ConversationType] ?? 1;
     }
 
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {

@@ -26,7 +26,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -36,6 +35,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
@@ -90,7 +90,7 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
+            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asText();
         }
         catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

@@ -1,5 +1,5 @@
 <div id="cardBuildOutput" class="card border build-output">
-    <div class="card-header d-flex bg-primary text-white" (click)="toggleEditorCollapse($event)">
+    <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header d-flex bg-primary text-white'" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <fa-icon [icon]="faTerminal" />
             <span jhiTranslate="artemisApp.editor.buildOutput"></span>

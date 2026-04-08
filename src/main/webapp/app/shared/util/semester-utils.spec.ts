@@ -89,14 +89,14 @@ describe('SemesterUtils', () => {
 
         it('should return 0 at start of semester', () => {
             // Start of winter semester
-            jest.useFakeTimers().setSystemTime(new Date('2025-10-01'));
+            jest.useFakeTimers().setSystemTime(new Date(2025, 9, 1, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeCloseTo(0, 0);
         });
 
         it('should return approximately 50 at mid-semester', () => {
             // Mid-winter semester (around mid-December)
-            jest.useFakeTimers().setSystemTime(new Date('2025-12-15'));
+            jest.useFakeTimers().setSystemTime(new Date(2025, 11, 15, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeGreaterThan(40);
             expect(progress).toBeLessThan(60);
@@ -104,7 +104,7 @@ describe('SemesterUtils', () => {
 
         it('should return close to 100 at end of semester', () => {
             // End of winter semester
-            jest.useFakeTimers().setSystemTime(new Date('2026-03-30'));
+            jest.useFakeTimers().setSystemTime(new Date(2026, 2, 30, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeGreaterThan(95);
         });

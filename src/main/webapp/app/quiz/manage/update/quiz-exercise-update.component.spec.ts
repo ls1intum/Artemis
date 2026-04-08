@@ -745,6 +745,11 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('unloading notification and can deactivate', () => {
+            beforeEach(() => {
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
+            });
+
             it('should return opposite of pendingChangesCache', () => {
                 comp.pendingChangesCache = true;
                 expect(comp.canDeactivate()).toBe(false);
@@ -762,6 +767,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.pendingChangesCache = false;
                 const canDeactivate = comp.canDeactivate();
                 expect(canDeactivate).toBe(true);
+            });
+
+            it('should always deactivate when quiz is not editable', () => {
+                comp.quizExercise.isEditable = false;
+                comp.pendingChangesCache = true;
+                expect(comp.canDeactivate()).toBe(true);
             });
         });
 
@@ -1322,6 +1333,26 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.previousState();
                 expect(routerSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 5, 'exercise-groups']);
             });
+
+            it('should return correct re-evaluate URL for course quiz', () => {
+                comp.quizExercise.id = 456;
+                comp.courseId = 123;
+                comp.isExamMode = false;
+                expect(comp.reEvaluateUrl).toEqual(['/course-management', '123', 'quiz-exercises', '456', 're-evaluate']);
+            });
+
+            it('should return correct re-evaluate URL for exam quiz', () => {
+                comp.quizExercise.id = 456;
+                comp.courseId = 123;
+                comp.examId = 789;
+                comp.isExamMode = true;
+                const testRoute = {
+                    snapshot: { paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }) },
+                    queryParams: of({}),
+                } as any as ActivatedRoute;
+                (comp as any).route = testRoute;
+                expect(comp.reEvaluateUrl).toEqual(['/course-management', '123', 'exams', '789', 'exercise-groups', '111', 'quiz-exercises', '456', 're-evaluate']);
+            });
         });
 
         describe('prepare entity', () => {
@@ -1432,6 +1463,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     comp.quizIsValid = true;
                     comp.quizExercise = quizExercise;
                     comp.quizExercise.dueDateError = false;
+                    comp.quizExercise.isEditable = true;
 
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(false);
                     vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
@@ -1458,6 +1490,11 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 it('should be disabled if the saved quiz has already started', () => {
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(true);
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if quiz is not editable', () => {
+                    comp.quizExercise.isEditable = false;
                     expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
@@ -2122,6 +2159,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
                 const translateService = TestBed.inject(TranslateService);
                 translateSpy = vi.spyOn(translateService, 'instant');
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
             });
 
             it('should prevent default and return warning text when changes are pending', () => {

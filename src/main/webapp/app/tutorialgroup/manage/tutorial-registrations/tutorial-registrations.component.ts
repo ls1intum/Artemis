@@ -3,7 +3,6 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +18,7 @@ import {
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations',
@@ -51,12 +51,12 @@ export class TutorialRegistrationsComponent {
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
-    registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
+    registeredStudents = input.required<TutorialGroupStudent[]>();
     loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();
     loggedInUserIsAtLeastInstructorInCourse = input.required<boolean>();
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
     searchString = signal('');
-    filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
+    filteredRegisteredStudents = computed<TutorialGroupStudent[]>(() => this.computeFilteredRegisteredStudents());
 
     exportRegisteredStudents() {
         const registeredStudents = this.registeredStudents();
@@ -74,7 +74,7 @@ export class TutorialRegistrationsComponent {
         }
     }
 
-    private confirmDeregistration(event: Event, student: TutorialGroupRegisteredStudentDTO) {
+    private confirmDeregistration(event: Event, student: TutorialGroupStudent) {
         this.confirmationService.confirm({
             target: event.target as EventTarget,
             message: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.message'),
@@ -98,7 +98,7 @@ export class TutorialRegistrationsComponent {
         return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.searchFieldPlaceholder');
     }
 
-    private computeFilteredRegisteredStudents(): TutorialGroupRegisteredStudentDTO[] {
+    private computeFilteredRegisteredStudents(): TutorialGroupStudent[] {
         const registeredStudents = this.registeredStudents();
         const searchString = this.searchString().toLowerCase();
         if (searchString === '') return registeredStudents;

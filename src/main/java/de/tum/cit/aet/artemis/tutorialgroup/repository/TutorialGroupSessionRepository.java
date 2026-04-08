@@ -70,6 +70,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO(
+                session.id,
                 session.start,
                 session.end,
                 session.location,
@@ -98,17 +99,6 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 AND session.tutorialGroup = :tutorialGroup
             """)
     Set<TutorialGroupSession> findOverlappingInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
-            @Param("end") ZonedDateTime end);
-
-    @Query("""
-            SELECT session
-            FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
-                AND session.tutorialGroupSchedule IS NULL
-                AND session.tutorialGroup = :tutorialGroup
-            """)
-    Set<TutorialGroupSession> findOverlappingIndividualSessionsInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
             @Param("end") ZonedDateTime end);
 
     @Query("""
