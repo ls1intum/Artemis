@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,8 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 @Service
 @Conditional(IrisEnabled.class)
 public class PyrisStatusUpdateService {
+
+    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     private final PyrisJobService pyrisJobService;
 
@@ -150,23 +154,36 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a lecture ingestion job.
-     * Also notifies the lecture content processing service when ingestion completes.
+     * <p>
+     * On EVERY callback (not just terminal): passes the {@code result} field to the checkpoint handler.
+     * This allows Artemis to save transcription data mid-pipeline and transition TRANSCRIBING → INGESTING.
+     * <p>
+     * On terminal callback: notifies the processing service that the job completed or failed.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
+        log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
+
+        // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
+        if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
+            processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
+        }
+
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
-            pyrisJobService.removeJob(job);
-
-            // Notify the lecture content processing service with token for validation
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}", job.lectureUnitId(), success);
             processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
+            pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);
+            // Update lastUpdated on every non-terminal callback so stuck detection
+            // can use "time since last callback" instead of "time since phase started"
+            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
         }
     }
 
