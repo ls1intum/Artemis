@@ -124,7 +124,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             getCreationOptionsMap().put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
         }
         else {
-            getCreationOptionsMap().remove(session.getId());
+            getCreationOptionsMap().remove(userId);
         }
     }
 
