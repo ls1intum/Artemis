@@ -214,9 +214,9 @@ describe('HomeComponent', () => {
     describe('prefillPasskeysIfPossible', () => {
         it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
             component.isPasskeyEnabled = true;
-            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
             (window as any).PublicKeyCredential = {
-                isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
             };
 
             await component.prefillPasskeysIfPossible();
@@ -228,7 +228,7 @@ describe('HomeComponent', () => {
 
         it('should not call startConditionalMediation if passkey is disabled', async () => {
             component.isPasskeyEnabled = false;
-            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
 
             await component.prefillPasskeysIfPossible();
 
@@ -237,9 +237,9 @@ describe('HomeComponent', () => {
 
         it('should not call startConditionalMediation if conditional mediation is unavailable', async () => {
             component.isPasskeyEnabled = true;
-            const startSpy = jest.spyOn(webauthnService, 'startConditionalMediation');
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
             (window as any).PublicKeyCredential = {
-                isConditionalMediationAvailable: jest.fn().mockResolvedValue(false),
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(false),
             };
 
             await component.prefillPasskeysIfPossible();
@@ -258,7 +258,7 @@ describe('HomeComponent', () => {
 
     describe('ngOnDestroy', () => {
         it('should stop conditional mediation on destroy', () => {
-            const stopSpy = jest.spyOn(webauthnService, 'stopConditionalMediation');
+            const stopSpy = vi.spyOn(webauthnService, 'stopConditionalMediation');
 
             component.ngOnDestroy();
 

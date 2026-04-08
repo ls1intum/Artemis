@@ -330,7 +330,7 @@ describe('WebauthnService', () => {
         });
 
         it('should pass mediation conditional and signal when isConditional is true', async () => {
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
 
             await service.getCredential(true);
 
@@ -344,11 +344,11 @@ describe('WebauthnService', () => {
         });
 
         it('should not pass mediation when isConditional is false', async () => {
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
 
             await service.getCredential(false);
 
-            const callArgs = (navigator.credentials.get as jest.Mock).mock.calls[0][0];
+            const callArgs = (navigator.credentials.get as ReturnType<typeof vi.fn>).mock.calls[0][0];
             expect(callArgs.mediation).toBeUndefined();
             expect(callArgs.signal).toEqual(expect.any(AbortSignal));
         });
@@ -364,7 +364,7 @@ describe('WebauthnService', () => {
             } as any);
 
             let capturedSignal: AbortSignal | undefined;
-            jest.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
                 capturedSignal = options?.signal;
                 return new Promise(() => {}); // never resolves
             });
@@ -392,7 +392,7 @@ describe('WebauthnService', () => {
             webauthnApiService.getAuthenticationOptions.mockReturnValue(optionsPromise as any);
 
             let capturedSignal: AbortSignal | undefined;
-            jest.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
                 capturedSignal = options?.signal;
                 return new Promise(() => {}); // never resolves
             });
@@ -427,11 +427,11 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
             accountService.identity.mockResolvedValue({} as any);
-            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+            const abortSpy = vi.spyOn(service, 'abortPendingCredentialRequest');
 
             await service.loginWithPasskey(false);
 
@@ -446,11 +446,11 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
             accountService.identity.mockResolvedValue({} as any);
-            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+            const abortSpy = vi.spyOn(service, 'abortPendingCredentialRequest');
 
             await service.loginWithPasskey(true);
 
@@ -464,7 +464,7 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
 
             await expect(service.loginWithPasskey(true)).rejects.toThrow(PasskeyAbortError);
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
@@ -477,7 +477,7 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
 
             await expect(service.loginWithPasskey(true)).rejects.toThrow(DOMException);
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
@@ -490,7 +490,7 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
 
             await expect(service.loginWithPasskey(true)).rejects.toThrow(DOMException);
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
@@ -504,11 +504,11 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
             const error401 = { status: 401 } as any;
             webauthnApiService.loginWithPasskey.mockRejectedValue(error401);
-            jest.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey(true)).rejects.toEqual(error401);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
@@ -522,8 +522,8 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const genericError = new Error('Server error');
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
-            jest.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey(true)).rejects.toThrow(genericError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
@@ -557,7 +557,7 @@ describe('WebauthnService', () => {
                     });
                 });
 
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
 
             // Start first request
             const first = service.getCredential(true);
@@ -590,12 +590,12 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
             accountService.identity.mockResolvedValue({} as any);
 
-            const onSuccess = jest.fn();
+            const onSuccess = vi.fn();
             service.startConditionalMediation(onSuccess);
 
             // Wait for the async flow to complete
@@ -611,9 +611,9 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
 
-            const onSuccess = jest.fn();
+            const onSuccess = vi.fn();
             service.startConditionalMediation(onSuccess);
 
             await new Promise((resolve) => setTimeout(resolve, 0));
@@ -628,9 +628,9 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
 
-            const onSuccess = jest.fn();
+            const onSuccess = vi.fn();
             service.startConditionalMediation(onSuccess);
 
             await new Promise((resolve) => setTimeout(resolve, 0));
@@ -639,7 +639,7 @@ describe('WebauthnService', () => {
         });
 
         it('should retry once on NotAllowedError (user cancelled)', async () => {
-            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
@@ -647,9 +647,9 @@ describe('WebauthnService', () => {
                 rpId: 'example.com',
             } as any);
             const notAllowedError = new DOMException('User cancelled', 'NotAllowedError');
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(notAllowedError);
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(notAllowedError);
 
-            const onSuccess = jest.fn();
+            const onSuccess = vi.fn();
             service.startConditionalMediation(onSuccess);
 
             // Wait for the retry to complete
@@ -663,7 +663,7 @@ describe('WebauthnService', () => {
 
     describe('stopConditionalMediation', () => {
         it('should abort pending credential request', () => {
-            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+            const abortSpy = vi.spyOn(service, 'abortPendingCredentialRequest');
 
             service.stopConditionalMediation();
 
