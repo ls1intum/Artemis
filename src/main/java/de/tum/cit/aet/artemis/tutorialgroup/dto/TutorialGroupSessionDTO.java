@@ -42,13 +42,15 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      */
     public static TutorialGroupSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd,
             String scheduleLocation, ZoneId courseTimeZone) {
+        boolean isCancelled = rawDto.isCancelled();
+        boolean isCancelledByFreePeriod = isCancelled && rawDto.isCancelledByFreePeriod();
         boolean sameLocation = rawDto.location().equals(scheduleLocation);
         ZonedDateTime sessionStart = rawDto.start().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = rawDto.end().withZoneSameInstant(courseTimeZone);
         boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
         boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
-        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), rawDto.isCancelled(), rawDto.isCancelledByFreePeriod(), !sameLocation,
-                !sameTime, !sameDay, rawDto.attendanceCount());
+        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, isCancelledByFreePeriod, !sameLocation, !sameTime, !sameDay,
+                rawDto.attendanceCount());
     }
 
     /**
@@ -59,8 +61,10 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      * @return a DTO with session details and flags for schedule deviations
      */
     public static TutorialGroupSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto) {
-        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), rawDto.isCancelled(), rawDto.isCancelledByFreePeriod(), false, false,
-                false, rawDto.attendanceCount());
+        boolean isCancelled = rawDto.isCancelled();
+        boolean isCancelledByFreePeriod = isCancelled && rawDto.isCancelledByFreePeriod();
+        return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, isCancelledByFreePeriod, false, false, false,
+                rawDto.attendanceCount());
     }
 
     /**
@@ -72,7 +76,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
      */
     public static TutorialGroupSessionDTO from(TutorialGroupSession session, TutorialGroupSchedule schedule) {
         boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
-        boolean isCancelledByFreePeriod = session.getTutorialGroupFreePeriod() != null;
+        boolean isCancelledByFreePeriod = isCancelled && session.getTutorialGroupFreePeriod() != null;
         boolean sameLocation = true;
         boolean sameTime = true;
         boolean sameDate = true;
