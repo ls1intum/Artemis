@@ -312,7 +312,7 @@ export class ComplaintService implements IComplaintService {
                 complaint.student = {
                     id: dto.participant.id,
                 } as User;
-            } else {
+            } else if (dto.participant.isStudent === false) {
                 complaint.team = {
                     id: dto.participant.id,
                 } as Team;
