@@ -94,7 +94,7 @@ public class FeatureToggleService {
         // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, and GlobalSearch) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.ApollonQuizDragAndDrop) {
                 features.put(feature, true);
             }
         }
@@ -121,6 +121,10 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.GlobalSearch)) {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.ApollonQuizDragAndDrop)) {
+            features.put(Feature.ApollonQuizDragAndDrop, false);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
