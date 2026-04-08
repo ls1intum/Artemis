@@ -14,4 +14,13 @@ export class ComplaintDTO {
     public complaintIsAccepted?: boolean;
     public complaintResponse?: ComplaintResponseDTO;
     public result?: ResultSimpleDTO;
+    public participant?: ParticipantDTO;
+}
+
+/**
+ * DTO representing a participant returned by the server.
+ */
+export class ParticipantDTO {
+    public id?: number;
+    public isStudent?: boolean;
 }

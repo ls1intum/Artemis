@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, ParticipationWithExerciseDTO } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -170,16 +170,13 @@ export function reconnectSubmissions(submissions: Submission[]): void {
     });
 }
 
-export class SubmissionDTO {
+/**
+ * A DTO representing a submission.
+ *
+ * @param id            the id of the submission
+ * @param participation the participation DTO, the submission belongs to
+ */
+export class SubmissionWithParticipationDTO {
     id?: number;
-    submitted?: boolean;
-    type?: SubmissionType;
-    exampleSubmission?: boolean;
-    submissionDate?: dayjs.Dayjs;
-    commitHash?: string;
-    buildFailed?: boolean;
-    submissionExerciseType?: string;
-    isProcessing?: boolean;
-    buildStartDate?: dayjs.Dayjs;
-    estimatedCompletionDate?: dayjs.Dayjs;
+    participation?: ParticipationWithExerciseDTO;
 }

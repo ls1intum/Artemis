@@ -12,6 +12,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { User } from 'app/core/user/user.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -278,42 +280,43 @@ export class ComplaintService implements IComplaintService {
             result.rated = dto.result.rated;
             result.assessmentType = dto.result.assessmentType;
 
-            if (dto.result.feedbacks) {
-                result.feedbacks = dto.result.feedbacks.map((feedbackDTO) => ({
-                    id: feedbackDTO.id,
-                    text: feedbackDTO.text,
-                    detailText: feedbackDTO.detailText,
-                    hasLongFeedbackText: feedbackDTO.hasLongFeedbackText,
-                    reference: feedbackDTO.reference,
-                    credits: feedbackDTO.credits,
-                    positive: feedbackDTO.positive,
-                    type: feedbackDTO.type,
-                    visibility: feedbackDTO.visibility,
-                    testCase: feedbackDTO.testCaseName ? { testName: feedbackDTO.testCaseName } : undefined,
-                })) as any;
+            if (dto.result.assessorId !== undefined) {
+                result.assessor = {
+                    id: dto.result.assessorId,
+                } as User;
             }
 
-            if (dto.result?.submissionId) {
+            if (dto.result.submission) {
                 const submission = {
-                    id: dto.result.submissionId,
+                    id: dto.result.submission.id,
                 } as Submission;
 
-                if (dto.result.participationId || dto.result.exerciseId || dto.result.exerciseTitle) {
+                if (dto.result.submission.participation) {
                     submission.participation = {
-                        id: dto.result.participationId,
-                        exercise:
-                            dto.result.exerciseId || dto.result.exerciseTitle
-                                ? ({
-                                      id: dto.result.exerciseId,
-                                      title: dto.result.exerciseTitle,
-                                  } as Exercise)
-                                : undefined,
+                        id: dto.result.submission.participation.id,
+                        exercise: dto.result.submission.participation.exercise
+                            ? ({
+                                  id: dto.result.submission.participation.exercise.id,
+                                  type: dto.result.submission.participation.exercise.type,
+                              } as Exercise)
+                            : undefined,
                     } as StudentParticipation;
                 }
 
                 result.submission = submission;
             }
             complaint.result = result;
+        }
+        if (dto.participant) {
+            if (dto.participant.isStudent === true) {
+                complaint.student = {
+                    id: dto.participant.id,
+                } as User;
+            } else {
+                complaint.team = {
+                    id: dto.participant.id,
+                } as Team;
+            }
         }
         return complaint;
     }

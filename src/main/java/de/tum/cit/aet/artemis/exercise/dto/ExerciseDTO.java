@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * @param type the type of the exercise (programming, modeling, quiz, text, file-upload)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseDTO(long id, ExerciseType type) {
+public record ExerciseDTO(Long id, ExerciseType type) {
 
     /**
      * Converts an exercise to an exercise DTO.

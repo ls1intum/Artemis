@@ -304,3 +304,14 @@ export function hasDueDatePassed(exercise: Exercise): boolean {
 export function getExerciseCompetencies(exercise: Exercise): CourseCompetency[] {
     return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency != null) ?? [];
 }
+
+/**
+ * A DTO representing an exercise.
+ *
+ * @param id   the id of the exercise
+ * @param type the type of the exercise (programming, modeling, quiz, text, file-upload)
+ */
+export class ExerciseDTO {
+    id?: number;
+    type?: ExerciseType;
+}

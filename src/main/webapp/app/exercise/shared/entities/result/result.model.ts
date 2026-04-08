@@ -1,8 +1,8 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { Submission, SubmissionWithParticipationDTO } from 'app/exercise/shared/entities/submission/submission.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -70,10 +70,7 @@ export class ResultSimpleDTO {
     public completionDate?: dayjs.Dayjs;
     public score?: number;
     public rated?: boolean;
-    public feedbacks?: FeedbackDTO[];
     public assessmentType?: AssessmentType;
-    public submissionId?: number;
-    public participationId?: number;
-    public exerciseId?: number;
-    public exerciseTitle?: string;
+    public submission?: SubmissionWithParticipationDTO;
+    public assessorId?: number;
 }
