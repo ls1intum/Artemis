@@ -65,7 +65,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
     /** Time-to-live in seconds: 5 minutes to support conditional mediation (passkey autofill) */
-    private static final int AUTH_OPTIONS_TTL_SECONDS = 300;
+    private static final int AUTH_OPTIONS_TIME_TO_LIVE_SECONDS = 300;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -87,7 +87,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     @PostConstruct
     public void init() {
         MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TTL_SECONDS);
+        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_SECONDS);
         authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
@@ -111,7 +111,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         if (options != null) {
             String token = UUID.randomUUID().toString();
             authOptionsMap.put(token, options);
-            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(token, AUTH_OPTIONS_TTL_SECONDS).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(token, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
         }
         else {
             Cookie existingCookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
