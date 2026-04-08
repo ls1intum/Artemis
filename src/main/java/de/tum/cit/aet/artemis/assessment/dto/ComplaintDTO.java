@@ -51,13 +51,13 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
             Long exerciseId = null;
             String exerciseTitle = null;
 
-            if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission())) {
+            if (result.getSubmission() != null) {
                 submissionId = result.getSubmission().getId();
 
-                if (result.getSubmission().getParticipation() != null && Hibernate.isInitialized(result.getSubmission().getParticipation())) {
+                if (result.getSubmission().getParticipation() != null) {
                     participationId = result.getSubmission().getParticipation().getId();
 
-                    if (result.getSubmission().getParticipation().getExercise() != null && Hibernate.isInitialized(result.getSubmission().getParticipation().getExercise())) {
+                    if (result.getSubmission().getParticipation().getExercise() != null) {
                         exerciseId = result.getSubmission().getParticipation().getExercise().getId();
                         exerciseTitle = result.getSubmission().getParticipation().getExercise().getTitle();
                     }
