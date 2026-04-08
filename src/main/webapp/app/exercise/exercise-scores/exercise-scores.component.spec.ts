@@ -13,6 +13,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Range } from 'app/shared/util/utils';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { Subscription, of } from 'rxjs';
@@ -269,7 +270,7 @@ describe('Exercise Scores Component', () => {
                 projectKey: 'key',
             } as ProgrammingExercise);
 
-            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'https://example.com/job/{projectKey}/job/{buildPlanId}' });
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'https://example.com/job/{projectKey}/job/{buildPlanId}' } as ProfileInfo);
 
             expect(component.getBuildPlanUrl(sampleDto)).toBe('https://example.com/job/key/job/1');
         });
@@ -283,7 +284,7 @@ describe('Exercise Scores Component', () => {
                 projectKey: 'key',
             } as ProgrammingExercise);
 
-            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({});
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({} as ProfileInfo);
 
             expect(component.getBuildPlanUrl(sampleDto)).toBeUndefined();
         });

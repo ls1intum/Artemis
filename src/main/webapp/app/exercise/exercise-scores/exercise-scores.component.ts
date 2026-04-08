@@ -352,20 +352,25 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     exportNames() {
         const ex = this.exercise();
         if (!ex?.id) return;
-        this.participationService.getParticipationNamesForExport(ex.id).subscribe((participations) => {
-            if (!participations.length) return;
-            const rows: string[] = [];
-            participations.forEach((dto, index) => {
-                if (dto.teamStudentNames !== undefined) {
-                    if (index === 0) {
-                        rows.push('Team Name,Team Short Name,Students');
+        this.participationService.getParticipationNamesForExport(ex.id).subscribe({
+            next: (participations) => {
+                if (!participations.length) return;
+                const rows: string[] = [];
+                participations.forEach((dto, index) => {
+                    if (dto.teamStudentNames !== undefined) {
+                        if (index === 0) {
+                            rows.push('Team Name,Team Short Name,Students');
+                        }
+                        rows.push(`${dto.participantName ?? ''},${dto.participantIdentifier ?? ''},"${dto.teamStudentNames.join(', ')}"`);
+                    } else {
+                        rows.push(dto.participantName ?? '');
                     }
-                    rows.push(`${dto.participantName ?? ''},${dto.participantIdentifier ?? ''},"${dto.teamStudentNames.join(', ')}"`);
-                } else {
-                    rows.push(dto.participantName ?? '');
-                }
-            });
-            this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
+                });
+                this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
+            },
+            error: (error: HttpErrorResponse) => {
+                onError(this.alertService, error);
+            },
         });
     }
 
