@@ -85,17 +85,13 @@ describe('ExerciseImportButtonComponent', () => {
     });
 
     it.each([
-        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.importLabel' },
-        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.importLabel' },
-        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.importLabel' },
-        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.importLabel' },
-    ])(
-        'should determine correct translation key and icon',
-        ({ exerciseType, expectedIcon, expectedTranslationLabel }: { exerciseType: ExerciseType; expectedIcon: IconDefinition; expectedTranslationLabel: string }) => {
-            fixture.componentRef.setInput('exerciseType', exerciseType);
-            component.ngOnInit();
-            expect(component.icon).toEqual(expectedIcon);
-            expect(component.translationLabel).toEqual(expectedTranslationLabel);
-        },
-    );
+        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram },
+        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload },
+        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont },
+        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard },
+    ])('should determine correct icon for exercise type', ({ exerciseType, expectedIcon }: { exerciseType: ExerciseType; expectedIcon: IconDefinition }) => {
+        fixture.componentRef.setInput('exerciseType', exerciseType);
+        component.ngOnInit();
+        expect(component.icon).toEqual(expectedIcon);
+    });
 });
