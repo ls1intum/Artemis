@@ -41,6 +41,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('LectureUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -96,6 +98,7 @@ describe('LectureUpdateComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         });
     });
