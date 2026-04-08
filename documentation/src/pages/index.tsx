@@ -77,7 +77,7 @@ export default function Home(): ReactNode {
     const { siteConfig } = useDocusaurusContext();
     return (
         <Layout
-            title={siteConfig.customFields.pageTitle.toString()}
+            title={String(siteConfig.customFields?.pageTitle ?? '')}
             description={siteConfig.tagline}>
             <HomepageHeader />
         </Layout>

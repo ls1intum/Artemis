@@ -1,0 +1,66 @@
+// Shared styles for version metadata panels (shared + programming).
+// Import this file in each metadata component's SCSS.
+
+// ::ng-deep is required here to style PrimeNG Panel internals (no public API for these overrides)
+@mixin version-meta-panel-overrides {
+    :host ::ng-deep .version-meta-panel.p-panel {
+        border: 1px solid var(--surface-border);
+        border-radius: 10px;
+        background: var(--surface-card);
+    }
+
+    :host ::ng-deep .version-meta-panel .p-panel-header {
+        background: var(--surface-ground);
+    }
+
+    :host ::ng-deep .version-meta-panel .p-panel-content {
+        background: var(--surface-card);
+    }
+
+    :host ::ng-deep .version-meta-panel .p-divider {
+        margin: 0.85rem 0;
+    }
+}
+
+@mixin version-metadata-base {
+    :host {
+        display: block;
+    }
+
+    .metadata-section {
+        padding: 0.25rem 0;
+    }
+
+    .metadata-section h4 {
+        margin: 0 0 0.6rem;
+        font-size: 1.03rem;
+        font-weight: 700;
+    }
+
+    .metadata-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .metadata-row {
+        display: grid;
+        grid-template-columns: minmax(12rem, 1fr) minmax(14rem, 2fr);
+        align-items: baseline;
+        column-gap: 1.25rem;
+    }
+
+    .metadata-row__label {
+        color: var(--text-color-secondary);
+        font-size: 0.9rem;
+        min-width: 0;
+        word-break: break-word;
+    }
+
+    .metadata-row__value {
+        text-align: left;
+        font-weight: 500;
+        min-width: 0;
+        word-break: break-word;
+    }
+}

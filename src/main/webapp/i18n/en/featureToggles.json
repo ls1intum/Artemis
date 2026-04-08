@@ -187,6 +187,11 @@
                     "name": "API Rate Limiting",
                     "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
                     "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
+                },
+                "GlobalSearch": {
+                    "name": "Global Search",
+                    "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
+                    "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
                 }
             }
         }

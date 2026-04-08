@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -16,16 +16,14 @@ export class ChannelItemComponent {
     canJoinChannel = canJoinChannel;
     canLeaveConversation = canLeaveConversation;
 
-    @Output()
-    channelAction = new EventEmitter<ChannelAction>();
-    @Input()
-    channel: ChannelDTO;
+    readonly channelAction = output<ChannelAction>();
+    readonly channel = input.required<ChannelDTO>();
 
     emitChannelAction($event: MouseEvent, action: ChannelActionType) {
         $event.stopPropagation();
         this.channelAction.emit({
             action,
-            channel: this.channel,
+            channel: this.channel(),
         } as ChannelAction);
     }
 }

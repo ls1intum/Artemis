@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -62,7 +63,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockContent());
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessageResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -78,7 +79,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.USER);
 
-        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessage.class);
+        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessageResponseDTO.class);
     }
 
     private IrisTextMessageContent createMockContent() {

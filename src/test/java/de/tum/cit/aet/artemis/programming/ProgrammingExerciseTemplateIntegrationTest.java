@@ -725,6 +725,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private int invokeGradle(Path testRepositoryPath) {
         log.info("Invoking Gradle in directory: {}", testRepositoryPath);
 
+        // Each Gradle invocation gets its own Gradle user home to prevent cache corruption
+        // when multiple test methods run in parallel and share /root/.gradle/caches
+        Path gradleUserHome = testRepositoryPath.resolve(".gradle-home-" + UUID.randomUUID().toString().substring(0, 8));
+
         // Use ExecutorService to enforce a timeout on Gradle builds
         // This prevents indefinite hangs in slow CI environments
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -734,6 +738,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
                     BuildLauncher launcher = connector.newBuild();
                     launcher.setJavaHome(java17Home);
+                    // Isolate Gradle user home to avoid transform cache corruption from parallel builds
+                    launcher.addArguments("-g", gradleUserHome.toAbsolutePath().toString());
                     String[] tasks = new String[] { "clean", "test" };
                     launcher.forTasks(tasks);
                     launcher.run();
@@ -765,6 +771,13 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
         finally {
             executor.shutdownNow();
+            // Clean up the isolated Gradle user home to free disk space
+            try {
+                FileUtils.deleteDirectory(gradleUserHome.toFile());
+            }
+            catch (IOException e) {
+                log.warn("Could not clean up Gradle user home: {}", gradleUserHome, e);
+            }
         }
     }
 

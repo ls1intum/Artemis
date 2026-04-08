@@ -8,7 +8,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
@@ -16,44 +15,46 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * A DTO for sending status updates of Iris to the client via the websocket
  *
  * @param type          the type of the message
- * @param message       an IrisMessage instance if the type is MESSAGE
+ * @param message       an IrisMessageResponseDTO instance if the type is MESSAGE
  * @param rateLimitInfo the rate limit information
  * @param stages        the stages of the Pyris pipeline
+ * @param sessionTitle  the chat session title
+ * @param suggestions   the suggestions to send to the client
+ * @param tokens        the token usage information for the response
+ * @param citationInfo  metadata about citations referenced in the response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
-        String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
+public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo,
+        List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
      * Takes care of setting the type correctly
      *
-     * @param message       the IrisMessage (optional)
+     * @param message       the IrisMessageResponseDTO (optional)
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
+     * @param sessionTitle  the session title to send
+     * @param suggestions   the suggestions to send
+     * @param tokens        the token usage information to send
+     * @param citationInfo  metadata about citations referenced in the response
      */
-    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, String sessionTitle,
-            List<String> suggestions, List<LLMRequest> tokens) {
-        this(determineType(message), message, rateLimitInfo, stages, sessionTitle, suggestions, tokens);
+    public IrisChatWebsocketDTO(@Nullable IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
+            String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo) {
+        this(determineType(message), message, rateLimitInfo, stages, sessionTitle, suggestions, tokens, citationInfo);
     }
 
     /**
-     * Determines the type of WebSocket message based on the presence of a message or throwable.
+     * Determines the type of WebSocket message based on the presence of a message.
      * <p>
-     * This method categorizes the WebSocket message type as follows:
-     * <ul>
-     * <li>{@link IrisWebsocketMessageType#MESSAGE} if the {@code message} parameter is not null.</li>
-     * <li>{@link IrisWebsocketMessageType#STATUS} if both {@code message} and {@code throwable} are null.</li>
-     * </ul>
+     * Returns {@link IrisWebsocketMessageType#MESSAGE} if the message is not null,
+     * {@link IrisWebsocketMessageType#STATUS} otherwise.
      *
-     * @param message The message associated with the WebSocket, which may be null.
+     * @param message The message DTO associated with the WebSocket, which may be null.
      * @return The {@link IrisWebsocketMessageType} indicating the type of the message based on the given parameters.
      */
-    private static IrisWebsocketMessageType determineType(@Nullable IrisMessage message) {
-        if (message != null) {
-            return IrisWebsocketMessageType.MESSAGE;
-        }
-        return IrisWebsocketMessageType.STATUS;
+    private static IrisWebsocketMessageType determineType(@Nullable IrisMessageResponseDTO message) {
+        return message != null ? IrisWebsocketMessageType.MESSAGE : IrisWebsocketMessageType.STATUS;
     }
 
     @Override
@@ -66,7 +67,7 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
         }
         IrisChatWebsocketDTO that = (IrisChatWebsocketDTO) o;
         return type == that.type && Objects.equals(message, that.message) && Objects.equals(rateLimitInfo, that.rateLimitInfo) && Objects.equals(stages, that.stages)
-                && Objects.equals(sessionTitle, that.sessionTitle);
+                && Objects.equals(sessionTitle, that.sessionTitle) && Objects.equals(citationInfo, that.citationInfo);
     }
 
     public enum IrisWebsocketMessageType {

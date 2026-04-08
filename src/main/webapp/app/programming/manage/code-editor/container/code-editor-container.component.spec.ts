@@ -7,7 +7,9 @@ import {
     EditorState,
     FileBadgeType,
     FileType,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
+    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -19,19 +21,31 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { WritableSignal, signal } from '@angular/core';
+import { Subject } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
     updateFileReference = jest.fn((file) => file);
 }
 
+const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
+
 describe('CodeEditorContainerComponent', () => {
     let component: CodeEditorContainerComponent;
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
     let fileService: MockFileService;
+    let reviewCommentService: { threads: WritableSignal<any[]> };
 
     beforeEach(async () => {
+        reviewCommentService = {
+            threads: signal([]),
+        };
         await TestBed.configureTestingModule({
             imports: [CodeEditorContainerComponent],
             providers: [
@@ -39,6 +53,7 @@ describe('CodeEditorContainerComponent', () => {
                 { provide: TranslateStore, useValue: {} },
                 { provide: AlertService, useValue: { error: jest.fn() } as any },
                 { provide: CodeEditorFileService, useClass: MockFileService },
+                { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             ],
         })
             .overrideComponent(CodeEditorContainerComponent, {
@@ -86,6 +101,160 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.fileBadges['src/main/App.java'][0].count).toBe(2);
     });
 
+    it('should count only active review thread badges per file (one badge count per thread)', () => {
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }, { id: 12 }],
+            },
+            {
+                id: 2,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 8,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 13 }],
+            },
+            {
+                id: 22,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 9,
+                outdated: false,
+                resolved: true,
+                comments: [{ id: 130 }],
+            },
+            {
+                id: 23,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 10,
+                outdated: true,
+                resolved: false,
+                comments: [{ id: 131 }],
+            },
+            {
+                id: 3,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.SOLUTION_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 9,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 14 }],
+            },
+            {
+                id: 4,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/Other.java',
+                initialLineNumber: 10,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 15 }],
+            },
+            {
+                id: 5,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+                initialLineNumber: 1,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 16 }],
+            },
+        ] as any);
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.detectChanges();
+
+        const appBadges = component.fileBadges['src/main/App.java'];
+        const reviewThreadBadge = appBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT);
+        expect(reviewThreadBadge?.count).toBe(2);
+
+        const otherBadges = component.fileBadges['src/main/Other.java'];
+        expect(otherBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+
+        const problemStatementBadges = component.fileBadges[PROBLEM_STATEMENT_IDENTIFIER];
+        expect(problemStatementBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+    });
+
+    it('should filter auxiliary review thread badges by selected auxiliary repository', () => {
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 20,
+                filePath: 'src/main/Aux.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }],
+            },
+            {
+                id: 2,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 30,
+                filePath: 'src/main/Aux.java',
+                initialLineNumber: 8,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 12 }],
+            },
+        ] as any);
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.AUXILIARY);
+        fixture.componentRef.setInput('selectedAuxiliaryRepositoryId', 20);
+        fixture.detectChanges();
+
+        const badges = component.fileBadges['src/main/Aux.java'];
+        expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+    });
+
+    it('should reactively update review thread badges when threads signal changes after initial render', () => {
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.detectChanges();
+
+        expect(component.fileBadges['src/main/App.java']).toBeUndefined();
+
+        reviewCommentService.threads.set([
+            {
+                id: 1,
+                exerciseId: 10,
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/main/App.java',
+                initialLineNumber: 2,
+                outdated: false,
+                resolved: false,
+                comments: [{ id: 11 }],
+            },
+        ] as any);
+        fixture.detectChanges();
+
+        let badges = component.fileBadges['src/main/App.java'];
+        expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
+
+        reviewCommentService.threads.set([]);
+        fixture.detectChanges();
+
+        badges = component.fileBadges['src/main/App.java'];
+        expect(badges).toBeUndefined();
+    });
+
     it('should adjust editor and commit states based on unsaved files', () => {
         component.unsavedFiles = { 'src/File.java': 'content' };
 
@@ -106,7 +275,7 @@ describe('CodeEditorContainerComponent', () => {
         const onFileChanged = jest.fn();
         component.onFileChanged.subscribe(onFileChanged);
 
-        component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/main/App.java')]);
+        component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/main/App.java'), false]);
 
         expect(component.selectedFile).toBe('src/main/App.java');
         expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
@@ -122,7 +291,7 @@ describe('CodeEditorContainerComponent', () => {
         fileService.updateFileReferences.mockReturnValue({ 'new/File.java': 'x' });
         fileService.updateFileReference.mockReturnValue('new/File.java');
 
-        component.onFileChange([[], new RenameFileChange(FileType.FILE, 'old/File.java', 'new/File.java')]);
+        component.onFileChange([[], new RenameFileChange(FileType.FILE, 'old/File.java', 'new/File.java'), false]);
 
         expect(fileService.updateFileReferences).toHaveBeenCalled();
         expect(component.unsavedFiles).toEqual({ 'new/File.java': 'x' });
@@ -136,7 +305,7 @@ describe('CodeEditorContainerComponent', () => {
         component.unsavedFiles = { 'old/File.java': 'x' };
         fileService.updateFileReferences.mockReturnValue({});
 
-        component.onFileChange([[], new DeleteFileChange(FileType.FILE, 'old/File.java')]);
+        component.onFileChange([[], new DeleteFileChange(FileType.FILE, 'old/File.java'), false]);
 
         expect(component.unsavedFiles).toEqual({});
         expect(component.editorState).toBe(EditorState.CLEAN);
@@ -149,6 +318,40 @@ describe('CodeEditorContainerComponent', () => {
         component.onFileContentChange({ fileName: 'src/main/App.java', text: 'new content' });
 
         expect(component.unsavedFiles['src/main/App.java']).toBe('new content');
+        expect(onFileChanged).toHaveBeenCalled();
+    });
+
+    it('should not mark file unsaved while initial file sync is pending', () => {
+        const onFileChanged = jest.fn();
+        component.onFileChanged.subscribe(onFileChanged);
+        fixture.componentRef.setInput('fileSyncService', {
+            fileTreeChange$: fileTreeChange$.asObservable(),
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => true),
+        } as any);
+        fixture.detectChanges();
+
+        component.onFileContentChange({ fileName: 'src/main/App.java', text: 'synced content' });
+
+        expect(component.unsavedFiles['src/main/App.java']).toBeUndefined();
+        expect(onFileChanged).not.toHaveBeenCalled();
+    });
+
+    it('should mark file unsaved after initial file sync finished', () => {
+        const onFileChanged = jest.fn();
+        component.onFileChanged.subscribe(onFileChanged);
+        fixture.componentRef.setInput('fileSyncService', {
+            fileTreeChange$: fileTreeChange$.asObservable(),
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+        } as any);
+        fixture.detectChanges();
+
+        component.onFileContentChange({ fileName: 'src/main/App.java', text: 'changed after sync' });
+
+        expect(component.unsavedFiles['src/main/App.java']).toBe('changed after sync');
         expect(onFileChanged).toHaveBeenCalled();
     });
 
@@ -248,5 +451,145 @@ describe('CodeEditorContainerComponent', () => {
         component.fileLoad('src/main/App.java');
 
         expect(spy).toHaveBeenCalledWith('src/main/App.java');
+    });
+
+    describe('remote file tree sync events', () => {
+        let mockSyncService: Partial<CodeEditorFileSyncService>;
+
+        beforeEach(() => {
+            mockSyncService = { fileTreeChange$: fileTreeChange$.asObservable() } as any;
+        });
+
+        /**
+         * Helper: sets the fileSyncService input, runs detectChanges (which triggers the effect
+         * and resets @ViewChild to undefined because the template is ''), then re-assigns the
+         * fileBrowser mock so the subscription handler can delegate to it.
+         */
+        function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
+            fixture.componentRef.setInput('fileSyncService', syncService);
+            fixture.detectChanges();
+            // @ViewChild is undefined in template-less tests; re-assign after detectChanges
+            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+        }
+
+        it('should subscribe to fileTreeChange$ when fileSyncService is set', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'src/New.java'), true);
+        });
+
+        it('should handle remote FILE_DELETED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_DELETED,
+                target: 0 as any,
+                filePath: 'src/Old.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new DeleteFileChange(FileType.FILE, 'src/Old.java'), true);
+        });
+
+        it('should handle remote FILE_RENAMED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_RENAMED,
+                target: 0 as any,
+                oldPath: 'src/Old.java',
+                newPath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new RenameFileChange(FileType.FILE, 'src/Old.java', 'src/New.java'), true);
+        });
+
+        it('should map FOLDER fileType correctly', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/newpkg',
+                fileType: 'FOLDER',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FOLDER, 'src/newpkg'), true);
+        });
+
+        it('should unsubscribe from previous sync service when a new one is set', () => {
+            activateSyncService(mockSyncService);
+
+            const newFileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
+            const newMockSyncService = { fileTreeChange$: newFileTreeChange$.asObservable() } as any;
+            activateSyncService(newMockSyncService);
+
+            // Old stream should no longer trigger handler
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'old-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).not.toHaveBeenCalled();
+
+            // New stream should work
+            newFileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'new-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'new-stream.java'), true);
+        });
+    });
+
+    describe('remote file-create does not hijack local selection', () => {
+        function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
+            fixture.componentRef.setInput('fileSyncService', syncService);
+            fixture.detectChanges();
+            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+        }
+
+        it('remote FILE_CREATED does not change selectedFile', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.selectedFile = 'existing.java';
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Remote.java'), true]);
+
+            expect(component.selectedFile).toBe('existing.java');
+        });
+
+        it('remote FILE_CREATED still sets commitState to UNCOMMITTED_CHANGES', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.commitState = CommitState.CLEAN;
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Remote.java'), true]);
+
+            expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        });
+
+        it('local FILE_CREATED still selects the new file', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.selectedFile = 'existing.java';
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Local.java'), false]);
+
+            expect(component.selectedFile).toBe('src/Local.java');
+        });
     });
 });

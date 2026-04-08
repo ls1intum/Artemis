@@ -1,9 +1,11 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { AccountService } from 'app/core/auth/account.service';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -11,6 +13,30 @@ const routes: Routes = [
     ...LAYOUT_ROUTES,
     {
         path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./core/landing/landing.component').then((m) => m.LandingComponent),
+        data: {
+            pageTitle: 'landing.pageTitle',
+            showSkeleton: false,
+        },
+        canActivate: [
+            (): Promise<boolean | UrlTree> => {
+                const accountService = inject(AccountService);
+                const router = inject(Router);
+                return accountService
+                    .identity()
+                    .then((account) => {
+                        if (account) {
+                            return router.parseUrl('/courses');
+                        }
+                        return true;
+                    })
+                    .catch(() => true);
+            },
+        ],
+    },
+    {
+        path: 'sign-in',
         loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
@@ -49,12 +75,16 @@ const routes: Routes = [
         },
     },
     {
-        path: 'llm-selection',
+        path: 'ai-experience-info',
         loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
         data: {
-            pageTitle: 'artemisApp.llmSelectionInfo.pageTitle',
-            usesModuleBackground: true,
+            pageTitle: 'artemisApp.aiExperienceInfo.pageTitle',
         },
+    },
+    {
+        path: 'llm-selection',
+        redirectTo: 'ai-experience-info',
+        pathMatch: 'full',
     },
     {
         path: 'privacy/data-exports',
@@ -235,21 +265,21 @@ const routes: Routes = [
         loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
     },
     {
+        path: 'exams/rooms',
+        loadComponent: () => import('app/exam/manage/students/room-distribution/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.examRooms.management.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'features',
         loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.featureOverviewRoutes),
     },
     {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
-    },
-    {
-        path: 'about-iris',
-        pathMatch: 'full',
-        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
-        data: {
-            pageTitle: 'artemisApp.exerciseChatbot.title',
-            usesModuleBackground: true,
-        },
     },
     // ===== SHARING =====
     {
@@ -259,6 +289,17 @@ const routes: Routes = [
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
+    },
+    // ===== PDF VIEWER IFRAME =====
+    {
+        path: 'pdf-viewer-iframe',
+        loadComponent: () => import('./lecture/shared/pdf-viewer/pdf-viewer-iframe-content.component').then((m) => m.PdfViewerIframeContentComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
+            hidePageRibbon: true,
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

@@ -1,4 +1,4 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()">
+<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -41,6 +41,8 @@
         [highlightFileChanges]="highlightFileChanges()"
         [fileBadges]="fileBadges"
         [allowHiddenFiles]="allowHiddenFiles()"
+        [fileSyncService]="fileSyncService()"
+        [showHeader]="showNavbar()"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
@@ -62,6 +64,7 @@
         <!-- Regular Code Editor - always in DOM, hidden when Problem Statement is selected -->
         <jhi-code-editor-monaco
             [hidden]="shouldShowProblemStatement()"
+            [secondaryHeader]="!showNavbar()"
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course()"
@@ -74,35 +77,36 @@
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
             [selectedRepository]="selectedRepository()"
             [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
+            [fileSyncService]="fileSyncService()"
             [buildAnnotations]="annotations"
             [sessionId]="participation()?.id ?? 'test'"
-            [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             (onFileContentChange)="onFileContentChange($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
             (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
             (onDiscardSuggestion)="onDiscardSuggestion.emit($event)"
             (onAddReviewComment)="onAddReviewComment.emit($event)"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
             (onError)="onError($event)"
             (onFileLoad)="fileLoad($event)"
             (onEditorLoaded)="onEditorLoaded.emit()"
         />
     </ng-container>
     <ng-container editorSidebarRight>
-        @if (showEditorInstructions()) {
-            <jhi-code-editor-instructions
-                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-                (onError)="onError($event)"
-                [isAssessmentMode]="isTutorAssessment()"
-            >
-                <ng-content select="[editorSidebar]" />
-            </jhi-code-editor-instructions>
-        }
+        <jhi-code-editor-instructions
+            [class.d-none]="!showEditorInstructions()"
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+            (onError)="onError($event)"
+            [isAssessmentMode]="isTutorAssessment()"
+        >
+            <ng-content select="[editorSidebar]" />
+        </jhi-code-editor-instructions>
     </ng-container>
     <ng-container editorBottomArea>
         @if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"
+                [secondaryHeader]="!showNavbar()"
                 (onAnnotations)="onAnnotations($event)"
                 (onError)="onError($event)"
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"

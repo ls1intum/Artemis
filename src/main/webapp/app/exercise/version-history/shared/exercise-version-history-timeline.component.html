@@ -1,0 +1,72 @@
+<div class="version-timeline-shell">
+    <header class="version-timeline__header">
+        <h3 class="version-timeline__title">
+            <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.title"></span>
+            <span class="version-timeline__count">({{ totalItems() }})</span>
+        </h3>
+    </header>
+
+    <div class="version-timeline__content">
+        @if (loading()) {
+            @for (_ of [1, 2, 3, 4]; track $index) {
+                <div class="timeline-skeleton">
+                    <p-skeleton width="1.125rem" height="1.125rem" shape="circle" />
+                    <div class="timeline-skeleton__card">
+                        <p-skeleton width="9rem" styleClass="mb-2" />
+                        <p-skeleton width="6.2rem" styleClass="mb-1" />
+                        <p-skeleton width="9.8rem" />
+                    </div>
+                </div>
+            }
+        } @else {
+            @if (timelineEntries().length === 0) {
+                <p-message severity="info">
+                    <ng-template pTemplate>
+                        <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.empty"></span>
+                    </ng-template>
+                </p-message>
+            } @else {
+                <p-timeline [value]="timelineEntries()" align="left" styleClass="version-timeline">
+                    <ng-template pTemplate="marker" let-entry>
+                        <jhi-profile-picture
+                            [authorName]="entry.displayName"
+                            [authorId]="entry.authorId"
+                            [imageUrl]="entry.authorImageUrl"
+                            imageSizeInRem="1.5rem"
+                            fontSizeInRem="0.6rem"
+                            [imageId]="'timeline-profile-' + entry.id"
+                            [defaultPictureId]="'timeline-default-profile-' + entry.id"
+                        />
+                    </ng-template>
+
+                    <ng-template pTemplate="content" let-entry>
+                        <button
+                            type="button"
+                            class="timeline-card"
+                            [class.timeline-card--selected]="selectedVersionId() === entry.id"
+                            [attr.aria-label]="'Version ' + entry.id"
+                            (click)="onSelect(entry.id)"
+                        >
+                            <span class="timeline-card__version">#{{ entry.id }}</span>
+                            <span class="timeline-card__author">{{ entry.displayName }}</span>
+                            <span class="timeline-card__author timeline-card__author--secondary">{{ entry.secondaryName }}</span>
+                            @if (entry.createdDate) {
+                                <span class="timeline-card__date" [title]="entry.createdDate | artemisDate: 'long' : true">
+                                    {{ entry.createdDate | artemisDate: 'short' : true }}
+                                </span>
+                            } @else {
+                                <span class="timeline-card__date">-</span>
+                            }
+                        </button>
+                    </ng-template>
+                </p-timeline>
+            }
+        }
+
+        @if (hasMore()) {
+            <button pButton type="button" class="timeline-load-more" severity="secondary" [outlined]="true" [loading]="loadingMore()" (click)="onLoadMore()">
+                <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.loadMore"></span>
+            </button>
+        }
+    </div>
+</div>

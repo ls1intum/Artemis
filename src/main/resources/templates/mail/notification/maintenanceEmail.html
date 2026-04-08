@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.notification.maintenance.title}">Planned Maintenance</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p th:text="#{email.notification.maintenance.reason}">You received this email because you are an instructor of an ongoing course in Artemis.</p>
+
+    <p th:text="#{email.notification.maintenance.text}">Artemis will be undergoing planned maintenance.</p>
+
+    <div class="bordered-content">
+        <p class="bold-text" th:if="${notificationTitle}" th:text="${notificationTitle}">Maintenance Title</p>
+        <p th:if="${notificationText}" th:text="${notificationText}">Maintenance details</p>
+        <p th:text="#{email.notification.maintenance.period(${formattedStart}, ${formattedEnd})}">Maintenance window</p>
+    </div>
+
+    <p th:text="#{email.notification.maintenance.feedback}">Please let us know if the maintenance window would cause any issues in your course.</p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+
+</body>
+</html>

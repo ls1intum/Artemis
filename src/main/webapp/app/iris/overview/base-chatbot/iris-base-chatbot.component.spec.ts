@@ -8,6 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,12 +17,14 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
     mockClientMessage,
+    mockClientMessageWithMemories,
     mockServerMessage,
+    mockServerMessageWithMemories,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
     mockServerSessionHttpResponseWithId,
@@ -30,18 +33,29 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
+import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { ConfirmationService } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+
+// Must match the constants in the component
+const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
+const PLACEHOLDER_FADE_DURATION_MS = 300;
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -79,6 +93,8 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(ContextSelectionComponent),
+                MockComponent(IrisThinkingBubbleComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -89,9 +105,12 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                MockProvider(AlertService),
+                MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
+                MockProvider(CourseStorageService),
             ],
         })
             .compileComponents()
@@ -166,7 +185,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
@@ -194,7 +213,7 @@ describe('IrisBaseChatbotComponent', () => {
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
         createdMessage.id = 2;
-        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         const stub = vi.spyOn(chatService, 'resendMessage');
@@ -217,7 +236,7 @@ describe('IrisBaseChatbotComponent', () => {
         const id = 123;
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessage>));
+        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
@@ -244,7 +263,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
@@ -295,6 +314,20 @@ describe('IrisBaseChatbotComponent', () => {
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should render memories indicator for messages with memories', async () => {
+        const messagesWithMemories = [mockClientMessageWithMemories, mockServerMessageWithMemories];
+        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(messagesWithMemories));
+
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const indicators = fixture.nativeElement.querySelectorAll('[data-testid="memories-indicator-button"]');
+        expect(indicators.length).toBeGreaterThan(0);
     });
 
     it('should not scroll to bottom when there is no new unread messages', async () => {
@@ -638,8 +671,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should start a new session when the new chat item is clicked', () => {
         const newChatSession: IrisSessionDTO = {
             id: 2,
-            // MockTranslateService.stream() returns the key itself, so use the translation key
-            title: 'artemisApp.iris.chatHistory.newChat',
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
@@ -914,12 +946,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
 
         it('should reset height and return early when textarea has only whitespace', () => {
@@ -928,12 +958,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '   ';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
     });
 
@@ -976,6 +1004,26 @@ describe('IrisBaseChatbotComponent', () => {
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
             expect(component.relatedEntityRoute()).toBe('../exercises/99');
+        });
+
+        it('should display correct related entity button when text exercise session selected', async () => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.TEXT_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(77));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/77');
+            expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
         });
     });
 
@@ -1150,6 +1198,488 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('Session switcher (widget layout)', () => {
+        const mockDate = new Date('2025-10-06T12:00:00.000Z');
+        const exerciseSession1: IrisSessionDTO = {
+            id: 10,
+            title: 'Help with recursion',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const exerciseSession2: IrisSessionDTO = {
+            id: 11,
+            title: 'Array sorting question',
+            creationDate: new Date('2025-10-05T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const otherEntitySession: IrisSessionDTO = {
+            id: 12,
+            title: 'Other exercise chat',
+            creationDate: new Date('2025-10-06T08:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 2',
+        };
+        const lectureSession: IrisSessionDTO = {
+            id: 13,
+            title: 'Lecture question',
+            creationDate: new Date('2025-10-06T07:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 42,
+            entityName: 'Lecture 1',
+        };
+
+        beforeAll(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            vi.useRealTimers();
+        });
+
+        beforeEach(() => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
+
+        it('should display current session title', () => {
+            expect(component.currentSessionTitle()).toBe('Help with recursion');
+        });
+
+        it('should display "New Chat" when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            // MockTranslateService returns the key as the translation
+            expect(component.currentSessionTitle()).toBe('artemisApp.iris.chatHistory.newChat');
+        });
+
+        it('should render session title trigger in widget layout', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
+
+        it('should not render session title trigger in client layout', () => {
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it('should build menu items with group labels and all sessions on toggle', () => {
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            // "Today" group label + 3 today sessions + "Older" group label + 1 older session
+            expect(component.sessionMenuItems()).toHaveLength(6);
+            expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
+            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion'); // most recent today
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
+            expect(component.sessionMenuItems()[2].label).toBe('Other exercise chat');
+            expect(component.sessionMenuItems()[3].label).toBe('Lecture question');
+            expect(component.sessionMenuItems()[4].disabled).toBe(true); // "Older" group label
+            expect(component.sessionMenuItems()[5].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[5].data?.isActive).toBe(false);
+        });
+
+        it('should still build grouped menu when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            // No session is active, but sessions are still grouped
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+        });
+
+        it('should call onSessionClick when a today session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[1].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession1);
+        });
+
+        it('should call onSessionClick when an older session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            // index 5: "Older" label is at [4], exerciseSession2 (the only older session) is at [5]
+            component.sessionMenuItems()[5].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
+        });
+
+        it('should have hasHeaderContent true for widget layout', () => {
+            expect(component.hasHeaderContent()).toBe(true);
+        });
+
+        it('should have proper aria attributes on the trigger button', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        });
+    });
+
+    describe('Session switcher (embedded layout)', () => {
+        const embeddedSession: IrisSessionDTO = {
+            id: 20,
+            title: 'Embedded session',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const embeddedPastSession: IrisSessionDTO = {
+            id: 21,
+            title: 'Older embedded session',
+            creationDate: new Date('2025-10-05T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const unrelatedSession: IrisSessionDTO = {
+            id: 22,
+            title: 'Unrelated session',
+            creationDate: new Date('2025-10-05T08:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 99,
+            entityName: 'Lecture 99',
+        };
+
+        it('should not render session title trigger in empty embedded mode without related sessions', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it('should render session title trigger in empty embedded mode with related sessions', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, embeddedPastSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
+
+        it('should not render session title trigger when only unrelated past sessions exist in embedded mode', () => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, unrelatedSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+    });
+
+    describe('onDeleteSession', () => {
+        let confirmationService: ConfirmationService;
+        let alertService: AlertService;
+        const mockSession: IrisSessionDTO = {
+            id: 42,
+            title: 'Test session',
+            creationDate: new Date('2025-06-20T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        beforeEach(() => {
+            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            alertService = TestBed.inject(AlertService);
+        });
+
+        it('should show confirmation dialog with correct i18n keys', () => {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+            component.onDeleteSession(mockSession);
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            const callArgs = confirmSpy.mock.calls[0][0];
+            expect(callArgs.header).toBe('artemisApp.iris.chatHistory.deleteSessionHeader');
+            expect(callArgs.message).toContain('artemisApp.iris.chatHistory.deleteSessionQuestion');
+            expect(callArgs.acceptLabel).toBe('entity.action.delete');
+            expect(callArgs.rejectLabel).toBe('entity.action.cancel');
+        });
+
+        it('should call chatService.deleteSession on accept', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).toHaveBeenCalledWith(42);
+        });
+
+        it('should show success alert after successful deletion', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.onDeleteSession(mockSession);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
+        });
+
+        it('should not call deleteSession on rejection', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                if (confirmation.reject) {
+                    confirmation.reject();
+                }
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('MCQ content rendering', () => {
+        it('should identify MCQ content using isMcqContent helper', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
+            const textContent = new IrisTextMessageContent('hello');
+
+            expect(isMcqContent(mcqContent)).toBe(true);
+            expect(isMcqContent(textContent)).toBe(false);
+        });
+
+        it('should extract MCQ data using getMcqData helper', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
+            const textContent = new IrisTextMessageContent('hello');
+
+            const data = getMcqData(mcqContent);
+            expect(data).toBeDefined();
+            expect(data?.question).toBe('Q?');
+            expect(data?.options).toHaveLength(2);
+
+            expect(getMcqData(textContent)).toBeUndefined();
+        });
+
+        it('should render MCQ component for MCQ messages', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'What is 1+1?',
+                options: [
+                    { text: '2', correct: true },
+                    { text: '3', correct: false },
+                ],
+                explanation: 'Math',
+            });
+            const mcqMessage = {
+                sender: IrisSender.LLM,
+                id: 20,
+                content: [mcqContent],
+                sentAt: dayjs(),
+            } as IrisAssistantMessage;
+
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mcqMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mcqElement = fixture.nativeElement.querySelector('jhi-iris-mcq-question');
+            expect(mcqElement).toBeTruthy();
+
+            const textBubble = fixture.nativeElement.querySelector('.bubble-left');
+            expect(textBubble).toBeFalsy();
+        });
+    });
+
+    describe('activeChatMessage computed signal', () => {
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
+        it('should show thinking bubble when a stage has IN_PROGRESS state and chatMessage', () => {
+            const stageWithChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+                chatMessage: 'Analyzing your code...',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Analyzing your code...');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
+        });
+
+        it('should not show thinking bubble when no stage has chatMessage', () => {
+            const stageWithoutChat: IrisStageDTO = {
+                name: 'Thinking',
+                weight: 1,
+                state: IrisStageStateDTO.IN_PROGRESS,
+                message: 'Processing...',
+                internal: false,
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([stageWithoutChat]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should not show thinking bubble when all stages are DONE', () => {
+            const doneStage: IrisStageDTO = {
+                name: 'Complete',
+                weight: 1,
+                state: IrisStageStateDTO.DONE,
+                message: 'Done',
+                internal: false,
+                chatMessage: 'Finished analysis',
+            };
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([doneStage]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBeUndefined();
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeFalsy();
+        });
+
+        it('should update thinking bubble message when chatMessage changes', () => {
+            const stagesSubject = new BehaviorSubject<IrisStageDTO[]>([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Initial message',
+                },
+            ]);
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(stagesSubject.asObservable());
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Initial message');
+
+            // Update the chatMessage
+            stagesSubject.next([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Updated message',
+                },
+            ]);
+            fixture.detectChanges();
+
+            expect(component.activeChatMessage()).toBe('Updated message');
+            const thinkingBubble = fixture.debugElement.query(By.css('jhi-iris-thinking-bubble'));
+            expect(thinkingBubble).toBeTruthy();
+        });
+    });
+
     describe('processMessages newline handling', () => {
         it('should not apply newline doubling to any messages', () => {
             const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';
@@ -1181,6 +1711,542 @@ describe('IrisBaseChatbotComponent', () => {
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);
+        });
+    });
+
+    describe('openAboutIrisModal transport selection', () => {
+        it('should open via MatDialog when layout is widget', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open').mockReturnValue({ close: vi.fn() } as any);
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open');
+
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(matDialogOpenSpy).toHaveBeenCalledOnce();
+            expect(dialogServiceOpenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should open via PrimeNG DialogService when layout is client', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open');
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ close: vi.fn() } as any);
+
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            expect(matDialogOpenSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('suggestion chips', () => {
+        beforeEach(() => {
+            statusMock.getActiveStatus.mockReturnValue(of({}));
+            statusMock.currentRatelimitInfo.mockReturnValue(of({}));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        });
+
+        it('should render suggestion chips on empty general state', () => {
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(3);
+        });
+
+        it('should disable suggestion chips when iris is unavailable', () => {
+            statusMock.getActiveStatus.mockReturnValue(of(false));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const chips: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(3);
+            chips.forEach((chip) => expect(chip.disabled).toBe(true));
+        });
+
+        it('should not render suggestion chips when isEmbeddedChat is true', () => {
+            fixture.componentRef.setInput('isEmbeddedChat', true);
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips in embedded layout empty state', () => {
+            fixture.componentRef.setInput('layout', 'embedded');
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips in widget layout empty state', () => {
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.detectChanges();
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should not render suggestion chips when messages exist', () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+            chatService.switchTo(ChatServiceMode.COURSE, 456);
+            fixture.detectChanges();
+
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it('should call applyChipText with correct starter key when Learn chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[0].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+        });
+
+        it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
+        });
+
+        it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
+            fixture.detectChanges();
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[2].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+        });
+
+        it('should set textarea content and focus when applyChipText is called', async () => {
+            fixture.detectChanges();
+            const starterKey = 'artemisApp.iris.chat.suggestions.learnStarter';
+            component.applyChipText(starterKey);
+            expect(component.newMessageTextContent()).toBe(starterKey);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            const textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeTruthy();
+        });
+
+        it('should show preview text on chip hover', () => {
+            fixture.detectChanges();
+            const starterKey = 'artemisApp.iris.chat.suggestions.learnStarter';
+            component.onChipMouseEnter(starterKey);
+            expect(component.chipPreviewText()).toBe(starterKey);
+        });
+
+        it('should clear preview text on chip mouse leave', () => {
+            fixture.detectChanges();
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.learnStarter');
+            component.onChipMouseLeave();
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should not clear applied text on mouse leave after click', () => {
+            fixture.detectChanges();
+            const starterKey = 'artemisApp.iris.chat.suggestions.learnStarter';
+            component.applyChipText(starterKey);
+            component.onChipMouseLeave();
+            expect(component.newMessageTextContent()).toBe(starterKey);
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should not show preview on hover after chip click', () => {
+            fixture.detectChanges();
+            component.applyChipText('artemisApp.iris.chat.suggestions.learnStarter');
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.quizTopicStarter');
+            expect(component.chipPreviewText()).toBe('');
+        });
+
+        it('should render all three chips in fixed order: learn, quiz, tips', () => {
+            fixture.detectChanges();
+            const chipKeys = (component as any).suggestionChips.map((c: any) => c.translationKey);
+            expect(chipKeys).toEqual(['artemisApp.iris.chat.suggestions.learn', 'artemisApp.iris.chat.suggestions.quiz', 'artemisApp.iris.chat.suggestions.tips']);
+        });
+
+        it('should not show chip preview overlay when input is disabled', () => {
+            fixture.detectChanges();
+            component.onChipMouseEnter('artemisApp.iris.chat.suggestions.learnStarter');
+            component.isLoading.set(true);
+            fixture.detectChanges();
+            const overlay = fixture.nativeElement.querySelector('.chip-preview-overlay');
+            expect(overlay).toBeNull();
+        });
+    });
+
+    describe('Cycling placeholder labels and ghost text', () => {
+        const exerciseSession: IrisSessionDTO = {
+            id: 10,
+            title: 'Help with recursion',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Sorting Arrays',
+        };
+        const lectureSession: IrisSessionDTO = {
+            id: 20,
+            title: 'Lecture question',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 55,
+            entityName: 'Data Structures',
+        };
+
+        describe('exercise mode', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should detect exercise mode', () => {
+                expect(component.isExerciseOrLectureMode()).toBeTruthy();
+            });
+
+            it('should interpolate exercise labels', () => {
+                const labels = component.interpolatedLabels();
+                expect(labels).toHaveLength(4);
+                expect(labels).toContain('artemisApp.iris.chat.placeholders.exercise.whereToStart');
+            });
+
+            it('should provide a current placeholder', () => {
+                const labels = component.interpolatedLabels();
+                expect(labels).toContain(component.currentPlaceholder());
+            });
+
+            it('should hide suggestion chips on exercise screen', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(0);
+            });
+
+            it('should not advance placeholder index immediately on blur with empty input', () => {
+                expect(component.placeholderIndex()).toBe(0);
+
+                // Simulate focus then blur; cycling should restart without immediate index change
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                expect(component.placeholderIndex()).toBe(0);
+            });
+
+            it('should track focus state without immediate index change on blur', () => {
+                component.onTextareaFocus();
+                expect(component.isFocused()).toBeTruthy();
+                const indexAtFocus = component.placeholderIndex();
+
+                // Blur with empty input restarts cycling without jumping to next label
+                component.onTextareaBlur();
+                expect(component.isFocused()).toBeFalsy();
+                expect(component.placeholderIndex()).toBe(indexAtFocus);
+            });
+
+            it('should not advance index on blur when input has text', () => {
+                component.newMessageTextContent.set('some text');
+                component.onTextareaFocus();
+                const indexAtFocus = component.placeholderIndex();
+
+                component.onTextareaBlur();
+                expect(component.placeholderIndex()).toBe(indexAtFocus);
+            });
+
+            it('should cycle placeholder after interval', () => {
+                vi.useFakeTimers();
+
+                // Trigger cycling by simulating blur with empty input
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                const indexAfterBlur = component.placeholderIndex();
+
+                // Advance past the cycle interval
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS);
+                expect(component.placeholderVisible()).toBe(false);
+
+                // Advance past the fade duration to swap text
+                vi.advanceTimersByTime(PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe((indexAfterBlur + 1) % component.interpolatedLabels().length);
+                expect(component.placeholderVisible()).toBe(true);
+
+                vi.useRealTimers();
+            });
+        });
+
+        describe('exercise mode with existing messages', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show the default placeholder label', () => {
+                expect(component.textareaPlaceholder()).toBe('artemisApp.exerciseChatbot.inputMessage');
+            });
+
+            it('should not cycle placeholder labels on blur', () => {
+                vi.useFakeTimers();
+
+                const indexAtStart = component.placeholderIndex();
+                component.onTextareaFocus();
+                component.onTextareaBlur();
+
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS + PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe(indexAtStart);
+                expect(component.placeholderVisible()).toBe(true);
+
+                vi.useRealTimers();
+            });
+        });
+
+        describe('lecture mode', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should interpolate lecture labels', () => {
+                const labels = component.interpolatedLabels();
+                expect(labels).toHaveLength(2);
+                expect(labels).toContain('artemisApp.iris.chat.placeholders.lecture.keyPoints');
+            });
+
+            it('should hide suggestion chips on lecture screen', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(0);
+            });
+        });
+
+        describe('lecture mode with existing messages', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show the default placeholder label', () => {
+                expect(component.textareaPlaceholder()).toBe('artemisApp.exerciseChatbot.inputMessage');
+            });
+        });
+
+        describe('course mode (no cycling)', () => {
+            it('should not be in exercise or lecture mode', () => {
+                expect(component.isExerciseOrLectureMode()).toBeFalsy();
+            });
+
+            it('should return empty interpolated labels', () => {
+                expect(component.interpolatedLabels()).toHaveLength(0);
+            });
+
+            it('should show suggestion chips on course screen', () => {
+                fixture.detectChanges();
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips.length).toBeGreaterThan(0);
+            });
+        });
+
+        describe('ghost text', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
+            it('should show ghost text when input matches a label prefix', () => {
+                // MockTranslateService returns the key, so labels are translation keys
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10);
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(10));
+            });
+
+            it('should clear ghost text when input does not match any label', () => {
+                component.newMessageTextContent.set('Something random');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should be case insensitive', () => {
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10).toLowerCase();
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(10));
+            });
+
+            it('should clear ghost text when input is empty', () => {
+                component.newMessageTextContent.set('');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should accept ghost text on Tab key', () => {
+                const label = component.interpolatedLabels()[0];
+                const prefix = label.substring(0, 10);
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(10));
+
+                const event = new KeyboardEvent('keydown', { key: 'Tab' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe(label);
+                expect(component.ghostText()).toBe('');
+            });
+
+            it('should accept ghost text on ArrowRight key when cursor is at end', () => {
+                const label = component.interpolatedLabels()[1];
+                const prefix = label.substring(0, 47);
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(47));
+
+                // Place cursor at end of input (set value to sync JSDOM with Angular model)
+                const textarea = fixture.debugElement.query(By.css('textarea')).nativeElement as HTMLTextAreaElement;
+                textarea.value = prefix;
+                textarea.setSelectionRange(prefix.length, prefix.length);
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe(label);
+            });
+
+            it('should not accept ghost text on ArrowRight key when cursor is in middle', () => {
+                const label = component.interpolatedLabels()[1];
+                const prefix = label.substring(0, 47);
+                component.newMessageTextContent.set(prefix);
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe(label.substring(47));
+
+                // Place cursor in the middle of input (set value to sync JSDOM with Angular model)
+                const textarea = fixture.debugElement.query(By.css('textarea')).nativeElement as HTMLTextAreaElement;
+                textarea.value = prefix;
+                textarea.setSelectionRange(5, 5);
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).not.toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe(prefix);
+            });
+
+            it('should not show ghost text on course screen', () => {
+                // Recreate with course mode
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                component.newMessageTextContent.set('Help me');
+                fixture.detectChanges();
+                expect(component.ghostText()).toBe('');
+            });
+        });
+    });
+
+    describe('shouldShowStatusBar', () => {
+        function createComponentWithStages(stages: IrisStageDTO[]): IrisBaseChatbotComponent {
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of(stages));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            const comp = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            return comp;
+        }
+
+        it('should return false when stages are empty', () => {
+            const comp = createComponentWithStages([]);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return false when all stages are DONE or SKIPPED', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.SKIPPED, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
+        });
+
+        it('should return true when a non-internal stage is IN_PROGRESS', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Stage 2', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: false } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return true when a non-internal stage is ERROR', () => {
+            const stages: IrisStageDTO[] = [{ name: 'Stage 1', weight: 1, state: IrisStageStateDTO.ERROR, message: '', internal: false } as IrisStageDTO];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+
+        it('should return false when only internal stages are unfinished', () => {
+            const stages: IrisStageDTO[] = [
+                { name: 'Stage 1', weight: 1, state: IrisStageStateDTO.DONE, message: '', internal: false } as IrisStageDTO,
+                { name: 'Internal Stage', weight: 1, state: IrisStageStateDTO.IN_PROGRESS, message: '', internal: true } as IrisStageDTO,
+            ];
+            const comp = createComponentWithStages(stages);
+            expect(comp.shouldShowStatusBar()).toBe(false);
         });
     });
 });

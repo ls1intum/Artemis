@@ -19,6 +19,14 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Accepts the code of conduct for a course.
+     * @param course - The course to accept code of conduct for.
+     */
+    async acceptCodeOfConduct(course: Course) {
+        await this.page.request.patch(`api/communication/courses/${course.id}/code-of-conduct/agreement`);
+    }
+
+    /**
      * Creates a new course post.
      *
      * @param course - The course to which the post belongs.
@@ -75,7 +83,7 @@ export class CommunicationAPIRequests {
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
         const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
-        // @ts-ignore
+        // @ts-expect-error: filter narrows ConversationDTO to ChannelDTO but TS can't infer that
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
 
@@ -112,6 +120,9 @@ export class CommunicationAPIRequests {
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
         const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: users });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessageGroupChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -129,12 +140,12 @@ export class CommunicationAPIRequests {
             content: message,
             conversation: {
                 id: targetId,
-                type,
             },
-            displayPriority: 'NONE',
-            visibleForStudents: true,
         };
         const response = await this.page.request.post(`api/communication/courses/${course.id}/messages`, { data });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessage failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -243,6 +254,40 @@ export class CommunicationAPIRequests {
             visibleForStudents: true,
         };
         const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
+        return response.json();
+    }
+
+    /**
+     * Creates a one-to-one chat (DM) with the specified partner.
+     *
+     * @param course - The course in which to create the DM.
+     * @param partnerUsername - The username of the partner.
+     * @returns Promise with the created conversation.
+     */
+    async createOneToOneChat(course: Course, partnerUsername: string) {
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/one-to-one-chats`, { data: [partnerUsername] });
+        if (!response.ok()) {
+            throw new Error(`createOneToOneChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Adds an emoji reaction to a post.
+     *
+     * @param courseId - The ID of the course.
+     * @param postId - The ID of the post to react to.
+     * @param emojiId - The emoji identifier (e.g., 'thumbsup').
+     */
+    async addReactionToPost(courseId: number, postId: number, emojiId: string) {
+        const data = {
+            emojiId,
+            relatedPostId: postId,
+        };
+        const response = await this.page.request.post(`api/communication/courses/${courseId}/postings/reactions`, { data });
+        if (!response.ok()) {
+            throw new Error(`addReactionToPost failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 }

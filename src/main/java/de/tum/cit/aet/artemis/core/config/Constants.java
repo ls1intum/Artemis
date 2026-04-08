@@ -167,6 +167,10 @@ public final class Constants {
 
     public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
 
+    public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
+
+    public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
+
     public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
@@ -389,6 +393,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for AtlasML functionality.
+     */
+    public static final String MODULE_FEATURE_ATLASML = "atlasml";
+
+    /**
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
@@ -452,6 +461,11 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable AtlasML functionality.
+     */
+    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Update all existing users to have memirisEnabled=true -->
+    <changeSet id="20260301010101-1" author="morrien">
+        <update tableName="jhi_user">
+            <column name="memiris_enabled" valueBoolean="true"/>
+            <where>memiris_enabled = false</where>
+        </update>
+    </changeSet>
+
+    <!-- Change the default value to true for future insertions -->
+    <changeSet id="20260301010101-2" author="morrien">
+        <addDefaultValue tableName="jhi_user" columnName="memiris_enabled" defaultValueBoolean="true"/>
+    </changeSet>
+
+</databaseChangeLog>
+

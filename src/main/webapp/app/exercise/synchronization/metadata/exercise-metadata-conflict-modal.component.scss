@@ -1,0 +1,25 @@
+.conflict-body {
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.global-toggle {
+    flex-wrap: wrap;
+}
+
+.conflict-tile {
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition:
+        border-color 0.15s ease-in-out,
+        border-width 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
+
+    &:hover:not(.conflict-tile--selected) {
+        border-color: var(--primary);
+    }
+
+    &--selected {
+        border: 1px solid var(--primary);
+    }
+}

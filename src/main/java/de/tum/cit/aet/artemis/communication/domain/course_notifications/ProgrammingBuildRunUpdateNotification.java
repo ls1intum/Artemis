@@ -18,13 +18,20 @@ public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
 
     protected String exerciseTitle;
 
+    protected Long examId;
+
+    protected Long exerciseGroupId;
+
     /**
      * Default constructor used when creating the notification
      */
-    public ProgrammingBuildRunUpdateNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle) {
+    public ProgrammingBuildRunUpdateNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId,
+            Long exerciseGroupId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
+        this.examId = examId;
+        this.exerciseGroupId = exerciseGroupId;
     }
 
     /**
@@ -51,6 +58,9 @@ public class ProgrammingBuildRunUpdateNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null && exerciseGroupId != null) {
+            return "/course-management/" + courseId + "/exams/" + examId + "/exercise-groups/" + exerciseGroupId + "/programming-exercises/" + exerciseId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

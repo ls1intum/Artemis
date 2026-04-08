@@ -165,19 +165,18 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQLDialect / org.hibernate.dialect.MySQLDialect
-        database: h2 # Alternatives h2 / POSTGRESQL / MYSQL
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database: POSTGRESQL
         open-in-view: false
         show-sql: false
         hibernate:
             ddl-auto: none
             naming:
                 physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+                implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.format_sql: false
             hibernate.use_sql_comments: false
-            hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: false
             hibernate.connection.autocommit: false
             hibernate.generate_statistics: false
@@ -185,12 +184,9 @@ spring:
             hibernate.order_updates: true
             hibernate.query.fail_on_pagination_over_collection_fetch: true # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
-            hibernate.cache.use_second_level_cache: true
+            # L2 cache disabled in tests (hazelcast-hibernate53 is incompatible with Hibernate 7.x; JCache bridge requires running Hazelcast instance)
+            hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
-            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
-            hibernate.cache.use_minimal_puts: true
-            hibernate.cache.hazelcast.instance_name: Artemis
-            hibernate.cache.hazelcast.use_lite_member: true
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
@@ -247,35 +243,58 @@ zonky:
         database:
             prefetching:
                 concurrency: 1
-            type: H2 # Alternatives: H2 / MYSQL / POSTGRES
+            # Default: PostgreSQL via Testcontainers (Docker required).
+            # Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker).
+            # Connection pooling for Testcontainers is handled by TestDataSourcePoolConfig.
+            type: POSTGRES
             postgres:
                 docker:
-                    image: docker.io/library/postgres:18.1-alpine
+                    image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
+                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+
+                    # (PGDATA moved to /var/lib/postgresql/<major>/docker). We disable it here and mount
+                    # tmpfs at /var/lib/postgresql via PostgresTmpfsContainerCustomizer instead.
                     tmpfs:
-                        enabled: true
+                        enabled: false
                 server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    # Safe because test data is ephemeral and does not need crash recovery.
                     properties:
-                        max_connections: 100
-                        shared_buffers: 2GB
-                        effective_cache_size: 4GB
-                        maintenance_work_mem: 256MB
+                        fsync: off
+                        synchronous_commit: off
+                        full_page_writes: off
+                        max_connections: 200
+                        shared_buffers: 256MB
+                        effective_cache_size: 512MB
+                        maintenance_work_mem: 64MB
                         checkpoint_completion_target: 0.9
                         wal_buffers: 16MB
                         default_statistics_target: 100
                         random_page_cost: 1.1
                         effective_io_concurrency: 200
-                        work_mem: 16MB
-                        min_wal_size: 1GB
-                        max_wal_size: 4GB
-                        max_worker_processes: 8
-                        max_parallel_workers_per_gather: 4
-                        max_parallel_workers: 8
-                        max_parallel_maintenance_workers: 4
+                        work_mem: 4MB
+                        min_wal_size: 256MB
+                        max_wal_size: 1GB
+                        max_worker_processes: 4
+                        max_parallel_workers_per_gather: 2
+                        max_parallel_workers: 4
+                        max_parallel_maintenance_workers: 2
             mysql:
                 docker:
-                    image: docker.io/library/mysql:9.5.0
+                    image: docker.io/library/mysql:${mysql.version}
+                    # MySQL's default DATADIR works with Zonky's tmpfs, no customizer needed.
                     tmpfs:
                         enabled: true
+                server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    properties:
+                        innodb_flush_log_at_trx_commit: 0
+                        innodb_doublewrite: 0
+                        sync_binlog: 0
+                        skip-log-bin: 1
+                        innodb_log_buffer_size: 64M
+                        innodb_buffer_pool_size: 512M
+                        innodb_io_capacity: 2000
+                        max_connections: 200
 
 server:
     port: 8080
@@ -287,9 +306,9 @@ management:
         web:
             base-path: /management
             exposure:
-                include: ["jhimetrics"]
+                include: ["artemismetrics"]
     endpoint:
-        jhimetrics:
+        artemismetrics:
             access: read_only
     info:
         env:

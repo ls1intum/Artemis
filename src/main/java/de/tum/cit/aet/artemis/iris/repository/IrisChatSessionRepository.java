@@ -6,9 +6,11 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -21,17 +23,18 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
     /**
-     * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by creation date in descending order.
+     * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by last activity in descending order.
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
-     * @return A list of chat sessions sorted by creation date in descending order.
+     * @return A list of chat sessions sorted by last activity (most recent message) in descending order.
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
                       COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1),
-                      COALESCE(e1.shortName, e2.shortName, l.title)
+                      COALESCE(e1.shortName, e2.shortName, l.title),
+                      MAX(m.sentAt)
                   )
                 FROM IrisChatSession s
                     LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
@@ -53,7 +56,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
                 GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
                 HAVING COUNT(m) > 0
-                ORDER BY s.creationDate DESC
+                ORDER BY MAX(m.sentAt) DESC
             """)
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
@@ -90,4 +93,36 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
             WHERE s.id IN :sessionIds
             """)
     Set<IrisChatSession> findAllWithMessagesByIds(@Param("sessionIds") Collection<Long> sessionIds);
+
+    /**
+     * Counts the number of chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the number of chat sessions
+     */
+    long countByUserId(long userId);
+
+    /**
+     * Counts the total number of messages across all chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the total number of messages
+     */
+    @Query("""
+            SELECT COUNT(m)
+            FROM IrisChatSession s
+                JOIN s.messages m
+            WHERE s.userId = :userId
+            """)
+    long countMessagesByUserId(@Param("userId") long userId);
+
+    /**
+     * Deletes all chat sessions for a given user.
+     * Messages and their content are removed via cascade (CascadeType.ALL + orphanRemoval on IrisSession.messages).
+     *
+     * @param userId the ID of the user whose sessions should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByUserId(long userId);
 }

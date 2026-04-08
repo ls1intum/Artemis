@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Conditional;
@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
@@ -63,8 +63,10 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository,
-            PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository, MessageSource messageSource) {
-        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService);
+            PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository, MessageSource messageSource,
+            IrisCitationService irisCitationService) {
+        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService,
+                Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -138,35 +140,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisCourseChatSession session) {
         builder.withCourse(session.getCourseId());
-    }
-
-    /**
-     * Handles the CompetencyJolSetEvent by checking if Iris is activated for the course and if the user has accepted external LLM usage.
-     * If both conditions are met, it retrieves or creates a session and sends the request to the LLM.
-     *
-     * @param competencyJolSetEvent The event containing the CompetencyJol
-     */
-    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
-        var competencyJol = competencyJolSetEvent.getEventObject();
-        var course = competencyJol.getCompetency().getCourse();
-        var user = competencyJol.getUser();
-
-        if (!user.hasOptedIntoLLMUsage()) {
-            return;
-        }
-
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            return;
-        }
-
-        var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user);
-        rateLimitService.checkRateLimitElseThrow(session, user);
-
-        var variant = settings.variant().jsonValue();
-        var customInstructions = settings.customInstructions();
-
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }
 
     /**

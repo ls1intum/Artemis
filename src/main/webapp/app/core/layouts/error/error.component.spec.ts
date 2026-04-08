@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { ErrorComponent } from 'app/core/layouts/error/error.component';
@@ -6,6 +8,8 @@ import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ErrorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let routeData$: ReplaySubject<{ error403?: boolean; error404?: boolean; errorMessage?: string }>;
 
     beforeEach(async () => {
@@ -23,6 +27,7 @@ describe('ErrorComponent', () => {
 
     afterEach(() => {
         routeData$?.complete();
+        vi.restoreAllMocks();
     });
 
     it('should set flags based on route data', () => {
@@ -32,7 +37,7 @@ describe('ErrorComponent', () => {
         fixture.detectChanges();
         const comp = fixture.componentInstance;
 
-        expect(comp.error403).toBeTrue();
+        expect(comp.error403).toBe(true);
         expect(comp.error404).toBeFalsy();
         expect(comp.errorMessage).toBe('Oops');
     });

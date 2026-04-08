@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -31,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -42,6 +44,7 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import {
     metisChannel,
     metisCourse,
@@ -55,18 +58,20 @@ import {
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let metisServiceGetLinkSpy: jest.SpyInstance;
-    let metisServiceGetQueryParamsSpy: jest.SpyInstance;
-    let metisServiceGetPageTypeStub: jest.SpyInstance;
+    let metisServiceGetLinkSpy: ReturnType<typeof vi.spyOn>;
+    let metisServiceGetQueryParamsSpy: ReturnType<typeof vi.spyOn>;
+    let metisServiceGetPageTypeStub: ReturnType<typeof vi.spyOn>;
     let router: MockRouter;
     let mainContainer: HTMLElement;
     let searchConfig: CourseWideSearchConfig;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mainContainer = document.createElement('div');
         mainContainer.classList.add('posting-infinite-scroll-container');
         document.body.appendChild(mainContainer);
@@ -81,7 +86,7 @@ describe('PostComponent', () => {
             sortingOrder: SortDirection.ASCENDING,
         };
 
-        return TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [
                 NgbTooltip,
                 OverlayModule,
@@ -89,7 +94,7 @@ describe('PostComponent', () => {
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
                 PostingHeaderComponent,
-                PostingContentComponent,
+                MockComponent(PostingContentComponent),
                 PostingFooterComponent,
                 AnswerPostCreateEditModalComponent,
                 MockRouterLinkDirective,
@@ -111,28 +116,30 @@ describe('PostComponent', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostComponent);
-                metisService = TestBed.inject(MetisService);
-                metisService.setCourse(metisCourse);
+        }).overrideComponent(PostComponent, {
+            remove: { imports: [PostingContentComponent] },
+            add: { imports: [MockComponent(PostingContentComponent)] },
+        });
 
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                metisServiceGetPageTypeStub = jest.spyOn(metisService, 'getPageType');
-                router = TestBed.inject<MockRouter>(Router as any);
-                const mockRouterState = {
-                    snapshot: {
-                        root: { firstChild: {}, data: {} },
-                    },
-                } as RouterState;
-                router.setRouterState(mockRouterState);
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        fixture = TestBed.createComponent(PostComponent);
+        metisService = TestBed.inject(MetisService);
+        metisService.setCourse(metisCourse);
+
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        metisServiceGetPageTypeStub = vi.spyOn(metisService, 'getPageType');
+        router = TestBed.inject<MockRouter>(Router as any);
+        const mockRouterState = {
+            snapshot: {
+                root: { firstChild: {}, data: {} },
+            },
+        } as RouterState;
+        router.setRouterState(mockRouterState);
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
@@ -143,53 +150,53 @@ describe('PostComponent', () => {
         if (component.deleteInterval) {
             clearInterval(component.deleteInterval);
         }
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should sort answers', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
+        component.posting.set(post);
+        component.posting()!.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.posting.answers = undefined;
+        component.posting.set(post);
+        component.posting()!.answers = unsortedAnswerArray;
+        component.posting()!.answers = undefined;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual([]);
     });
 
     it('should set router link and query params', () => {
-        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
-        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
+        metisServiceGetLinkSpy = vi.spyOn(metisService, 'getLinkForPost');
+        metisServiceGetQueryParamsSpy = vi.spyOn(metisService, 'getQueryParamsForPost');
 
-        component.posting = metisPostExerciseUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostExerciseUser1);
+        fixture.detectChanges();
 
         expect(metisServiceGetLinkSpy).toHaveBeenCalled();
-        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(expect.objectContaining({ id: metisPostExerciseUser1.id }));
         expect(component.routerLink).toEqual(['/courses', metisPostExerciseUser1.conversation?.course?.id, 'discussion']);
         expect(component.queryParams).toEqual({ searchText: '#' + metisPostExerciseUser1.id });
     });
 
     it('should initialize post without context information when shown in page section', () => {
         metisServiceGetPageTypeStub.mockReturnValue(PageType.PAGE_SECTION);
-        component.posting = metisPostLectureUser1;
+        component.posting.set(metisPostLectureUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(contextLink).toBeNull();
-        component.posting = metisPostExerciseUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostExerciseUser1);
+        fixture.detectChanges();
         fixture.changeDetectorRef.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
         expect(context).toBeNull();
     });
 
     it('should contain the posting content', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         fixture.changeDetectorRef.detectChanges();
 
         const header = getElement(debugElement, 'jhi-posting-content');
@@ -202,36 +209,36 @@ describe('PostComponent', () => {
     });
 
     it('should have correct content and title', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         expect(component.content).toBe(metisPostExerciseUser1.content);
-        expect(component.posting.title).toBe(metisPostExerciseUser1.title);
+        expect(component.posting()!.title).toBe(metisPostExerciseUser1.title);
     });
 
     it('should open create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
+        const postFooterOpenCreateAnswerPostModal = vi.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
     it('should close create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
+        const postFooterOpenCreateAnswerPostModal = vi.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
         component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
     it('should create or navigate to oneToOneChat when not on messaging page', () => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const oneToOneChatService = TestBed.inject(OneToOneChatService);
-        const createChatSpy = jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
+        const createChatSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
 
         component.onUserReferenceClicked(metisUser1.login!);
 
@@ -245,9 +252,9 @@ describe('PostComponent', () => {
 
     it('should create or navigate to oneToOneChat when on messaging page', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
-        const createOneToOneChatSpy = jest.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
+        const createOneToOneChatSpy = vi.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
         Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
-        component.isCommunicationPage = true;
+        fixture.componentRef.setInput('isCommunicationPage', true);
 
         component.onUserReferenceClicked(metisUser1.login!);
 
@@ -255,7 +262,7 @@ describe('PostComponent', () => {
     });
 
     it('should navigate to channel when not on messaging page', () => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
@@ -268,9 +275,9 @@ describe('PostComponent', () => {
 
     it('should navigate to channel when on messaging page', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
-        const setActiveConversationSpy = jest.fn();
+        const setActiveConversationSpy = vi.fn();
         Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
-        component.isCommunicationPage = true;
+        fixture.componentRef.setInput('isCommunicationPage', true);
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
@@ -279,12 +286,12 @@ describe('PostComponent', () => {
 
     it('should set isDeleted to true', () => {
         component.onDeleteEvent(true);
-        expect(component.isDeleted).toBeTrue();
+        expect(component.isDeleted).toBe(true);
     });
 
     it('should clear existing timers and intervals', () => {
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+        const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
 
         component.deleteTimer = setTimeout(() => {}, 1000);
         component.deleteInterval = setInterval(() => {}, 1000);
@@ -295,8 +302,8 @@ describe('PostComponent', () => {
     });
 
     it('should clear existing timers and intervals on destroy', () => {
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+        const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
 
         component.deleteTimer = setTimeout(() => {}, 1000);
         component.deleteInterval = setInterval(() => {}, 1000);
@@ -322,51 +329,53 @@ describe('PostComponent', () => {
     });
 
     it('should return true if the post is pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
-        expect(component.isPinned()).toBeTrue();
+        component.posting.set({ ...post, displayPriority: DisplayPriority.PINNED });
+        expect(component.isPinned()).toBe(true);
     });
 
     it('should return false if the post is not pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.NONE };
-        expect(component.isPinned()).toBeFalse();
+        component.posting.set({ ...post, displayPriority: DisplayPriority.NONE });
+        expect(component.isPinned()).toBe(false);
     });
 
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
             showDropdown: true,
-            enableBodyScroll: jest.fn(),
-            changeDetector: { detectChanges: jest.fn() },
+            enableBodyScroll: vi.fn(),
+            changeDetector: { detectChanges: vi.fn() },
         } as any as PostComponent;
 
         PostComponent.activeDropdownPost = previousComponent;
 
+        const target = fixture.nativeElement;
         const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+        Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBeFalse();
+        expect(previousComponent.showDropdown).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
         expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(PostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBeTrue();
+        expect(component.showDropdown).toBe(true);
     });
 
     it('should disable body scroll', () => {
-        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        const setStyleSpy = vi.spyOn(component.renderer, 'setStyle');
         (component as any).disableBodyScroll();
         expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow', 'hidden');
     });
 
     it('should enable body scroll', () => {
-        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        const setStyleSpy = vi.spyOn(component.renderer, 'setStyle');
         (component as any).enableBodyScroll();
         expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow-y', 'auto');
     });
 
     it('should handle click outside and hide dropdown', () => {
         component.showDropdown = true;
-        const enableBodyScrollSpy = jest.spyOn(component, 'enableBodyScroll' as any);
+        const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBeFalse();
+        expect(component.showDropdown).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
@@ -392,11 +401,11 @@ describe('PostComponent', () => {
             const targetElement = document.createElement('div');
             Object.defineProperty(event, 'target', { value: targetElement });
 
-            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+            vi.spyOn(window, 'getComputedStyle').mockReturnValue({
                 cursor,
             } as CSSStyleDeclaration);
 
-            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+            const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.onRightClick(event);
 
@@ -404,14 +413,14 @@ describe('PostComponent', () => {
             expect(component.showDropdown).toBe(showDropdown);
             expect(component.dropdownPosition).toEqual(dropdownPosition);
 
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
     });
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
-        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
         component.showDropdown = true;
-        component.posting = post;
+        component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
         const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
@@ -433,19 +442,19 @@ describe('PostComponent', () => {
             postingType: PostingType.POST,
         };
         // @ts-ignore method is private
-        const spy = jest.spyOn(component, 'assignPostingToPost');
-        component.posting = mockPost;
+        const spy = vi.spyOn(component, 'assignPostingToPost');
+        component.posting.set(mockPost);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.posting).toBeInstanceOf(Post);
+        expect(component.posting()).toBeInstanceOf(Post);
         expect(spy).toHaveBeenCalled();
     });
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
-        jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
+        vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
 
         const postTimeDebugElement = debugElement.query(By.css('span.post-time'));
@@ -459,9 +468,9 @@ describe('PostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
-        jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
+        vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
@@ -499,7 +508,7 @@ describe('PostComponent', () => {
     });
 
     it('should call markForCheck if a forwarded post is set', () => {
-        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
         const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
 
         fixture.componentRef.setInput('forwardedPosts', [forwardedPost]);
@@ -511,7 +520,7 @@ describe('PostComponent', () => {
     });
 
     it('should call markForCheck if a forwarded answer is set', () => {
-        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
         const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
 
         fixture.componentRef.setInput('forwardedPosts', []);
@@ -523,7 +532,7 @@ describe('PostComponent', () => {
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
-        const spyOnNavigateToPost = jest.spyOn(component.onNavigateToPost, 'emit');
+        const spyOnNavigateToPost = vi.spyOn(component.onNavigateToPost, 'emit');
         const testPost = { id: 123, content: 'Test Content' } as Posting;
 
         (component as any).onTriggerNavigateToPost(testPost);
@@ -533,7 +542,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', {
             searchTerm: 'answer',
             selectedConversations: [],
@@ -544,48 +553,48 @@ describe('PostComponent', () => {
             sortingOrder: SortDirection.ASCENDING,
         });
         component.showSearchResultInAnswersHint = false;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBeTrue();
+        expect(component.showSearchResultInAnswersHint).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
-        component.posting = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = false;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBeTrue();
+        expect(component.showSearchResultInAnswersHint).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBeFalse();
+        expect(component.showSearchResultInAnswersHint).toBe(false);
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBeFalse();
+        expect(component.showSearchResultInAnswersHint).toBe(false);
     });
 
     // update to true when selected author is in answers
     it('should update showSearchResultInAnswersHint to true for selected author in answers', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] });
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBeTrue();
+        expect(component.showSearchResultInAnswersHint).toBe(true);
     });
 });

@@ -13,22 +13,26 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
  * Spring Data JPA repository for the {@link ExamRoom} entity.
+ *
+ * <p>
+ * <b>Important:</b> Do NOT use {@code SELECT DISTINCT} on queries that return {@link ExamRoom}
+ * or its related entities (e.g., LayoutStrategy). These entities contain {@code json} columns
+ * ({@code exam_seats}, {@code parameters}) and PostgreSQL's {@code json} type does not support
+ * equality operators, causing {@code SELECT DISTINCT} to fail at runtime.
+ * Use {@link java.util.Set} return types or {@code stream().distinct()} in Java to deduplicate instead.
+ *
+ * <p>
+ * TODO: Remove this restriction once the json columns are migrated to jsonb.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
 @Repository
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
-
-    @Query("""
-            SELECT er
-            FROM ExamRoom er
-            LEFT JOIN FETCH er.layoutStrategies
-            """)
-    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     /**
      * Finds and returns all IDs of outdated and unused exam rooms.
@@ -105,7 +109,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             )
             WHERE rowNumber = 1
             """)
-    Set<Long> findAllIdsOfCurrentExamRooms();
+    Set<Long> findAllIdsOfNewestExamRoomVersions();
 
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
     Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
@@ -113,7 +117,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Returns a collection of {@link ExamRoomForDistributionDTO}, which are derived from {@link ExamRoom}.
      *
-     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfCurrentExamRooms}
+     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfNewestExamRoomVersions}
      *
      * @return Basic room information for distribution
      */
@@ -180,4 +184,14 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 AND er.roomNumber = :roomNumber
             """)
     boolean existsByRoomNumberAndIsConnectedToExam(@Param("roomNumber") String roomNumber, @Param("examId") long examId);
+
+    /**
+     * Finds all newest versions of {@link ExamRoom}s with eagerly loaded {@link LayoutStrategy}s
+     *
+     * @return All newest room versions with eagerly loaded layout strategies.
+     */
+    default Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies() {
+        Set<Long> idsOfNewestExamRoomVersions = findAllIdsOfNewestExamRoomVersions();
+        return findAllWithEagerLayoutStrategiesByIdIn(idsOfNewestExamRoomVersions);
+    }
 }

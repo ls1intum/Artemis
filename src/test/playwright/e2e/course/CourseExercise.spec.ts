@@ -1,24 +1,20 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin } from '../../support/users';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.general.id } as any;
 
 test.describe('Course exercise', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-    });
-
     test.describe('Search Exercise', () => {
         let exercise1: QuizExercise;
         let exercise2: QuizExercise;
         let exercise3: QuizExercise;
 
-        test.beforeEach('Create Exercises', async ({ exerciseAPIRequests }) => {
+        test.beforeEach('Create Exercises', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
             exercise1 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 1' });
             exercise2 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 2' });
             exercise3 = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise 3' });
@@ -26,6 +22,7 @@ test.describe('Course exercise', { tag: '@fast' }, () => {
 
         test('Filters exercises based on title', async ({ page, courseOverview }) => {
             await page.goto(`/courses/${course.id}/exercises`);
+            await page.waitForLoadState('networkidle');
             // All quiz exercises should be hidden initially, as the default accordion status is collapsed when there is no due date.
             await expect(courseOverview.getExercise(exercise1.title!)).toBeHidden();
             await expect(courseOverview.getExercise(exercise2.title!)).toBeHidden();
@@ -43,7 +40,5 @@ test.describe('Course exercise', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

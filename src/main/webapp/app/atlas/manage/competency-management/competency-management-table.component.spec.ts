@@ -8,7 +8,15 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
-import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import dayjs from 'dayjs/esm';
+import {
+    CompetencyRelationType,
+    CompetencyTaxonomy,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyProgress,
+    CourseCompetencyType,
+} from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -123,5 +131,126 @@ describe('CompetencyManagementTableComponent', () => {
         competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(competencyDeletedSpy).toHaveBeenCalledWith(1);
+    });
+
+    describe('filtering', () => {
+        it('should filter competencies by title (case-insensitive)', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Analysis' } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('al');
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result).toHaveLength(2);
+            expect(result.map((c) => c.id)).toContain(1);
+            expect(result.map((c) => c.id)).toContain(3);
+        });
+
+        it('should return empty list when filter matches nothing', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            component.courseCompetencies = [competency1];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('zzz');
+
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(0);
+        });
+
+        it('should show all competencies when filter is cleared', () => {
+            const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.filterText.set('Algebra');
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(1);
+
+            competencyManagementTableComponent.filterText.set('');
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies()).toHaveLength(2);
+        });
+    });
+
+    describe('sorting', () => {
+        it('should sort by title ascending by default', () => {
+            const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.title)).toEqual(['Algebra', 'Biology', 'Zoology']);
+        });
+
+        it('should sort by title descending', () => {
+            const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;
+            const competency3 = { id: 3, title: 'Biology' } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortAscending = false;
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.title)).toEqual(['Zoology', 'Biology', 'Algebra']);
+        });
+
+        it('should sort by taxonomy ascending', () => {
+            const competency1 = { id: 1, title: 'A', taxonomy: CompetencyTaxonomy.REMEMBER } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', taxonomy: CompetencyTaxonomy.ANALYZE } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', taxonomy: CompetencyTaxonomy.APPLY } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'taxonomy';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.taxonomy)).toEqual([CompetencyTaxonomy.ANALYZE, CompetencyTaxonomy.APPLY, CompetencyTaxonomy.REMEMBER]);
+        });
+
+        it('should sort by softDueDate ascending', () => {
+            const competency1 = { id: 1, title: 'A', softDueDate: dayjs('2025-06-01') } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', softDueDate: dayjs('2025-01-01') } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', softDueDate: dayjs('2025-03-15') } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'softDueDate';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 3, 1]);
+        });
+
+        it('should sort by masteredStudents ratio ascending', () => {
+            const progress1 = { numberOfStudents: 10, numberOfMasteredStudents: 8 } as CourseCompetencyProgress;
+            const progress2 = { numberOfStudents: 10, numberOfMasteredStudents: 2 } as CourseCompetencyProgress;
+            const progress3 = { numberOfStudents: 10, numberOfMasteredStudents: 5 } as CourseCompetencyProgress;
+            const competency1 = { id: 1, title: 'A', courseProgress: progress1 } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B', courseProgress: progress2 } as CourseCompetency;
+            const competency3 = { id: 3, title: 'C', courseProgress: progress3 } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2, competency3];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'masteredStudents';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 3, 1]);
+        });
+
+        it('should treat competency without progress as 0% for masteredStudents sort', () => {
+            const progress = { numberOfStudents: 10, numberOfMasteredStudents: 3 } as CourseCompetencyProgress;
+            const competency1 = { id: 1, title: 'A', courseProgress: progress } as CourseCompetency;
+            const competency2 = { id: 2, title: 'B' } as CourseCompetency;
+            component.courseCompetencies = [competency1, competency2];
+            fixture.changeDetectorRef.detectChanges();
+
+            competencyManagementTableComponent.sortPredicate = 'masteredStudents';
+
+            const result = competencyManagementTableComponent.filteredAndSortedCompetencies();
+            expect(result.map((c) => c.id)).toEqual([2, 1]);
+        });
     });
 });

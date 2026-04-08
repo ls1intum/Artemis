@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,6 +24,9 @@ export class TranscriptViewerComponent {
 
     /** Event emitted when user clicks on a transcript segment */
     segmentClicked = output<number>();
+
+    /** Reference to the scrollable transcript list container */
+    private transcriptListRef = viewChild<ElementRef<HTMLElement>>('transcriptList');
 
     /** Search query for filtering transcript segments */
     searchQuery = signal<string>('');
@@ -167,13 +170,16 @@ export class TranscriptViewerComponent {
     }
 
     /**
-     * Common helper method to scroll to a segment element.
-     * Encapsulates the DOM element lookup and scrollIntoView logic.
+     * Common helper method to scroll to a segment element within the transcript list container.
+     * Uses container-scoped scrolling to avoid scrolling the full page.
      */
     private scrollToSegmentElement(segment: TranscriptSegment): void {
         const el = document.getElementById(`segment-${segment.startTime}`);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const container = this.transcriptListRef()?.nativeElement;
+        if (el && container) {
+            const centeredTop = el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2;
+            const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
+            container.scrollTo({ top, behavior: 'smooth' });
         }
     }
 }

@@ -14,7 +14,7 @@ describe('ScoreDisplayComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ScoreDisplayComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ScoreDisplayComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -22,58 +22,54 @@ describe('ScoreDisplayComponent', () => {
                 fixture = TestBed.createComponent(ScoreDisplayComponent);
                 component = fixture.componentInstance;
 
+                fixture.componentRef.setInput('course', course);
                 fixture.detectChanges();
-                component.course = course;
             });
     });
 
     it('should set bonus points correctly if score > maxScore', () => {
-        component.score = 15.3334;
-        component.maxPoints = 10;
-        component.maxBonusPoints = 10;
+        fixture.componentRef.setInput('score', 15.3334);
+        fixture.componentRef.setInput('maxPoints', 10);
+        fixture.componentRef.setInput('maxBonusPoints', 10);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-
-        expect(component.bonusPoints).toBe(5.33);
-        expect(component.maxPointsWithBonus).toBe(20);
-        expect(component.maxPercentage).toBe(200);
-        expect(component.score).toBe(15.33);
+        expect(component.bonusPoints()).toBe(5.33);
+        expect(component.maxPointsWithBonus()).toBe(20);
+        expect(component.maxPercentage()).toBe(200);
+        expect(component.roundedScore()).toBe(15.33);
     });
 
     it('should set bonus points as undefined if score < maxScore', () => {
-        component.score = 9.555;
-        component.maxPoints = 10;
-        component.maxBonusPoints = 5;
+        fixture.componentRef.setInput('score', 9.555);
+        fixture.componentRef.setInput('maxPoints', 10);
+        fixture.componentRef.setInput('maxBonusPoints', 5);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-
-        expect(component.bonusPoints).toBeUndefined();
-        expect(component.maxPointsWithBonus).toBe(15);
-        expect(component.maxPercentage).toBe(150);
-        expect(component.score).toBe(9.56);
+        expect(component.bonusPoints()).toBeUndefined();
+        expect(component.maxPointsWithBonus()).toBe(15);
+        expect(component.maxPercentage()).toBe(150);
+        expect(component.roundedScore()).toBe(9.56);
     });
 
     it('should set bonus points, max points with bonus and max percentage to undefined if maxBonusPoints is 0', () => {
-        component.score = 4.722;
-        component.maxPoints = 10;
-        component.maxBonusPoints = 0;
+        fixture.componentRef.setInput('score', 4.722);
+        fixture.componentRef.setInput('maxPoints', 10);
+        fixture.componentRef.setInput('maxBonusPoints', 0);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-
-        expect(component.bonusPoints).toBeUndefined();
-        expect(component.maxPointsWithBonus).toBeUndefined();
-        expect(component.maxPercentage).toBeUndefined();
-        expect(component.score).toBe(4.72);
+        expect(component.bonusPoints()).toBeUndefined();
+        expect(component.maxPointsWithBonus()).toBeUndefined();
+        expect(component.maxPercentage()).toBeUndefined();
+        expect(component.roundedScore()).toBe(4.72);
     });
 
     it('should set bonus points, max points with bonus and max percentage to undefined if maxPoints is undefined', () => {
-        component.score = 1.3782;
+        fixture.componentRef.setInput('score', 1.3782);
+        fixture.detectChanges();
 
-        component.ngOnChanges();
-
-        expect(component.bonusPoints).toBeUndefined();
-        expect(component.maxPointsWithBonus).toBeUndefined();
-        expect(component.maxPercentage).toBeUndefined();
-        expect(component.score).toBe(1.38);
+        expect(component.bonusPoints()).toBeUndefined();
+        expect(component.maxPointsWithBonus()).toBeUndefined();
+        expect(component.maxPercentage()).toBeUndefined();
+        expect(component.roundedScore()).toBe(1.38);
     });
 });

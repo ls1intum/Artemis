@@ -115,7 +115,23 @@
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
-            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise."
+            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
+            "unsupportedExerciseType": "This exercise type does not support practice mode.",
+            "notAvailableInExam": "Practice mode is not available for exam exercises.",
+            "notSupportedForTeams": "Practice mode is not supported for team exercises.",
+            "programmingExercisesDisabled": "Practice mode for programming exercises is disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Practice mode for text and modeling exercises is unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active.",
+            "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
+        },
+        "feedbackRequest": {
+            "notAvailableInExam": "Feedback requests are not available for exam exercises.",
+            "unsupportedExerciseType": "This exercise type does not support feedback requests.",
+            "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Feedback requests for text and modeling exercises are unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active."
         },
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
@@ -167,6 +183,7 @@
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
         "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
+        "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
@@ -206,6 +223,46 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
+        "PlagiarismPost": {
+            "idNull": "The plagiarism post must have an id.",
+            "courseInformationSharingDisabled": "Posting is disabled for this course.",
+            "plagiarismCaseMissing": "The post must be associated with a plagiarism case.",
+            "idExists": "A new post cannot already have an ID"
+        },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
+            "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementGenerationFailed": "Failed to generate problem statement. Please try again later.",
+            "problemStatementGenerationNull": "The AI returned an empty response. Please try again.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again."
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
+            "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
+            "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
+            "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
+            "refinedProblemStatementUnchanged": "The AI did not make any changes to the problem statement. Please adjust the refinement instructions and try again.",
+            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later.",
+            "textExtractionFailed": "Failed to extract the selected text for refinement. Please adjust your selection and try again.",
+            "invalidLineRange": "The selected line range is out of bounds. Please adjust your selection and try again.",
+            "invalidColumnRange": "The selected column range is invalid. Please adjust your selection and try again.",
+            "instructionEmpty": "The refinement instruction cannot be empty.",
+            "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
+        },
+        "ProblemStatementRewrite": {
+            "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "problemStatementRewriteFailed": "Failed to rewrite problem statement. Please try again later.",
+            "problemStatementRewriteNull": "The AI returned an empty response. Please try again.",
+            "rewrittenProblemStatementTooLong": "The rewritten problem statement is too long. Please try again with a shorter input."
+        },
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
@@ -219,6 +276,25 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
-        }
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "A new tutorial group configuration cannot already have an ID.",
+            "alreadyExists": "A tutorial group configuration already exists for this course.",
+            "courseHasNoTimeZone": "The course has no configured time zone.",
+            "idNull": "A tutorial group configuration cannot be updated without an id.",
+            "tutorialPeriodMissing": "Tutorial period start date and end date must be set.",
+            "tutorialPeriodInvalidFormat": "Tutorial period start date and end date must be valid ISO 8601 date strings.",
+            "tutorialPeriodInvalidOrder": "Tutorial period start date must be before tutorial period end date.",
+            "courseIdMismatch": "The course id in the path does not match the course of the tutorial group configuration.",
+            "tutorialGroupConfigurationIdMismatch": "The tutorial group configuration id in the path does not match the configuration to be updated."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Tutorial group free period start date must be set.",
+            "tutorialFreePeriodEndDateMissing": "Tutorial group free period end date must be set.",
+            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings.",
+            "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
+            "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
+        },
+        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
     }
 }

@@ -2,16 +2,25 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -32,12 +41,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -90,6 +105,15 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private ExerciseWeaviateService exerciseWeaviateService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     @BeforeAll
     void setupAll() {
@@ -197,6 +221,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
 
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(createdExercise));
+
+        assertProgrammingExerciseExistsInWeaviate(weaviateService, createdExercise);
     }
 
     @Test
@@ -213,24 +239,162 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        ZonedDateTime originalReleaseDate = programmingExercise.getReleaseDate();
+
+        // Pre-populate Weaviate with the exercise to avoid race condition on first insert
+        // This ensures we're actually testing the UPDATE path, not the INSERT path
+        if (exerciseWeaviateService != null && weaviateService != null) {
+            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            // Wait for initial insert to complete before proceeding with update
+            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+                var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+                assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
+                Object releaseDateObj = properties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Initial release date should be set in Weaviate").isNotNull();
+            });
+        }
+
+        ZonedDateTime newReleaseDate = ZonedDateTime.now().plusHours(1);
+        programmingExercise.setReleaseDate(newReleaseDate);
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
+        // Compare as instants because PostgreSQL stores timestamps as UTC and the
+        // original timezone offset is not preserved through the database round-trip.
+        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
+
+        if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
+            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
+                assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
+                assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
+                assertThat(((Number) weaviateProperties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                // Verify that the release date was actually updated in Weaviate
+                Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
+                assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
+                ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
+                // Compare as instants with a small tolerance because Weaviate may not preserve
+                // sub-millisecond precision through the serialization round-trip.
+                assertThat(weaviateReleaseDate.toInstant()).isCloseTo(newReleaseDate.toInstant(), within(100, java.time.temporal.ChronoUnit.MILLIS));
+                assertThat(weaviateReleaseDate.toInstant()).isNotEqualTo(originalReleaseDate.toInstant());
+            });
+        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateProgrammingExercise_templateRepositoryUriIsInvalid() throws Exception {
-        programmingExercise.setTemplateRepositoryUri("http://localhost:9999/some/invalid/url.git");
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    void testUpdateProgrammingExercise_usesOriginalCompetenciesForProgressUpdate() throws Exception {
+        Competency replacementCompetency = competencyUtilService.createCompetency(course);
 
-        programmingExercise.setTemplateRepositoryUri(
-                "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
+        programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        AtomicReference<Set<Long>> originalCompetencyIds = new AtomicReference<>();
+        AtomicReference<Set<Long>> updatedCompetencyIds = new AtomicReference<>();
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Set<Long> originalIds = invocation.getArgument(0);
+            LearningObject updatedLearningObject = invocation.getArgument(1);
+
+            originalCompetencyIds.set(Set.copyOf(originalIds));
+            updatedCompetencyIds.set(updatedLearningObject.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
+            return null;
+        }).when(competencyProgressApi).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
+
+        programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, programmingExercise, 1)));
+
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(originalCompetencyIds.get()).containsExactly(competency.getId());
+        assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_withCompetencyFromDifferentCourse_badRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        Competency foreignCompetency = competencyUtilService.createCompetency(otherCourse);
+
+        programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(foreignCompetency, programmingExercise, 1)));
+
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // Note: testUpdateProgrammingExercise_templateRepositoryUriIsInvalid was removed because
+    // UpdateProgrammingExerciseDTO intentionally doesn't include templateRepositoryUri.
+    // Repository URIs are immutable after exercise creation and cannot be modified through the update endpoint.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_invalidBuildPhaseName() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "invalid phase",
+                      "script": "echo test",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_duplicateBuildPhaseNames_caseInsensitive() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "Build",
+                      "script": "echo build",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    },
+                    {
+                      "name": "build",
+                      "script": "echo test",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_reservedBuildPhaseName_caseInsensitive() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "main",
+                      "script": "echo build",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -239,12 +403,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testDeleteProgrammingExercise() throws Exception {
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExerciseRepository.save(programmingExercise);
+        long exerciseId = programmingExercise.getId();
 
         // Delete the exercise
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, params);
+        request.delete("/api/programming/programming-exercises/" + exerciseId, HttpStatus.OK, params);
 
         // Assert that the repository folders do not exist anymore.
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
@@ -254,6 +419,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
+
+        assertExerciseNotInWeaviate(weaviateService, exerciseId);
     }
 
     @Test
@@ -309,6 +476,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
+
+        assertProgrammingExerciseExistsInWeaviate(weaviateService, importedExercise);
     }
 
     @Test

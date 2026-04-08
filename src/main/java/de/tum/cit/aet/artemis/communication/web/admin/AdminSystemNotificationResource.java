@@ -12,14 +12,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.SystemNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -55,43 +58,72 @@ public class AdminSystemNotificationResource {
     /**
      * POST /system-notifications : Create a new system notification.
      *
-     * @param systemNotification the system notification to create
+     * @param dto                  the system notification DTO to create
+     * @param sendMaintenanceEmail whether to send maintenance email to instructors of ongoing courses
      * @return the ResponseEntity with status 201 (Created) and with body the new system notification, or with status 400 (Bad Request) if the system notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
-        log.debug("REST request to save SystemNotification : {}", systemNotification);
-        if (systemNotification.getId() != null) {
+    public ResponseEntity<SystemNotification> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
+            @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
+        log.debug("REST request to save SystemNotification : {}", dto);
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        SystemNotification systemNotification = dto.toEntity();
         this.systemNotificationService.validateDatesElseThrow(systemNotification);
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
+
+        if (sendMaintenanceEmail) {
+            try {
+                systemNotificationService.sendMaintenanceEmails(result);
+            }
+            catch (Exception e) {
+                log.error("Failed to trigger maintenance emails for system notification {}", result.getId(), e);
+            }
+        }
+
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
+     * GET /system-notifications/maintenance-recipients-count : Get the count of instructors who would receive a maintenance email.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the count of recipients in the body
+     */
+    @GetMapping("system-notifications/maintenance-recipients-count")
+    public ResponseEntity<Long> getMaintenanceRecipientsCount() {
+        long count = systemNotificationService.countMaintenanceEmailRecipients();
+        return ResponseEntity.ok(count);
+    }
+
+    /**
      * PUT /system-notifications : Updates an existing system notification.
      *
-     * @param systemNotification the system notification to update
+     * @param updateDTO the system notification update DTO containing the new values
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the system notification is not valid, or with
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
     @PutMapping("system-notifications")
-    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
-        log.debug("REST request to update SystemNotification : {}", systemNotification);
-        if (systemNotification.getId() == null) {
+    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
+        log.debug("REST request to update SystemNotification : {}", updateDTO);
+        if (updateDTO.id() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idNull");
         }
-        this.systemNotificationService.validateDatesElseThrow(systemNotification);
-        if (!systemNotificationRepository.existsById(systemNotification.getId())) {
-            throw new BadRequestAlertException("No system notification with this ID found", ENTITY_NAME, "idNull");
-        }
-        SystemNotification result = systemNotificationRepository.save(systemNotification);
+
+        // Fetch the existing notification from the database (this is the managed entity)
+        SystemNotification existingNotification = systemNotificationRepository.findById(updateDTO.id())
+                .orElseThrow(() -> new BadRequestAlertException("No system notification with this ID found", ENTITY_NAME, "idNull"));
+
+        // Apply DTO values to the managed entity
+        updateDTO.applyTo(existingNotification);
+
+        this.systemNotificationService.validateDatesElseThrow(existingNotification);
+        SystemNotification result = systemNotificationRepository.save(existingNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, systemNotification.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**

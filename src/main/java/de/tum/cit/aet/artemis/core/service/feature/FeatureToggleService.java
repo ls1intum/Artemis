@@ -33,6 +33,11 @@ public class FeatureToggleService {
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
+    @Value("${artemis.iris.lecture-content-processing.enabled:false}")
+    private boolean lectureContentProcessingEnabledOnStart;
+
+    private final boolean globalSearchEnabledOnStart;
+
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -44,11 +49,13 @@ public class FeatureToggleService {
     private Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService) {
+            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService,
+            @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
+        this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
@@ -84,10 +91,10 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris, AtlasAgent, and RateLimit) are enabled once the system starts up
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, and GlobalSearch) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.Memiris
-                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch) {
                 features.put(feature, true);
             }
         }
@@ -112,8 +119,12 @@ public class FeatureToggleService {
             features.put(Feature.Memiris, false);
         }
 
+        if (!features.containsKey(Feature.GlobalSearch)) {
+            features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
+        }
+
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
-        if (profileService.isDevActive()) {
+        if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
             features.put(Feature.LectureContentProcessing, false);
         }
 

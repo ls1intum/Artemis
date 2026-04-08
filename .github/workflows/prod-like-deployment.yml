@@ -30,7 +30,7 @@ env:
 
 jobs:
   check-build-status:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
     steps:

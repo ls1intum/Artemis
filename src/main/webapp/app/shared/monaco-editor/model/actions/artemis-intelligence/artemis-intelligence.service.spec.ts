@@ -199,7 +199,7 @@ describe('ArtemisIntelligenceService', () => {
     describe('consistencyCheck', () => {
         it('should trigger consistency check using Hyperion API and return result', () => {
             const exerciseId = 42;
-            const mockResponse: ConsistencyCheckResponse = { issues: [] };
+            const mockResponse: ConsistencyCheckResponse = { timestamp: new Date().toISOString(), issues: [] };
 
             mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
@@ -233,7 +233,7 @@ describe('ArtemisIntelligenceService', () => {
                 relatedLocations: [],
             } as const;
             // Cast to any because openapi types are structural; keeping literals preserves intent while avoiding enum import complexity in spec.
-            const mockResponse: ConsistencyCheckResponse = { issues: [mockIssue as any] };
+            const mockResponse: ConsistencyCheckResponse = { timestamp: new Date().toISOString(), issues: [mockIssue as any] };
 
             mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
@@ -366,6 +366,9 @@ describe('ArtemisIntelligenceService', () => {
         it('should reflect loading state correctly for FAQ rewrite', () => {
             const mockResponse: RewriteFaqResponse = {
                 rewrittenText: 'Rewritten Text',
+                inconsistencies: [],
+                suggestions: [],
+                improvement: '',
             };
             mockHyperionFaqApiService.rewriteFaq.mockReturnValue(of(mockResponse));
 
@@ -375,7 +378,7 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('should reflect loading state correctly for Hyperion consistency check', () => {
-            const mockResponse: ConsistencyCheckResponse = { issues: [] };
+            const mockResponse: ConsistencyCheckResponse = { timestamp: new Date().toISOString(), issues: [] };
             mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             expect(service.isLoading()).toBeFalsy();

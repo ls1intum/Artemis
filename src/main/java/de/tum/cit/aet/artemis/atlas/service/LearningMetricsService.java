@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyStudentMetricsDTO;
@@ -183,13 +182,12 @@ public class LearningMetricsService {
      * Retrieves comprehensive competency metrics for a student within a specific course.
      * <p>
      * This method aggregates competency information, links each competency to related exercises and lecture units,
-     * and collects the student's progress, confidence, and most recent self-assessment (JOL) values.
-     * Both current and prior JOL values are included to enable tracking of changes in self-assessment over time.
+     * and collects the student's progress and confidence.
      *
      * @param userId   the unique identifier of the student
      * @param courseId the unique identifier of the course
      * @return a {@link CompetencyStudentMetricsDTO} containing detailed competency metadata,
-     *         mappings to exercises and lecture units, student progress, confidence, and current/prior JOL values
+     *         mappings to exercises and lecture units, student progress, and confidence
      */
     public CompetencyStudentMetricsDTO getStudentCompetencyMetrics(long userId, long courseId) {
         final var competencyInfo = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseId);
@@ -210,15 +208,6 @@ public class LearningMetricsService {
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
-        // Get latest self-assessment (JOL) values and separate from prior JOLs
-        final var currentJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
-        final var currentJolValuesMap = currentJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
-
-        final var currentJolIds = currentJolValues.stream().map(CompetencyJolDTO::id).collect(toSet());
-        final var priorJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIdsExcludeJolIds(userId, competencyIds, currentJolIds);
-        final var priorJolValuesMap = priorJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
-
-        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, currentJolValuesMap,
-                priorJolValuesMap);
+        return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap);
     }
 }

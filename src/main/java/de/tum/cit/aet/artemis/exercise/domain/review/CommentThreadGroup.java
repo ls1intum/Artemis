@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain.review;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -21,7 +22,7 @@ public class CommentThreadGroup extends DomainObject {
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
-    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Set<CommentThread> threads = new HashSet<>();
 
     public Exercise getExercise() {

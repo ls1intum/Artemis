@@ -115,7 +115,23 @@
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
         "dueDateOver": {
             "noParticipationPossible": "Das Abgabedatum der Übung ist bereits abgelaufen, du kannst nicht mehr an dieser Übung teilnehmen.",
-            "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen."
+            "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
+            "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt den Übungsmodus nicht.",
+            "notAvailableInExam": "Der Übungsmodus ist für Klausuraufgaben nicht verfügbar.",
+            "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen nicht unterstützt.",
+            "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist deaktiviert.",
+            "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
+            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben ist nicht verfügbar.",
+            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv.",
+            "feedbackRequestAfterDueDate": "Die Abgabefrist ist abgelaufen. Starte eine Übungsteilnahme, um nach der Frist Feedback anzufordern."
+        },
+        "feedbackRequest": {
+            "notAvailableInExam": "Feedback-Anfragen sind für Klausuraufgaben nicht verfügbar.",
+            "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt keine Feedback-Anfragen.",
+            "programmingExercisesDisabled": "Feedback-Anfragen für Programmieraufgaben sind deaktiviert.",
+            "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
+            "athenaProfileRequired": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
+            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv."
         },
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
@@ -167,6 +183,7 @@
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
         },
         "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID.",
+        "participationExerciseMismatch": "Die Feedback-Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
@@ -206,6 +223,46 @@
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
+        "PlagiarismPost": {
+            "idNull": "Der Beitrag muss eine ID besitzen.",
+            "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
+            "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein.",
+            "idExists": "Ein neuer Beitrag darf noch keine ID haben"
+        },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
+            "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementGenerationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementGenerationNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
+            "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut."
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
+            "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut.",
+            "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",
+            "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
+            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut.",
+            "textExtractionFailed": "Der ausgewählte Text konnte nicht extrahiert werden. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidLineRange": "Der ausgewählte Zeilenbereich liegt außerhalb der Grenzen. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidColumnRange": "Der ausgewählte Spaltenbereich ist ungültig. Bitte passe die Auswahl an und versuche es erneut.",
+            "instructionEmpty": "Die Verfeinerungsanweisung darf nicht leer sein.",
+            "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
+        },
+        "ProblemStatementRewrite": {
+            "chatClientNotConfigured": "KI-Umschreibung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "problemStatementRewriteFailed": "Fehler beim Umschreiben der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementRewriteNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "rewrittenProblemStatementTooLong": "Die umgeschriebene Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer kürzeren Eingabe."
+        },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
         "examTimes": "Ungültige Klausurzeiten: Bitte stelle sicher, dass das Sichtbarkeitsdatum vor dem Startdatum liegt, das Startdatum vor dem Enddatum liegt und das Veröffentlichungsdatum der Beispiellösung (falls gesetzt) nach dem Enddatum liegt.",
@@ -219,6 +276,27 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
-        }
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "Eine neue Tutoriengruppen-Konfiguration darf noch keine ID besitzen.",
+            "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
+            "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
+            "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
+
+            "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
+
+            "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
+            "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodEndDateMissing": "Das Enddatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodInvalidFormat": "Das Start- und Enddatum des freien Zeitraums der Tutoriengruppe müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialFreePeriodInvalidOrder": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss vor dem Enddatum liegen.",
+            "tutorialFreePeriodOutOfBounds": "Freie Zeiträume der Tutoriengruppe müssen innerhalb des Tutorienzeitraums liegen."
+        },
+        "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut."
     }
 }

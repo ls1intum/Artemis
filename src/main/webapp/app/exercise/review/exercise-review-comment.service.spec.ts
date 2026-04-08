@@ -6,20 +6,56 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { Subject } from 'rxjs';
+import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
+import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
+    ReviewThreadSyncUpdateEvent,
+} from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
     let alertServiceMock: { error: ReturnType<typeof vi.fn> };
+    let syncServiceMock: { subscribeToUpdates: ReturnType<typeof vi.fn> };
+    let syncSubject: Subject<ExerciseEditorSyncEvent>;
+
+    const createReviewSyncEvent = (update: ReviewThreadSyncUpdate): ReviewThreadSyncUpdateEvent => {
+        return {
+            eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE,
+            target: ExerciseEditorSyncTarget.REVIEW_COMMENTS,
+            action: update.action,
+            exerciseId: update.exerciseId,
+            thread: update.thread,
+            comment: update.comment,
+            commentId: update.commentId,
+            threadIds: update.threadIds,
+            groupId: update.groupId,
+        };
+    };
 
     beforeEach(() => {
         alertServiceMock = {
             error: vi.fn(),
         };
+        syncSubject = new Subject<ExerciseEditorSyncEvent>();
+        syncServiceMock = {
+            subscribeToUpdates: vi.fn(() => syncSubject.asObservable()),
+        };
 
         TestBed.configureTestingModule({
-            providers: [ExerciseReviewCommentService, provideHttpClient(), provideHttpClientTesting(), { provide: AlertService, useValue: alertServiceMock }],
+            providers: [
+                ExerciseReviewCommentService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AlertService, useValue: alertServiceMock },
+                { provide: ExerciseEditorSyncService, useValue: syncServiceMock },
+            ],
         });
 
         service = TestBed.inject(ExerciseReviewCommentService);
@@ -38,6 +74,18 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
+    });
+
+    it('setExercise should not throw when synchronization connection is not ready', () => {
+        syncServiceMock.subscribeToUpdates.mockImplementationOnce(() => {
+            throw new Error('not connected');
+        });
+
+        const changed = service.setExercise(42);
+
+        expect(changed).toBe(true);
+        expect(service.threads()).toEqual([]);
     });
 
     it('setExercise should not clear thread state when exercise id is unchanged', () => {
@@ -48,6 +96,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(changed).toBe(false);
         expect(service.threads()).toEqual([{ id: 1 } as any]);
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state when no active exercise exists', () => {
@@ -68,6 +117,7 @@ describe('ExerciseReviewCommentService', () => {
         req.flush([{ id: 11 }]);
 
         expect(service.threads()).toEqual([{ id: 11 } as any]);
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should clear state and show alert on failure', () => {
@@ -81,6 +131,7 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(service.threads()).toEqual([]);
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
+        expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
     it('reloadThreads should ignore stale success responses after exercise switch', () => {
@@ -108,12 +159,73 @@ describe('ExerciseReviewCommentService', () => {
         expect(alertServiceMock.error).not.toHaveBeenCalled();
     });
 
+    it('setExercise should apply synchronization events before the first reload', () => {
+        service.setExercise(4);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.THREAD_CREATED,
+                exerciseId: 4,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
+
+        expect(service.threads()).toEqual([{ id: 2, comments: [] }] as any);
+    });
+
+    it('reloadThreads should merge synchronization updates received during an in-flight reload', () => {
+        service.setExercise(4);
+
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([{ id: 1, comments: [] }]);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.THREAD_CREATED,
+                exerciseId: 4,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
+
+        req.flush([{ id: 1, comments: [] }]);
+
+        expect(service.threads()).toEqual([
+            { id: 1, comments: [] },
+            { id: 2, comments: [] },
+        ] as any);
+    });
+
+    it('reloadThreads should preserve synchronization deletions received during an in-flight reload', () => {
+        service.setExercise(4);
+
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([{ id: 1, comments: [{ id: 9 }] }]);
+
+        service.reloadThreads();
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-threads');
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.COMMENT_DELETED,
+                exerciseId: 4,
+                commentId: 9,
+            }),
+        );
+
+        req.flush([{ id: 1, comments: [{ id: 9 }] }]);
+
+        expect(service.threads()).toEqual([]);
+    });
+
     it('createThreadInContext should be ignored without active exercise', () => {
         service.createThreadInContext({
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any);
 
         expect(httpMock.match(() => true)).toHaveLength(0);
@@ -126,7 +238,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload);
@@ -149,7 +261,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -168,7 +280,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -186,7 +298,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThreadInContext(payload, onSuccess);
@@ -219,7 +331,7 @@ describe('ExerciseReviewCommentService', () => {
         service.setExercise(3);
         service.threads.set([{ id: 5, comments: [] }] as any);
 
-        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any);
+        service.createReplyInContext(5, { contentType: CommentContentType.USER, text: 'reply' } as any);
 
         const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
         expect(req.request.method).toBe('POST');
@@ -232,7 +344,7 @@ describe('ExerciseReviewCommentService', () => {
         service.setExercise(3);
         const onSuccess = vi.fn();
 
-        service.createReplyInContext(5, { contentType: 'USER', text: 'reply' } as any, onSuccess);
+        service.createReplyInContext(5, { contentType: CommentContentType.USER, text: 'reply' } as any, onSuccess);
         expect(onSuccess).not.toHaveBeenCalled();
 
         const req = httpMock.expectOne('api/exercise/exercises/3/review-threads/5/comments');
@@ -244,7 +356,7 @@ describe('ExerciseReviewCommentService', () => {
     it('updateCommentInContext should replace comment content in-place', () => {
         service.setExercise(3);
         service.threads.set([{ id: 5, comments: [{ id: 10, threadId: 5, content: { text: 'old' } }] }] as any);
-        const content = { contentType: 'USER', text: 'new' } as any;
+        const content = { contentType: CommentContentType.USER, text: 'new' } as any;
 
         service.updateCommentInContext(10, content);
 
@@ -258,7 +370,7 @@ describe('ExerciseReviewCommentService', () => {
 
     it('updateCommentInContext should invoke success callback only after persistence', () => {
         service.setExercise(3);
-        const content = { contentType: 'USER', text: 'new' } as any;
+        const content = { contentType: CommentContentType.USER, text: 'new' } as any;
         const onSuccess = vi.fn();
 
         service.updateCommentInContext(10, content, onSuccess);
@@ -289,7 +401,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            initialComment: { contentType: 'USER', text: 'hi' },
+            initialComment: { contentType: CommentContentType.USER, text: 'hi' },
         } as any;
 
         service.createThread(1, payload).subscribe();
@@ -320,7 +432,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('createUserComment should send POST request', () => {
-        const payload = { contentType: 'USER', text: 'reply' } as any;
+        const payload = { contentType: CommentContentType.USER, text: 'reply' } as any;
 
         service.createUserComment(3, 5, payload).subscribe();
 
@@ -340,7 +452,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('updateUserCommentContent should send PUT request', () => {
-        const payload = { contentType: 'USER', text: 'update' } as any;
+        const payload = { contentType: CommentContentType.USER, text: 'update' } as any;
 
         service.updateUserCommentContent(8, 9, payload).subscribe();
 
@@ -408,5 +520,161 @@ describe('ExerciseReviewCommentService', () => {
         const result = service.appendThreadToThreads(threads, newThread);
 
         expect(result).toHaveLength(2);
+    });
+
+    it('should apply THREAD_CREATED synchronization update idempotently', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadSyncAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any }));
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadSyncAction.THREAD_CREATED, exerciseId: 4, thread: { id: 2, comments: [] } as any }));
+
+        expect(service.threads()).toEqual([
+            { id: 1, comments: [] },
+            { id: 2, comments: [] },
+        ] as any);
+    });
+
+    it('should apply COMMENT_CREATED synchronization update idempotently', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        const comment = { id: 9, threadId: 1, content: { text: 'Hello' } } as any;
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadSyncAction.COMMENT_CREATED, exerciseId: 4, comment }));
+        syncSubject.next(createReviewSyncEvent({ action: ReviewThreadSyncAction.COMMENT_CREATED, exerciseId: 4, comment }));
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [comment] }] as any);
+    });
+
+    it('should apply COMMENT_UPDATED synchronization update', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'Old' } }] }] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.COMMENT_UPDATED,
+                exerciseId: 4,
+                comment: { id: 9, threadId: 1, content: { text: 'New' } } as any,
+            }),
+        );
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [{ id: 9, threadId: 1, content: { text: 'New' } }] }] as any);
+    });
+
+    it('should preserve local comments when THREAD_UPDATED synchronization payload is stale', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([
+            { id: 1, resolved: false, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
+        ] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.THREAD_UPDATED,
+                exerciseId: 4,
+                thread: { id: 1, resolved: true, comments: [] } as any,
+            }),
+        );
+
+        expect(service.threads()).toEqual([
+            { id: 1, resolved: true, comments: [{ id: 11, threadId: 1, content: { text: 'new comment' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }] },
+        ] as any);
+    });
+
+    it('should keep the most recent comment version when THREAD_UPDATED contains duplicates', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([
+            {
+                id: 1,
+                comments: [{ id: 11, threadId: 1, content: { text: 'newer local' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }],
+            },
+        ] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.THREAD_UPDATED,
+                exerciseId: 4,
+                thread: {
+                    id: 1,
+                    comments: [{ id: 11, threadId: 1, content: { text: 'older incoming' }, lastModifiedDate: '2026-01-01T09:00:00.000Z' }],
+                } as any,
+            }),
+        );
+
+        expect(service.threads()).toEqual([
+            {
+                id: 1,
+                comments: [{ id: 11, threadId: 1, content: { text: 'newer local' }, lastModifiedDate: '2026-01-01T10:00:00.000Z' }],
+            },
+        ] as any);
+    });
+
+    it('should apply COMMENT_DELETED synchronization update and drop empty thread', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([{ id: 1, comments: [{ id: 9 }] }] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.COMMENT_DELETED,
+                exerciseId: 4,
+                commentId: 9,
+            }),
+        );
+
+        expect(service.threads()).toEqual([]);
+    });
+
+    it('should apply GROUP_UPDATED synchronization update', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([
+            { id: 1, groupId: undefined },
+            { id: 2, groupId: undefined },
+            { id: 3, groupId: 8 },
+        ] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.GROUP_UPDATED,
+                exerciseId: 4,
+                threadIds: [1, 2],
+                groupId: 77,
+            }),
+        );
+
+        expect(service.threads()).toEqual([
+            { id: 1, groupId: 77 },
+            { id: 2, groupId: 77 },
+            { id: 3, groupId: 8 },
+        ] as any);
+    });
+
+    it('should ignore synchronization events from other exercises', () => {
+        service.setExercise(4);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/4/review-threads').flush([]);
+        service.threads.set([{ id: 1, comments: [] }] as any);
+
+        syncSubject.next(
+            createReviewSyncEvent({
+                action: ReviewThreadSyncAction.THREAD_CREATED,
+                exerciseId: 5,
+                thread: { id: 2, comments: [] } as any,
+            }),
+        );
+
+        expect(service.threads()).toEqual([{ id: 1, comments: [] }] as any);
     });
 });

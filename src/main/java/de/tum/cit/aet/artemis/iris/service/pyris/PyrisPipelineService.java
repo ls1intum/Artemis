@@ -22,8 +22,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -131,8 +129,8 @@ public class PyrisPipelineService {
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
-        var preparing = new PyrisStageDTO("Preparing", 10, null, null, false);
-        var executing = new PyrisStageDTO("Executing pipeline", 30, null, null, false);
+        var preparing = new PyrisStageDTO("artemisApp.iris.stages.thinking", 10, null, null, false, null);
+        var executing = new PyrisStageDTO("artemisApp.iris.stages.analyzing", 30, null, null, false, null);
 
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
@@ -150,12 +148,12 @@ public class PyrisPipelineService {
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
-                statusUpdater.accept(List.of(preparing.done(), executing.error("An internal error occurred")));
+                statusUpdater.accept(List.of(preparing.done(), executing.error("artemisApp.iris.stages.error.internal")));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
-            statusUpdater.accept(List.of(preparing.error("An internal error occurred"), executing.notStarted()));
+            statusUpdater.accept(List.of(preparing.error("artemisApp.iris.stages.error.internal"), executing.notStarted()));
         }
     }
 
@@ -374,8 +372,6 @@ public class PyrisPipelineService {
      * It provides specific data for the course chat pipeline, including:
      * - The full course with the participation of the student
      * - The metrics of the student in the course
-     * - The competency JoL if this is due to a JoL set event
-     * <p>
      *
      * @param variant            the variant of the pipeline
      * @param customInstructions the custom instructions for the pipeline
@@ -387,7 +383,6 @@ public class PyrisPipelineService {
         log.debug("Executing course chat pipeline variant {} with object {}", variant, object);
         switch (object) {
             case null -> executeCourseChatPipeline(variant, customInstructions, session, null, null, Optional.empty());
-            case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, customInstructions, session, competencyJol, CompetencyJolDTO.class, Optional.of("jol"));
             case Exercise exercise -> executeCourseChatPipeline(variant, customInstructions, session, exercise, PyrisExerciseWithStudentSubmissionsDTO.class, Optional.empty());
             default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + object);
         }

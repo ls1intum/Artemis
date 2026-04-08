@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseLearnerProfileComponent } from 'app/core/user/settings/learner-profile/course-learner-profile/course-learner-profile.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -14,6 +16,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseLearnerProfileComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
     let selector: HTMLSelectElement;
@@ -22,7 +26,7 @@ describe('CourseLearnerProfileComponent', () => {
     let learnerProfileApiService: LearnerProfileApiService;
     let alertService: AlertService;
 
-    let putUpdatedCourseLearnerProfileSpy: jest.SpyInstance;
+    let putUpdatedCourseLearnerProfileSpy: ReturnType<typeof vi.spyOn>;
 
     const course1: Course = {
         id: 1,
@@ -70,7 +74,7 @@ describe('CourseLearnerProfileComponent', () => {
         component = fixture.componentInstance;
         selector = fixture.nativeElement.getElementsByTagName('select')[0];
 
-        jest.spyOn(courseManagementService, 'find').mockImplementation((courseId) => {
+        vi.spyOn(courseManagementService, 'find').mockImplementation((courseId) => {
             if (courseId < 1 || courseId > 2) {
                 return of(new HttpResponse<Course>({ status: 200 }));
             }
@@ -83,9 +87,9 @@ describe('CourseLearnerProfileComponent', () => {
             );
         });
 
-        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(profiles as CourseLearnerProfileDTO[]);
+        vi.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(profiles as CourseLearnerProfileDTO[]);
 
-        putUpdatedCourseLearnerProfileSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedCourseLearnerProfile');
+        putUpdatedCourseLearnerProfileSpy = vi.spyOn(learnerProfileApiService, 'putUpdatedCourseLearnerProfile');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -94,7 +98,7 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     function selectCourse(id: number) {
@@ -154,14 +158,14 @@ describe('CourseLearnerProfileComponent', () => {
 
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
+        expect((putUpdatedCourseLearnerProfileSpy.mock.calls[0] as any[])[0]).toEqual(profile);
         expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
     async function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
         await fixture.whenStable();
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-        expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
+        expect((putUpdatedCourseLearnerProfileSpy.mock.calls[0] as any[])[0]).toEqual(profile);
         expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
@@ -230,8 +234,8 @@ describe('CourseLearnerProfileComponent', () => {
         it('should handle non-HTTP error when loading profiles', async () => {
             // Arrange
             const genericError = new Error('Network error');
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(genericError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            vi.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(genericError);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call ngOnInit which internally calls loadProfiles
             await component.ngOnInit();
@@ -258,7 +262,7 @@ describe('CourseLearnerProfileComponent', () => {
                 status: 500,
             });
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -287,7 +291,7 @@ describe('CourseLearnerProfileComponent', () => {
                 headers: new HttpHeaders().set('x-artemisapp-alert', 'Custom Error Message'),
             });
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -315,7 +319,7 @@ describe('CourseLearnerProfileComponent', () => {
                 headers: new HttpHeaders().set('x-artemisapp-alert', 'Custom Error Message'),
             });
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -336,7 +340,7 @@ describe('CourseLearnerProfileComponent', () => {
                 error: { title: 'Custom error message' },
                 status: 400,
             });
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Set up component state and trigger error through API call
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
@@ -363,7 +367,7 @@ describe('CourseLearnerProfileComponent', () => {
                 headers: new HttpHeaders().set('x-artemisapp-alert', 'Header error message'),
                 status: 400,
             });
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Set up component state and trigger error through API call
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
@@ -387,7 +391,7 @@ describe('CourseLearnerProfileComponent', () => {
         it('should handle generic error through API failure', async () => {
             // Arrange
             const genericError = new Error('Generic error');
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Set up component state and trigger error through API call
             putUpdatedCourseLearnerProfileSpy.mockRejectedValue(genericError);
@@ -501,656 +505,6 @@ describe('CourseLearnerProfileComponent', () => {
             expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
             expect(component.timeInvestment()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
             expect(component.repetitionIntensity()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-        });
-
-        it('should load profile for course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection which internally calls loadProfileForCourse
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should load the profile for course 1
-            expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
-            expect(component.timeInvestment()).toBe(clp1.timeInvestment);
-            expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
-        });
-
-        it('should not load profile for non-existent course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection with non-existent course
-            const mockEvent = {
-                target: {
-                    value: '999',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should remain at default values since no profile was found
-            expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.timeInvestment()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.repetitionIntensity()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-        });
-
-        it('should load profiles successfully through ngOnInit', async () => {
-            // Arrange
-            const profiles = [clp1, clp2];
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(profiles);
-
-            // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(component.courseLearnerProfiles()).toEqual(profiles);
-        });
-
-        it('should handle error when loading profiles fails through ngOnInit', async () => {
-            // Arrange
-            const error = new Error('Failed to load profiles');
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(error);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should validate profile values before update', async () => {
-            // Arrange
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Set invalid values
-            component.aimForGradeOrBonus.set(-1);
-            component.timeInvestment.set(6);
-            component.repetitionIntensity.set(7);
-
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
-            expect(addAlertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
-            });
-        });
-
-        it('should update profile values in component state after successful update', async () => {
-            // Arrange
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            const newProfile = new CourseLearnerProfileDTO();
-            Object.assign(newProfile, { ...profiles[courseIndex] });
-            newProfile.aimForGradeOrBonus = 3;
-            newProfile.timeInvestment = 3;
-            newProfile.repetitionIntensity = 3;
-
-            component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus);
-            component.timeInvestment.set(newProfile.timeInvestment);
-            component.repetitionIntensity.set(newProfile.repetitionIntensity);
-
-            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(component.aimForGradeOrBonus()).toBe(newProfile.aimForGradeOrBonus);
-            expect(component.timeInvestment()).toBe(newProfile.timeInvestment);
-            expect(component.repetitionIntensity()).toBe(newProfile.repetitionIntensity);
-        });
-
-        it('should test updateProfileValues method through course selection', () => {
-            // Arrange
-            const testProfile = new CourseLearnerProfileDTO();
-            testProfile.id = 1;
-            testProfile.courseId = 1; // Set courseId so it can be found
-            testProfile.courseTitle = 'Test Course';
-            testProfile.aimForGradeOrBonus = 3;
-            testProfile.timeInvestment = 4;
-            testProfile.repetitionIntensity = 5;
-            component.courseLearnerProfiles.set([testProfile]);
-
-            // Act - Test through course selection which internally calls updateProfileValues
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert
-            expect(component.aimForGradeOrBonus()).toBe(3);
-            expect(component.timeInvestment()).toBe(4);
-            expect(component.repetitionIntensity()).toBe(5);
-        });
-
-        it('should test getCourseLearnerProfile method with existing course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection which internally calls getCourseLearnerProfile
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should load the profile for course 1
-            expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
-            expect(component.timeInvestment()).toBe(clp1.timeInvestment);
-            expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
-        });
-
-        it('should test getCourseLearnerProfile method with non-existing course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection with non-existent course
-            const mockEvent = {
-                target: {
-                    value: '999',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should remain at default values since no profile was found
-            expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.timeInvestment()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.repetitionIntensity()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-        });
-
-        it('should test loadProfileForCourse method with existing course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection which internally calls loadProfileForCourse
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should load the profile for course 1
-            expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
-            expect(component.timeInvestment()).toBe(clp1.timeInvestment);
-            expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
-        });
-
-        it('should test loadProfileForCourse method with non-existing course through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act - Test through course selection with non-existent course
-            const mockEvent = {
-                target: {
-                    value: '999',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should remain at default values since no profile was found
-            expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.timeInvestment()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-            expect(component.repetitionIntensity()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-        });
-
-        it('should test loadProfiles method through ngOnInit', async () => {
-            // Arrange
-            const testProfiles = [clp1, clp2];
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(testProfiles);
-
-            // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(component.courseLearnerProfiles()).toEqual(testProfiles);
-        });
-
-        it('should test loadProfiles method with error handling through ngOnInit', async () => {
-            // Arrange
-            const error = new Error('Load failed');
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(error);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test courseChanged method with valid course selection', () => {
-            // Arrange
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseLearnerProfiles.set(profiles);
-
-            // Act
-            component.courseChanged(mockEvent);
-
-            // Assert
-            expect(component.activeCourseId).toBe(1);
-            expect(component.disabled).toBeFalsy();
-            expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
-            expect(component.timeInvestment()).toBe(clp1.timeInvestment);
-            expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
-        });
-
-        it('should test courseChanged method with no course selection', () => {
-            // Arrange
-            const mockEvent = {
-                target: {
-                    value: '-1',
-                },
-            } as unknown as Event;
-
-            // Act
-            component.courseChanged(mockEvent);
-
-            // Assert
-            expect(component.activeCourseId).toBeNull();
-            expect(component.disabled).toBeTruthy();
-        });
-    });
-
-    describe('Error handling and edge cases', () => {
-        it('should test handleError method with HttpErrorResponse and title through API failure', async () => {
-            // Arrange
-            const httpError = new HttpErrorResponse({
-                error: { title: 'Custom error message' },
-                status: 400,
-            });
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'Custom error message',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test handleError method with HttpErrorResponse and header through API failure', async () => {
-            // Arrange
-            const httpError = new HttpErrorResponse({
-                headers: new HttpHeaders().set('x-artemisapp-alert', 'Header error message'),
-                status: 400,
-            });
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'Header error message',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test handleError method with HttpErrorResponse without title or header through API failure', async () => {
-            // Arrange
-            const httpError = new HttpErrorResponse({
-                status: 500,
-            });
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test handleError method with generic error through API failure', async () => {
-            // Arrange
-            const genericError = new Error('Generic error');
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(genericError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test handleError method with null error through API failure', async () => {
-            // Arrange
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(null);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test handleError method with string error through API failure', async () => {
-            // Arrange
-            const stringError = 'String error';
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(stringError);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Set up component state
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Act - Call onToggleChange which will trigger handleError
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test loadProfiles method with error handling through ngOnInit', async () => {
-            // Arrange
-            const error = new Error('Load failed');
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(error);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test onToggleChange with invalid profile values', async () => {
-            // Arrange
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            // Set invalid values
-            component.aimForGradeOrBonus.set(-1);
-            component.timeInvestment.set(6);
-            component.repetitionIntensity.set(7);
-
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
-            expect(addAlertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
-            });
-        });
-
-        it('should test onToggleChange with success and alert handling', async () => {
-            // Arrange
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            const newProfile = new CourseLearnerProfileDTO();
-            Object.assign(newProfile, { ...profiles[courseIndex] });
-            newProfile.aimForGradeOrBonus = 3;
-            newProfile.timeInvestment = 3;
-            newProfile.repetitionIntensity = 3;
-
-            component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus);
-            component.timeInvestment.set(newProfile.timeInvestment);
-            component.repetitionIntensity.set(newProfile.repetitionIntensity);
-
-            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
-            const closeAllSpy = jest.spyOn(alertService, 'closeAll');
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-            expect(closeAllSpy).toHaveBeenCalled();
-            expect(addAlertSpy).toHaveBeenCalledWith({
-                type: AlertType.SUCCESS,
-                message: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
-            });
-        });
-
-        it('should test onToggleChange with error during save', async () => {
-            // Arrange
-            const courseIndex = 1;
-            const courseId = profiles[courseIndex].courseId;
-            component.courseLearnerProfiles.set([...profiles]);
-            component.activeCourseId = courseId;
-            component.disabled = false;
-
-            const error = new Error('Save failed');
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(error);
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
-            expect(alertSpy).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: 'An unexpected error occurred',
-                disableTranslation: true,
-            });
-        });
-
-        it('should test component with empty profiles array through course selection', () => {
-            // Arrange
-            component.courseLearnerProfiles.set([]);
-
-            // Act - Test through course selection
-            const mockEvent = {
-                target: {
-                    value: '1',
-                },
-            } as unknown as Event;
-            component.courseChanged(mockEvent);
-
-            // Assert - Should not find profile and remain disabled
-            expect(component.activeCourseId).toBe(1);
-            expect(component.disabled).toBeFalsy();
-            // The profile values should remain at default since no profile was found
-            expect(component.aimForGradeOrBonus()).toBe(CourseLearnerProfileDTO.MIN_VALUE);
-        });
-
-        it('should test component with null activeCourseId', async () => {
-            // Arrange
-            component.activeCourseId = null;
-            component.disabled = false;
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
-        });
-
-        it('should test component with undefined activeCourseId', async () => {
-            // Arrange
-            component.activeCourseId = undefined as any;
-            component.disabled = false;
-
-            // Act
-            await component.onToggleChange();
-            await fixture.whenStable();
-
-            // Assert
-            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
-        });
-
-        it('should test component signal updates', () => {
-            // Arrange & Act
-            component.aimForGradeOrBonus.set(1);
-            component.timeInvestment.set(2);
-            component.repetitionIntensity.set(3);
-
-            // Assert
-            expect(component.aimForGradeOrBonus()).toBe(1);
-            expect(component.timeInvestment()).toBe(2);
-            expect(component.repetitionIntensity()).toBe(3);
-        });
-
-        it('should test component disabled state changes', () => {
-            // Arrange & Act
-            component.disabled = false;
-            expect(component.disabled).toBeFalsy();
-
-            component.disabled = true;
-            expect(component.disabled).toBeTruthy();
-        });
-
-        it('should test component with courseId as string', () => {
-            // Arrange
-            const mockEvent = {
-                target: {
-                    value: '1', // String value
-                },
-            } as unknown as Event;
-
-            // Act
-            component.courseChanged(mockEvent);
-
-            // Assert
-            expect(component.activeCourseId).toBe(1); // Should be converted to number
-            expect(component.disabled).toBeFalsy();
-        });
-
-        it('should test component with invalid courseId string', () => {
-            // Arrange
-            const mockEvent = {
-                target: {
-                    value: 'invalid',
-                },
-            } as unknown as Event;
-
-            // Act
-            component.courseChanged(mockEvent);
-
-            // Assert
-            expect(component.activeCourseId).toBeNaN();
-            expect(component.disabled).toBeFalsy();
         });
     });
 });

@@ -15,14 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,14 +48,15 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
     private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InterruptedException {
         queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-        // Reset pause state to ensure clean state for each test
-        sharedQueueProcessingService.resetPauseState();
+        // Set pause state to true so that any in-flight scheduled task (cancelled with cancel(false))
+        // that is still executing will return early and not consume queue items
+        sharedQueueProcessingService.setPauseState(true);
     }
 
     @AfterEach
@@ -65,7 +65,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         processingJobs.clear();
 
         // Reset pause state and init to activate queue listener again
-        sharedQueueProcessingService.resetPauseState();
+        sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
     }
 
@@ -121,7 +121,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
                 exercise.getBuildConfig().hasSequentialTestRuns());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-        String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
+        String expectedBuildConfig = JsonObjectMapper.get().writeValueAsString(windfile);
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
         assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
         // test that the method does not throw an exception when the exercise is null

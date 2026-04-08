@@ -13,12 +13,12 @@
             "descriptionCloud": "Schnelle, hochwertige KI basierend auf modernsten Cloud-Modellen",
             "descriptionLocal": "Ideal für höchsten Datenschutz, aber mit einigen Einschränkungen",
             "descriptionNo": "Du kannst Artemis weiterhin nutzen, jedoch ohne KI-Unterstützung",
-            "featureCloudOne": "Neueste Modelle wie GPT-5",
+            "featureCloudOne": "Neueste LLMs wie GPT-5",
             "featureCloudTwo": "Hohe Antwortqualität",
             "featureCloudThree": "Schnelle Antwortzeiten",
             "featureCloudFour": "DSGVO-konforme Verarbeitung in Azures EU-Rechenzentren",
             "featureCloudFive": "Alle Daten auf universitären Servern gespeichert",
-            "featureLocalOne": "Neueste Open-Source-Modelle wie GPT-OSS",
+            "featureLocalOne": "Neueste Open-Source-LLMs wie GPT-OSS",
             "featureLocalTwo": "Geringere Antwortqualität",
             "featureLocalThree": "Langsamere Antwortzeiten",
             "featureLocalFour": "Verarbeitung nur in universitären Rechenzentren",
@@ -27,7 +27,9 @@
             "featureNoTwo": "Kein automatisches KI-Feedback zu Modellierungs- und Textaufgaben",
             "featureNoThree": "Keine KI-gestützte Anleitung",
             "disclaimer": "Artemis wird niemals deine persönlichen Daten wie Matrikelnummer oder E-Mail-Adresse an ein großes Sprachmodell senden •",
-            "disclaimerButton": "Erfahre mehr über deine Optionen"
+            "disclaimerButton": "Erfahre mehr über deine Optionen",
+            "memirisTitle": "Langzeitgedächtnis aktivieren",
+            "memirisDescription": "Iris kann sich deine Lernpräferenzen und vergangene Interaktionen merken, um dich langfristig personalisierter zu unterstützen. Du kannst dies jederzeit deaktivieren."
         }
     }
 }

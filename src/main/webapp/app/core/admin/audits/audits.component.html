@@ -24,7 +24,7 @@
                             jhiSort
                             [predicate]="predicate()"
                             [ascending]="ascending()"
-                            (predicateChange)="predicate.set($event)"
+                            (predicateChange)="predicate.set($event!)"
                             (ascendingChange)="ascending.set($event)"
                             (sortChange)="transition()"
                         >

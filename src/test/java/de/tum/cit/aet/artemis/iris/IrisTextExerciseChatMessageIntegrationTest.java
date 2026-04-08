@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -212,8 +213,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisMessage message3 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
         IrisMessage message4 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
 
-        var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
+        var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessageResponseDTO.class);
+        assertThat(messages).hasSize(4);
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(message1.getId(), message2.getId(), message3.getId(), message4.getId());
     }
 
     @Test
@@ -222,7 +224,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisSession irisSession = createSessionForUser("student1");
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isTrue();
     }
@@ -233,7 +236,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisSession irisSession = createSessionForUser("student1");
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isFalse();
     }
@@ -244,7 +248,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisSession irisSession = createSessionForUser("student1");
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isNull();
     }
@@ -255,7 +260,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisSession irisSession = createSessionForUser("student1");
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -265,7 +271,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisSession irisSession2 = createSessionForUser("student2");
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession1);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.CONFLICT);
     }
 
     @Test
@@ -347,6 +354,23 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         var irisSessionFromDb = irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_invokesIrisCitationService() throws Exception {
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        verify(irisCitationService).resolveCitationInfo(any());
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {

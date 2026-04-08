@@ -149,9 +149,10 @@ describe('VideoPlayerComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function setInputs(url?: string, segments: TranscriptSegment[] = []): void {
+    function setInputs(url?: string, segments: TranscriptSegment[] = [], initialTimestamp?: number): void {
         fixture.componentRef.setInput('videoUrl', url);
         fixture.componentRef.setInput('transcriptSegments', segments);
+        fixture.componentRef.setInput('initialTimestamp', initialTimestamp);
     }
 
     async function render(): Promise<void> {
@@ -241,6 +242,16 @@ describe('VideoPlayerComponent', () => {
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
+    });
+
+    it('applies initial timestamp after metadata is available', async () => {
+        setInputs('https://cdn.example.com/m.m3u8', [], 12.5);
+        await render();
+
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(videoElement.currentTime).toBe(12.5);
+        expect(component.currentSegmentIndex()).toBe(-1);
     });
 
     it('ngOnDestroy destroys hls instance', async () => {
