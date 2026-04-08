@@ -8,7 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * This helper class is used to store transient information related to the notification,
@@ -157,7 +158,7 @@ public class NotificationTarget {
     public String toJsonString() {
         String result = null;
         try {
-            result = new ObjectMapper().writeValueAsString(this);
+            result = JsonObjectMapper.get().writeValueAsString(this);
         }
         catch (JsonProcessingException exception) {
             log.error(exception.getMessage(), exception);

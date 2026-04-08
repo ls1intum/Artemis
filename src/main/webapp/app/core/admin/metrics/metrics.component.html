@@ -1,32 +1,63 @@
 <div>
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
-    <div *adminTitleBarActions>
+    <div *adminTitleBarActions class="d-flex gap-2 align-items-center flex-wrap">
+        <span class="quick-nav-label">Jump to:</span>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('jvm-metrics')">JVM</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('gc-metrics')">GC</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('http-metrics')">HTTP</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('endpoints-metrics')">Endpoints</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('cache-metrics')">Cache</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('datasource-metrics')">Datasource</button>
+        @if (nodeOptions().length > 1) {
+            <p-select
+                [(ngModel)]="selectedNodeId"
+                [options]="nodeOptions()"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="onNodeChange()"
+                size="small"
+                styleClass="w-auto"
+                [style]="{ height: '31px', 'font-size': '0.875rem' }"
+            />
+        }
         <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="metrics.refresh.button"></span></button>
     </div>
-    <h3 jhiTranslate="metrics.jvm.title"></h3>
-    @if (metrics() && !updatingMetrics()) {
+
+    @if (!metrics() && updatingMetrics()) {
+        <div class="well well-lg" jhiTranslate="metrics.updating"></div>
+    }
+
+    @if (metrics()) {
+        <h3 id="jvm-metrics" jhiTranslate="metrics.jvm.title"></h3>
         <div class="row">
             <jhi-jvm-memory class="col-md-4" [updating]="updatingMetrics()" [jvmMemoryMetrics]="metrics()!.jvm" />
             <jhi-jvm-threads class="col-md-4" [threads]="threads()" />
             <jhi-metrics-system class="col-md-4" [updating]="updatingMetrics()" [systemMetrics]="metrics()!.processMetrics" />
         </div>
-    }
-    @if (metrics() && metricsKeyExists('garbageCollector')) {
-        <jhi-metrics-garbagecollector [updating]="updatingMetrics()" [garbageCollectorMetrics]="metrics()!.garbageCollector" />
-    }
-    @if (updatingMetrics()) {
-        <div class="well well-lg" jhiTranslate="metrics.updating"></div>
-    }
-    @if (metrics() && metricsKeyExists('http.server.requests')) {
-        <jhi-metrics-request [updating]="updatingMetrics()" [requestMetrics]="metrics()!['http.server.requests']" />
-    }
-    @if (metrics() && metricsKeyExists('services')) {
-        <jhi-metrics-endpoints-requests [updating]="updatingMetrics()" [endpointsRequestsMetrics]="metrics()!.services" />
-    }
-    @if (metrics() && metricsKeyExists('cache')) {
-        <jhi-metrics-cache [updating]="updatingMetrics()" [cacheMetrics]="metrics()!.cache" />
-    }
-    @if (metrics() && metricsKeyExistsAndObjectNotEmpty('databases')) {
-        <jhi-metrics-datasource [updating]="updatingMetrics()" [datasourceMetrics]="metrics()!.databases" />
+        @if (metricsKeyExists('garbageCollector')) {
+            <div id="gc-metrics">
+                <jhi-metrics-garbagecollector [updating]="updatingMetrics()" [garbageCollectorMetrics]="metrics()!.garbageCollector" />
+            </div>
+        }
+        @if (metricsKeyExists('http.server.requests')) {
+            <div id="http-metrics">
+                <jhi-metrics-request [updating]="updatingMetrics()" [requestMetrics]="metrics()!['http.server.requests']" />
+            </div>
+        }
+        @if (metricsKeyExists('services')) {
+            <div id="endpoints-metrics">
+                <jhi-metrics-endpoints-requests [updating]="updatingMetrics()" [endpointsRequestsMetrics]="metrics()!.services" />
+            </div>
+        }
+        @if (metricsKeyExists('cache')) {
+            <div id="cache-metrics">
+                <jhi-metrics-cache [updating]="updatingMetrics()" [cacheMetrics]="metrics()!.cache" />
+            </div>
+        }
+        @if (metricsKeyExistsAndObjectNotEmpty('databases')) {
+            <div id="datasource-metrics">
+                <jhi-metrics-datasource [updating]="updatingMetrics()" [datasourceMetrics]="metrics()!.databases" />
+            </div>
+        }
     }
 </div>
