@@ -1,0 +1,309 @@
+@use 'src/main/webapp/content/scss/themes/default-variables' as light;
+@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
+
+$toolbar-search-width: 168px;
+$toolbar-compact-hidden-selectors: (
+    1: '.artemis-pdf-toolbar__divider',
+    2: '.artemis-pdf-toolbar__download-button',
+    3: '.artemis-pdf-toolbar__search',
+    4: '.artemis-pdf-toolbar__zoom-controls',
+    5: '.artemis-pdf-toolbar__page-navigation',
+);
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.iframe-pdf-container {
+    width: 100%;
+    height: 100%;
+    --pdf-bar-height: 36px;
+    --toolbar-control-height: 24px;
+    // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
+    --pdf-viewer-bg: #{light.$gray-100};
+    --toolbar-surface-color: #{light.$card-bg};
+    --toolbar-border-color: #{light.$card-border-color};
+    --toolbar-text-color: #{light.$body-color};
+    --toolbar-muted-text-color: #{light.$gray-600};
+    --toolbar-input-border-color: #{light.$gray-400};
+    --toolbar-input-focus-color: #{light.$gray-500};
+    --artemis-search-highlight-bg-color: #{rgba(light.$yellow, 0.5)};
+    --artemis-search-highlight-selected-bg-color: #{rgba(light.$orange, 0.5)};
+}
+
+.iframe-pdf-viewer {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.iframe-pdf-container #viewerContainer,
+.iframe-pdf-container .pdfViewer {
+    background-color: var(--pdf-viewer-bg) !important;
+}
+
+#toolbarViewer.artemis-pdf-toolbar {
+    --artemis-toolbar-side-width: 32px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border: none !important;
+    background-color: var(--toolbar-surface-color) !important;
+}
+
+#toolbarViewer.artemis-pdf-toolbar.artemis-pdf-toolbar--fullscreen {
+    grid-template-columns: var(--artemis-toolbar-side-width) minmax(0, 1fr) var(--artemis-toolbar-side-width);
+    column-gap: 0.25rem;
+}
+
+.artemis-pdf-toolbar__left-spacer {
+    width: var(--artemis-toolbar-side-width);
+}
+
+.artemis-pdf-toolbar__center {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    height: auto;
+    overflow: hidden;
+    min-width: 0;
+}
+
+#toolbarViewer.artemis-pdf-toolbar.artemis-pdf-toolbar--fullscreen .artemis-pdf-toolbar__center {
+    grid-column: 2;
+}
+
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active > :not(.artemis-pdf-toolbar__search) {
+    display: none !important;
+}
+
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active .artemis-pdf-toolbar__search {
+    max-width: 100%;
+}
+
+.artemis-pdf-toolbar__center.artemis-pdf-toolbar__center--search-active .artemis-pdf-toolbar__search-input {
+    width: $toolbar-search-width !important;
+}
+
+.artemis-pdf-toolbar__right {
+    grid-column: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1rem;
+}
+
+@each $level, $selector in $toolbar-compact-hidden-selectors {
+    .artemis-pdf-toolbar__center--compact-#{$level} #{$selector} {
+        display: none;
+    }
+}
+
+.iframe-pdf-container #toolbarContainer {
+    display: flex;
+    align-items: center;
+    height: auto !important;
+    min-height: var(--pdf-bar-height) !important;
+    padding: 0 0.375rem !important;
+    background-color: var(--toolbar-surface-color) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--toolbar-border-color) !important;
+}
+
+.artemis-pdf-toolbar .p-inputnumber {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.artemis-pdf-toolbar :is(.artemis-pdf-toolbar__search-input, .artemis-pdf-toolbar__page-input) {
+    min-height: var(--toolbar-control-height) !important;
+    height: var(--toolbar-control-height) !important;
+    border: 1px solid var(--toolbar-input-border-color) !important;
+    border-radius: 0.25rem !important;
+    background-color: var(--toolbar-surface-color) !important;
+    color: var(--toolbar-text-color) !important;
+    font-size: 0.8rem !important;
+    font-weight: 400;
+    line-height: 1.1;
+    padding: 0.1rem 0.4rem !important;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+    &::placeholder {
+        color: var(--toolbar-muted-text-color);
+        opacity: 1;
+    }
+    &:focus {
+        border-color: var(--toolbar-input-focus-color) !important;
+        box-shadow: 0 0 0 1px var(--toolbar-input-focus-color) !important;
+        outline: none;
+    }
+}
+
+.artemis-pdf-toolbar__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    color: var(--toolbar-text-color);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    &:hover,
+    &:active {
+        opacity: 0.8;
+    }
+    fa-icon {
+        font-size: 1rem;
+    }
+}
+
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    filter: none !important;
+}
+
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button:focus-visible {
+    outline: 2px solid var(--toolbar-input-focus-color) !important;
+    outline-offset: -2px;
+}
+
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button::-moz-focus-inner {
+    border: 0 !important;
+}
+
+.artemis-pdf-toolbar__page-navigation {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.25rem;
+}
+
+.artemis-pdf-toolbar__page-navigation .p-inputnumber {
+    width: 2.1rem;
+}
+
+.artemis-pdf-toolbar__page-input {
+    width: 100%;
+    text-align: center;
+}
+
+.artemis-pdf-toolbar__page-total {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--toolbar-text-color);
+}
+
+.artemis-pdf-toolbar__search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.artemis-pdf-toolbar__search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.artemis-pdf-toolbar__search-icon {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--toolbar-muted-text-color);
+    font-size: 0.65rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.artemis-pdf-toolbar .artemis-pdf-toolbar__search-input {
+    width: $toolbar-search-width;
+    padding-left: 1.5rem !important;
+}
+
+.artemis-pdf-toolbar__search-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.artemis-pdf-toolbar__zoom-controls {
+    display: flex;
+    align-items: center;
+}
+
+.artemis-pdf-toolbar__search-count {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--toolbar-text-color);
+    padding: 0 0.5rem;
+}
+
+.artemis-pdf-toolbar__divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--toolbar-border-color);
+    margin: 0 0.5rem;
+}
+
+.iframe-pdf-container .toolbar,
+.iframe-pdf-container #mainContainer {
+    border: none !important;
+}
+
+.iframe-pdf-container .page,
+.iframe-pdf-container .toolbar,
+.iframe-pdf-container button {
+    box-shadow: none;
+    filter: none;
+}
+
+.iframe-pdf-container .textLayer .highlight,
+.iframe-pdf-container .textLayer .customHighlight {
+    background-color: var(--artemis-search-highlight-bg-color) !important;
+    opacity: 1 !important;
+    backdrop-filter: none !important;
+}
+
+.iframe-pdf-container .textLayer .highlight.selected,
+.iframe-pdf-container .textLayer .customHighlight.selected {
+    background-color: var(--artemis-search-highlight-selected-bg-color) !important;
+}
+
+.iframe-pdf-container .page {
+    border: none !important;
+    outline: none;
+    margin: 0 auto !important;
+    &:not(:last-child) {
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+.iframe-pdf-container.dark-mode {
+    --pdf-viewer-bg: #{dark.$gray-900};
+    --toolbar-surface-color: #{dark.$card-bg};
+    --toolbar-border-color: #{dark.$card-border-color};
+    --toolbar-text-color: #{dark.$body-color};
+    --toolbar-muted-text-color: #{dark.$gray-500};
+    --toolbar-input-border-color: #{dark.$gray-600};
+    --toolbar-input-focus-color: #{dark.$gray-400};
+    --artemis-search-highlight-bg-color: #{rgba(dark.$yellow, 0.5)};
+    --artemis-search-highlight-selected-bg-color: #{rgba(dark.$orange, 0.5)};
+}

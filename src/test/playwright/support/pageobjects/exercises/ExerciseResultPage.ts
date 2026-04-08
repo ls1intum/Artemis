@@ -32,18 +32,4 @@ export class ExerciseResultPage {
         const resultScore = this.page.locator('jhi-course-exercise-details #submission-result-graded');
         await Commands.reloadUntilTextFound(this.page, resultScore, `${percentage}%`, 4000, 60000);
     }
-
-    async clickOpenExercise(exerciseId: number) {
-        await this.page.locator(`#open-exercise-${exerciseId}`).click();
-    }
-
-    async clickOpenExerciseAndAwaitRatingResponse(exerciseId: number) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/results/*/rating`);
-        await this.clickOpenExercise(exerciseId);
-        await responsePromise;
-    }
-
-    async clickOpenCodeEditor(exerciseId: number) {
-        await this.page.locator(`#open-exercise-${exerciseId}`).click();
-    }
 }

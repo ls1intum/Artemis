@@ -30,14 +30,13 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
@@ -95,9 +94,9 @@ class HyperionConsistencyCheckServiceTest {
         var costConfiguration = createTestConfiguration();
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
-        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, new ObjectMapper());
+        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, new ObjectMapper());
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
     }
 
     @Test

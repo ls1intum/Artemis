@@ -26,7 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.ResourceUtils;
 
@@ -310,7 +310,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         }
     }
 
-    private MockHttpServletRequestBuilder buildUpdateExamUser(@NonNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
+    private MockMultipartHttpServletRequestBuilder buildUpdateExamUser(@NonNull ExamUserDTO examUserDTO, boolean hasSigned, long courseId, long examId) throws Exception {
         var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(examUserDTO).getBytes());
         if (hasSigned) {
             var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");
@@ -323,7 +323,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         }
     }
 
-    private MockHttpServletRequestBuilder buildUploadExamUserImages(long courseId, long examId) throws Exception {
+    private MockMultipartHttpServletRequestBuilder buildUploadExamUserImages(long courseId, long examId) throws Exception {
         var signingImage = loadFile("classpath:test-data/exam-users", "studentsWithImages.pdf");
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users-save-images").file(signingImage)

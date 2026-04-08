@@ -122,6 +122,20 @@
             "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen.",
             "buildLogs": {
                 "viewLogs": "Logs anzeigen"
+            },
+            "progressString": {
+                "title": "Ergebnisverlauf",
+                "resultsCount": {
+                    "one": "{{ count }} Ergebnis",
+                    "other": "{{ count }} Ergebnisse"
+                },
+                "feedbackButton": "Feedback",
+                "clickToSeeAllResults": "Klicke hier, um alle Ergebnisse zu sehen",
+                "buildFailed": "Dein Build ist fehlgeschlagen!",
+                "goalReached": "Ziel erreicht! Ausgezeichnete Arbeit.",
+                "niceProgress": "Guter Fortschritt! Du kommst näher.",
+                "scoreDrop": "Ups, deine Punktzahl ist gesunken. Versuche einen anderen Ansatz!",
+                "stuck": "Steckst du fest? Versuche einen neuen Ansatz."
             }
         }
     }

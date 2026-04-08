@@ -1,8 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateString } from 'app/shared/util/date.utils';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { toISO8601DateString } from 'app/shared/util/date.utils';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 type DtoResponseType = HttpResponse<TutorialGroupConfigurationDTO>;
@@ -27,18 +26,6 @@ export class TutorialGroupsConfigurationService {
         return this.httpClient.put<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
             observe: 'response',
         });
-    }
-
-    convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
-        tutorialGroupsConfiguration.tutorialPeriodStartInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodStartInclusive);
-        tutorialGroupsConfiguration.tutorialPeriodEndInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodEndInclusive);
-        if (tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-            tutorialGroupsConfiguration.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
-                tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-                tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-            });
-        }
-        return tutorialGroupsConfiguration;
     }
 
     private convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, period: Date[]): TutorialGroupConfigurationDTO {

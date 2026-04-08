@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
@@ -354,7 +355,7 @@ class AtlasAgentServiceTest {
     @Nested
     class AtlasAgentHistoryMessageDTOTests {
 
-        private final ObjectMapper objectMapper = new ObjectMapper();
+        private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
         @Test
         void shouldSerializeToJsonWhenValidData() throws Exception {

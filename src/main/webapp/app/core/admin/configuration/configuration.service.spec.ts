@@ -42,7 +42,7 @@ describe('ConfigurationService', () => {
             contexts: {
                 jhipster: {
                     beans: {
-                        'tech.jhipster.config.JHipsterProperties': bean,
+                        'de.tum.cit.aet.artemis.core.config.ArtemisProperties': bean,
                     },
                 },
             },

@@ -140,7 +140,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
-        expect(navigateSpy).toHaveBeenCalledWith(['/']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/sign-in']);
         expect(authStateSpy).toHaveBeenCalled();
     });
 

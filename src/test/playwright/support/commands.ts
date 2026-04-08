@@ -42,7 +42,7 @@ export class Commands {
 
         if (url) {
             await page.goto(url);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('load');
         }
     };
 
