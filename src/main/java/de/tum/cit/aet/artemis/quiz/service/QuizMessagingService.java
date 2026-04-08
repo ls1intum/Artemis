@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
@@ -36,8 +37,9 @@ public class QuizMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public QuizMessagingService(ObjectMapper objectMapper, GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
-        this.objectMapper = objectMapper;
+    public QuizMessagingService(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter, GroupNotificationService groupNotificationService,
+            WebsocketMessagingService websocketMessagingService) {
+        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
     }

@@ -105,7 +105,6 @@ public class LectureService {
      * @param user                   the user for which this call should filter
      * @return lecture with filtered attachments
      */
-    @SuppressWarnings("deprecation") // Lecture attachments are deprecated; migrate to AttachmentUnit
     public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
         Course course = lectureWithAttachments.getCourse();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
@@ -287,7 +286,6 @@ public class LectureService {
         return lecture;
     }
 
-    @SuppressWarnings("deprecation") // Lecture attachments are deprecated; migrate to AttachmentUnit
     private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
         List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
