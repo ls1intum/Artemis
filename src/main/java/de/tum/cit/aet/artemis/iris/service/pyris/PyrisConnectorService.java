@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -71,9 +72,10 @@ public class PyrisConnectorService {
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper, PyrisJobService pyrisJobService) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            PyrisJobService pyrisJobService) {
         this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.pyrisJobService = pyrisJobService;
     }
 
