@@ -231,6 +231,13 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    http:
+        converters:
+            # Jackson 3 is on the classpath (transitive from spring-ai) but the application uses Jackson 2
+            # for serialization (Hibernate7Module, JavaTimeModule, etc.). Without this setting, Spring Boot 4
+            # defaults to Jackson 3, which bypasses the registered Jackson 2 modules and causes
+            # LazyInitializationException during JSON serialization of Hibernate proxies.
+            preferred-json-mapper: jackson2
     ai:
         model:
             chat: none # possible values: openai, azure-openai, none
