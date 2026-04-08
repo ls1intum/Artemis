@@ -75,9 +75,11 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE phase = :phase
             AND retry_eligible_at IS NOT NULL
             AND retry_eligible_at <= :now
+            ORDER BY retry_eligible_at ASC, id ASC
+            LIMIT :limit
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
-    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") String phase, @Param("now") ZonedDateTime now);
+    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") String phase, @Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
      * Find all processing states for a course.

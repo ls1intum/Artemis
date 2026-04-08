@@ -124,7 +124,7 @@ public class ProcessingStateCallbackService {
             ZonedDateTime now = ZonedDateTime.now();
 
             // Pick up FAILED jobs that are eligible for retry (backoff expired)
-            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now);
+            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, availableSlots);
 
             for (LectureUnitProcessingState state : retryJobs) {
                 if (availableSlots <= 0) {
@@ -246,16 +246,17 @@ public class ProcessingStateCallbackService {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
+            processingStateRepository.save(state);
+
+            // Notify UI via WebSocket
+            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+            notifyProcessingStateChange(state, txStatus);
         }
         else {
             log.warn("Processing failed for unit {}", lectureUnitId);
+            // handleProcessingFailure saves the state and sends WebSocket notification internally
             handleProcessingFailure(state);
         }
-        processingStateRepository.save(state);
-
-        // Notify UI via WebSocket
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-        notifyProcessingStateChange(state, txStatus);
 
         // Fill the freed slot with the next pending job
         dispatchPendingJobs();
@@ -424,11 +425,15 @@ public class ProcessingStateCallbackService {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
 
+        // Preserve existing transcription status in the WebSocket notification so the UI
+        // does not lose it when a failure occurs after transcription already completed.
+        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+
         if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
             state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
             processingStateRepository.save(state);
-            notifyProcessingStateChange(state, null);
+            notifyProcessingStateChange(state, txStatus);
             return;
         }
 
@@ -437,7 +442,7 @@ public class ProcessingStateCallbackService {
         state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         state.scheduleRetry(backoffMinutes);
         processingStateRepository.save(state);
-        notifyProcessingStateChange(state, null);
+        notifyProcessingStateChange(state, txStatus);
 
         log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
                 MAX_PROCESSING_RETRIES);
@@ -536,7 +541,7 @@ public class ProcessingStateCallbackService {
      * Handle an Iris restart notification.
      * <p>
      * When Iris starts up, all previous in-flight jobs are lost. This method
-     * marks all TRANSCRIBING/INGESTING states as failed with retry so they
+     * resets all TRANSCRIBING/INGESTING states to IDLE so they
      * get re-dispatched to the now-fresh Iris instance.
      *
      * @return the number of jobs that were reset
@@ -553,21 +558,10 @@ public class ProcessingStateCallbackService {
         log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
 
         for (LectureUnitProcessingState state : activeStates) {
-            log.info("Iris reset: re-queuing unit {} (was {}), retry budget preserved", state.getLectureUnit().getId(), state.getPhase());
             // Do NOT call handleProcessingFailure here — Iris restarts are infrastructure events,
             // not content-processing failures. Incrementing retryCount would burn the retry
             // budget and could permanently fail otherwise healthy jobs after a few rollouts.
-            state.setPhase(ProcessingPhase.IDLE);
-            state.setIngestionJobToken(null);
-            state.setStartedAt(null);
-            state.setRetryEligibleAt(null);
-            state.setLastUpdated(ZonedDateTime.now());
-            processingStateRepository.save(state);
-
-            // Notify UI
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus)
-                    .orElse(null);
-            notifyProcessingStateChange(state, txStatus);
+            resetToIdleForRecovery(state);
         }
 
         return activeStates.size();

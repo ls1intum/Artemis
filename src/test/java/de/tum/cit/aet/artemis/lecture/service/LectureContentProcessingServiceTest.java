@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -57,6 +61,8 @@ class LectureContentProcessingServiceTest {
 
     private IrisLectureApi irisLectureApi;
 
+    private WebsocketMessagingService websocketMessagingService;
+
     private AttachmentVideoUnit testUnit;
 
     private Lecture testLecture;
@@ -72,7 +78,7 @@ class LectureContentProcessingServiceTest {
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
-        WebsocketMessagingService websocketMessagingService = mock(WebsocketMessagingService.class);
+        websocketMessagingService = mock(WebsocketMessagingService.class);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, Optional.of(irisLectureApi), websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
@@ -600,6 +606,106 @@ class LectureContentProcessingServiceTest {
             ZonedDateTime expectedEligibleAt = beforeCall.plusMinutes(4);
             assertThat(testState.getRetryEligibleAt()).isAfterOrEqualTo(expectedEligibleAt.minusSeconds(5));
             assertThat(testState.getRetryEligibleAt()).isBeforeOrEqualTo(expectedEligibleAt.plusSeconds(5));
+        }
+    }
+
+    // ==================== WebSocket Notification Correctness ====================
+
+    @Nested
+    class WebSocketNotifications {
+
+        @Test
+        void shouldPreserveTranscriptionStatusOnFailure() {
+            // Given: Unit in INGESTING phase with a completed transcription
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            LectureTranscription completedTranscription = new LectureTranscription();
+            completedTranscription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            // When: Ingestion fails
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+
+            // Then: WebSocket notification must include the transcription status (not null)
+            ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
+            verify(websocketMessagingService).sendMessage(anyString(), dtoCaptor.capture());
+
+            LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
+            assertThat(sentDto.transcriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+            assertThat(sentDto.processingPhase()).isEqualTo(ProcessingPhase.FAILED);
+        }
+    }
+
+    // ==================== Dispatch Slot Limiting ====================
+
+    @Nested
+    class DispatchSlotLimiting {
+
+        @Test
+        void shouldPassAvailableSlotsAsLimitToRetryQuery() {
+            // Given: 1 active job, so 1 slot available (MAX_CONCURRENT_PROCESSING = 2)
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L);
+            when(processingStateRepository.findStatesReadyForRetry(anyString(), any(), anyInt())).thenReturn(List.of());
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of());
+
+            // When
+            callbackService.dispatchPendingJobs();
+
+            // Then: Should pass availableSlots (2 - 1 = 1) as the limit
+            verify(processingStateRepository).findStatesReadyForRetry(eq(ProcessingPhase.FAILED.name()), any(ZonedDateTime.class), eq(1));
+        }
+    }
+
+    // ==================== Iris Reset ====================
+
+    @Nested
+    class IrisReset {
+
+        @Test
+        void shouldResetActiveStatesToIdlePreservingRetryBudget() {
+            // Given: Two in-flight jobs with existing retry counts
+            LectureUnitProcessingState transcribingState = new LectureUnitProcessingState(testUnit);
+            transcribingState.setPhase(ProcessingPhase.TRANSCRIBING);
+            transcribingState.setRetryCount(2);
+            transcribingState.setIngestionJobToken("token-1");
+            transcribingState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+
+            AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
+            unit2.setId(200L);
+            unit2.setLecture(testLecture);
+            LectureUnitProcessingState ingestingState = new LectureUnitProcessingState(unit2);
+            ingestingState.setPhase(ProcessingPhase.INGESTING);
+            ingestingState.setRetryCount(3);
+            ingestingState.setIngestionJobToken("token-2");
+            ingestingState.setStartedAt(ZonedDateTime.now().minusMinutes(10));
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(transcribingState, ingestingState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
+
+            // When
+            int resetCount = callbackService.handleIrisReset();
+
+            // Then: Both reset to IDLE, retry budget preserved, tokens cleared
+            assertThat(resetCount).isEqualTo(2);
+
+            assertThat(transcribingState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(transcribingState.getRetryCount()).isEqualTo(2); // Unchanged
+            assertThat(transcribingState.getIngestionJobToken()).isNull();
+            assertThat(transcribingState.getStartedAt()).isNull();
+
+            assertThat(ingestingState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(ingestingState.getRetryCount()).isEqualTo(3); // Unchanged
+            assertThat(ingestingState.getIngestionJobToken()).isNull();
+            assertThat(ingestingState.getStartedAt()).isNull();
+
+            verify(processingStateRepository, times(2)).save(any());
+            verify(websocketMessagingService, times(2)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }
