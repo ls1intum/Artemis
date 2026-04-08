@@ -375,11 +375,11 @@ describe('WebauthnService', () => {
             await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(capturedSignal).toBeDefined();
-            expect(capturedSignal!.aborted).toBeFalse();
+            expect(capturedSignal!.aborted).toBe(false);
 
             service.abortPendingCredentialRequest();
 
-            expect(capturedSignal!.aborted).toBeTrue();
+            expect(capturedSignal!.aborted).toBe(true);
             expect(capturedSignal!.reason).toBeInstanceOf(PasskeyAbortError);
         });
 
@@ -413,7 +413,7 @@ describe('WebauthnService', () => {
 
             // The signal passed to navigator.credentials.get should be the original (aborted) one
             expect(capturedSignal).toBeDefined();
-            expect(capturedSignal!.aborted).toBeTrue();
+            expect(capturedSignal!.aborted).toBe(true);
             expect(capturedSignal!.reason).toBeInstanceOf(PasskeyAbortError);
         });
     });
