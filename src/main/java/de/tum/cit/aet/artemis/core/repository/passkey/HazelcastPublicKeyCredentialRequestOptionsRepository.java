@@ -108,12 +108,14 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
      */
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
-        if (options != null) {
+        boolean storeNewChallenge = options != null;
+        if (storeNewChallenge) {
             String token = UUID.randomUUID().toString();
             authOptionsMap.put(token, options);
             response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(token, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
         }
         else {
+            // clear old challenge
             Cookie existingCookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
             if (existingCookie != null) {
                 authOptionsMap.remove(existingCookie.getValue());
