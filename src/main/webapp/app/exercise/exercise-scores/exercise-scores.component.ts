@@ -152,6 +152,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     });
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
+    private currentLoadRequestId = 0;
     paramSub: Subscription;
 
     // Template refs for cell rendering
@@ -292,6 +293,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (!ex?.id || !this.lastLazyEvent) return;
 
         this.isLoading.set(true);
+        const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationScoreSearch = {
             ...base,
@@ -302,13 +304,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
         this.participationService.searchParticipationScores(ex.id, search).subscribe({
             next: (result) => {
-                this.participations.set(result.content);
-                this.totalRows.set(result.totalElements);
-                this.isLoading.set(false);
+                if (requestId === this.currentLoadRequestId) {
+                    this.participations.set(result.content);
+                    this.totalRows.set(result.totalElements);
+                }
             },
             error: (error: HttpErrorResponse) => {
-                this.isLoading.set(false);
-                onError(this.alertService, error);
+                if (requestId === this.currentLoadRequestId) {
+                    this.isLoading.set(false);
+                    onError(this.alertService, error);
+                }
+            },
+            complete: () => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.isLoading.set(false);
+                }
             },
         });
     }
