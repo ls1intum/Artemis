@@ -256,6 +256,39 @@ $iris-z-index-dropdown: 1050;
     gap: 8px;
 }
 
+.prompt-suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+    justify-content: center;
+}
+
+.prompt-suggestion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    background-color: var(--iris-secondary-background);
+    color: var(--bs-body-color);
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+
+    &:not(:disabled):hover {
+        background-color: var(--iris-tertiary-background);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
 :host {
     .bubble-left,
     .bubble-right {
@@ -398,10 +431,10 @@ pre {
     .chat-body {
         position: relative;
         height: 100%;
-        overflow-y: hidden;
         display: flex;
         flex-direction: column;
         flex: 1;
+        min-height: 0;
         align-items: stretch; // stretch children to full width
         gap: 4px;
         margin: 0 16px;
@@ -460,6 +493,8 @@ pre {
     display: flex;
     flex-direction: column;
     flex: 0 1 auto;
+    gap: 16px;
+    overflow: visible;
 
     textarea {
         background-color: var(--iris-secondary-background);
@@ -483,6 +518,16 @@ pre {
             background-color: var(--iris-secondary-background) !important;
             cursor: not-allowed;
         }
+
+        &.placeholder-fade-in::placeholder {
+            opacity: 1;
+            transition: opacity 0.3s ease-in;
+        }
+
+        &.placeholder-fade-out::placeholder {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
     }
 
     &-inner {
@@ -494,6 +539,7 @@ pre {
         display: flex;
         flex-direction: column;
         flex: 1;
+        position: relative;
         background-color: var(--iris-secondary-background);
         border: 1px solid var(--bs-border-color);
         border-radius: $iris-border-radius-lg;
@@ -513,6 +559,38 @@ pre {
         align-items: center;
         justify-content: space-between;
         padding: 6px 6px 6px 8px;
+    }
+
+    // These values must stay in sync with the textarea padding (16px) and send button width (56px)
+    .ghost-text-overlay,
+    .chip-preview-overlay {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        right: 56px;
+        border: 1px solid transparent;
+        pointer-events: none;
+        font-family: var(--bs-body-font-family);
+        font-size: inherit;
+        line-height: inherit;
+        word-wrap: break-word;
+        overflow: hidden;
+    }
+
+    .ghost-text-mirror {
+        visibility: hidden;
+        white-space: pre-wrap;
+    }
+
+    .ghost-text-suggestion {
+        color: var(--bs-secondary-color);
+        opacity: 0.6;
+    }
+
+    .chip-preview-text {
+        color: var(--bs-secondary-color);
+        opacity: 1;
+        white-space: pre-wrap;
     }
 }
 
@@ -569,16 +647,16 @@ pre {
         @include custom-scrollbar(4px);
     }
 
-    &-info-link {
-        display: flex;
-        justify-content: flex-start;
-        padding: 0 8px 8px;
+    .about-iris-button {
+        padding: 8px;
+        margin: 0 8px 8px;
+        cursor: pointer;
+        border-radius: var(--bs-border-radius-lg);
+        color: var(--bs-body-color);
 
-        .info-button {
-            cursor: pointer;
-            vertical-align: middle;
-            font-size: 15px;
-            color: var(--bs-body-color);
+        &:hover {
+            background-color: var(--iris-accent-background);
+            border-radius: 6px;
         }
     }
 
