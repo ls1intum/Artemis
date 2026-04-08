@@ -3,106 +3,17 @@ title: Iris - AI Virtual Tutor
 sidebar_label: Iris
 ---
 
-import Image, {ImageSize} from "../../../src/components/Image/Image";
-import irisCourseChat from '../assets/iris/iris-course-chat.png';
-import irisExerciseChat from '../assets/iris/iris-exercise-chat.png';
-import irisAiExperienceSelection from '../assets/iris/iris-ai-experience-selection.png';
-
 # Iris
 
-Iris is an AI-powered virtual tutor integrated directly into Artemis. It provides context-aware support for programming exercises, text exercises, and lecture content, helping students learn independently through guided hints and explanations rather than giving away solutions. Iris is also available as a course-wide assistant for general course-related questions.
+Iris is an AI-powered virtual tutor integrated into Artemis. It provides context-aware support for programming exercises, text exercises, and lecture content, helping students learn through guided hints and explanations rather than giving away solutions.
 
-## Getting Started
+For comprehensive documentation, visit the **[Iris documentation](https://ls1intum.github.io/edutelligence/iris/)**.
 
-### Choosing Your AI Experience
+## Role-Specific Guides
 
-When you first open Iris, you choose how your interactions are processed:
-
-- **Cloud** (Recommended): Uses cutting-edge cloud models (e.g., GPT-4) hosted on European Azure servers with enterprise-grade safeguards. Offers the highest response quality and advanced reasoning.
-- **On-premise** (Experimental): Uses an open-source model running entirely on your institution's own infrastructure. No data leaves the university, but response quality may be lower.
-- **No AI**: Opt out of AI-powered features entirely. You can change this at any time.
-
-<Image src={irisAiExperienceSelection} alt="AI Experience Selection" size={ImageSize.large} caption={"Choose between Cloud, On-premise, or No AI"}></Image>
-
-You can change this setting at any time from within Iris.
-
-### Iris Memory
-
-When choosing your AI experience, you can also enable **Iris Memory**. When enabled, Iris remembers your learning preferences and past interactions across conversations to provide more personalized support over time. You can disable this at any time.
-
-When memory is active, you will see a small brain icon on messages indicating how many memories were used or created during that interaction. You can view and manage all stored memories in your learner profile settings.
-
-## Where to Find Iris
-
-Iris is available in several places, each tailored to a specific learning context:
-
-### Course Chat
-
-The course chat is your general-purpose assistant for a course. Open it from the course sidebar. Iris can answer questions about lecture content, course topics, and general programming concepts. It has access to all lectures and course materials.
-
-<Image src={irisCourseChat} alt="Iris Course Chat" size={ImageSize.large} caption={"Iris course chat with conversation history and follow-up suggestions"}></Image>
-
-### Exercise and Lecture Chat
-
-When working on an exercise or viewing a lecture, click the floating Iris icon in the bottom right corner to open a chat widget. In this mode, Iris automatically knows your context:
-
-- **Programming exercises:** Iris can reference your problem statement, code, build logs, and test results — no copy-pasting needed. This makes it particularly effective at helping you debug issues or understand what a failing test expects.
-- **Text exercises:** Iris can see your current submission and the problem statement.
-- **Lectures:** Iris references the specific lecture slides and materials to provide relevant answers.
-
-<Image src={irisExerciseChat} alt="Iris Exercise Chat" size={ImageSize.large} caption={"Iris chat widget within a programming exercise"}></Image>
-
-## How Iris Helps You Learn
-
-### Context-Aware Responses
-
-Unlike general-purpose AI chatbots, Iris automatically sees the context you are working in. In an exercise, it reads your code and build output. In a lecture, it references the slides. This means you can ask focused questions like _"Why is my sorting algorithm failing?"_ without having to explain your entire setup.
-
-### Citations
-
-When Iris references specific course materials, it includes **citations** — small numbered markers in its responses. Hover over a citation to see which lecture slide, video segment, or FAQ entry it came from. This lets you verify Iris's answers and dive deeper into the source material.
-
-### Follow-Up Suggestions
-
-After each response, Iris may suggest follow-up questions as clickable buttons below the message. These are designed to help you explore a topic further or clarify related concepts. Click a suggestion to send it as your next message.
-
-### Proactive Hints
-
-In some exercises, Iris may proactively offer a hint if it detects you might be stuck — for example, after repeated build failures. These hints appear as chat messages and follow the same guided-learning approach.
-
-## What to Expect
-
-- **Guide, Not Solve:** Iris does not provide complete solutions. It nudges you in the right direction with hints and explanations so you build genuine understanding.
-- **Stay on Topic:** Iris answers questions about course content and programming topics. It will not handle off-topic requests or organizational questions (exam dates, room assignments, etc.).
-- **Own Your Work:** Use Iris as a learning aid while maintaining academic integrity. Your submissions must reflect your own understanding and effort.
-- **Quality May Vary:** If you chose the on-premise model, responses may be less detailed or accurate than the cloud option. Try rephrasing your question if a response isn't helpful.
-
-## Interacting with Iris
-
-- **Send a message:** Type your question and press Enter. Use Shift+Enter for multi-line messages.
-- **Rate responses:** Use the thumbs up/down buttons on Iris's messages. Your feedback directly helps improve Iris over time.
-- **Copy responses:** Click the copy icon on any message to copy its text.
-- **Chat history:** In the course chat, the sidebar on the left shows all your past conversations, organized by date. You can search through them or start a new chat at any time.
-- **New chat:** Click the pen icon to start a fresh conversation. Each chat session is independent.
-
-## Usage Limits
-
-Your instructor may configure a maximum number of Iris interactions per time period (e.g., 20 messages per 24 hours). If a limit is set, you will see a counter in the chat header showing your current usage. When you reach the limit, you will need to wait for the time window to reset before sending new messages.
-
-## Privacy and Data
-
-- **Cloud AI:** Your interactions are processed on European Azure servers with enterprise-grade data protection. No data is used for model training.
-- **On-premise AI:** All processing happens on your institution's own infrastructure. No data leaves the university network.
-
-In both cases, review your institution's privacy policy for full details. You can switch between options or disable AI entirely at any time.
-
-## Research
-
-Iris is the result of ongoing research in AI-supported education at the Technical University of Munich. If you are interested in the scientific background, the following publications provide more details:
-
-<ol>
-    <li>Patrick Bassner, Björn Lenk-Ostendorf, Raphaela Beinstingel, Thomas Wasner, and Stephan Krusche. <em>Less stress, better scores, same learning: The dissociation of performance and learning in AI-supported programming education</em>. Computers and Education: Artificial Intelligence, 2025. <a href="https://doi.org/10.1016/j.caeai.2025.100537">doi:10.1016/j.caeai.2025.100537</a>.</li>
-    <li>Patrick Bassner, Alexander Lottner, and Stephan Krusche. <em>Towards Understanding the Impact of Context-Aware AI Tutors and General-Purpose AI Chatbots on Student Learning</em>. In 25th Koli Calling International Conference on Computing Education Research, 2025. <a href="https://dl.acm.org/doi/10.1145/3699538.3699564">doi:10.1145/3699538.3699564</a>.</li>
-    <li>Patrick Bassner, Eduard Frankford, and Stephan Krusche. <em>Iris: An AI-Driven Virtual Tutor for Computer Science Education</em>. In 29th Annual Conference on Innovation and Technology in Computer Science Education (ITiCSE), 2024. <a href="https://dl.acm.org/doi/10.1145/3649217.3653587">doi:10.1145/3649217.3653587</a>.</li>
-    <li>Eduard Frankford, Clemens Sauerwein, Patrick Bassner, Stephan Krusche, and Ruth Breu. <em>AI-Tutoring in Software Engineering Education</em>. In 46th International Conference on Software Engineering (ICSE SEET '24), 2024. <a href="https://doi.org/10.1145/3639474.3640061">doi:10.1145/3639474.3640061</a>.</li>
-</ol>
+| Role | Guide |
+|------|-------|
+| **Students** | [Getting Started](https://ls1intum.github.io/edutelligence/iris/docs/student/getting-started) — How to use Iris for learning |
+| **Instructors** | [Enabling Iris](https://ls1intum.github.io/edutelligence/iris/docs/instructor/enabling-iris) — Course setup and configuration |
+| **Developers** | [Local Setup](https://ls1intum.github.io/edutelligence/iris/docs/developer/local-setup) — Development environment setup |
+| **Administrators** | [Deployment](https://ls1intum.github.io/edutelligence/iris/docs/admin/deployment) — Production deployment guide |

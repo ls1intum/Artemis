@@ -50,7 +50,7 @@ export class AboutUsComponent implements OnInit {
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics' }],
         ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.tum.de/instructor/adaptive-learning' }],
         ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.tum.de/instructor/tutorial-groups' }],
-        ['iris', { irisUrl: 'https://docs.artemis.tum.de/student/learning-content/iris' }],
+        ['iris', { irisUrl: 'https://ls1intum.github.io/edutelligence/iris/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.tum.de/admin/scaling' }],
         ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.tum.de/student/user-experience' }],
         ['customizable', { customizableUrl: 'https://docs.artemis.tum.de/instructor/courses' }],
