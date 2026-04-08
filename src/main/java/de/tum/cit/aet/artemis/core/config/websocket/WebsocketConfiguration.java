@@ -98,11 +98,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
+    private final ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
+    private final ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -115,15 +115,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(ObjectProvider<ObjectMapper> objectMapperProvider, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            StudentParticipationRepository studentParticipationRepository, ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider,
+            ExerciseRepository exerciseRepository, ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider) {
         this.objectMapperProvider = objectMapperProvider;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.authorizationCheckService = authorizationCheckService;
+        this.authorizationCheckServiceProvider = authorizationCheckServiceProvider;
         this.exerciseRepository = exerciseRepository;
-        this.examRepositoryApi = examRepositoryApi;
+        this.examRepositoryApiProvider = examRepositoryApiProvider;
     }
 
     @Override
@@ -384,17 +384,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                return authorizationCheckService.isAdmin(login);
+                return authorizationCheckServiceProvider.getObject().isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
             if (buildJobCourseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, buildJobCourseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -406,23 +406,26 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                    return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInExercise(login, exerciseId);
                 }
                 else {
-                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                    return authorizationCheckServiceProvider.getObject().isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
-                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+                ExamRepositoryApi api = examRepositoryApiProvider.getIfAvailable();
+                if (api == null) {
+                    throw new ExamApiNotPresentException(ExamRepositoryApi.class);
+                }
                 var exam = api.findByIdElseThrow(examId.get());
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
 
             var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
             if (synchronizationExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
             }
 
             return true;
