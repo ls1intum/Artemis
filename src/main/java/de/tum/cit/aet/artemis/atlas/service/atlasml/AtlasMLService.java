@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -19,9 +22,11 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -33,8 +38,10 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -43,12 +50,18 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
  * Service for communicating with the AtlasML microservice.
  * Provides methods for suggesting and saving competencies.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasMLEnabled.class)
 @Service
 @Lazy
 public class AtlasMLService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasMLService.class);
+
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢
+
+    private static final String YELLOW_CIRCLE = "\uD83D\uDFE1"; // 🟡
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // 🔴
 
     private final RestTemplate atlasmlRestTemplate;
 
@@ -89,27 +102,39 @@ public class AtlasMLService {
      * @return true if the service is healthy, false otherwise
      */
     public boolean isHealthy() {
+        return health().isUp();
+    }
+
+    /**
+     * Retrieves the detailed health status of the AtlasML microservice.
+     *
+     * @return connector health including parsed AtlasML health details when available
+     */
+    public ConnectorHealth health() {
+        Map<String, Object> additionalInfo = new LinkedHashMap<>();
+        additionalInfo.put("url", config.getAtlasmlBaseUrl());
+
         try {
             log.debug("Checking AtlasML health status");
             HttpHeaders headers = buildHeadersWithAuth();
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = shortTimeoutAtlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + HEALTH_ENDPOINT, HttpMethod.GET, entity, String.class);
 
-            boolean isHealthy = response.getStatusCode().is2xxSuccessful();
-            log.debug("AtlasML health check result: {}", isHealthy);
-            return isHealthy;
+            ConnectorHealth connectorHealth = parseHealthResponse(response.getBody(), response.getStatusCode().is2xxSuccessful(), additionalInfo, null);
+            log.debug("AtlasML health check result: {}", connectorHealth.isUp());
+            return connectorHealth;
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
             log.warn("AtlasML health check failed with HTTP error: {}", e.getMessage());
-            return false;
+            return parseHealthResponse(e.getResponseBodyAsString(), false, additionalInfo, "AtlasML returned " + e.getStatusCode());
         }
         catch (ResourceAccessException e) {
             log.warn("AtlasML health check failed due to connection issue: {}", e.getMessage());
-            return false;
+            return createFailedHealth(additionalInfo, "Connection to AtlasML timed out");
         }
         catch (Exception e) {
             log.error("Unexpected error during AtlasML health check", e);
-            return false;
+            return createFailedHealth(additionalInfo, "Connection to AtlasML failed");
         }
     }
 
@@ -139,7 +164,7 @@ public class AtlasMLService {
 
             // Parse the response as SuggestCompetencyResponseDTO
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectMapper objectMapper = JsonObjectMapper.get();
                 return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
@@ -178,7 +203,7 @@ public class AtlasMLService {
 
             String responseBody = response.getBody();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonObjectMapper.get();
             return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
         }
         catch (HttpClientErrorException e) {
@@ -505,5 +530,107 @@ public class AtlasMLService {
             headers.set("Authorization", value);
         }
         return headers;
+    }
+
+    private ConnectorHealth parseHealthResponse(String responseBody, boolean isHttpHealthy, Map<String, Object> additionalInfo, String fallbackErrorMessage) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return createFailedHealth(additionalInfo, fallbackErrorMessage != null ? fallbackErrorMessage : "Empty response from AtlasML");
+        }
+
+        try {
+            ObjectMapper objectMapper = JsonObjectMapper.get();
+            JsonNode root = objectMapper.readTree(responseBody);
+            boolean isHealthy = isHttpHealthy;
+
+            String overallStatus = getText(root, "status");
+            if (overallStatus != null) {
+                additionalInfo.put("status", summarizeStatus(overallStatus, null));
+                isHealthy = isHealthy && isHealthyStatus(overallStatus);
+            }
+
+            JsonNode components = root.path("components");
+            if (components.isObject()) {
+                components.properties().forEach(entry -> flattenComponentHealthInto(additionalInfo, entry.getKey(), entry.getValue()));
+            }
+
+            return new ConnectorHealth(isHealthy, additionalInfo);
+        }
+        catch (JsonProcessingException e) {
+            log.warn("AtlasML health payload has invalid JSON", e);
+            return createFailedHealth(additionalInfo, "Incorrect format from AtlasML");
+        }
+    }
+
+    private void flattenComponentHealthInto(Map<String, Object> additionalInfo, String componentName, JsonNode componentNode) {
+        String componentStatus = getText(componentNode, "status");
+        String componentMessage = getText(componentNode, "message");
+        additionalInfo.put(componentName, summarizeStatus(componentStatus, componentMessage));
+
+        JsonNode collections = componentNode.path("collections");
+        if (collections.isObject()) {
+            collections.properties().forEach(entry -> additionalInfo.put("collection " + entry.getKey(), summarizeStatus(getText(entry.getValue(), "status"), null)));
+        }
+    }
+
+    private ConnectorHealth createFailedHealth(Map<String, Object> additionalInfo, String errorMessage) {
+        additionalInfo.put("error", RED_CIRCLE + " " + errorMessage);
+        return new ConnectorHealth(false, additionalInfo);
+    }
+
+    private static String summarizeStatus(String status, String message) {
+        String icon = iconFor(status);
+        String normalizedStatus = normalizeStatus(status);
+
+        if (message != null && !message.isBlank()) {
+            if (normalizedStatus != null) {
+                return icon + " " + normalizedStatus + ": " + message;
+            }
+            return icon + " " + message;
+        }
+
+        if (normalizedStatus != null) {
+            return icon + " " + normalizedStatus;
+        }
+
+        return icon;
+    }
+
+    private static String iconFor(String status) {
+        String normalizedStatus = normalizeStatus(status);
+        if (normalizedStatus == null) {
+            return RED_CIRCLE;
+        }
+        return switch (normalizedStatus) {
+            case "ok", "up" -> GREEN_CIRCLE;
+            case "warn", "degraded" -> YELLOW_CIRCLE;
+            default -> RED_CIRCLE;
+        };
+    }
+
+    private static boolean isHealthyStatus(String status) {
+        String normalizedStatus = normalizeStatus(status);
+        if (normalizedStatus == null) {
+            return false;
+        }
+        return switch (normalizedStatus) {
+            case "ok", "up" -> true;
+            default -> false;
+        };
+    }
+
+    private static String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        return status.toLowerCase(Locale.ROOT);
+    }
+
+    private static String getText(JsonNode node, String fieldName) {
+        JsonNode child = node.path(fieldName);
+        if (child.isMissingNode() || child.isNull() || !child.isValueNode()) {
+            return null;
+        }
+        String value = child.asText();
+        return value == null || value.isBlank() ? null : value;
     }
 }

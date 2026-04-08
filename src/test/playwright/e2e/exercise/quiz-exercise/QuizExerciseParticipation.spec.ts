@@ -28,7 +28,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await login(admin);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id!}`);
-            await courseOverview.openRunningExercise(quizExercise.id!);
+            await courseOverview.shouldShowExerciseTitleInHeader(quizExercise.title!);
         });
 
         test('Student can participate in MC quiz', async ({ login, exerciseAPIRequests, courseOverview, quizExerciseMultipleChoice }) => {
@@ -36,7 +36,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id!}`);
-            await courseOverview.startExercise(quizExercise.id!);
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 2);
             await quizExerciseMultipleChoice.submit();
@@ -56,15 +55,13 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.openRunningExercise(quizExercise.id!);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.openRunningExercise(quizExercise.id!);
-            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000);
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible();
+            await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
     });
@@ -99,7 +96,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const quizBatch = await quizExerciseOverview.addQuizBatch(quizExercise.id!);
             await quizExerciseOverview.startQuizBatch(quizExercise.id!, quizBatch.id!);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.joinQuizBatch(quizBatch.password!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
@@ -153,7 +149,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student can start a batch in an individual quiz', async ({ login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.openRunningExercise(quizExercise.id!);
             await quizExerciseParticipation.startQuizBatch();
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
@@ -171,7 +166,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student can participate in SA quiz', async ({ login, courseOverview, quizExerciseShortAnswerQuiz }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.startExercise(quizExercise.id!);
             const quizQuestionId = quizExercise.quizQuestions![0].id!;
             await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, quizQuestionId, 'give');
             await quizExerciseShortAnswerQuiz.typeAnswer(1, 1, quizQuestionId, 'let');
@@ -199,7 +193,6 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student can participate in DnD Quiz', async ({ login, courseOverview, quizExerciseDragAndDropQuiz }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.startExercise(quizExercise.id!);
             await quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
             await quizExerciseDragAndDropQuiz.submit();
         });

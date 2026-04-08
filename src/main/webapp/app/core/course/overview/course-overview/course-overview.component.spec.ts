@@ -39,8 +39,8 @@ import { CourseOverviewComponent } from 'app/core/course/overview/course-overvie
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
@@ -143,7 +143,7 @@ describe('CourseOverviewComponent', () => {
     let courseStorageService: CourseStorageService;
     let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
-    let tutorialGroupsService: TutorialGroupsService;
+    let tutorialGroupApiService: TutorialGroupApiService;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
@@ -220,7 +220,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(TutorialGroupsService),
+                MockProvider(TutorialGroupApiService),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
@@ -247,7 +247,7 @@ describe('CourseOverviewComponent', () => {
         examParticipationService = TestBed.inject(ExamParticipationService);
         teamService = TestBed.inject(TeamService);
         profileService = TestBed.inject(ProfileService);
-        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+        tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
         jhiWebsocketService = TestBed.inject(WebsocketService);
         courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
@@ -576,7 +576,7 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
@@ -692,10 +692,13 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not initialize courses attribute when page has error while loading', async () => {
-        findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+        // Use EMPTY instead of throwError to avoid RxJS reportUnhandledError — the subscribe() in
+        // updateRecentlyAccessedCourses() has no error handler, so thrown errors leak asynchronously.
+        // EMPTY completes without emitting, so courses() stays undefined, satisfying the test intent.
+        findAllForDropdownSpy.mockReturnValue(EMPTY);
 
         await component.ngOnInit();
-        // When findAllForDropdown fails, courses should not be initialized
+        // When findAllForDropdown completes without value, courses should not be initialized
         expect(component.courses()).toBeUndefined();
     });
 

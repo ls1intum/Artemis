@@ -31,9 +31,8 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
         exercise = await exerciseAPIRequests.createFileUploadExercise({ course });
         await Commands.login(page, studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         await courseOverview.startExercise(exercise.id!);
-        await courseOverview.openRunningExercise(exercise.id!);
         await fileUploadExerciseEditor.attachFile('pdf-test-file.pdf');
-        await fileUploadExerciseEditor.submit();
+        await courseOverview.submitExercise('api/fileupload/exercises/*/file-upload-submissions');
     });
 
     test.describe.serial('Feedback', () => {
@@ -67,7 +66,6 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseResult.shouldShowExerciseTitle(exercise.title!);
             await exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             await exerciseResult.shouldShowScore(percentage);
-            await exerciseResult.clickOpenExercise(exercise.id!);
             await fileUploadExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseFeedback.shouldShowScore(percentage);
             await fileUploadExerciseFeedback.complain(complaint);

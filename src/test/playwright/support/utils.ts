@@ -458,7 +458,7 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
 }
@@ -471,7 +471,7 @@ export async function makeExamSubmission(
  */
 export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
     if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
         console.log(`Waiting ${timeToWait}ms for exam to end...`);
         await page.waitForTimeout(timeToWait);
     }
@@ -488,7 +488,7 @@ export async function startAssessing(
     isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton();
+    await courseAssessment.clickExerciseDashboardButton(0, timeout);
     if (toggleSecondRound) {
         await exerciseAssessment.toggleSecondCorrectionRound();
     }

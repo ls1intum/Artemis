@@ -7,12 +7,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,8 +22,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.tutorialgroup.exception.ScheduleOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -55,19 +50,12 @@ public class TutorialGroupScheduleService {
     /**
      * Create a new schedule for the given tutorial group and creates all corresponding sessions
      *
-     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
-     * @param tutorialGroup               the tutorial group for which the schedule should be created
-     * @param tutorialGroupSchedule       the schedule to create
+     * @param course                the course of the tutorial group
+     * @param tutorialGroup         the tutorial group for which the schedule should be created
+     * @param tutorialGroupSchedule the schedule to create
      */
-    public void saveScheduleAndGenerateScheduledSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup,
-            TutorialGroupSchedule tutorialGroupSchedule) {
-        // Generate Sessions
-        var individualSessions = generateSessions(tutorialGroupsConfiguration, tutorialGroupSchedule);
-        // check for overlap with existing individual sessions
-        var overlappingIndividualSessions = findOverlappingExistingSessions(tutorialGroup, individualSessions);
-        if (!overlappingIndividualSessions.isEmpty()) {
-            throw new ScheduleOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(tutorialGroupsConfiguration.getCourse().getTimeZone()));
-        }
+    public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
+        var individualSessions = generateSessionsForSchedule(course, tutorialGroupSchedule);
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         if (tutorialGroupSchedule.getId() != null) {
             tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(tutorialGroupSchedule);
@@ -81,30 +69,6 @@ public class TutorialGroupScheduleService {
         tutorialGroupSessionRepository.saveAll(individualSessions);
     }
 
-    @NonNull
-    private Set<TutorialGroupSession> findOverlappingExistingSessions(TutorialGroup tutorialGroup, List<TutorialGroupSession> individualSessions) {
-        var overlappingIndividualSessions = new HashSet<TutorialGroupSession>();
-        for (var individualSession : individualSessions) {
-            var overlappingSession = tutorialGroupSessionRepository.findOverlappingIndividualSessionsInSameTutorialGroup(tutorialGroup, individualSession.getStart(),
-                    individualSession.getEnd());
-            if (!overlappingSession.isEmpty()) {
-                overlappingIndividualSessions.addAll(overlappingSession);
-            }
-        }
-        return overlappingIndividualSessions;
-    }
-
-    /**
-     * Generates all individual sessions for the given schedule
-     *
-     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
-     * @param tutorialGroupSchedule       the schedule for which the sessions should be generated
-     * @return a list of all generated individual sessions
-     */
-    public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
-        return this.generateSessions(tutorialGroupsConfiguration.getCourse(), tutorialGroupSchedule);
-    }
-
     /**
      * Generates all individual sessions for the given schedule
      *
@@ -112,7 +76,7 @@ public class TutorialGroupScheduleService {
      * @param tutorialGroupSchedule the schedule for which the sessions should be generated
      * @return a list of all generated individual sessions
      */
-    public List<TutorialGroupSession> generateSessions(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
+    public List<TutorialGroupSession> generateSessionsForSchedule(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId timeZone = ZoneId.of(course.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
         ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), DateUtil.END_OF_DAY, timeZone);
@@ -133,7 +97,6 @@ public class TutorialGroupScheduleService {
         return sessions;
     }
 
-    @NonNull
     private TutorialGroupSession generateScheduledSession(Course course, TutorialGroupSchedule tutorialGroupSchedule, ZonedDateTime sessionStart, ZonedDateTime sessionEnd) {
         TutorialGroupSession session = new TutorialGroupSession();
         session.setStart(sessionStart);
@@ -142,7 +105,7 @@ public class TutorialGroupScheduleService {
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
         var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session).stream().findFirst();
-        updateTutorialGroupSession(session, overlappingPeriod);
+        updateStatusAndFreePeriod(session, overlappingPeriod);
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;
     }
@@ -153,7 +116,7 @@ public class TutorialGroupScheduleService {
      * @param newSession        the tutorial group session to be updated.
      * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
      */
-    public static void updateTutorialGroupSession(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+    public static void updateStatusAndFreePeriod(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
             // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod
@@ -170,12 +133,12 @@ public class TutorialGroupScheduleService {
     /**
      * Update the schedule of the given tutorial group if it is changed
      *
-     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
-     * @param tutorialGroup               the tutorial group for which the schedule should be updated
-     * @param oldSchedule                 the old schedule of the tutorial group
-     * @param newSchedule                 the new schedule of the tutorial group
+     * @param course        the course of the tutorial group
+     * @param tutorialGroup the tutorial group for which the schedule should be updated
+     * @param oldSchedule   the old schedule of the tutorial group
+     * @param newSchedule   the new schedule of the tutorial group
      */
-    public void updateScheduleIfChanged(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
+    public void updateScheduleAndSessionsIfChanged(Course course, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
             Optional<TutorialGroupSchedule> newSchedule) {
         if (oldSchedule.isPresent() && newSchedule.isPresent()) {
             var oldS = oldSchedule.get();
@@ -187,7 +150,7 @@ public class TutorialGroupScheduleService {
                     tutorialGroupScheduleRepository.save(oldS);
                 }
                 else {
-                    updateAllSessionsToNewSchedule(tutorialGroupsConfiguration, tutorialGroup, oldS, newS);
+                    updateAllSessionsToNewSchedule(course, tutorialGroup, oldS, newS);
                 }
             }
         }
@@ -198,7 +161,7 @@ public class TutorialGroupScheduleService {
             tutorialGroupScheduleRepository.delete(oldSchedule.get()); // old schedule present but not new schedule -> delete old schedule
         }
         else {
-            newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, tutorialGroupSchedule));
+            newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, tutorialGroupSchedule));
         }
     }
 
@@ -208,10 +171,9 @@ public class TutorialGroupScheduleService {
         tutorialGroupSessionRepository.saveAll(sessions);
     }
 
-    private void updateAllSessionsToNewSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule oldSchedule,
-            TutorialGroupSchedule newSchedule) {
+    private void updateAllSessionsToNewSchedule(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule oldSchedule, TutorialGroupSchedule newSchedule) {
         overrideScheduleProperties(newSchedule, oldSchedule);
-        saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, oldSchedule);
+        saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, oldSchedule);
     }
 
     private static void overrideScheduleProperties(TutorialGroupSchedule sourceSchedule, TutorialGroupSchedule originalSchedule) {

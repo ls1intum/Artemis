@@ -181,7 +181,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Login as student and navigate to quiz exercise
             await login(studentOne, `/courses/${nestedCourse.id}/exercises/${quizExercise.id!}`);
-            await courseOverview.startExercise(quizExercise.id!);
 
             // Answer the multiple choice question - tick the first two options (correct answers)
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);

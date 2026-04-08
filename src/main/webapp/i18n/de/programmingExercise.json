@@ -333,11 +333,39 @@
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
                 "confirmTitle": "Code-Generierung bestätigen",
                 "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
-                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
+                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
                 "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
+                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
                 "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "attempts": "Versuche: {{attempts}}"
+                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
+                "settingsTitle": "Generierungs-Einstellungen",
+                "settingsTooltip": "Repositories für die Generierung auswählen",
+                "statusTitle": "Generierungsstatus",
+                "statusTooltip": "Live-Status der Generierung anzeigen",
+                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Template, Lösung, Test.",
+                "repositories": {
+                    "template": "Template Repository",
+                    "solution": "Solution Repository",
+                    "tests": "Tests Repository"
+                },
+                "activityTitle": "Dateiaktivität",
+                "iteration": "Iteration {{iteration}}",
+                "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
+                "attempts": "Versuche: {{attempts}}",
+                "status": {
+                    "idle": "Nicht gestartet",
+                    "queued": "In Warteschlange",
+                    "running": "Läuft",
+                    "success": "Abgeschlossen",
+                    "warning": "Mit Problemen abgeschlossen",
+                    "error": "Fehlgeschlagen",
+                    "skipped": "Übersprungen",
+                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
+                    "fileCreated": "erstellt",
+                    "fileUpdated": "aktualisiert"
+                }
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

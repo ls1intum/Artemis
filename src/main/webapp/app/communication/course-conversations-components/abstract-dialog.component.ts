@@ -1,5 +1,4 @@
 import { Directive, OnInit, WritableSignal, inject, isSignal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { captureException } from '@sentry/angular';
 
@@ -11,7 +10,6 @@ function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
 export abstract class AbstractDialogComponent implements OnInit {
     dialogRef = inject(DynamicDialogRef, { optional: true });
     dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    activeModal = inject(NgbActiveModal, { optional: true });
     isInitialized = false;
 
     ngOnInit() {
@@ -51,17 +49,10 @@ export abstract class AbstractDialogComponent implements OnInit {
     }
 
     dismiss() {
-        if (this.dialogRef) {
-            this.dialogRef.destroy();
-        } else if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
+        this.dialogRef?.destroy();
     }
+
     close(result?: any) {
-        if (this.dialogRef) {
-            this.dialogRef.close(result);
-        } else if (this.activeModal) {
-            this.activeModal.close(result);
-        }
+        this.dialogRef?.close(result);
     }
 }

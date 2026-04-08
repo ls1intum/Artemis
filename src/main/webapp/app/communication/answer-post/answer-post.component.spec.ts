@@ -88,7 +88,7 @@ describe('AnswerPostComponent', () => {
 
     it('should contain the posting header when isConsecutive is false', () => {
         fixture.componentRef.setInput('isConsecutive', false);
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -97,7 +97,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not contain the posting header when isConsecutive is true', () => {
         fixture.componentRef.setInput('isConsecutive', true);
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -105,14 +105,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         expect(component.containerRef).not.toBeNull();
     });
 
     it('should contain component to edit answer post', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const answerPostCreateEditModal = debugElement.query(By.css('jhi-answer-post-create-edit-modal'));
@@ -120,7 +120,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain an answer post reactions bar', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
@@ -128,7 +128,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should have correct content in posting-content component', () => {
-        component.posting = metisResolvingAnswerPostUser1;
+        component.posting.set(metisResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const postingContentDebugElement = debugElement.query(By.directive(PostingContentComponent));
@@ -200,14 +200,15 @@ describe('AnswerPostComponent', () => {
         const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
         component.onPostingUpdated(updatedPosting);
 
-        expect(component.posting).toEqual(updatedPosting);
+        expect(component.posting()).toEqual(updatedPosting);
     });
 
     it('should update reactions when onReactionsUpdated is called', () => {
+        component.posting.set(metisResolvingAnswerPostUser1);
         const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
         component.onReactionsUpdated(updatedReactions);
 
-        expect(component.posting.reactions).toEqual(updatedReactions);
+        expect(component.posting()!.reactions).toEqual(updatedReactions);
     });
 
     it('should handle onRightClick correctly based on cursor style', () => {
@@ -259,16 +260,16 @@ describe('AnswerPostComponent', () => {
         };
         // @ts-ignore method is private
         const spy = vi.spyOn(component, 'assignPostingToAnswerPost');
-        component.posting = mockPost;
+        component.posting.set(mockPost);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.posting).toBeInstanceOf(AnswerPost);
+        expect(component.posting()).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
     });
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
@@ -284,7 +285,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
@@ -296,7 +297,7 @@ describe('AnswerPostComponent', () => {
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
         component.showDropdown = true;
-        component.posting = post;
+        component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
         const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));

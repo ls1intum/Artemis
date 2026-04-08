@@ -93,7 +93,7 @@ describe('PostingDirective', () => {
         component.reactionsBar = mockReactionsBar;
         const user = new User();
         user.id = 123;
-        component.posting = new MockPosting(123, 'Test content', user);
+        component.posting.set(new MockPosting(123, 'Test content', user));
         fixture.componentRef.setInput('isCommunicationPage', false);
         fixture.componentRef.setInput('isThreadSidebar', false);
         fixture.detectChanges();
@@ -188,13 +188,13 @@ describe('PostingDirective', () => {
 
         component.markMessageAsUnread();
 
-        expect(markMessageAsUnreadSpy).toHaveBeenCalledWith(component.posting);
+        expect(markMessageAsUnreadSpy).toHaveBeenCalledWith(component.posting());
     });
 
     it('should not proceed in onUserNameClicked if author is not set', () => {
         const isMessagingEnabledSpy = vi.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
 
-        component.posting.author = undefined;
+        component.posting.set({ ...component.posting()!, author: undefined } as MockPosting);
         component.onUserNameClicked();
 
         expect(isMessagingEnabledSpy).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe('PostingDirective', () => {
 
         vi.runOnlyPendingTimers();
 
-        expect(deletePostSpy).toHaveBeenCalledWith(component.posting);
+        expect(deletePostSpy).toHaveBeenCalledWith(component.posting());
     });
 
     it('should call metisService.deleteAnswerPost for answer post', () => {
@@ -311,7 +311,7 @@ describe('PostingDirective', () => {
 
         vi.runOnlyPendingTimers();
 
-        expect(deleteAnswerPostSpy).toHaveBeenCalledWith(component.posting);
+        expect(deleteAnswerPostSpy).toHaveBeenCalledWith(component.posting());
     });
 
     it('should set up interval to decrement delete timer', () => {

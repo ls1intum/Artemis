@@ -298,8 +298,8 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             const channel = await courseMessages.setupCommunicationChannel(login, admin, course, communicationAPIRequests);
             const messageText = 'Test Message';
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 1');
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 2');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 1');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 2');
 
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,

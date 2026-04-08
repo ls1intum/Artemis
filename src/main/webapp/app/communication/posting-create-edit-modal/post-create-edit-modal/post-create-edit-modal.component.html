@@ -10,7 +10,7 @@
                     </div>
                     <div class="modal-body">
                         <!-- info if announcement is created-->
-                        @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
+                        @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting()?.conversation)?.isAnnouncementChannel) {
                             <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
                         }
                         <!-- title -->

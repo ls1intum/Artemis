@@ -164,9 +164,9 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 };
 
 /**
- * The start practice button should be available for programming and quiz exercises
+ * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming exercises when it's after the due date
+ * - For programming, text, and modeling exercises when it's after the due date
  * @param exercise the exercise that the student wants to practice
  * @param participation the potentially existing participation
  */
@@ -176,6 +176,9 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
+        case ExerciseType.TEXT:
+        case ExerciseType.MODELING:
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
         default:
             return false;
     }
