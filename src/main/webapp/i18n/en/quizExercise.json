@@ -12,7 +12,6 @@
                 "createLabel": "Create Quiz",
                 "editLabel": "Edit Quiz",
                 "importLabel": "Import Quiz",
-                "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
             "aiGeneration": {

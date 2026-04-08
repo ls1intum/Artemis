@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
@@ -25,12 +26,16 @@ interface FeatureCard {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutIrisModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    // Support both PrimeNG DynamicDialog and CDK MatDialog as overlay transports.
+    // When opened from the exercise/lecture chat widget (MatDialog), the CDK ref is used;
+    // when opened from the sidebar chat, the PrimeNG ref is used.
+    private readonly dynamicDialogRef = inject(DynamicDialogRef, { optional: true });
+    private readonly matDialogRef = inject(MatDialogRef, { optional: true });
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
 
-    readonly hideTryButton = this.dialogConfig.data?.hideTryButton === true;
+    readonly hideTryButton = this.dialogConfig?.data?.hideTryButton === true;
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faXmark = faXmark;
@@ -81,11 +86,13 @@ export class AboutIrisModalComponent {
     ];
 
     close(): void {
-        this.dialogRef.close();
+        this.dynamicDialogRef?.close();
+        this.matDialogRef?.close();
     }
 
     tryIris(): void {
         this.chatService.clearChat();
-        this.dialogRef.close();
+        this.dynamicDialogRef?.close();
+        this.matDialogRef?.close();
     }
 }

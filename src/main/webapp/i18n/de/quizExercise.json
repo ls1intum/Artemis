@@ -12,8 +12,7 @@
                 "createLabel": "Quiz erstellen",
                 "editLabel": "Quiz bearbeiten",
                 "importLabel": "Quiz importieren",
-                "createModelDragAndDrop": "Drag-and-Drop Model Quiz erstellen",
-                "exportLabel": "Quizübungen exportieren"
+                "createModelDragAndDrop": "Drag-and-Drop Model Quiz erstellen"
             },
             "aiGeneration": {
                 "button": "Mit KI generieren",
