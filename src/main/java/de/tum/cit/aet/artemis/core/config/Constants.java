@@ -603,8 +603,6 @@ public final class Constants {
 
     public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
-    public static final String WEBAUTHN_REGISTRATION_CHALLENGE_COOKIE_NAME = "webauthn-registration-challenge";
-
     public static final String BEARER_PREFIX = "Bearer ";
 
     public static final String HAZELCAST = "Hazelcast";
