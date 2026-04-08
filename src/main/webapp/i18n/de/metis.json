@@ -166,7 +166,8 @@
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
-                "deleted": "Antwort erfolgreich gelöscht"
+                "deleted": "Antwort erfolgreich gelöscht",
+                "deleteAnswer": "Antwort löschen"
             },
             "userRoles": {
                 "instructor": "Instruktor",

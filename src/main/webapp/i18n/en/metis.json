@@ -166,7 +166,8 @@
             },
             "answerPost": {
                 "created": "New reply successfully created",
-                "deleted": "Reply successfully deleted"
+                "deleted": "Reply successfully deleted",
+                "deleteAnswer": "Delete answer"
             },
             "userRoles": {
                 "instructor": "Instructor",
