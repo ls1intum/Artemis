@@ -131,11 +131,8 @@ describe('LectureUnitComponent', () => {
     });
 
     describe('Deeplinking scroll behavior', () => {
-        let mockScrollIntoView: ReturnType<typeof vi.fn>;
-
         beforeEach(() => {
-            mockScrollIntoView = vi.fn();
-            Element.prototype.scrollIntoView = mockScrollIntoView;
+            Element.prototype.scrollIntoView = vi.fn();
         });
 
         it('should scroll to video player when timestamp parameter is present', async () => {
@@ -148,7 +145,7 @@ describe('LectureUnitComponent', () => {
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
         });
 
@@ -162,7 +159,7 @@ describe('LectureUnitComponent', () => {
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
         });
 
@@ -179,7 +176,7 @@ describe('LectureUnitComponent', () => {
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(mockScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
         });
     });
