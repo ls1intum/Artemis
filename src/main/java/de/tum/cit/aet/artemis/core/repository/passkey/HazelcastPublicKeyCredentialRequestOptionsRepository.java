@@ -44,7 +44,7 @@ import com.hazelcast.map.IMap;
  * </p>
  *
  * <p>
- * The repository stores options in Hazelcast with a time-to-live of 10 minutes to accommodate
+ * The repository stores options in Hazelcast with a time-to-live of 5 minutes to accommodate
  * conditional mediation scenarios where users may not interact immediately.
  * </p>
  *
@@ -64,8 +64,8 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     /** Hazelcast map name for storing credential request options */
     private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
-    /** Time-to-live in seconds: 10 minutes to support conditional mediation (passkey autofill) */
-    private static final int AUTH_OPTIONS_TTL_SECONDS = 600;
+    /** Time-to-live in seconds: 5 minutes to support conditional mediation (passkey autofill) */
+    private static final int AUTH_OPTIONS_TTL_SECONDS = 300;
 
     private final HazelcastInstance hazelcastInstance;
 
