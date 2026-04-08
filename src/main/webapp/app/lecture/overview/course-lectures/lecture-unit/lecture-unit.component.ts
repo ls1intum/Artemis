@@ -21,7 +21,7 @@ export class LectureUnitComponent implements OnDestroy {
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
 
     private router = inject(Router);
-    private route = inject(ActivatedRoute);
+    private route = inject(ActivatedRoute, { optional: true });
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
     private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -111,7 +111,9 @@ export class LectureUnitComponent implements OnDestroy {
         afterNextRender(
             () => {
                 const doScroll = () => {
-                    const { timestamp, page } = this.route.snapshot.queryParams;
+                    const queryParams = this.route?.snapshot.queryParams;
+                    const timestamp = queryParams?.['timestamp'];
+                    const page = queryParams?.['page'];
 
                     // Scroll to video player if timestamp is provided (deeplinking)
                     if (timestamp !== undefined) {
