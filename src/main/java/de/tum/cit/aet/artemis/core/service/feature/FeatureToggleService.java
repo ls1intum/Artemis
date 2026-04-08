@@ -95,7 +95,8 @@ public class FeatureToggleService {
         // starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.ApollonQuizDragAndDrop) {
                 features.put(feature, true);
             }
         }
@@ -126,6 +127,10 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.AutonomousTutor)) {
             features.put(Feature.AutonomousTutor, false);
+        }
+
+        if (!features.containsKey(Feature.ApollonQuizDragAndDrop)) {
+            features.put(Feature.ApollonQuizDragAndDrop, false);
         }
 
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
