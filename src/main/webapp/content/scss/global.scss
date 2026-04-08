@@ -1397,7 +1397,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// About Iris modal backdrop
+// About Iris modal — PrimeNG variant (sidebar chat)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
 }
@@ -1410,6 +1410,18 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         position: relative;
         padding: 0;
     }
+}
+
+// About Iris modal — CDK MatDialog variant (exercise/lecture chat widget)
+.about-iris-backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.about-iris-dialog .mat-mdc-dialog-surface {
+    border-radius: 1rem;
+    overflow: hidden;
+    background-color: var(--iris-secondary-background);
+    padding: 0;
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)

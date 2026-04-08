@@ -26,6 +26,8 @@ export class User extends Account {
      * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
      * </ul>
      */
+    public bot?: boolean;
+
     public askToSetupPasskey?: boolean;
 
     public loggedInWithPasskey?: boolean;
