@@ -22,7 +22,7 @@
     }
 
     @if (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link)) {
-        @if (lectureUnit()?.description) {
+        @if (lectureUnit()?.description && !isFullscreen()) {
             <hr />
         }
         @if (lectureUnit().attachment?.uploadDate) {
@@ -55,9 +55,12 @@
         (click)="$event.stopPropagation()"
         (keydown.escape)="closeFullscreen()"
     >
-        <div class="main-content">
+        <div #mainContent class="main-content">
             @if (!!videoUrl()) {
-                @if (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) {
+                @if (
+                    (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
+                    !isFullscreen()
+                ) {
                     <hr />
                 }
                 @if (isLoading()) {
@@ -67,9 +70,11 @@
                         </div>
                     </div>
                 } @else if (playlistUrl() && hasTranscript()) {
-                    <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+                    <div #videoContainer class="video-container-wrapper">
+                        <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+                    </div>
                 } @else {
-                    <div class="video-player-container">
+                    <div #videoContainer class="video-player-container">
                         <div class="ratio ratio-16x9">
                             <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                         </div>
@@ -78,7 +83,7 @@
             }
 
             @if (hasPdf()) {
-                @if (lectureUnit()?.description || !!videoUrl()) {
+                @if ((lectureUnit()?.description || !!videoUrl()) && !isFullscreen()) {
                     <hr />
                 }
                 @if (pdfLoadError()) {
@@ -86,7 +91,7 @@
                         <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
                     </p-message>
                 } @else if (pdfUrl()) {
-                    <div class="pdf-viewer-spacing">
+                    <div #pdfContainer class="pdf-viewer-spacing">
                         @if (showPdfSpinner()) {
                             <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
                                 <div class="spinner-border" role="status">
@@ -110,8 +115,17 @@
         </div>
 
         @if (showIrisSidebar()) {
-            <div class="iris-sidebar" role="complementary" aria-label="Iris AI Assistant Chat">
+            <div #irisSidebar class="iris-sidebar" role="complementary" aria-label="Iris AI Assistant Chat">
                 <jhi-lecture-chatbot [lectureId]="lectureId()!" />
+                <button
+                    class="iris-sidebar__close-button"
+                    type="button"
+                    [title]="'artemisApp.attachmentVideoUnit.closeFullscreen' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.closeFullscreen' | artemisTranslate"
+                    (click)="closeFullscreen()"
+                >
+                    <fa-icon [icon]="faXmark" />
+                </button>
             </div>
         }
     </div>

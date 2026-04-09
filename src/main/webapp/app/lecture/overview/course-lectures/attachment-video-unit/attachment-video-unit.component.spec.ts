@@ -580,4 +580,86 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(() => component.ngOnDestroy()).not.toThrow();
         });
     });
+
+    describe('Resizable Splitters', () => {
+        it('needsVerticalSplitter: returns true when fullscreen with iris sidebar', () => {
+            // Don't call detectChanges to avoid triggering the Iris sidebar component
+            component.isFullscreen.set(true);
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false };
+
+            expect(component.needsVerticalSplitter()).toBe(true);
+        });
+
+        it('needsVerticalSplitter: returns false when not fullscreen', () => {
+            component.isFullscreen.set(false);
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false };
+
+            expect(component.needsVerticalSplitter()).toBe(false);
+        });
+
+        it('needsVerticalSplitter: returns false when iris sidebar is not shown', () => {
+            component.isFullscreen.set(true);
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: false },
+            });
+
+            expect(component.needsVerticalSplitter()).toBe(false);
+        });
+
+        it('needsHorizontalSplitter: returns true when fullscreen with video and PDF', () => {
+            component.isFullscreen.set(true);
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+
+            expect(component.needsHorizontalSplitter()).toBe(true);
+        });
+
+        it('needsHorizontalSplitter: returns false when not fullscreen', () => {
+            component.isFullscreen.set(false);
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+
+            expect(component.needsHorizontalSplitter()).toBe(false);
+        });
+
+        it('needsHorizontalSplitter: returns false when no video', () => {
+            component.isFullscreen.set(true);
+            component.lectureUnit().videoSource = undefined;
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+
+            expect(component.needsHorizontalSplitter()).toBe(false);
+        });
+
+        it('needsHorizontalSplitter: returns false when no PDF', () => {
+            component.isFullscreen.set(true);
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
+
+            expect(component.needsHorizontalSplitter()).toBe(false);
+        });
+
+        it('ngOnDestroy: destroys both splitters', () => {
+            component.isFullscreen.set(true);
+
+            // Mock the splitter instances
+            const mockVerticalDestroy = vi.fn();
+            const mockHorizontalDestroy = vi.fn();
+
+            component['verticalSplitInstance'] = { destroy: mockVerticalDestroy } as any;
+            component['horizontalSplitInstance'] = { destroy: mockHorizontalDestroy } as any;
+
+            component.ngOnDestroy();
+
+            expect(mockVerticalDestroy).toHaveBeenCalledTimes(1);
+            expect(mockHorizontalDestroy).toHaveBeenCalledTimes(1);
+            expect(component['verticalSplitInstance']).toBeUndefined();
+            expect(component['horizontalSplitInstance']).toBeUndefined();
+        });
+    });
 });

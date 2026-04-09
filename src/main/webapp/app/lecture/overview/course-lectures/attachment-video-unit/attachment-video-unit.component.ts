@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, Injector, OnDestroy, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, NgZone, OnDestroy, afterNextRender, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import Split from 'split.js';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -25,8 +26,10 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
+    faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -39,6 +42,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -46,12 +50,14 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
         CommonModule,
         LectureUnitComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         TranslateDirective,
         SafeResourceUrlPipe,
         VideoPlayerComponent,
         PdfViewerComponent,
         MessageModule,
         LectureChatbotComponent,
+        FaIconComponent,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -59,12 +65,14 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
     protected readonly faExpand = faExpand;
+    protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly injector = inject(Injector);
+    private readonly ngZone = inject(NgZone);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -72,11 +80,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly contentContainer = viewChild<ElementRef>('contentContainer');
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
+    readonly mainContentElement = viewChild<ElementRef>('mainContent');
+    readonly irisSidebarElement = viewChild<ElementRef>('irisSidebar');
+    readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
+    readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
     readonly isFullscreen = signal<boolean>(false);
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
+    // Split panel sizes (percentage values)
+    private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
+    private readonly _horizontalSplitSizes = signal<[number, number]>([50, 50]); // [video, pdf]
+
+    readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
+    readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
+
+    private verticalSplitInstance?: Split.Instance;
+    private horizontalSplitInstance?: Split.Instance;
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -117,6 +139,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return isFs && settings?.settings?.enabled && lecId !== undefined && !isTutorial;
     });
 
+    readonly needsVerticalSplitter = computed(() => this.isFullscreen() && this.showIrisSidebar());
+
+    readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasVideo() && this.hasPdf());
+
     readonly contentContainerClasses = computed(() => ({
         'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
         'content-container--embedded': !this.isCollapsed() && !this.isFullscreen(),
@@ -126,6 +152,44 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
+
+    constructor() {
+        super();
+
+        // Vertical splitter lifecycle (content | iris)
+        effect(() => {
+            const needs = this.needsVerticalSplitter();
+            const mainEl = this.mainContentElement()?.nativeElement;
+            const irisEl = this.irisSidebarElement()?.nativeElement;
+
+            untracked(() => {
+                this.destroyVerticalSplitter();
+
+                if (needs && mainEl && irisEl) {
+                    this.ngZone.runOutsideAngular(() => {
+                        this.initVerticalSplitter([mainEl, irisEl]);
+                    });
+                }
+            });
+        });
+
+        // Horizontal splitter lifecycle (video | pdf)
+        effect(() => {
+            const needs = this.needsHorizontalSplitter();
+            const videoEl = this.videoContainerElement()?.nativeElement;
+            const pdfEl = this.pdfContainerElement()?.nativeElement;
+
+            untracked(() => {
+                this.destroyHorizontalSplitter();
+
+                if (needs && videoEl && pdfEl) {
+                    this.ngZone.runOutsideAngular(() => {
+                        this.initHorizontalSplitter([videoEl, pdfEl]);
+                    });
+                }
+            });
+        });
+    }
 
     /**
      * Return the URL of the video source
@@ -321,7 +385,65 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
+    private initVerticalSplitter(elements: HTMLElement[]): void {
+        this.verticalSplitInstance = Split(elements, {
+            sizes: this._verticalSplitSizes(),
+            minSize: [500, 300], // main-content min 500px, iris min 300px
+            gutterSize: 12,
+            cursor: 'col-resize',
+            direction: 'horizontal',
+            onDragEnd: (sizes) => {
+                this.ngZone.run(() => {
+                    this._verticalSplitSizes.set([sizes[0], sizes[1]]);
+                });
+            },
+            gutter: (_index, direction) => {
+                const gutter = document.createElement('div');
+                gutter.className = `gutter gutter-${direction}`;
+                const handle = document.createElement('div');
+                handle.className = 'split-gutter-handle';
+                gutter.appendChild(handle);
+                return gutter;
+            },
+        });
+    }
+
+    private initHorizontalSplitter(elements: HTMLElement[]): void {
+        this.horizontalSplitInstance = Split(elements, {
+            sizes: this._horizontalSplitSizes(),
+            minSize: [200, 200], // video/pdf min 200px each
+            gutterSize: 12,
+            cursor: 'row-resize',
+            direction: 'vertical',
+            onDragEnd: (sizes) => {
+                this.ngZone.run(() => {
+                    this._horizontalSplitSizes.set([sizes[0], sizes[1]]);
+                });
+            },
+            gutter: (_index, direction) => {
+                const gutter = document.createElement('div');
+                gutter.className = `gutter gutter-${direction}`;
+                const handle = document.createElement('div');
+                handle.className = 'split-gutter-handle';
+                gutter.appendChild(handle);
+                return gutter;
+            },
+        });
+    }
+
+    private destroyVerticalSplitter(): void {
+        this.verticalSplitInstance?.destroy();
+        this.verticalSplitInstance = undefined;
+    }
+
+    private destroyHorizontalSplitter(): void {
+        this.horizontalSplitInstance?.destroy();
+        this.horizontalSplitInstance = undefined;
+    }
+
     ngOnDestroy(): void {
+        this.destroyVerticalSplitter();
+        this.destroyHorizontalSplitter();
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }

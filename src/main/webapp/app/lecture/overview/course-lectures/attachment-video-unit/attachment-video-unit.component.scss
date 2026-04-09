@@ -33,14 +33,20 @@ jhi-pdf-viewer.pdf-viewer-loading {
     inset: 4rem 2rem 2rem 2rem;
     z-index: 1032;
     display: flex;
-    gap: 1rem;
-    padding: 2rem;
+    gap: 0; // No gap when using Split.js - gutters are inserted by Split.js
+    padding: 1rem;
     background-color: var(--card-bg);
     border: 1px solid var(--card-border-color);
     border-radius: 0.4rem;
-    overflow: auto;
+    overflow: hidden;
     box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
     flex-direction: row;
+
+    // Remove padding in fullscreen for optimal space usage
+    .video-player-container,
+    .pdf-viewer-spacing {
+        padding-block: 0;
+    }
 
     // Content takes full width by default
     > .main-content {
@@ -48,23 +54,91 @@ jhi-pdf-viewer.pdf-viewer-loading {
         min-width: 0;
         display: flex;
         flex-direction: column;
+        gap: 0; // No gap when using Split.js
+        overflow: hidden;
+
+        // Enable children to shrink and fill available space
+        > * {
+            flex-shrink: 1;
+            min-height: 0;
+        }
+    }
+
+    // Optimize PDF and Video containers for fullscreen
+    .pdf-viewer-spacing,
+    .video-player-container,
+    .video-container-wrapper {
+        // Don't set flex properties - let Split.js control them via inline styles
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+
+        jhi-pdf-viewer,
+        .ratio {
+            height: 100%;
+        }
+    }
+
+    // When only one content type (video OR pdf), fill available space
+    .pdf-viewer-spacing:only-child,
+    .video-player-container:only-child,
+    .video-container-wrapper:only-child {
+        flex: 1;
     }
 
     // When sidebar is present, adjust layout
     &.content-container--with-sidebar {
+        // No gap - Split.js handles spacing via gutters
         > .main-content {
-            flex: 2;
+            // Don't set flex properties - let Split.js control them via inline styles
+            flex: unset;
             min-width: 500px;
         }
 
         > .iris-sidebar {
-            flex: 0 0 350px;
+            // Don't set flex properties - let Split.js control them
+            position: relative;
             min-width: 350px;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid var(--card-border-color);
             background-color: var(--card-bg);
             overflow: hidden;
+            padding-top: 2.5rem; // Space for close button at top
+        }
+    }
+
+    // Close button for Iris sidebar (matching PDF viewer style)
+    .iris-sidebar__close-button {
+        position: absolute;
+        top: 0.0625rem;
+        right: 0.125rem;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        color: var(--bs-body-color);
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+        border-radius: 0.25rem;
+
+        &:hover,
+        &:active {
+            opacity: 0.8;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--bs-primary);
+            outline-offset: -2px;
+        }
+
+        fa-icon {
+            font-size: 1.25rem;
         }
     }
 
@@ -80,6 +154,83 @@ jhi-pdf-viewer.pdf-viewer-loading {
                 display: none; // Hide sidebar on mobile
             }
         }
+    }
+
+    // Split.js gutter styling (copied from ResizablePanelsComponent pattern)
+
+    // Vertical gutter (for content | iris horizontal resizing)
+    ::ng-deep .gutter.gutter-horizontal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 12px;
+        cursor: col-resize;
+        background-color: transparent;
+        flex-shrink: 0;
+
+        &::before {
+            display: none;
+        }
+    }
+
+    // Horizontal gutter (for video | pdf vertical resizing)
+    ::ng-deep .gutter.gutter-vertical {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 12px;
+        cursor: row-resize;
+        background-color: transparent;
+        flex-shrink: 0;
+
+        &::before {
+            display: none;
+        }
+    }
+
+    // Two-line visual indicator (matches ResizablePanelsComponent)
+    ::ng-deep .split-gutter-handle {
+        display: flex;
+        pointer-events: none;
+
+        &::before,
+        &::after {
+            content: '';
+            display: block;
+            background: var(--bs-body-color);
+            border-radius: 1px;
+        }
+    }
+
+    // Horizontal gutter handle (vertical lines)
+    ::ng-deep .gutter-horizontal .split-gutter-handle {
+        flex-direction: row;
+        gap: 1px;
+
+        &::before,
+        &::after {
+            width: 2px;
+            height: 12px;
+        }
+    }
+
+    // Vertical gutter handle (horizontal lines)
+    ::ng-deep .gutter-vertical .split-gutter-handle {
+        flex-direction: column;
+        gap: 1px;
+
+        &::before,
+        &::after {
+            width: 12px;
+            height: 2px;
+        }
+    }
+
+    // Ensure video-container-wrapper exists for jhi-video-player case
+    .video-container-wrapper {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 }
 
