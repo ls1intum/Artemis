@@ -40,6 +40,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -148,7 +149,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
+    private readonly matDialog = inject(MatDialog);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+    private aboutIrisMatDialogRef: MatDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -236,11 +239,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
         const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
         const hasRateLimitInfo = rateLimit > 0;
+        const hasAboutIrisButton = !this.isChatHistoryAvailable() && !this.isChatGptWrapper();
         const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
         const hasSizeToggle = this.fullSize() !== undefined;
         const hasCloseButton = this.showCloseButton();
         const hasSessionSwitcher = this.hasSessionSwitcher();
-        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton || hasSessionSwitcher;
+        return hasRelatedEntity || hasRateLimitInfo || hasAboutIrisButton || hasClearButton || hasSizeToggle || hasCloseButton || hasSessionSwitcher;
     });
 
     // UI state signals
@@ -604,7 +608,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 clearInterval(this.dayTickIntervalId);
             }
         });
-        this.destroyRef.onDestroy(() => this.aboutIrisDialogRef?.close());
+        this.destroyRef.onDestroy(() => {
+            this.aboutIrisDialogRef?.close();
+            this.aboutIrisMatDialogRef?.close();
+        });
 
         // Placeholder cycling lifecycle
         effect((onCleanup) => {
@@ -1111,17 +1118,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
-        this.aboutIrisDialogRef?.close();
-        this.aboutIrisDialogRef =
-            this.dialogService.open(AboutIrisModalComponent, {
-                modal: true,
-                closable: false,
-                showHeader: false,
-                styleClass: 'about-iris-dialog',
-                maskStyleClass: 'about-iris-dialog',
+        // When opened from the exercise/lecture chat widget, the chat lives inside a CDK
+        // MatDialog overlay. A PrimeNG dialog cannot render above it because the chat widget
+        // uses CSS transforms (for drag/resize) which create an isolated stacking context.
+        // Solution: open via CDK MatDialog so it stacks correctly above the chat overlay.
+        if (this.layout() === 'widget') {
+            this.aboutIrisMatDialogRef?.close();
+            this.aboutIrisMatDialogRef = this.matDialog.open(AboutIrisModalComponent, {
+                hasBackdrop: true,
+                disableClose: true,
+                panelClass: 'about-iris-dialog',
+                backdropClass: 'about-iris-backdrop',
                 width: '40rem',
-                breakpoints: { '640px': '95vw' },
-            }) ?? undefined;
+                maxWidth: '95vw',
+            });
+        } else {
+            this.aboutIrisDialogRef?.close();
+            this.aboutIrisDialogRef =
+                this.dialogService.open(AboutIrisModalComponent, {
+                    modal: true,
+                    closable: false,
+                    showHeader: false,
+                    styleClass: 'about-iris-dialog',
+                    maskStyleClass: 'about-iris-dialog',
+                    width: '40rem',
+                    breakpoints: { '640px': '95vw' },
+                }) ?? undefined;
+        }
     }
 
     setSearchValue(searchValue: string) {
