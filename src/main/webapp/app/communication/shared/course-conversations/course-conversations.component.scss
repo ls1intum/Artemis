@@ -18,6 +18,11 @@
     min-width: 30%;
 }
 
+/* ensure the user selection dropdown lives on top of the create conversation dialog */
+body ngb-typeahead-window.dropdown-menu {
+    z-index: 2000 !important;
+}
+
 @include media-breakpoint-down(sm) {
     .communication-content-sidebar {
         position: absolute;
