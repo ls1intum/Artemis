@@ -1,5 +1,5 @@
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +29,7 @@ export class LectureUnitComponent implements OnDestroy {
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
     protected faCircle = faCircle;
+    protected faExpand = faExpand;
 
     courseId = input.required<number>();
 
@@ -43,6 +44,9 @@ export class LectureUnitComponent implements OnDestroy {
 
     readonly showOriginalVersionButton = input<boolean>(false);
     readonly onShowOriginalVersion = output<void>();
+
+    readonly showFullscreenButton = input<boolean>(false);
+    readonly onFullscreen = output<void>();
 
     readonly onShowIsolated = output<void>();
     readonly onCollapse = output<boolean>();
@@ -104,6 +108,11 @@ export class LectureUnitComponent implements OnDestroy {
     handleOriginalVersionView(event: Event) {
         event.stopPropagation();
         this.onShowOriginalVersion.emit();
+    }
+
+    handleFullscreen(event: Event) {
+        event.stopPropagation();
+        this.onFullscreen.emit();
     }
 
     private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0): void {

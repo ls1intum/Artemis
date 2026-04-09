@@ -1,0 +1,4 @@
+// Hide Iris floating button when fullscreen is active
+:host:has(.content-container--fullscreen) jhi-exercise-chatbot-button {
+    display: none;
+}

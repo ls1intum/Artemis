@@ -1508,3 +1508,12 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
 }
+
+// Lecture unit fullscreen mode z-index layering
+// When a lecture unit (video/PDF) enters fullscreen mode with split view,
+// ensure the mat-drawer-content container is above other overlays (e.g., course sidebar).
+// The fullscreen overlay uses z-index 1031, the content uses 1032, so the parent
+// mat-drawer-content needs z-index 4000 to be above the course sidebar (z-index 1030).
+.mat-drawer-content:has(.content-container--fullscreen) {
+    z-index: 4000 !important;
+}

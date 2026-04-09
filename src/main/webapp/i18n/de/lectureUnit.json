@@ -84,6 +84,7 @@
         "attachmentVideoUnit": {
             "created": "Neuer Datei-/Video-Inhalt erstellt",
             "updated": "Datei-/Video-Inhalt aktualisiert",
+            "fullscreen": "Vollbild",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
             "transcriptionProcessing": "Transkription wird verarbeitet",

@@ -1,4 +1,5 @@
-import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, ElementRef, Injector, OnDestroy, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -11,6 +12,7 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
+    faExpand,
     faFile,
     faFileArchive,
     faFileCode,
@@ -35,23 +37,43 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
+import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, MessageModule],
+    imports: [
+        CommonModule,
+        LectureUnitComponent,
+        ArtemisDatePipe,
+        TranslateDirective,
+        SafeResourceUrlPipe,
+        VideoPlayerComponent,
+        PdfViewerComponent,
+        MessageModule,
+        LectureChatbotComponent,
+    ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
+    protected readonly faExpand = faExpand;
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly injector = inject(Injector);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
+    irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
 
+    readonly contentContainer = viewChild<ElementRef>('contentContainer');
+    readonly lectureUnitCard = viewChild(LectureUnitComponent);
+
+    readonly isFullscreen = signal<boolean>(false);
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
@@ -76,6 +98,31 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
+
+    readonly hasFullscreenContent = computed(() => this.hasVideo() || this.hasPdf());
+
+    readonly lectureId = computed(() => this.lectureUnit().lecture?.id);
+
+    readonly isCollapsed = computed(() => {
+        const card = this.lectureUnitCard();
+        return card ? card.isCollapsed() : true;
+    });
+
+    readonly showIrisSidebar = computed(() => {
+        const isFs = this.isFullscreen();
+        const settings = this.irisSettings();
+        const lecId = this.lectureId();
+        const isTutorial = this.lectureUnit().lecture?.isTutorialLecture;
+
+        return isFs && settings?.settings?.enabled && lecId !== undefined && !isTutorial;
+    });
+
+    readonly contentContainerClasses = computed(() => ({
+        'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
+        'content-container--embedded': !this.isCollapsed() && !this.isFullscreen(),
+        'content-container--fullscreen': this.isFullscreen(),
+        'content-container--with-sidebar': this.isFullscreen() && this.showIrisSidebar(),
+    }));
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -151,47 +198,50 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
-
-            // reset stale state
-            this.transcriptSegments.set([]);
-            this.playlistUrl.set(undefined);
-            this.isLoading.set(true);
-
-            const src = this.lectureUnit().videoSource;
-
-            if (!src) {
-                this.isLoading.set(false);
-                if (this.hasPdf()) {
-                    this.loadPdf();
-                }
-                return;
-            }
-
-            // Try to resolve a .m3u8 playlist URL from the server
-            this.attachmentVideoUnitService
-                .getPlaylistUrl(src)
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe({
-                    next: (resolvedUrl) => {
-                        if (resolvedUrl) {
-                            this.playlistUrl.set(resolvedUrl);
-                            this.fetchTranscript();
-                        }
-                        this.isLoading.set(false);
-                    },
-                    error: () => {
-                        // Failed to resolve playlist URL, will fall back to iframe
-                        this.playlistUrl.set(undefined);
-                        this.isLoading.set(false);
-                    },
-                });
-            if (this.hasPdf()) {
-                this.loadPdf();
-            }
+            this.triggerContentLoad();
         } else {
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
+        }
+    }
+
+    private triggerContentLoad(): void {
+        // reset stale state
+        this.transcriptSegments.set([]);
+        this.playlistUrl.set(undefined);
+        this.isLoading.set(true);
+
+        const src = this.lectureUnit().videoSource;
+
+        if (!src) {
+            this.isLoading.set(false);
+            if (this.hasPdf()) {
+                this.loadPdf();
+            }
+            return;
+        }
+
+        // Try to resolve a .m3u8 playlist URL from the server
+        this.attachmentVideoUnitService
+            .getPlaylistUrl(src)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (resolvedUrl) => {
+                    if (resolvedUrl) {
+                        this.playlistUrl.set(resolvedUrl);
+                        this.fetchTranscript();
+                    }
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    // Failed to resolve playlist URL, will fall back to iframe
+                    this.playlistUrl.set(undefined);
+                    this.isLoading.set(false);
+                },
+            });
+        if (this.hasPdf()) {
+            this.loadPdf();
         }
     }
 
@@ -274,6 +324,53 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     ngOnDestroy(): void {
         this.cancelPdfLoad();
         this.revokePdfUrl();
+    }
+
+    openFullscreen(): void {
+        if (!this.hasFullscreenContent() || this.isFullscreen()) {
+            return;
+        }
+
+        const card = this.lectureUnitCard();
+
+        // Auto-expand if collapsed
+        if (card && card.isCollapsed()) {
+            // Trigger card expansion (this will automatically sync _isCollapsed via onCollapse event)
+            card.toggleCollapse();
+
+            // Wait for content to render before activating fullscreen using proper render cycle
+            afterNextRender(
+                () => {
+                    afterNextRender(
+                        () => {
+                            this.activateFullscreen();
+                        },
+                        { injector: this.injector },
+                    );
+                },
+                { injector: this.injector },
+            );
+        } else {
+            // Already expanded, show fullscreen immediately
+            this.activateFullscreen();
+        }
+    }
+
+    private activateFullscreen(): void {
+        afterNextRender(
+            () => {
+                this.isFullscreen.set(true);
+            },
+            { injector: this.injector },
+        );
+    }
+
+    closeFullscreen(): void {
+        if (!this.isFullscreen()) {
+            return;
+        }
+
+        this.isFullscreen.set(false);
     }
 
     private cancelPdfLoad(): void {

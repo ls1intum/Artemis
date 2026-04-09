@@ -19,6 +19,12 @@
                         <span class="d-none d-md-inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
                     </button>
                 }
+                @if (showFullscreenButton()) {
+                    <button id="fullscreen-button" class="btn btn-sm btn-primary me-2" (click)="handleFullscreen($event)">
+                        <fa-icon [icon]="faExpand" />
+                        <span class="d-none d-md-inline" [jhiTranslate]="'artemisApp.attachmentVideoUnit.fullscreen'"></span>
+                    </button>
+                }
                 @if (showViewIsolatedButton()) {
                     <button id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
