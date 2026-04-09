@@ -5,11 +5,11 @@
     "license": "MIT",
     "devDependencies": {
         "@playwright/test": "1.59.1",
-        "@typescript-eslint/eslint-plugin": "8.58.0",
-        "@typescript-eslint/parser": "8.58.0",
+        "@typescript-eslint/eslint-plugin": "8.58.1",
+        "@typescript-eslint/parser": "8.58.1",
         "cross-env": "10.1.0",
         "dayjs": "1.11.20",
-        "dotenv": "17.4.0",
+        "dotenv": "17.4.1",
         "eslint": "10.1.0",
         "istanbul-lib-coverage": "3.2.2",
         "istanbul-lib-report": "3.0.1",
@@ -18,12 +18,13 @@
         "npm-check-updates": "20.0.0",
         "monocart-reporter": "2.10.0",
         "npm-run-all2": "8.0.4",
-        "simple-git": "3.33.0",
+        "simple-git": "3.35.2",
         "uuid": "13.0.0",
         "archiver": "7.0.1"
     },
     "overrides": {
-        "nodemailer": "8.0.4"
+        "nodemailer": "8.0.5",
+        "lodash": "4.18.1"
     },
     "scripts": {
         "playwright:test": "cross-env NODE_OPTIONS=--max-old-space-size=6144 npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
