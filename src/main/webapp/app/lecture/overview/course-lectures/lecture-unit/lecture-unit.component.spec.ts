@@ -196,5 +196,40 @@ describe('LectureUnitComponent', () => {
                 expect(pdfScrollSpy).not.toHaveBeenCalled();
             });
         });
+
+        it('should ignore deeplink parameters when manually expanding (toggle)', async () => {
+            mockActivatedRoute.snapshot.queryParams = { timestamp: '30', page: '5' };
+            fixture.componentRef.setInput('initiallyExpanded', false);
+
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            const mockPdfViewer = document.createElement('div');
+            mockPdfViewer.scrollIntoView = vi.fn();
+            const pdfScrollSpy = mockPdfViewer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            const unitCardScrollSpy = vi.spyOn(fixture.nativeElement, 'scrollIntoView');
+
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
+                if (selector === 'jhi-video-player') return mockVideoPlayer;
+                if (selector === 'jhi-pdf-viewer') return mockPdfViewer;
+                return null;
+            });
+
+            fixture.detectChanges();
+
+            // Manually toggle collapse to expand
+            const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
+            collapseButton.nativeElement.click();
+
+            await vi.waitFor(() => {
+                // Deeplink targets should not be scrolled (manual expand ignores deeplinks)
+                expect(videoScrollSpy).not.toHaveBeenCalled();
+                expect(pdfScrollSpy).not.toHaveBeenCalled();
+                // Unit card itself should be scrolled with 'nearest'
+                expect(unitCardScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
     });
 });
