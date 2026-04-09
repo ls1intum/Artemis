@@ -8,11 +8,25 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
     test.describe('DnD Quiz drop locations', () => {
-        test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, quizExerciseCreation, quizExerciseDragAndDropQuiz }) => {
-            await login(admin, '/course-management/' + course.id + '/exercises');
+        test.beforeEach('Create DND quiz', async ({ login, page, courseManagementExercises, quizExerciseCreation, quizExerciseDragAndDropQuiz }) => {
+            // ApollonQuizDragAndDrop is disabled by default on the server — enable it for this test.
+            await login(admin);
+            await page.request.put('api/core/admin/feature-toggle', {
+                data: { ApollonQuizDragAndDrop: true },
+            });
+
+            await page.goto('/course-management/' + course.id + '/exercises');
+            await page.waitForLoadState('load');
             await courseManagementExercises.createQuizExercise();
             await quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
             await quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
+        });
+
+        test.afterEach('Restore feature toggle', async ({ login, page }) => {
+            await login(admin);
+            await page.request.put('api/core/admin/feature-toggle', {
+                data: { ApollonQuizDragAndDrop: false },
+            });
         });
 
         test('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
