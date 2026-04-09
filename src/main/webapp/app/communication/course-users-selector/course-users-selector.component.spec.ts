@@ -171,7 +171,8 @@ describe('CourseUsersSelectorComponent', () => {
     }
 
     function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
-        const pages = nativeEl.querySelectorAll('button.dropdown-item');
+        const completion = document.querySelector('ngb-typeahead-window');
+        const pages = completion!.querySelectorAll('button.dropdown-item');
         expect(pages).toHaveLength(dropdownEntries.length);
         for (let i = 0; i < dropdownEntries.length; i++) {
             const resultDef = dropdownEntries[i];
