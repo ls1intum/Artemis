@@ -35,7 +35,7 @@ import com.hazelcast.map.IMap;
  *
  * <p>
  * Instead of relying on HTTP sessions (which are not available under {@code SessionCreationPolicy.STATELESS}),
- * this implementation uses a random token stored in a cookie ({@value WEBAUTHN_CHALLENGE_COOKIE_NAME}) as the
+ * this implementation uses a random challenge lookup ID stored in a cookie ({@value WEBAUTHN_CHALLENGE_COOKIE_NAME}) as the
  * key for looking up challenge options in a distributed Hazelcast map. This ensures that the challenge
  * correlation between the options request ({@code POST /webauthn/authenticate/options}) and the
  * authentication request ({@code POST /login/webauthn}) works reliably across multiple nodes,
@@ -93,31 +93,33 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     /**
      * Saves the given {@link PublicKeyCredentialRequestOptions} in the Hazelcast distributed map
-     * and sets a cookie with the lookup token.
+     * and sets a cookie with the challenge lookup ID.
      *
      * <p>
-     * When {@code options} is not {@code null}, a new random token is generated, stored as the
+     * When {@code options} is not {@code null}, a new random challenge lookup ID is generated, stored as the
      * Hazelcast map key, and set as a cookie on the response. When {@code options} is {@code null}
-     * (cleanup after authentication), the existing token is read from the cookie, the Hazelcast
+     * (cleanup after authentication), the existing challenge lookup ID is read from the cookie, the Hazelcast
      * entry is removed, and the cookie is deleted.
      * </p>
      *
      * @param request  the current HTTP request
-     * @param response the current HTTP response (used to set the challenge token cookie)
+     * @param response the current HTTP response (used to set the challenge lookup ID cookie)
      * @param options  the WebAuthn challenge options to store, or {@code null} to remove
      */
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
         boolean storeNewChallenge = options != null;
         if (storeNewChallenge) {
-            String token = UUID.randomUUID().toString();
-            authOptionsMap.put(token, options);
-            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(token, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
+            String challengeLookupId = UUID.randomUUID().toString();
+            authOptionsMap.put(challengeLookupId, options);
+            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(challengeLookupId, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
+            log.debug("Saved PublicKeyCredentialRequestOptions to Hazelcast with challengeLookupId: {}", challengeLookupId);
         }
         else {
             // clear old challenge
             Cookie existingCookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
             if (existingCookie != null) {
+                log.debug("Removing PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", existingCookie.getValue());
                 authOptionsMap.remove(existingCookie.getValue());
             }
             response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie("", 0).toString());
@@ -126,9 +128,9 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     /**
      * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the Hazelcast map
-     * using the token from the {@value WEBAUTHN_CHALLENGE_COOKIE_NAME} cookie.
+     * using the challenge lookup ID from the {@value WEBAUTHN_CHALLENGE_COOKIE_NAME} cookie.
      *
-     * @param request the HTTP request (used to extract the challenge token cookie)
+     * @param request the HTTP request (used to extract the challenge lookup ID cookie)
      * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if the cookie
      *         is missing or no matching entry exists in Hazelcast
      */
@@ -140,7 +142,14 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             return null;
         }
 
-        return authOptionsMap.get(cookie.getValue());
+        PublicKeyCredentialRequestOptions options = authOptionsMap.get(cookie.getValue());
+        if (options != null) {
+            log.debug("Loaded PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", cookie.getValue());
+        }
+        else {
+            log.warn("No PublicKeyCredentialRequestOptions found in Hazelcast for challengeLookupId: {}. The entry may have expired.", cookie.getValue());
+        }
+        return options;
     }
 
     private ResponseCookie buildChallengeCookie(String value, int maxAgeSeconds) {
