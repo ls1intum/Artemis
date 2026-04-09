@@ -139,13 +139,16 @@ describe('LectureUnitComponent', () => {
             mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
             fixture.componentRef.setInput('initiallyExpanded', true);
 
-            const mockVideoPlayer = document.createElement('jhi-video-player');
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
             vi.spyOn(fixture.nativeElement, 'querySelector').mockReturnValue(mockVideoPlayer);
 
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                expect(videoScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
         });
 
@@ -153,13 +156,16 @@ describe('LectureUnitComponent', () => {
             mockActivatedRoute.snapshot.queryParams = { page: '5' };
             fixture.componentRef.setInput('initiallyExpanded', true);
 
-            const mockPdfViewer = document.createElement('jhi-pdf-viewer');
+            const mockPdfViewer = document.createElement('div');
+            mockPdfViewer.scrollIntoView = vi.fn();
+            const pdfScrollSpy = mockPdfViewer.scrollIntoView as ReturnType<typeof vi.fn>;
+
             vi.spyOn(fixture.nativeElement, 'querySelector').mockReturnValue(mockPdfViewer);
 
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                expect(pdfScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
         });
 
@@ -167,16 +173,27 @@ describe('LectureUnitComponent', () => {
             mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
             fixture.componentRef.setInput('initiallyExpanded', true);
 
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            const mockPdfViewer = document.createElement('div');
+            mockPdfViewer.scrollIntoView = vi.fn();
+            const pdfScrollSpy = mockPdfViewer.scrollIntoView as ReturnType<typeof vi.fn>;
+
             vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
-                if (selector === 'jhi-video-player') return null;
-                if (selector === 'jhi-pdf-viewer') return document.createElement('jhi-pdf-viewer');
+                if (selector === 'jhi-video-player') return mockVideoPlayer;
+                if (selector === 'jhi-pdf-viewer') return mockPdfViewer;
                 return null;
             });
 
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                // Video player should be scrolled (timestamp takes priority)
+                expect(videoScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+                // PDF viewer should not be scrolled (early return after video player)
+                expect(pdfScrollSpy).not.toHaveBeenCalled();
             });
         });
     });

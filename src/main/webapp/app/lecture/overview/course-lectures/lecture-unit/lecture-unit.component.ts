@@ -65,7 +65,7 @@ export class LectureUnitComponent implements OnDestroy {
                         this.onCollapse.emit(false);
                     }
 
-                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
+                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS, true);
                 }
                 if (!shouldAutoExpand) {
                     this.autoExpanded = false;
@@ -107,11 +107,11 @@ export class LectureUnitComponent implements OnDestroy {
         this.onShowOriginalVersion.emit();
     }
 
-    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0): void {
+    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0, useDeeplinkTarget = false): void {
         afterNextRender(
             () => {
                 const doScroll = () => {
-                    const queryParams = this.route?.snapshot.queryParams;
+                    const queryParams = useDeeplinkTarget ? this.route?.snapshot.queryParams : undefined;
                     const timestamp = queryParams?.['timestamp'];
                     const page = queryParams?.['page'];
 
