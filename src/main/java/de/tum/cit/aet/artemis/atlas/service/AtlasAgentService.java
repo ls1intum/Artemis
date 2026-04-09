@@ -68,6 +68,8 @@ public class AtlasAgentService {
 
     private final AtlasAgentToolCallbackService toolCallbackFactory;
 
+    private final AtlasAgentToolsService toolsService;
+
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
@@ -83,12 +85,13 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            AtlasAgentToolCallbackService toolCallbackFactory, ExecutionPlanStateManagerService executionPlanStateManagerService,
+            AtlasAgentToolCallbackService toolCallbackFactory, AtlasAgentToolsService toolsService, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
         this.toolCallbackFactory = toolCallbackFactory;
+        this.toolsService = toolsService;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;
@@ -226,7 +229,7 @@ public class AtlasAgentService {
 
     private ToolCallbackProvider getToolCallbackProvider(AgentType agentType) {
         return switch (agentType) {
-            case MAIN_AGENT -> toolCallbackFactory.createMainAgentProvider();
+            case MAIN_AGENT -> toolCallbackFactory.createMainAgentProvider(toolsService);
             case COMPETENCY_EXPERT -> toolCallbackFactory.createCompetencyExpertProvider();
             case COMPETENCY_MAPPER -> toolCallbackFactory.createCompetencyMapperProvider();
             case EXERCISE_MAPPER -> toolCallbackFactory.createExerciseMapperProvider();

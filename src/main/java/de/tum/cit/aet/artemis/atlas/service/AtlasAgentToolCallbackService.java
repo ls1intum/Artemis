@@ -22,17 +22,14 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolCallbackService {
 
-    private final AtlasAgentToolsService toolsService;
-
     private final CompetencyExpertToolsService expertToolsService;
 
     private final CompetencyMappingToolsService mapperToolsService;
 
     private final ExerciseMappingToolsService exerciseMapperToolsService;
 
-    public AtlasAgentToolCallbackService(AtlasAgentToolsService toolsService, CompetencyExpertToolsService expertToolsService, CompetencyMappingToolsService mapperToolsService,
+    public AtlasAgentToolCallbackService(CompetencyExpertToolsService expertToolsService, CompetencyMappingToolsService mapperToolsService,
             ExerciseMappingToolsService exerciseMapperToolsService) {
-        this.toolsService = toolsService;
         this.expertToolsService = expertToolsService;
         this.mapperToolsService = mapperToolsService;
         this.exerciseMapperToolsService = exerciseMapperToolsService;
@@ -41,9 +38,10 @@ public class AtlasAgentToolCallbackService {
     /**
      * Creates a provider exposing the Main Agent tools (information retrieval and delegation).
      *
+     * @param toolsService the tools service providing main agent tools
      * @return ToolCallbackProvider for the Main Agent
      */
-    public ToolCallbackProvider createMainAgentProvider() {
+    public ToolCallbackProvider createMainAgentProvider(AtlasAgentToolsService toolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
     }
 
