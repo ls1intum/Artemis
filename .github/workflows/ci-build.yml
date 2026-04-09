@@ -70,14 +70,12 @@ jobs:
           path: build/libs/Artemis-*.war
       - name: Upload Release Artifact
         if: inputs.is_release
-        uses: actions/upload-release-asset@v1
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/libs/Artemis-${{ inputs.release_tag }}.war
-          asset_name: Artemis.war
-          asset_content_type: application/x-webarchive
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp "build/libs/Artemis-${{ inputs.release_tag }}.war" Artemis.war
+          gh release upload "${{ inputs.release_tag }}" Artemis.war --clobber
 
   docker:
     name: Build and Push Docker Image

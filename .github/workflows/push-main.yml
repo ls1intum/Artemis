@@ -41,7 +41,16 @@ jobs:
 
           BASE_SHA="${{ github.event.before }}"
           HEAD_SHA="${{ github.sha }}"
-          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+          if git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
+            CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          elif git rev-parse --verify "${HEAD_SHA}^" >/dev/null 2>&1; then
+            echo "Base SHA $BASE_SHA is unavailable. Falling back to the first parent of $HEAD_SHA."
+            CHANGED_FILES="$(git diff --name-only "${HEAD_SHA}^" "$HEAD_SHA")"
+          else
+            echo "No comparable base commit available. Marking the build as relevant."
+            CHANGED_FILES="__FORCE_BUILD__"
+          fi
 
           if echo "$CHANGED_FILES" | rg -q '(^|/)gradle/|^gradlew$|^gradlew\.bat$|^build\.gradle$|^settings\.gradle$'; then
             echo "has_gradle=true" >> "$GITHUB_OUTPUT"

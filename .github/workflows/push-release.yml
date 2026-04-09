@@ -1,8 +1,11 @@
-name: Push Develop CI
+name: Push Release CI
 
 on:
   push:
-    branches: [develop]
+    branches:
+      - 'release/*'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'README.md'
       - 'CODE_OF_CONDUCT.md'
@@ -19,7 +22,7 @@ on:
       - 'proxy.conf.mjs'
 
 concurrency:
-  group: push-develop
+  group: push-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,10 +30,6 @@ jobs:
     name: Detect Changed Areas
     runs-on: ubuntu-latest
     outputs:
-      has_java: ${{ steps.filter.outputs.has_java }}
-      has_docs: ${{ steps.filter.outputs.has_docs }}
-      has_i18n: ${{ steps.filter.outputs.has_i18n }}
-      has_aeolus: ${{ steps.filter.outputs.has_aeolus }}
       has_gradle: ${{ steps.filter.outputs.has_gradle }}
       build_relevant: ${{ steps.filter.outputs.build_relevant }}
     steps:
@@ -56,22 +55,13 @@ jobs:
             CHANGED_FILES="__FORCE_BUILD__"
           fi
 
-          has_match() {
-            local pattern="$1"
-            if echo "$CHANGED_FILES" | rg -q "$pattern"; then
-              echo true
-            else
-              echo false
-            fi
-          }
+          if echo "$CHANGED_FILES" | rg -q '(^|/)gradle/|^gradlew$|^gradlew\.bat$|^build\.gradle$|^settings\.gradle$'; then
+            echo "has_gradle=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_gradle=false" >> "$GITHUB_OUTPUT"
+          fi
 
-          echo "has_java=$(has_match '^src/main/java/')" >> "$GITHUB_OUTPUT"
-          echo "has_docs=$(has_match '^documentation/')" >> "$GITHUB_OUTPUT"
-          echo "has_i18n=$(has_match '^src/main/webapp/i18n/')" >> "$GITHUB_OUTPUT"
-          echo "has_aeolus=$(has_match '^src/main/resources/templates/aeolus/')" >> "$GITHUB_OUTPUT"
-          echo "has_gradle=$(has_match '(^|/)gradle/|^gradlew$|^gradlew\\.bat$|^build\\.gradle$|^settings\\.gradle$')" >> "$GITHUB_OUTPUT"
-
-          if echo "$CHANGED_FILES" | rg -q '^(src/main/|src/test/|docker/|gradle/|build\.gradle|settings\.gradle|package\.json|package-lock\.json|tsconfig|angular\.json|vite|playwright|webpack|\.github/workflows/)'; then
+          if echo "$CHANGED_FILES" | rg -q '^(src/main/|src/test/|docker/|gradle/|build\.gradle|settings\.gradle|package\.json|package-lock\.json|tsconfig|angular\.json|vite|playwright|webpack|\.github/workflows/|__FORCE_BUILD__)'; then
             echo "build_relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "build_relevant=false" >> "$GITHUB_OUTPUT"
@@ -104,35 +94,9 @@ jobs:
     uses: ./.github/workflows/ci-test.yml
     secrets: inherit
     with:
-      base_branch: develop
+      base_branch: main
       run_all_tests: true
       is_pr: false
-
-  java-analysis:
-    name: Java Analysis
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_java == 'true'
-    uses: ./.github/workflows/ci-java-analysis.yml
-    with:
-      base_branch: develop
-
-  docs:
-    name: Build Documentation
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_docs == 'true'
-    uses: ./.github/workflows/ci-docs.yml
-
-  translation:
-    name: Check if German and English translations are consistent
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_i18n == 'true'
-    uses: ./.github/workflows/ci-translation.yml
-
-  aeolus:
-    name: Check if windfiles and scripts match
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_aeolus == 'true'
-    uses: ./.github/workflows/ci-aeolus.yml
 
   e2e:
     name: E2E Tests
@@ -147,5 +111,5 @@ jobs:
     with:
       branch_name: ${{ github.ref_name }}
       commit_sha: ${{ github.sha }}
-      base_branch: develop
+      base_branch: main
       is_pr: false

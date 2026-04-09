@@ -26,7 +26,7 @@ on:
 concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
-  build_workflow_name: build.yml
+  build_workflow_name: ci-build.yml
 
 jobs:
   check-build-status:
