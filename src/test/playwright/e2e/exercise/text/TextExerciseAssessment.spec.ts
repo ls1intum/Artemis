@@ -74,7 +74,6 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
             await exerciseResult.shouldShowExerciseTitle(exercise.title!);
             await exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             await exerciseResult.shouldShowScore(percentage);
-            await exerciseResult.clickOpenExercise(exercise.id!);
             await textExerciseFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             await textExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             await textExerciseFeedback.shouldShowScore(percentage);

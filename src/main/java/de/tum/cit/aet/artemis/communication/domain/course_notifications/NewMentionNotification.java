@@ -38,12 +38,14 @@ public class NewMentionNotification extends CourseNotification {
 
     protected Long channelId;
 
+    protected boolean replyIsBot;
+
     /**
      * Default constructor used when creating a new post notification.
      */
     public NewMentionNotification(Long courseId, String courseTitle, String courseImageUrl, String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId,
             String replyMarkdownContent, String replyCreationDate, String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName,
-            Long channelId) {
+            Long channelId, boolean replyIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postMarkdownContent = postMarkdownContent;
         this.postCreationDate = postCreationDate;
@@ -57,6 +59,7 @@ public class NewMentionNotification extends CourseNotification {
         this.replyId = replyId;
         this.channelName = channelName;
         this.channelId = channelId;
+        this.replyIsBot = replyIsBot;
     }
 
     /**

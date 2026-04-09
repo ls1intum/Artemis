@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
-import static de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,12 +20,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -41,34 +42,32 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDataDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentImportDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
 @Service
 public class TutorialGroupService {
-
-    private static final Logger log = LoggerFactory.getLogger(TutorialGroupService.class);
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
@@ -86,10 +85,12 @@ public class TutorialGroupService {
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
+    private final TutorialGroupRegistrationApi tutorialGroupRegistrationApi;
+
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
             UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
-            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository) {
+            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository, TutorialGroupRegistrationApi tutorialGroupRegistrationApi) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -98,6 +99,7 @@ public class TutorialGroupService {
         this.conversationDTOService = conversationDTOService;
         this.courseNotificationService = courseNotificationService;
         this.oneToOneChatRepository = oneToOneChatRepository;
+        this.tutorialGroupRegistrationApi = tutorialGroupRegistrationApi;
     }
 
     /**
@@ -161,7 +163,6 @@ public class TutorialGroupService {
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
         Collection<TutorialGroupSession> sessions;
 
-        // Check if sessions are already loaded via JPA; otherwise fetch from the database
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
             sessions = tutorialGroup.getTutorialGroupSessions();
         }
@@ -171,19 +172,12 @@ public class TutorialGroupService {
 
         //@formatter:off
         sessions.stream()
-            // Keep only sessions that have already ended
             .filter(session -> session.getEnd().isBefore(ZonedDateTime.now()))
-            // Keep only sessions that are marked as ACTIVE
             .filter(session -> TutorialGroupSessionStatus.ACTIVE.equals(session.getStatus()))
-            // Exclude sessions without attendance data
             .filter(session -> session.getAttendanceCount() != null)
-            // Sort by start time in descending order (most recent first)
             .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
-            // Limit to the last three valid sessions
             .limit(3)
-            // Map to attendance count for averaging
             .mapToInt(TutorialGroupSession::getAttendanceCount)
-            // Compute the average and set it (rounded to integer), or null if no valid sessions
             .average()
             .ifPresentOrElse(
                 value -> tutorialGroup.setAverageAttendance((int) Math.round(value)),
@@ -200,9 +194,8 @@ public class TutorialGroupService {
     private void setNextSession(TutorialGroup tutorialGroup) {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
-            // determine the next session
-            // we show currently running sessions and up to 30 minutes after the end of the session so that students can still join and tutors can easily update the attendance of
-            // the session
+            // determine the next session - we show currently running sessions and up to 30 minutes after the end of the session so that students can still
+            // join and tutors can easily update the attendance of the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
                     .filter(session -> session.getEnd().plusMinutes(30).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
         }
@@ -225,7 +218,6 @@ public class TutorialGroupService {
 
     /**
      * Deregister a student from a tutorial group.
-     * <p>
      * In addition, also removes the students from the respective tutorial group channel if it exists.
      *
      * @param student          The student to deregister.
@@ -254,30 +246,6 @@ public class TutorialGroupService {
     private void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
         tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
         tutorialGroupChannelManagementService.removeUsersFromAllTutorialGroupChannelsInCourse(course, students);
-    }
-
-    /**
-     * Register a student to a tutorial group.
-     * <p>
-     * In addition, also adds the student to the respective tutorial group channel if it exists.
-     *
-     * @param student          The student to register.
-     * @param tutorialGroup    The tutorial group to register to.
-     * @param registrationType The type of registration.
-     * @param responsibleUser  The user who is responsible for the registration.
-     */
-    public void registerStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser) {
-        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
-                student, registrationType);
-        if (existingRegistration.isPresent()) {
-            // we still need to make sure the user is also already added to the channel
-            tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
-            return; // Registration already exists, nothing to do.
-        }
-        TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
-        tutorialGroupRegistrationRepository.save(newRegistration);
-        notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
-        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
     private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser,
@@ -313,7 +281,6 @@ public class TutorialGroupService {
 
     /**
      * Register multiple students to a tutorial group.
-     * <p>
      * In addition, also adds the students to the respective tutorial group channel if it exists.
      *
      * @param tutorialGroup    the tutorial group to register the students for
@@ -322,20 +289,36 @@ public class TutorialGroupService {
      * @param responsibleUser  The user who is responsible for the registration.
      * @return The students that could not be found and thus not registered.
      */
-    public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs, TutorialGroupRegistrationType registrationType,
-            User responsibleUser) {
+    public List<TutorialGroupStudentImportDataDTO> registerMultipleStudentsViaLoginOrRegistrationNumber(TutorialGroup tutorialGroup,
+            List<TutorialGroupStudentImportDataDTO> studentDTOs, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> foundStudents = new HashSet<>();
-        Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
+        List<TutorialGroupStudentImportDataDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
     }
 
     /**
+     * Registers multiple students in a tutorial group based on their logins.
+     *
+     * @param tutorialGroup    the tutorial group to register the students for
+     * @param logins           the student logins to register
+     * @param registrationType the type of registration to apply
+     * @param responsibleUser  the user performing the registration
+     */
+    public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
+        Set<User> students = new HashSet<>();
+        for (var login : logins) {
+            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            students.add(student);
+        }
+        registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
+    }
+
+    /**
      * Import registrations
-     * <p>
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
      * <ul>
@@ -355,15 +338,14 @@ public class TutorialGroupService {
      * @param registrations The registrations to import.
      * @return The set of registrations with information about the success of the import
      */
-    public Set<TutorialGroupRegistrationImportDTO> importRegistrations(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
+    public Set<TutorialGroupImportDataDTO> importRegistrations(Course course, Set<TutorialGroupImportDataDTO> registrations) {
         // container that will be filled with the registrations that could not be imported during the import process
-        Set<TutorialGroupRegistrationImportDTO> failedRegistrations = new HashSet<>();
+        Set<TutorialGroupImportDataDTO> failedRegistrations = new HashSet<>();
 
         // === Step 1: Try to find all tutorial groups with the mentioned title. Create them if they do not exist yet ===
-        Set<TutorialGroupRegistrationImportDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
+        Set<TutorialGroupImportDataDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
         // Add registrations to failedRegistrations if the tutorial group already exists
-        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).filter(Objects::nonNull).map(String::trim)
-                .collect(Collectors.toSet());
+        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupImportDataDTO::title).filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet());
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
                 .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
@@ -379,7 +361,7 @@ public class TutorialGroupService {
                 .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
 
         // === Step 2: If the registration contains a student, try to find a user in the database with the mentioned registration number ===
-        Set<TutorialGroupRegistrationImportDTO> registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
+        Set<TutorialGroupImportDataDTO> registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
             if (registration.student() == null) {
                 return false;
             }
@@ -388,9 +370,8 @@ public class TutorialGroupService {
             return hasRegistrationNumber || hasLogin;
         }).collect(Collectors.toSet());
 
-        Map<TutorialGroupRegistrationImportDTO, User> registrationsWithMatchingUsers = filterOutWithoutMatchingUser(course, registrationWithUserIdentifier, failedRegistrations);
-        Map<TutorialGroupRegistrationImportDTO, User> uniqueRegistrationsWithMatchingUsers = filterOutMultipleRegistrationsForSameUser(registrationsWithMatchingUsers,
-                failedRegistrations);
+        Map<TutorialGroupImportDataDTO, User> registrationsWithMatchingUsers = filterOutWithoutMatchingUser(course, registrationWithUserIdentifier, failedRegistrations);
+        Map<TutorialGroupImportDataDTO, User> uniqueRegistrationsWithMatchingUsers = filterOutMultipleRegistrationsForSameUser(registrationsWithMatchingUsers, failedRegistrations);
 
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
@@ -410,9 +391,9 @@ public class TutorialGroupService {
         }
 
         // === Step 4: Create the result for the successful and failed imports ===
-        HashSet<TutorialGroupRegistrationImportDTO> registrationsWithImportResults = new HashSet<>();
+        HashSet<TutorialGroupImportDataDTO> registrationsWithImportResults = new HashSet<>();
 
-        Set<TutorialGroupRegistrationImportDTO> successfulImports = new HashSet<>(registrations);
+        Set<TutorialGroupImportDataDTO> successfulImports = new HashSet<>(registrations);
         successfulImports.removeAll(failedRegistrations);
         for (var successfulImport : successfulImports) {
             registrationsWithImportResults.add(successfulImport.withImportResult(true, null));
@@ -422,22 +403,22 @@ public class TutorialGroupService {
         return registrationsWithImportResults;
     }
 
-    private Map<TutorialGroupRegistrationImportDTO, User> filterOutMultipleRegistrationsForSameUser(Map<TutorialGroupRegistrationImportDTO, User> registrationToUser,
-            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+    private Map<TutorialGroupImportDataDTO, User> filterOutMultipleRegistrationsForSameUser(Map<TutorialGroupImportDataDTO, User> registrationToUser,
+            Set<TutorialGroupImportDataDTO> failedRegistrations) {
 
         // reverse the map
-        Map<User, Set<TutorialGroupRegistrationImportDTO>> userToRegistrations = new HashMap<>();
+        Map<User, Set<TutorialGroupImportDataDTO>> userToRegistrations = new HashMap<>();
         for (var registrationUserPair : registrationToUser.entrySet()) {
             userToRegistrations.computeIfAbsent(registrationUserPair.getValue(), key -> new HashSet<>()).add(registrationUserPair.getKey());
         }
 
         // filter out all users that are registered multiple times
-        Map<TutorialGroupRegistrationImportDTO, User> uniqueRegistrationsWithMatchingUsers = new HashMap<>();
+        Map<TutorialGroupImportDataDTO, User> uniqueRegistrationsWithMatchingUsers = new HashMap<>();
 
         for (var userToRegistration : userToRegistrations.entrySet()) {
             if (userToRegistration.getValue().size() > 1) {
-                failedRegistrations.addAll(
-                        userToRegistration.getValue().stream().map(registration -> registration.withImportResult(false, MULTIPLE_REGISTRATIONS)).collect(Collectors.toSet()));
+                failedRegistrations.addAll(userToRegistration.getValue().stream()
+                        .map(registration -> registration.withImportResult(false, TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS)).collect(Collectors.toSet()));
             }
             else {
                 uniqueRegistrationsWithMatchingUsers.put(userToRegistration.getValue().iterator().next(), userToRegistration.getKey());
@@ -446,9 +427,8 @@ public class TutorialGroupService {
         return uniqueRegistrationsWithMatchingUsers;
     }
 
-    private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
-        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).filter(Objects::nonNull).map(String::trim)
-                .collect(Collectors.toSet());
+    private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupImportDataDTO> registrations) {
+        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupImportDataDTO::title).filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet());
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
@@ -466,7 +446,7 @@ public class TutorialGroupService {
                     tutorialGroup.setCampus("Campus");
 
                     // Set additional fields from registrations
-                    Optional<TutorialGroupRegistrationImportDTO> registrationOpt = registrations.stream().filter(r -> title.equals(r.title())).findFirst();
+                    Optional<TutorialGroupImportDataDTO> registrationOpt = registrations.stream().filter(r -> title.equals(r.title())).findFirst();
                     registrationOpt.ifPresent(registration -> {
                         if (registration.campus() != null && !registration.campus().isEmpty()) {
                             tutorialGroup.setCampus(registration.campus());
@@ -495,10 +475,9 @@ public class TutorialGroupService {
         return tutorialGroupsMentionedInRegistrations;
     }
 
-    private Set<TutorialGroupRegistrationImportDTO> filterOutWithoutTitle(Set<TutorialGroupRegistrationImportDTO> registrations,
-            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
-        var registrationsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
-        var registrationsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
+    private Set<TutorialGroupImportDataDTO> filterOutWithoutTitle(Set<TutorialGroupImportDataDTO> registrations, Set<TutorialGroupImportDataDTO> failedRegistrations) {
+        var registrationsWithTitle = new HashSet<TutorialGroupImportDataDTO>();
+        var registrationsWithoutTitle = new HashSet<TutorialGroupImportDataDTO>();
         for (var importDTO : registrations) {
             if (!StringUtils.hasText(importDTO.title())) {
                 registrationsWithoutTitle.add(importDTO.withImportResult(false, TutorialGroupImportErrors.NO_TITLE));
@@ -511,11 +490,11 @@ public class TutorialGroupService {
         return registrationsWithTitle;
     }
 
-    private Map<TutorialGroupRegistrationImportDTO, User> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
-            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+    private Map<TutorialGroupImportDataDTO, User> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupImportDataDTO> registrations,
+            Set<TutorialGroupImportDataDTO> failedRegistrations) {
         Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations);
 
-        HashMap<TutorialGroupRegistrationImportDTO, User> registrationToUser = new HashMap<>();
+        HashMap<TutorialGroupImportDataDTO, User> registrationToUser = new HashMap<>();
 
         for (var registration : registrations) {
             // try to find matching user first by registration number and as a fallback by login
@@ -532,7 +511,7 @@ public class TutorialGroupService {
         return registrationToUser;
     }
 
-    private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
+    private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupImportDataDTO registration) {
         return users.stream().filter(user -> {
             if (registration.student() == null) {
                 return false;
@@ -550,7 +529,7 @@ public class TutorialGroupService {
         }).findFirst();
     }
 
-    private Set<User> tryToFindMatchingUsers(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
+    private Set<User> tryToFindMatchingUsers(Course course, Set<TutorialGroupImportDataDTO> registrations) {
         var registrationNumbersToSearchFor = new HashSet<String>();
         var loginsToSearchFor = new HashSet<String>();
 
@@ -599,40 +578,19 @@ public class TutorialGroupService {
     }
 
     /**
-     * Get one tutorial group of a course, including setting the transient properties for the given user
-     *
-     * @param course              The course for which the tutorial group should be retrieved.
-     * @param tutorialGroupId     The id of the tutorial group to retrieve.
-     * @param user                The user for whom to set the transient properties of the tutorial group.
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     * @return The tutorial group of the course with the transient properties set for the given user.
-     */
-    public TutorialGroup getOneOfCourse(@NonNull Course course, long tutorialGroupId, @NonNull User user, boolean isAdminOrInstructor) {
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
-        if (!course.equals(tutorialGroup.getCourse())) {
-            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
-        }
-        this.setTransientPropertiesForUser(user, tutorialGroup);
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            tutorialGroup.hidePrivacySensitiveInformation();
-        }
-        return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
-    }
-
-    /**
      * Retrieves the required data and uses them to assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
      *
      * @param tutorialGroupId the ID of the tutorial group to fetch
      * @param courseId        the ID of the course of the tutorial group
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
-     * @return a {@link TutorialGroupDetailGroupDTO}
+     * @return a {@link TutorialGroupDetailDataDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
-        RawTutorialGroupDetailGroupDTO rawGroupDTOs = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId, courseId)
+    public TutorialGroupDetailDataDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
+        RawTutorialGroupDTO rawGroupDTO = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
-        String tutorLogin = rawGroupDTOs.teachingAssistantLogin();
+        String tutorLogin = rawGroupDTO.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
         if (!tutorLogin.equals(currentUserLogin)) {
@@ -640,21 +598,21 @@ public class TutorialGroupService {
         }
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
-        List<TutorialGroupDetailSessionDTO> sessionDTOs;
-        // the schedule related properties are null if and only if there is no schedule for the tutorial group
-        if (rawGroupDTOs.scheduleDayOfWeek() != null) {
-            int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
-            LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
-            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
-            String scheduleLocation = rawGroupDTOs.scheduleLocation();
-            sessionDTOs = rawSessionDTOs.stream()
-                    .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+        List<TutorialGroupSessionDTO> sessionDTOs;
+        // The schedule related properties are null if and only if there is no schedule for the tutorial group.
+        if (rawGroupDTO.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = rawGroupDTO.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(rawGroupDTO.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTO.scheduleEndTime());
+            String scheduleLocation = rawGroupDTO.scheduleLocation();
+            sessionDTOs = rawSessionDTOs.stream().map(data -> TutorialGroupSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone))
+                    .toList();
         }
         else {
-            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupDetailSessionDTO::from).toList();
+            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupSessionDTO::from).toList();
         }
 
-        return TutorialGroupDetailGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+        return TutorialGroupDetailDataDTO.from(rawGroupDTO, sessionDTOs, tutorChatId);
     }
 
     /**
@@ -678,50 +636,8 @@ public class TutorialGroupService {
         return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
-    /**
-     * Checks if a user is allowed to change the registrations of a tutorial group
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    /**
-     * Checks if a user is allowed to delete the passed tutorial group. This is the case if the user is admin, or instructor of the group's course, or tutor of thr group.
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    /**
-     * Checks if a user is allowed to modify the sessions of a tutorial group
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.registrationNumber())
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.login()));
+    private Optional<User> findStudent(String login, String studentCourseGroupName) {
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
@@ -764,7 +680,6 @@ public class TutorialGroupService {
         return out.toString();
     }
 
-    // Method to write a row for a tutorial group, optionally including student details
     private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
         for (String field : fields) {
             printer.print(switch (field) {
@@ -795,11 +710,6 @@ public class TutorialGroupService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupExportDTO(Long id, String title, String dayOfWeek, String startTime, String endTime, String location, String campus, String language,
-            String additionalInformation, Integer capacity, Boolean isOnline, List<StudentExportDTO> students /* optional, only set if selected */) {
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentExportDTO(String registrationNumber, String firstName, String lastName) {
     }
 
@@ -807,7 +717,7 @@ public class TutorialGroupService {
      * Exports selected information about all tutorial groups in a given course.
      * <p>
      * This method retrieves tutorial groups for the specified course ID and maps each one
-     * to a {@link TutorialGroupExportDTO}. Only the fields explicitly listed in {@code selectedFields}
+     * to a {@link TutorialGroupExportDataDTO}. Only the fields explicitly listed in {@code selectedFields}
      * are populated; all others remain {@code null}. Field names must match exactly with those
      * defined in the corresponding client component (e.g., {@code tutorial-groups-export-button.component.ts}).
      * <p>
@@ -821,14 +731,14 @@ public class TutorialGroupService {
      *                           "Is Online", and "Students"
      * @return a list of tutorial group DTOs with selectively populated fields
      */
-    public List<TutorialGroupExportDTO> exportTutorialGroupInformation(Long courseId, List<String> selectedFields) {
+    public List<TutorialGroupExportDataDTO> exportTutorialGroupInformation(Long courseId, List<String> selectedFields) {
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(courseId);
 
-        List<TutorialGroupExportDTO> exportData = new ArrayList<>();
+        List<TutorialGroupExportDataDTO> exportData = new ArrayList<>();
         for (TutorialGroup group : tutorialGroups) {
             // NOTE: fields must be identical as defined in tutorial-groups-export-button.component.ts
             // @formatter:off
-            TutorialGroupExportDTO tutorialGroupExportDTO = new TutorialGroupExportDTO(
+            TutorialGroupExportDataDTO tutorialGroupExportDataDTO = new TutorialGroupExportDataDTO(
                 selectedFields.contains("ID") ? group.getId() : null,
                 selectedFields.contains("Title") ? getCSVInput(group, "Title") : null,
                 selectedFields.contains("Day of Week") ? getCSVInput(group, "Day of Week") : null,
@@ -843,7 +753,7 @@ public class TutorialGroupService {
                 selectedFields.contains("Students") ? convertStudents(group) : null
             );
             // @formatter:on
-            exportData.add(tutorialGroupExportDTO);
+            exportData.add(tutorialGroupExportDataDTO);
         }
 
         return exportData;
@@ -979,5 +889,24 @@ public class TutorialGroupService {
     public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, long courseId) {
         Set<Long> tutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesForCourseId(courseId, userId);
         return tutorialGroupSessionRepository.getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(tutorialGroupIds);
+    }
+
+    /**
+     * Identifies users who should be notified about changes in a tutorial group.
+     * This method collects a set of users who need to be notified, including:
+     * - All students registered to the group
+     * - The teaching assistant of the group (if one exists)
+     * Only users with a valid email address are included in the final set.
+     *
+     * @param tutorialGroup the tutorial group for which to find users to notify
+     * @return a set of users who should receive notifications, filtered to include only those with valid email addresses
+     */
+    public Set<User> findUsersToNotify(TutorialGroup tutorialGroup) {
+        var potentiallyInterestedUsers = tutorialGroupRegistrationApi.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION).stream()
+                .map(TutorialGroupRegistration::getStudent);
+        if (tutorialGroup.getTeachingAssistant() != null) {
+            potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
+        }
+        return potentiallyInterestedUsers.filter(user -> StringUtils.hasText(user.getEmail())).collect(Collectors.toSet());
     }
 }

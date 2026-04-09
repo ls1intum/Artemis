@@ -124,9 +124,11 @@ public class PushNotificationResource {
         PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
 
         User user = userRepository.getUser();
+        // Use getReferenceById to get a managed entity reference (required by Hibernate 7 for @IdClass entities)
+        User managedUser = userRepository.getReferenceById(user.getId());
 
-        return new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(), pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user,
-                apiType, pushNotificationRegisterBody.versionCode());
+        return new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(), pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(),
+                managedUser, apiType, pushNotificationRegisterBody.versionCode());
     }
 
     /**

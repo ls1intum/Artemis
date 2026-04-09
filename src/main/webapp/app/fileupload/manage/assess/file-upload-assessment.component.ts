@@ -448,7 +448,10 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      *
      * Additionally, the total score is calculated for all numerical credits.
      */
-    public validateAssessment(): void {
+    public validateAssessment(updatedFeedbacks?: Feedback[]): void {
+        if (updatedFeedbacks) {
+            this.unreferencedFeedback = updatedFeedbacks;
+        }
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 

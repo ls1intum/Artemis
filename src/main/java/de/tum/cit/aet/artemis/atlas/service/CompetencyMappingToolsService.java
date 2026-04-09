@@ -67,7 +67,7 @@ public class CompetencyMappingToolsService {
 
     private final AtlasAgentSessionCacheService sessionCacheService;
 
-    private final AtlasMLApi atlasMLApi;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -87,7 +87,7 @@ public class CompetencyMappingToolsService {
 
     public CompetencyMappingToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService, CourseRepository courseRepository,
-            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasMLApi atlasMLApi, AuthorizationCheckService authorizationCheckService,
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService, Optional<AtlasMLApi> atlasMLApi, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -235,8 +235,11 @@ public class CompetencyMappingToolsService {
      */
     @Tool(description = "Get ML-based suggested competency relation mappings for a course using clustering analysis. Returns suggested relations with relation types.")
     public String suggestRelationMappingsUsingML(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseId) {
+        if (atlasMLApi.isEmpty()) {
+            return errorResponse("AtlasML is not available");
+        }
         try {
-            SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.suggestCompetencyRelations(courseId);
+            SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.get().suggestCompetencyRelations(courseId);
 
             if (suggestionsResponse == null || suggestionsResponse.relations() == null || suggestionsResponse.relations().isEmpty()) {
                 return errorResponse("No relation suggestions available from ML clustering");
@@ -528,8 +531,11 @@ public class CompetencyMappingToolsService {
     }
 
     private void syncRelationToAtlasML(long headCompetencyId, long tailCompetencyId, String relationContext) {
+        if (atlasMLApi.isEmpty()) {
+            return;
+        }
         try {
-            atlasMLApi.mapCompetencyToCompetency(headCompetencyId, tailCompetencyId);
+            atlasMLApi.get().mapCompetencyToCompetency(headCompetencyId, tailCompetencyId);
         }
         catch (Exception e) {
             log.warn("Failed to sync {} to AtlasML: {}", relationContext, e.getMessage());

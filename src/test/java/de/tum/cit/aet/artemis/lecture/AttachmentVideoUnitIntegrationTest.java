@@ -37,7 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -135,12 +134,13 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment)
+            throws Exception {
         return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, true);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment, String fileContent,
-            boolean contentType) throws Exception {
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
+            String fileContent, boolean contentType) throws Exception {
         MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent);
         if (contentType) {
             builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -162,7 +162,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return builder.file(attachmentVideoUnitPart).file(attachmentPart);
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
+    private MockMultipartHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment)
+            throws Exception {
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentVideoUnitPdf();
@@ -423,7 +424,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "student_version.pdf", "application/pdf", "student content".getBytes());
 
         // Build request for adding student version
-        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders
                 .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId() + "/student-version")
                 .file(studentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
@@ -440,7 +441,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf", "updated student content".getBytes());
 
         // Build a new request to update the student version
-        MockHttpServletRequestBuilder updateBuilder = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder updateBuilder = MockMvcRequestBuilders
                 .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId() + "/student-version")
                 .file(newStudentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 

@@ -1,0 +1,39 @@
+@if (hasPractice()) {
+    @if (hasBoth()) {
+        <div class="segmented-control">
+            <button
+                class="segmented-control__button"
+                [class.segmented-control__button--active]="mode() === 'practice'"
+                [class.segmented-control__button--practice]="mode() === 'practice'"
+                (click)="selectMode('practice')"
+            >
+                <fa-icon [icon]="faBook" />
+                <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
+            </button>
+            <button
+                class="segmented-control__button"
+                [class.segmented-control__button--active]="mode() === 'graded'"
+                [class.segmented-control__button--graded]="mode() === 'graded'"
+                (click)="selectMode('graded')"
+            >
+                <fa-icon [icon]="faGraduationCap" />
+                <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
+            </button>
+        </div>
+    } @else {
+        <div class="segmented-control">
+            <span
+                class="segmented-control__button segmented-control__button--active"
+                [class.segmented-control__button--practice]="mode() === 'practice'"
+                [class.segmented-control__button--graded]="mode() === 'graded'"
+            >
+                <fa-icon [icon]="mode() === 'practice' ? faBook : faGraduationCap" />
+                @if (mode() === 'practice') {
+                    <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
+                }
+            </span>
+        </div>
+    }
+}
