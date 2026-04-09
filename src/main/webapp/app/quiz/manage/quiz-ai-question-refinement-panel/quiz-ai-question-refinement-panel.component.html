@@ -1,32 +1,42 @@
-@if (hyperionEnabled && isOpen() && !isRefinementPanelCollapsed()) {
+@if (hyperionEnabled && (isOpen() || refinementExplanation() !== undefined || externalReasoning()) && !isRefinementPanelCollapsed()) {
     <div class="quiz-ai-refinement-panel">
-        @if (refinementExplanation() !== undefined) {
+        @if ((refinementExplanation() ?? externalReasoning()) && (refinementExplanation() ?? externalReasoning()) !== dismissedReasoningContent()) {
             <div class="refinement-explanation-card">
                 <div class="refinement-explanation-card-header">
                     <fa-icon [icon]="faWandMagicSparkles" class="refinement-explanation-icon" />
                     <span class="refinement-explanation-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>
+                    <button
+                        class="refinement-explanation-close"
+                        (click)="dismissedReasoningContent.set(refinementExplanation() ?? externalReasoning())"
+                        type="button"
+                        aria-label="Dismiss"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
                 </div>
-                <p class="refinement-explanation-text">{{ refinementExplanation() }}</p>
+                <p class="refinement-explanation-text">{{ refinementExplanation() ?? externalReasoning() }}</p>
             </div>
         }
-        <div class="refinement-input-row">
-            <textarea
-                pTextarea
-                class="refinement-textarea"
-                [placeholder]="promptPlaceholder()"
-                maxlength="2000"
-                [ngModel]="refinePrompt()"
-                (ngModelChange)="refinePrompt.set($any($event))"
-                [disabled]="isRefining()"
-                (keydown.enter)="$event.preventDefault(); submitRefinement()"
-            ></textarea>
-            <button pButton type="button" class="refinement-submit-button" [disabled]="!refinePrompt().trim() || isRefining()" (click)="submitRefinement()">
-                @if (isRefining()) {
-                    <fa-icon [icon]="faCircleNotch" animation="spin" />
-                } @else {
-                    <fa-icon [icon]="faPaperPlane" />
-                }
-            </button>
-        </div>
+        @if (isOpen()) {
+            <div class="refinement-input-row">
+                <textarea
+                    pTextarea
+                    class="refinement-textarea"
+                    [placeholder]="promptPlaceholder()"
+                    maxlength="2000"
+                    [ngModel]="refinePrompt()"
+                    (ngModelChange)="refinePrompt.set($any($event))"
+                    [disabled]="isRefining()"
+                    (keydown.enter)="$event.preventDefault(); submitRefinement()"
+                ></textarea>
+                <button pButton type="button" class="refinement-submit-button" [disabled]="!refinePrompt().trim() || isRefining()" (click)="submitRefinement()">
+                    @if (isRefining()) {
+                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                    } @else {
+                        <fa-icon [icon]="faPaperPlane" />
+                    }
+                </button>
+            </div>
+        }
     </div>
 }

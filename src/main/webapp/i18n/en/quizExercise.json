@@ -54,10 +54,12 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",
-                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                    "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "refinementFailed": "Failed to refine quiz questions. Please try again."
                 },
                 "refinement": {
                     "promptPlaceholder": "Describe how to refine this question...",
+                    "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
                     "changesLabel": "Changes made",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."

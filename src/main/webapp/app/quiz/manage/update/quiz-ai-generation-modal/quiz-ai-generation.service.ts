@@ -2,9 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
+import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
+import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -47,6 +48,37 @@ export class QuizAiGenerationService {
                 refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
                 reasoning: response.reasoning,
             })),
+        );
+    }
+
+    refineAllMultipleChoiceQuestions(
+        courseId: number,
+        questions: MultipleChoiceQuestion[],
+        refinementPrompt: string,
+    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }[]> {
+        const request: QuizQuestionBulkRefinementRequest = {
+            questions: questions.map((q) => ({
+                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
+                title: q.title?.trim() || 'Untitled Question',
+                questionText: q.text ?? '',
+                hint: q.hint ?? undefined,
+                explanation: q.explanation ?? undefined,
+                options: (q.answerOptions ?? []).map((opt) => ({
+                    text: opt.text ?? '',
+                    correct: !!opt.isCorrect,
+                    hint: opt.hint ?? undefined,
+                    explanation: opt.explanation ?? undefined,
+                })),
+            })),
+            refinementPrompt,
+        };
+        return this.hyperionQuizQuestionGenerationApiService.refineAllQuizQuestions(courseId, request).pipe(
+            map((response) =>
+                response.refinements.map((refinement, index) => ({
+                    refinedQuestion: this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index)),
+                    reasoning: refinement.reasoning,
+                })),
+            ),
         );
     }
 

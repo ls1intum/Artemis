@@ -60,16 +60,29 @@ export class QuizQuestionListEditComponent {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ApollonQuizDragAndDrop = FeatureToggle.ApollonQuizDragAndDrop;
 
-    faPlus = faPlus;
+    readonly faPlus = faPlus;
 
     /** Questions whose AI refinement panel is currently open. */
     openRefinementQuestions = signal(new Set<QuizQuestion>());
     /** Questions whose editor card is currently collapsed. */
     collapsedQuestions = signal(new Set<QuizQuestion>());
+    /** Per-question reasoning from the last bulk refinement. */
+    bulkRefinementReasonings = signal(new Map<QuizQuestion, string>());
 
     showExistingQuestions = false;
-
     fileMap = new Map<string, { path?: string; file: File }>();
+
+    /**
+     * Apply bulk refinement results from the parent: update per-question reasonings and reload editors.
+     * Called by the parent after a successful global refinement request.
+     *
+     * @param reasonings map from each refined question to its AI reasoning string
+     */
+    applyBulkRefinement(reasonings: Map<QuizQuestion, string>): void {
+        this.bulkRefinementReasonings.set(reasonings);
+        this.editMultipleChoiceQuestionComponents().forEach((component) => component.reloadFromQuestion());
+        this.onQuestionUpdated.emit();
+    }
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.
@@ -149,6 +162,9 @@ export class QuizQuestionListEditComponent {
         const collapsedUpdated = new Set(this.collapsedQuestions());
         collapsedUpdated.delete(quizQuestion);
         this.collapsedQuestions.set(collapsedUpdated);
+        const reasoningsUpdated = new Map(this.bulkRefinementReasonings());
+        reasoningsUpdated.delete(quizQuestion);
+        this.bulkRefinementReasonings.set(reasoningsUpdated);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 

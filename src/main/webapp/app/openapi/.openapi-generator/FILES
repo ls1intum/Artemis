@@ -41,6 +41,8 @@ model/problemStatementRewriteResponse.ts
 model/problemStatementTargetedRefinementRequest.ts
 model/qualityIssue.ts
 model/qualityIssueLocation.ts
+model/quizQuestionBulkRefinementRequest.ts
+model/quizQuestionBulkRefinementResponse.ts
 model/quizQuestionGenerationRequest.ts
 model/quizQuestionGenerationResponse.ts
 model/quizQuestionRefinementRequest.ts

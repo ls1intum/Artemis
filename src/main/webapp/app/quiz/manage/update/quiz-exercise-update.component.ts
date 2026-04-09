@@ -1,10 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    HostListener,
+    OnChanges,
+    OnInit,
+    SimpleChanges,
+    ViewEncapsulation,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -30,7 +46,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faArrowLeft, faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleNotch, faExclamationCircle, faPaperPlane, faPlus, faWandMagicSparkles, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -52,6 +68,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
+import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -84,6 +102,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         ArtemisTranslatePipe,
         RouterLink,
         ButtonModule,
+        TextareaModule,
         QuizAiGenerationModalComponent,
     ],
 })
@@ -102,10 +121,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private calendarService = inject(CalendarService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+    private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     aiGenerationModalVisible = false;
+
+    // Global refinement FAB
+    isRefinementFabOpen = signal(false);
+    isGlobalRefining = signal(false);
+    globalRefinementPrompt = signal('');
+    private globalRefinementSubscription?: Subscription;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -150,6 +177,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faExclamationCircle = faExclamationCircle;
     faArrowLeft = faArrowLeft;
     faWrench = faWrench;
+    faWandMagicSparkles = faWandMagicSparkles;
+    faPaperPlane = faPaperPlane;
+    faCircleNotch = faCircleNotch;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
@@ -307,7 +337,54 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     canShowAiGenerationButton(): boolean {
-        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+        return this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
+    get hasMcQuestionsForRefinement(): boolean {
+        return (
+            this.hyperionEnabled &&
+            !this.isImport &&
+            !this.isExamMode &&
+            !!this.quizExercise?.isEditable &&
+            (this.quizExercise?.quizQuestions?.some((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) ?? false)
+        );
+    }
+
+    closeRefinementFab(): void {
+        this.globalRefinementSubscription?.unsubscribe();
+        this.globalRefinementSubscription = undefined;
+        this.isGlobalRefining.set(false);
+        this.globalRefinementPrompt.set('');
+        this.isRefinementFabOpen.set(false);
+    }
+
+    submitGlobalRefinement(): void {
+        const prompt = this.globalRefinementPrompt().trim();
+        const mcQuestions = (this.quizExercise?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
+        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
+            return;
+        }
+        this.isGlobalRefining.set(true);
+        this.globalRefinementSubscription = this.quizAiGenerationService
+            .refineAllMultipleChoiceQuestions(this.courseId, mcQuestions, prompt)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGlobalRefining.set(false)),
+            )
+            .subscribe({
+                next: (results) => {
+                    const reasonings = new Map<QuizQuestion, string>();
+                    results.forEach((result, index) => {
+                        reasonings.set(mcQuestions[index], result.reasoning);
+                    });
+                    this.quizQuestionListEditComponent().applyBulkRefinement(reasonings);
+                    this.globalRefinementPrompt.set('');
+                    this.isRefinementFabOpen.set(false);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.refinementFailed');
+                },
+            });
     }
 
     appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {

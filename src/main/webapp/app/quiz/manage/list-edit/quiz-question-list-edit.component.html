@@ -26,6 +26,7 @@
                             [courseId]="courseId()"
                             [isOpen]="openRefinementQuestions().has(quizQuestion)"
                             [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
+                            [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
                             (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
                         />
                     }

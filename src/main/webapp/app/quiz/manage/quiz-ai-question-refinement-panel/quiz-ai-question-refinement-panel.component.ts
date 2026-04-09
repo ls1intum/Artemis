@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { faCircleNotch, faPaperPlane, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPaperPlane, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,18 +33,21 @@ export class QuizAiQuestionRefinementPanelComponent {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
+    protected readonly faXmark = faXmark;
     readonly hyperionEnabled: boolean = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     question = input.required<QuizQuestion>();
     courseId = input.required<number>();
     isOpen = input(false);
     isRefinementPanelCollapsed = input(false);
+    externalReasoning = input<string | undefined>(undefined);
 
     questionRefined = output<MultipleChoiceQuestion>();
 
     refinePrompt = signal('');
     isRefining = signal(false);
     refinementExplanation = signal<string | undefined>(undefined);
+    dismissedReasoningContent = signal<string | undefined>(undefined);
     promptPlaceholder = signal(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.promptPlaceholder'));
 
     private refineSubscription?: Subscription;
@@ -60,6 +63,12 @@ export class QuizAiQuestionRefinementPanelComponent {
                 this.refinementExplanation.set(undefined);
                 this.refineSubscription?.unsubscribe();
                 this.isRefining.set(false);
+            }
+        });
+
+        effect(() => {
+            if (this.externalReasoning() !== undefined) {
+                this.refinementExplanation.set(undefined);
             }
         });
     }
