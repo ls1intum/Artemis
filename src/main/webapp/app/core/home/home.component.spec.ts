@@ -223,7 +223,7 @@ describe('HomeComponent', () => {
 
             expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
             expect(startSpy).toHaveBeenCalledOnce();
-            expect(startSpy).toHaveBeenCalledWith(expect.any(Function));
+            expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
         });
 
         it('should not call startConditionalMediation if passkey is disabled', async () => {

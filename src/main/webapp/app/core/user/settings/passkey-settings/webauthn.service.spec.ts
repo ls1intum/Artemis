@@ -604,6 +604,29 @@ describe('WebauthnService', () => {
             expect(onSuccess).toHaveBeenCalledOnce();
         });
 
+        it('should invoke onMediationActive callback after navigator.credentials.get is called', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
+
+            const onSuccess = vi.fn();
+            const onMediationActive = vi.fn();
+            service.startConditionalMediation(onSuccess, onMediationActive);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(onMediationActive).toHaveBeenCalledOnce();
+            expect(onSuccess).toHaveBeenCalledOnce();
+        });
+
         it('should silently handle PasskeyAbortError without calling onSuccess', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({

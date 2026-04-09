@@ -151,8 +151,37 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
         const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
         if (isAvailable) {
-            this.webauthnService.startConditionalMediation(() => this.handleLoginSuccess());
+            this.webauthnService.startConditionalMediation(
+                () => this.handleLoginSuccess(),
+                () => this.refocusUsernameFieldForPasskeyAutofill(),
+            );
         }
+    }
+
+    /**
+     * Re-focuses the username field after conditional mediation becomes active.
+     * The browser only shows passkey autofill suggestions when the field receives
+     * focus while a conditional mediation request is pending. Since the initial
+     * autofocus happens before the mediation HTTP request completes, we need to
+     * re-trigger focus once the mediation is active.
+     *
+     * Only re-focuses if the user hasn't started interacting with the form yet.
+     */
+    private refocusUsernameFieldForPasskeyAutofill(): void {
+        // Allow one event-loop tick so the browser fully registers the conditional mediation.
+        setTimeout(() => {
+            const usernameInput = this.renderer.selectRootElement('#username', true);
+            if (!usernameInput) {
+                return;
+            }
+
+            // Only re-focus if the username field is still the active element and the
+            // user hasn't started typing — this avoids disrupting user interaction.
+            if (document.activeElement === usernameInput && !this.username) {
+                usernameInput.blur();
+                usernameInput.focus();
+            }
+        });
     }
 
     async loginWithPasskey() {

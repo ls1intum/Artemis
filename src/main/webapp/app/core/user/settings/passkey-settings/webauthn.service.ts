@@ -37,6 +37,13 @@ export class WebauthnService {
     private isRetryingConditionalMediation = false;
 
     /**
+     * Callback invoked once `navigator.credentials.get()` has been called for conditional
+     * mediation. This allows the caller (e.g., the login component) to re-focus the username
+     * field so the browser shows the passkey autofill dropdown.
+     */
+    private onConditionalMediationActive: (() => void) | undefined;
+
+    /**
      * Aborts any pending credential request (e.g., a conditional mediation request)
      * and prepares a fresh AbortController for the next request.
      *
@@ -59,8 +66,9 @@ export class WebauthnService {
      *
      * @param onSuccess callback invoked when the user selects a passkey and login succeeds
      */
-    startConditionalMediation(onSuccess: () => void): void {
+    startConditionalMediation(onSuccess: () => void, onMediationActive?: () => void): void {
         this.isRetryingConditionalMediation = false;
+        this.onConditionalMediationActive = onMediationActive;
         this.runConditionalMediation(onSuccess);
     }
 
@@ -71,6 +79,7 @@ export class WebauthnService {
     stopConditionalMediation(): void {
         this.abortPendingCredentialRequest();
         this.isRetryingConditionalMediation = false;
+        this.onConditionalMediationActive = undefined;
     }
 
     /**
@@ -294,7 +303,17 @@ export class WebauthnService {
             ...(isConditional && { mediation: 'conditional' as CredentialMediationRequirement }),
         };
 
-        const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
+        const credentialPromise = navigator.credentials.get(credentialRequestOptions);
+
+        // Notify that conditional mediation is now active so the caller can
+        // re-trigger the autofill UI (e.g., by re-focusing the username field).
+        if (isConditional && this.onConditionalMediationActive) {
+            const callback = this.onConditionalMediationActive;
+            this.onConditionalMediationActive = undefined;
+            callback();
+        }
+
+        const credential = (await credentialPromise) ?? undefined;
         return credential as PublicKeyCredential | undefined;
     }
 }
