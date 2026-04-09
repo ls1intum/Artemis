@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
@@ -10,7 +11,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPEND
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.List;
 import java.util.Set;
@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
-import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -121,10 +120,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatMemoryRepository chatMemoryRepository;
 
-    // Spy for lecture transcription tests to allow real method execution in service integration tests
-    @MockitoSpyBean
-    protected LectureTranscriptionService lectureTranscriptionService;
-
     // Mock for TUM Live service used in Nebula transcription resource
     @MockitoBean
     protected TumLiveService tumLiveService;
@@ -169,9 +164,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
-        }
-        if (lectureTranscriptionService != null) {
-            Mockito.reset(lectureTranscriptionService);
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);

@@ -1,23 +1,22 @@
-import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupRegisteredStudentsService } from './tutorial-group-registered-students.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
-interface TutorialGroupsServiceMock {
+interface TutorialGroupApiServiceMock {
     deregisterStudent: ReturnType<typeof vi.fn>;
-    getRegisteredStudentDTOs: ReturnType<typeof vi.fn>;
+    getRegisteredStudents: ReturnType<typeof vi.fn>;
 }
 
 interface AlertServiceMock {
     addErrorAlert: ReturnType<typeof vi.fn>;
 }
 
-function createRegisteredStudent(id: number, login: string): TutorialGroupRegisteredStudentDTO {
+function createRegisteredStudent(id: number, login: string): TutorialGroupStudent {
     return {
         id,
         login,
@@ -31,19 +30,18 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     setupTestBed({ zoneless: true });
 
     let service: TutorialGroupRegisteredStudentsService;
-    let tutorialGroupsService: TutorialGroupsService;
     let alertService: AlertService;
 
     const courseId = 1;
     const tutorialGroupId = 2;
     const studentLogin = 'alice';
-    let tutorialGroupsServiceMock: TutorialGroupsServiceMock;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let alertServiceMock: AlertServiceMock;
 
     beforeEach(() => {
-        tutorialGroupsServiceMock = {
+        tutorialGroupApiServiceMock = {
             deregisterStudent: vi.fn(),
-            getRegisteredStudentDTOs: vi.fn(),
+            getRegisteredStudents: vi.fn(),
         };
         alertServiceMock = {
             addErrorAlert: vi.fn(),
@@ -53,8 +51,8 @@ describe('TutorialGroupRegisteredStudentsService', () => {
             providers: [
                 TutorialGroupRegisteredStudentsService,
                 {
-                    provide: TutorialGroupsService,
-                    useValue: tutorialGroupsServiceMock,
+                    provide: TutorialGroupApiService,
+                    useValue: tutorialGroupApiServiceMock,
                 },
                 {
                     provide: AlertService,
@@ -64,7 +62,6 @@ describe('TutorialGroupRegisteredStudentsService', () => {
         });
 
         service = TestBed.inject(TutorialGroupRegisteredStudentsService);
-        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
         alertService = TestBed.inject(AlertService);
     });
 
@@ -78,14 +75,14 @@ describe('TutorialGroupRegisteredStudentsService', () => {
 
     it('should fetch registered students and update loading state', () => {
         const registeredStudents = [createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')];
-        const response$ = new Subject<TutorialGroupRegisteredStudentDTO[]>();
-        vi.spyOn(tutorialGroupsService, 'getRegisteredStudentDTOs').mockReturnValue(response$);
+        const response$ = new Subject<TutorialGroupStudent[]>();
+        tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(response$);
 
         service.fetchRegisteredStudents(courseId, tutorialGroupId);
 
         expect(service.isLoading()).toBe(true);
-        expect(tutorialGroupsService.getRegisteredStudentDTOs).toHaveBeenCalledOnce();
-        expect(tutorialGroupsService.getRegisteredStudentDTOs).toHaveBeenCalledWith(courseId, tutorialGroupId);
+        expect(tutorialGroupApiServiceMock.getRegisteredStudents).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.getRegisteredStudents).toHaveBeenCalledWith(courseId, tutorialGroupId);
 
         response$.next(registeredStudents);
         response$.complete();
@@ -95,7 +92,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     });
 
     it('should show an error alert when fetching registered students fails', () => {
-        vi.spyOn(tutorialGroupsService, 'getRegisteredStudentDTOs').mockReturnValue(throwError(() => new Error('network error')));
+        tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(throwError(() => new Error('network error')));
 
         service.fetchRegisteredStudents(courseId, tutorialGroupId);
 
@@ -106,7 +103,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     });
 
     it('should handle successful fetches with empty results', () => {
-        vi.spyOn(tutorialGroupsService, 'getRegisteredStudentDTOs').mockReturnValue(of([]));
+        tutorialGroupApiServiceMock.getRegisteredStudents.mockReturnValue(of([]));
 
         service.fetchRegisteredStudents(courseId, tutorialGroupId);
 
@@ -117,16 +114,16 @@ describe('TutorialGroupRegisteredStudentsService', () => {
 
     it('should deregister a student and remove them from the state', () => {
         service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')]);
-        const response$ = new Subject<HttpResponse<void>>();
-        vi.spyOn(tutorialGroupsService, 'deregisterStudent').mockReturnValue(response$);
+        const response$ = new Subject<void>();
+        tutorialGroupApiServiceMock.deregisterStudent.mockReturnValue(response$);
 
         service.deregisterStudent(courseId, tutorialGroupId, studentLogin);
 
         expect(service.isLoading()).toBe(true);
-        expect(tutorialGroupsService.deregisterStudent).toHaveBeenCalledOnce();
-        expect(tutorialGroupsService.deregisterStudent).toHaveBeenCalledWith(courseId, tutorialGroupId, studentLogin);
+        expect(tutorialGroupApiServiceMock.deregisterStudent).toHaveBeenCalledOnce();
+        expect(tutorialGroupApiServiceMock.deregisterStudent).toHaveBeenCalledWith(courseId, tutorialGroupId, studentLogin);
 
-        response$.next(new HttpResponse<void>({ status: 200 }));
+        response$.next();
         response$.complete();
 
         expect(service.registeredStudents()).toEqual([createRegisteredStudent(2, 'bob')]);
@@ -136,7 +133,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     it('should show an error alert when deregistering a student fails', () => {
         const existingStudents = [createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')];
         service.addStudentsToRegisteredStudentsState(existingStudents);
-        vi.spyOn(tutorialGroupsService, 'deregisterStudent').mockReturnValue(throwError(() => new Error('network error')));
+        tutorialGroupApiServiceMock.deregisterStudent.mockReturnValue(throwError(() => new Error('network error')));
 
         service.deregisterStudent(courseId, tutorialGroupId, studentLogin);
 

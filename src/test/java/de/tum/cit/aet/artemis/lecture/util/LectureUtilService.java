@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.fail;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -116,15 +116,13 @@ public class LectureUtilService {
     /**
      * Creates and saves a Lecture for the given Course. The Lecture is empty as it does not contain any LectureUnits.
      *
-     * @param course      The Course the Lecture belongs to
-     * @param visibleDate The visible date of the Lecture
+     * @param course The Course the Lecture belongs to
      * @return The created Lecture
      */
-    public Lecture createLecture(Course course, ZonedDateTime visibleDate) {
+    public Lecture createLecture(Course course) {
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
-        lecture.setVisibleDate(visibleDate);
         lectureRepo.save(lecture);
         return lecture;
     }
@@ -132,17 +130,15 @@ public class LectureUtilService {
     /**
      * Creates and saves a Lecture for the given Course. The Lecture is empty as it does not contain any LectureUnits.
      *
-     * @param course      The Course the Lecture belongs to
-     * @param visibleDate The visible date of the Lecture
-     * @param startDate   The start date of the Lecture
-     * @param endDate     The end date of the Lecture
+     * @param course    The Course the Lecture belongs to
+     * @param startDate The start date of the Lecture
+     * @param endDate   The end date of the Lecture
      * @return The created Lecture
      */
-    public Lecture createLecture(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public Lecture createLecture(Course course, ZonedDateTime startDate, ZonedDateTime endDate) {
         Lecture lecture = new Lecture();
         lecture.setTitle("Test Lecture");
         lecture.setCourse(course);
-        lecture.setVisibleDate(visibleDate);
         lecture.setStartDate(startDate);
         lecture.setEndDate(endDate);
         lectureRepo.save(lecture);

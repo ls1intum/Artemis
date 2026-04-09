@@ -5,15 +5,15 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -25,7 +25,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private readonly PAGE_SIZE = 25;
 
     private translateService = inject(TranslateService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
@@ -41,14 +41,14 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     tutorialGroupId = input.required<number>();
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
     searchString = signal<string>('');
-    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    suggestedStudents = signal<TutorialGroupStudent[]>([]);
     firstSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageIndex = signal(0);
     hasMorePages = signal(true);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
     inputIsFocused = signal(false);
-    onStudentSelected = output<TutorialGroupRegisteredStudentDTO>();
+    onStudentSelected = output<TutorialGroupStudent>();
 
     constructor() {
         effect(() => {
@@ -154,7 +154,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         this.searchInput()?.nativeElement.focus();
     }
 
-    trackStudentById(index: number, student: TutorialGroupRegisteredStudentDTO): number {
+    trackStudentById(index: number, student: TutorialGroupStudent): number {
         return student.id;
     }
 
@@ -186,8 +186,8 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
 
         this.firstSuggestedStudentsPageLoading.set(true);
 
-        this.loadFirstPageSubscription = this.tutorialGroupsService
-            .getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, 0, this.PAGE_SIZE)
+        this.loadFirstPageSubscription = this.tutorialGroupApiService
+            .searchUnregisteredStudents(this.courseId(), this.tutorialGroupId(), trimmedSearchString, 0, this.PAGE_SIZE)
             .subscribe({
                 next: (page) => {
                     this.suggestedStudents.set(page);
@@ -212,7 +212,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
 
         const nextPageIndex = this.nextSuggestedStudentsPageIndex();
         const trimmedSearchString = this.searchString().trim();
-        this.tutorialGroupsService.getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, nextPageIndex, this.PAGE_SIZE).subscribe({
+        this.tutorialGroupApiService.searchUnregisteredStudents(this.courseId(), this.tutorialGroupId(), trimmedSearchString, nextPageIndex, this.PAGE_SIZE).subscribe({
             next: (page) => {
                 this.suggestedStudents.update((current) => [...current, ...page]);
                 this.nextSuggestedStudentsPageIndex.update((i) => i + 1);

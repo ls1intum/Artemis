@@ -139,18 +139,13 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            if (exercise instanceof QuizExercise) {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            }
-            else {
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-            }
+            optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
                 studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
 
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+                optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
@@ -298,7 +293,7 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.FINISHED);
             participationRepository.save(participation);
         });
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
+        Optional<StudentParticipation> optionalStudentParticipation = findOnePracticeByExerciseAndParticipant(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -357,7 +352,7 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Participant participant, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -569,15 +564,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation (in any state) by its participant and exercise.
+     * Get one graded participation (in any state) by its participant and exercise.
      *
      * @param exercise    the exercise for which to find a participation
      * @param participant the participant for which to find a participation
-     * @return the participation of the given participant and exercise in any state
+     * @return the graded participation of the given participant and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
+    public Optional<StudentParticipation> findOneGradedByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), false);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -588,16 +583,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation (in any state) by its participant and exercise.
+     * Get one practice participation (in any state) by its participant and exercise.
      *
      * @param exercise    the exercise for which to find a participation
-     * @param participant the short name of the team
-     * @param testRun     the indicator if it should be a testRun participation
-     * @return the participation of the given team and exercise in any state
+     * @param participant the participant for which to find a participation
+     * @return the practice participation of the given participant and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
+    public Optional<StudentParticipation> findOnePracticeByExerciseAndParticipant(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), true);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -643,7 +637,29 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        // After the effective due date (respecting individual extensions), prefer the practice participation
+        Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                username, false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
+                .orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                    username, true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        // For regular exam exercises (not test exams), if no graded participation was found,
+        // fall back to looking for a test run participation. This handles the case where an
+        // instructor performs a test run on a regular exam — their participation has testRun=true
+        // but the exercise is not a test exam exercise, so it isn't caught by the check above.
+        // Without this fallback, submissions during test runs fail with a "no participation found" error.
+        // We use findLatest... to deterministically return the most recent participation when
+        // multiple test runs exist for the same exercise.
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
+        return gradedParticipation;
     }
 
     /**

@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime visibleDate,
+public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
         @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits, List<AttachmentDTO> attachments)
         implements LectureDTO {
 

@@ -29,8 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
@@ -117,7 +115,8 @@ public class CourseStudentDataExportService {
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
+            ObjectMapper objectMapper) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -130,11 +129,7 @@ public class CourseStudentDataExportService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
-
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -434,7 +429,7 @@ public class CourseStudentDataExportService {
             }
 
             Path outputFile = outputDir.resolve("iris-sessions.json");
-            objectMapper.writeValue(outputFile.toFile(), sessions);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), sessions);
             return Optional.of(outputFile);
         }
         catch (Exception e) {

@@ -12,6 +12,8 @@ import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
@@ -30,6 +32,7 @@ import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/qui
         FaIconComponent,
         NgClass,
         QuizQuestionListEditExistingComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class QuizQuestionListEditComponent {
@@ -52,6 +55,7 @@ export class QuizQuestionListEditComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly ApollonQuizDragAndDrop = FeatureToggle.ApollonQuizDragAndDrop;
 
     faPlus = faPlus;
 

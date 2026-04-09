@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import tech.jhipster.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Message Posts.
@@ -168,7 +168,7 @@ public class ConversationMessageResource {
         // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, updatedPost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
+        return ResponseEntity.ok(updatedMessagePost);
     }
 
     /**

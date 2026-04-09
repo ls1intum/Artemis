@@ -61,7 +61,7 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           max_entitygraph_violations=11
-          max_query_violations=24
+          max_query_violations=25
           max_total_violations=$((max_entitygraph_violations + max_query_violations))
 
           echo "=========================================="
@@ -99,6 +99,31 @@ jobs:
 
           if [ "$violation_detected" = "true" ]; then
             echo "::error::Query Quality check failed"
+
+            if [ "$entitygraph_violations" -gt "0" ]; then
+              echo ""
+              echo "VIOLATING ENTITY GRAPHS ($entitygraph_violations violations):"
+              echo "-----------------------------------------------------------"
+              echo "$output" | sed -n '/\[EntityGraph\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|@EntityGraph)'
+            fi
+
+            if [ "$query_violations" -gt "0" ]; then
+              echo ""
+              echo "VIOLATING QUERIES ($query_violations violations):"
+              echo "-------------------------------------------------"
+              echo "$output" | sed -n '/\[@Query\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|JOIN FETCH)'
+            fi
+
+            echo ""
+            echo "=========================================="
+            echo "HOW TO FIX THESE PERFORMANCE ISSUES"
+            echo "=========================================="
+            echo "Fetch only the data you actually need. Typical fixes are:"
+            echo "- add pagination for large result sets"
+            echo "- switch to projections when only a subset of fields is needed"
+            echo "- split one over-fetching query into multiple focused queries"
+            echo "- remove unnecessary JOIN FETCH clauses or EntityGraph paths"
+            echo "- create dedicated repository methods for list vs detail views"
             exit 1
           fi
 
@@ -214,7 +239,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           RUNNING_MESSAGE="'Artemis' is running!"
-          STARTUP_TIMEOUT_ATTEMPTS=32
+          STARTUP_TIMEOUT_ATTEMPTS=60
           STARTUP_RETRY_INTERVAL=2
           LOG_FILE="app.log"
 

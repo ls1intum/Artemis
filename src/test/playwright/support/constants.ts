@@ -15,9 +15,6 @@ export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
 
-// Constants
-export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
-
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
 

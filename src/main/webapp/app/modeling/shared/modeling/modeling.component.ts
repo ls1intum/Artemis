@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, input, model, viewChild } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import interact from 'interactjs';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -17,7 +17,7 @@ export abstract class ModelingComponent implements OnDestroy {
     resizeOptions = input<{
         horizontalResize?: boolean;
         verticalResize?: boolean;
-    }>(undefined!);
+    }>();
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     explanation = model<string>('');
@@ -32,7 +32,7 @@ export abstract class ModelingComponent implements OnDestroy {
         if (resizeOptions && resizeContainer) {
             this.interactable = interact(resizeContainer)
                 .resizable({
-                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize, top: false },
+                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize && '.draggable-bottom', top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
                             min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
@@ -50,10 +50,10 @@ export abstract class ModelingComponent implements OnDestroy {
                 .on('resizemove', (event: any) => {
                     const target = event.target;
                     const resizeOptionsValue = this.resizeOptions();
-                    if (resizeOptionsValue.horizontalResize) {
+                    if (resizeOptionsValue?.horizontalResize) {
                         target.style.width = event.rect.width + 'px';
                     }
-                    if (resizeOptionsValue.verticalResize) {
+                    if (resizeOptionsValue?.verticalResize) {
                         target.style.height = event.rect.height + 'px';
                     }
                 });

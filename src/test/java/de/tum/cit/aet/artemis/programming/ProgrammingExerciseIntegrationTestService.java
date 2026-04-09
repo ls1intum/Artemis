@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -13,7 +14,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,7 +49,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -637,7 +636,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
@@ -675,6 +674,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
+    // VCS project deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
     void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
@@ -682,14 +683,16 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        request.delete(path, HttpStatus.OK, params);
     }
 
+    // VCS repository deletion uses local VCS in the test environment, so no external call fails.
+    // Build plan deletion succeeds (shouldFail=false), so the overall delete succeeds.
     void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
@@ -697,12 +700,12 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
@@ -1018,7 +1021,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         final var endpoint = "/api/programming/programming-exercises/timeline";
-        MultiValueMap<String, String> params = new HttpHeaders();
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.FORBIDDEN, params);
     }
@@ -1026,14 +1029,14 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateTimeline_invalidId_notFound() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var endpoint = "/api/programming/programming-exercises/timeline";
-        MultiValueMap<String, String> params = new HttpHeaders();
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.NOT_FOUND, params);
     }
 
     void updateTimeline_ok() throws Exception {
         final var endpoint = "/api/programming/programming-exercises/timeline";
-        MultiValueMap<String, String> params = new HttpHeaders();
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
     }

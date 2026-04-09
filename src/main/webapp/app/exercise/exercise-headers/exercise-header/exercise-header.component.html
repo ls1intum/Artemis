@@ -1,0 +1,49 @@
+<div id="exercise-header" class="d-flex flex-column flex-fill">
+    <div class="d-flex align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-3">
+            @if (exerciseIcon()) {
+                <h5 class="mb-0">
+                    <fa-icon [icon]="exerciseIcon()!" />
+                    {{ exercise().title }}
+                </h5>
+            }
+        </div>
+        <jhi-exercise-header-actions
+            class="w-auto"
+            [courseId]="courseId()"
+            [exercise]="exercise()"
+            [onSubmitExercise]="effectiveOnSubmitExercise()"
+            [onContinueExercise]="onContinueExercise()"
+            [onRestartPractice]="onRestartPractice()"
+            [submitDisabled]="submitDisabled()"
+            [submitLabel]="submitLabel()"
+            [plagiarismCaseInfo]="plagiarismCaseInfo()"
+            [participationMode]="participationMode()"
+            (newParticipation)="onNewParticipation($event)"
+            (participationModeChange)="participationMode.set($event)"
+        />
+    </div>
+
+    <hr class="my-2" />
+
+    <div class="d-flex align-items-center gap-2">
+        <jhi-exercise-headers-information
+            class="flex-grow-1 min-w-0"
+            [exercise]="exercise()"
+            [studentParticipation]="activeParticipation()"
+            [submissionPolicy]="submissionPolicy()"
+            [course]="exercise().course"
+            [isPractice]="participationMode() === 'practice'"
+            [athenaEnabled]="athenaEnabled()"
+            [feedbackRequestLimit]="feedbackRequestLimit()"
+            (viewingSubmissionChange)="isViewingSubmission.set($event)"
+        />
+        <jhi-participation-mode-toggle
+            class="ms-auto flex-shrink-0"
+            [mode]="participationMode()"
+            (modeChange)="participationMode.set($event)"
+            [hasPractice]="hasParticipation()"
+            [hasBoth]="hasBothParticipations()"
+        />
+    </div>
+</div>

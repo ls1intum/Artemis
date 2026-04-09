@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,7 +14,6 @@ import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -3352,11 +3352,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
@@ -3384,11 +3384,11 @@ public class CourseTestService {
                 course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + id).file(coursePart);
         if (fileContent != null) {

@@ -57,8 +57,12 @@ jobs:
           cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
-      - name: Production Build
-        run: ./gradlew -Pprod -Pwar clean bootWar
+      - name: Install npm dependencies
+        run: npm install
+      - name: Build Angular Client
+        run: npm run clean-www && npm run prebuild && npx ng build --configuration production --optimization=false
+      - name: Build .war
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
         with:
