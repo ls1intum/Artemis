@@ -6,5 +6,8 @@
 
 /* ensure the user selection dropdown lives on top of the create conversation dialog */
 body ngb-typeahead-window.dropdown-menu {
-    z-index: 2000 !important;
+    $dialog-content-z-index: 1002;
+    z-index: $dialog-content-z-index + 1 !important;
+    max-height: 25rem;
+    overflow-y: auto;
 }
