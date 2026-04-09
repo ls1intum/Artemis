@@ -36,20 +36,13 @@ class AtlasAgentToolsServiceTest {
     private AtlasAgentDelegationService delegationService;
 
     @Mock
-    private CompetencyExpertToolsService competencyExpertToolsService;
-
-    @Mock
-    private CompetencyMappingToolsService competencyMappingToolsService;
-
-    @Mock
-    private ExerciseMappingToolsService exerciseMappingToolsService;
+    private AtlasAgentToolCallbackService toolCallbackFactory;
 
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, competencyExpertToolsService,
-                competencyMappingToolsService, exerciseMappingToolsService);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, toolCallbackFactory);
     }
 
     @AfterEach
