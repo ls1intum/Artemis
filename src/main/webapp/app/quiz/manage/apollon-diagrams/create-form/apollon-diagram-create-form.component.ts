@@ -46,7 +46,6 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
                 }
             },
             error: () => {
-                this.isSaving = false;
                 this.alertService.error('artemisApp.apollonDiagram.create.error');
             },
         });
