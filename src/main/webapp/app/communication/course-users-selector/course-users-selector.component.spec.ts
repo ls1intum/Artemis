@@ -112,7 +112,7 @@ describe('CourseUsersSelectorComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
             expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
-            expectDropdownItems(fixture.nativeElement, ['MHMortimer of Sto Helit (mort)']);
+            expectDropdownItems(['MHMortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
             fixture.changeDetectorRef.detectChanges();
@@ -170,7 +170,7 @@ describe('CourseUsersSelectorComponent', () => {
         return Array.from(element.queryAll(By.css('button.dropdown-item')));
     }
 
-    function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
+    function expectDropdownItems(dropdownEntries: string[]): void {
         const completion = document.querySelector('ngb-typeahead-window');
         const pages = completion!.querySelectorAll('button.dropdown-item');
         expect(pages).toHaveLength(dropdownEntries.length);
