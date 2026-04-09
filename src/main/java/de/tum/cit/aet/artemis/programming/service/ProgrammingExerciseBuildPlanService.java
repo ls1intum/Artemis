@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -104,20 +106,26 @@ public class ProgrammingExerciseBuildPlanService {
 
         var buildConfig = programmingExercise.getBuildConfig();
 
-        // already in phases format, nothing to do
-        if (buildConfig.getBuildPlanPhases().isPresent()) {
+        Optional<BuildPlanPhasesDTO> existingPlan = buildConfig.getBuildPlanPhases();
+        List<BuildPhaseDTO> phases = existingPlan.map(BuildPlanPhasesDTO::phases).orElse(null);
+        String dockerImage = existingPlan.map(BuildPlanPhasesDTO::dockerImage).orElse(null);
+
+        boolean planComplete = phases != null && dockerImage != null;
+        if (planComplete) {
             return;
         }
 
-        BuildPlanPhasesDTO buildPlanPhasesDTO = null;
+        // augment with default template or values
+        if (buildPhasesTemplateService.isPresent()) {
+            if (phases == null) {
+                phases = buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise);
+            }
+            if (dockerImage == null) {
+                dockerImage = buildPhasesTemplateService.orElseThrow().getDefaultDockerImageFor(programmingExercise);
+            }
 
-        // no config at all, load default build plan phases template
-        if (buildConfig.getBuildPlanConfiguration() == null && buildPhasesTemplateService.isPresent()) {
-            buildPlanPhasesDTO = new BuildPlanPhasesDTO(buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise), null);
-        }
-
-        if (buildPlanPhasesDTO != null) {
-            buildConfig.setBuildPlanConfiguration(buildPlanPhasesDTO.toBuildPlanConfiguration());
+            final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
+            buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {
