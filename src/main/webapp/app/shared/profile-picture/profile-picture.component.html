@@ -13,7 +13,7 @@
             [alt]="authorName()"
             class="profile-picture rounded-3"
             [src]="imageUrl()"
-            [ngStyle]="{ 'background-color': profilePictureBackgroundColor }"
+            [ngStyle]="{ 'background-color': imageBackgroundColor() ?? profilePictureBackgroundColor }"
             [ngClass]="imageClass() + (isGray() ? ' is-grayscale' : '')"
         />
     }
