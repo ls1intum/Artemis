@@ -129,6 +129,7 @@
         },
         "@babel/runtime": "7.29.2",
         "@primeuix/styled": "0.7.4",
+        "@sinonjs/fake-timers": "15.1.1",
         "ajv": "8.18.0",
         "braces": "3.0.3",
         "cookie": "1.1.1",
