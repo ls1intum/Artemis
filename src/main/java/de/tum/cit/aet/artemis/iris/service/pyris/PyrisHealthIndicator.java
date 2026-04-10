@@ -3,20 +3,16 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.health.contributor.Status;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -27,13 +23,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
-@Component
-@Lazy
-@Conditional(IrisEnabled.class)
+/**
+ * Health indicator for the Pyris AI service connector.
+ * <p>
+ * This bean is created via {@link de.tum.cit.aet.artemis.iris.config.PyrisConfiguration}
+ * rather than component scanning, so that {@link ObjectProvider} can be used for the
+ * {@link ProcessingStateCallbackApi} dependency. This defers the instantiation of the
+ * entire processing-state callback chain to runtime (first health check), reducing the
+ * startup bean dependency edge count.
+ */
 public class PyrisHealthIndicator implements HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisHealthIndicator.class);
@@ -51,7 +52,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final RestTemplate restTemplate;
 
-    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
+    private final ObjectProvider<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
@@ -73,7 +74,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+    public PyrisHealthIndicator(RestTemplate restTemplate, ObjectProvider<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.restTemplate = restTemplate;
         this.processingStateCallbackApi = processingStateCallbackApi;
     }
@@ -137,7 +138,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
         boolean wasUp = previouslyUp.getAndSet(currentlyUp);
         if (currentlyUp && !wasUp) {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
-            processingStateCallbackApi.ifPresent(api -> {
+            processingStateCallbackApi.ifAvailable(api -> {
                 try {
                     api.handleIrisReset();
                 }

@@ -14,6 +14,7 @@ import jakarta.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -51,12 +52,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ArtemisProperties jHipsterProperties;
 
-    private final ToolsInterceptor toolsInterceptor;
+    // ToolsInterceptor is only needed at runtime (during request handling in addInterceptors),
+    // not during startup configuration. Using ObjectProvider defers its instantiation to reduce
+    // the startup bean dependency edge count.
+    private final ObjectProvider<ToolsInterceptor> toolsInterceptorProvider;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ObjectProvider<ToolsInterceptor> toolsInterceptorProvider) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
-        this.toolsInterceptor = toolsInterceptor;
+        this.toolsInterceptorProvider = toolsInterceptorProvider;
     }
 
     @Override
@@ -144,7 +148,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
+        registry.addInterceptor(toolsInterceptorProvider.getObject()).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
     }
 
     /**
