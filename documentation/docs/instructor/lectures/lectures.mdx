@@ -116,9 +116,18 @@ To add a video with automatic transcription:
 4. On the lecture management page, status badges show the current progress (e.g. *Transcribing*, *Processing complete*, *Transcription complete*).
 5. Once complete, the transcript is attached to the unit and becomes available to students.
 
+##### Supported Video Sources
+
+Automatic transcription is available for the following video platforms:
+
+- **TUM-Live:** Paste the public TUM-Live video link (e.g. `https://live.rbg.tum.de/w/course/12345`). Artemis resolves it to an HLS playlist and hands it off for transcription.
+- **YouTube:** Paste a standard YouTube link (e.g. `https://www.youtube.com/watch?v=...`, `https://youtu.be/...`, or embed/live/shorts URLs). Artemis recognizes it and passes the URL through for transcription.
+
 <Callout variant={CalloutVariant.info}>
-  <p>Currently, automatic transcription is supported for <strong>TUM-Live</strong> videos. Videos from other platforms can still be embedded as attachment video units, but transcripts for these must be added manually. Your administrator can confirm which video sources are supported on your instance.</p>
+  <p><strong>YouTube visibility:</strong> Only <strong>public</strong> and <strong>unlisted</strong> YouTube videos can be transcribed. Private YouTube videos cannot be accessed by the transcription service and will fail. If you want to use automatic transcription, make sure your YouTube video is set to <em>public</em> or <em>unlisted</em>.</p>
 </Callout>
+
+Videos from other platforms (e.g. Vimeo) can still be embedded as attachment video units, but transcripts for these must be added manually. Your administrator can confirm which video sources are enabled on your instance.
 
 #### Iris Integration
 

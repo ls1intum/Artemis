@@ -41,7 +41,9 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
+import de.tum.cit.aet.artemis.nebula.api.YouTubeApi;
 
 @Lazy
 @Service
@@ -64,12 +66,14 @@ public class PyrisWebhookService {
 
     private final Optional<TumLiveApi> tumLiveApi;
 
+    private final Optional<YouTubeApi> youTubeApi;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<TumLiveApi> tumLiveApi) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<TumLiveApi> tumLiveApi, Optional<YouTubeApi> youTubeApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
@@ -77,6 +81,7 @@ public class PyrisWebhookService {
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.tumLiveApi = tumLiveApi;
+        this.youTubeApi = youTubeApi;
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -120,45 +125,63 @@ public class PyrisWebhookService {
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
-        // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg
-        String videoLink = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        // Resolve the raw video URL to something Pyris can consume and identify the source type.
+        ResolvedVideo resolvedVideo = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        String videoLink = resolvedVideo.url();
+        VideoSourceType videoSourceType = resolvedVideo.type();
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
 
             return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     PyrisLectureTranscriptionDTO.of(transcription), lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription,
-                    lectureUnitLink, videoLink);
+                    lectureUnitLink, videoLink, videoSourceType);
         }
 
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
-                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoLink);
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoLink, videoSourceType);
     }
 
     /**
-     * Resolve a video URL, converting TUM Live watch page URLs to HLS playlist URLs if TumLiveApi is available.
-     * Falls back to the original URL if resolution fails or TumLiveApi is not present.
+     * Resolve a raw video URL for Pyris ingestion, returning both the URL to hand to Pyris and the
+     * {@link VideoSourceType} so Pyris knows how to obtain the audio track.
+     * <ul>
+     * <li>TUM Live watch-page URLs are converted to HLS playlist URLs (so ffmpeg can stream them directly) and tagged {@link VideoSourceType#TUM_LIVE}.</li>
+     * <li>YouTube URLs are passed through unchanged and tagged {@link VideoSourceType#YOUTUBE}; Pyris uses {@code yt-dlp} to download the audio.</li>
+     * <li>All other sources (or null/blank input, or resolution failures) are passed through with a {@code null} type.</li>
+     * </ul>
      *
-     * @param videoSource the raw video URL (may be a TUM Live watch page URL)
-     * @return the resolved HLS playlist URL, or the original URL if resolution is not applicable
+     * @param videoSource the raw video URL stored on the attachment video unit
+     * @return the resolved URL and its source type
      */
-    private String resolveVideoUrl(String videoSource) {
+    ResolvedVideo resolveVideoUrl(String videoSource) {
         if (videoSource == null || videoSource.isBlank()) {
-            return videoSource;
+            return new ResolvedVideo(videoSource, null);
         }
         if (tumLiveApi.isPresent()) {
             try {
                 Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
                 if (resolved.isPresent()) {
                     log.info("Resolved TUM Live URL to HLS playlist for Iris ingestion");
-                    return resolved.get();
+                    return new ResolvedVideo(resolved.get(), VideoSourceType.TUM_LIVE);
                 }
             }
             catch (Exception e) {
                 log.warn("Could not resolve TUM Live URL for Iris ingestion, falling back to original video source", e);
             }
         }
-        return videoSource;
+        if (youTubeApi.isPresent() && youTubeApi.get().isYouTubeUrl(videoSource)) {
+            log.info("Detected YouTube URL for Iris ingestion, passing through unchanged");
+            return new ResolvedVideo(videoSource, VideoSourceType.YOUTUBE);
+        }
+        return new ResolvedVideo(videoSource, null);
+    }
+
+    /**
+     * Result of {@link #resolveVideoUrl(String)}: the URL to send to Pyris together with the identified source type
+     * (or {@code null} if the source could not be identified).
+     */
+    record ResolvedVideo(String url, VideoSourceType type) {
     }
 
     /**
@@ -173,7 +196,7 @@ public class PyrisWebhookService {
         Long lectureUnitId = attachmentVideoUnit.getId();
         Long lectureId = attachmentVideoUnit.getLecture().getId();
         Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "");
+        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "", null);
     }
 
     /**
