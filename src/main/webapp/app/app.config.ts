@@ -23,6 +23,7 @@ import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fing
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -69,12 +70,13 @@ export const appConfig: ApplicationConfig = {
         DatePipe,
         provideAppInitializer(() => {
             const profileService = inject(ProfileService);
+            const accountService = inject(AccountService);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
-            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
-            // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
-            return profileService.loadProfileInfo();
+            // Load profile info and resolve user identity in parallel to minimize startup time.
+            // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
+            return Promise.all([profileService.loadProfileInfo(), accountService.identity().catch(() => undefined)]).then(() => undefined);
         }),
         /**
          * @description Interceptor declarations:
