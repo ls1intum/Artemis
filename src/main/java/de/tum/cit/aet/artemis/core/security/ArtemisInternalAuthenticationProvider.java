@@ -55,6 +55,9 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
             return null;
         }
         final var user = optionalUser.get();
+        if (user.isBot()) {
+            throw new AuthenticationServiceException("Bot users cannot authenticate interactively");
+        }
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + user.getLogin() + " was not activated");
         }

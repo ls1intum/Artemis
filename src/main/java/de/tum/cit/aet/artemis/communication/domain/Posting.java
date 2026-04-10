@@ -35,7 +35,7 @@ public abstract class Posting extends DomainObject {
     @ManyToOne
     // NOTE: Using @JsonIgnoreProperties instead of @JsonIncludeProperties to avoid Jackson deserialization issues
     // with "No _valueDeserializer assigned" errors in nested entity hierarchies
-    // We basically want: @JsonIncludeProperties({ "id", "name", "imageUrl" })
+    // We basically want: @JsonIncludeProperties({ "id", "name", "imageUrl", "bot" })
     @JsonIgnoreProperties(value = { "password", "registrationNumber", "activationKey", "resetKey", "vcsAccessToken", "vcsAccessTokenExpiryDate", "groups", "authorities",
             "organizations", "tutorialGroupRegistrations", "completedLectureUnits", "competencyProgresses", "learningPaths", "examUsers", "pushNotificationDeviceConfigurations",
             "savedPosts", "learnerProfile" }, allowSetters = true)
