@@ -43,6 +43,7 @@ export default defineConfig({
             'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
+            'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
@@ -90,6 +91,7 @@ export default defineConfig({
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
                 'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage

@@ -663,6 +663,16 @@ public class ParticipationService {
                 return practiceParticipation;
             }
         }
+        // For regular exam exercises (not test exams), if no graded participation was found,
+        // fall back to looking for a test run participation. This handles the case where an
+        // instructor performs a test run on a regular exam — their participation has testRun=true
+        // but the exercise is not a test exam exercise, so it isn't caught by the check above.
+        // Without this fallback, submissions during test runs fail with a "no participation found" error.
+        // We use findLatest... to deterministically return the most recent participation when
+        // multiple test runs exist for the same exercise.
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
         return gradedParticipation;
     }
 

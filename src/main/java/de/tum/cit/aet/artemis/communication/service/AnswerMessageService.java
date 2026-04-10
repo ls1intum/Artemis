@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -42,11 +44,14 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class AnswerMessageService extends PostingService {
+
+    private static final Logger log = LoggerFactory.getLogger(AnswerMessageService.class);
 
     private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
 
@@ -64,12 +69,15 @@ public class AnswerMessageService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final Optional<AutonomousTutorApi> autonomousTutorApi;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
+            Optional<AutonomousTutorApi> autonomousTutorApi) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -78,6 +86,7 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.autonomousTutorApi = autonomousTutorApi;
     }
 
     /**
@@ -122,7 +131,7 @@ public class AnswerMessageService extends PostingService {
         var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
                 newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
-                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId, newAnswerMessage.getAuthor().isBot());
 
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
@@ -145,11 +154,22 @@ public class AnswerMessageService extends PostingService {
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
                 newAnswerMessage.getCreationDate().toString(), newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(),
-                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId,
+                newAnswerMessage.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         this.preparePostAndBroadcast(savedAnswerMessage, course);
+
+        // Include the new answer in the parent post's in-memory answers set so it is part of the thread context forwarded to Iris
+        post.addAnswerPost(savedAnswerMessage);
+        try {
+            autonomousTutorApi.ifPresent(api -> api.onNewAnswerMessage(savedAnswerMessage, post, conversation, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to forward answer message to autonomous tutor pipeline for answer post {}", savedAnswerMessage.getId(), e);
+        }
+
         return savedAnswerMessage;
     }
 

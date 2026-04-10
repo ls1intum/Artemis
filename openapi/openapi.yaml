@@ -971,6 +971,9 @@ components:
       type: object
       properties:
         jobId: {type: string}
+        repositoryType:
+          type: string
+          enum: [exercise, solution, tests, auxiliary, user]
     ConsistencyIssue:
       type: object
       description: Individual consistency issue details
@@ -1379,14 +1382,15 @@ components:
         id: {type: integer, format: int64}
         start: {type: string, format: date-time}
         end: {type: string, format: date-time}
-        location: {type: string}
+        location: {type: string, maxLength: 255, minLength: 1}
         isCancelled: {type: boolean}
+        isCancelledByFreePeriod: {type: boolean}
         locationChanged: {type: boolean}
         timeChanged: {type: boolean}
         dateChanged: {type: boolean}
         attendanceCount: {type: integer, format: int32}
-      required: [dateChanged, end, id, isCancelled, location, locationChanged, start,
-        timeChanged]
+      required: [dateChanged, end, id, isCancelled, isCancelledByFreePeriod, location,
+        locationChanged, start, timeChanged]
     ConversationUser:
       type: object
       properties:
