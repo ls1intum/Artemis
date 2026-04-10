@@ -113,9 +113,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, @Lazy TokenProvider tokenProvider,
-            @Lazy StudentParticipationRepository studentParticipationRepository, @Lazy AuthorizationCheckService authorizationCheckService,
-            @Lazy ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
+    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
+            Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = objectMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
