@@ -495,7 +495,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     /**
      * Returns true if the message is an internal system message that should never appear in the chat UI:
-     * - Orchestrator delegation briefs (EXERCISE_ID: / %%ARTEMIS_DELEGATE_TO_)
+     * - Orchestrator delegation briefs (EXERCISE_ID:)
      * - Action confirmation commands with JSON payloads ([CREATE_APPROVED_EXERCISE_MAPPING]:{...})
      */
     private isDelegationBrief(content: string): boolean {
@@ -505,7 +505,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const trimmed = content.trimStart();
         return (
             trimmed.startsWith('EXERCISE_ID:') ||
-            trimmed.startsWith('%%ARTEMIS_DELEGATE_TO_') ||
             trimmed.startsWith('[CREATE_APPROVED_EXERCISE_MAPPING]:') ||
             trimmed.startsWith('[CREATE_APPROVED_COMPETENCY]:') ||
             trimmed.startsWith('[CREATE_APPROVED_RELATION]:')

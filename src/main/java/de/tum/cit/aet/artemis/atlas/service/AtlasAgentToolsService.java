@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
 
-    private static final String RETURN_TO_MAIN_AGENT_MARKER = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
-
     private static final ThreadLocal<Long> currentCourseId = new ThreadLocal<>();
 
     private static final ThreadLocal<String> currentSessionId = new ThreadLocal<>();
@@ -135,7 +133,7 @@ public class AtlasAgentToolsService {
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT), brief, courseId, sessionId,
                 false, toolCallbackFactory.createCompetencyExpertProvider());
-        return stripReturnMarker(response);
+        return response;
     }
 
     /**
@@ -160,7 +158,7 @@ public class AtlasAgentToolsService {
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER), brief, courseId, sessionId,
                 false, toolCallbackFactory.createCompetencyMapperProvider());
-        return stripReturnMarker(response);
+        return response;
     }
 
     /**
@@ -185,15 +183,11 @@ public class AtlasAgentToolsService {
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId, false,
                 toolCallbackFactory.createExerciseMapperProvider());
-        return stripReturnMarker(response);
+        return response;
     }
 
     private static String formatBrief(String topicLabel, String topic, String requirements, String constraints, String context) {
         return topicLabel + ": " + topic + "\nREQUIREMENTS: " + requirements + "\nCONSTRAINTS: " + constraints + "\nCONTEXT: " + context;
-    }
-
-    private static String stripReturnMarker(String response) {
-        return response.replace(RETURN_TO_MAIN_AGENT_MARKER, "").trim();
     }
 
     private String toJson(Object object) {

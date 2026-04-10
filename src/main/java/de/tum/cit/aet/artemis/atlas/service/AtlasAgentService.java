@@ -305,17 +305,14 @@ public class AtlasAgentService {
                 String text = message.getText();
                 boolean isUser = message.getMessageType() == MessageType.USER;
 
-                // Skip internal system messages (delegation markers, briefings, action confirmations, and plan continuations)
+                // Skip internal system messages (briefings, action confirmations, and plan continuations)
                 boolean isBriefing = text.startsWith("TOPIC:") || text.startsWith("TOPICS:") || text.startsWith("ACTION:")
                         || (text.contains("REQUIREMENTS:") && text.contains("CONSTRAINTS:") && text.contains("CONTEXT:"));
-                // Legacy marker filtering for old sessions that still have markers in chat memory
-                boolean isDelegationMarker = text.contains("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%") || text.contains("%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%")
-                        || text.contains("%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%") || text.contains("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
                 boolean isActionConfirmation = text.equals(CREATE_APPROVED_RELATION) || text.equals(CREATE_APPROVED_COMPETENCY) || text.equals(CREATE_APPROVED_EXERCISE_MAPPING)
                         || text.startsWith(CREATE_APPROVED_EXERCISE_MAPPING + ":");
                 boolean isPlanContinuation = text.startsWith("MULTI-STEP PLAN CONTINUATION");
 
-                if (isBriefing || isDelegationMarker || isActionConfirmation || isPlanContinuation) {
+                if (isBriefing || isActionConfirmation || isPlanContinuation) {
                     continue;
                 }
 
