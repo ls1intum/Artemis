@@ -7,11 +7,12 @@ import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-butt
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 import { ButtonModule } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-quiz-exercise-create-buttons',
     templateUrl: './quiz-exercise-create-buttons.component.html',
-    imports: [FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, ButtonModule],
+    imports: [FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, ButtonModule, RouterLink],
 })
 export class QuizExerciseCreateButtonsComponent {
     course = input.required<Course>();
