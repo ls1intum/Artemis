@@ -159,17 +159,49 @@
                 "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "How can I help you today?"
+                "helpOffer": "How can I help you today?",
+                "suggestions": {
+                    "learn": "Learn",
+                    "learnStarter": "Help me understand the concept of ",
+                    "quiz": "Quiz",
+                    "quizTopicStarter": "Generate 5 multiple choice questions to quiz me on the topic of ",
+                    "tips": "Tips",
+                    "tipsStarter": "Give me 3 tips to learn this course effectively"
+                },
+                "placeholders": {
+                    "exercise": {
+                        "testsFailing": "Why are my tests failing?",
+                        "whereToStart": "I am stuck, where should I start?",
+                        "conceptNeeded": "What concept do I need to understand to solve this exercise?",
+                        "walkThrough": "Walk me through the requirements of this exercise"
+                    },
+                    "lecture": {
+                        "keyPoints": "What are the key points I should know from this lecture?",
+                        "summarise": "Summarize what I should know"
+                    }
+                }
             },
             "mcq": {
                 "submit": "Submit Answer",
                 "correct": "Correct!",
                 "incorrect": "Incorrect.",
-                "explanation": "Explanation:"
+                "explanation": "Explanation:",
+                "questionOf": "Question {{ current }} of {{ total }}",
+                "viewScore": "View Score",
+                "reviewQuestions": "Review Questions",
+                "score": "Score"
             },
             "citation": {
                 "unitLabel": "Unit:",
                 "lectureLabel": "Lecture:"
+            },
+            "contextSelection": {
+                "label": "Select chat context",
+                "search": "Search...",
+                "placeholder": "Select context...",
+                "courseGroup": "Course",
+                "lecturesGroup": "Lectures",
+                "exercisesGroup": "Exercises"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
@@ -224,6 +256,7 @@
                 "older": "Older",
                 "relatedEntityTooltip": {
                     "programmingExercise": "This chat is related to a programming exercise.",
+                    "textExercise": "This chat is related to a text exercise.",
                     "lecture": "This chat is related to a lecture."
                 },
                 "deleteSession": "Delete",
