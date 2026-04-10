@@ -14,6 +14,12 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 public record BuildPhaseDTO(@NotBlank @Pattern(regexp = BuildPhaseDTO.BUILD_PHASE_NAME_REGEX) String name, String script, BuildPhaseCondition condition, boolean forceRun,
         List<String> resultPaths) {
 
+    public BuildPhaseDTO {
+        if (condition == null) {
+            condition = BuildPhaseCondition.ALWAYS;
+        }
+    }
+
     public static final String BUILD_PHASE_NAME_REGEX = "^[A-Za-z_][A-Za-z0-9_]*$";
 
     public static final java.util.regex.Pattern BUILD_PHASE_NAME_PATTERN = java.util.regex.Pattern.compile(BUILD_PHASE_NAME_REGEX);

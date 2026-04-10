@@ -340,6 +340,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
             DockerRunConfig dockerRunConfig) {
 
+        programmingExercise.setBuildConfig(buildConfig);
+
         final List<BuildPhaseDTO> phases;
         if (buildPlanPhasesDTO.isEmpty()) {
             List<BuildPhaseDTO> templatePhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
@@ -374,7 +376,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         List<String> resultPaths = gatheredGlobResultPaths.stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
-        programmingExercise.setBuildConfig(buildConfig);
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
