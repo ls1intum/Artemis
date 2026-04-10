@@ -8,6 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -1710,6 +1711,38 @@ describe('IrisBaseChatbotComponent', () => {
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);
+        });
+    });
+
+    describe('openAboutIrisModal transport selection', () => {
+        it('should open via MatDialog when layout is widget', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open').mockReturnValue({ close: vi.fn() } as any);
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open');
+
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(matDialogOpenSpy).toHaveBeenCalledOnce();
+            expect(dialogServiceOpenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should open via PrimeNG DialogService when layout is client', () => {
+            const matDialog = TestBed.inject(MatDialog);
+            const matDialogOpenSpy = vi.spyOn(matDialog, 'open');
+            const dialogService = TestBed.inject(DialogService);
+            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ close: vi.fn() } as any);
+
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.detectChanges();
+
+            component.openAboutIrisModal();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            expect(matDialogOpenSpy).not.toHaveBeenCalled();
         });
     });
 
