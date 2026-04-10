@@ -8,7 +8,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
-import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -155,7 +155,12 @@ export class PostingHeaderComponent implements OnInit {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
         this.userAuthorityIcon = faUser;
-        if (this.posting()?.authorRole === UserRole.USER) {
+        if (this.posting()?.author?.bot) {
+            this.userAuthorityIcon = faRobot;
+            this.userAuthority = 'bot';
+            this.userRoleBadge = roleBadgeTranslationPath + 'bot';
+            this.userAuthorityTooltip = toolTipTranslationPath + 'bot';
+        } else if (this.posting()?.authorRole === UserRole.USER) {
             this.userAuthority = 'student';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
