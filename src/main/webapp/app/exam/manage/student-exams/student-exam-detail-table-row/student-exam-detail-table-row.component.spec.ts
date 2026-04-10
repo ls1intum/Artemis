@@ -22,7 +22,7 @@ import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideRouter } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';

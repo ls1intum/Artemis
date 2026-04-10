@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
@@ -8,8 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseNotificationPresetPickerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseNotificationPresetPickerComponent;
     let fixture: ComponentFixture<CourseNotificationPresetPickerComponent>;
 
@@ -28,6 +33,10 @@ describe('CourseNotificationPresetPickerComponent', () => {
         };
     }
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -39,8 +48,13 @@ describe('CourseNotificationPresetPickerComponent', () => {
                 MockDirective(NgbDropdownMenu),
                 MockDirective(NgbDropdownItem),
             ],
-        }).compileComponents();
+            providers: [{ provide: TranslateService, useValue: { instant: vi.fn((key: string) => key), get: vi.fn() } }],
+        });
 
+        TestBed.overrideComponent(CourseNotificationPresetPickerComponent, {
+            remove: { imports: [TranslateDirective] },
+            add: { imports: [MockDirective(TranslateDirective)] },
+        });
         fixture = TestBed.createComponent(CourseNotificationPresetPickerComponent);
         component = fixture.componentInstance;
 
@@ -72,7 +86,7 @@ describe('CourseNotificationPresetPickerComponent', () => {
     });
 
     it('should emit onPresetSelected event with the correct preset ID when a preset is selected', () => {
-        const emitSpy = jest.spyOn(component.onPresetSelected, 'emit');
+        const emitSpy = vi.spyOn(component.onPresetSelected, 'emit');
 
         component['presetSelected'](2);
 
@@ -80,7 +94,7 @@ describe('CourseNotificationPresetPickerComponent', () => {
     });
 
     it('should emit 0 when the custom preset is selected', () => {
-        const emitSpy = jest.spyOn(component.onPresetSelected, 'emit');
+        const emitSpy = vi.spyOn(component.onPresetSelected, 'emit');
 
         component['presetSelected'](0);
 
@@ -98,6 +112,6 @@ describe('CourseNotificationPresetPickerComponent', () => {
         expect(component.selectedCourseSettingPreset()).toBe(mockPresets[0]);
 
         expect(component.selectedCourseSettingPreset()?.identifier).toBe('preset1');
-        expect(component.selectedCourseSettingPreset() !== null).toBeTrue();
+        expect(component.selectedCourseSettingPreset() !== null).toBe(true);
     });
 });

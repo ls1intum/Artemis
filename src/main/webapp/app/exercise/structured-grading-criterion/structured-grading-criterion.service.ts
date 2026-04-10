@@ -24,39 +24,34 @@ export class StructuredGradingCriterionService {
             }
         }
     }
+
     computeTotalScore(assessments: Feedback[]) {
         let score = 0;
-        const gradingInstructions = {}; // { instructionId: noOfEncounters }
+        const encounteredInstructions = new Map<number, number>();
         for (const feedback of assessments) {
             if (feedback.gradingInstruction) {
-                score = this.calculateScoreForGradingInstructions(feedback, score, gradingInstructions);
+                score = this.calculateScoreForGradingInstructions(feedback, score, encounteredInstructions);
             } else {
-                score += feedback.credits!;
+                score += feedback.credits ?? 0;
             }
         }
         return score;
     }
 
-    calculateScoreForGradingInstructions(feedback: Feedback, score: number, gradingInstructions: any): number {
-        if (gradingInstructions[feedback.gradingInstruction!.id!]) {
-            // We Encountered this grading instruction before
-            const maxCount = feedback.gradingInstruction!.usageCount;
-            const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
-            if (maxCount && maxCount > 0) {
-                if (encounters >= maxCount) {
-                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
-                } else {
-                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
-                    score += feedback.gradingInstruction!.credits;
-                }
-            } else {
-                score += feedback.credits!;
-            }
-        } else {
-            // First time encountering the grading instruction
-            gradingInstructions[feedback.gradingInstruction!.id!] = 1;
-            score += feedback.credits!;
+    calculateScoreForGradingInstructions(feedback: Feedback, score: number, encounteredInstructions: Map<number, number>): number {
+        const instructionId = feedback.gradingInstruction!.id!;
+        const maxCount = feedback.gradingInstruction!.usageCount ?? 0;
+        const encounters = encounteredInstructions.get(instructionId) ?? 0;
+
+        encounteredInstructions.set(instructionId, encounters + 1);
+
+        if (maxCount > 0 && encounters >= maxCount) {
+            // Limited usage and limit already reached: do NOT add credits
+            return score;
         }
+
+        // Either unlimited (maxCount === 0) or limit not yet reached: add credits
+        score += feedback.credits ?? 0;
         return score;
     }
 }

@@ -13,11 +13,11 @@
         <p th:text="#{email.courseRequest.accepted.text(${courseRequest.title})}">Welcome to your new course.</p>
         <p th:text="#{email.courseRequest.accepted.followUp}">You can adjust the course after opening it.</p>
         <div class="button-wrapper">
-            <a class="button" th:href="@{|${baseUrl}/course-management/${course.id}|}" th:text="#{email.courseRequest.accepted.linkText}">Open course</a>
+            <a class="button" th:href="@{|${baseUrl}/course-management/${course.id}/onboarding|}" th:text="#{email.courseRequest.accepted.linkText}">Start course setup</a>
         </div>
         <div class="emergency-link">
             <p th:text="#{email.notification.aux.emergency.link.text}">Emergency Link if button is not working</p>
-            <a th:with="url=(@{|${baseUrl}/course-management/${course.id}|})" th:href="${url}" th:text="${url}">Link</a>
+            <a th:with="url=(@{|${baseUrl}/course-management/${course.id}/onboarding|})" th:href="${url}" th:text="${url}">Link</a>
         </div>
     </div>
     <th:block th:replace="~{mail/notification/fragments :: farewell}"/>

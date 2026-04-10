@@ -22,11 +22,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
-import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing ExerciseVersion.

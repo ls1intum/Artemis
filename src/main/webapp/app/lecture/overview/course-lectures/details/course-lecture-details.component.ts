@@ -98,6 +98,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
+    readonly targetPdfPage = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
@@ -125,9 +126,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetUnitId.set(unitId);
                 const timestamp = Number(params['timestamp']);
                 this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
+                const pageNum = Number(params['page']);
+                this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
             } else {
                 this.targetUnitId.set(undefined);
                 this.targetVideoTimestamp.set(undefined);
+                this.targetPdfPage.set(undefined);
             }
 
             if (this.lectureUnits.length > 0) {
@@ -157,13 +161,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
                         this.ensureValidDeepLinkTargets();
-                        if (this.lectureUnits?.length) {
-                            // Check if PDF attachments exist in lecture units
-                            this.hasPdfLectureUnit =
-                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
-                                    (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
-                                ).length > 0;
-                        }
+                        this.hasPdfLectureUnit = this.lectureUnits.some(
+                            (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                        );
                         if (this.irisEnabled && this.lecture?.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
                                 this.irisSettings = response;
@@ -228,18 +228,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
     }
 
-    createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {
-        const boxContentStartDate: InformationBoxContent = {
-            type: 'dateTime',
-            value: date,
-        };
-        return {
-            title: contentStringName,
-            content: boxContentStartDate,
-            isContentComponent: true,
-        };
-    }
-
     private ensureValidDeepLinkTargets(): void {
         const targetUnitId = this.targetUnitId();
         if (!targetUnitId) {
@@ -250,12 +238,35 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         if (!targetUnit) {
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
+            this.targetPdfPage.set(undefined);
             return;
         }
 
-        if (targetUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
+        if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+
+            if (isPdf) {
+                this.targetVideoTimestamp.set(undefined);
+            } else {
+                this.targetPdfPage.set(undefined);
+            }
+        } else {
             this.targetVideoTimestamp.set(undefined);
+            this.targetPdfPage.set(undefined);
         }
+    }
+
+    createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {
+        const boxContentStartDate: InformationBoxContent = {
+            type: 'dateTime',
+            value: date,
+        };
+        return {
+            title: contentStringName,
+            content: boxContentStartDate,
+            isContentComponent: true,
+        };
     }
 
     ngOnDestroy() {

@@ -80,7 +80,7 @@ export class LoginService {
     private onLogout(): void {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl('/sign-in');
         this.authServerProvider.clearCaches().subscribe();
     }
 

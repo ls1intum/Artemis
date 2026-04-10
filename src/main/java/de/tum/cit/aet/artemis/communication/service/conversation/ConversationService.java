@@ -555,19 +555,13 @@ public class ConversationService {
     /**
      * Determines whether the provided channel is visible to students.
      * <p>
-     * If the channel is not associated with a lecture/exam/exercise, then this method returns true.
-     * If it is connected to a lecture/exam/exercise, then the
-     * channel visibility depends on the visible date of the lecture/exam/exercise.
+     * If the channel is not associated with an exam/exercise, then this method returns true (including lecture channels, which are always visible).
+     * If it is connected to an exam/exercise, then the channel visibility depends on the visible date of the exam/exercise.
      *
      * @param channel the channel under consideration
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // if (channel.getLecture() != null) {
-        // return channel.getLecture().isVisibleToStudents();
-        // }
         if (channel.getExercise() != null) {
             return channel.getExercise().isVisibleToStudents();
         }

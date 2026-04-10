@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
+import static de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.MAX_CONCURRENT_PROCESSING;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
  */
-@Conditional(LectureWithIrisOrNebulaEnabled.class)
+@Conditional(LectureWithIrisEnabled.class)
 @Component
 @Lazy
 public class LectureContentProcessingScheduler {
@@ -44,22 +44,20 @@ public class LectureContentProcessingScheduler {
     private static final Logger log = LoggerFactory.getLogger(LectureContentProcessingScheduler.class);
 
     /**
-     * Timeout in minutes for transcription phase.
-     * Transcription can take a while for long videos.
+     * Timeout in minutes for detecting stuck jobs (no callback received).
+     * With Iris heartbeats firing every ~5-10 minutes during Whisper transcription,
+     * prolonged silence means the pipeline is dead or lost connectivity.
+     * <p>
+     * Set to 20 minutes to accommodate single long-running stages without heartbeats
+     * (e.g. video download on slow wifi, audio extraction for very large files).
+     * A heartbeat fires when each stage starts, so 20 minutes of silence after that
+     * reliably indicates a stuck pipeline.
+     * <p>
+     * Note: this checks {@code lastUpdated}, not {@code startedAt}. Every heartbeat
+     * and checkpoint callback resets the clock, so a healthy 2-hour transcription
+     * is never considered stuck.
      */
-    private static final int TRANSCRIPTION_TIMEOUT_MINUTES = 120; // 2 hours
-
-    /**
-     * Timeout in minutes for ingestion phase.
-     * Ingestion is generally faster than transcription.
-     */
-    private static final int INGESTION_TIMEOUT_MINUTES = 60; // 1 hour
-
-    /**
-     * Maximum number of concurrent processing jobs (TRANSCRIBING or INGESTING).
-     * Keeps load on Nebula/Pyris manageable.
-     */
-    private static final int MAX_CONCURRENT_PROCESSING = 10;
+    private static final int NO_CALLBACK_TIMEOUT_MINUTES = 20;
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -67,27 +65,30 @@ public class LectureContentProcessingScheduler {
 
     private final LectureContentProcessingService processingService;
 
+    private final ProcessingStateCallbackService callbackService;
+
     private final FeatureToggleService featureToggleService;
 
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            LectureContentProcessingService processingService, FeatureToggleService featureToggleService) {
+            LectureContentProcessingService processingService, ProcessingStateCallbackService callbackService, FeatureToggleService featureToggleService) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
+        this.callbackService = callbackService;
         this.featureToggleService = featureToggleService;
     }
 
     /**
-     * Periodically check for processing states that need attention.
+     * Periodically check for processing states that need attention and dispatch pending jobs.
      * <p>
      * Handles two scenarios:
-     * <ul>
-     * <li>Stuck states: Jobs that never received a callback (timeout-based) - increments retry count</li>
-     * <li>Failed states: Jobs that failed explicitly and are waiting for retry (backoff-based)</li>
-     * </ul>
+     * <ol>
+     * <li>Stuck states: Jobs that never received a callback (timeout-based) — reset to IDLE for re-dispatch</li>
+     * <li>Dispatch: Claim IDLE jobs and send them to Iris if capacity is available (backup trigger)</li>
+     * </ol>
      * <p>
-     * IMPORTANT: Stuck detection runs FIRST to increment retry count before backoff retry kicks in.
-     * This ensures stuck retries eventually fail after max retries instead of looping forever.
+     * The dispatcher is also triggered by job creation and completion callbacks, so this
+     * scheduled run serves as a safety net for edge cases (missed callbacks, node restarts).
      */
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void processScheduledRetries() {
@@ -103,70 +104,12 @@ public class LectureContentProcessingScheduler {
 
         log.debug("Checking for processing states that need attention...");
 
-        // First, handle stuck states where callback was never received (increments retry count)
-        recoverStuckPhase(ProcessingPhase.TRANSCRIBING, TRANSCRIPTION_TIMEOUT_MINUTES);
-        recoverStuckPhase(ProcessingPhase.INGESTING, INGESTION_TIMEOUT_MINUTES);
+        // First, handle stuck states where no callback was received recently
+        recoverStuckPhase(ProcessingPhase.TRANSCRIBING, NO_CALLBACK_TIMEOUT_MINUTES);
+        recoverStuckPhase(ProcessingPhase.INGESTING, NO_CALLBACK_TIMEOUT_MINUTES);
 
-        // Then, handle states that are ready for retry (either failed explicitly or marked by stuck recovery)
-        retryFailedStates(ProcessingPhase.TRANSCRIBING);
-        retryFailedStates(ProcessingPhase.INGESTING);
-    }
-
-    /**
-     * Find and retry all states in a specific phase that are ready for retry.
-     * The query handles the backoff check via retryEligibleAt timestamp.
-     *
-     * @param phase the processing phase to check
-     */
-    private void retryFailedStates(ProcessingPhase phase) {
-        ZonedDateTime now = ZonedDateTime.now();
-        List<LectureUnitProcessingState> states = processingStateRepository.findStatesReadyForRetry(phase, now);
-
-        for (LectureUnitProcessingState state : states) {
-            retryState(state, phase);
-        }
-    }
-
-    /**
-     * Retry a single failed state.
-     * Re-fetches state from DB to avoid overwriting concurrent user changes.
-     *
-     * @param state the state to retry (used only for ID lookup)
-     * @param phase the expected processing phase
-     */
-    private void retryState(LectureUnitProcessingState state, ProcessingPhase phase) {
-        // Re-fetch fresh state to avoid overwriting concurrent changes (e.g., user updated content)
-        LectureUnitProcessingState freshState = processingStateRepository.findById(state.getId()).orElse(null);
-        if (freshState == null) {
-            log.debug("State {} no longer exists, skipping retry", state.getId());
-            return;
-        }
-
-        if (freshState.getLectureUnit() == null) {
-            log.warn("Cannot retry state {} - no associated lecture unit", freshState.getId());
-            processingStateRepository.delete(freshState);
-            return;
-        }
-
-        if (freshState.getPhase() != phase) {
-            log.info("State for unit {} changed from {} to {} since batch read, skipping retry", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
-            return;
-        }
-
-        log.info("Retrying {} for unit {} after exponential backoff (attempt {}/{})", phase, freshState.getLectureUnit().getId(), freshState.getRetryCount(),
-                MAX_PROCESSING_RETRIES);
-
-        try {
-            if (phase == ProcessingPhase.TRANSCRIBING) {
-                processingService.retryTranscription(freshState);
-            }
-            else if (phase == ProcessingPhase.INGESTING) {
-                processingService.retryIngestion(freshState);
-            }
-        }
-        catch (Exception e) {
-            log.error("Failed to retry {} for unit {}: {}", phase, freshState.getLectureUnit().getId(), e.getMessage());
-        }
+        // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
+        callbackService.dispatchPendingJobs();
     }
 
     /**
@@ -190,15 +133,13 @@ public class LectureContentProcessingScheduler {
     }
 
     /**
-     * Recover a single stuck processing state.
+     * Recover a single stuck processing state by resetting to IDLE for re-dispatch.
      * Re-fetches state from DB to avoid overwriting concurrent user changes.
-     * Increments retry count and schedules retry with exponential backoff.
      *
      * @param state the stuck processing state to recover (used only for ID lookup)
      * @param phase the expected processing phase
      */
     private void recoverStuckState(LectureUnitProcessingState state, ProcessingPhase phase) {
-        // Re-fetch fresh state to avoid overwriting concurrent changes (e.g., user updated content)
         LectureUnitProcessingState freshState = processingStateRepository.findById(state.getId()).orElse(null);
         if (freshState == null) {
             log.debug("State {} no longer exists, skipping recovery", state.getId());
@@ -216,7 +157,6 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
-        // Double-check: shouldn't be already scheduled for retry (query excludes these, but defensive)
         if (freshState.getRetryEligibleAt() != null) {
             log.debug("State {} already scheduled for retry, skipping stuck recovery", freshState.getId());
             return;
@@ -224,22 +164,10 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
-        // Increment retry count for tracking
-        freshState.incrementRetryCount();
-
-        if (freshState.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            log.warn("Max recovery attempts reached for unit {}, marking as failed", freshState.getLectureUnit().getId());
-            freshState.markFailed("artemisApp.attachmentVideoUnit.processing.error.timeout");
-        }
-        else {
-            // Schedule retry with exponential backoff
-            long backoffMinutes = ProcessingStateCallbackService.calculateBackoffMinutes(freshState.getRetryCount());
-            freshState.scheduleRetry(backoffMinutes);
-            log.info("Stuck state for unit {} scheduled for retry in {} minutes (attempt {}/{})", freshState.getLectureUnit().getId(), backoffMinutes, freshState.getRetryCount(),
-                    MAX_PROCESSING_RETRIES);
-        }
-
-        processingStateRepository.save(freshState);
+        // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
+        // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
+        // ensures poison-pill jobs eventually fail permanently instead of looping forever.
+        callbackService.handleProcessingFailure(freshState);
     }
 
     /**

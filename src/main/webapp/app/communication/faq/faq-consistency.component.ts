@@ -7,7 +7,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'faq-consistency-check',
     templateUrl: './faq-consistency.component.html',
     imports: [TranslateDirective, FontAwesomeModule],
-    standalone: true,
 })
 export class FaqConsistencyComponent {
     protected readonly faCheck = faCheck;

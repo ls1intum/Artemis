@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
@@ -75,10 +77,12 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher) {
+            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -91,6 +95,7 @@ public class ExerciseVersionService {
         this.channelRepository = channelRepository;
         this.exerciseReviewService = exerciseReviewService;
         this.eventPublisher = eventPublisher;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -144,7 +149,10 @@ public class ExerciseVersionService {
             ExerciseVersion exerciseVersion = new ExerciseVersion();
             exerciseVersion.setExerciseId(targetExercise.getId());
             exerciseVersion.setAuthorId(author.getId());
-            ExerciseSnapshotDTO exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            // Normalize through JSON round-trip to ensure consistent null/empty list handling
+            // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
+            ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
             Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
             if (previousVersion.isPresent()) {
                 ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
@@ -161,7 +169,11 @@ public class ExerciseVersionService {
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
-                    exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot);
+                    List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
+                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
+                    for (CommentThreadDTO updatedThread : updatedThreads) {
+                        exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
+                    }
                 }
                 catch (Exception ex) {
                     log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());

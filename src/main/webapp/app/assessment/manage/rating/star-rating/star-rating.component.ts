@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewEncapsulation, effect, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewEncapsulation, effect, input, output, signal, viewChild } from '@angular/core';
 
 /**
  * Output event payload emitted when the user rates by clicking a star.
@@ -39,7 +39,7 @@ export interface StarRatingChangeEvent {
     styleUrls: ['./star-rating.component.scss'],
     encapsulation: ViewEncapsulation.ShadowDom,
 })
-export class StarRatingComponent {
+export class StarRatingComponent implements OnDestroy {
     // =========================================================================
     // CSS Custom Property Names (used for styling stars via Shadow DOM)
     // =========================================================================
@@ -662,5 +662,9 @@ export class StarRatingComponent {
      */
     private handleMouseLeave(): void {
         this.renderStarStates();
+    }
+
+    ngOnDestroy(): void {
+        this.removeEventListeners();
     }
 }

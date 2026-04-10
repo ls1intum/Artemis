@@ -399,6 +399,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }));
 
         if (languageChanged) {
+            this.resetBuildOptionSelections();
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
@@ -417,6 +418,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!this.staticCodeAnalysisAllowed) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
+
+        if (!this.sequentialTestRunsAllowed) {
+            this.programmingExercise.buildConfig!.sequentialTestRuns = false;
         }
 
         if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
@@ -498,6 +503,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.selectedProjectTypeValue = type;
             this.programmingExercise.projectType = type;
         }
+
+        this.resetBuildOptionSelections();
     }
 
     /**
@@ -517,6 +524,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private disableStaticCodeAnalysis() {
         this.programmingExercise.staticCodeAnalysisEnabled = false;
         this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+    }
+
+    private resetBuildOptionSelections() {
+        this.programmingExercise.staticCodeAnalysisEnabled = false;
+        this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        if (this.programmingExercise.buildConfig) {
+            this.programmingExercise.buildConfig.sequentialTestRuns = false;
+        }
     }
 
     /**
@@ -878,7 +893,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile || this.isImportFromSharing) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
+            // Try phases-based serialization first (from the build phases editor)
+            const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
+            if (phasesJSON) {
+                this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
+            } else if (this.programmingExercise.buildConfig?.windfile) {
+                // Fallback to windfile serialization
+                this.programmingExercise.buildConfig.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig.windfile);
+            }
         } else {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             this.programmingExercise.buildConfig!.windfile = undefined;
@@ -1231,6 +1253,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateBuildPhaseNames(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1256,6 +1279,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         });
                     }
                 }
+            });
+        }
+    }
+
+    private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
+        if (!this.programmingExercise.customizeBuildPlanWithAeolus || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+            return;
+        }
+
+        const customBuildPlanComponent = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent;
+        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(customBuildPlanComponent.buildPlanPhases.phases);
+        if (!phasesValid) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
+                translateValues: {},
             });
         }
     }

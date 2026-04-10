@@ -24,6 +24,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -142,8 +143,8 @@ export class BonusComponent implements OnInit {
                 }),
             ),
             this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
-                tap((gradingScales) => {
-                    this.sourceGradingScales = gradingScales.body?.resultsOnPage || [];
+                tap((gradingScalesDto) => {
+                    this.sourceGradingScales = gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? [];
                 }),
             ),
             this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
@@ -183,8 +184,10 @@ export class BonusComponent implements OnInit {
             if (!sourceGradingScale) {
                 throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
             }
+            sourceGradingScale.course = this.bonus.sourceGradingScale.course;
+            sourceGradingScale.exam = this.bonus.sourceGradingScale.exam;
             this.bonus.sourceGradingScale = sourceGradingScale;
-            this.onBonusSourceChange(sourceGradingScale);
+            this.onBonusSourceChange(this.bonus.sourceGradingScale);
         }
     }
 
@@ -199,7 +202,7 @@ export class BonusComponent implements OnInit {
     }
 
     /**
-     * Checks if given bonus strategy and weight combination would result in a worse grade for student, which is counter-intuitive for a bonus.
+     * Checks if given bonus strategy and weight combination would result in a worse grade for a student, which is counter-intuitive for a bonus.
      * Warning: Assumes bonusToGradeSteps are sorted.
      *
      * @param bonusStrategy current bonus strategy
@@ -261,7 +264,7 @@ export class BonusComponent implements OnInit {
         } else if (bonusStrategyOption === BonusStrategyOption.GRADES) {
             switch (bonusStrategyDiscreteness) {
                 case BonusStrategyDiscreteness.CONTINUOUS:
-                case undefined: // undefined case also returns GRADES_CONTINUOUS because GRADES_DISCRETE is not implemented yet.
+                case undefined: // the undefined case also returns GRADES_CONTINUOUS because GRADES_DISCRETE is not implemented yet.
                     return BonusStrategy.GRADES_CONTINUOUS;
                 case BonusStrategyDiscreteness.DISCRETE:
                     return BonusStrategy.GRADES_DISCRETE;

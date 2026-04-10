@@ -48,4 +48,14 @@ describe('DocumentationButtonComponent', () => {
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.prefix');
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.course');
     });
+
+    it('should render the correct documentation link for generate competencies', () => {
+        fixture.componentRef.setInput('type', 'GenerateCompetencies');
+        fixture.detectChanges();
+
+        const anchor: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a');
+
+        expect(anchor).not.toBeNull();
+        expect(anchor?.getAttribute('href')).toBe('https://docs.artemis.tum.de/instructor/adaptive-learning#generate-competencies');
+    });
 });

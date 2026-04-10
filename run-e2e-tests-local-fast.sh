@@ -82,6 +82,13 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
+# Ensures a required port is available before starting a service.
+# If a leftover process (e.g. from a previous crashed run) occupies the port,
+# it is automatically killed so the script can proceed without manual intervention.
+# This is intentional: developers and CI agents should not have to manually hunt
+# down stale processes every time they re-run E2E tests. Do NOT replace this with
+# a simple "error and exit" — that was tried and reverted because it broke the
+# hands-free workflow that this script is designed to provide.
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -98,7 +105,7 @@ check_port_available() {
             kill_tree "$pid"
         done
         sleep 2
-        # Verify port is now free
+        # Verify port is now free after killing
         listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
         if [ -n "$listeners" ]; then
             echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
@@ -115,7 +122,7 @@ check_port_available() {
 if [ "$STOP" = true ]; then
     echo -e "${BLUE}Stopping all E2E services...${NC}"
 
-    # Kill server
+    # Kill server (PID file first, then any remaining process on port 8080)
     if [ -f "$LOCAL_DIR/server.pid" ]; then
         SERVER_PID=$(cat "$LOCAL_DIR/server.pid")
         if kill -0 "$SERVER_PID" 2>/dev/null; then
@@ -123,8 +130,9 @@ if [ "$STOP" = true ]; then
             kill_tree "$SERVER_PID"
         fi
     fi
+    check_port_available 8080 "Artemis server"
 
-    # Kill client
+    # Kill client (PID file first, then any remaining process on port 9000)
     if [ -f "$LOCAL_DIR/client.pid" ]; then
         CLIENT_PID=$(cat "$LOCAL_DIR/client.pid")
         if kill -0 "$CLIENT_PID" 2>/dev/null; then
@@ -132,6 +140,7 @@ if [ "$STOP" = true ]; then
             kill_tree "$CLIENT_PID"
         fi
     fi
+    check_port_available 9000 "Angular client"
 
     # Stop Postgres
     echo "Stopping Postgres..."
@@ -389,9 +398,9 @@ export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
-export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-90000}"
-export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-60000}"
-export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-60000}"
+export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-120000}"
+export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-90000}"
+export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-90000}"
 
 cd src/test/playwright
 

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, untracked, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -20,12 +20,12 @@ import { PostingThreadComponent } from 'app/communication/posting-thread/posting
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -41,7 +41,7 @@ import { AccountService } from 'app/core/auth/account.service';
         ArtemisTranslatePipe,
         TranslateDirective,
         NgbTooltipModule,
-        ButtonComponent,
+        SearchFilterComponent,
     ],
     providers: [MetisService],
 })
@@ -55,6 +55,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     exercise = input<Exercise>();
     lecture = input<Lecture>();
+    embedded = input<boolean>(false);
 
     readonly postCreateEditModal = viewChild<PostCreateEditModalComponent>(PostCreateEditModalComponent);
     readonly messages = viewChildren<ElementRef>('postingThread');
@@ -66,8 +67,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private page = 1;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
-    // as set for the css class '.items-container'
-    private messagesContainerHeight = 700;
+    private get messagesContainerHeight(): number {
+        return this.content()?.nativeElement.clientHeight ?? 700;
+    }
     private viewChildrenInitialized = false;
     currentSortDirection = SortDirection.DESCENDING;
 
@@ -89,7 +91,11 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor() {
         super();
-        effect(() => this.loadData(this.exercise(), this.lecture()));
+        effect(() => {
+            const exerciseValue = this.exercise();
+            const lectureValue = this.lecture();
+            untracked(() => this.loadData(exerciseValue, lectureValue));
+        });
     }
 
     loadData(exercise?: Exercise, lecture?: Lecture): void {
@@ -146,7 +152,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     ngOnDestroy(): void {
         super.onDestroy();
-        this.postCreateEditModal()?.modalRef?.close();
+        this.postCreateEditModal()?.close();
+        this.interactable?.unset();
     }
 
     /**
@@ -213,11 +220,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes discussion section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-discussion')
+        this.interactable = interact('.expanded-discussion')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
@@ -325,5 +334,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     toggleSendMessage(): void {
         this.shouldSendMessage = !this.shouldSendMessage;
+    }
+
+    /**
+     * on receiving a new search term, updates the search text and triggers a post reload with the current filter context
+     */
+    onSearch(searchText: string): void {
+        this.searchText = searchText;
+        this.onSelectContext();
     }
 }

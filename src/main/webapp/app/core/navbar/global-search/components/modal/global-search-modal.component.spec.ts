@@ -17,6 +17,8 @@ import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
+import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -54,6 +56,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: GlobalSearchService, useValue: mockSearchService },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 
@@ -417,6 +420,230 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(true);
             // No additional HTTP call: still only the 1 from the first add
             expect(mockSearchService.search).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('View Navigation', () => {
+        it('should navigate back to Navigation view on Escape when in Lecture view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            mockSearchOverlayService.isOpen.set(true);
+
+            const event = new KeyboardEvent('keydown', { key: 'Escape' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).currentView()).toBe(SearchView.Navigation);
+            expect(searchOverlayService.close).not.toHaveBeenCalled();
+        });
+
+        it('should close when Escape is pressed from Navigation view', () => {
+            (component as any).currentView.set(SearchView.Navigation);
+            mockSearchOverlayService.isOpen.set(true);
+
+            const event = new KeyboardEvent('keydown', { key: 'Escape' });
+            component.handleKeyboardEvent(event);
+
+            expect(searchOverlayService.close).toHaveBeenCalled();
+        });
+
+        it('should reset selectedIndex when navigating to a new view', () => {
+            (component as any).selectedIndex.set(2);
+
+            (component as any).navigateTo(SearchView.Lecture);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+    });
+
+    describe('Arrow Key Navigation', () => {
+        beforeEach(() => {
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+        });
+
+        it('should increment selectedIndex on ArrowDown', () => {
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should not exceed maxIndex on ArrowDown', () => {
+            const maxIdx = (component as any).maxIndex();
+            (component as any).selectedIndex.set(maxIdx);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(maxIdx);
+        });
+
+        it('should decrement selectedIndex on ArrowUp', () => {
+            (component as any).selectedIndex.set(0);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+
+        it('should not decrement selectedIndex below -1', () => {
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+
+        it('should call preventDefault on arrow keys', () => {
+            const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            const downPreventDefaultSpy = vi.spyOn(downEvent, 'preventDefault');
+            component.handleKeyboardEvent(downEvent);
+            expect(downPreventDefaultSpy).toHaveBeenCalled();
+
+            const upEvent = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            const upPreventDefaultSpy = vi.spyOn(upEvent, 'preventDefault');
+            component.handleKeyboardEvent(upEvent);
+            expect(upPreventDefaultSpy).toHaveBeenCalled();
+        });
+
+        it('should not change selectedIndex when modal is closed', () => {
+            mockSearchOverlayService.isOpen.set(false);
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+    });
+
+    describe('Iris navigation', () => {
+        it('should set irisSourceView to current view when navigating to Iris for the first time', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+
+            (component as any).navigateTo(SearchView.Iris);
+
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).currentView()).toBe(SearchView.Iris);
+        });
+
+        it('should do nothing when navigateTo(Iris) is called while already on Iris', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).irisSourceView.set(SearchView.Lecture);
+
+            (component as any).navigateTo(SearchView.Iris);
+
+            // irisSourceView must not be overwritten
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).currentView()).toBe(SearchView.Iris);
+        });
+
+        it('should update irisSourceView and reset selectedIndex via updateIrisSource', () => {
+            (component as any).selectedIndex.set(3);
+
+            (component as any).updateIrisSource(SearchView.Lecture);
+
+            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+    });
+
+    describe('Split panel navigation', () => {
+        beforeEach(() => {
+            mockSearchOverlayService.isOpen.set(true);
+            (component as any).currentView.set(SearchView.Iris);
+            fixture.detectChanges();
+            // Set selectedIndex after detectChanges so the scroll effect sees the rendered items
+            (component as any).selectedIndex.set(0);
+        });
+
+        it('should switch to right panel on ArrowRight when on Iris left panel with a selection', () => {
+            (component as any).activeSplitPanel.set('left');
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('right');
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should switch to left panel on ArrowLeft when on Iris right panel', () => {
+            (component as any).activeSplitPanel.set('right');
+            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should not switch panel on ArrowRight when selectedIndex is -1', () => {
+            (component as any).activeSplitPanel.set('left');
+            (component as any).selectedIndex.set(-1);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+        });
+
+        it('should not switch panel on ArrowRight when not on Iris view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).activeSplitPanel()).toBe('left');
+        });
+    });
+
+    describe('Input keydown handler', () => {
+        it('should prevent ArrowRight default when on Iris left panel with a selection', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).activeSplitPanel.set('left');
+            (component as any).selectedIndex.set(0);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).toHaveBeenCalled();
+        });
+
+        it('should prevent ArrowLeft default when on Iris right panel with a selection', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).activeSplitPanel.set('right');
+            (component as any).selectedIndex.set(0);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).toHaveBeenCalled();
+        });
+
+        it('should not prevent default when not on Iris view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not prevent default when selectedIndex is -1 (cursor navigation mode)', () => {
+            (component as any).currentView.set(SearchView.Iris);
+            (component as any).selectedIndex.set(-1);
+            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
+            const preventSpy = vi.spyOn(event, 'preventDefault');
+
+            (component as any).onInputKeydown(event);
+
+            expect(preventSpy).not.toHaveBeenCalled();
         });
     });
 });

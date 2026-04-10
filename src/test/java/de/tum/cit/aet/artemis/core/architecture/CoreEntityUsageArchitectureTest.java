@@ -24,7 +24,7 @@ class CoreEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getMaxEntityInputViolations() {
-        return 3;
+        return 2;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
