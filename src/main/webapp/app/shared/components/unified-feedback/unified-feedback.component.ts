@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
@@ -10,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted';
 
 interface FeedbackTypeConfig {
-    icon: any;
+    icon: IconDefinition;
     alertClass: string;
     defaultTitle: string;
 }
@@ -59,7 +60,13 @@ export class UnifiedFeedbackComponent {
         }
 
         const points = this.points();
-        return points > 0 ? 'correct' : 'not_attempted';
+        if (points > 0) {
+            return 'correct';
+        }
+        if (points < 0) {
+            return 'needs_revision';
+        }
+        return 'not_attempted';
     });
 
     readonly inferredTitle = computed(() => {

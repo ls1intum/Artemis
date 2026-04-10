@@ -1,11 +1,9 @@
-import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';

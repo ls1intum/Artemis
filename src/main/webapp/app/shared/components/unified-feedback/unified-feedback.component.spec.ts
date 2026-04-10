@@ -47,6 +47,13 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-success');
     });
 
+    it('should infer needs_revision type when points < 0', () => {
+        fixture.componentRef.setInput('points', -1);
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('needs_revision');
+        expect(component.inferredAlertClass()).toBe('alert-warning');
+    });
+
     it('should prefer explicit type over inferred from points', () => {
         fixture.componentRef.setInput('points', 0);
         fixture.componentRef.setInput('type', 'correct');
