@@ -87,7 +87,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         }
 
         Course course = courseUtilService.createCourse();
-        lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        lecture = lectureUtilService.createLecture(course);
 
         activateIrisGlobally();
         activateIrisFor(course);

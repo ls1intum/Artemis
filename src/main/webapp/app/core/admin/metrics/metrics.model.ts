@@ -99,6 +99,11 @@ export interface ProcessMetrics {
     'process.uptime': number;
 }
 
+export interface NodeInfo {
+    nodeId: string;
+    label: string;
+}
+
 export interface ThreadDump {
     threads: Thread[];
 }

@@ -51,7 +51,7 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         }
 
         course = courseUtilService.createCourse();
-        lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        lecture = lectureUtilService.createLecture(course);
 
         activateIrisGlobally();
         activateIrisFor(course);
@@ -130,7 +130,7 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         String otherPrefix = "other";
         userUtilService.addUsers(otherPrefix, 1, 0, 0, 1);  // Create separate users
         Course otherCourse = courseUtilService.addEmptyCourse();
-        Lecture otherLecture = lectureUtilService.createLecture(otherCourse, ZonedDateTime.now());
+        Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
         activateIrisFor(otherCourse);
 
         // When/Then: Request should be forbidden (student1 is not in otherCourse)

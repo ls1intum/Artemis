@@ -129,8 +129,12 @@ public class UserDTO extends AuditingEntityDTO {
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        this.groups = groups;
-        this.organizations = organizations;
+        if (groups != null && Hibernate.isInitialized(groups)) {
+            this.groups = groups;
+        }
+        if (organizations != null && Hibernate.isInitialized(organizations)) {
+            this.organizations = organizations;
+        }
         this.selectedLLMUsage = selectedLLMUsage;
         this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
         this.memirisEnabled = memirisEnabled;

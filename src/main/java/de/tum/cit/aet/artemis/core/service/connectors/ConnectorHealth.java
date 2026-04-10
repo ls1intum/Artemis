@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.service.connectors;
 
 import java.util.Map;
 
-import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.health.contributor.Health;
 
 public record ConnectorHealth(boolean isUp, Map<String, Object> additionalInfo, Exception exception) {
 
@@ -16,7 +16,7 @@ public record ConnectorHealth(boolean isUp, Map<String, Object> additionalInfo, 
 
     /**
      * Converts the health instance into a for the Spring Boot actuator readable health object. This can then be
-     * exposed on the /health endpoint using a custom {@link org.springframework.boot.actuate.health.HealthIndicator}
+     * exposed on the /health endpoint using a custom {@link org.springframework.boot.health.contributor.HealthIndicator}
      *
      * @return The health object to be exposed in a HealthIndicator
      */

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { map, tap } from 'rxjs/operators';
+import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -134,6 +135,16 @@ export class IrisChatHttpService {
      */
     createTutorSuggestionSession(postId: number): Response<IrisSession> {
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${postId}/sessions`, null, { observe: 'response' });
+    }
+
+    /**
+     * Saves the user's MCQ answer selection for persistence across page reloads
+     * @param sessionId of the session
+     * @param messageId of the message containing the MCQ
+     * @param response the user's answer selection
+     */
+    saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): Response<void> {
+        return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {

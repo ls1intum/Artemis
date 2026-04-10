@@ -580,6 +580,19 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    switchToNewSession(mode: ChatServiceMode, id?: number): void {
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            return;
+        }
+        this.sessionContext = { mode, courseId, entityId: id };
+        this.close();
+        this.createNewSession().subscribe({
+            ...this.handleNewSession(),
+            complete: () => this.loadChatSessions(),
+        });
+    }
+
     switchToSession(session: IrisSessionDTO): void {
         if (this.sessionId === session.id) {
             return;
@@ -591,6 +604,7 @@ export class IrisChatService implements OnDestroy {
         const entityId = session.entityId;
         const chatMode = session.chatMode;
         if (courseId) {
+            this.sessionContext = { mode: chatMode, courseId, entityId };
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
                 this.currentChatModeSubject.next(chatMode);

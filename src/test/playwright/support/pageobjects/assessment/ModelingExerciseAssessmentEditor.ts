@@ -10,7 +10,7 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
         await this.page
             .locator('#apollon-assessment-row')
             .locator('.react-flow__node')
-            .nth(componentNumber - 1)
+            .nth(componentNumber)
             .dblclick({ position: { x: 100, y: 5 }, force: true });
     }
 

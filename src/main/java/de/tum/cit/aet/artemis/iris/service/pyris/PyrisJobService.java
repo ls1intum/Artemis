@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -53,8 +54,8 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
-    private int ingestionJobTimeout; // in seconds
+    @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
+    private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
     public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -120,6 +121,21 @@ public class PyrisJobService {
     }
 
     /**
+     * Adds an autonomous tutor job to the job map.
+     * This job is used for the autonomous tutor pipeline that responds to student posts.
+     *
+     * @param postId   Id of the post being responded to
+     * @param courseId Id of the course the post belongs to
+     * @return the token of the job
+     */
+    public String addAutonomousTutorJob(Long postId, Long courseId) {
+        var token = generateJobIdToken();
+        var job = new AutonomousTutorJob(token, postId, courseId);
+        getPyrisJobMap().put(token, job);
+        return token;
+    }
+
+    /**
      * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *
      * @param courseId      the ID of the course associated with the webhook job
@@ -158,12 +174,14 @@ public class PyrisJobService {
     }
 
     /**
-     * Store a job in the job map.
+     * Store a job in the job map, preserving the appropriate TTL for the job type.
+     * Ingestion jobs use a longer TTL since pipelines can run for over an hour.
      *
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
-        getPyrisJobMap().put(job.jobId(), job);
+        int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
+        getPyrisJobMap().put(job.jobId(), job, ttl, TimeUnit.SECONDS);
     }
 
     /**

@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -118,7 +119,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Exam.
@@ -1218,16 +1218,26 @@ public class ExamResource {
             throw new BadRequestAlertException("The number of exercise groups changed", ENTITY_NAME, "numberExerciseGroupsChanged");
         }
 
-        // Ensure that all received exercise groups are already related to the exam
-        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
-            if (!exam.getExerciseGroups().contains(exerciseGroup)) {
-                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
-            }
-            // Set the exam manually as it won't be included in orderedExerciseGroups
-            exerciseGroup.setExam(exam);
+        // Build a map from ID to managed exercise group for reordering
+        var managedGroupsById = new java.util.HashMap<Long, ExerciseGroup>();
+        for (ExerciseGroup managedGroup : exam.getExerciseGroups()) {
+            managedGroupsById.put(managedGroup.getId(), managedGroup);
         }
 
-        exam.setExerciseGroups(orderedExerciseGroups);
+        // Ensure all received exercise groups exist in the exam and build the reordered list using managed entities
+        var reorderedManagedGroups = new java.util.ArrayList<ExerciseGroup>();
+        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
+            ExerciseGroup managedGroup = managedGroupsById.get(exerciseGroup.getId());
+            if (managedGroup == null) {
+                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
+            }
+            reorderedManagedGroups.add(managedGroup);
+        }
+
+        // Clear and re-add managed entities in the new order to avoid Hibernate 7 dirty-checking NPE
+        // on unmanaged entities with null collection snapshots
+        exam.getExerciseGroups().clear();
+        exam.getExerciseGroups().addAll(reorderedManagedGroups);
         examRepository.save(exam);
 
         // Return the original request body as it might contain exercise details (e.g. quiz questions), which would be lost otherwise

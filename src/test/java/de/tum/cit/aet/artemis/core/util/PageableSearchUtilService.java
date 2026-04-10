@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
 
@@ -143,7 +143,7 @@ public class PageableSearchUtilService {
      * @return A LinkedMultiValueMap with parameter names as keys and their corresponding values
      */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search, String parentKey) {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = JsonObjectMapper.get();
         try {
             // Serialize the DTO into a JSON string and then deserialize it into a Map
             final String json = objectMapper.writeValueAsString(search);
