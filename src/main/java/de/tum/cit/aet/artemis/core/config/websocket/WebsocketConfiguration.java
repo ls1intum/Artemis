@@ -26,6 +26,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -91,17 +92,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ObjectMapper objectMapper;
 
-    private final TokenProvider tokenProvider;
-
     private final TaskScheduler messageBrokerTaskScheduler;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    // These dependencies are only used at runtime (during WebSocket handshake/subscription checks),
+    // not during startup configuration. Using ObjectProvider defers their instantiation to reduce
+    // the startup bean dependency edge count.
+    private final ObjectProvider<TokenProvider> tokenProviderProvider;
 
-    private final AuthorizationCheckService authorizationCheckService;
+    private final ObjectProvider<StudentParticipationRepository> studentParticipationRepositoryProvider;
 
-    private final ExerciseRepository exerciseRepository;
+    private final ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider;
 
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
+    private final ObjectProvider<ExerciseRepository> exerciseRepositoryProvider;
+
+    private final ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -113,16 +117,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+    public WebsocketConfiguration(ObjectMapper objectMapper, TaskScheduler messageBrokerTaskScheduler, ObjectProvider<TokenProvider> tokenProviderProvider,
+            ObjectProvider<StudentParticipationRepository> studentParticipationRepositoryProvider, ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider,
+            ObjectProvider<ExerciseRepository> exerciseRepositoryProvider, ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider) {
         this.objectMapper = objectMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
-        this.tokenProvider = tokenProvider;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.authorizationCheckService = authorizationCheckService;
-        this.exerciseRepository = exerciseRepository;
-        this.examRepositoryApi = examRepositoryApi;
+        this.tokenProviderProvider = tokenProviderProvider;
+        this.studentParticipationRepositoryProvider = studentParticipationRepositoryProvider;
+        this.authorizationCheckServiceProvider = authorizationCheckServiceProvider;
+        this.exerciseRepositoryProvider = exerciseRepositoryProvider;
+        this.examRepositoryApiProvider = examRepositoryApiProvider;
     }
 
     @Override
@@ -286,7 +290,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
 
-                        JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider);
+                        JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProviderProvider.getObject());
                         return jwtWithSource != null;
                     }
                     catch (IllegalArgumentException e) {
@@ -383,17 +387,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                return authorizationCheckService.isAdmin(login);
+                return authorizationCheckServiceProvider.getObject().isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
             if (buildJobCourseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, buildJobCourseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -404,24 +408,27 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                if (exerciseRepositoryProvider.getObject().isExamExercise(exerciseId)) {
+                    return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInExercise(login, exerciseId);
                 }
                 else {
-                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                    return authorizationCheckServiceProvider.getObject().isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
-                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+                ExamRepositoryApi api = examRepositoryApiProvider.getIfAvailable();
+                if (api == null) {
+                    throw new ExamApiNotPresentException(ExamRepositoryApi.class);
+                }
                 var exam = api.findByIdElseThrow(examId.get());
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
 
             var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
             if (synchronizationExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
             }
 
             return true;
@@ -438,7 +445,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepositoryProvider.getObject().findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 
