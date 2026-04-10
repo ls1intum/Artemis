@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -96,10 +97,12 @@ public class ProgrammingExerciseValidationService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    private final ProfileService profileService;
+
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
-            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyService = submissionPolicyService;
@@ -108,6 +111,7 @@ public class ProgrammingExerciseValidationService {
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.versionControlService = versionControlService1;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -285,6 +289,10 @@ public class ProgrammingExerciseValidationService {
      * @param programmingExercise the programming exercise to validate
      */
     public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
+        if (!profileService.isLocalCIActive()) {
+            return;
+        }
+
         Optional<BuildPlanPhasesDTO> buildPlanPhasesOptional = programmingExercise.getBuildConfig().getBuildPlanPhases();
         if (buildPlanPhasesOptional.isEmpty()) {
             return;
