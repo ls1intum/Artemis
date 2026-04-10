@@ -69,6 +69,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
+import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum MedianType {
     PASSED,
@@ -175,7 +176,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // find grading scale if one exists and handle case when it doesn't
             const gradingScaleObservable = this.gradingService
                 .findGradingScaleForExam(params['courseId'], params['examId'])
-                .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+                .pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
@@ -209,7 +210,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists = true;
-                        this.gradingScale = gradingScaleResponse.body!;
+                        this.gradingScale = toEntity(gradingScaleResponse.body!, this.course);
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                         this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
                         this.gradingScale!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale!.gradeSteps);
