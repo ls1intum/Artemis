@@ -43,12 +43,11 @@ describe('SearchFilterComponent', () => {
         expect(component.filterForm.value.searchFilter).toBeNull();
     });
 
-    it('should emit the search value on keyup', () => {
+    it('should emit the search value on input', () => {
         jest.spyOn(component.newSearchEvent, 'emit');
 
-        // Assuming the form control is named 'searchFilter' and bound to an input field
         const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
-        inputElement.dispatchEvent(new Event('keyup'));
+        inputElement.dispatchEvent(new Event('input'));
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.newSearchEvent.emit).toHaveBeenCalled();

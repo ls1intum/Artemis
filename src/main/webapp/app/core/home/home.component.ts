@@ -1,5 +1,5 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewChecked, Component, DestroyRef, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
@@ -19,7 +19,6 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
@@ -27,7 +26,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent, SetupPasskeyModalComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
@@ -47,8 +46,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
-    private readonly modalService = inject(NgbModal);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -59,7 +58,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     authenticationError = false;
     account: User;
-    modalRef: NgbModalRef;
+    showPasskeyModal = signal(false);
     password: string;
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
@@ -108,7 +107,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+        this.showPasskeyModal.set(true);
     }
 
     ngOnInit() {
@@ -153,13 +152,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
-        this.activatedRoute.queryParams.subscribe((params) => {
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });

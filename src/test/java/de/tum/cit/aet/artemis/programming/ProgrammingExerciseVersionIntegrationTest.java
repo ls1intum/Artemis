@@ -38,7 +38,10 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -87,6 +90,10 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         auxiliaryRepository.setName("extra");
         auxiliaryRepository.setCheckoutDirectory("extra");
         newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        // Set valid build plan phases so that subsequent update requests pass the noBuildPhases validation
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
+        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
         // Act: Create the exercise via setup endpoint
         this.programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
@@ -212,7 +219,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/timeline";
-        MultiValueMap<String, String> params = new HttpHeaders();
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
 
@@ -256,7 +263,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
 
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -273,7 +281,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody(endpoint, de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -425,7 +434,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version1 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(version2.getId()).isNotEqualTo(version1.getId());
@@ -476,7 +486,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         MvcResult mvcResult = request

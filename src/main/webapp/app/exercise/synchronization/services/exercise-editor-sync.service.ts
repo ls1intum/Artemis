@@ -4,6 +4,10 @@ import { concatMap, filter, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Synchronization targets used to scope editor sync events.
@@ -15,6 +19,7 @@ export enum ExerciseEditorSyncTarget {
     TESTS_REPOSITORY = 'TESTS_REPOSITORY',
     AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
     EXERCISE_METADATA = 'EXERCISE_METADATA',
+    REVIEW_COMMENTS = 'REVIEW_COMMENTS',
 }
 
 /**
@@ -25,8 +30,16 @@ export enum ExerciseEditorSyncEventType {
     PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE = 'PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE',
     PROBLEM_STATEMENT_SYNC_UPDATE = 'PROBLEM_STATEMENT_SYNC_UPDATE',
     PROBLEM_STATEMENT_AWARENESS_UPDATE = 'PROBLEM_STATEMENT_AWARENESS_UPDATE',
+    FILE_SYNC_FULL_CONTENT_REQUEST = 'FILE_SYNC_FULL_CONTENT_REQUEST',
+    FILE_SYNC_FULL_CONTENT_RESPONSE = 'FILE_SYNC_FULL_CONTENT_RESPONSE',
+    FILE_SYNC_UPDATE = 'FILE_SYNC_UPDATE',
+    FILE_AWARENESS_UPDATE = 'FILE_AWARENESS_UPDATE',
+    FILE_CREATED = 'FILE_CREATED',
+    FILE_DELETED = 'FILE_DELETED',
+    FILE_RENAMED = 'FILE_RENAMED',
     NEW_COMMIT_ALERT = 'NEW_COMMIT_ALERT',
     NEW_EXERCISE_VERSION_ALERT = 'NEW_EXERCISE_VERSION_ALERT',
+    REVIEW_THREAD_UPDATE = 'REVIEW_THREAD_UPDATE',
 }
 
 /**
@@ -61,28 +74,89 @@ export interface ProblemStatementAwarenessUpdateEvent extends ExerciseEditorSync
     awarenessUpdate: string;
 }
 
+export interface FileSyncFullContentRequestEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST;
+    filePath: string;
+    requestId: string;
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileSyncFullContentResponseEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE;
+    filePath: string;
+    responseTo: string;
+    yjsUpdate: string;
+    leaderTimestamp: number;
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileSyncUpdateEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_SYNC_UPDATE;
+    filePath: string;
+    yjsUpdate: string;
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileAwarenessUpdateEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_AWARENESS_UPDATE;
+    filePath: string;
+    awarenessUpdate: string;
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileCreatedEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_CREATED;
+    filePath: string;
+    fileType: 'FILE' | 'FOLDER';
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileDeletedEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_DELETED;
+    filePath: string;
+    fileType: 'FILE' | 'FOLDER';
+    auxiliaryRepositoryId?: number;
+}
+
+export interface FileRenamedEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.FILE_RENAMED;
+    oldPath: string;
+    newPath: string;
+    fileType: 'FILE' | 'FOLDER';
+    auxiliaryRepositoryId?: number;
+}
+
 /**
  * Event payload indicating a repository commit was pushed.
  */
-export interface ExerciseNewCommitAlertEvent {
+export interface ExerciseNewCommitAlertEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT;
-    target: ExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
-    sessionId?: string;
-    timestamp?: number;
 }
 
 /**
  * Event payload indicating a new exercise version (metadata) was saved.
  */
-export interface ExerciseNewVersionAlertEvent {
+export interface ExerciseNewVersionAlertEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT;
-    target: ExerciseEditorSyncTarget;
     exerciseVersionId: number;
     author: UserPublicInfoDTO;
     changedFields?: string[];
-    sessionId?: string;
-    timestamp?: number;
+}
+
+/**
+ * Event payload describing an incremental review-thread update.
+ */
+export interface ReviewThreadSyncUpdateEvent extends ExerciseEditorSyncEventBase {
+    eventType: ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE;
+    target: ExerciseEditorSyncTarget.REVIEW_COMMENTS;
+    action: ReviewThreadSyncAction;
+    exerciseId: number;
+    thread?: CommentThread;
+    comment?: Comment;
+    commentId?: number;
+    threadIds?: number[];
+    groupId?: number;
 }
 
 /**
@@ -93,8 +167,36 @@ export type ExerciseEditorSyncEvent =
     | ProblemStatementSyncFullContentResponseEvent
     | ProblemStatementSyncUpdateEvent
     | ProblemStatementAwarenessUpdateEvent
+    | FileSyncFullContentRequestEvent
+    | FileSyncFullContentResponseEvent
+    | FileSyncUpdateEvent
+    | FileAwarenessUpdateEvent
+    | FileCreatedEvent
+    | FileDeletedEvent
+    | FileRenamedEvent
     | ExerciseNewVersionAlertEvent
-    | ExerciseNewCommitAlertEvent;
+    | ExerciseNewCommitAlertEvent
+    | ReviewThreadSyncUpdateEvent;
+
+/**
+ * Maps a RepositoryType to the corresponding ExerciseEditorSyncTarget.
+ * Returns `undefined` for repository types that do not support synchronization
+ * (e.g. ASSIGNMENT, USER).
+ */
+export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEditorSyncTarget | undefined {
+    switch (repoType) {
+        case RepositoryType.TEMPLATE:
+            return ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+        case RepositoryType.SOLUTION:
+            return ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+        case RepositoryType.TESTS:
+            return ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+        case RepositoryType.AUXILIARY:
+            return ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+        default:
+            return undefined;
+    }
+}
 
 /**
  * Relays exercise editor synchronization messages over WebSocket.

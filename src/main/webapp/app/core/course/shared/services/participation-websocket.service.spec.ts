@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -12,12 +14,14 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { StudentParticipation } from '../../../../exercise/shared/entities/participation/student-participation.model';
 
 describe('ParticipationWebsocketService', () => {
+    setupTestBed({ zoneless: true });
+
     let websocketService: WebsocketService;
     let receiveParticipationSubject: Subject<Participation>;
     let receiveParticipation2Subject: Subject<Participation>;
     let receiveResultForParticipationSubject: Subject<Result>;
     let receiveResultForParticipation2Subject: Subject<Result>;
-    let subscribeSpy: jest.SpyInstance;
+    let subscribeSpy: ReturnType<typeof vi.spyOn>;
     let participationWebsocketService: ParticipationWebsocketService;
 
     const exercise1 = new ProgrammingExercise(undefined, undefined);
@@ -44,42 +48,40 @@ describe('ParticipationWebsocketService', () => {
     const participationInstructorResultTopic = `/topic/exercise/${participation2.exercise!.id}/newResults`;
     const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationService, useClass: MockParticipationService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                websocketService = TestBed.inject(WebsocketService);
+        });
+        await TestBed.compileComponents();
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        websocketService = TestBed.inject(WebsocketService);
 
-                subscribeSpy = jest.spyOn(websocketService, 'subscribe');
+        subscribeSpy = vi.spyOn(websocketService, 'subscribe');
 
-                receiveResultForParticipationSubject = new Subject();
-                receiveResultForParticipation2Subject = new Subject();
-                receiveParticipationSubject = new Subject();
-                receiveParticipation2Subject = new Subject();
-                subscribeSpy.mockImplementation((arg1) => {
-                    switch (arg1) {
-                        case participationPersonalResultTopic:
-                            return receiveResultForParticipationSubject.asObservable();
-                        case participationInstructorResultTopic:
-                            return receiveResultForParticipation2Subject.asObservable();
-                        case participationTopic:
-                            return receiveParticipationSubject.asObservable();
-                        case participation2Topic:
-                            return receiveParticipation2Subject.asObservable();
-                    }
-                    return new Subject().asObservable();
-                });
-            });
+        receiveResultForParticipationSubject = new Subject();
+        receiveResultForParticipation2Subject = new Subject();
+        receiveParticipationSubject = new Subject();
+        receiveParticipation2Subject = new Subject();
+        subscribeSpy.mockImplementation((arg1: string) => {
+            switch (arg1) {
+                case participationPersonalResultTopic:
+                    return receiveResultForParticipationSubject.asObservable();
+                case participationInstructorResultTopic:
+                    return receiveResultForParticipation2Subject.asObservable();
+                case participationTopic:
+                    return receiveParticipationSubject.asObservable();
+                case participation2Topic:
+                    return receiveParticipation2Subject.asObservable();
+            }
+            return new Subject().asObservable();
+        });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
@@ -93,7 +95,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
 
         expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
@@ -109,7 +111,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeDefined();
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
 
         expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
@@ -117,7 +119,7 @@ describe('ParticipationWebsocketService', () => {
     it('should emit rated result when received through websocket', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
         const resultObservable = new BehaviorSubject(undefined);
-        const resultSpy = jest.spyOn(resultObservable, 'next');
+        const resultSpy = vi.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
 
         // Emit new result from websocket
@@ -132,10 +134,10 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
-        const resultSpy = jest.spyOn(resultObservable, 'next');
+        const resultSpy = vi.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
-        const participationSpy = jest.spyOn(participationObservable, 'next');
+        const participationSpy = vi.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
 
         receiveResultForParticipationSubject.next(newRatedResult);
@@ -157,10 +159,10 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.subscribeForParticipationChanges();
 
         const resultObservable = new BehaviorSubject<Result | undefined>(undefined);
-        const resultSpy = jest.spyOn(resultObservable, 'next');
+        const resultSpy = vi.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
-        const participationSpy = jest.spyOn(participationObservable, 'next');
+        const participationSpy = vi.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
         receiveResultForParticipationSubject.next(newUnratedResult);
 
@@ -182,10 +184,10 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.addParticipation(participation as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
-        const resultSpy = jest.spyOn(resultObservable, 'next');
+        const resultSpy = vi.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
         const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
-        const participationSpy = jest.spyOn(participationObservable, 'next');
+        const participationSpy = vi.spyOn(participationObservable, 'next');
         participationWebsocketService.participationObservable = participationObservable;
 
         receiveResultForParticipationSubject.next(newRatedResult);
@@ -219,7 +221,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should return the cached participation after adding it', () => {
-        expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toBeEmpty();
+        expect(participationWebsocketService.getParticipationsForExercise(participation.exercise!.id!)).toHaveLength(0);
 
         participationWebsocketService.addParticipation(participation);
 

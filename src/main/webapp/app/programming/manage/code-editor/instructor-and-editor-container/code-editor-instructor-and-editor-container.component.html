@@ -35,6 +35,7 @@
             [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
+            [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
@@ -203,11 +204,52 @@
                             <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
                                 <div class="ai-menu-items">
                                     <!-- AI Generation Actions -->
-                                    <button class="ai-menu-item" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
-                                        <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
-                                        <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
-                                    </button>
-
+                                    <div class="ai-menu-item-group">
+                                        <button class="ai-menu-item flex-grow-1" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
+                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                            <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
+                                        </button>
+                                        <button
+                                            #codeGenerationSettingsToggle
+                                            class="ai-menu-item-icon"
+                                            type="button"
+                                            [disabled]="isGeneratingCode()"
+                                            [pTooltip]="'artemisApp.programmingExercise.codeGeneration.settingsTooltip' | artemisTranslate"
+                                            [attr.aria-label]="'artemisApp.programmingExercise.codeGeneration.settingsTooltip' | artemisTranslate"
+                                            (click)="toggleCodeGenerationSettings($event)"
+                                        >
+                                            <fa-icon [icon]="faGear" />
+                                        </button>
+                                    </div>
+                                    <p-popover #codeGenerationSettingsPopover [dismissable]="true" styleClass="code-generation-popover p-0">
+                                        <div class="code-generation-popover__section">
+                                            <div class="code-generation-popover__header">
+                                                <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.settingsTitle"></div>
+                                                <button
+                                                    type="button"
+                                                    class="code-generation-popover__close"
+                                                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                                                    (click)="codeGenerationSettingsPopover.hide()"
+                                                >
+                                                    <fa-icon [icon]="faTimes" />
+                                                </button>
+                                            </div>
+                                            <div class="code-generation-popover__hint" jhiTranslate="artemisApp.programmingExercise.codeGeneration.executionOrder"></div>
+                                            @for (repositoryType of supportedCodeGenerationRepositories; track repositoryType) {
+                                                <label class="code-generation-checkbox-row" [attr.for]="'code-generation-' + repositoryType">
+                                                    <p-checkbox
+                                                        [inputId]="'code-generation-' + repositoryType"
+                                                        [name]="'code-generation-' + repositoryType"
+                                                        [binary]="true"
+                                                        [disabled]="isGeneratingCode()"
+                                                        [ngModel]="isCodeGenerationRepositoryEnabled(repositoryType)"
+                                                        (ngModelChange)="setCodeGenerationRepositoryEnabled(repositoryType, $event)"
+                                                    />
+                                                    <span [jhiTranslate]="getCodeGenerationRepositoryTranslationKey(repositoryType)"></span>
+                                                </label>
+                                            }
+                                        </div>
+                                    </p-popover>
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->
                                         <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
@@ -248,6 +290,76 @@
                                 </div>
                             </p-popover>
                         </div>
+                        <button
+                            pButton
+                            severity="secondary"
+                            [outlined]="true"
+                            type="button"
+                            class="ms-1 code-generation-status-toolbar-button"
+                            [pTooltip]="'artemisApp.programmingExercise.codeGeneration.statusTooltip' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.programmingExercise.codeGeneration.statusTooltip' | artemisTranslate"
+                            (click)="toggleCodeGenerationStatus($event)"
+                        >
+                            <fa-icon [icon]="faCircleInfo" />
+                        </button>
+                        <p-popover #codeGenerationStatusPopover [dismissable]="true" [appendTo]="'body'" styleClass="code-generation-popover code-generation-status-popover p-0">
+                            <div class="code-generation-popover__section">
+                                <div class="code-generation-popover__header">
+                                    <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.statusTitle"></div>
+                                    <button
+                                        type="button"
+                                        class="code-generation-popover__close"
+                                        [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                                        (click)="codeGenerationStatusPopover.hide()"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                </div>
+                                <div class="code-generation-status-grid">
+                                    @for (status of codeGenerationStatuses(); track status.repositoryType) {
+                                        <section class="code-generation-status-card">
+                                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                                <span class="fw-semibold" [jhiTranslate]="getCodeGenerationRepositoryTranslationKey(status.repositoryType)"></span>
+                                                <span
+                                                    class="small fw-semibold"
+                                                    [class]="getCodeGenerationStateClass(status.state)"
+                                                    [jhiTranslate]="getCodeGenerationStateTranslationKey(status.state)"
+                                                ></span>
+                                            </div>
+                                            @if (status.message) {
+                                                <div class="small text-body-secondary mt-1">{{ status.message }}</div>
+                                            }
+                                            @if (status.fileActivities.length) {
+                                                <div class="code-generation-activity-list">
+                                                    @for (activityGroup of getCodeGenerationIterationActivityGroups(status.fileActivities); track activityGroup.iteration ?? -1) {
+                                                        <div class="code-generation-iteration-group">
+                                                            <div class="code-generation-iteration-group__title">
+                                                                @if (activityGroup.iteration !== undefined) {
+                                                                    <span
+                                                                        [jhiTranslate]="'artemisApp.programmingExercise.codeGeneration.iteration'"
+                                                                        [translateValues]="{ iteration: activityGroup.iteration }"
+                                                                    ></span>
+                                                                } @else {
+                                                                    <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.activityTitle"></span>
+                                                                }
+                                                            </div>
+                                                            @for (activity of activityGroup.activities; track activity.timestamp + activity.path) {
+                                                                <div class="code-generation-activity-item">
+                                                                    <span [jhiTranslate]="getCodeGenerationFileActionTranslationKey(activity.eventType)"></span>
+                                                                    <code>{{ activity.path }}</code>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            } @else {
+                                                <div class="small text-body-secondary" jhiTranslate="artemisApp.programmingExercise.codeGeneration.noActivity"></div>
+                                            }
+                                        </section>
+                                    }
+                                </div>
+                            </div>
+                        </p-popover>
 
                         @if (isGeneratingOrRefining()) {
                             <button pButton type="button" severity="secondary" outlined class="ms-1" (click)="cancelAiOperation()">

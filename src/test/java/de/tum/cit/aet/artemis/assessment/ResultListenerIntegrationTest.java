@@ -115,7 +115,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.put("/api/text/text-exercises", exercise, HttpStatus.OK);
+        request.put("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of((TextExercise) exercise), HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
         await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
@@ -416,12 +416,19 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         Result persistedResult = participationUtilService.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
-        // Wait for the scheduler to execute its task
-        participantScoreScheduleService.executeScheduledTasks();
-        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+        // Wait for the scheduler to process the result and create the participant score.
+        // Use untilAsserted because the first executeScheduledTasks() call may miss the result
+        // if lastScheduledRun hasn't been initialized yet (its Instant.now() fallback can be
+        // after the result's lastModifiedDate, causing findAllByLastModifiedDateAfter to miss it).
+        // Retrying ensures subsequent scheduler cycles pick it up.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            var scores = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(scores).isNotEmpty();
+        });
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
-        assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);

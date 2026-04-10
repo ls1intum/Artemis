@@ -25,6 +25,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MetisService } from 'app/communication/service/metis.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -36,6 +39,9 @@ describe('MarkdownEditorMonacoComponent', () => {
             providers: [
                 MockProvider(FileUploaderService),
                 MockProvider(AlertService),
+                MockProvider(MetisConversationService),
+                MockProvider(MetisService),
+                MockProvider(ProfileService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -92,7 +98,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should layout and focus the editor when switching to editor mode', () => {
+    it('should layout and focus the editor when the edit tab is shown', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
@@ -101,8 +107,23 @@ describe('MarkdownEditorMonacoComponent', () => {
             activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
             preventDefault: jest.fn(),
         });
+        comp.onTabShown();
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not layout or focus the editor when a non-edit tab is shown', () => {
+        fixture.detectChanges();
+        const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
+        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            activeId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            preventDefault: jest.fn(),
+        });
+        comp.onTabShown();
+        expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
+        expect(focusSpy).not.toHaveBeenCalled();
     });
 
     it('should emit when leaving the visual tab', () => {
@@ -490,6 +511,32 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<h1>Heading</h1>');
         expect(renderedHtml).toContain('<ul>');
         expect(renderedHtml).toContain('<blockquote>');
+    });
+
+    it('should always show all text actions if not in communication mode', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(false);
+        fixture.detectChanges();
+
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
+    });
+
+    it('should hide text style actions in communication mode by default', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
+        fixture.detectChanges();
+
+        expect(comp.showTextStyleActions()).toBeFalse();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
+    });
+
+    it('should show text style actions in communication mode when text is selected', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
+        fixture.detectChanges();
+
+        comp.updateEditorActionsVisibility({ startLineNumber: 1, endLineNumber: 1, startColumn: 10, endColumn: 20 });
+
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeFalse();
     });
 
     it('should emit closeEditor on close button click', () => {

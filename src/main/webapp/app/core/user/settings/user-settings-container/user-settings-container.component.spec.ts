@@ -1,11 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -14,6 +14,8 @@ import { UserSettingsContainerComponent } from 'app/core/user/settings/user-sett
 import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let component: UserSettingsContainerComponent;
 
@@ -27,7 +29,6 @@ describe('UserSettingsContainerComponent', () => {
             imports: [UserSettingsContainerComponent, RouterModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
@@ -40,16 +41,20 @@ describe('UserSettingsContainerComponent', () => {
         translateService.use('en');
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should initialize', async () => {
         component.ngOnInit();
         expect(component.currentUser).toBeDefined();
-        expect(component.isAtLeastTutor).toBeTrue();
+        expect(component.isAtLeastTutor).toBe(true);
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
-        jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
+        vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isPasskeyEnabled).toBeFalse();
+        expect(component.isPasskeyEnabled).toBe(false);
     });
 
     describe('isAiEnabled behavior', () => {
@@ -58,8 +63,8 @@ describe('UserSettingsContainerComponent', () => {
          * @param activeModuleFeatures for which true should be returned when calling isModuleFeatureActive
          */
         const spyOnProfileService = (activeProfiles: string[], activeModuleFeatures: string[] = []) => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
-            jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => activeModuleFeatures.includes(feature));
+            vi.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
+            vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => activeModuleFeatures.includes(feature));
         };
 
         /**

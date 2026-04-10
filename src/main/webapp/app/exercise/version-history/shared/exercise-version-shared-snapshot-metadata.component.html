@@ -1,0 +1,75 @@
+<p-panel styleClass="version-meta-panel">
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.exercise.sections.general"></h4>
+        <div class="metadata-list">
+            @for (field of generalFields(); track field.label) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
+                    <span class="metadata-row__value">{{ field.displayValue }}</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h4>
+        <div class="metadata-list">
+            @for (field of dateFields(); track field.label) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
+                    <span class="metadata-row__value">{{ field.value ? (field.value | artemisDate: 'long' : true) : '-' }}</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.exercise.categories"></h4>
+        @if (categories().length > 0) {
+            <div class="category-list">
+                @for (category of categories(); track category) {
+                    <p-tag [value]="category" severity="secondary" />
+                }
+            </div>
+        } @else {
+            <span class="metadata-row__value">-</span>
+        }
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.timeline.complaintsAllowed"></h4>
+        <div class="metadata-list">
+            @for (field of flagFields(); track field.label) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
+                    <span class="metadata-row__value">{{ field.displayValue }}</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section metadata-section--problem">
+        <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h4>
+        @if (problemStatement(); as problemStatement) {
+            <div class="markdown-block markdown-block--problem markdown-preview" [innerHTML]="problemStatement"></div>
+        } @else {
+            <span class="metadata-row__value">-</span>
+        }
+    </section>
+
+    @if (gradingInstructions(); as gradingInstructions) {
+        <p-divider />
+        <section class="metadata-section">
+            <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h4>
+            <div class="markdown-block markdown-preview" [innerHTML]="gradingInstructions"></div>
+        </section>
+    }
+</p-panel>

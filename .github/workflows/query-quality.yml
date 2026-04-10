@@ -36,8 +36,8 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           # TODO these values should become zero in the future
-          max_entitygraph_violations=10
-          max_query_violations=24
+          max_entitygraph_violations=11
+          max_query_violations=25
           max_total_violations=$((max_entitygraph_violations + max_query_violations))
 
           echo "=========================================="

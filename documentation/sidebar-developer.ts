@@ -41,6 +41,8 @@ const sidebars: SidebarsConfig = {
         'aeolus',
         'openapi',
         'docker-compose',
+        'mailpit-setup',
+        'keycloak-saml2-setup',
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',

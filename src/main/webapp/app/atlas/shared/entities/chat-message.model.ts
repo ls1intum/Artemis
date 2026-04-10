@@ -1,4 +1,43 @@
+import { WritableSignal } from '@angular/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+
+export interface CompetencyPreviewResponse {
+    title: string;
+    description: string;
+    taxonomy: CompetencyTaxonomy;
+    icon: string;
+    competencyId?: number;
+    viewOnly?: boolean;
+}
+
+export interface CompetencyRelationPreviewResponse {
+    relationId?: number;
+    tailCompetencyId: number;
+    tailCompetencyTitle: string;
+    headCompetencyId: number;
+    headCompetencyTitle: string;
+    relationType: CompetencyRelationType;
+    viewOnly?: boolean;
+}
+
+export interface AgentChatResponse {
+    message: string;
+    timestamp: string;
+    competenciesModified: boolean;
+    competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
+}
+
+export interface AgentHistoryMessage {
+    content: string;
+    isUser: boolean;
+    competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
+}
 
 export interface ChatMessage {
     id: string;
@@ -8,8 +47,10 @@ export interface ChatMessage {
     relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
     competencyPreviews?: CompetencyPreview[]; // Unified array for competency previews
     relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews
+    exerciseMappingPreview?: ExerciseMappingPreviewViewModel; // Preview for exercise-to-competency mapping
     competencyCreated?: boolean;
     relationCreated?: boolean;
+    exerciseMappingCreated?: boolean;
     planPending?: boolean;
     planApproved?: boolean;
     // Pre-computed graph data for stable rendering
@@ -51,5 +92,31 @@ export interface RelationGraphEdge {
 export interface RelationGraphPreview {
     nodes: RelationGraphNode[];
     edges: RelationGraphEdge[];
+    viewOnly?: boolean;
+}
+
+export interface CompetencyMappingOption {
+    competencyId: number;
+    competencyTitle: string;
+    weight: number;
+    alreadyMapped?: boolean;
+    suggested?: boolean;
+}
+
+export interface ExerciseMappingPreview {
+    exerciseId: number;
+    exerciseTitle: string;
+    competencies: CompetencyMappingOption[];
+    viewOnly?: boolean;
+}
+
+export interface CompetencyMappingViewModel extends CompetencyMappingOption {
+    selected: WritableSignal<boolean>;
+}
+
+export interface ExerciseMappingPreviewViewModel {
+    exerciseId: number;
+    exerciseTitle: string;
+    competencies: CompetencyMappingViewModel[];
     viewOnly?: boolean;
 }

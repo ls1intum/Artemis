@@ -1,31 +1,36 @@
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { UnitType } from '../../support/pageobjects/lecture/LectureManagementPage';
-import { setMonacoEditorContentByLocator } from '../../support/utils';
+import { generateUUID, setMonacoEditorContentByLocator } from '../../support/utils';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.atlas1.id } as any;
+const uid = generateUUID();
 
 test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
-    let course: Course;
     let lecture: Lecture;
-    const competencyData = { title: 'Competency 1', description: 'Test competency for lecture unit linking' };
+    // Each test creates its own competency — use a function to get unique names
+    const makeCompetencyTitle = (suffix: string) => `Comp${suffix} ${uid}`;
 
-    test.beforeEach('Setup course with lecture', async ({ login, courseManagementAPIRequests }) => {
+    test.beforeEach('Setup lecture', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        lecture = await courseManagementAPIRequests.createLecture(course, 'Test Lecture');
+        lecture = await courseManagementAPIRequests.createLecture(course, 'Test Lecture ' + uid);
+        // Enable learning paths if not already enabled (idempotent)
+        try {
+            await courseManagementAPIRequests.enableLearningPaths(course);
+        } catch {
+            // Already enabled from a previous run
+        }
     });
 
-    test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 
     test.describe('Link a lecture unit to a single competency', () => {
         test('Links a text unit to a competency via api and verifies it in competency detail', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            const competency = await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
-
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            const title = makeCompetencyTitle('Single');
+            const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 
             // Create text unit with competency link directly
             await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit 1', 'Content for text unit', [
@@ -34,7 +39,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
 
-            await page.getByRole('link', { name: competencyData.title }).click();
+            await page.getByRole('link', { name: title }).click();
             await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
@@ -47,9 +52,8 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             courseManagementAPIRequests,
             competencyManagement,
         }) => {
-            const competency = await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
-
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            const title = makeCompetencyTitle('Multi');
+            const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 
             await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit 1', 'Content for text unit 1', [
                 { competency: { id: competency.id, type: 'competency' }, weight: 1 },
@@ -63,7 +67,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
 
-            await page.getByRole('link', { name: competencyData.title }).click();
+            await page.getByRole('link', { name: title }).click();
             await page.waitForLoadState('domcontentloaded');
 
             await expect(page.getByRole('heading', { name: 'Text Unit 1' })).toBeVisible();
@@ -74,8 +78,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Link a lecture unit to competency through UI', () => {
         test('Links a lecture unit to competency through lecture unit creation page', async ({ page, courseManagementAPIRequests, lectureManagement, competencyManagement }) => {
-            await courseManagementAPIRequests.createCompetency(course, 'UI Link Competency', 'Competency for UI linking test');
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            await courseManagementAPIRequests.createCompetency(course, 'UI Link ' + uid, 'Competency for UI linking test');
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management`);
             await page.waitForLoadState('domcontentloaded');
@@ -86,7 +89,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             const contentEditor = page.locator('#content');
             await setMonacoEditorContentByLocator(page, contentEditor, 'Content created through UI');
 
-            await page.getByRole('checkbox', { name: 'UI Link Competency' }).check();
+            await page.getByRole('checkbox', { name: 'UI Link ' + uid }).check();
 
             await page.click('#submitButton');
             await page.waitForLoadState('domcontentloaded');
@@ -95,7 +98,7 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
             await competencyManagement.goto(course.id!);
 
-            await page.getByRole('link', { name: 'UI Link Competency' }).click();
+            await page.getByRole('link', { name: 'UI Link ' + uid }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'UI Created Text Unit' })).toBeVisible();
         });
@@ -103,36 +106,34 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Update/change the competency linked to a lecture unit', () => {
         test('Changes the competency linked to a lecture unit via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            const compA = await courseManagementAPIRequests.createCompetency(course, 'Comp A', 'First competency');
-            await courseManagementAPIRequests.createCompetency(course, 'Comp B', 'Second competency');
-
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            const compA = await courseManagementAPIRequests.createCompetency(course, 'Comp A ' + uid, 'First competency');
+            await courseManagementAPIRequests.createCompetency(course, 'Comp B ' + uid, 'Second competency');
 
             const textUnit = await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit', 'Content for text unit', [
                 { competency: { id: compA.id, type: 'competency' }, weight: 1 },
             ]);
 
             await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp A' }).click();
+            await page.getByRole('link', { name: 'Comp A ' + uid }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
             await page.waitForLoadState('domcontentloaded');
 
-            await page.getByRole('checkbox', { name: 'Comp A' }).uncheck();
-            await page.getByRole('checkbox', { name: 'Comp B' }).check();
+            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).uncheck();
+            await page.getByRole('checkbox', { name: 'Comp B ' + uid }).check();
 
             await page.click('#submitButton');
             await page.waitForLoadState('domcontentloaded');
 
             await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp A' }).click();
+            await page.getByRole('link', { name: 'Comp A ' + uid }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
             await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp B' }).click();
+            await page.getByRole('link', { name: 'Comp B ' + uid }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
         });
@@ -140,29 +141,28 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Remove competency from a lecture unit', () => {
         test('Unlinks a lecture unit from a competency via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            const competency = await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
-
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            const title = makeCompetencyTitle('Unlink');
+            const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 
             const textUnit = await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit', 'Content for text unit', [
                 { competency: { id: competency.id, type: 'competency' }, weight: 1 },
             ]);
 
             await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: competencyData.title }).click();
+            await page.getByRole('link', { name: title }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
             await page.waitForLoadState('domcontentloaded');
 
-            await page.getByRole('checkbox', { name: competencyData.title }).uncheck();
+            await page.getByRole('checkbox', { name: title }).uncheck();
 
             await page.click('#submitButton');
             await page.waitForLoadState('domcontentloaded');
 
             await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: competencyData.title }).click();
+            await page.getByRole('link', { name: title }).click();
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 

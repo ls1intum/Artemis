@@ -1,8 +1,10 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -23,6 +25,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -46,6 +49,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
     ],
@@ -60,7 +64,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
 
+    /** Tracks the authoritative competency links state, updated whenever links change from any source. */
+    readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
+
     private translateService = inject(TranslateService);
+
+    // Child component reference for refreshing competency selection
+    private competencySelectionComponent = viewChild(CompetencySelectionComponent);
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
@@ -106,6 +116,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const exercise = this.programmingExercise();
+        this.activeCompetencyLinks.set([...(exercise?.competencyLinks ?? [])]);
         this.aiOps.currentProblemStatement.set(exercise?.problemStatement ?? '');
         this.aiOps.loadTemplate(exercise);
     }
@@ -142,12 +153,56 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     }
 
-    onCompetencyLinksChange(competencyLinks: ProgrammingExercise['competencyLinks']): void {
+    /**
+     * Handles changes to competency links from either the checklist panel or the competency selection.
+     * Also refreshes the CompetencySelectionComponent to reflect changes (e.g., newly created/linked competencies).
+     */
+    onCompetencyLinksChange(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[] | undefined): void {
+        if (this.programmingExerciseCreationConfig().isExamMode) return;
         const exercise = this.programmingExercise();
         if (exercise) {
-            exercise.competencyLinks = competencyLinks;
+            // undefined means all competencies were unlinked — treat as empty array.
+            const updatedLinks = (competencyLinks ?? []).map((link) =>
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+            );
+            exercise.competencyLinks = updatedLinks;
+            // Update the reactive signal so the checklist panel badges update immediately.
+            this.activeCompetencyLinks.set(updatedLinks);
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            this.programmingExerciseChange.emit(exercise);
+            this.refreshCompetencySelection(competencyLinks ?? []);
+        }
+    }
+
+    /**
+     * Refreshes the CompetencySelectionComponent so newly linked/created competencies are visible.
+     */
+    private refreshCompetencySelection(competencyLinks: CompetencyExerciseLink[] | CompetencyLearningObjectLink[]): void {
+        const selection = this.competencySelectionComponent();
+        if (!selection) return;
+
+        selection.refreshWithLinks(competencyLinks);
+    }
+
+    onDifficultyChange(difficulty: string): void {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            const level = DifficultyLevel[difficulty as keyof typeof DifficultyLevel];
+            if (level === undefined) {
+                return;
+            }
+            exercise.difficulty = level;
+            this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.programmingExerciseChange.emit(exercise);
         }
+    }
+
+    /**
+     * Opens the diff view to show changes proposed by a checklist AI action.
+     * Uses the same diff review flow as refineProblemStatement().
+     */
+    onChecklistActionDiffRequest(proposedContent: string): void {
+        this.aiOps.applyChecklistActionDiff(proposedContent, this.editableInstructions());
     }
 
     onInstructionChange(problemStatement: string) {
@@ -156,11 +211,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.aiOps.currentProblemStatement.set(problemStatement);
         if (problemStatement !== previousContent) {
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            if (exercise) {
+                exercise.problemStatement = problemStatement;
+                this.programmingExerciseChange.emit(exercise);
+            }
+            this.problemStatementChange.emit(problemStatement);
         }
-        if (exercise) {
-            exercise.problemStatement = problemStatement;
-            this.programmingExerciseChange.emit(exercise);
-        }
-        this.problemStatementChange.emit(problemStatement);
     }
 }

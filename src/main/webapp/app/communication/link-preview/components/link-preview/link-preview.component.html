@@ -1,5 +1,5 @@
-@if (!this.linkPreview && !this.loaded && this.showLoadingsProgress) {
-    @if (!hasError) {
+@if (!linkPreview() && !loaded() && showLoadingsProgress()) {
+    @if (!hasError()) {
         <div class="loading-container">
             <!-- Loading template -->
             <div class="loading-spinner">
@@ -8,33 +8,35 @@
         </div>
     }
 } @else {
-    @if (linkPreview && linkPreview.shouldPreviewBeShown) {
-        <div class="preview-container">
-            <!-- Link preview template -->
-            <div class="preview-card">
-                @if (isAuthorOfOriginalPost) {
-                    <jhi-confirm-icon
-                        class="close-button"
-                        iconSize="sm"
-                        (confirmEvent)="removeLinkPreview(linkPreview)"
-                        [ngClass]="'faTimes clickable icon'"
-                        [initialIcon]="faTimes"
-                        [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
-                        [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
-                    />
-                }
-                <div class="left-border">
-                    <div class="preview-content">
-                        <h2 class="preview-title">{{ linkPreview.title }}</h2>
-                        <p class="preview-description">{{ linkPreview.description }}</p>
-                    </div>
-                    @if (linkPreview.image && !multiple) {
-                        <div class="preview-image">
-                            <img [src]="linkPreview.image" alt="Preview Image" />
-                        </div>
+    @if (linkPreview(); as lp) {
+        @if (lp.shouldPreviewBeShown) {
+            <div class="preview-container">
+                <!-- Link preview template -->
+                <div class="preview-card">
+                    @if (isAuthorOfOriginalPost) {
+                        <jhi-confirm-icon
+                            class="close-button"
+                            iconSize="sm"
+                            (confirmEvent)="removeLinkPreview(lp)"
+                            [ngClass]="'faTimes clickable icon'"
+                            [initialIcon]="faTimes"
+                            [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
+                            [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
+                        />
                     }
+                    <div class="left-border">
+                        <div class="preview-content">
+                            <h2 class="preview-title">{{ lp.title }}</h2>
+                            <p class="preview-description">{{ lp.description }}</p>
+                        </div>
+                        @if (lp.image && !multiple()) {
+                            <div class="preview-image">
+                                <img [src]="lp.image" alt="Preview Image" />
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     }
 }

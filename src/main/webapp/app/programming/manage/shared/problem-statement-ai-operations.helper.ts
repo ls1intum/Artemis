@@ -310,6 +310,26 @@ export class ProblemStatementAiOperationsHelper {
     }
 
     /**
+     * Applies a proposed problem statement from a checklist AI action by switching
+     * into diff review mode and loading the content into the editor.
+     *
+     * @param proposedContent The updated problem statement markdown proposed by the checklist action.
+     * @param editableInstructions Reference to the editable instruction editor.
+     */
+    applyChecklistActionDiff(proposedContent: string, editableInstructions: ProgrammingExerciseEditableInstructionComponent | undefined): void {
+        this.showDiff.set(true);
+        const requestId = ++this.refinementRequestId;
+        afterNextRender(
+            () => {
+                if (requestId === this.refinementRequestId && this.showDiff()) {
+                    editableInstructions?.applyRefinedContent(proposedContent);
+                }
+            },
+            { injector: this.injector },
+        );
+    }
+
+    /**
      * Cleans up subscriptions. Call from the host component's ngOnDestroy.
      */
     destroy(): void {

@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,8 +20,7 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
@@ -28,10 +28,11 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
-    let modalService: NgbModal;
     let loginService: LoginService;
     let localStorageService: LocalStorageService;
 
@@ -54,7 +55,6 @@ describe('HomeComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(LoginService),
                 MockProvider(EventManager),
                 MockProvider(AlertService),
@@ -75,9 +75,12 @@ describe('HomeComponent', () => {
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
-        modalService = TestBed.inject(NgbModal);
         loginService = TestBed.inject(LoginService);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create the component', () => {
@@ -86,99 +89,97 @@ describe('HomeComponent', () => {
 
     it('should initialize with profile info and prefilled username', () => {
         expect(component.username).toBe('prefilledUsername');
-        expect(component.isPasskeyEnabled).toBeFalse();
+        expect(component.isPasskeyEnabled).toBe(false);
     });
 
     it('should validate form correctly', () => {
         component.username = 'testUser';
         component.password = 'password123';
         component.checkFormValidity();
-        expect(component.isFormValid).toBeTrue();
+        expect(component.isFormValid).toBe(true);
 
         component.password = '';
         component.checkFormValidity();
-        expect(component.isFormValid).toBeFalse();
+        expect(component.isFormValid).toBe(false);
     });
 
-    it('should handle successful login', fakeAsync(() => {
-        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
-        const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+    it('should handle successful login', async () => {
+        const loginSpy = vi.spyOn(loginService, 'login').mockResolvedValue(undefined);
+        const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
         component.username = 'testUser';
         component.password = 'password123';
         component.rememberMe = true;
 
-        component.login();
-        tick();
+        await component.login();
+        await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBeFalse();
+        expect(component.isSubmittingLogin).toBe(false);
         expect(loginSpy).toHaveBeenCalledWith({
             username: 'testUser',
             password: 'password123',
             rememberMe: true,
         });
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
-        expect(component.authenticationError).toBeFalse();
-    }));
+        expect(component.authenticationError).toBe(false);
+    });
 
-    it('should handle failed login', fakeAsync(() => {
-        jest.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
+    it('should handle failed login', async () => {
+        vi.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
 
         component.username = 'testUser';
         component.password = 'wrongPassword';
 
-        component.login();
-        tick();
+        await component.login();
+        await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBeFalse();
-        expect(component.authenticationError).toBeTrue();
-    }));
+        expect(component.isSubmittingLogin).toBe(false);
+        expect(component.authenticationError).toBe(true);
+    });
 
-    it('should set and reset isSubmittingLogin flag', fakeAsync(() => {
-        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
+    it('should set and reset isSubmittingLogin flag', async () => {
+        const loginSpy = vi.spyOn(loginService, 'login').mockResolvedValue(undefined);
+        vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
         component.username = 'testUser';
         component.password = 'password123';
 
-        component.login();
-        expect(component.isSubmittingLogin).toBeTrue();
+        const loginPromise = component.login();
+        expect(component.isSubmittingLogin).toBe(true);
 
-        tick();
-
-        expect(component.isSubmittingLogin).toBeFalse();
+        await loginPromise;
+        await fixture.whenStable();
+        expect(component.isSubmittingLogin).toBe(false);
         expect(loginSpy).toHaveBeenCalled();
-    }));
+    });
 
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
-            const openModalSpy = jest.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = jest.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: false } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = jest.spyOn(modalService, 'open');
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).toHaveBeenCalledWith(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+            expect(component.showPasskeyModal()).toBe(true);
         });
 
         it('should return early if the user disabled the reminder for the current timeframe', () => {
@@ -188,11 +189,10 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = jest.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should not return early if the reminder date is in the past', () => {
@@ -202,11 +202,10 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = jest.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(true);
         });
     });
 });

@@ -14,6 +14,16 @@ import { HttpClient,
          HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
+import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
+
+// @ts-ignore
+import { ChecklistActionRequest } from '../model/checklistActionRequest';
+// @ts-ignore
+import { ChecklistActionResponse } from '../model/checklistActionResponse';
+// @ts-ignore
+import { ChecklistAnalysisRequest } from '../model/checklistAnalysisRequest';
+// @ts-ignore
+import { ChecklistAnalysisResponse } from '../model/checklistAnalysisResponse';
 // @ts-ignore
 import { ConsistencyCheckResponse } from '../model/consistencyCheckResponse';
 // @ts-ignore
@@ -48,19 +58,242 @@ export class HyperionProblemStatementApiService extends BaseService {
     }
 
     /**
-     * @endpoint post /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check
-     * @param programmingExerciseId 
+     * @endpoint post /api/hyperion/courses/{courseId}/checklist-analysis
+     * @param courseId 
+     * @param checklistAnalysisRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
-    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
-    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ConsistencyCheckResponse>>;
-    public checkExerciseConsistency(programmingExerciseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (programmingExerciseId === null || programmingExerciseId === undefined) {
-            throw new Error('Required parameter programmingExerciseId was null or undefined when calling checkExerciseConsistency.');
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
+    public analyzeChecklist(courseId: number, checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling analyzeChecklist.');
         }
+        if (checklistAnalysisRequest === null || checklistAnalysisRequest === undefined) {
+            throw new Error('Required parameter checklistAnalysisRequest was null or undefined when calling analyzeChecklist.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ChecklistAnalysisResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: checklistAnalysisRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}
+     * @param courseId 
+     * @param section 
+     * @param checklistAnalysisRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling analyzeChecklistSection.');
+        }
+        if (section === null || section === undefined) {
+            throw new Error('Required parameter section was null or undefined when calling analyzeChecklistSection.');
+        }
+        if (checklistAnalysisRequest === null || checklistAnalysisRequest === undefined) {
+            throw new Error('Required parameter checklistAnalysisRequest was null or undefined when calling analyzeChecklistSection.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis/sections/${this.configuration.encodeParam({name: "section", value: section, in: "path", style: "simple", explode: false, dataType: "'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'", dataFormat: undefined})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ChecklistAnalysisResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: checklistAnalysisRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/hyperion/courses/{courseId}/checklist-actions
+     * @param courseId 
+     * @param checklistActionRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistActionResponse>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistActionResponse>>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistActionResponse>>;
+    public applyChecklistAction(courseId: number, checklistActionRequest: ChecklistActionRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling applyChecklistAction.');
+        }
+        if (checklistActionRequest === null || checklistActionRequest === undefined) {
+            throw new Error('Required parameter checklistActionRequest was null or undefined when calling applyChecklistAction.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-actions`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<ChecklistActionResponse>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: checklistActionRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/consistency-check
+     * @param exerciseId 
+     * @param skipThreadContext 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
+    public checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
+    public checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ConsistencyCheckResponse>>;
+    public checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (exerciseId === null || exerciseId === undefined) {
+            throw new Error('Required parameter exerciseId was null or undefined when calling checkExerciseConsistency.');
+        }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'skipThreadContext',
+            <any>skipThreadContext,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -87,11 +320,12 @@ export class HyperionProblemStatementApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "programmingExerciseId", value: programmingExerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
+        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ConsistencyCheckResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

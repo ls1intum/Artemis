@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -8,6 +10,7 @@ import { FeatureActivationComponent } from 'app/shared/feature-activation/featur
 import { By } from '@angular/platform-browser';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 import { PostService } from 'app/communication/service/post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { ReactionService } from 'app/communication/service/reaction.service';
@@ -30,6 +33,8 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('CourseConversationComponent with communication disabled', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseConversationsComponent;
     let fixture: ComponentFixture<CourseConversationsComponent>;
     let metisConversationService: MetisConversationService;
@@ -43,6 +48,7 @@ describe('CourseConversationComponent with communication disabled', () => {
     };
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [CourseConversationsComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -78,8 +84,9 @@ describe('CourseConversationComponent with communication disabled', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(EventManager),
+                MockProvider(DialogService),
             ],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(CourseConversationsComponent);
         component = fixture.componentInstance;
@@ -87,7 +94,7 @@ describe('CourseConversationComponent with communication disabled', () => {
         metisService = fixture.debugElement.injector.get(MetisService);
         eventManager = TestBed.inject(EventManager);
         alertService = TestBed.inject(AlertService);
-        jest.spyOn(metisConversationService, 'isServiceSetup$', 'get').mockReturnValue(of(false));
+        vi.spyOn(metisConversationService, 'isServiceSetup$', 'get').mockReturnValue(of(false));
     });
     it('should render feature activation page when instructor + management view', () => {
         fixture.detectChanges();
@@ -97,9 +104,9 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it.each([true, false])('should call service method to enable communication', async (withMessaging: boolean) => {
-        const serviceSpy = jest.spyOn(metisService, 'enable').mockReturnValue(of(undefined));
-        const alertSpy = jest.spyOn(alertService, 'error');
-        const eventManagerSpy = jest.spyOn(eventManager, 'broadcast').mockImplementation(() => {});
+        const serviceSpy = vi.spyOn(metisService, 'enable').mockReturnValue(of(undefined));
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation(() => {});
         fixture.detectChanges();
         await component.enableCommunication(withMessaging);
         if (withMessaging) {
@@ -113,10 +120,10 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it('should call alert service on error', async () => {
-        jest.spyOn(metisService, 'enable').mockImplementation(() => {
+        vi.spyOn(metisService, 'enable').mockImplementation(() => {
             throw new Error('Test error');
         });
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
         fixture.detectChanges();
         await component.enableCommunication();
         expect(alertSpy).toHaveBeenCalledOnce();

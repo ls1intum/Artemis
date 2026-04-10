@@ -1,35 +1,50 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# SAML2 Testing service
+# SAML2 Testing service (Keycloak)
 # ----------------------------------------------------------------------------------------------------------------------
-# based on the work of: https://github.com/kit-sdq/Artemis-SAML2-Test-Docker
+# Keycloak provides a full-featured SAML2 Identity Provider for local testing.
 #
-# when using this service you have to manually add the saml2 spring profile in your Artemis configuration
+# Admin console: http://localhost:9080 (admin/admin)
+# SAML metadata: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+# Test users:    saml2user1 / password, saml2user2 / password
 #
-# Out of the box this setup just works with a containerized Artemis instance
-# see comments above artemis-app on how to get it working wit a non-containerized Artemis instance
+# This file can be run standalone for non-containerized Artemis (e.g. IntelliJ):
+#   docker compose -f docker/saml-test.yml up
+#
+# For non-containerized Artemis, add the saml2 Spring profile and the Keycloak SAML2 configuration
+# to your application-local.yml. See the developer documentation for the full configuration:
+#   https://docs.artemis.tum.de/developer/docker-compose
+#
+# For containerized Artemis, combine with an Artemis setup, add the saml2 profile, and mount the config:
+#   docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+#   (also add 'saml2' to SPRING_PROFILES_ACTIVE and mount application-saml2.yml into the container)
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    saml-test:
-        container_name: artemis-saml-test
-        image: docker.io/jamedjo/test-saml-idp:${SAML_TEST_IDP_VERSION}
+    keycloak:
+        container_name: artemis-keycloak
+        image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
         pull_policy: missing
+        command: start-dev --import-realm
+        environment:
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 9080
         ports:
-            - "9980:8080"
-        # expose the port to make it reachable docker internally even if the external port mapping changes
+            - "9080:9080"
         expose:
-            - "8080"
+            - "9080"
         volumes:
-            - ./saml-test/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
-            - ./saml-test/config.php:/var/www/simplesamlphp/config/config.php
+            - ./saml-test/artemis-realm.json:/opt/keycloak/data/import/artemis-realm.json
         networks:
             - artemis
 
-    # comment this section if you use the saml-test service with a non-containerized Artemis instance
-    # and copy the ./saml-test/application-saml2.yml to your server configs
-    artemis-app:
-        volumes:
-            - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
+    # Uncomment this section for containerized Artemis (e.g. docker compose -f artemis-dev-mysql.yml -f saml-test.yml up)
+    # It merges with the artemis-app service from the Artemis compose file to mount the SAML2 config.
+    # You also need to add 'saml2' to the SPRING_PROFILES_ACTIVE environment variable.
+    # For non-containerized Artemis (IntelliJ / gradlew bootRun), configure application-local.yml instead.
+    # artemis-app:
+    #     volumes:
+    #         - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
 
 networks:
     artemis:

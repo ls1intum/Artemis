@@ -211,6 +211,6 @@ public class IrisSessionService {
         }
 
         return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
-                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
+                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.lastActivityDate(), dao.session().getMode())).toList();
     }
 }

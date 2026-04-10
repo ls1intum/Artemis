@@ -24,7 +24,10 @@ import com.zaxxer.hikari.HikariDataSource;
  * port range (~16K ports on macOS), causing {@code java.net.BindException: Can't assign requested address}.
  * <p>
  * <b>Solution:</b> This configuration wraps Zonky's DataSource in HikariCP so TCP connections are pooled
- * and reused, preventing port exhaustion and improving test performance.
+ * and reused, preventing port exhaustion and improving test performance. The pool is configured with
+ * connection validation ({@code keepaliveTime}), recycling ({@code maxLifetime}), and idle eviction
+ * ({@code idleTimeout}) to detect and remove stale connections after Zonky swaps the underlying
+ * database between test contexts.
  * <p>
  * <b>H2 exclusion:</b> H2 runs in-process (no TCP sockets), so pooling is unnecessary. Wrapping H2 with
  * HikariCP actually causes {@link OutOfMemoryError} in large test suites because the pooled H2 sessions
@@ -80,15 +83,20 @@ public class TestDataSourcePoolConfig {
                     log.info("Wrapping '{}' DataSource ({}) with HikariCP connection pool", beanName, bean.getClass().getSimpleName());
                     HikariDataSource pooled = new HikariDataSource();
                     pooled.setDataSource(ds);
-                    pooled.setMaximumPoolSize(20);
-                    pooled.setMinimumIdle(10);
+                    pooled.setMaximumPoolSize(10);
+                    pooled.setMinimumIdle(0);
                     // autoCommit=false is required: Artemis integration tests do not use @Transactional,
                     // so Hibernate manages transactions itself and expects connections with autoCommit off.
                     pooled.setAutoCommit(false);
-                    // maxLifetime=0 disables connection cycling. Test containers have a stable lifecycle,
-                    // so connections can be reused indefinitely without risk of stale TCP connections.
-                    pooled.setMaxLifetime(0);
-                    pooled.setConnectionTimeout(30000);
+                    // Recycle connections every 30 seconds. When Zonky swaps the underlying database
+                    // between test contexts, existing connections become stale TCP sockets pointing at
+                    // a stopped container. Aggressive recycling limits the window for stale connections.
+                    pooled.setMaxLifetime(30_000);
+                    // Evict idle connections after 10 seconds to minimize stale connection accumulation.
+                    pooled.setIdleTimeout(10_000);
+                    // Proactively validate idle connections every 10 seconds.
+                    pooled.setKeepaliveTime(10_000);
+                    pooled.setConnectionTimeout(30_000);
                     pooled.setPoolName("TestPool");
 
                     // Set connection init SQL to ensure consistent timezone handling.

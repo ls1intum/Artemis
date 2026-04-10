@@ -1,0 +1,29 @@
+---
+title: Tutorial Groups
+sidebar_label: Tutorial Groups
+---
+
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+
+import studentsOwnGroupImg from '../assets/tutorial-groups/students-own-groups.png';
+import studentsAllGroupImg from '../assets/tutorial-groups/students-all-groups.png';
+import studentsDetailImg from '../assets/tutorial-groups/students-detail.png';
+
+# Tutorial Groups
+
+## Viewing Tutorial Groups as a Student
+
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/27043" title="Tutorial Groups Student View" />
+
+Students can access their tutorial groups for a specific course by navigating to the course's <code>Tutorial Group</code> page.
+
+The sidebar organizes tutorial groups into sections. If you are enrolled in any groups, they appear under **My Tutorial Groups**. All other groups in the course are listed under **Further Tutorial Groups**, where you can see each group's name, utilization, and responsible tutor. This is useful if you want to switch to a less crowded group: pick one with low utilization and contact the tutor to get enrolled.
+
+<Image src={studentsOwnGroupImg} alt={"student-own-groups"} size={ImageSize.large} />
+
+<Image src={studentsAllGroupImg} alt={"student-all-groups"} size={ImageSize.large} />
+
+To see more details about a tutorial group (including an overview of all sessions), click on the name of the tutorial group. This opens the detail page of the respective group. The session overview is shown at the bottom of the page. You can toggle between viewing all sessions and only future sessions.
+
+<Image src={studentsDetailImg} alt={"student-detail"} size={ImageSize.large} />

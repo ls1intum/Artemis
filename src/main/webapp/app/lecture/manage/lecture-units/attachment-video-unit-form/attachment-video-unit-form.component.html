@@ -162,6 +162,10 @@
                     </div>
                 </div>
             </div>
+            <div class="alert alert-info mt-2 py-2 small" [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing">
+                <fa-icon [icon]="faCircleInfo" class="me-1" />
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint"></span>
+            </div>
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">

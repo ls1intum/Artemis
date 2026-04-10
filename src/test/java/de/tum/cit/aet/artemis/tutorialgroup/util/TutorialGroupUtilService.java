@@ -1,12 +1,16 @@
 package de.tum.cit.aet.artemis.tutorialgroup.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -125,9 +130,7 @@ public class TutorialGroupUtilService {
             User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepo.findByIdElseThrow(courseId);
 
-        var tutorialGroup = TutorialGroupFactory.generateTutorialGroup(title, additionalInformation, capacity, isOnline, language, campus);
-        tutorialGroup.setCourse(course);
-        tutorialGroup.setTeachingAssistant(teachingAssistant);
+        var tutorialGroup = TutorialGroupFactory.generateTutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language, teachingAssistant, null);
 
         var persistedTutorialGroup = tutorialGroupRepository.saveAndFlush(tutorialGroup);
 
@@ -137,6 +140,84 @@ public class TutorialGroupUtilService {
         }
         tutorialGroupRegistrationRepository.saveAllAndFlush(registrations);
         return persistedTutorialGroup;
+    }
+
+    public TutorialGroupSchedule createAndSaveTutorialGroupSchedule(TutorialGroup tutorialGroup, int dayOfWeek, String startTime, String endTime, int repetitionFrequency,
+            String validFromInclusive, String validToInclusive, String location) {
+        TutorialGroupSchedule tutorialGroupSchedule = new TutorialGroupSchedule();
+        tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
+        tutorialGroupSchedule.setDayOfWeek(dayOfWeek);
+        tutorialGroupSchedule.setStartTime(startTime);
+        tutorialGroupSchedule.setEndTime(endTime);
+        tutorialGroupSchedule.setRepetitionFrequency(repetitionFrequency);
+        tutorialGroupSchedule.setValidFromInclusive(validFromInclusive);
+        tutorialGroupSchedule.setValidToInclusive(validToInclusive);
+        tutorialGroupSchedule.setLocation(location);
+        tutorialGroupScheduleTestRepository.saveAndFlush(tutorialGroupSchedule);
+
+        tutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
+        tutorialGroupRepository.saveAndFlush(tutorialGroup);
+
+        return tutorialGroupSchedule;
+    }
+
+    public List<TutorialGroupSession> createAndSaveRegularSessionsFromTutorialGroupSchedule(Course course, TutorialGroup tutorialGroup,
+            TutorialGroupSchedule tutorialGroupSchedule) {
+        List<TutorialGroupSession> sessions = new ArrayList<>();
+        ZonedDateTime sessionStart = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getStartTime()),
+                ZoneId.of(course.getTimeZone()));
+        ZonedDateTime sessionEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getEndTime()),
+                ZoneId.of(course.getTimeZone()));
+        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), DateUtil.END_OF_DAY, ZoneId.of(course.getTimeZone()));
+
+        while (sessionEnd.isBefore(periodEnd) || sessionEnd.isEqual(periodEnd)) {
+            TutorialGroupSession session = createTutorialGroupSession(sessionStart, sessionEnd, tutorialGroupSchedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE,
+                    tutorialGroupSchedule, tutorialGroup);
+            sessions.add(session);
+            sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());
+            sessionEnd = sessionEnd.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());
+        }
+
+        tutorialGroupSessionRepository.saveAllAndFlush(sessions);
+
+        return sessions;
+    }
+
+    public TutorialGroupSession createTutorialGroupSession(ZonedDateTime start, ZonedDateTime end, String location, Integer attendanceCount, TutorialGroupSessionStatus status,
+            TutorialGroupSchedule tutorialGroupSchedule, TutorialGroup tutorialGroup) {
+        TutorialGroupSession session = new TutorialGroupSession();
+        session.setStart(start);
+        session.setEnd(end);
+        session.setLocation(location);
+        session.setAttendanceCount(attendanceCount);
+        session.setStatus(status);
+        session.setTutorialGroupSchedule(tutorialGroupSchedule);
+        session.setTutorialGroup(tutorialGroup);
+        return session;
+    }
+
+    public TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
+            User teachingAssistant, Set<User> studentsToRegister) {
+        var course = courseRepo.findByIdElseThrow(courseId);
+
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTitle(title);
+        tutorialGroup.setAdditionalInformation(additionalInformation);
+        tutorialGroup.setCapacity(capacity);
+        tutorialGroup.setIsOnline(isOnline);
+        tutorialGroup.setLanguage(language);
+        tutorialGroup.setCampus(campus);
+        tutorialGroup.setTeachingAssistant(teachingAssistant);
+        tutorialGroup = tutorialGroupRepository.saveAndFlush(tutorialGroup);
+
+        var registrations = new HashSet<TutorialGroupRegistration>();
+        for (var student : studentsToRegister) {
+            registrations.add(new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION));
+        }
+        tutorialGroupRegistrationRepository.saveAllAndFlush(registrations);
+
+        return tutorialGroup;
     }
 
     /**
@@ -173,42 +254,6 @@ public class TutorialGroupUtilService {
         tutorialGroup.setCapacity(capacity);
         tutorialGroup.setCampus(campus);
         return tutorialGroup;
-    }
-
-    public TutorialGroupSchedule createAndSaveTutorialGroupSchedule(int dayOfWeek, String startTime, String endTime, String validFromInclusive, String validToInclusive,
-            String location, int repetitionFrequency, TutorialGroup tutorialGroup) {
-        TutorialGroupSchedule schedule = createTutorialGroupSchedule(dayOfWeek, startTime, endTime, validFromInclusive, validToInclusive, location, repetitionFrequency);
-        schedule.setTutorialGroup(tutorialGroup);
-        tutorialGroupScheduleTestRepository.saveAndFlush(schedule);
-        tutorialGroup.setTutorialGroupSchedule(schedule);
-        tutorialGroupRepository.saveAndFlush(tutorialGroup);
-        return schedule;
-    }
-
-    public TutorialGroupSchedule createTutorialGroupSchedule(int dayOfWeek, String startTime, String endTime, String validFromInclusive, String validToInclusive, String location,
-            int repetitionFrequency) {
-        TutorialGroupSchedule newTutorialGroupSchedule = new TutorialGroupSchedule();
-        newTutorialGroupSchedule.setDayOfWeek(dayOfWeek);
-        newTutorialGroupSchedule.setStartTime(startTime);
-        newTutorialGroupSchedule.setEndTime(endTime);
-        newTutorialGroupSchedule.setValidFromInclusive(validFromInclusive);
-        newTutorialGroupSchedule.setValidToInclusive(validToInclusive);
-        newTutorialGroupSchedule.setLocation(location);
-        newTutorialGroupSchedule.setRepetitionFrequency(repetitionFrequency);
-        return newTutorialGroupSchedule;
-    }
-
-    public TutorialGroupSession createTutorialGroupSession(ZonedDateTime start, ZonedDateTime end, String location, Integer attendanceCount, TutorialGroupSessionStatus status,
-            TutorialGroup group, TutorialGroupSchedule schedule) {
-        TutorialGroupSession session = new TutorialGroupSession();
-        session.setTutorialGroup(group);
-        session.setTutorialGroupSchedule(schedule);
-        session.setStart(start);
-        session.setEnd(end);
-        session.setLocation(location);
-        session.setAttendanceCount(attendanceCount);
-        session.setStatus(status);
-        return session;
     }
 
 }

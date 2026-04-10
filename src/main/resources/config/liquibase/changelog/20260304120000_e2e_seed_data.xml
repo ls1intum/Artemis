@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- ============================================================ -->
+    <!-- E2E Test Seed Data                                           -->
+    <!-- Only runs when Liquibase context includes "e2e"              -->
+    <!-- ============================================================ -->
+
+    <!-- ==================== USERS ==================== -->
+    <changeSet id="e2e-seed-users" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM jhi_user WHERE login = 'artemis_admin'</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/users.csv" separator=";" tableName="jhi_user" usePreparedStatements="true">
+            <column name="id" type="NUMERIC"/>
+            <column name="activated" type="BOOLEAN"/>
+            <column name="is_internal" type="BOOLEAN"/>
+            <column name="is_deleted" type="BOOLEAN"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="e2e-seed-user-authorities" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM jhi_user_authority WHERE user_id = 100</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/user_authorities.csv" separator=";" tableName="jhi_user_authority" usePreparedStatements="true">
+            <column name="user_id" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== COURSES ==================== -->
+    <changeSet id="e2e-seed-courses" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM course WHERE short_name = 'e2echannel1'</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/courses.csv" separator=";" tableName="course" usePreparedStatements="true">
+            <column name="id" type="NUMERIC"/>
+            <column name="test_course" type="BOOLEAN"/>
+            <column name="online_course" type="BOOLEAN"/>
+            <column name="max_complaints" type="NUMERIC"/>
+            <column name="max_complaint_time_days" type="NUMERIC"/>
+            <column name="max_request_more_feedback_time_days" type="NUMERIC"/>
+            <column name="max_points" type="NUMERIC"/>
+            <column name="accuracy_of_scores" type="NUMERIC"/>
+            <column name="info_sharing_config" type="NUMERIC"/>
+            <column name="unenrollment_enabled" type="BOOLEAN"/>
+            <column name="learning_paths_enabled" type="BOOLEAN"/>
+            <column name="restricted_athena_modules_access" type="BOOLEAN"/>
+            <column name="student_course_analytics_dashboard_enabled" type="BOOLEAN"/>
+            <column name="faq_enabled" type="BOOLEAN"/>
+            <column name="max_complaint_text_limit" type="NUMERIC"/>
+            <column name="max_complaint_response_text_limit" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== USER GROUPS (course enrollment) ==================== -->
+    <changeSet id="e2e-seed-user-groups" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM user_groups WHERE user_groups = 'artemis-e2echannel1-students'</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/user_groups.csv" separator=";" tableName="user_groups" usePreparedStatements="true">
+            <column name="user_id" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== CONVERSATIONS (default channels) ==================== -->
+    <changeSet id="e2e-seed-conversations" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation WHERE course_id = 9001 AND name = 'announcement'</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/conversations.csv" separator=";" tableName="conversation" usePreparedStatements="true">
+            <column name="id" type="NUMERIC"/>
+            <column name="course_id" type="NUMERIC"/>
+            <column name="is_public" type="BOOLEAN"/>
+            <column name="is_course_wide" type="BOOLEAN"/>
+            <column name="is_announcement" type="BOOLEAN"/>
+            <column name="is_archived" type="BOOLEAN"/>
+            <column name="creator_id" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== CONVERSATION PARTICIPANTS ==================== -->
+    <changeSet id="e2e-seed-conversation-participants" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE conversation_id = 90001</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/conversation_participants.csv" separator=";" tableName="conversation_participant" usePreparedStatements="true">
+            <column name="id" type="NUMERIC"/>
+            <column name="conversation_id" type="NUMERIC"/>
+            <column name="user_id" type="NUMERIC"/>
+            <column name="unread_messages_count" type="NUMERIC"/>
+            <column name="is_moderator" type="BOOLEAN"/>
+            <column name="is_hidden" type="BOOLEAN"/>
+            <column name="is_favorite" type="BOOLEAN"/>
+            <column name="is_muted" type="BOOLEAN"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== CONDUCT AGREEMENTS ==================== -->
+    <changeSet id="e2e-seed-conduct-agreements" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conduct_agreement WHERE course_id = 9001</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/conduct_agreements.csv" separator=";" tableName="conduct_agreement" usePreparedStatements="true">
+            <column name="course_id" type="NUMERIC"/>
+            <column name="user_id" type="NUMERIC"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== POSTS (messages in channels) ==================== -->
+    <changeSet id="e2e-seed-posts" author="e2e" context="e2e">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE conversation_id = 90001</sqlCheck>
+        </preConditions>
+        <loadData file="config/liquibase/e2e/posts.csv" separator=";" tableName="post" usePreparedStatements="true">
+            <column name="id" type="NUMERIC"/>
+            <column name="author_id" type="NUMERIC"/>
+            <column name="conversation_id" type="NUMERIC"/>
+            <column name="visible_for_students" type="BOOLEAN"/>
+            <column name="resolved" type="BOOLEAN"/>
+            <column name="has_forwarded_messages" type="BOOLEAN"/>
+        </loadData>
+    </changeSet>
+
+    <!-- ==================== RESET SEQUENCES (PostgreSQL) ==================== -->
+    <changeSet id="e2e-seed-reset-sequences" author="e2e" context="e2e" dbms="postgresql">
+        <sql>
+            SELECT setval('jhi_user_id_seq', GREATEST((SELECT MAX(id) FROM jhi_user), 1));
+            SELECT setval('course_id_seq', GREATEST((SELECT MAX(id) FROM course), 1));
+            SELECT setval('conversation_id_seq', GREATEST((SELECT MAX(id) FROM conversation), 1));
+            SELECT setval('conversation_participant_id_seq', GREATEST((SELECT MAX(id) FROM conversation_participant), 1));
+            SELECT setval('post_id_seq', GREATEST((SELECT MAX(id) FROM post), 1));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

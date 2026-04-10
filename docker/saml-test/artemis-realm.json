@@ -1,0 +1,126 @@
+{
+  "realm": "artemis",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "attributes": {
+    "frontendUrl": "http://localhost:9080"
+  },
+  "clients": [
+    {
+      "clientId": "artemis",
+      "name": "Artemis",
+      "enabled": true,
+      "protocol": "saml",
+      "frontchannelLogout": true,
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.force.post.binding": "true",
+        "saml.multivalued.roles": "false",
+        "saml.encrypt": "false",
+        "saml.server.signature": "true",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml.signing.certificate": "",
+        "saml_force_name_id_format": "true",
+        "saml_name_id_format": "persistent",
+        "saml.client.signature": "false",
+        "saml.authnstatement": "true",
+        "saml_single_logout_service_url_redirect": "",
+        "saml.artifact.binding": "false",
+        "saml.allow.ecp.flow": "false"
+      },
+      "redirectUris": [
+        "http://localhost:8080/login/saml2/sso/keycloak",
+        "http://localhost:9000/login/saml2/sso/keycloak"
+      ],
+      "adminUrl": "http://localhost:8080",
+      "baseUrl": "http://localhost:8080",
+      "protocolMappers": [
+        {
+          "name": "uid",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "uid",
+            "friendly.name": "uid",
+            "attribute.name": "uid"
+          }
+        },
+        {
+          "name": "first_name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "firstName",
+            "friendly.name": "first_name",
+            "attribute.name": "first_name"
+          }
+        },
+        {
+          "name": "last_name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "lastName",
+            "friendly.name": "last_name",
+            "attribute.name": "last_name"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "email",
+            "friendly.name": "email",
+            "attribute.name": "email"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "saml2user1",
+      "enabled": true,
+      "firstName": "SAML2",
+      "lastName": "User1",
+      "email": "saml2user1@example.com",
+      "attributes": {
+        "uid": ["saml2user1"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "saml2user2",
+      "enabled": true,
+      "firstName": "SAML2",
+      "lastName": "User2",
+      "email": "saml2user2@example.com",
+      "attributes": {
+        "uid": ["saml2user2"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

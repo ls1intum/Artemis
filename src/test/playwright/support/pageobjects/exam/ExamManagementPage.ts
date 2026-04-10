@@ -71,10 +71,8 @@ export class ExamManagementPage {
      * @param timeout timeout of waiting for assessment dashboard button
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
-        await this.page.goto(`/course-management/${courseID}/exams`);
-        const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-        await assessmentButton.waitFor({ state: 'attached', timeout: timeout });
-        await assessmentButton.click();
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
+        await this.page.waitForLoadState('networkidle');
     }
 
     /**
@@ -100,12 +98,14 @@ export class ExamManagementPage {
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        await this.page.waitForLoadState('networkidle');
         await this.page.locator('#student-exam').waitFor({ state: 'visible' });
         await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
     }
 
     async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
+        await this.page.waitForLoadState('networkidle');
         await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
@@ -131,7 +131,9 @@ export class ExamManagementPage {
     }
 
     async sendAnnouncement() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/announcements') && resp.request().method() === 'POST' && resp.ok());
         await this.page.locator('button', { hasText: 'Send Announcement' }).click();
+        await responsePromise;
     }
 
     async openEditWorkingTimeDialog() {

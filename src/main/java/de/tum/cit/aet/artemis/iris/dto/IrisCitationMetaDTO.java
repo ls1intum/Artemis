@@ -10,7 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param entityId         the id of the cited lecture unit
  * @param lectureTitle     the title of the lecture containing the unit
  * @param lectureUnitTitle the title of the lecture unit
+ * @param lectureId        the id of the lecture containing the unit
+ * @param courseId         the id of the course containing the lecture
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCitationMetaDTO(long entityId, @NotNull String lectureTitle, @NotNull String lectureUnitTitle) {
+public record IrisCitationMetaDTO(long entityId, @NotNull String lectureTitle, @NotNull String lectureUnitTitle, long lectureId, long courseId) {
 }

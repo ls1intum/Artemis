@@ -41,6 +41,7 @@ public final class WeaviateTestConfiguration {
             registry.add("artemis.weaviate.http-port", () -> container.getMappedPort(8080));
             registry.add("artemis.weaviate.grpc-port", () -> container.getMappedPort(50051));
             registry.add("artemis.weaviate.scheme", () -> "http");
+            registry.add("artemis.weaviate.vectorizer-module", () -> "none");
             registry.add("artemis.weaviate.collection-prefix", () -> COLLECTION_PREFIX + collectionPrefix);
         }
         else {

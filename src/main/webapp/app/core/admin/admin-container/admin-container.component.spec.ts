@@ -83,6 +83,8 @@ describe('AdminContainerComponent', () => {
                     provide: ProfileService,
                     useValue: {
                         getProfileInfo: vi.fn().mockReturnValue(mockProfileInfo),
+                        isModuleFeatureActive: vi.fn().mockReturnValue(false),
+                        isProfileActive: vi.fn().mockReturnValue(false),
                     },
                 },
                 {
@@ -134,13 +136,8 @@ describe('AdminContainerComponent', () => {
     });
 
     it('should detect feature flags from profile info', () => {
-        const profileInfoWithFeatures: ProfileInfo = {
-            ...mockProfileInfo,
-            activeProfiles: ['localci'],
-            activeModuleFeatures: ['atlas', 'exam', 'lti'],
-        };
-
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithFeatures);
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === 'localci');
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['atlas', 'exam', 'lti'].includes(feature));
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
@@ -153,12 +150,7 @@ describe('AdminContainerComponent', () => {
     });
 
     it('should detect passkey feature flags from profile info', () => {
-        const profileInfoWithPasskey: ProfileInfo = {
-            ...mockProfileInfo,
-            activeModuleFeatures: ['passkey', 'passkey-admin'],
-        };
-
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithPasskey);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['passkey', 'passkey-admin'].includes(feature));
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;

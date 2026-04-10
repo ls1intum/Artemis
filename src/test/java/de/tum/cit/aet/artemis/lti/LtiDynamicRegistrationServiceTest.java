@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
@@ -65,10 +66,11 @@ class LtiDynamicRegistrationServiceTest {
         course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         course.setOnlineCourse(true);
         course.setShortName("shortName");
-        openIdConfigurationUrl = "url";
+        openIdConfigurationUrl = "https://example.com/.well-known/openid-configuration";
         registrationToken = "token";
 
-        platformConfiguration = new Lti13PlatformConfiguration(null, "token", "auth", "jwks", "register");
+        platformConfiguration = new Lti13PlatformConfiguration(null, "https://example.com/token", "https://example.com/auth", "https://example.com/jwks",
+                "https://example.com/register");
         clientRegistrationResponse = Lti13ClientRegistrationFactory.createRegistration("http://artemis.com", "artemis-" + UUID.randomUUID());
     }
 
@@ -100,7 +102,8 @@ class LtiDynamicRegistrationServiceTest {
 
     @Test
     void badRequestWhenRegistrationEndpointEmpty() {
-        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, "token", "auth", "uri", null);
+        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, "https://example.com/token", "https://example.com/auth", "https://example.com/jwks",
+                null);
 
         when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
 
@@ -143,5 +146,40 @@ class LtiDynamicRegistrationServiceTest {
 
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
+    }
+
+    @Test
+    void badRequestWhenUrlIsNotHttps() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://example.com/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
+    void badRequestWhenUrlPointsToLoopback() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://127.0.0.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
+    void badRequestWhenUrlPointsToPrivateNetwork() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://192.168.1.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
+    void badRequestWhenUrlPointsToIPv6Loopback() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://[::1]/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
+    void badRequestWhenUrlPointsToSharedAddressSpace() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://100.64.0.1/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
     }
 }

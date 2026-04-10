@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -7,7 +7,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalUserPasswordResetModalComponent } from 'app/core/account/password-reset/external/external-user-password-reset-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, ExternalUserPasswordResetModalComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordResetInitComponent implements AfterViewInit {
@@ -28,7 +27,6 @@ export class PasswordResetInitComponent implements AfterViewInit {
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
-    private readonly modalService = inject(NgbModal);
 
     /** Reference to the email/username input field for auto-focus */
     readonly emailUsernameElement = viewChild<ElementRef>('emailUsername');
@@ -36,8 +34,8 @@ export class PasswordResetInitComponent implements AfterViewInit {
     /** The email address or username entered by the user */
     emailUsernameValue = '';
 
-    /** Reference to the external user modal, used to close it programmatically */
-    externalResetModalRef: NgbModalRef | undefined;
+    /** Whether the external reset modal is visible */
+    showExternalResetModal = signal(false);
 
     /** Whether external authentication (SSO) is enabled on this instance */
     readonly useExternal: boolean;
@@ -81,9 +79,7 @@ export class PasswordResetInitComponent implements AfterViewInit {
             error: (errorResponse: HttpErrorResponse) => {
                 // External/SSO users cannot reset passwords through Artemis
                 if (this.useExternal && errorResponse?.error?.errorKey === 'externalUser') {
-                    this.externalResetModalRef = this.modalService.open(ExternalUserPasswordResetModalComponent, { size: 'lg', backdrop: 'static' });
-                    this.externalResetModalRef.componentInstance.externalCredentialProvider = this.externalCredentialProvider;
-                    this.externalResetModalRef.componentInstance.externalPasswordResetLink = this.externalPasswordResetLink;
+                    this.showExternalResetModal.set(true);
                 } else {
                     onError(this.alertService, errorResponse);
                 }

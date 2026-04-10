@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -72,14 +74,37 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     /**
      * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
+     * If a resultId is provided, retrieves that specific result with authorization and sensitive data filtering applied.
      *
      * @param submissionId the id of the submission that should be sent to the client
+     * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
-    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        if (resultId != null) {
+            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
+            ModelingSubmission submission = modelingSubmissionRepository
+                    .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+
+            if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+                throw new AccessForbiddenException();
+            }
+            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+
+            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+                throw new AccessForbiddenException();
+            }
+
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                exercise.filterSensitiveInformation();
+                result.filterSensitiveInformation();
+            }
+
+            return ResponseEntity.ok(result);
+        }
         return super.getAssessmentBySubmissionId(submissionId);
     }
 

@@ -55,8 +55,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class,
-                HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);

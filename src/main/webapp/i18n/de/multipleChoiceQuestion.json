@@ -47,7 +47,8 @@
                 "code": "Code",
                 "color": "Farbe",
                 "emoji": "Emoji",
-                "strikethrough": "Durchgestrichen"
+                "strikethrough": "Durchgestrichen",
+                "textFormat": "Format"
             },
             "visualEditor": {
                 "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quiz über den ?-Button)",

@@ -1,5 +1,5 @@
 import { faLink } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
@@ -12,7 +12,7 @@ interface UrlArguments {
 /**
  * Action to insert a URL into the editor. They follow the format [text](url).
  */
-export class UrlAction extends TextEditorAction {
+export class UrlAction extends TextStyleTextEditorAction {
     static readonly ID = 'url.action';
     static readonly DEFAULT_LINK_TEXT = 'Link';
     static readonly DEFAULT_LINK_PLACEHOLDER = 'https://';

@@ -4,8 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { CoursesPage } from '../course/CoursesPage';
-import { CourseOverviewPage } from '../course/CourseOverviewPage';
 import { ExamNavigationBar } from './ExamNavigationBar';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
@@ -14,10 +12,9 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
     private readonly examStartEnd: ExamStartEndPage;
     private readonly modelingExerciseEditor: ModelingEditor;
@@ -26,8 +23,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly textExerciseEditor: TextEditorPage;
 
     constructor(
-        courseList: CoursesPage,
-        courseOverview: CourseOverviewPage,
         examNavigation: ExamNavigationBar,
         examStartEnd: ExamStartEndPage,
         modelingExerciseEditor: ModelingEditor,
@@ -37,8 +32,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         page: Page,
     ) {
         super(page);
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
         this.examStartEnd = examStartEnd;
         this.modelingExerciseEditor = modelingExerciseEditor;
@@ -56,10 +49,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
                 await this.makeModelingExerciseSubmission(exerciseID);
                 break;
             case ExerciseType.QUIZ:
-                await this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
+                await this.makeQuizExerciseSubmission(exerciseID);
                 break;
             case ExerciseType.PROGRAMMING:
-                await this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
+                await this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode, additionalData!.skipBuildResultCheck);
                 break;
         }
     }
@@ -67,21 +60,26 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
+        // Wait for the text to be processed by Angular change detection
         await this.page.waitForTimeout(1000);
     }
 
-    private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {
+    private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
         await this.programmingExerciseEditor.toggleCompressFileTree(exerciseID);
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
+        for (const deleteFile of submission.deleteFiles) {
+            await this.programmingExerciseEditor.deleteFile(exerciseID, deleteFile);
+        }
         await this.programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             await this.programmingExerciseEditor.submitPractice(exerciseID);
         } else {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
-        await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible();
+        if (!skipBuildResultCheck) {
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
+                timeout: BUILD_RESULT_TIMEOUT * 2,
+            });
+        }
     }
 
     private async makeModelingExerciseSubmission(exerciseID: number) {
@@ -90,20 +88,18 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.modelingExerciseEditor.addComponentToModel(exerciseID, 4);
     }
 
-    private async makeQuizExerciseSubmission(exerciseID: number, quizExerciseID: number) {
-        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 0, quizExerciseID);
-        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2, quizExerciseID);
+    private async makeQuizExerciseSubmission(exerciseID: number) {
+        // In exam mode, quiz question elements use the actual DB ID (not index),
+        // so we skip the #question{id} scope and click answer options directly.
+        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 0);
+        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2);
     }
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
-        await Commands.login(this.page, student, '/');
-        await this.page.goto(`/courses`);
-        await this.page.waitForURL('/courses');
-        await this.courseList.openCourse(course.id!);
-        await this.courseOverview.openExamsTab();
-        await this.courseOverview.openExam(exam.title!);
-        await this.page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
+        // Use a permissive glob so Angular sub-path routing (e.g. /exams/{id}/start)
+        // does not cause waitForURL to time out.
+        await this.page.waitForURL(`**/exams/${exam.id}**`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
@@ -125,9 +121,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(expectedResult: string) {
-        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
+        // In exam mode, page.reload() navigates away from the active exercise tab,
+        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }

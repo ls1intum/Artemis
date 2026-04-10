@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
 
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,14 +22,28 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
+    imports: [
+        FormDateTimePickerComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TranslateDirective,
+        FormsModule,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        CleanupOperationModalComponent,
+    ],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
     private readonly dataCleanupService = inject(DataCleanupService);
-    private readonly modalService = inject(NgbModal);
+
+    /** Whether the cleanup operation modal is visible */
+    showCleanupModal = signal<boolean>(false);
+
+    /** The currently selected operation for the modal */
+    selectedOperation = signal<CleanupOperation | undefined>(undefined);
 
     /** Cleanup operations data - uses signal for reactivity */
     readonly cleanupOperations = signal<CleanupOperation[]>([
@@ -101,7 +114,7 @@ export class CleanupServiceComponent implements OnInit {
      * Handles displaying the modal with operation details and counts.
      */
     openCleanupOperationModal(operation: CleanupOperation): void {
-        const modalRef = this.modalService.open(CleanupOperationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.operation = signal<CleanupOperation>(operation);
+        this.selectedOperation.set(operation);
+        this.showCleanupModal.set(true);
     }
 }

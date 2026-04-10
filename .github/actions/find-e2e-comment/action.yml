@@ -17,6 +17,7 @@ runs:
       uses: actions/github-script@v8
       continue-on-error: true
       with:
+        result-encoding: string
         script: |
           const branch = '${{ github.event.workflow_run.head_branch }}';
           const { data: prs } = await github.rest.pulls.list({
@@ -29,7 +30,7 @@ runs:
             console.log(`No open PR found for branch ${branch}`);
             return '';
           }
-          return String(prs[0].number);
+          return prs[0].number;
 
     - name: Find existing E2E comment
       id: find-comment
@@ -37,6 +38,7 @@ runs:
       uses: actions/github-script@v8
       continue-on-error: true
       with:
+        result-encoding: string
         script: |
           const prNumber = Number('${{ steps.find-pr.outputs.result }}');
           const marker = '<!-- E2E Test Results -->';
@@ -51,6 +53,6 @@ runs:
             });
             if (!comments.length) break;
             const found = comments.find(c => c.body && c.body.includes(marker));
-            if (found) return String(found.id);
+            if (found) return found.id;
           }
           return '';

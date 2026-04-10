@@ -38,8 +38,57 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "searching": "Searching...",
             "toNavigate": "to navigate",
-            "toClose": "to close"
+            "toSelect": "to select",
+            "toClose": "to close",
+            "toAddFilter": "to add a filter",
+            "tipTitle": "Quick Search",
+            "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
+            "arrowUpAriaLabel": "Arrow up",
+            "arrowDownAriaLabel": "Arrow down",
+            "searchLectureContentHint": "Type to search through lecture transcripts and materials",
+            "lectureResultsAriaLabel": "Lecture search results",
+            "lectureSearchError": "Search failed. Please try again.",
+            "pageAbbreviation": "pg.",
+            "filterChipAriaLabel": "Filter: {{ filter }}",
+            "actionBadge": "Action",
+            "actions": {
+                "askIrisTitle": "Ask Iris",
+                "askIrisDescription": "Chat with Iris AI assistant",
+                "lectureSearchTitle": "Lecture Search",
+                "lectureSearchDescription": "Search through lecture content and slides"
+            },
+            "entities": {
+                "exercisesTitle": "Exercises",
+                "exercisesDescription": "View and complete course exercises",
+                "lecturesTitle": "Lecture Details",
+                "lecturesDescription": "View lecture content and units",
+                "communicationTitle": "Communication",
+                "communicationDescription": "Chat with classmates and instructors",
+                "irisTitle": "Dashboard with Iris",
+                "irisDescription": "Chat with Iris AI assistant",
+                "usersTitle": "User Management",
+                "usersDescription": "Manage users and permissions",
+                "statisticsTitle": "Statistics",
+                "statisticsDescription": "View course statistics and analytics",
+                "calendarTitle": "Calendar",
+                "calendarDescription": "View your schedule and deadlines"
+            },
+            "results": {
+                "due": "Due: {{ date }}",
+                "point": "point",
+                "points": "points"
+            },
+            "comingSoon": "Coming soon",
+            "enterToActivate": "Press Enter to activate",
+            "searchFailed": "Search failed. Please try again.",
+            "askIris": "Ask Iris AI",
+            "askIrisDescription": "Get an AI-generated answer from your lecture content",
+            "irisAnswerTitle": "Iris AI Answer",
+            "irisAnswerSources": "Sources",
+            "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
+            "continueInIris": "Continue conversation in Iris"
         },
         "menu": {
             "home": "Home",
@@ -194,8 +243,7 @@
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
                 "cleanupService": "Cleanup Service",
-                "lectureTranscription": "Lecture Transcription",
-                "examRooms": "Exam Rooms"
+                "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
             "settings": "Settings"
@@ -220,7 +268,8 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input"
+            "invalidInput": "Invalid Input",
+            "requiredLabel": "* required"
         },
         "messages": {
             "info": {
@@ -280,6 +329,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
@@ -356,8 +406,10 @@
             "show": "Show",
             "addExercise": "Add exercise",
             "addLecture": "Add lecture",
-            "addFaq": "Add FAQ",
+            "addTutorial": "Add tutorial",
             "addExam": "Add exam",
+            "addCompetency": "Add competency",
+            "addFaq": "Add FAQ",
             "addStudent": "Add student",
             "addTutor": "Add tutor",
             "addEditor": "Add editor",

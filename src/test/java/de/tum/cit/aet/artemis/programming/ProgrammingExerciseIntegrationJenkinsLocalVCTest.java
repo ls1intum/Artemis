@@ -471,6 +471,12 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_sameShortNameInCourse_badRequest();
     }

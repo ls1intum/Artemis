@@ -1,7 +1,7 @@
 export interface PageableResult<T> {
     content: T[];
     totalElements: number;
-    totalPages: number;
+    totalPages?: number;
 }
 
 export interface SearchResult<T> {

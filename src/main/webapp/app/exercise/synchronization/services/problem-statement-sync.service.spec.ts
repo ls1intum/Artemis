@@ -253,6 +253,67 @@ describe('ProblemStatementSyncService', () => {
         );
     });
 
+    it('exposes awaitingInitialSync=false inside initialSyncFinalized subscribers', () => {
+        const awaitingStateSeenInSubscriber: boolean[] = [];
+        service.initialSyncFinalized$.subscribe(() => {
+            awaitingStateSeenInSubscriber.push(service.isAwaitingInitialSync());
+        });
+        service.init(16, 'Fallback statement');
+
+        expect(service.isAwaitingInitialSync()).toBe(true);
+        vi.advanceTimersByTime(500);
+
+        expect(awaitingStateSeenInSubscriber).toEqual([false]);
+        expect(service.isAwaitingInitialSync()).toBe(false);
+    });
+
+    it('emits divergence=false when finalized content matches fallback', () => {
+        const finalizedSpy = vi.fn();
+        const sub = service.initialSyncFinalized$.subscribe(finalizedSpy);
+
+        service.init(26, 'Fallback statement');
+        vi.advanceTimersByTime(500);
+
+        expect(finalizedSpy).toHaveBeenCalledWith({
+            contentChangedDuringFinalize: true,
+            contentDivergedFromFallback: false,
+            finalContent: 'Fallback statement',
+        });
+        sub.unsubscribe();
+    });
+
+    it('emits divergence=true when finalized content differs from fallback', () => {
+        const finalizedSpy = vi.fn();
+        const sub = service.initialSyncFinalized$.subscribe(finalizedSpy);
+        service.init(27, 'Fallback statement');
+
+        const requestCall = (syncService.sendSynchronizationUpdate as ReturnType<typeof vi.fn>).mock.calls.find(
+            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+        );
+        const requestId = requestCall?.[1].requestId as string;
+        expect(requestId).toBeDefined();
+
+        const remoteDoc = new Y.Doc();
+        remoteDoc.getText('problem-statement').insert(0, 'Remote unsaved statement');
+        incomingMessages$.next({
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            responseTo: requestId,
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(remoteDoc)),
+            leaderTimestamp: 1,
+            timestamp: 1,
+        });
+
+        vi.advanceTimersByTime(500);
+
+        expect(finalizedSpy).toHaveBeenCalledWith({
+            contentChangedDuringFinalize: true,
+            contentDivergedFromFallback: true,
+            finalContent: 'Remote unsaved statement',
+        });
+        sub.unsubscribe();
+    });
+
     it('applies awareness updates and registers remote client styles', () => {
         service.init(15, '');
 
