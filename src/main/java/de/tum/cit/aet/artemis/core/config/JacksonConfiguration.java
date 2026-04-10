@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
@@ -62,6 +63,7 @@ public class JacksonConfiguration {
      * @return the HTTP message converter
      */
     @Bean
+    @Lazy
     @SuppressWarnings("removal") // MappingJackson2HttpMessageConverter is deprecated but still required for proper Hibernate module registration
     public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
         return new MappingJackson2HttpMessageConverter(objectMapper);
