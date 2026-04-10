@@ -34,9 +34,11 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -55,7 +57,10 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private IrisSessionRepository irisTextExerciseChatSessionRepository;
+    private IrisChatSessionRepository irisTextExerciseChatSessionRepository;
+
+    @Autowired
+    private IrisSessionRepository irisSessionRepository;
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
@@ -73,9 +78,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
     private AtomicBoolean pipelineDone;
 
-    private IrisTextExerciseChatSession createSessionForUser(String userLogin) {
+    private IrisChatSession createSessionForUser(String userLogin) {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(exercise, user));
+        return irisTextExerciseChatSessionRepository.save(new IrisChatSession(exercise, user, IrisChatMode.TEXT_EXERCISE_CHAT));
     }
 
     @BeforeEach
@@ -199,7 +204,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         verify(websocketMessagingService, times(8)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), any());
 
-        var irisSessionFromDb = irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(4);
     }
 
@@ -291,7 +296,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
-        await().until(() -> irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
         verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
@@ -319,7 +324,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         try {
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
-            await().until(() -> irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+            await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, HttpStatus.TOO_MANY_REQUESTS);
             var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
@@ -352,7 +357,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
 
-        var irisSessionFromDb = irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
     }
 

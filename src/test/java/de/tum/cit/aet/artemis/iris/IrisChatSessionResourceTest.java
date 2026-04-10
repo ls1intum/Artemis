@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -112,7 +111,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessionsForCourseWithoutSessions() throws Exception {
-        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
     }
 
@@ -120,10 +119,10 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        IrisChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
         this.irisSessionRepository.save(courseSession);
 
-        IrisChatSessionResponseDTO irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK,
+        IrisChatSessionResponseDTO irisChatSessions = request.get("/api/iris/chat/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK,
                 IrisChatSessionResponseDTO.class);
         assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());
     }
@@ -138,7 +137,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
         irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user));
 
-        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
     }
 
@@ -157,7 +156,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(programmingExercise, user));
 
-        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
 
         assertThat(irisChatSessions).hasSize(4);
 
@@ -190,7 +189,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         var untitledLectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
         saveChatSessionWithMessages(untitledLectureSession);
 
-        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
 
         assertThat(irisChatSessions).hasSize(2);
 
@@ -214,7 +213,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         disableIrisFor(course);
 
         // Should return empty list when Iris is disabled at course level
-        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).isEmpty();
     }
 
@@ -227,14 +226,14 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
 
         // Verify sessions exist
-        List<IrisChatSessionDTO> sessionsBefore = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> sessionsBefore = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(sessionsBefore).hasSize(2);
 
         // Delete all sessions
-        request.delete("/api/iris/chat-history/sessions", HttpStatus.NO_CONTENT);
+        request.delete("/api/iris/chat/sessions", HttpStatus.NO_CONTENT);
 
         // Verify sessions are deleted
-        List<IrisChatSessionDTO> sessionsAfter = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> sessionsAfter = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(sessionsAfter).isEmpty();
     }
 
@@ -242,7 +241,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteAllSessionsForCurrentUser_noSessions() throws Exception {
         // Should succeed even with no sessions
-        request.delete("/api/iris/chat-history/sessions", HttpStatus.NO_CONTENT);
+        request.delete("/api/iris/chat/sessions", HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -251,7 +250,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // Get initial counts (may be non-zero due to other tests)
-        var initialCounts = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
+        var initialCounts = request.get("/api/iris/chat/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
         assertThat(initialCounts.sessions()).isGreaterThanOrEqualTo(0);
         assertThat(initialCounts.messages()).isGreaterThanOrEqualTo(0);
 
@@ -259,7 +258,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
 
-        var updatedCounts = request.get("/api/iris/chat-history/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
+        var updatedCounts = request.get("/api/iris/chat/sessions/count", HttpStatus.OK, IrisChatSessionCountDTO.class);
         assertThat(updatedCounts.sessions()).isEqualTo(initialCounts.sessions() + 2);
         // Each session created by the factory has 2 messages (1 LLM + 1 USER)
         assertThat(updatedCounts.messages()).isEqualTo(initialCounts.messages() + 4);
@@ -276,14 +275,14 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(session2);
 
         // Verify both sessions exist
-        List<IrisChatSessionDTO> sessionsBefore = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> sessionsBefore = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(sessionsBefore).hasSize(2);
 
         // Delete individual session
-        request.delete("/api/iris/chat-history/sessions/" + session1.getId(), HttpStatus.NO_CONTENT);
+        request.delete("/api/iris/chat/sessions/" + session1.getId(), HttpStatus.NO_CONTENT);
 
         // Verify only one session remains
-        List<IrisChatSessionDTO> sessionsAfter = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        List<IrisChatSessionDTO> sessionsAfter = request.getList("/api/iris/chat/" + course.getId() + "/sessions/overview", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(sessionsAfter).hasSize(1);
         assertThat(sessionsAfter.getFirst().id()).isEqualTo(session2.getId());
     }
@@ -297,13 +296,13 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(session);
 
         // Student2 tries to delete student1's session
-        request.delete("/api/iris/chat-history/sessions/" + session.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/iris/chat/sessions/" + session.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteIndividualSession_notFound() throws Exception {
-        request.delete("/api/iris/chat-history/sessions/999999", HttpStatus.NOT_FOUND);
+        request.delete("/api/iris/chat/sessions/999999", HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -312,24 +311,24 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // Create and save a valid session
-        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        IrisChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
         irisSessionRepository.save(courseSession);
 
         // Disable Iris for the course
         disableIrisFor(course);
 
         // Should return 403 Forbidden when Iris is disabled at course level
-        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisChatSessionResponseDTO.class);
+        request.get("/api/iris/chat/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisChatSessionResponseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId_invokesIrisCitationService() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        IrisChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
         irisSessionRepository.save(courseSession);
 
-        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisChatSessionResponseDTO.class);
+        request.get("/api/iris/chat/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisChatSessionResponseDTO.class);
 
         verify(irisCitationService).resolveCitationInfoFromMessages(any());
     }

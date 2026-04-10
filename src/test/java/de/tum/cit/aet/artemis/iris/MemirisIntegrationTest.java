@@ -32,12 +32,13 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 
 class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
@@ -48,7 +49,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private FeatureToggleService featureToggleService;
 
     @Autowired
-    private IrisCourseChatSessionService irisCourseChatSessionService;
+    private IrisChatSessionService irisCourseChatSessionService;
 
     @Autowired
     private IrisSessionRepository irisSessionRepository;
@@ -58,7 +59,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
     private Course course;
 
-    private IrisCourseChatSession irisSession;
+    private IrisChatSession irisSession;
 
     private AtomicBoolean pipelineDone;
 
@@ -81,7 +82,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         userTestRepository.updateMemirisEnabled(user.getId(), true);
 
-        irisSession = irisCourseChatSessionService.createSession(course, user);
+        irisSession = irisCourseChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, null, user);
 
         pipelineDone = new AtomicBoolean(false);
     }

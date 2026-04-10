@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -47,19 +47,19 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSessionUnauthorized() throws Exception {
-        request.post(exerciseChatUrl(exercise.getId()), null, HttpStatus.FORBIDDEN);
+        request.post(exerciseChatUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get(exerciseChatUrl(exercise.getId()), HttpStatus.FORBIDDEN, IrisSession.class);
+        request.get(exerciseChatUrl(), HttpStatus.FORBIDDEN, IrisSession.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockContent());
@@ -69,7 +69,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
         IrisMessage message1 = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message1.addContent(createMockContent(), createMockContent(), createMockContent());
@@ -86,7 +86,8 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         return new IrisTextMessageContent("Not relevant for the test cases");
     }
 
-    private static String exerciseChatUrl(long sessionId) {
-        return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
+    private String exerciseChatUrl() {
+        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        return "/api/iris/chat/" + courseId + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 }

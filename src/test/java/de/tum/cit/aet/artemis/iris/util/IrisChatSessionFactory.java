@@ -7,11 +7,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -24,20 +21,20 @@ public class IrisChatSessionFactory {
     private IrisChatSessionFactory() {
     }
 
-    public static IrisLectureChatSession createLectureSessionForUser(Lecture lecture, User user) {
-        return new IrisLectureChatSession(lecture, user);
+    public static IrisChatSession createLectureSessionForUser(Lecture lecture, User user) {
+        return new IrisChatSession(lecture, user);
     }
 
-    public static IrisCourseChatSession createCourseChatSessionForUser(Course course, User user) {
-        return new IrisCourseChatSession(course, user);
+    public static IrisChatSession createCourseChatSessionForUser(Course course, User user) {
+        return new IrisChatSession(course, user);
     }
 
-    public static IrisTextExerciseChatSession createTextExerciseChatSessionForUser(TextExercise textExercise, User user) {
-        return new IrisTextExerciseChatSession(textExercise, user);
+    public static IrisChatSession createTextExerciseChatSessionForUser(TextExercise textExercise, User user) {
+        return new IrisChatSession(textExercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
     }
 
-    public static IrisProgrammingExerciseChatSession createProgrammingExerciseChatSessionForUser(ProgrammingExercise programmingExercise, User user) {
-        return new IrisProgrammingExerciseChatSession(programmingExercise, user);
+    public static IrisChatSession createProgrammingExerciseChatSessionForUser(ProgrammingExercise programmingExercise, User user) {
+        return new IrisChatSession(programmingExercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
     }
 
     public static <T extends IrisChatSession> T createSessionWithMessages(T session) {
@@ -51,23 +48,19 @@ public class IrisChatSessionFactory {
         return session;
     }
 
-    public static IrisLectureChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user) {
-        IrisLectureChatSession chatSession = createLectureSessionForUser(lecture, user);
-        return createSessionWithMessages(chatSession);
+    public static IrisChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user) {
+        return createSessionWithMessages(createLectureSessionForUser(lecture, user));
     }
 
-    public static IrisCourseChatSession createCourseSessionForUserWithMessages(Course course, User user) {
-        IrisCourseChatSession chatSession = createCourseChatSessionForUser(course, user);
-        return createSessionWithMessages(chatSession);
+    public static IrisChatSession createCourseSessionForUserWithMessages(Course course, User user) {
+        return createSessionWithMessages(createCourseChatSessionForUser(course, user));
     }
 
-    public static IrisTextExerciseChatSession createTextExerciseSessionForUserWithMessages(TextExercise textExercise, User user) {
-        IrisTextExerciseChatSession chatSession = createTextExerciseChatSessionForUser(textExercise, user);
-        return createSessionWithMessages(chatSession);
+    public static IrisChatSession createTextExerciseSessionForUserWithMessages(TextExercise textExercise, User user) {
+        return createSessionWithMessages(createTextExerciseChatSessionForUser(textExercise, user));
     }
 
-    public static IrisProgrammingExerciseChatSession createProgrammingExerciseChatSessionForUserWithMessages(ProgrammingExercise programmingExercise, User user) {
-        IrisProgrammingExerciseChatSession chatSession = createProgrammingExerciseChatSessionForUser(programmingExercise, user);
-        return createSessionWithMessages(chatSession);
+    public static IrisChatSession createProgrammingExerciseChatSessionForUserWithMessages(ProgrammingExercise programmingExercise, User user) {
+        return createSessionWithMessages(createProgrammingExerciseChatSessionForUser(programmingExercise, user));
     }
 }

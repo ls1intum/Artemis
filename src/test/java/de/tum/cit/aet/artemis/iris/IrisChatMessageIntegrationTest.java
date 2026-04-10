@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -207,7 +207,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Prepare session and message
         long submissionId = soloParticipation.getSubmissions().iterator().next().getId();
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         messageToSend.setMessageDifferentiator(123456789);
@@ -226,7 +226,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private void sendOneMessage(ProgrammingExercise exercise, String studentLogin, long submissionId) throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + studentLogin));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         messageToSend.setMessageDifferentiator(1453);
@@ -251,7 +251,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendSuggestions() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         messageToSend.setMessageDifferentiator(1454);
@@ -279,7 +279,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
         irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.FORBIDDEN);
@@ -288,7 +288,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessageWithoutContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.BAD_REQUEST);
@@ -297,7 +297,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendTwoMessages() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -331,7 +331,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMessages() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message1 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
         IrisMessage message2 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
@@ -346,7 +346,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulTrue() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
@@ -359,7 +359,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulFalse() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
@@ -372,7 +372,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulNull() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
@@ -385,7 +385,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageWrongSender() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
@@ -396,9 +396,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageWrongSession() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession1 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession1 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisProgrammingExerciseChatSession irisSession2 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession2 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession1);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
@@ -409,7 +409,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -434,7 +434,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "ADMIN")
     void sendMessageRateLimitReached() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         IrisMessage messageToSend1 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage messageToSend2 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
@@ -470,7 +470,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessageUpdatesSessionTitle() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         final String expectedTitle = "New chat";
@@ -493,7 +493,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage_invokesIrisCitationService() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -511,7 +511,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMcqJsonResultStoresAsJsonContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -539,7 +539,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendPlainTextResultStoresAsTextContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -562,7 +562,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendNonMcqJsonResultStoresAsTextContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -588,7 +588,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendInvalidJsonResultStoresAsTextContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 

@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -17,9 +18,9 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -28,13 +29,15 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     private static final String TEST_PREFIX = "irislecturechatsessiontest";
 
     @Autowired
-    private IrisLectureChatSessionRepository irisLectureChatSessionRepository;
+    private IrisChatSessionRepository irisChatSessionRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
+
+    private Course course;
 
     private Lecture lecture;
 
@@ -47,29 +50,37 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
             userTestRepository.save(user);
         }
 
-        Course course = courseUtilService.createCourse();
+        course = courseUtilService.createCourse();
         lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
         activateIrisGlobally();
         activateIrisFor(course);
     }
 
+    private String lectureChatCurrentUrl(long lectureId) {
+        return "/api/iris/chat/" + course.getId() + "/sessions/current?mode=LECTURE_CHAT&entityId=" + lectureId;
+    }
+
+    private String lectureChatCurrentUrl() {
+        return lectureChatCurrentUrl(lecture.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_createsNewSession() throws Exception {
         // When: User requests current session for the first time
-        var response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: A new session should be created
         assertThat(response).isNotNull();
         assertThat(response.id()).isNotNull();
 
         // Verify session was saved in database
-        var sessionsInDb = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(),
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
+        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), Pageable.unpaged());
         assertThat(sessionsInDb).hasSize(1);
         assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.id());
-        assertThat(sessionsInDb.getFirst().getLectureId()).isEqualTo(lecture.getId());
+        assertThat(sessionsInDb.getFirst().getEntityId()).isEqualTo(lecture.getId());
     }
 
     @Test
@@ -77,18 +88,18 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void testGetCurrentSessionOrCreateIfNotExists_returnsExistingSession() throws Exception {
         // Given: User already has a session
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisLectureChatSession existingSession = new IrisLectureChatSession(lecture, user);
-        existingSession = irisLectureChatSessionRepository.save(existingSession);
+        IrisChatSession existingSession = new IrisChatSession(lecture, user);
+        existingSession = irisChatSessionRepository.save(existingSession);
 
         // When: User requests current session again
-        var response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        var response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: The existing session should be returned
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(existingSession.getId());
 
         // Verify no new session was created
-        var sessionsInDb = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());
+        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId(), Pageable.unpaged());
         assertThat(sessionsInDb).hasSize(1);
     }
 
@@ -97,15 +108,15 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void testGetCurrentSessionOrCreateIfNotExists_returnsLatestSession() throws Exception {
         // Given: User has multiple sessions
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisLectureChatSession olderSession = new IrisLectureChatSession(lecture, user);
+        IrisChatSession olderSession = new IrisChatSession(lecture, user);
         olderSession.setCreationDate(ZonedDateTime.now().minusMinutes(1));
-        irisLectureChatSessionRepository.save(olderSession);
+        irisChatSessionRepository.save(olderSession);
 
-        IrisLectureChatSession newerSession = new IrisLectureChatSession(lecture, user);
-        newerSession = irisLectureChatSessionRepository.save(newerSession);
+        IrisChatSession newerSession = new IrisChatSession(lecture, user);
+        newerSession = irisChatSessionRepository.save(newerSession);
 
         // When: User requests current session
-        var response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        var response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: The latest session should be returned
         assertThat(response).isNotNull();
@@ -123,14 +134,16 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         activateIrisFor(otherCourse);
 
         // When/Then: Request should be forbidden (student1 is not in otherCourse)
-        request.postWithResponseBody("/api/iris/lecture-chat/" + otherLecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/chat/" + otherCourse.getId() + "/sessions/current?mode=LECTURE_CHAT&entityId=" + otherLecture.getId(), null,
+                IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_notFoundForInvalidLectureId() throws Exception {
         // When/Then: Request with invalid lecture ID should fail
-        request.postWithResponseBody("/api/iris/lecture-chat/999999/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/iris/chat/" + course.getId() + "/sessions/current?mode=LECTURE_CHAT&entityId=999999", null, IrisChatSessionResponseDTO.class,
+                HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -138,12 +151,11 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void testGetCurrentSessionOrCreateIfNotExists_differentUsersGetDifferentSessions() throws Exception {
         // Given: Student1 already has a session
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisLectureChatSession student1Session = new IrisLectureChatSession(lecture, student1);
-        student1Session = irisLectureChatSessionRepository.save(student1Session);
+        IrisChatSession student1Session = new IrisChatSession(lecture, student1);
+        student1Session = irisChatSessionRepository.save(student1Session);
 
         // When: Student2 requests a session
-        var student2Response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
-                HttpStatus.CREATED);
+        var student2Response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: Student2 should get a different session
         assertThat(student2Response).isNotNull();
@@ -151,8 +163,8 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         // Verify both sessions exist
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var student1Sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student1.getId());
-        var student2Sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student2.getId());
+        var student1Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student1.getId(), Pageable.unpaged());
+        var student2Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student2.getId(), Pageable.unpaged());
 
         assertThat(student1Sessions).hasSize(1);
         assertThat(student2Sessions).hasSize(1);
@@ -162,30 +174,30 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCurrentSessionOrCreateIfNotExists_tutorCanAccessSession() throws Exception {
         // When: Tutor requests current session
-        var response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: Tutor should successfully create/get a session
         assertThat(response).isNotNull();
         assertThat(response.id()).isNotNull();
 
         // Verify the session is in the database with correct lecture ID
-        var sessionFromDb = irisLectureChatSessionRepository.findById(response.id()).orElseThrow();
-        assertThat(sessionFromDb.getLectureId()).isEqualTo(lecture.getId());
+        var sessionFromDb = irisChatSessionRepository.findById(response.id()).orElseThrow();
+        assertThat(sessionFromDb.getEntityId()).isEqualTo(lecture.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCurrentSessionOrCreateIfNotExists_instructorCanAccessSession() throws Exception {
         // When: Instructor requests current session
-        var response = request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         // Then: Instructor should successfully create/get a session
         assertThat(response).isNotNull();
         assertThat(response.id()).isNotNull();
 
         // Verify the session is in the database with correct lecture ID
-        var sessionFromDb = irisLectureChatSessionRepository.findById(response.id()).orElseThrow();
-        assertThat(sessionFromDb.getLectureId()).isEqualTo(lecture.getId());
+        var sessionFromDb = irisChatSessionRepository.findById(response.id()).orElseThrow();
+        assertThat(sessionFromDb.getEntityId()).isEqualTo(lecture.getId());
     }
 
     @Test
@@ -193,9 +205,9 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void testGetCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
         // Given: User already has an existing session so the "get existing" path is taken
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
+        irisChatSessionRepository.save(new IrisChatSession(lecture, user));
 
-        request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        request.postWithResponseBody(lectureChatCurrentUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }

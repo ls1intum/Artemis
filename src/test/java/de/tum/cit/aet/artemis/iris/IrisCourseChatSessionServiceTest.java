@@ -16,15 +16,15 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 
 class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscoursechatsessionservice";
 
     @Autowired
-    private IrisCourseChatSessionService irisCourseChatSessionService;
+    private IrisChatSessionService irisCourseChatSessionService;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -36,7 +36,7 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
 
     private User user;
 
-    private IrisCourseChatSession session;
+    private IrisChatSession session;
 
     @BeforeEach
     void setUp() {
@@ -49,7 +49,7 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         // Ensure course membership for auth check
         user.setGroups(Set.of(course.getStudentGroupName()));
 
-        session = new IrisCourseChatSession(course, user);
+        session = new IrisChatSession(course, user);
         session.setId(7L); // needed for exception message path
     }
 

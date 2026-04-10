@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -132,7 +132,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingHandledExerciseChat() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
@@ -167,7 +167,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingSavedExerciseChat() {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage irisMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         irisMessageRepository.save(irisMessage);
@@ -184,7 +184,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");

@@ -28,15 +28,15 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -46,18 +46,20 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     private static final String TEST_PREFIX = "irischatsessionintegration";
 
     @Autowired
-    private IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
+    private IrisChatSessionRepository irisChatSessionRepository;
 
     @Autowired
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private IrisMessageRepository irisMessageRepository;
+    private de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository irisMessageRepository;
 
     @Autowired
     private de.tum.cit.aet.artemis.iris.service.IrisSessionService irisSessionService;
 
     private ProgrammingExercise exercise;
+
+    private Course course;
 
     @BeforeEach
     void initTestCase() {
@@ -68,16 +70,16 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
             userTestRepository.save(user);
         }
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
     }
 
-    private IrisProgrammingExerciseChatSession createSessionForUser(String userLogin) {
+    private IrisChatSession createSessionForUser(String userLogin) {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisExerciseChatSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
+        return irisChatSessionRepository.save(new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT));
     }
 
     private IrisMessage createDefaultMockTextMessage(IrisSession irisSession) {
@@ -110,37 +112,49 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         return new IrisJsonMessageContent(jsonNode);
     }
 
+    private String createSessionUrl() {
+        return "/api/iris/chat/" + course.getId() + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+    }
+
+    private String getCurrentSessionUrl() {
+        return "/api/iris/chat/" + course.getId() + "/sessions/current?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+    }
+
+    private String getAllSessionsUrl() {
+        return "/api/iris/chat/" + course.getId() + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        var actualIrisSession = irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.id());
+        var irisSession = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var actualIrisSession = irisChatSessionRepository.findByIdElseThrow(irisSession.id());
         assertThat(actualIrisSession.getUserId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
-        assertThat(exercise.getId()).isEqualTo(actualIrisSession.getExerciseId());
+        assertThat(exercise.getId()).isEqualTo(actualIrisSession.getEntityId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession_alreadyExists() throws Exception {
-        var firstResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        var secondResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var firstResponse = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var secondResponse = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         assertThat(firstResponse).isNotEqualTo(secondResponse);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        var currentIrisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        var irisSession = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var currentIrisSession = request.postWithResponseBody(getCurrentSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
         assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessions() throws Exception {
-        var irisSession1 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        var irisSession2 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        List<IrisChatSessionResponseDTO> irisSessions = request.getList(exerciseChatUrl(exercise.getId()), HttpStatus.OK, IrisChatSessionResponseDTO.class);
+        var irisSession1 = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var irisSession2 = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        List<IrisChatSessionResponseDTO> irisSessions = request.getList(getAllSessionsUrl(), HttpStatus.OK, IrisChatSessionResponseDTO.class);
         assertThat(irisSessions).hasSize(2).extracting(IrisChatSessionResponseDTO::id).containsExactlyInAnyOrder(irisSession1.id(), irisSession2.id());
     }
 
@@ -167,12 +181,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseWithIrisSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.id())).isNotNull();
+        var irisSession = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        assertThat(irisChatSessionRepository.findByIdElseThrow(irisSession.id())).isNotNull();
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.id()))).isFalse();
+        assertThat(irisChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.id()))).isFalse();
     }
 
     @Test
@@ -186,11 +200,11 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         irisMessageService.saveMessage(createDefaultMockTextMessage(irisSession), irisSession, IrisMessageSender.USER);
         irisMessageService.saveMessage(createDefaultMockTextMessage(irisSession), irisSession, IrisMessageSender.LLM);
 
-        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
+        assertThat(irisChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
+        assertThat(irisChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
     }
 
@@ -205,11 +219,11 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         irisMessageService.saveMessage(createDefaultMockJsonMessage(irisSession), irisSession, IrisMessageSender.USER);
         irisMessageService.saveMessage(createDefaultMockJsonMessage(irisSession), irisSession, IrisMessageSender.LLM);
 
-        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
+        assertThat(irisChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
+        assertThat(irisChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
     }
 
@@ -227,8 +241,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Mock Pyris response
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             // Verify uncommitted files are in the repository
-            if (dto.submission() != null && dto.submission().repository() != null) {
-                assertThat(dto.submission().repository()).containsAllEntriesOf(uncommittedFiles);
+            if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
+                assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
             }
         });
 
@@ -236,7 +250,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
         // Assert - Verify the session was processed and messages exist
-        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        var updatedSession = irisChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
@@ -266,7 +280,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
         // Assert - Verify the session was processed normally
-        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        var updatedSession = irisChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
@@ -291,7 +305,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         irisSessionService.requestMessageFromIris(session);
 
         // Assert - Verify the session was processed normally
-        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        var updatedSession = irisChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
         var messages = irisMessageRepository.findAllBySessionId(session.getId());
         assertThat(messages).isNotEmpty();
@@ -333,8 +347,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Mock Pyris response
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             // Verify uncommitted files are in the repository
-            if (dto.submission() != null && dto.submission().repository() != null) {
-                assertThat(dto.submission().repository()).containsAllEntriesOf(uncommittedFiles);
+            if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
+                assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
             }
         });
 
@@ -376,12 +390,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
-        request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        request.postWithResponseBody(getCurrentSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
-    }
-
-    private static String exerciseChatUrl(long sessionId) {
-        return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
     }
 }
