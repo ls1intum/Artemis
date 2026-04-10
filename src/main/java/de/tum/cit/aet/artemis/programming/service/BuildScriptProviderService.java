@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
 /**
  * Service for providing build scripts for programming exercises
- * The scripts are loaded from the resources/templates/aeolus directory
+ * The scripts are loaded from the resources/templates/phases directory
  */
 @Lazy
 @Service

@@ -361,9 +361,6 @@ jhipster:
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
 
-aeolus:
-    url: http://mock-aeolus-url:8090
-
 # Eureka configuration
 eureka:
     client:

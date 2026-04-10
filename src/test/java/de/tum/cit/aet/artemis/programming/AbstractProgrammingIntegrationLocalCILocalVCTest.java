@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCre
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.programming.service.localci.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;

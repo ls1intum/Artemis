@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.aeolus;
+package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.web.localci.BuildPhasesTemplateResourc
 
 /**
  * Handles the request to {@link BuildPhasesTemplateResource} and Artemis internal
- * requests to fetch aeolus templates for programming exercises.
+ * requests to fetch template defaults for programming exercises.
  */
 @Lazy
 @Service
@@ -62,7 +62,7 @@ public class BuildPhasesTemplateService {
     }
 
     /**
-     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the bean has been created.
+     * Loads all YAML scripts from the "templates/phases" directory into the cache when the bean has been created.
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *

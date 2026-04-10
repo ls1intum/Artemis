@@ -105,7 +105,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          PROFILES=dev,localci,aeolus,localvc,artemis,scheduling,buildagent,core,ldap
+          PROFILES=dev,localci,localvc,artemis,scheduling,buildagent,core,ldap
           JAR=$(ls build/libs/Artemis*.jar | head -n1)
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
@@ -120,7 +120,6 @@ jobs:
             --spring.datasource.username=sa \
             --spring.datasource.password= \
             --eureka.client.enabled=false \
-            --aeolus.url=http://aeolus.fake \
             > app.log 2>&1 &
           echo $! > app.pid
 
