@@ -44,6 +44,18 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission_;
 public class StudentParticipationSpecs {
 
     // --------------------------------------------------
+    // Helpers
+    // --------------------------------------------------
+
+    /**
+     * Returns a no-op specification that adds no predicate (matches everything).
+     */
+    @NonNull
+    private static Specification<StudentParticipation> noOp() {
+        return (root, query, cb) -> cb.conjunction();
+    }
+
+    // --------------------------------------------------
     // Basic filter specifications
     // --------------------------------------------------
 
@@ -96,14 +108,14 @@ public class StudentParticipationSpecs {
      * @param teamMode   whether the exercise uses teams
      * @return specification, or null if search term is blank
      */
-    @Nullable
+    @NonNull
     public static Specification<StudentParticipation> searchByName(@Nullable String searchTerm, boolean teamMode) {
         if (searchTerm == null || searchTerm.isBlank()) {
-            return null;
+            return noOp();
         }
         List<String> tokens = Arrays.stream(searchTerm.split(",")).map(String::trim).filter(t -> !t.isBlank()).toList();
         if (tokens.isEmpty()) {
-            return null;
+            return noOp();
         }
         if (teamMode) {
             return (root, query, cb) -> {
@@ -288,10 +300,10 @@ public class StudentParticipationSpecs {
      * @param scoreRangeUpper upper bound (nullable to skip)
      * @return specification, or null if both bounds are null
      */
-    @Nullable
+    @NonNull
     public static Specification<StudentParticipation> scoreInRange(@Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
         if (scoreRangeLower == null || scoreRangeUpper == null) {
-            return null;
+            return noOp();
         }
         return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> {
             Predicate lowerBound = c.ge(r.get(Result_.SCORE), scoreRangeLower);
@@ -306,10 +318,10 @@ public class StudentParticipationSpecs {
      * @param filterProp filter name (Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
      * @return specification, or null for unrecognized filterProp
      */
-    @Nullable
+    @NonNull
     public static Specification<StudentParticipation> scoresFilter(@Nullable String filterProp) {
         if (filterProp == null) {
-            return null;
+            return noOp();
         }
         return switch (filterProp) {
             case "Successful" -> isSuccessful();
@@ -318,7 +330,7 @@ public class StudentParticipationSpecs {
             case "Manual" -> hasManualAssessment();
             case "Automatic" -> hasAutomaticAssessment();
             case "Locked" -> isLocked();
-            default -> null;
+            default -> noOp();
         };
     }
 
@@ -388,16 +400,16 @@ public class StudentParticipationSpecs {
      * @param stuckBuildCutoff cutoff timestamp for the Failed filter
      * @return specification, or null for unrecognized filterProp
      */
-    @Nullable
+    @NonNull
     public static Specification<StudentParticipation> managementFilter(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
         if (filterProp == null) {
-            return null;
+            return noOp();
         }
         return switch (filterProp) {
             case "Failed" -> hasFailedBuild(stuckBuildCutoff);
             case "NoSubmissions" -> hasNoSubmissions();
             case "NoPracticeMode" -> isNotPracticeMode();
-            default -> null;
+            default -> noOp();
         };
     }
 
