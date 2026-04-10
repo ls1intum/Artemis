@@ -211,7 +211,7 @@ jobs:
     env:
       GATEWAY_USER: "jump"
       GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
-      GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+      GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
       # Download artemis-server-cli from GH without cloning the Repo
