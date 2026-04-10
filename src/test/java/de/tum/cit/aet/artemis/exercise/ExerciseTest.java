@@ -182,4 +182,34 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         exercise.setTitle("Test?+#*                Exercise123%$§");
         assertThat(exercise.getSanitizedExerciseTitle()).isEqualTo("Test_Exercise123");
     }
+
+    @Test
+    void testMaxPointsDecimalPrecisionIsRestricted(){
+        Exercise exercise= new ProgrammingExercise();
+        exercise.setMaxPoints(1.1111111111111112);
+        assertThat(exercise.getMaxPoints()).isEqualTo(1.11);
+    }
+    @Test
+    void testMaxPointsRoundsUp() {
+        Exercise exercise= new ProgrammingExercise();
+        exercise.setMaxPoints(1.556);
+        assertThat(exercise.getMaxPoints()).isEqualTo(1.56);
+    }
+
+    @Test
+    void testMaxPointsRoundsDown() {
+        Exercise exercise= new ProgrammingExercise();
+        exercise.setMaxPoints(1.554);
+        assertThat(exercise.getMaxPoints()).isEqualTo(1.55);
+    }
+    @Test
+    void testMaxPointsWithExactlyTwoDecimals() {
+        Exercise exercise= new ProgrammingExercise();
+        exercise.setMaxPoints(1.50);
+        assertThat(exercise.getMaxPoints()).isEqualTo(1.50);
+    }
+
+
+
+
 }
