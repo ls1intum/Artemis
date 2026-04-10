@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -120,5 +121,57 @@ describe('AboutIrisModalComponent', () => {
             userIdentitySignal.set(undefined);
             expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDesc');
         });
+    });
+});
+
+describe('AboutIrisModalComponent (MatDialogRef only)', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: AboutIrisModalComponent;
+    let fixture: ComponentFixture<AboutIrisModalComponent>;
+    let matDialogRef: { close: ReturnType<typeof vi.fn> };
+    let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    const userIdentitySignal = signal<User | undefined>(undefined);
+
+    beforeEach(async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        matDialogRef = { close: vi.fn() };
+        chatService = { clearChat: vi.fn() };
+
+        TestBed.configureTestingModule({
+            imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: MatDialogRef, useValue: matDialogRef },
+                { provide: IrisChatService, useValue: chatService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
+            ],
+        });
+
+        userIdentitySignal.set(undefined);
+        fixture = TestBed.createComponent(AboutIrisModalComponent);
+        component = fixture.componentInstance;
+        await fixture.whenStable();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create when opened via MatDialog', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('close() should call matDialogRef.close()', () => {
+        component.close();
+        expect(matDialogRef.close).toHaveBeenCalledOnce();
+        expect(chatService.clearChat).not.toHaveBeenCalled();
+    });
+
+    it('tryIris() should clear chat and close MatDialog', () => {
+        component.tryIris();
+        expect(chatService.clearChat).toHaveBeenCalledOnce();
+        expect(matDialogRef.close).toHaveBeenCalledOnce();
     });
 });

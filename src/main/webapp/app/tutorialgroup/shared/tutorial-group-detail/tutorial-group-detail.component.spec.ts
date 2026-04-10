@@ -91,6 +91,7 @@ describe('TutorialGroupDetailComponent', () => {
             end: dayjs('2025-01-15T15:00:00+01:00').toISOString(),
             location: '01.05.13',
             isCancelled: false,
+            isCancelledByFreePeriod: false,
             locationChanged: false,
             timeChanged: false,
             dateChanged: false,
@@ -256,26 +257,6 @@ describe('TutorialGroupDetailComponent', () => {
         expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).not.toBeNull();
     });
 
-    it('should display edit session button if session is not cancelled', () => {
-        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
-        const session = createRawTutorialGroupSessionDTO();
-        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
-        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).not.toBeNull();
-    });
-
-    it('should not display edit session button if session is cancelled', () => {
-        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
-        const session = createRawTutorialGroupSessionDTO({ isCancelled: true });
-        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
-        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).toBeNull();
-    });
-
     it('should display cancel session button but not activate session button if session is not cancelled', () => {
         fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
         const session = createRawTutorialGroupSessionDTO();
@@ -295,6 +276,17 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).toBeNull();
+    });
+
+    it('should display neither activate nor cancel session button if session is cancelled by a free period', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        const session = createRawTutorialGroupSessionDTO({ isCancelled: true, isCancelledByFreePeriod: true });
+        const tutorialGroup = createTutorialGroupDetailData({ sessions: [session] });
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
         expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).toBeNull();
     });
 
