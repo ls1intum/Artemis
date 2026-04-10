@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.web.admin;
 import static de.tum.cit.aet.artemis.core.config.Constants.DEFAULT_LANGUAGE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
@@ -141,6 +142,9 @@ public class AdminUserResource {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
+        else if (IRIS_BOT_LOGIN.equals(userToBeCreated.getLogin().toLowerCase())) {
+            throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
+        }
         else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
@@ -167,6 +171,9 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeActivated -> {
+            if (IRIS_BOT_LOGIN.equals(userToBeActivated.getLogin())) {
+                throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+            }
             checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeActivated.getAuthorities()));
             userCreationService.activateUser(userToBeActivated);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", userToBeActivated.getLogin()))
@@ -184,6 +191,9 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeDeactivated -> {
+            if (IRIS_BOT_LOGIN.equals(userToBeDeactivated.getLogin())) {
+                throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+            }
             checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
             userCreationService.deactivateUser(userToBeDeactivated);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
@@ -209,12 +219,19 @@ public class AdminUserResource {
             throw new EmailAlreadyUsedException();
         }
 
+        if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
+            throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
+        }
+
         var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+        if (IRIS_BOT_LOGIN.equals(existingUser.getLogin())) {
+            throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+        }
         boolean editedUserIsAdmin = AuthorizationCheckService.isAdmin(existingUser.getAuthorities());
         boolean requestedAdminEscalation = managedUserVM.getAuthorities() != null && AuthorizationCheckService.isAdminByAuthorityName(managedUserVM.getAuthorities());
         checkSuperAdminAuthorizationToManageAdmin(editedUserIsAdmin || requestedAdminEscalation);
@@ -405,6 +422,9 @@ public class AdminUserResource {
     @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
+        if (IRIS_BOT_LOGIN.equals(login)) {
+            throw new BadRequestAlertException("The Iris bot user cannot be deleted via the API.", "userManagement", "cannotDeleteIrisBot");
+        }
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
@@ -426,6 +446,8 @@ public class AdminUserResource {
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
 
+        // Remove protected users from the list
+        logins.remove(IRIS_BOT_LOGIN);
         // Get current user and remove current user from list of logins
         var currentUser = userRepository.getUser();
         logins.remove(currentUser.getLogin());
