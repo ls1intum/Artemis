@@ -188,7 +188,7 @@ export class ExerciseSplitPanelComponent {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                this.chatService.switchTo(mode, this.courseId(), exercise.id);
             }
         });
         effect(() => {

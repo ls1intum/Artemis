@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
@@ -98,20 +98,50 @@ export class IrisChatHttpService {
         return this.httpClient.put<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
-    getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
+    /**
+     * Retrieves or creates the current chat session for the given context.
+     * @param courseId the course ID
+     * @param mode the chat mode (e.g. 'COURSE_CHAT', 'PROGRAMMING_EXERCISE_CHAT')
+     * @param entityId optional exercise or lecture ID (omit for COURSE_CHAT)
+     */
+    getCurrentChatSessionOrCreate(courseId: number, mode: string, entityId?: number): Response<IrisSession> {
+        const params = this.buildChatParams(mode, entityId);
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions/current`, null, { observe: 'response', params });
     }
 
-    createSession<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
+    /**
+     * Creates a new chat session for the given context.
+     * @param courseId the course ID
+     * @param mode the chat mode
+     * @param entityId optional exercise or lecture ID
+     */
+    createChatSession(courseId: number, mode: string, entityId?: number): Response<IrisSession> {
+        const params = this.buildChatParams(mode, entityId);
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions`, null, { observe: 'response', params });
+    }
+
+    /**
+     * Retrieves or creates the current tutor suggestion session for the given post.
+     * @param postId the post ID
+     */
+    getCurrentTutorSuggestionSessionOrCreate(postId: number): Response<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${postId}/sessions/current`, null, { observe: 'response' });
+    }
+
+    /**
+     * Creates a new tutor suggestion session for the given post.
+     * @param postId the post ID
+     */
+    createTutorSuggestionSession(postId: number): Response<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/${postId}/sessions`, null, { observe: 'response' });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<any[]>(`${this.apiPrefix}/chat-history/${courseId}/sessions`).pipe();
+        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`).pipe();
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe();
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/${courseId}/session/${sessionId}`).pipe();
     }
 
     /**
@@ -120,7 +150,7 @@ export class IrisChatHttpService {
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
         return this.httpClient
-            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat-history/sessions/count`)
+            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat/sessions/count`)
             .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
     }
 
@@ -129,7 +159,7 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteAllSessions(): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions`, { observe: 'response' });
     }
 
     /**
@@ -138,6 +168,14 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions/${sessionId}`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
+    }
+
+    private buildChatParams(mode: string, entityId?: number): HttpParams {
+        let params = new HttpParams().set('mode', mode);
+        if (entityId !== undefined) {
+            params = params.set('entityId', entityId);
+        }
+        return params;
     }
 }

@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,16 +18,16 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisChatSession extends IrisSession {
-    // TODO: REFACTORING ASLAN: JSONIGNORE ODER NICHT ?
 
     @JsonIgnore
     private long courseId;
 
     @JsonIgnore
-    private Long exerciseId;
+    private Long entityId;
 
-    @JsonIgnore
-    private Long lectureId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chat_mode")
+    private IrisChatMode chatMode;
 
     public IrisChatSession() {
     }
@@ -32,18 +35,22 @@ public class IrisChatSession extends IrisSession {
     public IrisChatSession(Course course, User user) {
         setUserId(user.getId());
         this.courseId = course.getId();
+        this.entityId = course.getId();
+        this.chatMode = IrisChatMode.COURSE_CHAT;
     }
 
-    public IrisChatSession(Exercise exercise, User user) {
+    public IrisChatSession(Exercise exercise, User user, IrisChatMode chatMode) {
         setUserId(user.getId());
-        this.exerciseId = exercise.getId();
+        this.entityId = exercise.getId();
         this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        this.chatMode = chatMode;
     }
 
     public IrisChatSession(Lecture lecture, User user) {
         setUserId(user.getId());
-        this.lectureId = lecture.getId();
+        this.entityId = lecture.getId();
         this.courseId = lecture.getCourse().getId();
+        this.chatMode = IrisChatMode.LECTURE_CHAT;
     }
 
     public long getCourseId() {
@@ -54,20 +61,12 @@ public class IrisChatSession extends IrisSession {
         this.courseId = courseId;
     }
 
-    public Long getExerciseId() {
-        return exerciseId;
+    public Long getEntityId() {
+        return entityId;
     }
 
-    public void setExerciseId(Long exerciseId) {
-        this.exerciseId = exerciseId;
-    }
-
-    public Long getLectureId() {
-        return lectureId;
-    }
-
-    public void setLectureId(Long lectureId) {
-        this.lectureId = lectureId;
+    public void setEntityId(Long entityId) {
+        this.entityId = entityId;
     }
 
     @Override
@@ -77,6 +76,6 @@ public class IrisChatSession extends IrisSession {
 
     @Override
     public IrisChatMode getMode() {
-        return IrisChatMode.CHAT;
+        return chatMode;
     }
 }

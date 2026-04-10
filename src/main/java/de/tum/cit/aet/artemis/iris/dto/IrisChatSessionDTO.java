@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
  * @param lastActivityDate when the session was last active (latest message timestamp)
  * @param chatMode         the chat mode enum
  */
+// TODO: REFACTORING ASLAN: EXERCISEID / LECTUREID MITSCHICKEN?
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatSessionDTO(long id, long entityId, @Nullable String entityName, @Nullable String title, ZonedDateTime creationDate, @Nullable ZonedDateTime lastActivityDate,
         IrisChatMode chatMode) {

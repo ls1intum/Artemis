@@ -8,8 +8,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChatJob(String jobId, long courseId, long sessionId, @Nullable Long exerciseId, @Nullable Long lectureId, Long traceId, Long userMessageId, Long assistantMessageId)
+public record ChatJob(String jobId, long courseId, long sessionId, @Nullable Long entityId, Long traceId, Long userMessageId, Long assistantMessageId)
         implements TrackedSessionBasedPyrisJob {
+
+    // TODO: REFACTORING ASLAN: Nullable ? Wo wird courseID gebraucht ?
 
     @Override
     public boolean canAccess(Course course) {
@@ -18,21 +20,21 @@ public record ChatJob(String jobId, long courseId, long sessionId, @Nullable Lon
 
     @Override
     public boolean canAccess(Exercise exercise) {
-        return exercise.getId().equals(exerciseId);
+        return exercise.getId().equals(entityId);
     }
 
     @Override
     public ChatJob withUserMessageId(long messageId) {
-        return new ChatJob(jobId, courseId, sessionId, exerciseId, lectureId, traceId, messageId, assistantMessageId);
+        return new ChatJob(jobId, courseId, sessionId, entityId, traceId, messageId, assistantMessageId);
     }
 
     @Override
     public ChatJob withAssistantMessageId(long messageId) {
-        return new ChatJob(jobId, courseId, sessionId, exerciseId, lectureId, traceId, userMessageId, messageId);
+        return new ChatJob(jobId, courseId, sessionId, entityId, traceId, userMessageId, messageId);
     }
 
     @Override
     public ChatJob withTraceId(long traceId) {
-        return new ChatJob(jobId, courseId, sessionId, exerciseId, lectureId, traceId, userMessageId, assistantMessageId);
+        return new ChatJob(jobId, courseId, sessionId, entityId, traceId, userMessageId, assistantMessageId);
     }
 }

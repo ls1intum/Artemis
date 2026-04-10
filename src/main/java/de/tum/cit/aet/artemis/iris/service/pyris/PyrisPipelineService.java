@@ -155,7 +155,7 @@ public class PyrisPipelineService {
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
         executePipeline("chat", user.getSelectedLLMUsage(), variant, eventVariant,
-            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getExerciseId(), session.getLectureId(), lastMessageId),
+            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             dtoBuilder::apply,
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
         // @formatter:on

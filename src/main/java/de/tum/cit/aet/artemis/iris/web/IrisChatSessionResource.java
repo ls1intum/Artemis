@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
@@ -94,18 +95,17 @@ public class IrisChatSessionResource {
     /**
      * POST api/iris/chat/{courseId}/sessions/current: Retrieve or create the current Iris chat session.
      *
-     * @param courseId   the course ID (required for authorization)
-     * @param exerciseId optional exercise ID for exercise chat context
-     * @param lectureId  optional lecture ID for lecture chat context
+     * @param courseId the course ID (required for authorization)
+     * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
+     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
      * @return the current or newly created session
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long lectureId) {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
+            @RequestParam(required = false) Long entityId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasOptedIntoLLMUsageElseThrow();
-        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, exerciseId, lectureId, user);
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, mode, entityId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
@@ -113,18 +113,17 @@ public class IrisChatSessionResource {
     /**
      * POST api/iris/chat/{courseId}/sessions: Create a new Iris chat session.
      *
-     * @param courseId   the course ID (required for authorization)
-     * @param exerciseId optional exercise ID for exercise chat context
-     * @param lectureId  optional lecture ID for lecture chat context
+     * @param courseId the course ID (required for authorization)
+     * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
+     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
      * @return the newly created session
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long lectureId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam IrisChatMode mode, @RequestParam(required = false) Long entityId)
+            throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasOptedIntoLLMUsageElseThrow();
-        var session = irisChatSessionService.createSession(courseId, exerciseId, lectureId, user);
+        var session = irisChatSessionService.createSession(courseId, mode, entityId, user);
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
@@ -132,22 +131,20 @@ public class IrisChatSessionResource {
     /**
      * GET api/iris/chat/{courseId}/sessions: Retrieve all Iris chat sessions for a context.
      *
-     * @param courseId   the course ID (required for authorization)
-     * @param exerciseId optional exercise ID for exercise chat context
-     * @param lectureId  optional lecture ID for lecture chat context
+     * @param courseId the course ID (required for authorization)
+     * @param mode     the chat mode
+     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
      * @return list of sessions
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long lectureId) {
+    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
+            @RequestParam(required = false) Long entityId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasOptedIntoLLMUsageElseThrow();
-
-        var sessions = irisChatSessionService.getAllSessions(courseId, exerciseId, lectureId, user);
+        var sessions = irisChatSessionService.getAllSessions(courseId, mode, entityId, user);
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions.stream().map(IrisChatSessionResponseDTO::of).toList());
     }
@@ -188,7 +185,8 @@ public class IrisChatSessionResource {
             throw new EntityNotFoundException("Iris session with id " + sessionId + " not found");
         }
 
-        irisSessionService.checkHasAccessToIrisSession(irisSession, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        irisSessionService.checkHasAccessToIrisSession(irisSession, user);
 
         boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
