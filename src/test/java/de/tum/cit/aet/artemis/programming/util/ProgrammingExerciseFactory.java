@@ -151,8 +151,20 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.getBuildConfig().setBuildScript("Some script");
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("{\"api\":\"v0.0.1\",\"metadata\":{},\"actions\":[]}");
+        programmingExercise.getBuildConfig().setBuildScript(null);
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                    "phases": [
+                        {
+                            "name": "gradle",
+                            "script": "chmod +x ./gradlew\\n./gradlew clean test",
+                            "condition": "ALWAYS",
+                            "forceRun": false,
+                            "resultPaths": ["**/test-results/test/*.xml"]
+                        }
+                    ]
+                }
+                """);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
