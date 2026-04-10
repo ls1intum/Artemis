@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
+@Lazy
 @Configuration
 @Conditional(IrisEnabled.class)
 public class PyrisConfiguration {
