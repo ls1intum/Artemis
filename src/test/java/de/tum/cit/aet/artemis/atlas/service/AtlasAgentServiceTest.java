@@ -445,10 +445,9 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldFilterOutDelegationMarkers() {
+        void shouldKeepUserAndAssistantMessages() {
             String sessionId = "course_123_user_101";
-            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency"),
-                    new AssistantMessage("Competency created successfully"));
+            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("Competency created successfully"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
 
@@ -553,11 +552,11 @@ class AtlasAgentServiceTest {
         @Test
         void shouldFilterOutAllInternalMessagesAndKeepUserFacingOnes() {
             String sessionId = "course_123_user_707";
-            List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Brief"),
+            List<Message> messages = List.of(new UserMessage("Create OOP competency"),
                     new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
                     new AssistantMessage(
                             "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"}}}%%PREVIEW_DATA_END%%"),
-                    new AssistantMessage("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%"), new AssistantMessage("Task completed successfully"));
+                    new AssistantMessage("Task completed successfully"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
 

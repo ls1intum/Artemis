@@ -152,16 +152,6 @@ class AtlasAgentToolsServiceTest {
         }
 
         @Test
-        void shouldStripReturnToMainAgentMarker() {
-            when(delegationService.delegateToAgent(anyString(), anyString(), anyLong(), anyString(), anyBoolean(), any()))
-                    .thenReturn("Response text %%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
-
-            String result = toolsService.delegateToCompetencyExpert("t", "r", "c", "x");
-
-            assertThat(result).isEqualTo("Response text");
-        }
-
-        @Test
         void shouldReturnUnchangedWhenNoMarkerPresent() {
             when(delegationService.delegateToAgent(anyString(), anyString(), anyLong(), anyString(), anyBoolean(), any())).thenReturn("Clean response");
 

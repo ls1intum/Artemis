@@ -2233,7 +2233,6 @@ describe('AgentChatModalComponent', () => {
     describe('isDelegationBrief', () => {
         it.each([
             'EXERCISE_ID: 42',
-            '%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER',
             '[CREATE_APPROVED_EXERCISE_MAPPING]:{}',
             '[CREATE_APPROVED_COMPETENCY]:',
             '[CREATE_APPROVED_RELATION]:',
