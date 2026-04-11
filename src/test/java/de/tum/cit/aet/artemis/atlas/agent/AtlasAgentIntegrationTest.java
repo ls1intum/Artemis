@@ -275,8 +275,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
             // Store preview data in cache for the first assistant message (index 0)
             var competencyPreviews = List.of(new CompetencyPreviewDTO("Test Competency", "Test Description", "APPLY", null, false));
-            atlasAgentSessionCacheService.storePreviewForMessage(sessionId, 0,
-                    new AtlasAgentSessionCacheService.MessagePreviewData(competencyPreviews, null, null, null));
+            atlasAgentSessionCacheService.storePreviewForMessage(sessionId, 0, new AtlasAgentSessionCacheService.MessagePreviewData(competencyPreviews, null, null, null));
 
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(2))

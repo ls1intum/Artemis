@@ -158,9 +158,9 @@ public class AtlasAgentService {
 
             boolean hasPreviewData = (competencyPreviews != null && !competencyPreviews.isEmpty()) || (relationPreviews != null && !relationPreviews.isEmpty())
                     || exerciseMappingPreview != null;
-            log.info("processChatMessage: hasPreviewData={}, competencyPreviews={}, relationPreviews={}, exerciseMapping={}, responseLength={}",
-                    hasPreviewData, competencyPreviews != null ? competencyPreviews.size() : "null", relationPreviews != null ? relationPreviews.size() : "null",
-                    exerciseMappingPreview != null, response != null ? response.length() : 0);
+            log.info("processChatMessage: hasPreviewData={}, competencyPreviews={}, relationPreviews={}, exerciseMapping={}, responseLength={}", hasPreviewData,
+                    competencyPreviews != null ? competencyPreviews.size() : "null", relationPreviews != null ? relationPreviews.size() : "null", exerciseMappingPreview != null,
+                    response != null ? response.length() : 0);
 
             // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
             // The current response was already added to chat memory by Spring AI's MessageChatMemoryAdvisor,
@@ -374,8 +374,7 @@ public class AtlasAgentService {
         if (!previews.isEmpty()) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
-                atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex,
-                        new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
+                atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex, new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
             }
         }
 
@@ -530,8 +529,7 @@ public class AtlasAgentService {
                 previewService.addAssistantMessageToMemory(sessionId, combinedResponse);
                 if (!previews.isEmpty()) {
                     int assistantIdx = countAssistantMessages(sessionId) - 1;
-                    atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIdx,
-                            new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
+                    atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIdx, new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
                 }
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null, null);
             }

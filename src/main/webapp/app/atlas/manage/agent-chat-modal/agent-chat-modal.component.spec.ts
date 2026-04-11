@@ -790,8 +790,6 @@ describe('AgentChatModalComponent', () => {
             it('should handle empty response message from service', () => {
                 component.currentMessage.set('Test message');
                 component.isAgentTyping.set(false);
-                const errorText = 'Error text';
-                const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(errorText);
                 const mockResponse = {
                     message: '',
                     sessionId: 'course_123',
@@ -804,7 +802,10 @@ describe('AgentChatModalComponent', () => {
 
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
+                // With ?? (nullish coalescing), empty string is a valid message and used as-is
+                const messages = component.messages();
+                const lastAgentMessage = messages.filter((m) => !m.isUser).pop();
+                expect(lastAgentMessage?.content).toBe('');
             });
 
             it('should handle null response message from service', () => {
