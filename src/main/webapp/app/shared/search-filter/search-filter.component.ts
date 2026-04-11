@@ -1,17 +1,15 @@
 import { Component, input, output, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faMagnifyingGlass, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
-    imports: [FaIconComponent, ArtemisTranslatePipe],
+    imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
 })
 export class SearchFilterComponent {
-    readonly faMagnifyingGlass = faMagnifyingGlass;
-    readonly faTimes = faTimes;
-
     readonly placeholderKey = input<string>('artemisApp.course.exercise.search.searchPlaceholder');
     readonly newSearchEvent = output<string>();
 

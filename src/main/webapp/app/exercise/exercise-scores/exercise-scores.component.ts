@@ -173,6 +173,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         scrollable: true,
         scrollHeight: 'flex',
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+        rowActionsAlignment: 'start',
     }));
 
     readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => {

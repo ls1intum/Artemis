@@ -1,22 +1,25 @@
-<div aria-label="Filter Dropdown" ngbDropdown>
-    <button class="btn" ngbDropdownToggle id="filter-dropdown-button" [class]="activeFilter() === allValue() ? 'btn-secondary' : 'btn-success'">
-        <fa-icon [icon]="faFilter" />
-        <span>
-            {{
-                activeFilter() === allValue()
-                    ? ('artemisApp.exercise.filter' | artemisTranslate)
-                    : ('artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + activeFilter() | artemisTranslate) })
-            }}
-        </span>
-    </button>
-    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-        @for (filter of filters(); track filter) {
-            <li>
-                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                    <input type="radio" [ngModel]="activeFilter()" (click)="filterChange.emit(filter)" [value]="filter" />
-                    <span class="ms-1">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-                </label>
-            </li>
-        }
-    </ul>
-</div>
+<p-select
+    size="small"
+    appendTo="self"
+    [options]="filters()"
+    [ngModel]="activeFilter()"
+    (onChange)="filterChange.emit($event.value)"
+    [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
+    aria-label="Filter Dropdown"
+>
+    <ng-template #selectedItem>
+        <div class="d-flex align-items-center">
+            <i class="pi pi-filter"></i>
+            <span class="ms-2">
+                @if (activeFilter() === allValue()) {
+                    {{ 'artemisApp.exercise.filter' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + activeFilter() | artemisTranslate) } }}
+                }
+            </span>
+        </div>
+    </ng-template>
+    <ng-template #item let-filter>
+        {{ 'artemisApp.exercise.show' + filter | artemisTranslate }}
+    </ng-template>
+</p-select>

@@ -1,21 +1,18 @@
-<div class="me-2">
-    <div class="input-group rounded-3">
-        <input
-            id="search"
-            type="text"
-            class="form-control rounded-3 border"
-            [value]="searchValue()"
-            (input)="setSearchValue($event.target.value)"
-            [placeholder]="placeholderKey() | artemisTranslate"
-            aria-label="Filter Search Field"
-            aria-describedby="filter-search-field"
-        />
-        <div class="position-relative my-auto mn-icon-field">
-            @if (searchValue()) {
-                <fa-icon id="test-fa-times" class="pointer text-secondary" [icon]="faTimes" (click)="resetSearchValue()" tooltip="Clear search filter" />
-            } @else {
-                <fa-icon [icon]="faMagnifyingGlass" />
-            }
-        </div>
-    </div>
-</div>
+<p-iconfield>
+    <p-inputicon class="pi pi-search" />
+    <input
+        #searchInput
+        id="search"
+        type="text"
+        pSize="small"
+        pInputText
+        [value]="searchValue()"
+        (input)="setSearchValue(searchInput.value)"
+        [placeholder]="placeholderKey() | artemisTranslate"
+        aria-label="Filter Search Field"
+        aria-describedby="filter-search-field"
+    />
+    @if (searchValue()) {
+        <p-inputicon class="pi pi-times pointer" (click)="resetSearchValue()" />
+    }
+</p-iconfield>

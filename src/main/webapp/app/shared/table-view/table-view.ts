@@ -61,6 +61,8 @@ export interface TableConfig {
     scrollable: boolean;
     /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
     scrollHeight: string | undefined;
+    /** Alignment of the row actions column. Default: 'end' */
+    rowActionsAlignment: 'start' | 'end';
 }
 
 /**
@@ -86,6 +88,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
     scrollable: false,
     scrollHeight: undefined,
+    rowActionsAlignment: 'end',
 };
 
 @Component({
@@ -146,6 +149,7 @@ export class TableViewComponent<T> {
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
+            rowActionsAlignment: opts.rowActionsAlignment ?? DEFAULT_TABLE_CONFIG.rowActionsAlignment,
         };
         return tableConfig;
     });

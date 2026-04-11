@@ -1,15 +1,14 @@
-import { Component, input, output } from '@angular/core';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Component, ViewEncapsulation, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SelectModule } from 'primeng/select';
 
 @Component({
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
     styleUrls: ['./filter-dropdown.component.scss'],
-    imports: [NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, FaIconComponent, FormsModule, ArtemisTranslatePipe],
+    imports: [FormsModule, ArtemisTranslatePipe, SelectModule],
+    encapsulation: ViewEncapsulation.None,
 })
 export class FilterDropdownComponent {
     readonly filters = input.required<string[]>();
@@ -18,5 +17,5 @@ export class FilterDropdownComponent {
     readonly allValue = input<string>('All');
     readonly filterChange = output<string>();
 
-    protected readonly faFilter = faFilter;
+    readonly isFiltered = computed(() => this.activeFilter() !== this.allValue());
 }

@@ -77,7 +77,7 @@
                     </td>
                 }
                 @if (rowActions()) {
-                    <td class="text-end">
+                    <td [class]="'text-' + resolvedOptions().rowActionsAlignment">
                         <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
                     </td>
                 }
