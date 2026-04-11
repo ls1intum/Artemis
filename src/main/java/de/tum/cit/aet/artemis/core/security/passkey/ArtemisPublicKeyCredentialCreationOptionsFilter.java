@@ -33,6 +33,8 @@ import org.springframework.security.web.webauthn.registration.PublicKeyCredentia
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 /**
  * <p>
  * A {@link jakarta.servlet.Filter} that renders the {@link PublicKeyCredentialCreationOptions} for <a href=
@@ -62,7 +64,7 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
     private final WebAuthnRelyingPartyOperations rpOperations;
 
     private final HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
-            Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module()).build());
+            Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module(), new JavaTimeModule()).build());
 
     /**
      * Creates a new instance.

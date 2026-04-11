@@ -137,13 +137,45 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "Wie kann ich Dir helfen?"
+                "helpOffer": "Wie kann ich Dir helfen?",
+                "suggestions": {
+                    "learn": "Lernen",
+                    "learnStarter": "Hilf mir, das Konzept zu verstehen von ",
+                    "quiz": "Quiz",
+                    "quizTopicStarter": "Erstelle 5 Multiple-Choice-Fragen, um mich zum Thema zu prüfen: ",
+                    "tips": "Tipps",
+                    "tipsStarter": "Gib mir 3 Tipps, um diesen Kurs effektiv zu lernen"
+                },
+                "placeholders": {
+                    "exercise": {
+                        "testsFailing": "Warum schlagen meine Tests fehl?",
+                        "whereToStart": "Ich stecke fest, wo soll ich anfangen?",
+                        "conceptNeeded": "Welches Konzept muss ich verstehen, um diese Aufgabe zu lösen?",
+                        "walkThrough": "Führe mich durch die Anforderungen dieser Aufgabe"
+                    },
+                    "lecture": {
+                        "keyPoints": "Was sind die wichtigsten Punkte, die ich aus dieser Vorlesung wissen sollte?",
+                        "summarise": "Fasse zusammen, was ich wissen sollte"
+                    }
+                }
             },
             "mcq": {
                 "submit": "Antwort abschicken",
                 "correct": "Richtig!",
                 "incorrect": "Falsch.",
-                "explanation": "Erklärung:"
+                "explanation": "Erklärung:",
+                "questionOf": "Frage {{ current }} von {{ total }}",
+                "viewScore": "Ergebnis anzeigen",
+                "reviewQuestions": "Fragen überprüfen",
+                "score": "Ergebnis"
+            },
+            "contextSelection": {
+                "label": "Chat-Kontext auswählen",
+                "search": "Suchen...",
+                "placeholder": "Kontext auswählen...",
+                "courseGroup": "Kurs",
+                "lecturesGroup": "Vorlesungen",
+                "exercisesGroup": "Aufgaben"
             },
             "citation": {
                 "unitLabel": "Einheit:",
@@ -202,6 +234,7 @@
                 "older": "Älter",
                 "relatedEntityTooltip": {
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "textExercise": "Diese Konversation bezieht sich auf eine Textaufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
                 },
                 "deleteSession": "Löschen",

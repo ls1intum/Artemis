@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 
 /**
@@ -33,11 +32,8 @@ public class NebulaTranscriptionResource {
 
     private final TumLiveService tumLiveService;
 
-    private final LectureTranscriptionService lectureTranscriptionService;
-
-    public NebulaTranscriptionResource(TumLiveService tumLiveService, LectureTranscriptionService lectureTranscriptionService) {
+    public NebulaTranscriptionResource(TumLiveService tumLiveService) {
         this.tumLiveService = tumLiveService;
-        this.lectureTranscriptionService = lectureTranscriptionService;
     }
 
     /**

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
+import static de.tum.cit.aet.artemis.core.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,7 +25,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuditEventService;
-import tech.jhipster.web.util.ResponseUtil;
+import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 
 /**
  * REST controller for getting the audit events.

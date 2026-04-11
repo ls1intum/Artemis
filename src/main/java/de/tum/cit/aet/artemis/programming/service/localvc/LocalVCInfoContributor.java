@@ -26,7 +26,7 @@ public class LocalVCInfoContributor implements InfoContributor {
     @Value("${server.url}")
     private URI artemisServerUri;
 
-    @Value("${artemis.version-control.repository-authentication-mechanisms:password,token,ssh}")
+    @Value("${artemis.version-control.repository-authentication-mechanisms:token,ssh,password}")
     private List<String> orderedRepositoryAuthenticationMechanisms;
 
     @Value("${artemis.version-control.ssh-port:7921}")

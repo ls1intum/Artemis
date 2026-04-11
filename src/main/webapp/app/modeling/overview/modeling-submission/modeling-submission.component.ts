@@ -14,7 +14,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
@@ -55,6 +54,7 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -64,7 +64,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
         HeaderParticipationPageComponent,
         ButtonComponent,
         RouterLink,
-        RequestFeedbackButtonComponent,
         ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -82,6 +81,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
         DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        ExerciseSubmitButtonComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -108,6 +108,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     displayHeader = input(true);
     isPrinting = input(false);
     expandProblemStatement = input(false);
+    showProblemStatement = input(true);
 
     private subscription: Subscription;
     private manualResultUpdateListener?: Subscription;
@@ -365,6 +366,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
+            !this.participation.testRun &&
             dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.modelingExercise, this.participation));
 
         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
@@ -417,6 +419,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.model) {
             this.umlModel = importDiagram(JSON.parse(this.submission.model));
             this.hasElements = hasModelElements(this.umlModel);
+        } else {
+            this.umlModel = undefined!;
+            this.hasElements = false;
         }
         this.explanation = this.submission.explanationText ?? '';
     }
@@ -890,7 +895,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise && !this.examMode && !hasExerciseDueDatePassed(this.modelingExercise, this.participation);
+        return this.modelingExercise && !this.examMode && (!hasExerciseDueDatePassed(this.modelingExercise, this.participation) || !!this.participation?.testRun);
     }
 
     get submitButtonTooltip(): string {
