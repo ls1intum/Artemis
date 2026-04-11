@@ -87,13 +87,7 @@ public class ProgrammingExerciseBuildPlanService {
     }
 
     /**
-     * Ensures that the build plan configuration for a programming exercise is stored in the
-     * {@link BuildPlanPhasesDTO} format. This handles three cases:
-     * <ol>
-     * <li>No config exists ({@code null}): loads the default windfile template and converts it to phases format</li>
-     * <li>Config exists in legacy Windfile format: converts it to phases format</li>
-     * <li>Config already in phases format: no change needed</li>
-     * </ol>
+     * Adds the default build plan to a programming exercise.
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
      * @param programmingExercise the programming exercise whose build config should be normalized

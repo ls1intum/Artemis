@@ -57,21 +57,21 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     /**
-     * Fetches the default build plan configuration for the given exercise and the windfile for its metadata (docker image etc.).
+     * Fetches the default build plan configuration for the given localci exercise
      *
      * @param exercise for which the build plans should be recreated
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
-        // TODO: implement this differently for LocalCI in the future
         if (exercise == null) {
             return;
         }
         log.debug("Recreating build plans for exercise {}", exercise.getTitle());
         List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(null);
-        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, null).toBuildPlanConfiguration());
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
         // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

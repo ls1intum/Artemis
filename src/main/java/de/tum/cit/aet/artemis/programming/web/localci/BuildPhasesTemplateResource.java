@@ -63,7 +63,7 @@ public class BuildPhasesTemplateResource {
     public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
+        log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
                 staticAnalysis, sequentialRuns);
 
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
@@ -99,7 +99,7 @@ public class BuildPhasesTemplateResource {
             return ResponseEntity.ok(new BuildPlanPhasesDTO(phases, image));
         }
         catch (IOException ex) {
-            log.warn("Error when retrieving aeolus template file", ex);
+            log.warn("Error when retrieving phases template file", ex);
             return ResponseEntity.notFound().build();
         }
     }
