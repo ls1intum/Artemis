@@ -42,8 +42,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     memorySwap: number | undefined;
     dockerFlags: DockerFlags = {};
 
-    isAeolus = input.required<boolean>();
-
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 

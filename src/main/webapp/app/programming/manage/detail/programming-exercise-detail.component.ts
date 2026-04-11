@@ -38,7 +38,6 @@ import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/prog
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
@@ -65,6 +64,7 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -105,7 +105,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
-    private aeolusService = inject(AeolusService);
     private sharingService = inject(ProgrammingExerciseSharingService);
 
     protected readonly dayjs = dayjs;
@@ -491,7 +490,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        this.checkAndSetWindFile(exercise);
+        const buildPlanPhases = this.getBuildPlanPhases(exercise);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -594,13 +593,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 diffReportDetail,
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
+                        data: { text: buildPlanPhases?.dockerImage },
                     },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -789,14 +788,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Checks if the build configuration is available and sets the windfile if it is, helpful for reliably displaying
-     * the build configuration in the UI
-     * @param exercise the programming exercise to check
-     */
-    checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
-            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
+    private getBuildPlanPhases(exercise: ProgrammingExercise): BuildPlanPhases | undefined {
+        const buildPlanConfiguration = exercise.buildConfig?.buildPlanConfiguration;
+        if (!buildPlanConfiguration) {
+            return undefined;
+        }
+
+        try {
+            return JSON.parse(buildPlanConfiguration);
+        } catch {
+            return undefined;
         }
     }
 

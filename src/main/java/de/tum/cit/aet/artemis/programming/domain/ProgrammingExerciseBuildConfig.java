@@ -231,10 +231,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     /**
      * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
-     * This provides discrimination between the new phases format and the old Windfile format:
-     * BuildPlanPhases JSON has a "phases" root key, while Windfile JSON has "api", "metadata", "actions".
      *
-     * @return the {@link BuildPlanPhasesDTO} object, or null if the configuration is null, empty, or in Windfile format
+     * @return the {@link BuildPlanPhasesDTO} object, or null if the configuration is null, empty, or in an invalid format
      */
     public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
         if (buildPlanConfiguration == null) {
@@ -245,9 +243,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             return Optional.of(phases);
         }
         catch (JsonProcessingException e) {
-            // Not in phases format
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public void filterSensitiveInformation() {
