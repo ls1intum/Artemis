@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lti.web.admin;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
 import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
@@ -75,13 +78,13 @@ public class AdminLtiConfigurationResource {
      * Returns {@code ResponseEntity} with status OK if found, or NOT_FOUND if no configuration exists.
      *
      * @param platformId The ID of the LTI platform to retrieve configuration for.
-     * @return a {@code ResponseEntity} with an {@code Optional<LtiPlatformConfiguration>} and HTTP status.
+     * @return a {@code ResponseEntity} with the platform configuration DTO and HTTP status.
      */
     @GetMapping("lti-platform/{platformId}")
-    public ResponseEntity<LtiPlatformConfiguration> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+    public ResponseEntity<LtiPlatformConfigurationDTO> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
         log.debug("REST request to configured lti platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
-        return new ResponseEntity<>(platform, HttpStatus.OK);
+        return new ResponseEntity<>(LtiPlatformConfigurationDTO.of(platform), HttpStatus.OK);
     }
 
     /**
@@ -109,7 +112,7 @@ public class AdminLtiConfigurationResource {
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PutMapping("lti-platform")
-    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
+    public ResponseEntity<LtiPlatformConfigurationDTO> updateLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
         log.debug("REST request to update configured LTI platform");
 
         if (updateDTO.id() == null) {
@@ -127,7 +130,7 @@ public class AdminLtiConfigurationResource {
 
         ltiPlatformConfigurationRepository.save(existingPlatform);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(existingPlatform));
     }
 
     /**
@@ -137,7 +140,7 @@ public class AdminLtiConfigurationResource {
      * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
     @PostMapping("lti-platform")
-    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO dto) {
+    public ResponseEntity<LtiPlatformConfigurationDTO> addLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO dto) {
         log.debug("REST request to add new LTI platform");
 
         LtiPlatformConfiguration platform = dto.toEntity();
@@ -147,7 +150,7 @@ public class AdminLtiConfigurationResource {
         ltiPlatformConfigurationRepository.save(platform);
         oAuth2JWKSService.updateKey(clientRegistrationId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(platform));
     }
 
     /**

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -45,6 +47,8 @@ import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
+import de.tum.cit.aet.artemis.lti.dto.OnlineCourseConfigurationDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
@@ -101,18 +105,20 @@ public class LtiResource {
     /**
      * PUT courses/:courseId/online-course-configuration : Updates the onlineCourseConfiguration for the given course.
      *
-     * @param courseId                  the id of the course to update
-     * @param onlineCourseConfiguration the online course configuration to update
+     * @param courseId                     the id of the course to update
+     * @param onlineCourseConfigurationDTO the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
     @PutMapping("courses/{courseId}/online-course-configuration")
     @EnforceAtLeastInstructor
-    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
-            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+    public ResponseEntity<OnlineCourseConfigurationDTO> updateOnlineCourseConfiguration(@PathVariable Long courseId,
+            @Valid @RequestBody OnlineCourseConfigurationDTO onlineCourseConfigurationDTO) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = OnlineCourseConfigurationDTO.from(onlineCourseConfigurationDTO);
 
         if (!course.isOnlineCourse()) {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
@@ -135,7 +141,7 @@ public class LtiResource {
 
         courseRepository.save(course);
 
-        return ResponseEntity.ok(onlineCourseConfiguration);
+        return ResponseEntity.ok(OnlineCourseConfigurationDTO.of(onlineCourseConfiguration));
     }
 
     /**
@@ -196,11 +202,11 @@ public class LtiResource {
      */
     @GetMapping("lti-platforms")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms(Pageable pageable) {
+    public ResponseEntity<List<LtiPlatformConfigurationDTO>> getAllConfiguredLtiPlatforms(Pageable pageable) {
         log.info("REST request to get all configured LTI platforms");
         Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);
-        return new ResponseEntity<>(platformsPage.getContent(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(platformsPage.getContent().stream().map(LtiPlatformConfigurationDTO::of).toList(), headers, HttpStatus.OK);
     }
 
     /**
