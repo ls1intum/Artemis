@@ -27,6 +27,12 @@ public record OnlineCourseConfigurationDTO(Long id, @NotBlank String userPrefix,
                 config.getLtiPlatformConfiguration() == null ? null : LtiPlatformConfigurationDTO.of(config.getLtiPlatformConfiguration()));
     }
 
+    /**
+     * Creates an online course configuration entity from the given DTO.
+     *
+     * @param dto the DTO to convert
+     * @return the corresponding entity
+     */
     public static OnlineCourseConfiguration from(OnlineCourseConfigurationDTO dto) {
         OnlineCourseConfiguration config = new OnlineCourseConfiguration();
         config.setId(dto.id());
