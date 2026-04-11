@@ -103,4 +103,18 @@ class YouTubeServiceTest {
         assertThat(youTubeService.isYouTubeUrl("https://live.rbg.tum.de/w/course/12345")).isFalse();
         assertThat(youTubeService.isYouTubeUrl(null)).isFalse();
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://YouTube.com/watch?v=dQw4w9WgXcQ", "https://WWW.YOUTUBE.COM/watch?v=dQw4w9WgXcQ", "https://Youtu.Be/dQw4w9WgXcQ",
+            "https://www.YouTube-NoCookie.com/embed/dQw4w9WgXcQ" })
+    void shouldAcceptMixedCaseHosts(String url) {
+        assertThat(youTubeService.extractYouTubeVideoId(url)).contains("dQw4w9WgXcQ");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ftp://youtube.com/watch?v=dQw4w9WgXcQ", "file:///youtube.com/watch?v=dQw4w9WgXcQ", "javascript:alert('xss')",
+            "data:text/html,<script>youtube.com/watch?v=dQw4w9WgXcQ</script>" })
+    void shouldRejectNonHttpSchemes(String url) {
+        assertThat(youTubeService.extractYouTubeVideoId(url)).isEmpty();
+    }
 }
