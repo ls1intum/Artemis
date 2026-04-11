@@ -74,9 +74,9 @@
                         <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
                     </div>
                 } @else {
-                    <div #videoContainer class="video-player-container">
-                        <div class="ratio ratio-16x9">
-                            <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                    <div #videoContainer class="video-player-container" [ngClass]="{ 'video-player-container--fullscreen': isFullscreen() }">
+                        <div class="video-iframe-wrapper" [ngClass]="{ 'video-iframe-wrapper--fullscreen': isFullscreen() }">
+                            <iframe id="videoFrame" class="video-iframe" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                         </div>
                     </div>
                 }

@@ -3,6 +3,64 @@
     padding-block: 20px;
 }
 
+.video-player-container {
+    // In fullscreen: enable centering container with gray background and border
+    &.video-player-container--fullscreen {
+        padding-block: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background-color: #f8f9fa; // Gray background like PDF viewer
+        border: 1px solid var(--card-border-color);
+        border-radius: 0.15rem;
+        overflow: hidden;
+        container-type: size;
+    }
+}
+
+.video-iframe-wrapper {
+    width: 100%;
+
+    // Embedded mode: use aspect ratio for consistent display
+    &:not(.video-iframe-wrapper--fullscreen) {
+        aspect-ratio: 16 / 9;
+        position: relative;
+    }
+
+    // Fullscreen mode: adaptive sizing
+    &.video-iframe-wrapper--fullscreen {
+        // Keep 16:9 and fit into whichever container side is limiting
+        aspect-ratio: 16 / 9;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border: 1px solid var(--card-border-color);
+        border-radius: 0.15rem;
+        overflow: hidden;
+
+        @supports (width: 1cqw) {
+            width: min(100cqw, calc(100cqh * 16 / 9));
+            height: min(100cqh, calc(100cqw * 9 / 16));
+        }
+    }
+}
+
+.video-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+
+    // Embedded mode: absolute positioning
+    .video-iframe-wrapper:not(.video-iframe-wrapper--fullscreen) & {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+}
+
 .pdf-viewer-spacing {
     position: relative;
 }
@@ -73,8 +131,7 @@ jhi-pdf-viewer.pdf-viewer-loading {
         display: flex;
         flex-direction: column;
 
-        jhi-pdf-viewer,
-        .ratio {
+        jhi-pdf-viewer {
             height: 100%;
         }
     }
