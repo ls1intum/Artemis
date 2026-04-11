@@ -148,11 +148,16 @@ public class LtiDynamicRegistrationService {
             throw new BadRequestAlertException("URL must contain a valid host", "LTI", "invalidUrl");
         }
 
-        if (!isLocalDevelopmentHost(host) && !"https".equals(uri.getScheme())) {
+        String scheme = uri.getScheme();
+
+        if (!isLocalDevelopmentHost(host) && !"https".equals(scheme)) {
             throw new BadRequestAlertException("Only HTTPS URLs are allowed for LTI configuration", "LTI", "invalidUrl");
         }
 
         if (isLocalDevelopmentHost(host)) {
+            if (!"http".equals(scheme) && !"https".equals(scheme)) {
+                throw new BadRequestAlertException("Only HTTPS URLs are allowed for LTI configuration", "LTI", "invalidUrl");
+            }
             return;
         }
 

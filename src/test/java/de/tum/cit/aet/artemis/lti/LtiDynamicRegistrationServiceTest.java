@@ -173,6 +173,13 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
+    void badRequestWhenLocalhostUrlUsesUnsupportedScheme() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("ftp://localhost/config", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
     void badRequestWhenUrlPointsToLoopback() {
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://127.0.0.1/config", registrationToken))
