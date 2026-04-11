@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
-import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -119,10 +118,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatMemoryRepository chatMemoryRepository;
 
-    // Spy for lecture transcription tests to allow real method execution in service integration tests
-    @MockitoSpyBean
-    protected LectureTranscriptionService lectureTranscriptionService;
-
     // Mock for TUM Live service used in Nebula transcription resource
     @MockitoBean
     protected TumLiveService tumLiveService;
@@ -167,9 +162,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
-        }
-        if (lectureTranscriptionService != null) {
-            Mockito.reset(lectureTranscriptionService);
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
