@@ -70,8 +70,12 @@
                         </div>
                     </div>
                 } @else if (playlistUrl() && hasTranscript()) {
-                    <div #videoContainer class="video-container-wrapper">
-                        <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+                    <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
+                        <div #hlsScaleViewport class="hls-player-fit-viewport">
+                            <div #hlsScaleContent class="hls-player-fit-content" [style.transform]="hlsFullscreenScaleTransform()">
+                                <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+                            </div>
+                        </div>
                     </div>
                 } @else {
                     <div #videoContainer class="video-player-container" [ngClass]="{ 'video-player-container--fullscreen': isFullscreen() }">
@@ -87,7 +91,7 @@
                     <hr />
                 }
                 @if (pdfLoadError()) {
-                    <p-message severity="error" styleClass="m-3">
+                    <p-message severity="error" class="m-3">
                         <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
                     </p-message>
                 } @else if (pdfUrl()) {
