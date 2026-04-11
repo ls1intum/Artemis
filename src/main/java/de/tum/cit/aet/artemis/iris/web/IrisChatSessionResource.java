@@ -129,24 +129,34 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * GET api/iris/chat/{courseId}/sessions: Retrieve all Iris chat sessions for a context.
+     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
      *
-     * @param courseId the course ID (required for authorization)
-     * @param mode     the chat mode
-     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
-     * @return list of sessions
+     * @param courseId  of the course
+     * @param sessionId of the session
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
-    @GetMapping("{courseId}/sessions")
+    @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
-            @RequestParam(required = false) Long entityId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+    public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {
+        IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
+
+        if (irisSession == null) {
+            throw new EntityNotFoundException("Iris session with id " + sessionId + " not found");
+        }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var sessions = irisChatSessionService.getAllSessions(courseId, mode, entityId, user);
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions.stream().map(IrisChatSessionResponseDTO::of).toList());
+        irisSessionService.checkHasAccessToIrisSession(irisSession, user);
+
+        boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
+
+        if (enabled) {
+            if (!(irisSession instanceof IrisChatSession chatSession)) {
+                throw new BadRequestException("Session is not a chat session");
+            }
+            chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(chatSession));
+        }
+        throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
 
     /**
@@ -167,37 +177,6 @@ public class IrisChatSessionResource {
         else {
             return ResponseEntity.ok(List.of());
         }
-    }
-
-    /**
-     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
-     *
-     * @param courseId  of the course
-     * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
-     */
-    @GetMapping("{courseId}/session/{sessionId}")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
-        IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
-
-        if (irisSession == null) {
-            throw new EntityNotFoundException("Iris session with id " + sessionId + " not found");
-        }
-
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        irisSessionService.checkHasAccessToIrisSession(irisSession, user);
-
-        boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
-
-        if (enabled) {
-            if (!(irisSession instanceof IrisChatSession chatSession)) {
-                throw new BadRequestException("Session is not a chat session");
-            }
-            chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
-            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(chatSession));
-        }
-        throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
 
     // -------------------------------------------------------------------------
