@@ -4,7 +4,7 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "make && ./helloWorld",
+            "command": "make && make run",
             "group": { "kind": "build", "isDefault": true },
             "options": { "cwd": "${workspaceFolder}" },
             "presentation": { "reveal": "always", "panel": "shared" }
