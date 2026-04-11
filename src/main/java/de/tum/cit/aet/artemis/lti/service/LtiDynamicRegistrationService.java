@@ -118,20 +118,25 @@ public class LtiDynamicRegistrationService {
     }
 
     /**
-     * Validates that the given URL is safe for outbound HTTP requests during LTI registration.
+     * Validates that the given URL string is safe for outbound HTTP requests during LTI registration.
      * <p>
      * Enforces the following rules:
      * <ul>
-     * <li>The URL must be syntactically valid.</li>
-     * <li>Only the {@code https} scheme is permitted.</li>
-     * <li>The URL must contain a non-null host.</li>
-     * <li><strong>All</strong> IP addresses the host resolves to (via {@link InetAddress#getAllByName})
+     * <li>The value must be parseable as a valid {@link URI}.</li>
+     * <li>For non-local hosts, only the {@code https} scheme is permitted.</li>
+     * <li>For {@code localhost} and {@code *.localhost} development hosts, only {@code http} and {@code https} are permitted.</li>
+     * <li>The URI must contain a non-null host.</li>
+     * <li>For non-local hosts, <strong>all</strong> IP addresses the host resolves to (via {@link InetAddress#getAllByName})
      * must be public — none may be loopback, site-local, link-local, multicast, or otherwise
      * reserved (see {@link #isPrivateOrReservedAddress}).</li>
+     * <li>Localhost development hosts are explicitly exempt from the public-IP resolution check.</li>
      * </ul>
      *
-     * @param url the URL to validate
-     * @throws BadRequestAlertException if the URL fails any of the above checks
+     * This method returns normally when the URL is accepted and throws an exception otherwise.
+     *
+     * @param url the URL string to validate
+     * @throws BadRequestAlertException if the URL is malformed, uses a disallowed scheme, has no host,
+     *                                      resolves to non-public addresses for a non-local host, or cannot be resolved
      */
     private void validateExternalUrl(String url) {
         URI uri;
