@@ -149,6 +149,23 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
+    void performDynamicRegistrationAllowsLocalhostHttp() {
+        String localhostOpenIdConfigurationUrl = "http://localhost:8086/.well-known/openid-configuration";
+        Lti13PlatformConfiguration localhostPlatformConfiguration = new Lti13PlatformConfiguration(null, "http://localhost:8086/token", "http://localhost:8086/auth",
+                "http://localhost:8086/jwks", "http://localhost:8086/register");
+
+        when(restTemplate.getForEntity(localhostOpenIdConfigurationUrl, Lti13PlatformConfiguration.class))
+                .thenReturn(ResponseEntity.accepted().body(localhostPlatformConfiguration));
+        when(restTemplate.postForEntity(eq(localhostPlatformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
+                .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
+
+        ltiDynamicRegistrationService.performDynamicRegistration(localhostOpenIdConfigurationUrl, registrationToken);
+
+        verify(ltiPlatformConfigurationRepository).save(any());
+        verify(oAuth2JWKSService).updateKey(any());
+    }
+
+    @Test
     void badRequestWhenUrlIsNotHttps() {
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://example.com/config", registrationToken))

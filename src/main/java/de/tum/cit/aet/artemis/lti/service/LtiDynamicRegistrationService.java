@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
  * <p>
  * Every URL used for outbound HTTP requests — both the initial configuration URL provided by the caller
  * and all endpoint URLs returned by the platform — is validated via {@link #validateExternalUrl(String)}
- * before use. This ensures the server only connects to legitimate, publicly routable HTTPS hosts.
+ * before use. This ensures the server only connects to legitimate, publicly routable HTTPS hosts,
+ * while still allowing localhost-based HTTP endpoints for local development.
  */
 @Lazy
 @Service
@@ -141,13 +142,18 @@ public class LtiDynamicRegistrationService {
             throw new BadRequestAlertException("Invalid URL format", "LTI", "invalidUrl");
         }
 
-        if (!"https".equals(uri.getScheme())) {
+        String host = uri.getHost();
+
+        if (host == null) {
+            throw new BadRequestAlertException("URL must contain a valid host", "LTI", "invalidUrl");
+        }
+
+        if (!isLocalDevelopmentHost(host) && !"https".equals(uri.getScheme())) {
             throw new BadRequestAlertException("Only HTTPS URLs are allowed for LTI configuration", "LTI", "invalidUrl");
         }
 
-        String host = uri.getHost();
-        if (host == null) {
-            throw new BadRequestAlertException("URL must contain a valid host", "LTI", "invalidUrl");
+        if (isLocalDevelopmentHost(host)) {
+            return;
         }
 
         try {
@@ -164,6 +170,11 @@ public class LtiDynamicRegistrationService {
         catch (UnknownHostException e) {
             throw new BadRequestAlertException("URL host could not be resolved", "LTI", "invalidUrl");
         }
+    }
+
+    private boolean isLocalDevelopmentHost(String host) {
+        String normalizedHost = host.toLowerCase();
+        return "localhost".equals(normalizedHost) || normalizedHost.endsWith(".localhost");
     }
 
     /**

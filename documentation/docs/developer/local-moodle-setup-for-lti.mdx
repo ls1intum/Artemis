@@ -1,14 +1,16 @@
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 # Local Moodle Environment Setup for LTI Development
 
 This guide will help developers quickly establish a consistent and reliable Moodle environment for development purposes.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>The setup uses a docker-compose file based on configurations that Bitnami provided under the Apache License, Version 2.0.
-    You can find the original configuration in the <a href="https://github.com/bitnami/containers/tree/main/bitnami/moodle">Bitnami GitHub repository</a>.
-    Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.</p>
+    <p>
+        The setup uses a docker-compose file based on configurations that Bitnami provided under the Apache License, Version 2.0. You can find the original configuration in the{' '}
+        <a href="https://github.com/bitnami/containers/tree/main/bitnami/moodle">Bitnami GitHub repository</a>. Usage of the Moodle™ trademark within this guide does not imply
+        affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
+    </p>
 </Callout>
 
 ## Prerequisites
@@ -19,21 +21,19 @@ This guide will help developers quickly establish a consistent and reliable Mood
 
 ## Setup Instructions
 
-The setup leverages [Bitnami's Docker images for Moodle](https://github.com/bitnami/containers/tree/main/bitnami/moodle), which are included in this repository's docker-compose file, to ensure a streamlined and reliable deployment.
+Moodle requires access to a MySQL or MariaDB database to store information. The local setup uses the pinned MariaDB image defined in the repository root `.env` file.
 
-Moodle requires access to a MySQL or MariaDB database to store information. Bitnami uses the Bitnami Docker Image for MariaDB for the database requirements.
-
-To initialize your Moodle environment, navigate to the `docker/moodle/` directory containing the `moodle.yml` docker-compose file in this repository and execute the following command:
+To initialize your Moodle environment, run the following command from the repository root:
 
 ```bash
-docker-compose -f moodle.yml up
+docker compose --env-file .env -f docker/moodle/moodle.yml up
 ```
 
 This command will download the necessary Docker images and initialize the Moodle instance with the specified environment and configurations.
 
 ## Configuration
 
-When you start the Moodle image, you can adjust the instance's configuration by passing one or more environment variables on the docker-compose file.
+When you start the Moodle image, you can adjust the instance's configuration by passing one or more environment variables in the compose file. Version pins for the Moodle and MariaDB images are configured centrally in the repository root `.env` file.
 
 ### Available environment variables
 
@@ -49,14 +49,14 @@ When you start the Moodle image, you can adjust the instance's configuration by 
 
 ## Customization
 
-You can customize the Moodle port number over the docker-compose.yml file.
+You can customize the Moodle port number in `docker/moodle/moodle.yml`.
 
 ```yaml
 moodle:
-    image: bitnami/moodle:latest
+    image: docker.io/bitnamilegacy/moodle:${MOODLE_VERSION}
     ports:
-      - '8085:8080'
-      - '443:8443'
+        - '8085:8080'
+        - '443:8443'
 ```
 
 ## Accessing Moodle
