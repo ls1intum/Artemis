@@ -1,17 +1,13 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.job;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChatJob(String jobId, long courseId, long sessionId, @Nullable Long entityId, Long traceId, Long userMessageId, Long assistantMessageId)
+public record ChatJob(String jobId, long courseId, long sessionId, Long entityId, Long traceId, Long userMessageId, Long assistantMessageId)
         implements TrackedSessionBasedPyrisJob {
-
-    // TODO: REFACTORING ASLAN: Nullable ? Wo wird courseID gebraucht ?
 
     @Override
     public boolean canAccess(Course course) {

@@ -24,6 +24,7 @@ public record PyrisCourseDTO(long id, String name, String description, @Nullable
      *
      * @param course The course
      */
+    // TODO: REFACTORING ASLAN: SOLLEN TUTOR SUGGESTION & AUTONOMOUS TUTOR NUR BASIS VAIRANTE ODER EXTENDED VARIANTE BEKOMMEN?
     public PyrisCourseDTO(Course course) {
         this(course.getId(), course.getTitle(), course.getDescription(), null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
