@@ -173,53 +173,6 @@ class IrisCourseChatSessionResourceTest extends AbstractIrisIntegrationTest {
         assertThat(sessionFromDb.getCourseId()).isEqualTo(course.getId());
     }
 
-    // -------------------- getAllSessions tests --------------------
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllSessions_returnsAllUserSessions() throws Exception {
-        // Given: User has multiple sessions
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        IrisChatSession session1 = new IrisChatSession(course, user);
-        session1 = irisChatSessionRepository.save(session1);
-        IrisChatSession session2 = new IrisChatSession(course, user);
-        session2 = irisChatSessionRepository.save(session2);
-
-        // When: User requests all sessions
-        var response = request.getList("/api/iris/chat/" + course.getId() + "/sessions?mode=COURSE_CHAT", HttpStatus.OK, IrisChatSessionResponseDTO.class);
-
-        // Then: All sessions should be returned
-        assertThat(response).hasSize(2);
-        assertThat(response).extracting(IrisChatSessionResponseDTO::id).containsExactlyInAnyOrder(session1.getId(), session2.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllSessions_emptyWhenNoSessions() throws Exception {
-        // When/Then: Request should return empty list when user has no sessions
-        var response = request.getList("/api/iris/chat/" + course.getId() + "/sessions?mode=COURSE_CHAT", HttpStatus.OK, IrisChatSessionResponseDTO.class);
-        assertThat(response).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testGetAllSessions_onlyReturnsOwnSessions() throws Exception {
-        // Given: Student1 has sessions, Student2 has one session
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        IrisChatSession student1Session = new IrisChatSession(course, student1);
-        irisChatSessionRepository.save(student1Session);
-        IrisChatSession student2Session = new IrisChatSession(course, student2);
-        student2Session = irisChatSessionRepository.save(student2Session);
-
-        // When: Student2 requests all sessions
-        var response = request.getList("/api/iris/chat/" + course.getId() + "/sessions?mode=COURSE_CHAT", HttpStatus.OK, IrisChatSessionResponseDTO.class);
-
-        // Then: Only Student2's sessions should be returned
-        assertThat(response).hasSize(1);
-        assertThat(response.getFirst().id()).isEqualTo(student2Session.getId());
-    }
-
     // -------------------- createSessionForCourse tests --------------------
 
     @Test

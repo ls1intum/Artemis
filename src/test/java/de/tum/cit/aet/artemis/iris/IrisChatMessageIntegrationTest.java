@@ -614,7 +614,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMixedTextAndMcqJsonStoresMultipleContents() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -647,7 +647,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMixedTextAndMcqSetJsonStoresMultipleContents() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -680,7 +680,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendTextWithNonMcqJsonStoresAsSingleTextContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -706,7 +706,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendPureMcqJsonStoresAsSingleJsonContent() throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -805,7 +805,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private void assertMalformedMcqShowsErrorMessage(String result) throws Exception {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
@@ -942,7 +942,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.FORBIDDEN);
     }
 
-    private IrisMessage createLlmMessageWithMcqContent(IrisProgrammingExerciseChatSession session, String jsonString) {
+    private IrisMessage createLlmMessageWithMcqContent(IrisChatSession session, String jsonString) {
         var message = new IrisMessage();
         var jsonContent = new IrisJsonMessageContent();
         jsonContent.setJsonContent(jsonString);

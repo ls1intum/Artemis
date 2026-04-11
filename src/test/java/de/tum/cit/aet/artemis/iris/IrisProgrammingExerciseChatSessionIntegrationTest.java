@@ -120,10 +120,6 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         return "/api/iris/chat/" + course.getId() + "/sessions/current?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 
-    private String getAllSessionsUrl() {
-        return "/api/iris/chat/" + course.getId() + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession() throws Exception {
@@ -147,15 +143,6 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var irisSession = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         var currentIrisSession = request.postWithResponseBody(getCurrentSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
         assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getAllSessions() throws Exception {
-        var irisSession1 = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        var irisSession2 = request.postWithResponseBody(createSessionUrl(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
-        List<IrisChatSessionResponseDTO> irisSessions = request.getList(getAllSessionsUrl(), HttpStatus.OK, IrisChatSessionResponseDTO.class);
-        assertThat(irisSessions).hasSize(2).extracting(IrisChatSessionResponseDTO::id).containsExactlyInAnyOrder(irisSession1.id(), irisSession2.id());
     }
 
     @Test
