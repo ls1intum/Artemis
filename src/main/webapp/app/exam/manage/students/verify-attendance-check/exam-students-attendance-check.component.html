@@ -85,11 +85,17 @@
                                 } @else {
                                     <div class="d-flex align-items-center gap-2">
                                         @if (examUser.studentImagePath ? examUser.didCheckImage && examUser.didCheckName : examUser.didCheckName) {
-                                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}">
+                                            <div
+                                                aria-label="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}"
+                                                title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}"
+                                            >
                                                 <fa-icon [icon]="faCheck" class="fa-2x text-warning" />
                                             </div>
                                         } @else {
-                                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
+                                            <div
+                                                aria-label="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
+                                                title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
+                                            >
                                                 <fa-icon [icon]="faXmark" class="fa-2x text-danger" />
                                             </div>
                                         }
