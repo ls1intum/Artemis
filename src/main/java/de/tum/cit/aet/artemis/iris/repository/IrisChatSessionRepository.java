@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -31,7 +30,10 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 @Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
-    // TODO: REFACTORING ASLAN: NICHT GEBRAUCHTE ENTFERNEN
+    // -------------------------------------------------------------------------
+    // Sidebar overview query (course-scoped, all modes)
+    // -------------------------------------------------------------------------
+
     /**
      * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by last activity in descending order.
      *
@@ -45,11 +47,15 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                       s.entityId,
                       CASE s.chatMode
                           WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT THEN l.title
-                          ELSE e.shortName END,
+                          WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT THEN e.shortName
+                          WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT THEN e.shortName
+                          ELSE NULL END,
                       MAX(m.sentAt)
                   )
                 FROM IrisChatSession s
-                    LEFT JOIN Exercise e ON e.id = s.entityId AND s.chatMode <> de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT
+                    LEFT JOIN Exercise e ON e.id = s.entityId AND s.chatMode IN (
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT)
                     LEFT JOIN Lecture l ON l.id = s.entityId AND s.chatMode = de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT
                     LEFT JOIN s.messages m
                 WHERE s.userId = :userId
@@ -62,19 +68,10 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     // -------------------------------------------------------------------------
-    // Session lookup — by ID + user
-    // -------------------------------------------------------------------------
-    @EntityGraph(type = LOAD, attributePaths = "messages")
-    Optional<IrisChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
-
-    // -------------------------------------------------------------------------
-    // Exercise/Lecture-context queries (by entityId)
+    // Session lookup by entity (exercise or lecture)
     // -------------------------------------------------------------------------
 
     List<IrisChatSession> findByEntityIdAndUserIdOrderByCreationDateDesc(Long entityId, Long userId, Pageable pageable);
-
-    @EntityGraph(type = LOAD, attributePaths = "messages")
-    List<IrisChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
 
     /**
      * Finds the latest chat sessions for the given entity (exercise or lecture) and user, with messages eagerly loaded.
@@ -93,7 +90,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     }
 
     // -------------------------------------------------------------------------
-    // Course-context queries (chatMode = COURSE_CHAT)
+    // Session lookup by course (COURSE_CHAT mode only)
     // -------------------------------------------------------------------------
 
     List<IrisChatSession> findByCourseIdAndChatModeAndUserIdOrderByCreationDateDesc(long courseId, IrisChatMode chatMode, long userId, Pageable pageable);
@@ -114,14 +111,16 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
         return findSessionsWithMessagesByIdIn(ids);
     }
 
-    /**
-     * Deletes all chat sessions for a given course.
-     *
-     * @param courseId The ID of the course.
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    void deleteAllByCourseId(long courseId);
+    // -------------------------------------------------------------------------
+    // Shared helper: eager message loading by IDs
+    // -------------------------------------------------------------------------
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+
+    // -------------------------------------------------------------------------
+    // Course-level admin queries (used by IrisSettingsApi)
+    // -------------------------------------------------------------------------
 
     /**
      * Count the number of chat sessions for a given course.
@@ -163,12 +162,43 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                 .toList();
     }
 
+    /**
+     * Deletes all chat sessions for a given course.
+     *
+     * @param courseId The ID of the course.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByCourseId(long courseId);
+
     // -------------------------------------------------------------------------
-    // Global user queries (cross-context)
+    // User-level queries (used by IrisChatSessionResource and IrisDataExportApi)
     // -------------------------------------------------------------------------
 
     /**
-     * Finds all chat session IDs for a user, ordered by creation date.
+     * Counts the number of chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the number of chat sessions
+     */
+    long countByUserId(long userId);
+
+    /**
+     * Counts the total number of messages across all chat sessions for a given user.
+     *
+     * @param userId the ID of the user
+     * @return the total number of messages
+     */
+    @Query("""
+            SELECT COUNT(m)
+            FROM IrisChatSession s
+                JOIN s.messages m
+            WHERE s.userId = :userId
+            """)
+    long countMessagesByUserId(@Param("userId") long userId);
+
+    /**
+     * Finds all chat session IDs for a user.
      * Used internally to fetch sessions in a two-step process to avoid PostgreSQL
      * JSON equality comparison issues with DISTINCT.
      *
@@ -200,28 +230,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
             WHERE s.id IN :sessionIds
             """)
     Set<IrisChatSession> findAllWithMessagesByIds(@Param("sessionIds") Collection<Long> sessionIds);
-
-    /**
-     * Counts the number of chat sessions for a given user.
-     *
-     * @param userId the ID of the user
-     * @return the number of chat sessions
-     */
-    long countByUserId(long userId);
-
-    /**
-     * Counts the total number of messages across all chat sessions for a given user.
-     *
-     * @param userId the ID of the user
-     * @return the total number of messages
-     */
-    @Query("""
-            SELECT COUNT(m)
-            FROM IrisChatSession s
-                JOIN s.messages m
-            WHERE s.userId = :userId
-            """)
-    long countMessagesByUserId(@Param("userId") long userId);
 
     /**
      * Deletes all chat sessions for a given user.

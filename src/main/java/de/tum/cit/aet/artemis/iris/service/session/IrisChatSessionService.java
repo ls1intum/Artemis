@@ -55,9 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
@@ -174,7 +172,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     @Override
     public void requestAndHandleResponse(IrisChatSession session) {
-        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+        doRequestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
     }
 
     /**
@@ -185,29 +183,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param uncommittedFiles The uncommitted files from the client
      */
     public void requestAndHandleResponseWithUncommittedChanges(IrisChatSession session, Map<String, String> uncommittedFiles) {
-        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
+        doRequestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
     }
 
-    /**
-     * Sends all messages of the session to the LLM with optional event, settings, and submission.
-     * Only applicable for programming exercise sessions.
-     *
-     * @param session          The chat session
-     * @param event            The event to trigger on the Pyris side
-     * @param settings         Optional pre-loaded settings; fetched if absent
-     * @param latestSubmission Optional pre-loaded submission; fetched if absent
-     */
-    public void requestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission) {
-        requestAndHandleResponse(session, event, settings, latestSubmission, Map.of());
-    }
-
-    private void requestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles) {
-        requestAndHandleResponse(session, event, settings, latestSubmission, uncommittedFiles, null);
-    }
-
-    private void requestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles, Object eventObject) {
+    private void doRequestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
+            Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
         var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
         var actualSettings = settings.orElseGet(() -> irisSettingsService.getSettingsForCourse(course));
@@ -223,8 +203,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, executionDto -> buildChatDTO(chatSession.getMode(), chatSession,
-                executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles, eventObject));
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event,
+                executionDto -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles));
     }
 
     // -------------------------------------------------------------------------
@@ -306,7 +286,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * Uses a single switch to collect context-specific data and populate the appropriate fields.
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
-            Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles, Object eventObject) {
+            Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
@@ -314,11 +294,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
         StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
-        PyrisEventDTO<?> eventPayload = switch (eventObject) {
-            case Exercise ex -> pyrisPipelineService.generateEventPayloadFromObjectType(PyrisExerciseWithStudentSubmissionsDTO.class, ex);
-            case null -> null;
-            default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + eventObject);
-        };
 
         // Mode-specific fields (additive on top of base data)
         Object exercise = null;
@@ -359,7 +334,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), new PyrisUserDTO(user), executionDto.initialStages(),
-                customInstructions, courseDto, exercise, lectureDto, null, progSubmission, textSubmission, metrics, eventPayload);
+                customInstructions, courseDto, exercise, lectureDto, null, progSubmission, textSubmission, metrics, null);
     }
 
     // -------------------------------------------------------------------------
@@ -403,8 +378,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
-        CompletableFuture
-                .runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission)));
+        CompletableFuture.runAsync(
+                () -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission), Map.of()));
     }
 
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
@@ -432,8 +407,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 try {
-                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
-                            Optional.of(latestSubmission)));
+                    CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
+                            Optional.of(latestSubmission), Map.of()));
                 }
                 catch (Exception e) {
                     log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
@@ -485,13 +460,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         return switch (mode) {
-            case PROGRAMMING_EXERCISE_CHAT -> {
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                yield findOrCreateExerciseSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
-            }
-            case TEXT_EXERCISE_CHAT -> {
-                var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                yield findOrCreateExerciseSession(exercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
+                yield findOrCreateExerciseSession(exercise, user, mode);
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
@@ -517,13 +488,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         return switch (mode) {
-            case PROGRAMMING_EXERCISE_CHAT -> {
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                yield createExerciseSessionInternal(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
-            }
-            case TEXT_EXERCISE_CHAT -> {
-                var exercise = exerciseRepository.findByIdElseThrow(entityId);
-                yield createExerciseSessionInternal(exercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
+                yield createExerciseSessionInternal(exercise, user, mode);
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);

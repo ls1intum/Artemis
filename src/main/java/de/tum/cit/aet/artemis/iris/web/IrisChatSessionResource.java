@@ -143,20 +143,22 @@ public class IrisChatSessionResource {
         if (irisSession == null) {
             throw new EntityNotFoundException("Iris session with id " + sessionId + " not found");
         }
+        if (!(irisSession instanceof IrisChatSession chatSession)) {
+            throw new BadRequestException("Session is not a chat session");
+        }
+        if (chatSession.getCourseId() != courseId) {
+            throw new BadRequestException("Session does not belong to the specified course");
+        }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         irisSessionService.checkHasAccessToIrisSession(irisSession, user);
 
-        boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
-
-        if (enabled) {
-            if (!(irisSession instanceof IrisChatSession chatSession)) {
-                throw new BadRequestException("Session is not a chat session");
-            }
-            chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
-            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(chatSession));
+        if (!irisSettingsService.isEnabledForCourse(courseId)) {
+            throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
         }
-        throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
+
+        chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
+        return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(chatSession));
     }
 
     /**
