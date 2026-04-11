@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LtiPlatformConfigurationDTO(Long id, @NotBlank String registrationId, @NotBlank String clientId, @Nullable String originalUrl, @Nullable String customName,
+public record LtiPlatformConfigurationDTO(@NotNull Long id, @NotBlank String registrationId, @NotBlank String clientId, @Nullable String originalUrl, @Nullable String customName,
         @NotBlank String authorizationUri, @NotBlank String jwkSetUri, @NotBlank String tokenUri) {
 
     public static LtiPlatformConfigurationDTO of(LtiPlatformConfiguration config) {

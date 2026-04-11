@@ -119,6 +119,10 @@ public class LtiResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         OnlineCourseConfiguration onlineCourseConfiguration = OnlineCourseConfigurationDTO.from(onlineCourseConfigurationDTO);
+        if (onlineCourseConfigurationDTO.ltiPlatformConfiguration() != null) {
+            Long platformId = onlineCourseConfigurationDTO.ltiPlatformConfiguration().id();
+            onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findByIdElseThrow(platformId));
+        }
 
         if (!course.isOnlineCourse()) {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
