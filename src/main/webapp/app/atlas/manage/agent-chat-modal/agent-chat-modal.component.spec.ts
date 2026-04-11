@@ -2231,15 +2231,12 @@ describe('AgentChatModalComponent', () => {
     });
 
     describe('isDelegationBrief', () => {
-        it.each([
-            'EXERCISE_ID: 42',
-            '[CREATE_APPROVED_EXERCISE_MAPPING]:{}',
-            '[CREATE_APPROVED_COMPETENCY]:',
-            '[CREATE_APPROVED_RELATION]:',
-            '  EXERCISE_ID: 42',
-        ])('returns true for internal system message: %s', (content) => {
-            expect(component['isDelegationBrief'](content)).toBeTruthy();
-        });
+        it.each(['EXERCISE_ID: 42', '[CREATE_APPROVED_EXERCISE_MAPPING]:{}', '[CREATE_APPROVED_COMPETENCY]:', '[CREATE_APPROVED_RELATION]:', '  EXERCISE_ID: 42'])(
+            'returns true for internal system message: %s',
+            (content) => {
+                expect(component['isDelegationBrief'](content)).toBeTruthy();
+            },
+        );
 
         it('returns false for normal message or empty string', () => {
             expect(component['isDelegationBrief']('Please help')).toBeFalsy();

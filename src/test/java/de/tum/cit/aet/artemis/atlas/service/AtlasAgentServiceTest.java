@@ -552,8 +552,7 @@ class AtlasAgentServiceTest {
         @Test
         void shouldFilterOutAllInternalMessagesAndKeepUserFacingOnes() {
             String sessionId = "course_123_user_707";
-            List<Message> messages = List.of(new UserMessage("Create OOP competency"),
-                    new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
+            List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
                     new AssistantMessage(
                             "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"}}}%%PREVIEW_DATA_END%%"),
                     new AssistantMessage("Task completed successfully"));
