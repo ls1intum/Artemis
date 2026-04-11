@@ -26,14 +26,7 @@ public class LocalCIBuildConfigurationService {
     }
 
     /**
-     * Creates a build script for a given programming exercise, optionally using pre-evaluated active phases.
-     * <p>
-     * Decision tree:
-     * <ol>
-     * <li>If activePhases is provided (non-null, non-empty): assemble script from active phases with {@code set -e}</li>
-     * <li>Else if buildScript is set: use verbatim custom script</li>
-     * <li>Else: use windfile actions (custom or default template)</li>
-     * </ol>
+     * Creates a build script for a given programming exercise, using pre-evaluated active phases.
      *
      * @param buildConfig  the programming exercise build config for which the build script should be created
      * @param activePhases the pre-evaluated active build phases, or null to fall back to existing paths

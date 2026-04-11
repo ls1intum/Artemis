@@ -66,9 +66,7 @@ public class BuildPhasesTemplateResource {
         log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
                 staticAnalysis, sequentialRuns);
 
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
-
-        return getBuildPhasesTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns);
+        return getBuildPhasesTemplateFileContentWithResponse(language, projectType, staticAnalysis, sequentialRuns);
     }
 
     /**
@@ -77,19 +75,15 @@ public class BuildPhasesTemplateResource {
      * docker image and flags we intersect and inject the values for the particular instance before sending it to the
      * client.
      *
-     * @param language          The programming language for which the template file should be returned
-     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis    Whether the static analysis template should be used
-     * @param sequentialRuns    Whether the sequential runs template should be used
+     * @param language            The programming language for which the template file should be returned
+     * @param optionalProjectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis      Whether the static analysis template should be used
+     * @param sequentialRuns      Whether the sequential runs template should be used
      * @return The requested build plan phases, or 404 if the phases don't exist
      */
-    private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, String projectTypePrefix, boolean staticAnalysis,
-            boolean sequentialRuns) {
+    private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, Optional<ProjectType> optionalProjectType,
+            boolean staticAnalysis, boolean sequentialRuns) {
         try {
-            Optional<ProjectType> optionalProjectType = Optional.empty();
-            if (!projectTypePrefix.isEmpty()) {
-                optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
-            }
             List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             if (phases == null) {
                 return ResponseEntity.notFound().build();
