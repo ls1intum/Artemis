@@ -161,6 +161,10 @@ jhi-pdf-viewer.pdf-viewer-loading {
             background-color: var(--card-bg);
             overflow: hidden;
             padding-top: 2.5rem; // Space for close button at top
+
+            > jhi-lecture-chatbot {
+                --iris-chat-shell-border-radius: 0.15rem;
+            }
         }
     }
 
