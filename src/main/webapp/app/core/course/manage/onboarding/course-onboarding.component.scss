@@ -14,46 +14,19 @@
     padding: 0 1.5rem 2rem;
 }
 
-// ── Hero header with gradient background ──────────────
+// ── Hero header with subtle tinted background ─────────
 .onboarding-header {
     text-align: center;
     padding: 1.5rem 2rem 1.25rem;
     margin: -1rem -1.5rem 1.5rem;
-    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.08) 0%, rgba(var(--bs-primary-rgb), 0.02) 100%);
+    background: rgba(var(--bs-primary-rgb), 0.05);
     border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
-    border-radius: 0 0 1.5rem 1.5rem;
-    position: relative;
-    overflow: hidden;
-
-    // Decorative floating circles
-    &::before,
-    &::after {
-        content: '';
-        position: absolute;
-        border-radius: 50%;
-        opacity: 0.06;
-        background: var(--bs-primary);
-    }
-
-    &::before {
-        width: 200px;
-        height: 200px;
-        top: -60px;
-        right: -40px;
-    }
-
-    &::after {
-        width: 120px;
-        height: 120px;
-        bottom: -30px;
-        left: -20px;
-    }
+    border-radius: 0 0 0.5rem 0.5rem;
 
     h2 {
         margin-bottom: 0.25rem;
         font-weight: 700;
         font-size: 1.4rem;
-        position: relative;
     }
 
     .onboarding-subtitle {
@@ -61,7 +34,6 @@
         font-size: 0.95rem;
         max-width: 700px;
         margin: 0 auto;
-        position: relative;
     }
 }
 
@@ -165,13 +137,11 @@
 .onboarding-content {
     background: var(--onboarding-content-bg, #f5f5f5);
     border: 1px solid var(--bs-border-color);
-    border-radius: 1rem;
+    border-radius: 0.5rem;
     padding: 0;
     margin-bottom: 1.5rem;
     min-height: 320px;
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.06),
-        0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     animation: fadeSlideIn 0.3s ease-out;
 }
@@ -230,11 +200,6 @@
     .onboarding-header {
         padding: 1.5rem 1rem 1.25rem;
         margin: -0.5rem -0.75rem 1.5rem;
-
-        &::before,
-        &::after {
-            display: none;
-        }
     }
 
     .step-indicator {
