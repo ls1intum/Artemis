@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
@@ -10,7 +13,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
@@ -43,6 +49,20 @@ public class AtlasAgentSessionCacheService {
      * Used as distributed fallback when the ThreadLocal preview is not available across nodes.
      */
     public static final String ATLAS_SESSION_EXERCISE_PREVIEW_CACHE = "atlas-session-exercise-preview";
+
+    /**
+     * Cache name for per-message preview data history.
+     * Stores a map of assistant message index to preview data for each session,
+     * enabling history reconstruction without embedding markers in chat memory.
+     */
+    public static final String ATLAS_SESSION_PREVIEW_HISTORY_CACHE = "atlas-session-preview-history";
+
+    /**
+     * Preview data associated with a single assistant message.
+     */
+    public record MessagePreviewData(@Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
+            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
+    }
 
     private final CacheManager cacheManager;
 
@@ -171,6 +191,55 @@ public class AtlasAgentSessionCacheService {
      */
     public void clearCachedExerciseMappingPreview(String sessionId) {
         Cache cache = cacheManager.getCache(ATLAS_SESSION_EXERCISE_PREVIEW_CACHE);
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
+    }
+
+    /**
+     * Store preview data for a specific assistant message in the session's preview history.
+     *
+     * @param sessionId    the session ID
+     * @param messageIndex the 0-based index of the assistant message
+     * @param previewData  the preview data to store
+     */
+    @SuppressWarnings("unchecked")
+    public void storePreviewForMessage(String sessionId, int messageIndex, MessagePreviewData previewData) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        if (cache == null) {
+            return;
+        }
+        Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
+        if (history == null) {
+            history = new HashMap<>();
+        }
+        history.put(messageIndex, previewData);
+        cache.put(sessionId, history);
+    }
+
+    /**
+     * Retrieve the full preview history for a session.
+     *
+     * @param sessionId the session ID
+     * @return map of assistant message index to preview data, or empty map if none exist
+     */
+    @SuppressWarnings("unchecked")
+    public Map<Integer, MessagePreviewData> getPreviewHistory(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        if (cache == null) {
+            return Map.of();
+        }
+        Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
+        return history != null ? history : Map.of();
+    }
+
+    /**
+     * Clear the preview history for a session.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearPreviewHistory(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
         if (cache != null) {
             cache.evict(sessionId);
         }

@@ -312,7 +312,7 @@ public class CompetencyMappingToolsService {
                     continue;
                 }
 
-                if (rel.id() == null) {
+                if (rel.id() == null || rel.id() == 0L) {
                     competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     createCount++;
 

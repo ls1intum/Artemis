@@ -38,7 +38,7 @@ public class AtlasAgentDelegationService {
     private final double temperature;
 
     public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
+            @Value("${artemis.atlas.chat-model:gpt-4o}") String deploymentName, @Value("${artemis.atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;

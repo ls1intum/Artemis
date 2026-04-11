@@ -131,9 +131,8 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT), brief, courseId, sessionId,
-                false, toolCallbackFactory.createCompetencyExpertProvider());
-        return response;
+        return delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT), brief, courseId, sessionId, false,
+                toolCallbackFactory.createCompetencyExpertProvider());
     }
 
     /**
@@ -156,9 +155,8 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER), brief, courseId, sessionId,
-                false, toolCallbackFactory.createCompetencyMapperProvider());
-        return response;
+        return delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER), brief, courseId, sessionId, false,
+                toolCallbackFactory.createCompetencyMapperProvider());
     }
 
     /**
@@ -181,9 +179,8 @@ public class AtlasAgentToolsService {
         String brief = "EXERCISE_ID: " + exerciseId + "\nEXERCISE_TITLE: " + exerciseTitle + "\nREQUIREMENTS: " + requirements + "\nCONTEXT: " + context;
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId, false,
+        return delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId, false,
                 toolCallbackFactory.createExerciseMapperProvider());
-        return response;
     }
 
     private static String formatBrief(String topicLabel, String topic, String requirements, String constraints, String context) {
