@@ -287,7 +287,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     /** Returns true if the message content is valid, i.e. does not exceed the max length */
     isMessageValid(): boolean {
         const content = this.newPost.content ?? '';
-        return content.length < this.maxContentLength;
+        return content.length <= this.maxContentLength;
     }
 
     /** Sets input focus and opens dropdown */
