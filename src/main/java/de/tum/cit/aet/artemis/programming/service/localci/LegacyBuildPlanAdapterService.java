@@ -55,9 +55,9 @@ public class LegacyBuildPlanAdapterService {
         List<BuildPhaseDTO> templatePhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
         List<String> resultPaths = BuildPhaseEvaluationService.gatherResultPaths(templatePhases).stream().toList();
         String legacyScript = programmingExercise.getBuildConfig().getBuildScript();
-        String wrappedScript = "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + "  local tmp_file=$(mktemp)\n"
-                + "cat << '__LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n" + legacyScript + "\n" + "__LEGACY_INNER_SCRIPT_END__\n" + "  chmod +x \"${tmp_file}\"\n"
-                + "  \"${tmp_file}\" \"$@\"\n";
+        String wrappedScript = "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + "local tmp_file=$(mktemp)\n"
+                + "cat << '  __LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n" + legacyScript + "\n" + "__LEGACY_INNER_SCRIPT_END__\n" + "chmod +x \"${tmp_file}\"\n"
+                + "\"${tmp_file}\" \"$@\"\n";
         return List.of(new BuildPhaseDTO("script", wrappedScript, BuildPhaseCondition.ALWAYS, false, resultPaths));
     }
 }

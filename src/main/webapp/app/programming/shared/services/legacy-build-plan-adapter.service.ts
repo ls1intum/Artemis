@@ -45,12 +45,12 @@ export class LegacyBuildPlanAdapterService {
 
     private wrapLegacyBuildScript(script: string, resultPaths: string[]): BuildPhase[] {
         const wrappedScript = `cd ${LegacyBuildPlanAdapterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
-  local tmp_file=$(mktemp)
-cat << '__LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"
+local tmp_file=$(mktemp)
+cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"
 ${script}
 __LEGACY_INNER_SCRIPT_END__
-  chmod +x "\${tmp_file}"
-  "\${tmp_file}" "$@"
+chmod +x "\${tmp_file}"
+"\${tmp_file}" "$@"
 `;
         return [
             {

@@ -75,7 +75,7 @@ class LegacyBuildPlanAdapterServiceTest {
         assertThat(phases.getFirst().resultPaths().size()).isEqualTo(1);
         assertThat(phases.getFirst().resultPaths()).containsExactly("build/test-results/test/*.xml");
         assertThat(phases.getFirst().script()).contains("cd /var/tmp/testing-dir\n");
-        assertThat(phases.getFirst().script()).contains("cat << '__LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n");
+        assertThat(phases.getFirst().script()).contains("cat << '  __LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n");
         assertThat(phases.getFirst().script()).contains("echo hi\n");
     }
 }
