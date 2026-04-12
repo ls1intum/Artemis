@@ -307,4 +307,16 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.isMessageValid()).toBe(false);
         expect(sendButton.disabled).toBe(true);
     });
+
+    it('should enable send button if message is valid', () => {
+        const longText = 'a'.repeat(component.maxContentLength - 1);
+        component.updateField(longText);
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+
+        expect(component.isMessageValid()).toBe(true);
+        expect(sendButton.disabled).toBe(false);
+    });
 });
