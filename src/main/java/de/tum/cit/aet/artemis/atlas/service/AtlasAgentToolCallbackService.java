@@ -22,53 +22,59 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolCallbackService {
 
-    private final CompetencyExpertToolsService expertToolsService;
+    private final ToolCallbackProvider expertProvider;
 
-    private final CompetencyMappingToolsService mapperToolsService;
+    private final ToolCallbackProvider mapperProvider;
 
-    private final ExerciseMappingToolsService exerciseMapperToolsService;
+    private final ToolCallbackProvider exerciseMapperProvider;
+
+    private volatile ToolCallbackProvider mainAgentProvider;
 
     public AtlasAgentToolCallbackService(CompetencyExpertToolsService expertToolsService, CompetencyMappingToolsService mapperToolsService,
             ExerciseMappingToolsService exerciseMapperToolsService) {
-        this.expertToolsService = expertToolsService;
-        this.mapperToolsService = mapperToolsService;
-        this.exerciseMapperToolsService = exerciseMapperToolsService;
+        this.expertProvider = MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
+        this.mapperProvider = MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build();
+        this.exerciseMapperProvider = MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
     }
 
     /**
-     * Creates a provider exposing the Main Agent tools (information retrieval and delegation).
+     * Returns the provider exposing the Main Agent tools (information retrieval and delegation).
+     * Cached after first call. Accepts the tools service as a parameter to avoid a circular bean dependency.
      *
      * @param toolsService the tools service providing main agent tools
      * @return ToolCallbackProvider for the Main Agent
      */
     public ToolCallbackProvider createMainAgentProvider(AtlasAgentToolsService toolsService) {
-        return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
+        if (mainAgentProvider == null) {
+            mainAgentProvider = MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
+        }
+        return mainAgentProvider;
     }
 
     /**
-     * Creates a provider exposing the Competency Expert sub-agent tools.
+     * Returns the provider exposing the Competency Expert sub-agent tools.
      *
      * @return ToolCallbackProvider for the Competency Expert
      */
     public ToolCallbackProvider createCompetencyExpertProvider() {
-        return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
+        return expertProvider;
     }
 
     /**
-     * Creates a provider exposing the Competency Mapper sub-agent tools.
+     * Returns the provider exposing the Competency Mapper sub-agent tools.
      *
      * @return ToolCallbackProvider for the Competency Mapper
      */
     public ToolCallbackProvider createCompetencyMapperProvider() {
-        return MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build();
+        return mapperProvider;
     }
 
     /**
-     * Creates a provider exposing the Exercise Mapper sub-agent tools.
+     * Returns the provider exposing the Exercise Mapper sub-agent tools.
      *
      * @return ToolCallbackProvider for the Exercise Mapper
      */
     public ToolCallbackProvider createExerciseMapperProvider() {
-        return MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
+        return exerciseMapperProvider;
     }
 }

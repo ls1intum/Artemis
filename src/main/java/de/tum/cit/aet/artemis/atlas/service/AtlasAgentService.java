@@ -165,10 +165,10 @@ public class AtlasAgentService {
             }
 
             List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
-            RelationGraphPreviewDTO graphForDto = (singleRelationPreview != null || batchRelationPreview != null) ? relationGraphPreview : null;
+            RelationGraphPreviewDTO graphForDto = relationGraphPreview;
 
             boolean hasPreviewData = (competencyPreviews != null && !competencyPreviews.isEmpty()) || (relationPreviews != null && !relationPreviews.isEmpty())
-                    || exerciseMappingPreview != null;
+                    || graphForDto != null || exerciseMappingPreview != null;
             log.debug("processChatMessage: hasPreviewData={}, competencyPreviews={}, relationPreviews={}, exerciseMapping={}, responseLength={}", hasPreviewData,
                     competencyPreviews != null ? competencyPreviews.size() : "null", relationPreviews != null ? relationPreviews.size() : "null", exerciseMappingPreview != null,
                     response != null ? response.length() : 0);
