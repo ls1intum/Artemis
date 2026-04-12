@@ -310,7 +310,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should enable send button if message is valid', () => {
-        const longText = 'a'.repeat(component.maxContentLength - 1);
+        const longText = 'a'.repeat(component.maxContentLength);
         component.updateField(longText);
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
