@@ -118,7 +118,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 1,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.LECTURE,
+            mode: ChatServiceMode.LECTURE,
             entityId: 42,
             entityName: 'Lecture 1',
         };
@@ -130,7 +130,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 2,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 77,
             entityName: 'Exercise 1',
         };
@@ -142,7 +142,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 3,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.TEXT_EXERCISE,
+            mode: ChatServiceMode.TEXT_EXERCISE,
             entityId: 55,
             entityName: 'Text Exercise 1',
         };
@@ -154,7 +154,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -170,7 +170,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'Neuer Chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -186,7 +186,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'NEW CHAT',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -202,7 +202,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 5,
             title: 'Some regular chat title',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -218,7 +218,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 10,
             title: 'Some chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -235,7 +235,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 11,
             title: 'Chat to delete',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -254,7 +254,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 12,
             title: 'Chat with menu',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -280,7 +280,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 13,
             title: 'Chat to delete via menu',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -305,7 +305,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 14,
             title: 'Chat for language test',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -332,7 +332,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 3,
             title: 'Course chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 123,
             entityName: 'Course 1',
         };
@@ -349,7 +349,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 20,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -371,7 +371,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 21,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -392,7 +392,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 22,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -413,7 +413,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 30,
             title: 'Locale test chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 50,
             entityName: 'Exercise 1',
         };

@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -76,7 +77,7 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         assertThat(response.id()).isNotNull();
 
         // Verify session was saved in database
-        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(),
+        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(lecture.getId(), IrisChatMode.LECTURE_CHAT,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), Pageable.unpaged());
         assertThat(sessionsInDb).hasSize(1);
         assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.id());
@@ -99,7 +100,8 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         assertThat(response.id()).isEqualTo(existingSession.getId());
 
         // Verify no new session was created
-        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId(), Pageable.unpaged());
+        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(lecture.getId(), IrisChatMode.LECTURE_CHAT, user.getId(),
+                Pageable.unpaged());
         assertThat(sessionsInDb).hasSize(1);
     }
 
@@ -163,8 +165,10 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         // Verify both sessions exist
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var student1Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student1.getId(), Pageable.unpaged());
-        var student2Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(lecture.getId(), student2.getId(), Pageable.unpaged());
+        var student1Sessions = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(lecture.getId(), IrisChatMode.LECTURE_CHAT, student1.getId(),
+                Pageable.unpaged());
+        var student2Sessions = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(lecture.getId(), IrisChatMode.LECTURE_CHAT, student2.getId(),
+                Pageable.unpaged());
 
         assertThat(student1Sessions).hasSize(1);
         assertThat(student2Sessions).hasSize(1);

@@ -78,7 +78,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         assertThat(response.id()).isNotNull();
 
         // Verify session was saved in database
-        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(textExercise.getId(),
+        var sessionsInDb = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(textExercise.getId(), IrisChatMode.TEXT_EXERCISE_CHAT,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), Pageable.unpaged());
         assertThat(sessionsInDb).hasSize(1);
         assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.id());
@@ -138,8 +138,10 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         assertThat(response1.id()).isNotEqualTo(response2.id());
 
         // Verify in database
-        var student1Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(textExercise.getId(), student1.getId(), Pageable.unpaged());
-        var student2Sessions = irisChatSessionRepository.findByEntityIdAndUserIdOrderByCreationDateDesc(textExercise.getId(), student2.getId(), Pageable.unpaged());
+        var student1Sessions = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(textExercise.getId(), IrisChatMode.TEXT_EXERCISE_CHAT,
+                student1.getId(), Pageable.unpaged());
+        var student2Sessions = irisChatSessionRepository.findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(textExercise.getId(), IrisChatMode.TEXT_EXERCISE_CHAT,
+                student2.getId(), Pageable.unpaged());
 
         assertThat(student1Sessions).hasSize(1);
         assertThat(student2Sessions).hasSize(1);
