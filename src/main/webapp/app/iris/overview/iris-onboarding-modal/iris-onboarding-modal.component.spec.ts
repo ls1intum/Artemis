@@ -12,6 +12,9 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { IrisOnboardingService, OnboardingEvent } from './iris-onboarding.service';
+import { Subject } from 'rxjs';
+import { signal } from '@angular/core';
 
 function createMockElement(rect: Partial<DOMRect>): HTMLElement {
     const el = document.createElement('div');
@@ -41,6 +44,7 @@ describe('IrisOnboardingModalComponent', () => {
     let component: IrisOnboardingModalComponent;
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
     let dialogRef: DynamicDialogRef;
+    let onboardingEventSubject: Subject<OnboardingEvent>;
 
     async function detectChanges(): Promise<void> {
         fixture.detectChanges();
@@ -49,6 +53,7 @@ describe('IrisOnboardingModalComponent', () => {
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
+        onboardingEventSubject = new Subject<OnboardingEvent>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -60,7 +65,18 @@ describe('IrisOnboardingModalComponent', () => {
                 MockDirective(CdkTrapFocus),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(DynamicDialogRef), { provide: DynamicDialogConfig, useValue: { data: {} } }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(DynamicDialogRef),
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: IrisOnboardingService,
+                    useValue: {
+                        onboardingEvent$: onboardingEventSubject,
+                        currentStep: signal(0),
+                    },
+                },
+            ],
         });
 
         fixture = TestBed.createComponent(IrisOnboardingModalComponent);
@@ -183,17 +199,17 @@ describe('IrisOnboardingModalComponent', () => {
             component.tooltipConfig.set({
                 spotlight: { top: 500, left: 50, width: 40, height: 40 },
                 coachMarkPosition: { top: 514, left: 64 },
-                tooltipPosition: { top: 490, left: 106 },
+                tooltipPosition: { top: 320, left: 106 },
                 titleTranslationKey: 'artemisApp.iris.onboarding.step3.title',
                 descriptionTranslationKey: 'artemisApp.iris.onboarding.step3.description',
-                arrowDirection: 'left',
+                arrowDirection: 'down',
                 currentStep: 3,
             });
             component.isStepPositionReady.set(true);
             await detectChanges();
 
             const tooltip = fixture.nativeElement.querySelector('.onboarding-tooltip');
-            expect(tooltip.classList.contains('tooltip-arrow-left')).toBe(true);
+            expect(tooltip.classList.contains('tooltip-arrow-down')).toBe(true);
         });
 
         it('should have correct ARIA attributes on tooltip', async () => {
@@ -204,7 +220,7 @@ describe('IrisOnboardingModalComponent', () => {
                 tooltipPosition: { top: 350, left: 120 },
                 titleTranslationKey: 'artemisApp.iris.onboarding.step2.title',
                 descriptionTranslationKey: 'artemisApp.iris.onboarding.step2.description',
-                arrowDirection: 'down-left',
+                arrowDirection: 'up',
                 currentStep: 2,
             });
             component.isStepPositionReady.set(true);
@@ -229,10 +245,10 @@ describe('IrisOnboardingModalComponent', () => {
     });
 
     describe('position calculations', () => {
-        it('should calculate tooltip position for step 1 (suggestion chips)', () => {
+        it('should calculate tooltip position for step 1 (context selector)', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelectorAll').mockImplementation((selector: string) => {
-                if (selector === '[data-onboarding-target="suggestion-chips"]') {
+                if (selector === '[data-onboarding-target="context-selector"]') {
                     return [createMockElement({ top: 500, left: 200, right: 480, bottom: 536, width: 280, height: 36 })] as unknown as NodeListOf<Element>;
                 }
                 return [] as unknown as NodeListOf<Element>;
@@ -247,7 +263,7 @@ describe('IrisOnboardingModalComponent', () => {
             const config = component.tooltipConfig();
             expect(config).toBeTruthy();
             expect(config!.currentStep).toBe(1);
-            expect(config!.arrowDirection).toBe('down');
+            expect(config!.arrowDirection).toBe('down-left');
             expect(config!.titleTranslationKey).toBe('artemisApp.iris.onboarding.step1.title');
 
             vi.useRealTimers();
@@ -272,7 +288,7 @@ describe('IrisOnboardingModalComponent', () => {
             const config = component.tooltipConfig();
             expect(config).toBeTruthy();
             expect(config!.currentStep).toBe(3);
-            expect(config!.arrowDirection).toBe('left');
+            expect(config!.arrowDirection).toBe('down');
 
             vi.useRealTimers();
         });
@@ -322,6 +338,72 @@ describe('IrisOnboardingModalComponent', () => {
             // Should not throw after destroy
             vi.advanceTimersByTime(20 * 200);
             vi.useRealTimers();
+        });
+
+        it('should remove body attribute on destroy', () => {
+            document.body.setAttribute('data-onboarding-active-step', '1');
+            fixture.destroy();
+            expect(document.body.hasAttribute('data-onboarding-active-step')).toBe(false);
+        });
+    });
+
+    describe('interactive onboarding events', () => {
+        it('should advance from step 1 on contextChanged event', () => {
+            component.step.set(1);
+            const nextSpy = vi.spyOn(component, 'next');
+            onboardingEventSubject.next({ type: 'contextChanged' });
+            expect(nextSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not advance from step 2 on contextChanged event', () => {
+            component.step.set(2);
+            const nextSpy = vi.spyOn(component, 'next');
+            onboardingEventSubject.next({ type: 'contextChanged' });
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
+
+        it('should advance from step 2 on quiz chip click', () => {
+            component.step.set(2);
+            const nextSpy = vi.spyOn(component, 'next');
+            onboardingEventSubject.next({ type: 'chipClicked', chipKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' });
+            expect(nextSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not advance from step 2 on non-quiz chip click', () => {
+            component.step.set(2);
+            const nextSpy = vi.spyOn(component, 'next');
+            onboardingEventSubject.next({ type: 'chipClicked', chipKey: 'artemisApp.iris.chat.suggestions.learnStarter' });
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
+
+        it('should finish from step 3 on aboutIrisOpened event', () => {
+            component.step.set(3);
+            const finishSpy = vi.spyOn(component, 'finish');
+            onboardingEventSubject.next({ type: 'aboutIrisOpened' });
+            expect(finishSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not finish from step 2 on aboutIrisOpened event', () => {
+            component.step.set(2);
+            const finishSpy = vi.spyOn(component, 'finish');
+            onboardingEventSubject.next({ type: 'aboutIrisOpened' });
+            expect(finishSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('isInteractiveStep', () => {
+        it('should return false for step 0', () => {
+            component.step.set(0);
+            expect(component.isInteractiveStep()).toBe(false);
+        });
+
+        it('should return true for steps 1-3', () => {
+            component.step.set(1);
+            expect(component.isInteractiveStep()).toBe(true);
+            component.step.set(2);
+            expect(component.isInteractiveStep()).toBe(true);
+            component.step.set(3);
+            expect(component.isInteractiveStep()).toBe(true);
         });
     });
 });

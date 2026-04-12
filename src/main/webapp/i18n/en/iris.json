@@ -11,16 +11,16 @@
                 "stepOf": "Step {{current}} of {{total}}",
                 "finish": "Finish",
                 "step1": {
-                    "title": "Start with a prompt",
-                    "description": "Use one of the suggested prompts below to start chatting with Iris."
+                    "title": "Adjust your context",
+                    "description": "Iris defaults to your full course. Try switching to a specific exercise or lecture for more targeted answers."
                 },
                 "step2": {
-                    "title": "Focus Iris on what matters",
-                    "description": "By default, Iris considers your entire course. Switch the context to a specific lecture or exercise to get more relevant answers."
+                    "title": "Not sure where to start?",
+                    "description": "Tap a suggestion chip below to send your first message. The \"Quiz\" prompt is a good starting point."
                 },
                 "step3": {
-                    "title": "What can Iris help with?",
-                    "description": "Iris guides you through concepts and exercises, but does not give away solutions. Tap the info icon to see the full list of capabilities."
+                    "title": "Know the boundaries",
+                    "description": "Iris explains concepts and guides problem-solving, but does not provide solutions. Click the info icon to learn more."
                 }
             },
             "settings": {

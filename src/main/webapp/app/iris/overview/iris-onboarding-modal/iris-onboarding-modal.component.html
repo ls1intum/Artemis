@@ -53,10 +53,11 @@
     <!-- Steps 1-3: Tooltips pointing at Iris chat UI elements -->
     @if (tooltipConfig(); as config) {
         @if (isStepPositionReady()) {
-            <div class="spotlight-click-guard" aria-hidden="true"></div>
+            <div class="spotlight-click-guard" [class.interactive]="isInteractiveStep()" aria-hidden="true"></div>
             <div
                 aria-hidden="true"
                 class="spotlight-blocker rounded-cutout"
+                [class.interactive]="isInteractiveStep()"
                 [style.top.px]="config.spotlight.top"
                 [style.left.px]="config.spotlight.left"
                 [style.width.px]="config.spotlight.width"
@@ -67,6 +68,7 @@
 
             <div
                 class="onboarding-tooltip"
+                [class.tooltip-arrow-up]="config.arrowDirection === 'up'"
                 [class.tooltip-arrow-down]="config.arrowDirection === 'down'"
                 [class.tooltip-arrow-down-left]="config.arrowDirection === 'down-left'"
                 [class.tooltip-arrow-left]="config.arrowDirection === 'left'"
@@ -82,6 +84,9 @@
             >
                 <div class="tooltip-header">
                     <p class="tooltip-header-text" [id]="'onboarding-tooltip-title-' + config.currentStep" [jhiTranslate]="config.titleTranslationKey"></p>
+                    <button type="button" class="tooltip-close-button" (click)="next()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <p class="tooltip-description" [id]="'onboarding-tooltip-desc-' + config.currentStep" [jhiTranslate]="config.descriptionTranslationKey"></p>
                 <div class="tooltip-footer">

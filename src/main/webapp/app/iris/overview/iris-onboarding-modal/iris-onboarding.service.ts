@@ -1,9 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
 export type OnboardingResult = { action: 'finish' };
+
+export type OnboardingEvent = { type: 'contextChanged' } | { type: 'chipClicked'; chipKey: string } | { type: 'aboutIrisOpened' };
 
 const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
@@ -15,6 +18,9 @@ export class IrisOnboardingService {
     private accountService = inject(AccountService);
     private dialogRef: DynamicDialogRef | undefined;
     private pendingResult: Promise<OnboardingResult | undefined> | undefined;
+
+    readonly onboardingEvent$ = new Subject<OnboardingEvent>();
+    readonly currentStep = signal(0);
 
     private getStorageKey(): string {
         const userId = this.accountService.userIdentity()?.id;
@@ -66,7 +72,7 @@ export class IrisOnboardingService {
      * Opens the onboarding modal if the user hasn't completed it yet.
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async showOnboardingIfNeeded(): Promise<OnboardingResult | undefined> {
+    async showOnboardingIfNeeded(isEmptyState: boolean): Promise<OnboardingResult | undefined> {
         if (!this.accountService.userIdentity()?.id) {
             return undefined;
         }
@@ -76,6 +82,10 @@ export class IrisOnboardingService {
         }
 
         if (this.hasCompletedOnboarding()) {
+            return undefined;
+        }
+
+        if (!isEmptyState) {
             return undefined;
         }
 
@@ -100,6 +110,8 @@ export class IrisOnboardingService {
             return this.pendingResult;
         }
 
+        this.currentStep.set(0);
+
         this.dialogRef =
             this.dialogService.open(IrisOnboardingModalComponent, {
                 modal: false,
@@ -111,6 +123,7 @@ export class IrisOnboardingService {
 
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
+                this.currentStep.set(0);
                 this.markOnboardingCompleted();
                 if (result) {
                     resolve({ action: 'finish' });

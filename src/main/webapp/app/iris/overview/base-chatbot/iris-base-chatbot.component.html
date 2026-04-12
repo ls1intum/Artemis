@@ -399,7 +399,6 @@
                 <div class="chat-input">
                     <div class="chat-input-inner">
                         <div class="textarea-wrapper">
-                            <div class="context-selector-placeholder" data-onboarding-target="context-selector" aria-hidden="true"></div>
                             <textarea
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
@@ -429,14 +428,17 @@
                                 </div>
                             }
                             <div class="textarea-controls">
-                                <jhi-context-selection [disabled]="isInputDisabled()" />
+                                <jhi-context-selection
+                                    [disabled]="isInputDisabled()"
+                                    data-onboarding-target="context-selector"
+                                    (contextChanged)="onContextChangedDuringOnboarding()"
+                                />
                                 <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
                             </div>
                         </div>
-                        <div class="suggestion-chip-placeholder" data-onboarding-target="suggestion-chips" aria-hidden="true"></div>
                     </div>
                     @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && !isExerciseOrLectureMode()) {
-                        <div class="prompt-suggestion-chips">
+                        <div class="prompt-suggestion-chips" data-onboarding-target="suggestion-chips">
                             @for (chip of suggestionChips; track chip.translationKey) {
                                 <button
                                     type="button"

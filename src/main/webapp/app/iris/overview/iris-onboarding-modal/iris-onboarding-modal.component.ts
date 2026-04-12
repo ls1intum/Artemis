@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -6,7 +7,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { OnboardingResult } from './iris-onboarding.service';
+import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 
 // Data-attribute selectors for onboarding tooltip anchor elements.
 // These elements live inside the Iris chat UI (iris-base-chatbot component).
@@ -16,7 +17,7 @@ const ONBOARDING_TARGETS = {
     infoIcon: '[data-onboarding-target="info-icon"]',
 } as const;
 
-type ArrowDirection = 'down' | 'down-left' | 'left';
+type ArrowDirection = 'up' | 'down' | 'down-left' | 'left';
 
 type TooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -43,6 +44,7 @@ type TooltipConfig = {
 export class IrisOnboardingModalComponent {
     private dialogRef = inject(DynamicDialogRef);
     private destroyRef = inject(DestroyRef);
+    private onboardingService = inject(IrisOnboardingService);
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly ButtonType = ButtonType;
@@ -57,6 +59,7 @@ export class IrisOnboardingModalComponent {
     // Tooltip positioning
     readonly tooltipConfig = signal<TooltipConfig | undefined>(undefined);
     readonly isStepPositionReady = signal(false);
+    readonly isInteractiveStep = computed(() => this.step() >= 1 && this.step() <= 3);
 
     constructor() {
         this.destroyRef.onDestroy(() => {
@@ -64,6 +67,32 @@ export class IrisOnboardingModalComponent {
                 clearTimeout(timer);
             }
             this.pendingTimers.clear();
+            document.body.removeAttribute('data-onboarding-active-step');
+        });
+
+        this.onboardingService.onboardingEvent$.pipe(takeUntilDestroyed()).subscribe((event) => {
+            switch (event.type) {
+                case 'contextChanged':
+                    if (this.step() === 1) this.next();
+                    break;
+                case 'chipClicked':
+                    if (this.step() === 2 && event.chipKey === 'artemisApp.iris.chat.suggestions.quizTopicStarter') {
+                        this.next();
+                    }
+                    break;
+                case 'aboutIrisOpened':
+                    if (this.step() === 3) this.finish();
+                    break;
+            }
+        });
+
+        effect(() => {
+            const step = this.step();
+            if (step >= 1 && step <= 3) {
+                document.body.setAttribute('data-onboarding-active-step', String(step));
+            } else {
+                document.body.removeAttribute('data-onboarding-active-step');
+            }
         });
     }
 
@@ -79,13 +108,18 @@ export class IrisOnboardingModalComponent {
         this.close();
     }
 
+    private setStep(newStep: number): void {
+        this.step.set(newStep);
+        this.onboardingService.currentStep.set(newStep);
+    }
+
     /**
      * Moves to the next step or closes the modal if on the last step.
      */
     next(): void {
         const nextStep = this.step() + 1;
         if (nextStep < this.totalSteps) {
-            this.step.set(nextStep);
+            this.setStep(nextStep);
             this.isStepPositionReady.set(false);
             this.schedulePositionCalculation(nextStep as 1 | 2 | 3);
         } else {
@@ -98,7 +132,7 @@ export class IrisOnboardingModalComponent {
      */
     onStartTour(): void {
         this.isStepPositionReady.set(false);
-        this.step.set(1);
+        this.setStep(1);
         this.schedulePositionCalculation(1);
     }
 
@@ -106,6 +140,7 @@ export class IrisOnboardingModalComponent {
      * Finishes the onboarding and closes the modal.
      */
     finish(): void {
+        document.body.removeAttribute('data-onboarding-active-step');
         this.dialogRef.close({ action: 'finish' } satisfies OnboardingResult);
     }
 
@@ -113,6 +148,7 @@ export class IrisOnboardingModalComponent {
      * Closes the modal without completing.
      */
     close(): void {
+        document.body.removeAttribute('data-onboarding-active-step');
         this.dialogRef.close();
     }
 
@@ -143,9 +179,19 @@ export class IrisOnboardingModalComponent {
         let tooltipPos: { top: number; left: number };
 
         switch (config.arrowDirection) {
+            case 'up': {
+                // Tooltip below target, arrow pointing up
+                const preferredTop = spotlight.top + spotlight.height + 8;
+                const preferredLeft = spotlight.left + spotlight.width / 2 - tooltipWidth / 2;
+                tooltipPos = {
+                    top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
+                    left: Math.max(viewportPadding, Math.min(preferredLeft, window.innerWidth - tooltipWidth - viewportPadding)),
+                };
+                break;
+            }
             case 'down': {
                 // Tooltip above target, arrow pointing down
-                const preferredTop = spotlight.top - tooltipHeight - gap;
+                const preferredTop = spotlight.top - tooltipHeight - 8;
                 const preferredLeft = spotlight.left + spotlight.width / 2 - tooltipWidth / 2;
                 tooltipPos = {
                     top: Math.max(viewportPadding, preferredTop),
@@ -155,7 +201,7 @@ export class IrisOnboardingModalComponent {
             }
             case 'down-left': {
                 // Tooltip above and to the right, arrow pointing down-left
-                const preferredTop = spotlight.top - tooltipHeight - gap;
+                const preferredTop = spotlight.top - tooltipHeight - 8;
                 const preferredLeft = spotlight.left + spotlight.width / 2;
                 tooltipPos = {
                     top: Math.max(viewportPadding, preferredTop),
@@ -164,8 +210,10 @@ export class IrisOnboardingModalComponent {
                 break;
             }
             case 'left': {
-                // Tooltip to the right of target, arrow pointing left
-                const preferredTop = spotlight.top + spotlight.height / 2 - tooltipHeight / 2;
+                // Tooltip to the right of target, arrow pointing left.
+                // Prefer aligning near the top of the spotlight so the tooltip doesn't
+                // get pushed off the bottom edge when the target is low on screen.
+                const preferredTop = spotlight.top;
                 const preferredLeft = spotlight.left + spotlight.width + gap;
                 tooltipPos = {
                     top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
@@ -197,22 +245,22 @@ export class IrisOnboardingModalComponent {
         switch (step) {
             case 1:
                 return {
-                    selector: ONBOARDING_TARGETS.suggestionChips,
-                    arrowDirection: 'down',
+                    selector: ONBOARDING_TARGETS.contextSelector,
+                    arrowDirection: 'down-left',
                     titleKey: 'artemisApp.iris.onboarding.step1.title',
                     descriptionKey: 'artemisApp.iris.onboarding.step1.description',
                 };
             case 2:
                 return {
-                    selector: ONBOARDING_TARGETS.contextSelector,
-                    arrowDirection: 'down-left',
+                    selector: ONBOARDING_TARGETS.suggestionChips,
+                    arrowDirection: 'up',
                     titleKey: 'artemisApp.iris.onboarding.step2.title',
                     descriptionKey: 'artemisApp.iris.onboarding.step2.description',
                 };
             case 3:
                 return {
                     selector: ONBOARDING_TARGETS.infoIcon,
-                    arrowDirection: 'left',
+                    arrowDirection: 'down',
                     titleKey: 'artemisApp.iris.onboarding.step3.title',
                     descriptionKey: 'artemisApp.iris.onboarding.step3.description',
                 };

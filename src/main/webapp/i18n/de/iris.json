@@ -11,16 +11,16 @@
                 "stepOf": "Schritt {{current}} von {{total}}",
                 "finish": "Fertig",
                 "step1": {
-                    "title": "Starte mit einem Prompt",
-                    "description": "Nutze einen der vorgeschlagenen Prompts unten, um mit Iris zu chatten."
+                    "title": "Passe deinen Kontext an",
+                    "description": "Iris bezieht sich standardmäßig auf deinen gesamten Kurs. Versuche, zu einer bestimmten Übung oder Vorlesung zu wechseln, um gezieltere Antworten zu erhalten."
                 },
                 "step2": {
-                    "title": "Fokussiere Iris auf das Wesentliche",
-                    "description": "Standardmäßig berücksichtigt Iris den gesamten Kurs. Wechsle den Kontext auf eine bestimmte Vorlesung oder Übung, um relevantere Antworten zu erhalten."
+                    "title": "Nicht sicher, wo du anfangen sollst?",
+                    "description": "Tippe unten auf einen Vorschlags-Chip, um deine erste Nachricht zu senden. Der \"Quiz\"-Prompt ist ein guter Einstieg."
                 },
                 "step3": {
-                    "title": "Wobei kann Iris helfen?",
-                    "description": "Iris führt dich durch Konzepte und Übungen, verrät aber keine Lösungen. Tippe auf das Info-Symbol, um die vollständige Liste der Funktionen zu sehen."
+                    "title": "Kenne die Grenzen",
+                    "description": "Iris erklärt Konzepte und hilft beim Problemlösen, gibt aber keine Lösungen vor. Klicke auf das Info-Symbol, um mehr zu erfahren."
                 }
             },
             "settings": {

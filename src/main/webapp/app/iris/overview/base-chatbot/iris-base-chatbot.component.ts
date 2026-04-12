@@ -668,7 +668,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
 
-        void this.onboardingService.showOnboardingIfNeeded().catch(() => undefined);
+        const shouldShowOnboarding = this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active();
+        void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
+    }
+
+    onContextChangedDuringOnboarding(): void {
+        if (this.onboardingService.currentStep() === 1) {
+            this.onboardingService.onboardingEvent$.next({ type: 'contextChanged' });
+        }
     }
 
     checkIfUserAcceptedLLMUsage(): void {
@@ -983,6 +990,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             this.adjustTextareaRows();
         });
+        if (this.onboardingService.currentStep() === 2) {
+            this.onboardingService.onboardingEvent$.next({ type: 'chipClicked', chipKey: translationKey });
+        }
     }
 
     onChipMouseEnter(starterKey: string): void {
@@ -1122,6 +1132,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
+        if (this.onboardingService.currentStep() === 3) {
+            this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
+        }
         // When opened from the exercise/lecture chat widget, the chat lives inside a CDK
         // MatDialog overlay. A PrimeNG dialog cannot render above it because the chat widget
         // uses CSS transforms (for drag/resize) which create an isolated stacking context.

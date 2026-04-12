@@ -197,6 +197,12 @@
     z-index: 10;
 }
 
+.tooltip-close-button {
+    @extend %close-button-base;
+
+    font-size: 1.1rem;
+}
+
 .text-content {
     display: flex;
     flex-direction: column;
@@ -239,9 +245,14 @@
     position: absolute;
     background: transparent;
     pointer-events: auto; // Block clicks on spotlight target while step is visible
-    cursor: default;
+    cursor: pointer;
     z-index: 1050;
     border-radius: var(--onboarding-radius);
+
+    &.interactive {
+        pointer-events: none;
+        cursor: default;
+    }
 }
 
 .spotlight-click-guard {
@@ -250,10 +261,14 @@
     pointer-events: auto; // Block clicks on non-highlighted areas
     background: transparent;
     z-index: 1049;
+
+    &.interactive {
+        pointer-events: none;
+    }
 }
 
 .spotlight-blocker.rounded-cutout {
-    box-shadow: 0 0 0 200vmax var(--iris-onboarding-backdrop);
+    // No backdrop for tooltip steps — only the welcome modal uses a backdrop
 }
 
 // Onboarding tooltip styles
@@ -272,6 +287,35 @@
     flex-direction: column;
     gap: 0.5rem;
     animation: onboarding-tooltip-enter var(--onboarding-tooltip-enter-duration) var(--onboarding-tooltip-enter-ease) both;
+
+    // Arrow pointing up — tooltip is below the target
+    &.tooltip-arrow-up {
+        transform-origin: center top;
+
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            top: -10px;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-bottom: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            top: -9px;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid var(--onboarding-modal-surface);
+        }
+    }
 
     // Arrow pointing down — tooltip is above the target
     &.tooltip-arrow-down {
@@ -332,14 +376,13 @@
 
     // Arrow pointing left — tooltip is to the right of the target
     &.tooltip-arrow-left {
-        transform-origin: left center;
+        transform-origin: left top;
 
         &::before,
         &::after {
             content: '';
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
+            top: 24px;
             width: 0;
             height: 0;
         }

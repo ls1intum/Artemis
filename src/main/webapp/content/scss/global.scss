@@ -926,6 +926,28 @@ Course Info Bar
     padding: 0.3rem 0.75rem;
 }
 
+// During onboarding, elevate the active target element above the click-guard (z-index 1049)
+// and spotlight-blocker (z-index 1050) so user clicks reach the actual UI element.
+body[data-onboarding-active-step='1'] [data-onboarding-target='context-selector'] {
+    position: relative;
+    z-index: 1053;
+}
+
+body[data-onboarding-active-step='2'] [data-onboarding-target='suggestion-chips'] {
+    position: relative;
+    z-index: 1053;
+}
+
+body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
+    position: relative;
+    z-index: 1053;
+}
+
+// PrimeNG p-select overlay (appended to body) during context selector step
+body[data-onboarding-active-step='1'] > .p-select-overlay {
+    z-index: 1060 !important;
+}
+
 .connection-status {
     font-size: 14px;
     color: $connection-status;

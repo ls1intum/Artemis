@@ -262,6 +262,8 @@ $iris-z-index-dropdown: 1050;
     gap: 8px;
     padding: 4px 0;
     justify-content: center;
+    width: fit-content;
+    margin-inline: auto;
 }
 
 .prompt-suggestion-chip {
@@ -592,21 +594,6 @@ pre {
         color: var(--bs-secondary-color);
         opacity: 1;
         white-space: pre-wrap;
-    }
-
-    .context-selector-placeholder {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        width: 24px;
-        height: 24px;
-        pointer-events: none;
-        z-index: 1;
-    }
-
-    .suggestion-chip-placeholder {
-        min-height: 36px;
-        border-radius: $iris-border-radius-lg;
     }
 }
 

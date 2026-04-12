@@ -180,7 +180,7 @@ describe('IrisOnboardingService', () => {
     describe('showOnboardingIfNeeded', () => {
         it('should return undefined and not open modal on non-desktop viewport', async () => {
             setDesktopViewport(false);
-            const result = await service.showOnboardingIfNeeded();
+            const result = await service.showOnboardingIfNeeded(true);
 
             expect(dialogService.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
@@ -190,7 +190,7 @@ describe('IrisOnboardingService', () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const resultPromise = service.showOnboardingIfNeeded();
+            const resultPromise = service.showOnboardingIfNeeded(true);
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             const result = await resultPromise;
@@ -202,7 +202,14 @@ describe('IrisOnboardingService', () => {
         it('should return undefined and skip opening when onboarding has been completed', async () => {
             service.markOnboardingCompleted();
 
-            const result = await service.showOnboardingIfNeeded();
+            const result = await service.showOnboardingIfNeeded(true);
+
+            expect(result).toBeUndefined();
+            expect(dialogService.open).not.toHaveBeenCalled();
+        });
+
+        it('should return undefined and skip opening when not in empty state', async () => {
+            const result = await service.showOnboardingIfNeeded(false);
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
