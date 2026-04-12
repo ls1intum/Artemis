@@ -67,8 +67,8 @@ export class QuizAiQuestionRefinementPanelComponent {
         });
     }
 
-    onEnterKey(event: KeyboardEvent): void {
-        if (!event.shiftKey) {
+    onEnterKey(event: Event): void {
+        if (!(event as KeyboardEvent).shiftKey) {
             event.preventDefault();
             this.submitRefinement();
         }
