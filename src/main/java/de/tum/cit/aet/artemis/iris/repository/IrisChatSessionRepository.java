@@ -68,43 +68,23 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     // -------------------------------------------------------------------------
-    // Session lookup by entity (exercise or lecture)
+    // Session lookup by entity (exercise, lecture, or course)
     // -------------------------------------------------------------------------
 
-    List<IrisChatSession> findByEntityIdAndUserIdOrderByCreationDateDesc(Long entityId, Long userId, Pageable pageable);
+    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
 
     /**
-     * Finds the latest chat sessions for the given entity (exercise or lecture) and user, with messages eagerly loaded.
+     * Finds the latest chat sessions for the given entity and chat mode, with messages eagerly loaded.
+     * Works uniformly for all chat modes: for COURSE_CHAT the entityId equals the courseId.
      *
-     * @param entityId the entity ID (exerciseId or lectureId depending on chatMode)
+     * @param entityId the entity ID (exerciseId, lectureId, or courseId depending on chatMode)
+     * @param chatMode the chat mode to filter by
      * @param userId   the user ID
      * @param pageable pagination info
      * @return list of sessions with messages
      */
-    default List<IrisChatSession> findLatestByEntityIdAndUserIdWithMessages(Long entityId, Long userId, Pageable pageable) {
-        List<Long> ids = findByEntityIdAndUserIdOrderByCreationDateDesc(entityId, userId, pageable).stream().map(DomainObject::getId).toList();
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return findSessionsWithMessagesByIdIn(ids);
-    }
-
-    // -------------------------------------------------------------------------
-    // Session lookup by course (COURSE_CHAT mode only)
-    // -------------------------------------------------------------------------
-
-    List<IrisChatSession> findByCourseIdAndChatModeAndUserIdOrderByCreationDateDesc(long courseId, IrisChatMode chatMode, long userId, Pageable pageable);
-
-    /**
-     * Finds the latest course-only chat sessions for the given course and user, with messages eagerly loaded.
-     *
-     * @param courseId the course ID
-     * @param userId   the user ID
-     * @param pageable pagination info
-     * @return list of sessions with messages
-     */
-    default List<IrisChatSession> findLatestCourseChatSessionsByUserIdWithMessages(long courseId, long userId, Pageable pageable) {
-        List<Long> ids = findByCourseIdAndChatModeAndUserIdOrderByCreationDateDesc(courseId, IrisChatMode.COURSE_CHAT, userId, pageable).stream().map(DomainObject::getId).toList();
+    default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
+        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Collections.emptyList();
         }

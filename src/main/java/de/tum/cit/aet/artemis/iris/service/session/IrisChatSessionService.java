@@ -506,12 +506,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     // -------------------------------------------------------------------------
 
     private IrisChatSession findOrCreateExerciseSession(Exercise exercise, User user, IrisChatMode mode) {
-        return irisChatSessionRepository.findLatestByEntityIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
+        return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(exercise.getId(), mode, user.getId(), Pageable.ofSize(1)).stream().findFirst()
                 .orElseGet(() -> createExerciseSessionInternal(exercise, user, mode));
     }
 
     private IrisChatSession findOrCreateCourseSession(Course course, User user) {
-        var sessionOptional = irisChatSessionRepository.findLatestCourseChatSessionsByUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
+        var sessionOptional = irisChatSessionRepository
+                .findLatestByEntityIdAndChatModeAndUserIdWithMessages(course.getId(), IrisChatMode.COURSE_CHAT, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             // Course sessions are reused if created today; otherwise a new one is created
@@ -524,8 +525,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private IrisChatSession findOrCreateLectureSession(Lecture lecture, User user) {
-        return irisChatSessionRepository.findLatestByEntityIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> createLectureSessionInternal(lecture, user));
+        return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(lecture.getId(), IrisChatMode.LECTURE_CHAT, user.getId(), Pageable.ofSize(1)).stream()
+                .findFirst().orElseGet(() -> createLectureSessionInternal(lecture, user));
     }
 
     private IrisChatSession createExerciseSessionInternal(Exercise exercise, User user, IrisChatMode mode) {
