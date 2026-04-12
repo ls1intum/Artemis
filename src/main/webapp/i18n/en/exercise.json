@@ -79,7 +79,8 @@
                 "errors": {
                     "invalidExerciseId": "Could not determine exercise id.",
                     "timelineLoadFailed": "Version timeline could not be loaded.",
-                    "snapshotLoadFailed": "Version snapshot could not be loaded."
+                    "snapshotLoadFailed": "Version snapshot could not be loaded.",
+                    "exerciseLoadFailed": "Exercise could not be loaded."
                 },
                 "revert": {
                     "tooltip": "Revert to: {{ value }}",

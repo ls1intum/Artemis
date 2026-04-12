@@ -10,21 +10,17 @@ export function booleanLabel(translateService: TranslateService, value?: boolean
 
 export type VersionHistoryViewMode = 'full' | 'changes';
 
-/** Returns a stable JSON representation for change detection across snapshots. */
-export function stableStringify(value: unknown): string {
-    return JSON.stringify(normalizeForStableStringify(value));
-}
-
 /** Returns whether two snapshot values differ after stable normalization. */
 export function valuesDiffer(current: unknown, previous: unknown): boolean {
     return stableStringify(current) !== stableStringify(previous);
 }
 
-function normalizeForStableStringify(value: unknown): unknown {
-    if (value === undefined) {
-        return null;
-    }
+/** Returns a stable JSON representation for change detection across snapshots. */
+export function stableStringify(value: unknown): string {
+    return JSON.stringify(normalizeForStableStringify(value));
+}
 
+function normalizeForStableStringify(value: unknown): unknown {
     if (value === null || typeof value !== 'object') {
         return value;
     }

@@ -5,39 +5,7 @@
                 <h4 jhiTranslate="artemisApp.exercise.sections.general"></h4>
                 <div class="metadata-list">
                     @for (field of generalFields(); track field.id) {
-                        <div class="metadata-row">
-                            <span class="metadata-row__label">
-                                {{ field.label }}
-                                @if (isDiffView() && field.revertable) {
-                                    <button
-                                        pButton
-                                        type="button"
-                                        text
-                                        rounded
-                                        size="small"
-                                        class="metadata-diff__revert"
-                                        [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
-                                        tooltipPosition="right"
-                                        (click)="revertField.emit({ fieldId: field.id, fieldLabel: field.label, previousRaw: field.previousRaw })"
-                                    >
-                                        <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
-                                    </button>
-                                }
-                            </span>
-                            @if (isDiffView()) {
-                                <div class="metadata-diff">
-                                    <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
-                                        {{ field.previousDisplay }}
-                                    </span>
-                                    <span class="metadata-diff__arrow">&rarr;</span>
-                                    <span class="metadata-diff__value metadata-diff__value--new" [class.metadata-diff__value--empty]="field.currentEmpty">
-                                        {{ field.currentDisplay }}
-                                    </span>
-                                </div>
-                            } @else {
-                                <span class="metadata-row__value">{{ field.currentDisplay }}</span>
-                            }
-                        </div>
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
                     }
                 </div>
             </section>
@@ -179,39 +147,7 @@
                 <h4 jhiTranslate="artemisApp.programmingExercise.timeline.complaintsAllowed"></h4>
                 <div class="metadata-list">
                     @for (field of feedbackFields(); track field.id) {
-                        <div class="metadata-row">
-                            <span class="metadata-row__label">
-                                {{ field.label }}
-                                @if (isDiffView() && field.revertable) {
-                                    <button
-                                        pButton
-                                        type="button"
-                                        text
-                                        rounded
-                                        size="small"
-                                        class="metadata-diff__revert"
-                                        [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
-                                        tooltipPosition="right"
-                                        (click)="revertField.emit({ fieldId: field.id, fieldLabel: field.label, previousRaw: field.previousRaw })"
-                                    >
-                                        <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
-                                    </button>
-                                }
-                            </span>
-                            @if (isDiffView()) {
-                                <div class="metadata-diff">
-                                    <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
-                                        {{ field.previousDisplay }}
-                                    </span>
-                                    <span class="metadata-diff__arrow">&rarr;</span>
-                                    <span class="metadata-diff__value metadata-diff__value--new" [class.metadata-diff__value--empty]="field.currentEmpty">
-                                        {{ field.currentDisplay }}
-                                    </span>
-                                </div>
-                            } @else {
-                                <span class="metadata-row__value">{{ field.currentDisplay }}</span>
-                            }
-                        </div>
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
                     }
                 </div>
             </section>
@@ -223,39 +159,7 @@
                 <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.teamAssignment' | artemisTranslate }}</h4>
                 <div class="metadata-list">
                     @for (field of teamAssignmentFields(); track field.id) {
-                        <div class="metadata-row">
-                            <span class="metadata-row__label">
-                                {{ field.label }}
-                                @if (isDiffView() && field.revertable) {
-                                    <button
-                                        pButton
-                                        type="button"
-                                        text
-                                        rounded
-                                        size="small"
-                                        class="metadata-diff__revert"
-                                        [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
-                                        tooltipPosition="right"
-                                        (click)="revertField.emit({ fieldId: field.id, fieldLabel: field.label, previousRaw: field.previousRaw })"
-                                    >
-                                        <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
-                                    </button>
-                                }
-                            </span>
-                            @if (isDiffView()) {
-                                <div class="metadata-diff">
-                                    <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
-                                        {{ field.previousDisplay }}
-                                    </span>
-                                    <span class="metadata-diff__arrow">&rarr;</span>
-                                    <span class="metadata-diff__value metadata-diff__value--new" [class.metadata-diff__value--empty]="field.currentEmpty">
-                                        {{ field.currentDisplay }}
-                                    </span>
-                                </div>
-                            } @else {
-                                <span class="metadata-row__value">{{ field.currentDisplay }}</span>
-                            }
-                        </div>
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
                     }
                 </div>
             </section>
@@ -267,39 +171,7 @@
                 <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.plagiarismDetection' | artemisTranslate }}</h4>
                 <div class="metadata-list">
                     @for (field of plagiarismFields(); track field.id) {
-                        <div class="metadata-row">
-                            <span class="metadata-row__label">
-                                {{ field.label }}
-                                @if (isDiffView() && field.revertable) {
-                                    <button
-                                        pButton
-                                        type="button"
-                                        text
-                                        rounded
-                                        size="small"
-                                        class="metadata-diff__revert"
-                                        [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
-                                        tooltipPosition="right"
-                                        (click)="revertField.emit({ fieldId: field.id, fieldLabel: field.label, previousRaw: field.previousRaw })"
-                                    >
-                                        <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
-                                    </button>
-                                }
-                            </span>
-                            @if (isDiffView()) {
-                                <div class="metadata-diff">
-                                    <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
-                                        {{ field.previousDisplay }}
-                                    </span>
-                                    <span class="metadata-diff__arrow">&rarr;</span>
-                                    <span class="metadata-diff__value metadata-diff__value--new" [class.metadata-diff__value--empty]="field.currentEmpty">
-                                        {{ field.currentDisplay }}
-                                    </span>
-                                </div>
-                            } @else {
-                                <span class="metadata-row__value">{{ field.currentDisplay }}</span>
-                            }
-                        </div>
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
                     }
                 </div>
             </section>

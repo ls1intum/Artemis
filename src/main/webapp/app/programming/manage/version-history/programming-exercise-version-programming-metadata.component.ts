@@ -12,6 +12,7 @@ import {
 } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { VersionHistoryViewMode, booleanLabel, valuesDiffer } from 'app/exercise/version-history/shared/version-history.utils';
 import { isRevertable } from 'app/exercise/version-history/shared/revert-field.registry';
+import { MetadataFieldRowComponent } from 'app/exercise/version-history/shared/metadata-field-row.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseVersionRepositoryCommitDiffComponent } from 'app/programming/manage/version-history/programming-exercise-version-repository-commit-diff.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -28,7 +29,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 interface MetadataField {
     id: string;
-    translatedLabel: string;
+    label: string;
     currentDisplay: string | number;
     previousDisplay: string | number;
     currentRaw?: string | number | boolean;
@@ -68,6 +69,7 @@ interface MetadataField {
         TranslateDirective,
         ArtemisTranslatePipe,
         ProgrammingExerciseVersionRepositoryCommitDiffComponent,
+        MetadataFieldRowComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -86,7 +88,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faRotateLeft = faRotateLeft;
 
-    readonly revertField = output<{ fieldId: string; previousRaw: unknown }>();
+    readonly revertField = output<{ fieldId: string; fieldLabel: string; previousRaw: unknown }>();
 
     readonly isDiffView = computed(() => this.viewMode() === 'changes' && !!this.previousProgrammingData());
 
@@ -375,7 +377,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     private toTextField(labelId: string, labelKey: string, currentRaw?: string | number | boolean, previousRaw?: string | number | boolean): MetadataField {
         return {
             id: labelId,
-            translatedLabel: this.translateLabel(labelKey),
+            label: this.translateLabel(labelKey),
             currentDisplay: typeof currentRaw === 'boolean' ? String(currentRaw) : (currentRaw ?? '-'),
             previousDisplay: typeof previousRaw === 'boolean' ? String(previousRaw) : (previousRaw ?? '-'),
             currentRaw,
@@ -399,7 +401,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         const fullHash = typeof currentValue === 'string' ? currentValue : undefined;
         return {
             id: labelId,
-            translatedLabel: this.translateLabel(labelKey),
+            label: this.translateLabel(labelKey),
             currentDisplay: currentValue ?? '-',
             previousDisplay: previousValue ?? '-',
             currentRaw: currentValue,
@@ -429,7 +431,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         const repositoryUri = typeof currentValue === 'string' ? currentValue : undefined;
         return {
             id: labelId,
-            translatedLabel: this.translateLabel(labelKey),
+            label: this.translateLabel(labelKey),
             currentDisplay: currentValue ?? '-',
             previousDisplay: previousValue ?? '-',
             currentRaw: currentValue,

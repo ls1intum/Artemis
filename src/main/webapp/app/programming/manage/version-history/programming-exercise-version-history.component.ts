@@ -9,7 +9,7 @@ import { ExerciseVersionHistoryLayoutComponent } from 'app/exercise/version-hist
 import { ExerciseVersionHistoryTimelineComponent } from 'app/exercise/version-history/shared/exercise-version-history-timeline.component';
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
 import { getRevertConfig } from 'app/exercise/version-history/shared/revert-field.registry';
-import { VersionHistoryViewMode } from 'app/exercise/version-history/shared/version-history.utils';
+import { VersionHistoryViewMode, booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
@@ -336,6 +336,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
                     this.currentExercise.set(response.body);
                 }
             },
+            error: () => {
+                this.alertService.error('artemisApp.exercise.versionHistory.errors.exerciseLoadFailed');
+            },
         });
     }
 
@@ -345,7 +348,7 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
             return '-';
         }
         if (typeof value === 'boolean') {
-            return value ? 'Yes' : 'No';
+            return booleanLabel(this.translateService, value) ?? '-';
         }
         return String(value);
     }
@@ -368,19 +371,24 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     }
 
     /** Reads a deeply nested property from an object using a dot-separated path. */
-    private getNestedValue(obj: Record<string, any>, path: string): unknown {
-        return path.split('.').reduce((current, key) => current?.[key], obj as any);
+    private getNestedValue(obj: object, path: string): unknown {
+        return path.split('.').reduce<unknown>((current, key) => {
+            if (typeof current === 'object' && current !== undefined && current !== null) {
+                return (current as Record<string, unknown>)[key];
+            }
+            return undefined;
+        }, obj);
     }
 
     /** Sets a deeply nested property on an object using a dot-separated path, creating intermediate objects as needed. */
-    private setNestedValue(obj: Record<string, any>, path: string, value: unknown): void {
+    private setNestedValue(obj: object, path: string, value: unknown): void {
         const keys = path.split('.');
-        let current: any = obj;
+        let current: Record<string, unknown> = obj as Record<string, unknown>;
         for (let i = 0; i < keys.length - 1; i++) {
-            if (current[keys[i]] === undefined || current[keys[i]] === null) {
+            if (current[keys[i]] === undefined || current[keys[i]] === null || typeof current[keys[i]] !== 'object') {
                 current[keys[i]] = {};
             }
-            current = current[keys[i]];
+            current = current[keys[i]] as Record<string, unknown>;
         }
         current[keys[keys.length - 1]] = value;
     }

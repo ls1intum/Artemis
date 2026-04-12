@@ -6,6 +6,7 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import { normalizeCategoryArray } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
 import { serializeGradingCriteriaToMarkdown } from 'app/exercise/version-history/shared/grading-criteria-markdown.util';
 import { ExerciseVersionMarkdownDiffComponent } from 'app/exercise/version-history/shared/exercise-version-markdown-diff.component';
+import { MetadataFieldRowComponent } from 'app/exercise/version-history/shared/metadata-field-row.component';
 import { VersionHistoryViewMode, booleanLabel, valuesDiffer } from 'app/exercise/version-history/shared/version-history.utils';
 import { isRevertable } from 'app/exercise/version-history/shared/revert-field.registry';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -77,6 +78,7 @@ interface CompetencyEntry {
         ArtemisTranslatePipe,
         CustomExerciseCategoryBadgeComponent,
         ExerciseVersionMarkdownDiffComponent,
+        MetadataFieldRowComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

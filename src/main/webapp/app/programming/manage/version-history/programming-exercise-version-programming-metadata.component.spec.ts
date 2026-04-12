@@ -81,7 +81,7 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         });
         fixture.detectChanges();
 
-        const commitField = component.repositoryFields().find((f) => f.kind === 'commit' && f.translatedLabel.includes('template'));
+        const commitField = component.repositoryFields().find((f) => f.kind === 'commit' && f.label.includes('template'));
         expect(commitField).toBeDefined();
         expect(commitField!.commitLink).toBeUndefined();
     });
@@ -111,13 +111,13 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         });
         fixture.detectChanges();
 
-        const commitField = component.repositoryFields().find((f) => f.kind === 'commit' && f.translatedLabel.includes('template'));
+        const commitField = component.repositoryFields().find((f) => f.kind === 'commit' && f.label.includes('template'));
         expect(commitField).toBeDefined();
         expect(commitField!.shortCommitHash).toBe('-');
     });
 
     it('should use fallback label when translation key is not found', () => {
-        const branchField = component.buildConfigurationFields().find((f) => f.translatedLabel === 'Branch');
+        const branchField = component.buildConfigurationFields().find((f) => f.label === 'Branch');
         expect(branchField).toBeDefined();
     });
 
@@ -128,7 +128,7 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         });
         fixture.detectChanges();
 
-        const emptyField = component.languageFields().find((f) => f.translatedLabel.includes('projectType'));
+        const emptyField = component.languageFields().find((f) => f.label.includes('projectType'));
         expect(emptyField).toBeDefined();
         expect(emptyField!.currentEmpty).toBeTruthy();
         expect(emptyField!.currentDisplay).toBe('-');
@@ -150,7 +150,7 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         const langField = fields.find((f) => f.currentDisplay === 'JAVA');
         expect(langField!.currentEmpty).toBeFalsy();
 
-        const projectTypeField = fields.find((f) => f.translatedLabel.includes('projectType'));
+        const projectTypeField = fields.find((f) => f.label.includes('projectType'));
         expect(projectTypeField!.currentEmpty).toBeTruthy();
     });
 

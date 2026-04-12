@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, effect, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, signal, viewChild } from '@angular/core';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
@@ -6,6 +6,9 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 
 @Component({
     selector: 'jhi-exercise-version-markdown-diff',
+    host: {
+        '(window:resize)': 'onResize()',
+    },
     template: `
         <div class="version-markdown-diff" [style.min-height.px]="initialEditorHeight()">
             <jhi-monaco-diff-editor [allowSplitView]="renderSideBySide()" [languageId]="customMarkdownLanguageId" />
@@ -29,6 +32,8 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionMarkdownDiffComponent {
+    private static readonly SIDE_BY_SIDE_MIN_WIDTH_PX = 1200;
+
     readonly original = input<string | undefined>();
     readonly modified = input<string | undefined>();
     readonly domainActions = input<TextEditorDomainAction[]>([]);
@@ -37,7 +42,7 @@ export class ExerciseVersionMarkdownDiffComponent {
     readonly editor = viewChild(MonacoDiffEditorComponent);
     readonly customMarkdownLanguageId = CUSTOM_MARKDOWN_LANGUAGE_ID;
 
-    readonly renderSideBySide = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1200);
+    readonly renderSideBySide = signal(typeof window === 'undefined' ? true : window.innerWidth >= ExerciseVersionMarkdownDiffComponent.SIDE_BY_SIDE_MIN_WIDTH_PX);
 
     constructor() {
         effect(() => {
@@ -52,8 +57,7 @@ export class ExerciseVersionMarkdownDiffComponent {
         });
     }
 
-    @HostListener('window:resize')
     onResize(): void {
-        this.renderSideBySide.set(window.innerWidth >= 1200);
+        this.renderSideBySide.set(window.innerWidth >= ExerciseVersionMarkdownDiffComponent.SIDE_BY_SIDE_MIN_WIDTH_PX);
     }
 }

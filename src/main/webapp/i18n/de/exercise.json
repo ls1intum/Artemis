@@ -79,7 +79,8 @@
                 "errors": {
                     "invalidExerciseId": "Die Seite konnte nicht geladen werden.",
                     "timelineLoadFailed": "Der Versionsverlauf konnte nicht geladen werden.",
-                    "snapshotLoadFailed": "Die Versionsdaten konnten nicht geladen werden."
+                    "snapshotLoadFailed": "Die Versionsdaten konnten nicht geladen werden.",
+                    "exerciseLoadFailed": "Die Aufgabe konnte nicht geladen werden."
                 },
                 "revert": {
                     "tooltip": "Zurücksetzen auf: {{ value }}",
