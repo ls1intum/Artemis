@@ -299,7 +299,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
         assertThat(job).isNotNull();
         assertThat(job.jobId()).isEqualTo(token);
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done", false));
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done", false, null));
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
