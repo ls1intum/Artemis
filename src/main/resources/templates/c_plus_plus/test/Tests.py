@@ -20,12 +20,15 @@ def main() -> None:
 
         for f in filenames:
             if f.endswith(".cpp") or f.endswith(".c"):
-                name, _ = os.path.splitext(f)
                 rel_path = os.path.relpath(os.path.join(root, f), ".")
                 rel_path = rel_path.replace(os.sep, "/")
-                test_filenames[name] = rel_path
 
-    print(f"Found test: {test_filenames}")
+                rel_path_no_ext, _ = os.path.splitext(rel_path)
+                unique_name = rel_path_no_ext.replace("/", "_").replace(".", "_")
+
+                test_filenames[unique_name] = rel_path
+
+    print(f"Found tests: {test_filenames}")
 
     # And adjust CMakeLists.txt accordingly
     cmake_file = os.path.join('.', "CMakeLists.txt")
