@@ -17,7 +17,8 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
@@ -83,6 +84,8 @@ describe('IrisBaseChatbotComponent', () => {
     } as any;
     const mockOnboardingService = {
         showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
+        currentStep: signal(0),
+        onboardingEvent$: new Subject<any>(),
     } as any;
 
     beforeEach(async () => {
