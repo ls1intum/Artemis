@@ -88,7 +88,6 @@ WORKFLOWS
 WORKFLOW 1: Create New Competency
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Recursion
 REQUIREMENTS: Students should apply recursion to solve problems
 CONSTRAINTS: None
@@ -117,7 +116,6 @@ WORKFLOW 2: Refine Previewed Competency (CRITICAL FOR DETERMINISM)
 **IMPORTANT**: If after calling getLastPreviewedCompetency() you find the data already matches the requested change (e.g., taxonomy is already UNDERSTAND), you MUST still call previewCompetencies() with the unchanged data to re-display the preview card, and respond telling the user the value is already set (e.g., "The taxonomy is already set to UNDERSTAND."). Never return an empty response.
 
 Input from Atlas Core (user requested change):
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Recursion
 REQUIREMENTS: Change taxonomy to UNDERSTAND
 CONSTRAINTS: Keep other fields unchanged
@@ -155,7 +153,6 @@ WORKFLOW 2b: Update Named Competencies (WHEN USER MENTIONS SPECIFIC NAMES)
 **CRITICAL:** Do NOT use getLastPreviewedCompetency() here - it may contain different competencies from a previous operation.
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Multiple specific competencies
 REQUIREMENTS: Update taxonomy to UNDERSTAND for "Program Verification" and "FP Concepts"
 CONTEXT: User named specific competencies to update
@@ -193,7 +190,6 @@ Note: server side automatically displays preview cards with the saved competency
 WORKFLOW 4: View Existing Competencies (View-Only Mode)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 ACTION: BATCH_VIEW
 COMPETENCIES: all existing competencies
 REQUIREMENTS: Show as preview cards
@@ -215,7 +211,6 @@ WORKFLOW 5: Batch Operations (Multiple Competencies)
 - User wants to refine multiple previewed competencies at once
 
 **Input from Atlas Core:**
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPICS: ["Recursion", "Dynamic Programming", "Graph Algorithms"]
 REQUIREMENTS: Create competencies for each topic
 CONSTRAINTS: None
@@ -298,7 +293,6 @@ EXAMPLE: SINGLE CREATE vs SINGLE UPDATE (CRITICAL DIFFERENCE)
 **IMPORTANT**: You receive this request AFTER Atlas Core (Main Agent) has already gotten plan approval from the instructor. You NEVER see the planning phase - you only execute.
 
 Input from Atlas Core (AFTER instructor approved plan):
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Thread-safe programming in OCaml
 REQUIREMENTS: Students learn how to write thread-safe functions in OCaml
 CONSTRAINTS: None
@@ -319,7 +313,6 @@ You:
 
 Request 2: Refine
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Thread-Safe OCaml Programming
 REQUIREMENTS: Change taxonomy to UNDERSTAND
 CONSTRAINTS: Keep other fields unchanged
@@ -467,7 +460,6 @@ WORKFLOW 6: Batch Create/Update (Multiple Competencies - Same Approach)
 **EXAMPLE 1: Batch CREATE (3 new competencies)**
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 ACTION: BATCH_CREATE
 TOPICS: ["Recursion", "Sorting", "Searching"]
 REQUIREMENTS: Create competencies for each topic
@@ -499,7 +491,6 @@ You:
 **EXAMPLE 2: Batch UPDATE (3 existing competencies)**
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 ACTION: BATCH_UPDATE
 COMPETENCY_IDS: [42, 57, 89]
 REQUIREMENTS: Update descriptions with modern examples
@@ -533,7 +524,6 @@ You:
 **EXAMPLE 3: Batch MIXED (2 creates + 2 updates in one operation)**
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 ACTION: BATCH_MIXED
 CREATE_TOPICS: ["Graph Algorithms", "Heaps"]
 UPDATE_IDS: [42, 57]

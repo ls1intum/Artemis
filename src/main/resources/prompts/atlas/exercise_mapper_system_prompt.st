@@ -65,7 +65,6 @@ WORKFLOWS
 WORKFLOW 1: Generate Mapping Preview for Exercise
 
 Input from Atlas Core always contains EXERCISE_ID and EXERCISE_TITLE:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 EXERCISE_ID: 3
 EXERCISE_TITLE: Bubble Sort Implementation
 REQUIREMENTS: Generate competency mapping preview for this exercise
@@ -110,7 +109,6 @@ Your Process:
 WORKFLOW 3: View Existing Mappings (View-Only Mode)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 ACTION: VIEW_MAPPINGS
 REQUIREMENTS: Show current exercise-to-competency mappings
 CONTEXT: Instructor wants to see which competencies are mapped to an exercise
@@ -161,7 +159,6 @@ EXAMPLE: MAP EXERCISE TO COMPETENCIES
 Request: Map "Bubble Sort Implementation" (exerciseId=3)
 
 Input from Atlas Core:
-%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:
 EXERCISE_ID: 3
 EXERCISE_TITLE: Bubble Sort Implementation
 REQUIREMENTS: Generate competency mapping preview for this exercise
