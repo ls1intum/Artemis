@@ -71,8 +71,8 @@
                     </div>
                 } @else if (playlistUrl() && hasTranscript()) {
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
-                        <div #hlsScaleViewport class="hls-player-fit-viewport">
-                            <div #hlsScaleContent class="hls-player-fit-content" [style.transform]="hlsFullscreenScaleTransform()">
+                        <div class="hls-player-fit-viewport">
+                            <div class="hls-player-fit-content">
                                 <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
                             </div>
                         </div>

@@ -84,14 +84,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly irisSidebarElement = viewChild<ElementRef>('irisSidebar');
     readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
     readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
-    readonly hlsScaleViewportElement = viewChild<ElementRef>('hlsScaleViewport');
-    readonly hlsScaleContentElement = viewChild<ElementRef>('hlsScaleContent');
 
     readonly isFullscreen = signal<boolean>(false);
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
-    readonly hlsFullscreenScale = signal<number>(1);
 
     // Split panel sizes (percentage values)
     private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
@@ -102,7 +99,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
-    private hlsScaleResizeObserver?: ResizeObserver;
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -154,13 +150,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         'content-container--with-sidebar': this.isFullscreen() && this.showIrisSidebar(),
     }));
 
-    readonly hlsFullscreenScaleTransform = computed(() => {
-        if (!this.isFullscreen()) {
-            return undefined;
-        }
-        return `scale(${this.hlsFullscreenScale()})`;
-    });
-
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
@@ -196,25 +185,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 if (needs && videoEl && pdfEl) {
                     this.ngZone.runOutsideAngular(() => {
                         this.initHorizontalSplitter([videoEl, pdfEl]);
-                    });
-                }
-            });
-        });
-
-        // Fullscreen HLS fitting lifecycle (keep full player visible in the available panel)
-        effect(() => {
-            const isFs = this.isFullscreen();
-            const hasHlsPlayer = !!this.playlistUrl() && this.hasTranscript();
-            const viewportEl = this.hlsScaleViewportElement()?.nativeElement;
-            const contentEl = this.hlsScaleContentElement()?.nativeElement;
-
-            untracked(() => {
-                this.destroyHlsScaleObserver();
-                this.hlsFullscreenScale.set(1);
-
-                if (isFs && hasHlsPlayer && viewportEl && contentEl) {
-                    this.ngZone.runOutsideAngular(() => {
-                        this.initHlsScaleObserver(viewportEl, contentEl);
                     });
                 }
             });
@@ -471,47 +441,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.horizontalSplitInstance = undefined;
     }
 
-    private initHlsScaleObserver(viewportEl: HTMLElement, contentEl: HTMLElement): void {
-        this.hlsScaleResizeObserver = new ResizeObserver(() => {
-            this.updateHlsFullscreenScale(viewportEl, contentEl);
-        });
-
-        this.hlsScaleResizeObserver.observe(viewportEl);
-        this.hlsScaleResizeObserver.observe(contentEl);
-        this.updateHlsFullscreenScale(viewportEl, contentEl);
-    }
-
-    private updateHlsFullscreenScale(viewportEl: HTMLElement, contentEl: HTMLElement): void {
-        const viewportWidth = viewportEl.clientWidth;
-        const viewportHeight = viewportEl.clientHeight;
-        const contentWidth = contentEl.scrollWidth;
-        const contentHeight = contentEl.scrollHeight;
-
-        if (!viewportWidth || !viewportHeight || !contentWidth || !contentHeight) {
-            this.ngZone.run(() => this.hlsFullscreenScale.set(1));
-            return;
-        }
-
-        const scale = Math.min(1, viewportWidth / contentWidth, viewportHeight / contentHeight);
-        const clampedScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
-
-        this.ngZone.run(() => {
-            if (this.hlsFullscreenScale() !== clampedScale) {
-                this.hlsFullscreenScale.set(clampedScale);
-            }
-        });
-    }
-
-    private destroyHlsScaleObserver(): void {
-        this.hlsScaleResizeObserver?.disconnect();
-        this.hlsScaleResizeObserver = undefined;
-    }
-
     ngOnDestroy(): void {
         this.destroyVerticalSplitter();
         this.destroyHorizontalSplitter();
-        this.hlsScaleResizeObserver?.disconnect();
-        this.hlsScaleResizeObserver = undefined;
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }
