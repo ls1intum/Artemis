@@ -20,6 +20,16 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
     }
 
+    public static boolean isInPhasesFormat(String buildPlanConfiguration) {
+        try {
+            fromBuildPlanConfiguration(buildPlanConfiguration);
+        }
+        catch (JsonProcessingException e) {
+            return false;
+        }
+        return true;
+    }
+
     public String toBuildPlanConfiguration() throws JsonProcessingException {
         return mapper.writeValueAsString(this);
     }
