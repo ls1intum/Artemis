@@ -169,7 +169,7 @@ public class AtlasAgentService {
 
             boolean hasPreviewData = (competencyPreviews != null && !competencyPreviews.isEmpty()) || (relationPreviews != null && !relationPreviews.isEmpty())
                     || exerciseMappingPreview != null;
-            log.info("processChatMessage: hasPreviewData={}, competencyPreviews={}, relationPreviews={}, exerciseMapping={}, responseLength={}", hasPreviewData,
+            log.debug("processChatMessage: hasPreviewData={}, competencyPreviews={}, relationPreviews={}, exerciseMapping={}, responseLength={}", hasPreviewData,
                     competencyPreviews != null ? competencyPreviews.size() : "null", relationPreviews != null ? relationPreviews.size() : "null", exerciseMappingPreview != null,
                     response != null ? response.length() : 0);
 
@@ -178,7 +178,7 @@ public class AtlasAgentService {
             // so the index of the current response = count - 1.
             if (hasPreviewData) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;
-                log.info("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
+                log.debug("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
                 if (assistantIndex >= 0) {
                     atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex,
                             new AtlasAgentSessionCacheService.MessagePreviewData(competencyPreviews, relationPreviews, graphForDto, exerciseMappingPreview));
