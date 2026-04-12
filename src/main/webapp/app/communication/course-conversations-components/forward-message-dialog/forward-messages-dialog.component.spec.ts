@@ -297,8 +297,10 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should disable send button if message is too long', () => {
-        const longText = 'a'.repeat(5001);
+        const longText = 'a'.repeat(component.maxContentLength + 1);
         component.updateField(longText);
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
 
         const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
 
