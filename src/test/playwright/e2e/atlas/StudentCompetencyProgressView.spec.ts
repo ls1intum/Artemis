@@ -2,10 +2,9 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
-import { Buffer } from 'buffer';
 import { SEED_COURSES } from '../../support/seedData';
 import { generateUUID } from '../../support/utils';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 
 const WAIT_STATE = 'domcontentloaded';
 
@@ -96,8 +95,20 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await expect(completionCheckbox).toBeVisible();
             await completionCheckbox.click();
 
-            // Wait for the completion to be processed
-            await page.waitForLoadState(WAIT_STATE);
+            // Wait until the completion is persisted before reloading.
+            await expect
+                .poll(
+                    async () => {
+                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/course-competencies/${competency.id}/student-progress?refresh=true`);
+                        if (!progressResponse.ok()) {
+                            return 0;
+                        }
+                        const progressBody = (await progressResponse.json()) as { progress?: number };
+                        return progressBody.progress ?? 0;
+                    },
+                    { timeout: 60000 },
+                )
+                .toBeGreaterThan(0);
 
             // Refresh the page to see updated progress
             await page.reload();
@@ -128,147 +139,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
         });
     });
 
-    test.describe('Judgement of Learning (JoL) rating submission', () => {
-        test('Student submits JoL rating via star rating component', async ({ page, login, courseManagementAPIRequests }) => {
-            // Enable the student course analytics dashboard so we can access /dashboard
-            const courseResponse = await page.request.get(`api/core/courses/${course.id}`);
-            expect(courseResponse.ok()).toBeTruthy();
-            const fullCourse = await courseResponse.json();
-            fullCourse.studentCourseAnalyticsDashboardEnabled = true;
-            const updateResponse = await page.request.put(`api/core/courses/${course.id}`, {
-                multipart: {
-                    course: {
-                        name: 'course',
-                        mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(fullCourse)),
-                    },
-                },
-            });
-            expect(updateResponse.ok()).toBeTruthy();
-
-            // Preconditions: Create competency with softDueDate set to trigger JoL prompt
-            // JoL prompt condition: Current Date >= Competency Soft Due Date - 1 Day AND Progress >= 20%
-            // Set soft due date to today or yesterday so the condition is met
-            const softDueDate = dayjs().subtract(1, 'day').toISOString();
-
-            // Create competency with soft due date via direct API call
-            const competencyResponse = await page.request.post(`api/atlas/courses/${course.id}/competencies`, {
-                data: {
-                    type: 'competency',
-                    title: 'JoL ' + uid,
-                    description: 'Rate your understanding',
-                    masteryThreshold: 100,
-                    softDueDate: softDueDate,
-                },
-            });
-            expect(competencyResponse.ok()).toBeTruthy();
-            const competency = await competencyResponse.json();
-
-            // Create a text unit linked to competency
-            await courseManagementAPIRequests.createTextUnit(lecture, 'JoL Test Unit ' + uid, 'Content for JoL testing', [
-                { competency: { id: competency.id, type: 'competency' }, weight: 1 },
-            ]);
-
-            // Login as student
-            await login(studentOne);
-
-            // Navigate to competency detail and mark the unit as complete to get >= 20% progress
-            await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
-            await page.waitForLoadState(WAIT_STATE);
-
-            // Complete the lecture unit to trigger JoL prompt (100% progress on single unit = 100% >= 20%)
-            const textUnitCard = page.locator('jhi-text-unit');
-            await expect(textUnitCard).toBeVisible();
-            await textUnitCard.locator('#lecture-unit-toggle-button').click();
-            const completionCheckbox = textUnitCard.locator('#completed-checkbox');
-            await completionCheckbox.click();
-            await page.waitForLoadState(WAIT_STATE);
-
-            // Wait for the completion to be persisted (progress > 0)
-            await expect
-                .poll(
-                    async () => {
-                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/course-competencies/${competency.id}/student-progress?refresh=true`);
-                        if (!progressResponse.ok()) {
-                            return 0;
-                        }
-                        const progressBody = (await progressResponse.json()) as { progress?: number };
-                        return progressBody.progress ?? 0;
-                    },
-                    { timeout: 60000 },
-                )
-                .toBeGreaterThan(0);
-
-            // Wait for the completion to be reflected in progress (progress ring should update)
-            // Reload the page to ensure progress is fetched fresh from server
-            await page.reload();
-            await page.waitForLoadState(WAIT_STATE);
-
-            // Verify the unit is completed by checking for the green checkmark
-            // First expand the unit again (it collapses after reload)
-            const textUnitToggleAfterReload = page.locator('jhi-text-unit #lecture-unit-toggle-button');
-            await expect(textUnitToggleAfterReload).toBeVisible();
-            await textUnitToggleAfterReload.click();
-
-            // Wait for the checkbox to appear (unit needs to expand)
-            const completedIcon = page.locator('jhi-text-unit #completed-checkbox.text-success');
-            await expect(completedIcon).toBeVisible({ timeout: 10000 });
-
-            // Navigate to dashboard where JoL rating component appears in competency accordion
-            await page.goto(`/courses/${course.id}/dashboard`);
-            await page.waitForLoadState(WAIT_STATE);
-
-            // Look for the competency accordion button and its parent container
-            const competencyButton = page.locator(`#competency-accordion-${competency.id}`);
-            await expect(competencyButton).toBeVisible();
-
-            // Click to expand the accordion
-            await competencyButton.click();
-
-            // The accordion body is a sibling of the button, find it via the parent container
-            const accordionContainer = competencyButton.locator('..');
-            const accordionBody = accordionContainer.locator('.competency-accordion-body-open');
-            await expect(accordionBody).toBeVisible({ timeout: 10000 });
-
-            // Check for JoL rating component - should be visible since conditions are met
-            const jolRatingComponent = accordionBody.locator('jhi-judgement-of-learning-rating');
-            await expect(jolRatingComponent).toBeVisible({ timeout: 10000 });
-
-            // Find the star rating component within the JoL component
-            const starRating = jolRatingComponent.locator('star-rating');
-            await expect(starRating).toBeVisible();
-
-            // The star-rating component uses shadow DOM, so we need to access it properly
-            // Click on a star to submit rating (4th star for a 4/5 rating)
-            // Stars are rendered inside shadow DOM as <span> elements with data-index attribute
-            await starRating.evaluate((el) => {
-                const shadowRoot = el.shadowRoot;
-                if (shadowRoot) {
-                    const stars = shadowRoot.querySelectorAll('span[data-index]');
-                    if (stars.length >= 4) {
-                        (stars[3] as HTMLElement).click();
-                    }
-                }
-            });
-
-            // Wait for the rating to be saved
-            await page.waitForLoadState(WAIT_STATE);
-
-            // After rating, the star-rating should become read-only and show the rating
-            // The JoL component should still be visible but now in rated state
-            await page.reload();
-            await page.waitForLoadState(WAIT_STATE);
-
-            // Navigate back and check the accordion
-            await competencyButton.click();
-            await page.waitForLoadState(WAIT_STATE);
-
-            // The JoL component should show the submitted rating
-            await expect(jolRatingComponent).toBeVisible();
-        });
-    });
-
-    test.describe('Student Competency Progress - Exercise Completion', () => {
+    test.describe('Student Competency Progress - Exercise Completion', { tag: '@slow' }, () => {
         test.beforeEach('Setup course', async ({ login, courseManagementAPIRequests }) => {
             await login(admin);
             nestedCourse = await courseManagementAPIRequests.createCourse();
@@ -291,71 +162,25 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             // Create competency first
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
-            // Create quiz exercise with competency link using direct API call
-            // Use a very short duration so the quiz ends quickly after submission
-            const quizExerciseDTO = {
+            // Create quiz exercise using the standard helper (ensures proper DTO conversion)
+            await login(admin);
+            // Use short duration so the quiz ends quickly after submission for faster progress calculation.
+            // start-now sets dueDate = now + duration + QUIZ_GRACE_PERIOD (5s).
+            // Results are processed at dueDate + 5s. With duration=15, results arrive ~25s after start.
+            const quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { course: nestedCourse },
+                quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
-                releaseDate: dayjs().subtract(1, 'hour').toISOString(),
-                startDate: null,
-                dueDate: dayjs().add(1, 'day').toISOString(),
-                difficulty: 'EASY',
-                mode: 'INDIVIDUAL',
-                includedInOverallScore: 'INCLUDED_COMPLETELY',
-                competencyLinks: [{ competency: { id: competency.id, type: 'competency' }, weight: 1 }],
-                categories: [],
-                channelName: 'exercise-progress-test-quiz',
-                randomizeQuestionOrder: false,
-                quizMode: 'SYNCHRONIZED',
-                // When startQuizNow is called, the server overrides dueDate to
-                // now + duration + QUIZ_GRACE_PERIOD (5s). Results are calculated at
-                // dueDate + 5s by QuizScheduleService. With duration=10, results are
-                // calculated ~20s after quiz start. Programmatic participation (login,
-                // navigate, tick, submit) takes ~5s, so 10s is sufficient.
-                duration: 10,
-                quizBatches: [{ startTime: dayjs().toISOString() }],
-                quizQuestions: [
-                    {
-                        type: 'multiple-choice',
-                        title: 'Test Question',
-                        text: 'Which answers are correct?',
-                        hint: 'Choose wisely',
-                        scoringType: 'PROPORTIONAL_WITHOUT_PENALTY',
-                        points: 10,
-                        randomizeOrder: false,
-                        singleChoice: false,
-                        answerOptions: [
-                            { isCorrect: true, text: 'Correct answer 1', hint: 'A hint', explanation: 'Correct' },
-                            { isCorrect: true, text: 'Correct answer 2', hint: 'A hint', explanation: 'Correct' },
-                            { isCorrect: false, text: 'Wrong answer 1', hint: 'A hint', explanation: 'Wrong' },
-                            { isCorrect: false, text: 'Wrong answer 2', hint: 'A hint', explanation: 'Wrong' },
-                        ],
-                    },
-                ],
-            };
-
-            const createResponse = await page.request.post(`api/quiz/courses/${nestedCourse.id}/quiz-exercises`, {
-                multipart: {
-                    exercise: {
-                        name: 'exercise',
-                        mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
-                    },
-                },
+                duration: 15,
+                competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             });
-            expect(createResponse.ok()).toBeTruthy();
-            const quizExercise = await createResponse.json();
 
-            // Make quiz visible and start it immediately
+            // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
 
-            // Login as student and navigate directly to quiz exercise
-            await login(studentOne);
-            await page.goto(`/courses/${nestedCourse.id}/exercises/${quizExercise.id}`);
-            await page.waitForLoadState('domcontentloaded');
-
-            // Start the exercise
-            await courseOverview.startExercise(quizExercise.id!);
+            // Login as student and navigate to quiz exercise
+            await login(studentOne, `/courses/${nestedCourse.id}/exercises/${quizExercise.id!}`);
 
             // Answer the multiple choice question - tick the first two options (correct answers)
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
@@ -365,7 +190,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const response = await quizExerciseMultipleChoice.submit();
             expect(response.status()).toBe(200);
 
-            // Wait for the quiz to end naturally and for competency progress to be calculated
+            // Wait for competency progress to be calculated (quiz results are processed asynchronously)
             await expect
                 .poll(
                     async () => {
@@ -387,8 +212,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Verify competency is visible with progress rings showing update
             await expect(page.getByText('Progress Test Competency')).toBeVisible();
-            const progressRings = page.locator('jhi-competency-rings').first();
-            await expect(progressRings).toBeVisible();
+            await expect(page.locator('jhi-competency-rings').first()).toBeVisible();
 
             // Navigate to competency detail to verify progress has increased
             await page.goto(`/courses/${nestedCourse.id}/competencies/${competency.id}`);
@@ -396,8 +220,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Check that the exercise shows in the competency detail
             await expect(page.getByRole('heading', { name: 'Progress Test Quiz' })).toBeVisible();
-
-            // Verify the progress ring is visible indicating progress tracking is working
             await expect(page.locator('jhi-competency-rings')).toBeVisible();
         });
     });

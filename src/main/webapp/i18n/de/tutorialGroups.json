@@ -5,12 +5,9 @@
             "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
-            "unknown": "Nicht bekannt",
             "more": "Mehr...",
             "offline": "Offline",
             "online": "Online",
-            "german": "Deutsch",
-            "english": "Englisch",
             "repetitions": {
                 "everyWeek": "Jede Woche",
                 "everyNWeeks": "Alle {{ n }} Wochen"
@@ -22,155 +19,26 @@
             "tutorialGroup": {
                 "locationTime": "Ort/Zeit",
                 "plural": "Tutorien",
-                "course": "Kurs",
                 "title": "Titel",
-                "additionalInformation": "Zusätzliche Informationen",
-                "capacity": "Kapazität",
                 "isOnline": "Online",
                 "campus": "Campus",
                 "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
-                "registrations": "Registrierungen",
                 "registrationsWithCapacity": "Registrierungen / Kapazität",
-                "schedule": "Sitzungsplan",
-                "sessions": "Sitzungen",
                 "nextSession": "Nächste Sitzung",
                 "channel": "Chat",
-                "channelWithName": "Kanal: {{ channel }}",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
-                "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
-                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
-                "averageAttendanceDetail": "Durchschnittliche Teilnehmerzahl",
-                "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
-                "profilePicture": "Tutor:in Profilbild",
-                "profilePictureAlt": "Profilbild von {{ user }}",
-                "name": "Name",
-                "information": "Information",
-                "isNotOnline": "Nicht Online"
-            },
-            "tutorialGroupSchedule": {
-                "dayOfWeek": "Wochentag",
-                "time": "Zeit",
-                "startTime": "Startzeit",
-                "endTime": "Endzeit",
-                "location": "Treffpunkt",
-                "repetitionFrequency": "Wiederholungsfrequenz",
-                "repetitionOneWeek": "Wöchentlich",
-                "repetitionNWeeks": "Wiederholt sich alle {{ n }} Wochen",
-                "validFromInclusive": "Gültig ab",
-                "validToInclusive": "Gültig bis"
-            },
-            "tutorialGroupSession": {
-                "date": "Datum",
-                "start": "Anfang",
-                "end": "Ende",
-                "status": "Status",
-                "location": "Ort",
-                "attendance": "# Teilnehmer:innen"
+                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}"
             },
             "tutorialFreePeriod": {
-                "date": "Datum",
                 "startDate": "Startdatum",
                 "endDate": "Enddatum",
                 "reason": "Grund"
             }
         },
         "forms": {
-            "tutorialGroupForm": {
-                "titleInput": {
-                    "label": "Titel",
-                    "placeholder": "G1 Mo {{ from }}-{{ to }}",
-                    "requiredValidationError": "Titel ist erforderlich!",
-                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!",
-                    "regexValidationError": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen, Doppelpunkte und Bindestriche enthalten."
-                },
-                "updateChannelNameInput": {
-                    "label": "Kanalnamen aktualisieren",
-                    "explanation": "Wenn mit dieser Übungsgruppe ein Kommunikationskanal verbunden ist, wird der Name des Kanals mit dem Titel der Übungsgruppe aktualisiert, falls du diese Option aktivierst."
-                },
-                "teachingAssistantInput": {
-                    "label": "Tutor:in",
-                    "placeholder": "Wähle eine Tutor:in aus, die für diese Gruppe verantwortlich ist.",
-                    "loadingText": "Tutor:innen laden ...",
-                    "notFoundText": "Keine Tutor:in gefunden.",
-                    "requiredValidationError": "Eine Übungsgruppe braucht eine Tutor:in zugewiesen!",
-                    "taHelp": "In das Feld tippen um nach Tutor:innen zu suchen."
-                },
-                "campusInput": {
-                    "label": "Campus",
-                    "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
-                    "loadingText": "Campus laden ...",
-                    "notFoundText": "Kein Campus gefunden.",
-                    "campusHelp": "In das Feld tippen, um nach einem Campus zu suchen.",
-                    "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
-                },
-                "additionalInformationInput": {
-                    "label": "Zusätzliche Informationen",
-                    "placeholder": "Zusätzliche Informationen zur Übungsgruppe.",
-                    "maxLengthValidationError": "Zusätzliche Informationen sind auf {{ max }} Zeichen beschränkt!"
-                },
-                "capacityInput": {
-                    "label": "Kapazität",
-                    "unit": "Studierende",
-                    "minValidationError": "Die Kapazität muss mindestens 1 sein!"
-                },
-                "languageInput": {
-                    "label": "Sprache",
-                    "placeholder": "Wähle eine Sprache",
-                    "loadingText": "Sprachen laden ...",
-                    "notFoundText": "Keine Sprachen gefunden.",
-                    "languageHelp": "In das Feld tippen, um nach einer Sprache zu suchen.",
-                    "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!",
-                    "requiredValidationError": "Eine Sprache ist erforderlich!"
-                },
-                "isOnlineInput": {
-                    "label": "Trifft sich diese Übungsgruppe online oder offline?"
-                },
-                "notificationInput": {
-                    "label": "Optional: Benachrichtigung über Änderungen",
-                    "placeholder": "Benachrichtigungstext",
-                    "maxLengthValidationError": "Der Benachrichtigungstext ist limitiert auf {{ max }} Zeichen!",
-                    "help": "Wenn du die eingeschriebenen Studierenden und den zugewiesenen Tutor über Änderungen in dieser Übungsgruppe informieren möchtest, kannst du hier einen Benachrichtigungstext eingeben. Es wird eine Benachrichtigung mit dem Text versendet."
-                }
-            },
-            "scheduleForm": {
-                "configureRecurringSchedule": "Konfigurieren eines wiederkehrenden Sitzungsplans?",
-                "scheduleChangeWarning": "Der Zeitplan wurde geändert. Alle Sitzungen, die zum alten Zeitplan gehören, werden infolgedessen gelöscht. Soll das wirklich gemacht werden?",
-                "sessionCreationInfo": "Der Zeitplan enthält die folgenden Sitzungen:",
-                "formTitle": "Sitzungsplan",
-                "repetitionFrequencyInput": {
-                    "label": "Sitzung wiederholt alle:",
-                    "weeks": "Wochen",
-                    "requiredValidationError": "Eine Wiederholungsfrequenz muss ausgewählt werden!",
-                    "minValidationError": "Wiederholungsfrequenz muss mindestens {{min}} sein!",
-                    "maxValidationError": "Wiederholungsfrequenz kann höchstens {{max}} sein!"
-                },
-                "weekDayInput": {
-                    "label": "Wochentag"
-                },
-                "locationInput": {
-                    "labelOnline": "Meeting-Link",
-                    "labelOffline": "Treffpunkt",
-                    "placeholderOnline": "Wie können die Studierende dem Online-Meeting beitreten?",
-                    "placeholderOffline": "Wie können die Studierende den Raum finden?",
-                    "maxLengthValidationError": "Der Ort ist auf {{ max }} Zeichen beschränkt!",
-                    "requiredValidationError": "Ein Ort muss angegeben werden!"
-                },
-                "timeInput": {
-                    "from": "Sitzung beginnt um",
-                    "to": "Sitzung endet um",
-                    "invalidTimeRange": "Der Zeitbereich muss ein gültiger Zeitbereich sein!"
-                },
-                "periodInput": {
-                    "label": "Zeitraum, in der sich die Übungsgruppe trifft:",
-                    "periodWarning": "Hinweis: Der Zeitraum, unterscheidet sich vom Zeitraum der globalen Übungsgruppen-Konfiguration!",
-                    "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
-                    "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
-                    "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
-                }
-            },
             "tutorialFreePeriodForm": {
                 "timeFrame": {
                     "periodWithinDay": "Freier Zeitraum innerhalb eines Tages",
@@ -191,30 +59,11 @@
                     "maxLengthValidationError": "Die Vernunft beschränkt sich auf {{ max }} Zeichen!"
                 }
             },
-            "sessionForm": {
-                "dateInput": {
-                    "label": "Datum"
-                },
-                "timeInput": {
-                    "from": "Sitzung beginnt um",
-                    "to": "Sitzung endet um",
-                    "invalidTimeRange": "Der Zeitbereich muss ein gültiger Zeitbereich sein!"
-                },
-                "locationInput": {
-                    "labelOnline": "Ort / Link",
-                    "placeholder": "Wo können sich die Studierende treffen?",
-                    "maxLengthValidationError": "Der Ort / Link ist auf {{ max }} Zeichen beschränkt!",
-                    "requiredValidationError": "Ein Ort / Link muss angegeben werden!"
-                }
-            },
             "configurationForm": {
                 "timeZoneInput": {
                     "label": "Übungsgruppen-Zeitzone",
-                    "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
-                    "placeholder": "Wähle eine Zeitzone aus",
-                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
-                    "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!"
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen."
                 },
                 "periodInput": {
                     "label": "Übungsgruppen-Zeitraum",
@@ -237,10 +86,6 @@
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
                 "editConfigurationButton": "Globale Konfiguration bearbeiten",
-                "rowButtons": {
-                    "sessions": "Sitzungen",
-                    "registrations": "Registrierungen"
-                },
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
@@ -251,17 +96,121 @@
                 "explanation": "Bevor du mit der Nutzung der Übungsgruppenfunktion beginnen kannst, musst du einige Konfigurationsschritte durchführen",
                 "timeZone": "Der Kurs hat eine Zeitzone konfiguriert",
                 "timeZoneExplanation": "Für den Kurs muss eine Zeitzone konfiguriert werden, damit die Übungsgruppen-Termine entsprechend dieser Zeitzone korrekt geplant werden können.",
-                "editCourse": "Kurs bearbeiten",
                 "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
                 "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
                 "createConfiguration": "Konfiguration erstellen",
                 "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
             },
-            "createTutorialGroup": {
-                "title": "Übungsgruppe erstellen"
+            "tutorialGroupRegistrations": {
+                "title": "Tutorialregistrierungen",
+                "searchFieldPlaceholder": "Suche nach Name oder Login",
+                "importButtonLabel": "Importieren",
+                "exportButtonLabel": "Exportieren",
+                "addStudentsButtonLabel": "Studenten Hinzufügen",
+                "removeStudentButton": {
+                    "confirmationDialogue": {
+                        "header": "Entfernung Bestätigen",
+                        "message": "Möchtest du den Student wirklich deregistrieren?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registrierungsnummer",
+                    "deregister": "Deregistrieren"
+                },
+                "importModal": {
+                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login' oder 'Registration Number' enthalten. Falls die Datei weitere Spalten enthält, werden diese ignoriert. Hier ein Beispiel für eine valide Datei:",
+                    "explanationHeader": "Studenten Importieren",
+                    "confirmImportHeader": "Importbestätigung",
+                    "importResultsHeader": "Import Resultat",
+                    "chooseFileButtonLabel": "Datei Wählen",
+                    "invalidFileEntriesAlert": "Die ausgewählte Datei enthält Einträge, die nicht mindestens eines der benötigten Felder enthälten.",
+                    "noFileEntriesAlert": "Die ausgewählte Datei enthält keine Einträge.",
+                    "confirmationText": "Bitte schau dir den Inhalt der eingelesenen .csv Datei and und bestätige, dass er korrekt ist. Danach wird Artemis verifizieren, dass die Benutzer existieren und sie für die Gruppe registrieren. Artemis hat Folgendes eingelesen:",
+                    "backToExplanationButtonLabel": "Zurück",
+                    "importButtonLabel": "Importieren",
+                    "importErrorAlert": "Beim Importieren ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "finishButtonLabel": "Beenden",
+                    "restartButtonLabel": "Neustart",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Nur ein Teil der Studenten konnten registriert werden. Die rot markierten logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "allStudentsRegistered": "Alle Studenten wurden registriert.."
+                    },
+                    "tableHeader": {
+                        "login": "Login",
+                        "registrationNumber": "Registration Number"
+                    }
+                },
+                "registerModal": {
+                    "header": "Studenten Registrieren",
+                    "registerAllButtonLabel": "Alle Registrieren",
+                    "cancelButtonLabel": "Abbrechen",
+                    "registerErrorAlert": "Beim Registrieren ist etwas schiefgegangen. Bitte versuche es erneut."
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",
+                    "noResultsText": "Keine Studenten gefunden."
+                }
             },
-            "editTutorialGroup": {
-                "title": "Übungsgruppe bearbeiten"
+            "createOrEditTutorialGroup": {
+                "title": {
+                    "edit": "Übungsgruppe bearbeiten",
+                    "create": "Übungsgruppe erstellen"
+                },
+                "sectionTitle": {
+                    "generalInformation": "Generelle Informationen",
+                    "defineSessionPlan": "Sessionplan definieren"
+                },
+                "inputLabel": {
+                    "title": "Titel",
+                    "tutor": "Tutor",
+                    "language": "Sprache",
+                    "languageAutocompleteHeader": "gebe eine neue ein oder wähle eine existierende:",
+                    "mode": "Modus",
+                    "campus": "Campus",
+                    "capacity": "Kapazität",
+                    "additionalInformation": "Zusätzliche Information",
+                    "firstSessionStart": "Start erste Session",
+                    "firstSessionEnd": "Ende erste Session",
+                    "repetitionFrequency": "Wiederholungsfrequenz",
+                    "repetitionFrequencyPrefix": "jede ",
+                    "repetitionFrequencySuffix": " Woche(n)",
+                    "tutorialPeriodEnd": "Ende Tutoriumsperiode",
+                    "location": "Ort"
+                },
+                "validationError": {
+                    "titleContent": "Der Titel muss mit einem Buchstaben oder einer Ziffer anfangen und darf sonst nur Buchstaben, Ziffern, Strichpunkte, Leerzeichen und Bindestriche enthalten.",
+                    "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "campusLength": "Campus darf eine maximale Länge von 255 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
+                    "languageRequired": "Bitte wähle eine Sprache.",
+                    "languageLength": "Sprache darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "additionalInformationLength": "Zusätzliche Information darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
+                    "firstSessionEndNotOnSameDayAsStart": "Das Ende der ersten Session muss am selben Tag sein wie der Anfang.",
+                    "teachingPeriodRequired": "Bitte wähle ein Zeitpunkt.",
+                    "teachingPeriodNotAfterFirstSessionStart": "Das Ende der Tutoriumsperiode muss nach dem Anfang der ersten Session liegen.",
+                    "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "Das Ende der Tutoriumsperiode darf höchstens 2 Jahre nach dem Beginn der ersten Session liegen.",
+                    "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
+                    "tutorRequired": "Bitte wähle ein Tutor.",
+                    "locationRequired": "Bitte wähle einen Ort.",
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                },
+                "networkError": {
+                    "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createGroup": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchSchedule": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchLanguages": "Beim laden der vom Kurs benutzten Sprachen ist etwas schief gegangen. Bitte lade die Seite neu, falls du beim Auswählen der Sprache bereits benutzte Sprachen vorgeschlagen bekommen willst."
+                },
+                "confirmSaveDialog": {
+                    "header": "Gruppe Speichern?",
+                    "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
+                    "acceptButtonLabel": "Speichern und Überschreiben"
+                }
             },
             "tutorialGroupDetail": {
                 "cardTitles": {
@@ -285,12 +234,6 @@
                 "time": "Uhrzeit:",
                 "location": "Ort:",
                 "title": "Übungsgruppen-Details",
-                "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
-                "capacityNotSet": "Kapazität nicht eingestellt",
-                "campusNotSet": "Campus nicht gesetzt",
-                "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt",
-                "scheduleNotSet": "Kein Sitzungsplan festgelegt",
-                "sessionsNotFound": "Keine Sitzungen gefunden",
                 "sessionsListTitle": "Sessions",
                 "sessionListOptionLabel": {
                     "allSessions": "Alle",
@@ -299,18 +242,70 @@
                 "currentTutorialLectureLinkLabel": "Aktuelle Lektion",
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Gruppen Channel",
+                "registrationsLinkLabel": "Registrierungen",
+                "newSessionButtonLabel": "Neue Session",
+                "confirmationDialog": {
+                    "deleteGroup": {
+                        "header": "Gruppe löschen?",
+                        "message": "Willst du wirklich diese Gruppe löschen? Diese Aktion kann nicht rückgängig gemacht werden!"
+                    },
+                    "deleteSession": {
+                        "header": "Session löschen?",
+                        "message": "Willst du wirklich diese Session löschen?"
+                    }
+                },
                 "sessionTableColumnTitle": {
                     "date": "Datum",
                     "time": "Uhrzeit",
                     "location": "Ort",
                     "attendance": "Teilnehmerzahl",
-                    "status": "Status"
+                    "status": "Status",
+                    "actions": "Aktionen"
+                },
+                "sessionTableActionTooltipLabel": {
+                    "edit": "Bearbeiten",
+                    "cancel": "Absagen",
+                    "activate": "Absage wiederrufen",
+                    "delete": "Löschen"
                 },
                 "disclaimerText": {
                     "noAttendanceDataAvailable": "Keine Daten verfügbar",
                     "noUpcomingSession": "Keine bevorstehende Session"
                 },
-                "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
+                "pieChartCategoryLabel": {
+                    "attended": "Anwesend",
+                    "notAttended": "Abwesend"
+                },
+                "networkError": {
+                    "deleteGroup": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
+                    "deleteSession": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
+                    "cancelSession": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "activateSession": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "updateSession": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createSession": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createOneToOneChat": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
+                },
+                "createOrEditSessionModal": {
+                    "header": {
+                        "create": "Session erstellen",
+                        "edit": "Session bearbeiten"
+                    },
+                    "inputLabels": {
+                        "date": "Datum",
+                        "startTime": "Startzeit",
+                        "endTime": "Endzeit",
+                        "location": "Ort",
+                        "attendance": "Anwesenheiten"
+                    },
+                    "validationError": {
+                        "dateRequired": "Bitte wähle ein Datum.",
+                        "startTimeRequired": "Bitte wähle eine Startzeit.",
+                        "endTimeRequired": "Bitte wähle eine Endzeit.",
+                        "endTimeNotAfterStartTime": "Die Endzeit muss nach der Startzeit sein.",
+                        "locationRequired": "Bitte wähle einen Ort.",
+                        "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                    }
+                }
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
@@ -321,58 +316,13 @@
                     "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
                 }
             },
-            "createTutorialFreePeriod": {
-                "title": "Freien Tag erstellen"
-            },
-            "editTutorialFreePeriod": {
-                "title": "Freien Tag bearbeiten"
+            "createOrEditTutorialFreePeriodTitle": {
+                "create": "Freien Tag erstellen",
+                "edit": "Freien Tag bearbeiten"
             },
             "tutorialGroupSessionManagement": {
                 "title": "Sitzungsverwaltung",
-                "currentDate": "Aktuelles Datum:",
-                "createSessionButton": "Neue Sitzung hinzufügen",
-                "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt",
-                "divider": "Nächste Sitzung: ↑",
-                "cancelled": "Sitzung abgesagt",
-                "noReason": "Kein Grund angegeben",
-                "showAll": "Zeige alle Sitzungen ↓ ",
-                "differsFromSchedule": "Die Sitzung findet an einem anderen Ort oder Datum statt als im Sitzungsplan!",
-                "rowButtons": {
-                    "sessions": "Sitzungen",
-                    "registrations": "Registrierungen",
-                    "cancel": "Sitzung absagen",
-                    "activate": "Sitzung reaktivieren"
-                },
-                "columns": {
-                    "notes": "Anmerkungen",
-                    "isCancelled": "Ist abgesagt?"
-                },
-                "deleteDialog": {
-                    "question": "Sicher, dass die Sitzung {{ title }} gelöscht werden soll?"
-                },
-                "cancelActivateModal": {
-                    "cancelSession": {
-                        "title": "Sitzung absagen",
-                        "question": "Sicher, dass die Sitzung {{label}} abgesagt werden soll?",
-                        "explanation": "Grund für die Absage:",
-                        "maxLengthValidationError": "Der Grund kann max {{ max }} Zeichen lang sein!"
-                    },
-                    "activateSession": {
-                        "title": "Sitzung reaktivieren",
-                        "question": "Sicher, dass die abgesagte Sitzung {{label}} reaktiviert werden soll??"
-                    }
-                }
-            },
-            "registeredStudents": {
-                "title": "Registrierte Studierende",
-                "header": "Registrierte Studierende von {{ title }}",
-                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Bist du sicher, dass du noch mehr Studierende hinzufügen möchtest?"
-            },
-            "createTutorialSession": {
-                "title": "Sitzung erstellen"
-            },
-            "editTutorialSession": {
-                "title": "Sitzung bearbeiten"
+                "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt"
             },
             "createTutorialGroupsConfiguration": {
                 "title": "Globalen Übungsgruppen Konfiguration erstellen",
@@ -380,6 +330,25 @@
             },
             "editTutorialGroupsConfiguration": {
                 "title": "Globale Konfiguration bearbeiten"
+            }
+        },
+        "services": {
+            "tutorialGroupCourseAndGroupService": {
+                "networkError": {
+                    "fetchGroup": "Beim Aktualisieren der Daten der Tutorial Gruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchCourse": "Beim Aktualisieren der Daten des Kurses ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupTutorService": {
+                "networkError": {
+                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupRegisteredStudentsService": {
+                "networkError": {
+                    "deregisterStudent": "Beim Deregistrieren des Studenten ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchRegisteredStudents": "Beim Laden der registrierten Studenten ist etwas schief gegangen. Bitte versuche es erneut."
+                }
             }
         }
     }

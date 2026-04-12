@@ -211,6 +211,7 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "language": "Language",
             "ltiConfiguration": "LTI Configuration",
             "recentlyAccessed": "Recently accessed",
             "maxPoints": {
@@ -254,10 +255,6 @@
                     "label": "Direct Messages / Group Chats Enabled",
                     "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happen in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
-                },
-                "faqEnabled": {
-                    "label": "FAQ enabled",
-                    "tooltip": "Enables the creation of FAQ entries where instructors can compile frequently asked questions in an organized manner. Students can access this knowledge base to independently review topics and resolve their questions on their own."
                 }
             },
             "enrollmentEnabled": {
@@ -398,7 +395,105 @@
                 "title": "Crop your image",
                 "uploadTitle": "Add an icon"
             },
-            "overview": "Overview"
+            "overview": "Overview",
+            "quickActions": {
+                "title": "Quick Actions",
+                "description": "Manage your course content and participants at a glance."
+            },
+            "onboarding": {
+                "title": "Course Setup Wizard",
+                "subtitle": "Let's set up your course step by step. You can adjust settings later at any time.",
+                "steps": {
+                    "generalSettings": "General",
+                    "enrollment": "Enrollment",
+                    "communication": "Communication",
+                    "assessment": "Assessment",
+                    "explore": "Explore"
+                },
+                "actions": {
+                    "next": "Next",
+                    "previous": "Previous",
+                    "finishSetup": "Finish Setup",
+                    "goToCourse": "Go to Course",
+                    "restartSetup": "Course Onboarding",
+                    "saving": "Saving..."
+                },
+                "validation": {
+                    "startDateBeforeEndDate": "The start date must be before the end date.",
+                    "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
+                    "enrollmentRequiresCourseDates": "Enrollment dates require the course to have a start and end date. Please set them in the General Settings step.",
+                    "enrollmentEndDateBeforeCourseEndDate": "The enrollment end date must not be after the course end date.",
+                    "unenrollmentRequiresEnrollmentDates": "The unenrollment end date requires enrollment start and end dates to be set.",
+                    "unenrollmentAfterEnrollmentEnd": "The unenrollment end date must be after the enrollment end date.",
+                    "unenrollmentBeforeCourseEndDate": "The unenrollment end date must not be after the course end date.",
+                    "accuracyOfScoresRange": "Decimal places for score calculations must be between 0 and 5.",
+                    "maxPointsPositive": "Max points must be greater than 0."
+                },
+                "generalSettings": {
+                    "title": "General",
+                    "description": "Configure the basic settings for your course such as description, dates, and language preferences.",
+                    "irisTitle": "Iris AI Assistant",
+                    "irisEnabledHint": "Iris is enabled. Students can interact with the AI tutor for help with exercises, code review, and course content.",
+                    "irisDisabledHint": "Iris is disabled. Students will not have access to AI-powered assistance in this course.",
+                    "irisPrivacyNote": "<strong>Please note:</strong> Students can choose to turn off Iris individually. Iris can use local models hosted in the university infrastructure or cloud models within the EU."
+                },
+                "enrollment": {
+                    "title": "Enrollment",
+                    "description": "Configure how students can enroll in your course and set enrollment periods.",
+                    "selfEnrollmentEnabled": "Students can find and register for this course on their own. You can set enrollment periods and a confirmation message below.",
+                    "selfEnrollmentDisabled": "Students cannot self-register. You will need to add participants manually or via CSV import.",
+                    "unenrollmentEnabled": "Students can leave the course on their own within the specified period.",
+                    "unenrollmentDisabled": "Students cannot leave the course by themselves. Only instructors can remove participants.",
+                    "onlineCourseEnabled": "This course is managed through an LTI platform. Self-enrollment is disabled.",
+                    "onlineCourseDisabled": "This is a standard Artemis course, not managed through an external LTI platform."
+                },
+                "communication": {
+                    "title": "Communication",
+                    "description": "Set up communication channels and collaboration tools for your course.",
+                    "communicationEnabled": "Discussion channels are available. Students and instructors can post questions, share resources, and collaborate.",
+                    "communicationDisabled": "No discussion channels. Students cannot communicate within the course platform.",
+                    "messagingEnabled": "Private direct messages are available between all course participants.",
+                    "messagingDisabled": "No private messaging. Participants can only use public discussion channels.",
+                    "codeOfConductHint": "Set expectations for respectful and constructive communication. This is shown to all participants."
+                },
+                "assessment": {
+                    "title": "Assessment",
+                    "description": "Configure grading, complaints, and feedback requests.",
+                    "complaintsEnabled": "Students can submit complaints about manual assessments. Configure the limits below.",
+                    "complaintsDisabled": "Students cannot dispute assessment results. All grades from manual assessments are final.",
+                    "moreFeedbackEnabled": "Students can request additional feedback on their assessed submissions from tutors.",
+                    "moreFeedbackDisabled": "Students cannot request additional feedback. They only receive the initial assessment."
+                },
+                "explore": {
+                    "title": "Explore Artemis",
+                    "description": "Your course is ready! Here are the key areas you can start using right away.",
+                    "exercises": {
+                        "title": "Exercises",
+                        "description": "Create programming, modeling, text, quiz, and file upload exercises with automatic assessment."
+                    },
+                    "lectures": {
+                        "title": "Lectures",
+                        "description": "Upload lecture slides, organize content, and link learning materials to competencies."
+                    },
+                    "tutorialGroups": {
+                        "title": "Tutorials",
+                        "description": "Organize students into tutorials and manage schedules."
+                    },
+                    "exams": {
+                        "title": "Exams",
+                        "description": "Create and manage online exams with various exercise types."
+                    },
+                    "competencies": {
+                        "title": "Competencies",
+                        "description": "Define learning objectives and track student progress across the course."
+                    },
+                    "faqs": {
+                        "title": "FAQs",
+                        "description": "Create and organize frequently asked questions to help students find answers independently."
+                    }
+                },
+                "replayWizard": "Replay Setup Wizard"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistics",

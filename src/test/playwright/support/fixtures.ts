@@ -14,6 +14,7 @@ import { CourseMessagesPage } from './pageobjects/course/CourseMessagesPage';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { CommunicationAPIRequests } from './requests/CommunicationAPIRequests';
 import { CourseCommunicationPage } from './pageobjects/course/CourseCommunicationPage';
+import { CourseOnboardingPage } from './pageobjects/course/CourseOnboardingPage';
 import { LectureManagementPage } from './pageobjects/lecture/LectureManagementPage';
 import { LectureCreationPage } from './pageobjects/lecture/LectureCreationPage';
 import { ExamCreationPage } from './pageobjects/exam/ExamCreationPage';
@@ -75,7 +76,7 @@ import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/prog
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<void>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<StudentParticipation>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -106,6 +107,7 @@ export type ArtemisPageObjects = {
     courseOverview: CourseOverviewPage;
     courseMessages: CourseMessagesPage;
     courseCommunication: CourseCommunicationPage;
+    courseOnboarding: CourseOnboardingPage;
     lectureManagement: LectureManagementPage;
     lectureCreation: LectureCreationPage;
     examCreation: ExamCreationPage;
@@ -186,7 +188,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     waitForParticipationBuildToFinish: async ({ exerciseAPIRequests }, use) => {
         await use(async (participationId: number, interval?, timeout?) => {
-            await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout);
+            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout);
         });
     },
     navigationBar: async ({ page }, use) => {
@@ -240,6 +242,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     courseCommunication: async ({ page }, use) => {
         await use(new CourseCommunicationPage(page));
     },
+    courseOnboarding: async ({ page }, use) => {
+        await use(new CourseOnboardingPage(page));
+    },
     lectureManagement: async ({ page }, use) => {
         await use(new LectureManagementPage(page));
     },
@@ -267,23 +272,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examNavigation: async ({ page }, use) => {
         await use(new ExamNavigationBar(page));
     },
-    examParticipation: async (
-        { page, courseList, courseOverview, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor },
-        use,
-    ) => {
-        await use(
-            new ExamParticipationPage(
-                courseList,
-                courseOverview,
-                examNavigation,
-                examStartEnd,
-                modelingExerciseEditor,
-                programmingExerciseEditor,
-                quizExerciseMultipleChoice,
-                textExerciseEditor,
-                page,
-            ),
-        );
+    examParticipation: async ({ page, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor }, use) => {
+        await use(new ExamParticipationPage(examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor, page));
     },
     examParticipationActions: async ({ page }, use) => {
         await use(new ExamParticipationActions(page));

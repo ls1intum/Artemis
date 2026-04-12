@@ -191,7 +191,7 @@ management:
                   - env
                   - health
                   - info
-                  - jhimetrics
+                  - artemismetrics
                   - logfile
                   - loggers
                   - prometheus
@@ -231,6 +231,13 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    http:
+        converters:
+            # Jackson 3 is on the classpath (transitive from spring-ai) but the application uses Jackson 2
+            # for serialization (Hibernate7Module, JavaTimeModule, etc.). Without this setting, Spring Boot 4
+            # defaults to Jackson 3, which bypasses the registered Jackson 2 modules and causes
+            # LazyInitializationException during JSON serialization of Hibernate proxies.
+            preferred-json-mapper: jackson2
     ai:
         model:
             chat: none # possible values: openai, azure-openai, none
@@ -260,9 +267,8 @@ spring: #disabled by default, you must enable it
             ddl-auto: none
             naming:
                 physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+                implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
         properties:
-            hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
             hibernate.generate_statistics: false
             hibernate.order_inserts: true
@@ -271,10 +277,14 @@ spring: #disabled by default, you must enable it
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
+            # Use JCache bridge since hazelcast-hibernate53 is incompatible with Hibernate 7.x
+            hibernate.cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
+            hibernate.javax.cache.provider: com.hazelcast.cache.HazelcastMemberCachingProvider
+            # Auto-create missing cache regions instead of warning for each @Cache entity
+            hibernate.javax.cache.missing_cache_strategy: create
+            # Still needed by HazelcastConfiguration for the Hazelcast instance name
             hibernate.cache.hazelcast.instance_name: Artemis
-            hibernate.cache.hazelcast.use_lite_member: true
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
@@ -362,14 +372,13 @@ server:
 # If these are set through Java code, the Logback appender fails to pick up the desired settings
 # Errors are still reported if the appender fails, but traces are missing
 sentry:
-    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
+    dsn: # Leave empty to disable Sentry, must be a valid URI
     logging:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
     sample-rate: 1
     release: ${artemis.version}
-    send-default-pii: true
     # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
     # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
     environment: test

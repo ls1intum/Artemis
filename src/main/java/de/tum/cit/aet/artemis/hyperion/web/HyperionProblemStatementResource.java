@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -18,6 +21,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
@@ -58,6 +66,8 @@ public class HyperionProblemStatementResource {
 
     private final ExerciseReviewService exerciseReviewService;
 
+    private final ExerciseEditorSyncService exerciseEditorSyncService;
+
     private final HyperionProblemStatementRewriteService problemStatementRewriteService;
 
     private final HyperionProblemStatementGenerationService problemStatementGenerationService;
@@ -69,12 +79,13 @@ public class HyperionProblemStatementResource {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public HyperionProblemStatementResource(CourseRepository courseRepository, HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
-            HyperionProblemStatementRewriteService problemStatementRewriteService, HyperionProblemStatementGenerationService problemStatementGenerationService,
-            HyperionChecklistService checklistService, HyperionProblemStatementRefinementService problemStatementRefinementService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ExerciseEditorSyncService exerciseEditorSyncService, HyperionProblemStatementRewriteService problemStatementRewriteService,
+            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionChecklistService checklistService,
+            HyperionProblemStatementRefinementService problemStatementRefinementService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.exerciseReviewService = exerciseReviewService;
+        this.exerciseEditorSyncService = exerciseEditorSyncService;
         this.problemStatementRewriteService = problemStatementRewriteService;
         this.problemStatementGenerationService = problemStatementGenerationService;
         this.checklistService = checklistService;
@@ -83,22 +94,31 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
+     * POST programming-exercises/{exerciseId}/consistency-check: Check the consistency of a programming exercise.
      * Returns a JSON body with the issues (can be empty list).
      *
-     * @param exerciseId the id of the programming exercise to check
+     * @param exerciseId        the id of the programming exercise to check
+     * @param skipThreadContext if {@code true}, skips injecting existing review-thread context into the AI prompts
+     *                              and skips creating new review-comment threads after the check (default: {@code false})
      * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
-    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
+    @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("exerciseId") long exerciseId,
+            @RequestParam(required = false, defaultValue = "false") boolean skipThreadContext) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
-        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId);
-        try {
-            exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
-        }
-        catch (RuntimeException ex) {
-            log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId, skipThreadContext);
+        if (!skipThreadContext) {
+            try {
+                List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+                for (CommentThread thread : createdThreads) {
+                    CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
+                    exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
+                }
+            }
+            catch (RuntimeException ex) {
+                log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+            }
         }
         return ResponseEntity.ok(response);
     }
@@ -242,4 +262,5 @@ public class HyperionProblemStatementResource {
 
         return ResponseEntity.ok(result);
     }
+
 }

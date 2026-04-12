@@ -1,19 +1,27 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 
 describe('ChannelIconComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ChannelIconComponent;
     let fixture: ComponentFixture<ChannelIconComponent>;
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] }).compileComponents();
-    }));
+    beforeEach(async () => {
+        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] });
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ChannelIconComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

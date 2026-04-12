@@ -67,8 +67,10 @@
         </div>
     </div>
 
-    <!-- Try Iris button -->
-    <div class="try-iris-btn-wrapper">
-        <button type="button" pButton class="try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
-    </div>
+    @if (!hideTryButton) {
+        <!-- Try Iris button -->
+        <div class="try-iris-btn-wrapper">
+            <button type="button" pButton class="try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
+        </div>
+    }
 </div>

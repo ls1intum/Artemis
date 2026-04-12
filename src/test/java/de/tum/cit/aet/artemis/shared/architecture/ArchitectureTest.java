@@ -53,8 +53,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -87,11 +85,15 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.repository.CustomOrganizationRepositoryImpl;
+import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
+import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -133,16 +135,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
-    }
-
-    @Test
-    // TODO When upgrading to Spring Boot 4, we can remove this test.
-    @SuppressWarnings("removal")
-    void testNoMockBeanAndSpyBean() {
-        ArchRule noMockBeanAndSpyBean = noFields().should().beAnnotatedWith(MockBean.class).orShould().beAnnotatedWith(SpyBean.class)
-                .because("We use @MockitoBean or @MockitoSpyBean.");
-        noMockBeanAndSpyBean.check(testClasses);
-
     }
 
     @Test
@@ -232,15 +224,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testJSONImplementations() {
         // Note: we should only use Jackson. There are rare cases where gson is still used
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
     }
 
     @Test
@@ -297,13 +286,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testJsonIncludeNonEmpty() {
-        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
-        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
+    void testJsonIncludeNonEmptyOrNonNull() {
+        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
+        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
     }
 
-    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
+    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_NULL)") {
 
             @Override
             public void check(T item, ConditionEvents events) {
@@ -314,8 +303,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
-                if (!value.name().equals("NON_EMPTY")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                if (!value.name().equals("NON_EMPTY") && !value.name().equals("NON_NULL")) {
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(NON_EMPTY) or @JsonInclude(NON_NULL)"));
                 }
             }
         };
@@ -343,7 +332,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
                 "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
-                "IrisTutorSuggestionIntegrationTest", "HyperionCodeGenerationResourceTest" };
+                "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -362,6 +351,21 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
         final var exceptions = new Class[] { StaticResourcesConfiguration.class };
+        JavaClasses classes = classesExcept(productionClasses, exceptions);
+        rule.check(classes);
+    }
+
+    @Test
+    void shouldNotUseEntityManagerDirectly() {
+        // No class should inject EntityManager or EntityManagerFactory directly.
+        // All persistence operations must go through Spring Data repositories.
+        // Direct EntityManager usage bypasses the repository abstraction, makes code harder to test,
+        // and can introduce subtle persistence context bugs (e.g. stale proxies after JPQL bulk operations).
+        // See server-development.mdx for details.
+        ArchRule rule = noFields().should().haveRawType(jakarta.persistence.EntityManager.class).orShould().haveRawType(jakarta.persistence.EntityManagerFactory.class)
+                .because("classes should use Spring Data repositories instead of EntityManager directly. " + "See server-development.mdx for details.");
+        // TODO: Refactor these classes to eliminate direct EntityManager usage and remove from this exception list.
+        final var exceptions = new Class[] { RepositoryImpl.class, CustomOrganizationRepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

@@ -37,11 +37,15 @@ export class ExamExerciseGroupsPage {
     }
 
     async shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
-        await expect(this.page.locator('#number-groups')).toContainText(numberOfGroups.toString());
+        const numberOfGroupsLocator = this.page.locator('#number-groups');
+        await numberOfGroupsLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(numberOfGroupsLocator).toContainText(numberOfGroups.toString(), { timeout: 30000 });
     }
 
     async clickAddExerciseGroup() {
-        await this.page.locator('#create-new-group').click();
+        const createButton = this.page.locator('#create-new-group');
+        await createButton.waitFor({ state: 'visible', timeout: 30000 });
+        await createButton.click();
     }
 
     async clickAddTextExercise(groupID: number) {
@@ -74,6 +78,7 @@ export class ExamExerciseGroupsPage {
 
     async visitPageViaUrl(courseId: number, examId: number) {
         await this.page.goto(`/course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.locator('#number-groups').waitFor({ state: 'visible', timeout: 30000 });
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {

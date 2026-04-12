@@ -1,114 +1,113 @@
-<jhi-card-wrapper title="entity.quickActions">
-    <div class="d-flex flex-wrap align-items-center mb-3">
-        <div class="d-flex flex-wrap">
-            <ng-container
-                *ngTemplateOutlet="
-                    courseStatItem;
-                    context: {
-                        userGroup: 'students',
-                        count: course()?.numberOfStudents,
-                    }
-                "
-            />
-
-            <ng-container
-                *ngTemplateOutlet="
-                    courseStatItem;
-                    context: {
-                        userGroup: 'tutors',
-                        count: course()?.numberOfTeachingAssistants,
-                    }
-                "
-            />
-
-            <ng-container
-                *ngTemplateOutlet="
-                    courseStatItem;
-                    context: {
-                        userGroup: 'editors',
-                        count: course()?.numberOfEditors,
-                    }
-                "
-            />
-
-            <ng-container
-                *ngTemplateOutlet="
-                    courseStatItem;
-                    context: {
-                        userGroup: 'instructors',
-                        count: course()?.numberOfInstructors,
-                    }
-                "
-            />
-            @if (course()?.isAtLeastInstructor) {
-                <jhi-user-management-dropdown [courseId]="course()?.id" />
-            }
-        </div>
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-        @if (course()?.isAtLeastEditor) {
-            <jhi-button
-                id="open-add-exercise-popover"
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'entity.action.addExercise'"
-                [icon]="faListAlt"
-                [shouldToggle]="true"
-                (click)="addExercisePopover.showPopover($event)"
-            />
-
-            @if (lectureEnabled) {
-                <jhi-button
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.MEDIUM"
-                    [title]="'entity.action.addLecture'"
-                    [icon]="faChalkboardUser"
-                    [shouldToggle]="true"
-                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
-                />
-            }
-        }
-        @if (course()?.faqEnabled) {
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'entity.action.addFaq'"
-                [icon]="faQuestion"
-                [shouldToggle]="true"
-                (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
-            />
-        }
+<div class="quick-actions-header">
+    <div class="user-stats">
         @if (course()?.isAtLeastInstructor) {
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'entity.action.addExam'"
-                [icon]="faGraduationCap"
-                [shouldToggle]="true"
-                (onClick)="navigateToCourseManagementSection(CourseManagementSection.EXAM)"
-            />
-
-            <jhi-button
-                [btnType]="ButtonType.SECONDARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'artemisApp.course.import.button'"
-                [icon]="faFileImport"
-                (onClick)="openImportDialog()"
-            />
+            <jhi-user-management-dropdown [courseId]="course()?.id" />
         }
+        <ng-container
+            *ngTemplateOutlet="
+                courseStatItem;
+                context: {
+                    userGroup: 'students',
+                    count: course()?.numberOfStudents,
+                }
+            "
+        />
+        <ng-container
+            *ngTemplateOutlet="
+                courseStatItem;
+                context: {
+                    userGroup: 'tutors',
+                    count: course()?.numberOfTeachingAssistants,
+                }
+            "
+        />
+        <ng-container
+            *ngTemplateOutlet="
+                courseStatItem;
+                context: {
+                    userGroup: 'editors',
+                    count: course()?.numberOfEditors,
+                }
+            "
+        />
+        <ng-container
+            *ngTemplateOutlet="
+                courseStatItem;
+                context: {
+                    userGroup: 'instructors',
+                    count: course()?.numberOfInstructors,
+                }
+            "
+        />
     </div>
-</jhi-card-wrapper>
+</div>
+
+<div class="quick-actions-grid">
+    @if (course()?.isAtLeastEditor) {
+        <button class="quick-action-card quick-action-card--exercises" id="open-add-exercise-popover" (click)="addExercisePopover.showPopover($event)">
+            <div class="quick-action-icon">
+                <fa-icon [icon]="faCode" />
+            </div>
+            <span class="quick-action-label" jhiTranslate="entity.action.addExercise"></span>
+        </button>
+
+        @if (lectureEnabled) {
+            <button class="quick-action-card quick-action-card--lectures" (click)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faChalkboardTeacher" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addLecture"></span>
+            </button>
+        }
+    }
+    @if (course()?.isAtLeastInstructor) {
+        @if (tutorialGroupEnabled) {
+            <button class="quick-action-card quick-action-card--tutorial" (click)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faUsers" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addTutorial"></span>
+            </button>
+        }
+
+        @if (examEnabled) {
+            <button class="quick-action-card quick-action-card--exams" (click)="navigateToCourseManagementSection(CourseManagementSection.EXAM)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faFileAlt" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addExam"></span>
+            </button>
+        }
+
+        @if (atlasEnabled) {
+            <button class="quick-action-card quick-action-card--competencies" (click)="navigateToCourseManagementSection(CourseManagementSection.COMPETENCY)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faBullseye" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addCompetency"></span>
+            </button>
+        }
+    }
+    @if (course()?.isAtLeastTutor) {
+        <button class="quick-action-card quick-action-card--faqs" (click)="navigateToCourseManagementSection(CourseManagementSection.FAQ)">
+            <div class="quick-action-icon">
+                <fa-icon [icon]="faQuestion" />
+            </div>
+            <span class="quick-action-label" jhiTranslate="entity.action.addFaq"></span>
+        </button>
+    }
+</div>
 
 <jhi-add-exercise-popover [course]="course()" #addExercisePopover="addExercisePopover" />
 <jhi-course-material-import-dialog #importDialog [targetCourseId]="course()?.id!" />
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
-    <div class="text-center me-3">
-        <div class="small text-muted" jhiTranslate="artemisApp.course.{{ userGroup }}"></div>
+    <div class="stat-item">
+        <div class="stat-label" jhiTranslate="artemisApp.course.{{ userGroup }}"></div>
         @if (course()?.isAtLeastInstructor) {
-            <a [routerLink]="['/course-management', course()?.id, 'groups', userGroup]" class="fw-bold" id="number-of-{{ userGroup }}">{{ count || 0 }}</a>
+            <a [routerLink]="['/course-management', course()?.id, 'groups', userGroup]" class="stat-value" id="number-of-{{ userGroup }}">{{ count || 0 }}</a>
         } @else {
-            <div class="fw-bold" id="number-of-{{ userGroup }}-text">{{ count || 0 }}</div>
+            <div class="stat-value" id="number-of-{{ userGroup }}-text">{{ count || 0 }}</div>
         }
     </div>
 </ng-template>

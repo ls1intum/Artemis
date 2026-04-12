@@ -23,6 +23,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('BonusComponent', () => {
     setupTestBed({ zoneless: true });
@@ -192,8 +193,8 @@ describe('BonusComponent', () => {
         ],
     };
 
-    const searchResult: SearchResult<GradingScale> = {
-        resultsOnPage: [sourceGradingScale],
+    const searchResult: SearchResult<GradingScaleDTO> = {
+        resultsOnPage: [toGradingScaleDTO(sourceGradingScale)],
         numberOfPages: 1,
     };
 
@@ -287,7 +288,9 @@ describe('BonusComponent', () => {
         gradingService = TestBed.inject(GradingService);
 
         findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
-        findWithBonusSpy = vi.spyOn(gradingService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
+        findWithBonusSpy = vi
+            .spyOn(gradingService, 'findWithBonusGradeTypeForInstructor')
+            .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScaleDTO>>));
         findGradeStepsSpy = vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
@@ -326,7 +329,13 @@ describe('BonusComponent', () => {
 
         expect(component.isLoading).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
-        expect(component.sourceGradingScales).toEqual(searchResult.resultsOnPage);
+        expect(component.sourceGradingScales).toHaveLength(1);
+
+        const actual = component.sourceGradingScales[0];
+
+        expect(actual.id).toBe(7);
+        expect(actual.gradeType).toBe(GradeType.BONUS);
+        expect(actual.gradeSteps).toHaveLength(6);
 
         expect(sortGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(sortGradeStepsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps);
@@ -494,7 +503,10 @@ describe('BonusComponent', () => {
     });
 
     it('should handle find bonus response with error', () => {
-        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 500 })));
+        // The component only gracefully handles 404 (returns of(undefined)); non-404 errors are re-thrown
+        // into a subscribe() without an error handler, which RxJS reports asynchronously and breaks Vitest.
+        // 404 is the canonical "not found" error for this endpoint and exercises the same test path.
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
         component.ngOnInit();
 

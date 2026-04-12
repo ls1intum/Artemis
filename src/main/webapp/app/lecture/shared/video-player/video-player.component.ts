@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
@@ -34,6 +34,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Transcript segments to highlight and sync */
     transcriptSegments = input<TranscriptSegment[]>([]);
 
+    /** Optional timestamp to seek to once the player is ready */
+    initialTimestamp = input<number | undefined>(undefined);
+
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
@@ -55,16 +58,52 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
+    /** Store reference to loadedmetadata handler for cleanup */
+    private loadedmetadataHandler: (() => void) | undefined = undefined;
+
     /** ResizeObserver for syncing transcript height with video column */
     private resizeObserver: ResizeObserver | undefined = undefined;
 
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
+    private viewReady = signal<boolean>(false);
+    private lastInitialTimestamp: number | undefined;
+    private pendingInitialSeek: number | undefined;
+
+    constructor() {
+        effect(() => {
+            if (!this.viewReady()) {
+                return;
+            }
+
+            const timestamp = this.initialTimestamp();
+            if (timestamp === undefined || !Number.isFinite(timestamp) || timestamp < 0) {
+                this.lastInitialTimestamp = undefined;
+                this.pendingInitialSeek = undefined;
+                return;
+            }
+
+            if (this.lastInitialTimestamp === timestamp) {
+                return;
+            }
+
+            const videoElement = this.videoRef()?.nativeElement;
+            if (!videoElement) {
+                return;
+            }
+
+            this.lastInitialTimestamp = timestamp;
+            this.queueInitialSeek(videoElement, timestamp);
+        });
+    }
+
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
         const src = this.videoUrl();
+
+        this.viewReady.set(true);
 
         if (!videoElement || !src) {
             return;
@@ -193,6 +232,43 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         videoElement.play();
     }
 
+    private queueInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
+        const target = Math.max(0, seconds);
+        if (videoElement.readyState >= 1) {
+            this.applyInitialSeek(videoElement, target);
+            return;
+        }
+
+        this.pendingInitialSeek = target;
+
+        // Remove any existing listener before adding a new one
+        if (this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+        }
+
+        // Create a named listener function that can be removed later
+        this.loadedmetadataHandler = () => {
+            const pending = this.pendingInitialSeek;
+            this.pendingInitialSeek = undefined;
+            this.loadedmetadataHandler = undefined; // Clear reference after firing
+            if (pending !== undefined) {
+                this.applyInitialSeek(videoElement, pending);
+            }
+        };
+
+        videoElement.addEventListener('loadedmetadata', this.loadedmetadataHandler, { once: true });
+    }
+
+    private applyInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
+        const duration = videoElement.duration;
+        if (Number.isFinite(duration) && seconds > duration) {
+            return;
+        }
+        const clamped = Number.isFinite(duration) ? Math.max(0, seconds) : seconds;
+        videoElement.currentTime = clamped;
+        this.updateCurrentSegment(clamped);
+    }
+
     /**
      * Updates the `currentSegmentIndex` signal based on playback time.
      * Scrolls the active transcript line into view via the transcript viewer component.
@@ -221,6 +297,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        // Remove loadedmetadata listener to prevent memory leaks
+        if (videoElement && this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+            this.loadedmetadataHandler = undefined;
+            this.pendingInitialSeek = undefined; // Clear pending seek as well
         }
 
         // Destroy HLS instance

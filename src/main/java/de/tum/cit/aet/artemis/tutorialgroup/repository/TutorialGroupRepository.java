@@ -15,7 +15,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -37,14 +38,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             """)
     @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
-
-    @Query("""
-            SELECT DISTINCT tutorialGroup.campus
-            FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.id = :courseId
-                AND tutorialGroup.campus IS NOT NULL
-            """)
-    Set<String> findAllUniqueCampusValuesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT tutorialGroup.language
@@ -83,6 +76,8 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Set<TutorialGroup> findAllByCourseIdWithChannel(@Param("courseId") Long courseId);
 
     boolean existsByTitleAndCourse(String title, Course course);
+
+    boolean existsByIdAndCourse_Id(Long id, Long courseId);
 
     @Query("""
             SELECT tutorialGroup
@@ -124,12 +119,13 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
-    Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
+    Optional<TutorialGroup> findByIdWithSessionsAndSchedule(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO(
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO(
                 tutorialGroup.id,
                 tutorialGroup.title,
                 tutorialGroup.language,
@@ -138,7 +134,9 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 tutorialGroup.campus,
                 CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
                 tutorialGroup.teachingAssistant.login,
+                tutorialGroup.teachingAssistant.id,
                 tutorialGroup.teachingAssistant.imageUrl,
+                tutorialGroup.additionalInformation,
                 channel.id,
                 schedule.dayOfWeek,
                 schedule.startTime,
@@ -150,10 +148,33 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
             WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
             """)
-    Optional<RawTutorialGroupDetailGroupDTO> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+    Optional<RawTutorialGroupDTO> getRawTutorialGroupDTO(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 
-    default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
-        return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
+    @Query("""
+                    SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO(
+                        student.id,
+                        TRIM(CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, ''))),
+                        student.imageUrl,
+                        student.login,
+                        student.email,
+                        student.registrationNumber
+                    )
+                    FROM TutorialGroup tutorialGroup
+                        JOIN tutorialGroup.registrations registration
+                        JOIN registration.student student
+                    WHERE tutorialGroup.id = :tutorialGroupId
+            """)
+    Set<TutorialGroupStudentDTO> getRegisteredStudentsOfTutorialGroup(@Param("tutorialGroupId") long tutorialGroupId);
+
+    @Query("""
+            SELECT COUNT(tutorialGroup) > 0
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.teachingAssistant.id = :userId AND tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    boolean isTutorInTutorialGroup(@Param("userId") long userId, @Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+
+    default TutorialGroup findByIdWithSessionsAndScheduleElseThrow(long tutorialGroupId) {
+        return getValueElseThrow(findByIdWithSessionsAndSchedule(tutorialGroupId), tutorialGroupId);
     }
 
     default TutorialGroup findByIdWithTeachingAssistantAndCourseElseThrow(long tutorialGroupId) {

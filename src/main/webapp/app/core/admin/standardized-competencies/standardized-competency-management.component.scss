@@ -1,3 +1,44 @@
 .light-background {
     background-color: var(--overview-light-background-color);
 }
+
+.split-container {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.tree-panel {
+    flex: 1 1 auto;
+    min-width: 200px;
+    overflow: auto;
+}
+
+.sc-detail-panel {
+    display: flex;
+    flex-shrink: 0;
+    width: 40%;
+    min-width: 250px;
+    max-width: calc(100% - 200px);
+    touch-action: none;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: calc(100vh - var(--sidebar-header-footer-combined-height, 105px));
+    overflow-y: auto;
+}
+
+.draggable-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    cursor: col-resize;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+    min-width: 0;
+}

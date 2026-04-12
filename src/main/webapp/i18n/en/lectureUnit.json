@@ -85,10 +85,7 @@
             "created": "New file/video content created",
             "updated": "File/video content updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
-            "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
-            "generateTranscription": "Generate transcription",
-            "transcriptionPossible": "Transcription Possible",
             "transcriptionProcessing": "Transcription Processing",
             "transcriptionFailed": "Transcription Failed",
             "hasTranscription": "Transcription complete",
@@ -178,7 +175,7 @@
                 "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
                 "videoTranscription": "Video Transcription",
                 "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
-                "generateTranscriptLabel": "Generate transcript after saving"
+                "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"
@@ -217,6 +214,23 @@
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
                 "loading": "Loading..."
+            },
+            "pdfViewer": {
+                "title": "PDF Viewer",
+                "loadingPdf": "Loading PDF...",
+                "loadFailed": "Failed to load PDF",
+                "zoomOut": "Zoom out",
+                "zoomIn": "Zoom in",
+                "search": "Search in document",
+                "searchPlaceholder": "Search...",
+                "nextMatch": "Next match",
+                "previousMatch": "Previous match",
+                "clearSearch": "Clear search",
+                "goToPage": "Go to page",
+                "pageInputPlaceholder": "Page",
+                "downloadPdf": "Download PDF",
+                "openFullscreen": "Open fullscreen",
+                "closeFullscreen": "Close fullscreen"
             }
         },
         "exerciseUnit": {

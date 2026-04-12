@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, computed, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -8,7 +8,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
-import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -27,7 +27,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     styleUrls: ['../metis.component.scss'],
     imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
 })
-export class PostingHeaderComponent implements OnInit, OnChanges {
+export class PostingHeaderComponent implements OnInit {
     lastReadDate = input<dayjs.Dayjs>();
     posting = input<Posting>();
     readOnlyMode = input<boolean>(false);
@@ -56,6 +56,20 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
+
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            this.posting();
+            this.hasChannelModerationRights();
+            untracked(() => {
+                if (this.posting()) {
+                    this.setUserProperties();
+                    this.setUserAuthorityIconAndTooltip();
+                }
+            });
+        });
+    }
 
     isPostResolved = computed<boolean>(() => {
         const posting = this.posting();
@@ -88,14 +102,6 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
 
     private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
         return posting !== undefined && 'resolved' in posting;
-    }
-
-    /**
-     * on changes: re-evaluates authority roles
-     */
-    ngOnChanges() {
-        this.setUserProperties();
-        this.setUserAuthorityIconAndTooltip();
     }
 
     /**
@@ -149,7 +155,12 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
         this.userAuthorityIcon = faUser;
-        if (this.posting()?.authorRole === UserRole.USER) {
+        if (this.posting()?.author?.bot) {
+            this.userAuthorityIcon = faRobot;
+            this.userAuthority = 'bot';
+            this.userRoleBadge = roleBadgeTranslationPath + 'bot';
+            this.userAuthorityTooltip = toolTipTranslationPath + 'bot';
+        } else if (this.posting()?.authorRole === UserRole.USER) {
             this.userAuthority = 'student';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;

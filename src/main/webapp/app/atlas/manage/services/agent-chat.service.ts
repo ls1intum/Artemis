@@ -3,47 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { AgentChatResponse, AgentHistoryMessage } from 'app/atlas/shared/entities/chat-message.model';
+
+export type { AgentChatResponse, AgentHistoryMessage, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;
-}
-
-export interface CompetencyPreviewResponse {
-    title: string;
-    description: string;
-    taxonomy: CompetencyTaxonomy;
-    icon: string;
-    competencyId?: number;
-    viewOnly?: boolean;
-}
-
-export interface CompetencyRelationPreviewResponse {
-    relationId?: number;
-    tailCompetencyId: number;
-    tailCompetencyTitle: string;
-    headCompetencyId: number;
-    headCompetencyTitle: string;
-    relationType: CompetencyRelationType;
-    viewOnly?: boolean;
-}
-
-export interface AgentChatResponse {
-    message: string;
-    timestamp: string;
-    competenciesModified: boolean;
-    competencyPreviews?: CompetencyPreviewResponse[];
-    relationPreviews?: CompetencyRelationPreviewResponse[];
-    relationGraphPreview?: RelationGraphPreview;
-}
-
-export interface AgentHistoryMessage {
-    content: string;
-    isUser: boolean;
-    competencyPreviews?: CompetencyPreviewResponse[];
-    relationPreviews?: CompetencyRelationPreviewResponse[];
-    relationGraphPreview?: RelationGraphPreview;
 }
 
 @Injectable({
@@ -62,7 +27,7 @@ export class AgentChatService {
             timeout(30000),
             catchError(() => {
                 return of({
-                    message: this.translateService.instant('artemisApp.agent.chat.error'),
+                    message: this.translateService.instant('artemisApp.agent.chat.error.general'),
                     timestamp: new Date().toISOString(),
                     competenciesModified: false,
                 });

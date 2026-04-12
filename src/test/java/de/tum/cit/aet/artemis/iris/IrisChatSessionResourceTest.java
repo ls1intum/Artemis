@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
@@ -101,7 +101,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         team.setOwner(users.get(1));
         teamRepository.save(team);
 
-        lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        lecture = lectureUtilService.createLecture(course);
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(textExercise);
@@ -112,7 +112,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessionsForCourseWithoutSessions() throws Exception {
-        List<IrisChatSession> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
     }
 
@@ -123,8 +123,9 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
         this.irisSessionRepository.save(courseSession);
 
-        IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
-        assertThat(irisChatSessions.getId()).isEqualTo(courseSession.getId());
+        IrisChatSessionResponseDTO irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK,
+                IrisChatSessionResponseDTO.class);
+        assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());
     }
 
     @Test
@@ -318,7 +319,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         disableIrisFor(course);
 
         // Should return 403 Forbidden when Iris is disabled at course level
-        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisSession.class);
+        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisChatSessionResponseDTO.class);
     }
 
     @Test
@@ -328,7 +329,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
         irisSessionRepository.save(courseSession);
 
-        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
+        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisChatSessionResponseDTO.class);
 
         verify(irisCitationService).resolveCitationInfoFromMessages(any());
     }

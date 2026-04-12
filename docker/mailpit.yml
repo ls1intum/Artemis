@@ -1,0 +1,50 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Mailpit service (drop-in replacement for MailHog)
+#
+# Web UI: http://localhost:8025
+# SMTP:   localhost:1025
+#
+# This file can be run standalone for non-containerized Artemis (e.g. IntelliJ):
+#   docker compose -f docker/mailpit.yml up
+#
+# For non-containerized Artemis, add the following to your application-local.yml:
+#   spring:
+#       mail:
+#           host: localhost
+#           port: 1025
+#           username:
+#           password:
+#
+# For containerized Artemis, combine with an Artemis setup and pass the mail environment:
+#   docker compose -f docker/artemis-dev-mysql.yml -f docker/mailpit.yml up
+#   (also add SPRING_MAIL_HOST=mailpit and SPRING_MAIL_PORT=1025 to your env_file or environment)
+# ----------------------------------------------------------------------------------------------------------------------
+services:
+    mailpit:
+        container_name: artemis-mailpit
+        image: docker.io/axllent/mailpit:${MAILPIT_VERSION}
+        pull_policy: missing
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+        # expose the ports to make them reachable docker internally even if the external port mapping changes
+        expose:
+            - "1025"
+            - "8025"
+        networks:
+            - artemis
+
+    # Uncomment this section for containerized Artemis (e.g. docker compose -f artemis-dev-mysql.yml -f mailpit.yml up)
+    # It merges with the artemis-app service from the Artemis compose file to configure mail settings.
+    # For non-containerized Artemis (IntelliJ / gradlew bootRun), configure application-local.yml instead.
+    # artemis-app:
+    #     environment:
+    #         SPRING_MAIL_HOST: "mailpit"
+    #         SPRING_MAIL_PORT: "1025"
+    #         SPRING_MAIL_USERNAME:
+    #         SPRING_MAIL_PASSWORD:
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

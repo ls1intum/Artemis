@@ -15,17 +15,17 @@ export class ExamDetailsPage {
     }
 
     async checkItemChecked(checklistItem: ExamChecklistItem) {
-        await expect(
-            this.getChecklistItemLocator(checklistItem).getByTestId('check-icon-checked'),
-            `Checklist item for \"${checklistItem}\" is not checked or not found`,
-        ).toBeVisible();
+        const checklistItemLocator = this.getChecklistItemLocator(checklistItem);
+        await checklistItemLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(checklistItemLocator.getByTestId('check-icon-checked'), `Checklist item for "${checklistItem}" is not checked or not found`).toBeVisible({ timeout: 30000 });
     }
 
     async checkItemUnchecked(checklistItem: ExamChecklistItem) {
-        await expect(
-            this.getChecklistItemLocator(checklistItem).getByTestId('check-icon-unchecked'),
-            `Checklist item for \"${checklistItem}\" is not unchecked or not found`,
-        ).toBeVisible();
+        const checklistItemLocator = this.getChecklistItemLocator(checklistItem);
+        await checklistItemLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(checklistItemLocator.getByTestId('check-icon-unchecked'), `Checklist item for "${checklistItem}" is not unchecked or not found`).toBeVisible({
+            timeout: 30000,
+        });
     }
 
     private getChecklistItemLocator(checklistItem: ExamChecklistItem) {

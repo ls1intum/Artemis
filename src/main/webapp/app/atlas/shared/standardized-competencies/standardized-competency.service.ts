@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaDTO, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +11,7 @@ export class StandardizedCompetencyService {
     private resourceURL = 'api/atlas/standardized-competencies';
 
     getStandardizedCompetency(competencyId: number) {
-        return this.httpClient.get<StandardizedCompetency>(`${this.resourceURL}/${competencyId}`, { observe: 'response' });
+        return this.httpClient.get<StandardizedCompetencyDTO>(`${this.resourceURL}/${competencyId}`, { observe: 'response' });
     }
 
     getAllForTreeView() {
