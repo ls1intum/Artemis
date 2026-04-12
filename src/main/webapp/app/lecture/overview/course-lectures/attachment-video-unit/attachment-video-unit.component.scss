@@ -323,6 +323,12 @@ jhi-pdf-viewer.pdf-viewer-loading {
         }
 
         .hls-player-fit-content {
+            // In fullscreen, scale the element based on its intrinsic width.
+            // Keeping width: 100% here causes a second shrink when transform scale < 1,
+            // which leaves unintended left/right gaps in narrow viewports.
+            width: max-content;
+            max-width: none;
+            flex: 0 0 auto;
             min-width: 0;
             min-height: 0;
             transform-origin: center center;
