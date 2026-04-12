@@ -19,6 +19,7 @@ export class CourseChatbotComponent {
         effect(() => {
             const courseId = this.courseId();
             if (courseId !== undefined) {
+                this.chatService.setCourseId(courseId);
                 this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
             }
         });

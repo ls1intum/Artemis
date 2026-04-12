@@ -48,10 +48,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             untracked(() => {
                 if (this.initialized && this.irisEnabled) {
                     if (post) {
-                        const courseId = this.course()?.id;
-                        if (courseId) {
-                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, courseId, post.id);
-                        }
+                        this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
                         this.messagesSubscription?.unsubscribe();
                         this.subscribeToIrisActivation();
                     }
@@ -115,12 +112,11 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 if (!this.isAtLeastTutor || post?.resolved) {
                     return;
                 }
-                const courseId = course?.id;
-                if (courseId && post) {
-                    this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe((response) => {
+                if (course?.id && post) {
+                    this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
                         this.irisEnabled = !!response?.settings?.enabled;
                         if (this.irisEnabled) {
-                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, courseId, post.id);
+                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
