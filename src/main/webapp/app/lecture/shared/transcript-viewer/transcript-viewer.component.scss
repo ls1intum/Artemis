@@ -174,3 +174,17 @@
     font-style: italic;
     padding: 2rem 1rem;
 }
+
+:host-context(.content-container--fullscreen) .search-input {
+    font-size: 1rem;
+}
+
+:host-context(.content-container--fullscreen) .search-nav {
+    font-size: 0.95rem;
+}
+
+:host-context(.content-container--fullscreen) .transcript-line {
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 0.5rem 0.625rem;
+}

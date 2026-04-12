@@ -71,11 +71,7 @@
                     </div>
                 } @else if (playlistUrl() && hasTranscript()) {
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
-                        <div #hlsScaleViewport class="hls-player-fit-viewport">
-                            <div #hlsScaleContent class="hls-player-fit-content" [style.transform]="hlsFullscreenScaleTransform()">
-                                <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
-                            </div>
-                        </div>
+                        <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
                     </div>
                 } @else {
                     <div #videoContainer class="video-player-container" [ngClass]="{ 'video-player-container--fullscreen': isFullscreen() }">

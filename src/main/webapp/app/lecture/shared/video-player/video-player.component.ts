@@ -66,6 +66,11 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
+    /** Keep the manually selected video width ratio stable while resizing fullscreen pane */
+    private fullscreenVideoWidthRatio: number | undefined;
+    private lastObservedWrapperWidth = 0;
+    private lastObservedVideoHeight = 0;
+    private autoFullscreenWidthApplied = false;
 
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
@@ -167,7 +172,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 move: (event) => {
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const minWidth = 300;
-                    const maxWidth = wrapperRect.width - 250; // Leave space for transcript
+                    const maxWidth = Math.max(minWidth, wrapperRect.width - 250); // Leave space for transcript
 
                     // Calculate new width based on drag position
                     const newWidth = event.clientX - wrapperRect.left;
@@ -176,6 +181,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     // Set video column width and disable flex
                     videoColumnEl.style.flex = 'none';
                     videoColumnEl.style.width = `${clampedWidth}px`;
+                    if (this.isFullscreenContext(wrapperEl) && wrapperRect.width > 0) {
+                        this.fullscreenVideoWidthRatio = clampedWidth / wrapperRect.width;
+                        this.autoFullscreenWidthApplied = false;
+                    }
                     // ResizeObserver will automatically sync transcript height
                 },
             },
@@ -186,15 +195,22 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.resizeHandler = () => {
             videoColumnEl.style.flex = '';
             videoColumnEl.style.width = '';
+            this.fullscreenVideoWidthRatio = undefined;
+            this.autoFullscreenWidthApplied = false;
             // ResizeObserver will automatically sync transcript height
         };
         window.addEventListener('resize', this.resizeHandler);
 
+        this.lastObservedWrapperWidth = wrapperEl.getBoundingClientRect().width;
+        this.lastObservedVideoHeight = videoColumnEl.clientHeight;
+
         // Use ResizeObserver to reliably sync transcript height whenever video column size changes
         this.resizeObserver = new ResizeObserver(() => {
             this.syncTranscriptHeight();
+            this.syncFullscreenVideoWidth(videoColumnEl, wrapperEl);
         });
         this.resizeObserver.observe(videoColumnEl);
+        this.resizeObserver.observe(wrapperEl);
     }
 
     /**
@@ -217,6 +233,72 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         const videoHeight = videoColumnEl.offsetHeight;
         const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
+    }
+
+    private syncFullscreenVideoWidth(videoColumnEl: HTMLDivElement, wrapperEl: HTMLDivElement): void {
+        const wrapperWidth = wrapperEl.getBoundingClientRect().width;
+        if (!wrapperWidth) {
+            return;
+        }
+
+        const isFullscreen = this.isFullscreenContext(wrapperEl);
+        const wrapperWidthChanged = Math.abs(wrapperWidth - this.lastObservedWrapperWidth) > 0.5;
+        this.lastObservedWrapperWidth = wrapperWidth;
+        const videoHeight = videoColumnEl.clientHeight;
+        const videoHeightChanged = Math.abs(videoHeight - this.lastObservedVideoHeight) > 0.5;
+        this.lastObservedVideoHeight = videoHeight;
+
+        if (!isFullscreen) {
+            if (this.autoFullscreenWidthApplied) {
+                videoColumnEl.style.flex = '';
+                videoColumnEl.style.width = '';
+                this.autoFullscreenWidthApplied = false;
+            }
+            return;
+        }
+
+        const maxWidthByHeight = this.getHeightLimitedMaxWidth(videoColumnEl, wrapperWidth);
+        if (!wrapperWidthChanged && !videoHeightChanged && !this.autoFullscreenWidthApplied) {
+            return;
+        }
+
+        if (this.fullscreenVideoWidthRatio === undefined) {
+            const currentWidth = videoColumnEl.getBoundingClientRect().width;
+            if (currentWidth > maxWidthByHeight + 0.5) {
+                videoColumnEl.style.flex = 'none';
+                videoColumnEl.style.width = `${maxWidthByHeight}px`;
+                this.autoFullscreenWidthApplied = true;
+                return;
+            }
+
+            if (this.autoFullscreenWidthApplied && currentWidth <= maxWidthByHeight + 0.5) {
+                videoColumnEl.style.flex = '';
+                videoColumnEl.style.width = '';
+                this.autoFullscreenWidthApplied = false;
+            }
+            return;
+        }
+
+        const minWidth = 300;
+        const maxWidth = Math.max(minWidth, wrapperWidth - 250);
+        const syncedWidthByRatio = Math.max(minWidth, Math.min(maxWidth, wrapperWidth * this.fullscreenVideoWidthRatio));
+        const syncedWidth = Math.min(syncedWidthByRatio, maxWidthByHeight);
+
+        videoColumnEl.style.width = `${syncedWidth}px`;
+        this.autoFullscreenWidthApplied = false;
+    }
+
+    private getHeightLimitedMaxWidth(videoColumnEl: HTMLDivElement, wrapperWidth: number): number {
+        const height = videoColumnEl.clientHeight;
+        if (!height) {
+            return wrapperWidth;
+        }
+        const heightLimitedWidth = (height * 16) / 9;
+        return Math.min(wrapperWidth, Math.max(1, heightLimitedWidth));
+    }
+
+    private isFullscreenContext(wrapperEl: HTMLDivElement): boolean {
+        return !!wrapperEl.closest('.content-container--fullscreen');
     }
 
     /** Seek the video to the given time and resume playback. */

@@ -67,11 +67,6 @@
     }
 }
 
-.hls-player-fit-viewport,
-.hls-player-fit-content {
-    width: 100%;
-}
-
 .pdf-viewer-spacing {
     position: relative;
 }
@@ -306,33 +301,15 @@ jhi-pdf-viewer.pdf-viewer-loading {
         overflow: hidden;
         background-color: var(--lecture-combined-view-bg);
 
-        &.video-container-wrapper--fullscreen {
-            border: 1px solid var(--lecture-combined-view-border);
-            border-radius: var(--lecture-combined-view-radius);
-        }
-
-        .hls-player-fit-viewport {
+        > jhi-video-player {
             flex: 1;
             min-width: 0;
             min-height: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background-color: var(--lecture-combined-view-bg);
         }
 
-        .hls-player-fit-content {
-            // In fullscreen, scale the element based on its intrinsic width.
-            // Keeping width: 100% here causes a second shrink when transform scale < 1,
-            // which leaves unintended left/right gaps in narrow viewports.
-            width: max-content;
-            max-width: none;
-            flex: 0 0 auto;
-            min-width: 0;
-            min-height: 0;
-            transform-origin: center center;
-            will-change: transform;
+        &.video-container-wrapper--fullscreen {
+            border: 1px solid var(--lecture-combined-view-border);
+            border-radius: var(--lecture-combined-view-radius);
         }
     }
 }
