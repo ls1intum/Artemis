@@ -450,11 +450,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      *
      * @param courseId the course ID
      * @param mode     the chat mode (determines how entityId is interpreted)
-     * @param entityId optional entity ID — exerciseId for exercise modes, lectureId for LECTURE_CHAT, null for COURSE_CHAT
+     * @param entityId entity ID — exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @param user     the user
      * @return the current (or newly created) Iris session
      */
-    public IrisChatSession getCurrentSessionOrCreateIfNotExists(long courseId, IrisChatMode mode, Long entityId, User user) {
+    public IrisChatSession getCurrentSessionOrCreateIfNotExists(long courseId, IrisChatMode mode, long entityId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         var course = courseRepository.findByIdElseThrow(courseId);
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -478,11 +478,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      *
      * @param courseId the course ID
      * @param mode     the chat mode (determines how entityId is interpreted)
-     * @param entityId optional entity ID — exerciseId for exercise modes, lectureId for LECTURE_CHAT, null for COURSE_CHAT
+     * @param entityId entity ID — exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @param user     the user
      * @return the newly created session
      */
-    public IrisChatSession createSession(long courseId, IrisChatMode mode, Long entityId, User user) {
+    public IrisChatSession createSession(long courseId, IrisChatMode mode, long entityId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         var course = courseRepository.findByIdElseThrow(courseId);
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);

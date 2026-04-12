@@ -103,7 +103,7 @@ public class IrisChatSessionResource {
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam IrisChatMode mode,
-            @RequestParam(required = false) Long entityId) {
+            @RequestParam long entityId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, mode, entityId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
@@ -115,12 +115,12 @@ public class IrisChatSessionResource {
      *
      * @param courseId the course ID (required for authorization)
      * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
+     * @param entityId the exercise or lecture ID; courseID for course which does not get used
      * @return the newly created session
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam IrisChatMode mode, @RequestParam(required = false) Long entityId)
+    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@PathVariable Long courseId, @RequestParam IrisChatMode mode, @RequestParam long entityId)
             throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var session = irisChatSessionService.createSession(courseId, mode, entityId, user);

@@ -136,4 +136,10 @@ public abstract class IrisSession extends DomainObject {
 
     public abstract IrisChatMode getMode();
 
+    /**
+     * Returns the ID of the domain entity this session is associated with.
+     * For chat sessions this is the course, exercise, or lecture ID; for tutor-suggestion sessions it is the post ID.
+     */
+    public abstract Long getEntityId();
+
 }

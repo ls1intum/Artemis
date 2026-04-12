@@ -61,6 +61,7 @@ public class IrisChatSession extends IrisSession {
         this.courseId = courseId;
     }
 
+    @Override
     public Long getEntityId() {
         return entityId;
     }
