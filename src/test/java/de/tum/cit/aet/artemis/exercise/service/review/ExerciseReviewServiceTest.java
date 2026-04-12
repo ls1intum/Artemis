@@ -1059,14 +1059,27 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    void shouldReturnWhenUpdateThreadsForVersionChangeSnapshotsNull() {
+    void shouldThrowWhenUpdateThreadsForVersionChangeSnapshotsNull() {
         CommentThread thread = persistThread(programmingExercise);
         Integer originalLine = thread.getLineNumber();
+        ExerciseSnapshotDTO snapshot = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
 
-        exerciseReviewVersionChangeService.updateThreadsForVersionChange(null, null);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(null, snapshot))
+                .withMessage("previousSnapshot must not be null");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(snapshot, null))
+                .withMessage("currentSnapshot must not be null");
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
+    }
+
+    @Test
+    void shouldThrowWhenUpdateThreadsForVersionChangeSnapshotsBelongToDifferentExercises() {
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId() + 1, programmingExercise.getProblemStatement(), null);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> exerciseReviewVersionChangeService.updateThreadsForVersionChange(previous, current))
+                .withMessage("Cannot update review threads for snapshots of different exercises");
     }
 
     @Test

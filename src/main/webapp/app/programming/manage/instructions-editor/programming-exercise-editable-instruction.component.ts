@@ -259,7 +259,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             }),
             map(() => undefined),
             catchError(() => {
-                // TODO: move to programming exercise translations
                 this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
                 return EMPTY;
             }),

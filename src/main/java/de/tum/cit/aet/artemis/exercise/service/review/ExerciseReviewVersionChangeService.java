@@ -78,22 +78,56 @@ public class ExerciseReviewVersionChangeService {
      * @return modified threads that should be synchronized with active editors
      */
     public List<CommentThread> updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
-        if (previousSnapshot == null || currentSnapshot == null) {
-            return List.of();
-        }
-        if (!Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
-            return List.of();
-        }
+        validateVersionChangeSnapshots(previousSnapshot, currentSnapshot);
 
         List<CommentThread> threads = commentThreadRepository.findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(currentSnapshot.id());
         if (threads.isEmpty()) {
             return List.of();
         }
 
-        ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
-        ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
-        boolean hasProgrammingSnapshots = previousProgramming != null && currentProgramming != null;
+        MappingPreparation mappingPreparation = prepareMappingTasks(threads, previousSnapshot.programmingData(), currentSnapshot.programmingData());
+        if (mappingPreparation.mappingTasksByThreadId().isEmpty()) {
+            return List.of();
+        }
 
+        EditList problemStatementEdits = mappingPreparation.hasProblemStatementTasks() ? calculateTextEdits(previousSnapshot.problemStatement(), currentSnapshot.problemStatement())
+                : null;
+        Map<RepoDiffKey, Map<String, FileMappingPlan>> filePlansByRepoDiff = prepareRepoFilePlans(mappingPreparation.requiredFilePathsByRepoDiff());
+        Set<CommentThread> modifiedThreads = mapThreadAnchors(mappingPreparation.mappingTasksByThreadId().values(), problemStatementEdits, filePlansByRepoDiff);
+        Set<Comment> modifiedComments = mapInlineFixRanges(mappingPreparation.mappingTasksByThreadId(), problemStatementEdits, filePlansByRepoDiff, modifiedThreads);
+
+        persistModifiedThreadsAndComments(modifiedThreads, modifiedComments);
+        return List.copyOf(modifiedThreads);
+    }
+
+    /**
+     * Validates that both snapshots can be compared for one exercise version change.
+     *
+     * @param previousSnapshot the previous exercise snapshot
+     * @param currentSnapshot  the current exercise snapshot
+     */
+    private void validateVersionChangeSnapshots(@Nullable ExerciseSnapshotDTO previousSnapshot, @Nullable ExerciseSnapshotDTO currentSnapshot) {
+        if (previousSnapshot == null) {
+            throw new IllegalArgumentException("previousSnapshot must not be null");
+        }
+        if (currentSnapshot == null) {
+            throw new IllegalArgumentException("currentSnapshot must not be null");
+        }
+        if (!Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
+            throw new IllegalArgumentException("Cannot update review threads for snapshots of different exercises");
+        }
+    }
+
+    /**
+     * Collects all thread-mapping tasks and repository/file diff inputs needed for one version-change run.
+     *
+     * @param threads             active line-bound threads of the exercise
+     * @param previousProgramming previous programming snapshot, if available
+     * @param currentProgramming  current programming snapshot, if available
+     * @return prepared mapping metadata
+     */
+    private MappingPreparation prepareMappingTasks(List<CommentThread> threads, @Nullable ProgrammingExerciseSnapshotDTO previousProgramming,
+            @Nullable ProgrammingExerciseSnapshotDTO currentProgramming) {
         Map<Long, ThreadMappingTask> mappingTasksByThreadId = new HashMap<>();
         Map<RepoDiffKey, Set<String>> requiredFilePathsByRepoDiff = new HashMap<>();
         boolean hasProblemStatementTasks = false;
@@ -112,7 +146,7 @@ public class ExerciseReviewVersionChangeService {
             }
 
             String filePath = thread.getFilePath();
-            if (!hasProgrammingSnapshots || filePath == null || filePath.isBlank()) {
+            if (previousProgramming == null || currentProgramming == null || filePath == null || filePath.isBlank()) {
                 continue;
             }
 
@@ -131,15 +165,21 @@ public class ExerciseReviewVersionChangeService {
             requiredFilePathsByRepoDiff.computeIfAbsent(repoDiffKey, ignored -> new HashSet<>()).add(filePath);
         }
 
-        if (mappingTasksByThreadId.isEmpty()) {
-            return List.of();
-        }
+        return new MappingPreparation(mappingTasksByThreadId, requiredFilePathsByRepoDiff, hasProblemStatementTasks);
+    }
 
-        EditList problemStatementEdits = hasProblemStatementTasks ? calculateTextEdits(previousSnapshot.problemStatement(), currentSnapshot.problemStatement()) : null;
-        Map<RepoDiffKey, Map<String, FileMappingPlan>> filePlansByRepoDiff = prepareRepoFilePlans(requiredFilePathsByRepoDiff);
-
+    /**
+     * Maps all thread anchor lines and collects modified threads.
+     *
+     * @param mappingTasks          prepared mapping tasks
+     * @param problemStatementEdits precomputed problem-statement edits, if needed
+     * @param filePlansByRepoDiff   precomputed repository file plans
+     * @return modified threads
+     */
+    private Set<CommentThread> mapThreadAnchors(Collection<ThreadMappingTask> mappingTasks, @Nullable EditList problemStatementEdits,
+            Map<RepoDiffKey, Map<String, FileMappingPlan>> filePlansByRepoDiff) {
         Set<CommentThread> modifiedThreads = new HashSet<>();
-        for (ThreadMappingTask task : mappingTasksByThreadId.values()) {
+        for (ThreadMappingTask task : mappingTasks) {
             LineMappingResult mappedAnchor = mapAnchorForTask(task, problemStatementEdits, filePlansByRepoDiff);
             if (mappedAnchor == null) {
                 continue;
@@ -148,19 +188,28 @@ public class ExerciseReviewVersionChangeService {
                 modifiedThreads.add(task.thread());
             }
         }
+        return modifiedThreads;
+    }
 
+    /**
+     * Maps inline-fix line ranges for consistency comments and collects modified comments.
+     *
+     * @param mappingTasksByThreadId prepared mapping tasks by thread id
+     * @param problemStatementEdits  precomputed problem-statement edits, if needed
+     * @param filePlansByRepoDiff    precomputed repository file plans
+     * @param modifiedThreads        modified thread set, extended when inline fixes become outdated
+     * @return modified comments
+     */
+    private Set<Comment> mapInlineFixRanges(Map<Long, ThreadMappingTask> mappingTasksByThreadId, @Nullable EditList problemStatementEdits,
+            Map<RepoDiffKey, Map<String, FileMappingPlan>> filePlansByRepoDiff, Set<CommentThread> modifiedThreads) {
         List<Comment> consistencyComments = findConsistencyCommentsByThreadIds(mappingTasksByThreadId.keySet());
         Set<Comment> modifiedComments = new HashSet<>();
         for (Comment comment : consistencyComments) {
-            Long threadId = comment.getThread() != null ? comment.getThread().getId() : null;
-            if (threadId == null) {
-                continue;
-            }
-
-            ThreadMappingTask task = mappingTasksByThreadId.get(threadId);
+            ThreadMappingTask task = findMappingTaskForComment(comment, mappingTasksByThreadId);
             if (task == null) {
                 continue;
             }
+
             if (!(comment.getContent() instanceof ConsistencyIssueCommentContentDTO consistencyContent)) {
                 continue;
             }
@@ -194,14 +243,38 @@ public class ExerciseReviewVersionChangeService {
             comment.setContent(new ConsistencyIssueCommentContentDTO(consistencyContent.severity(), consistencyContent.category(), consistencyContent.text(), updatedInlineFix));
             modifiedComments.add(comment);
         }
+        return modifiedComments;
+    }
 
+    /**
+     * Resolves the mapping task for the thread that owns a consistency comment.
+     *
+     * @param comment                consistency comment to resolve
+     * @param mappingTasksByThreadId prepared mapping tasks by thread id
+     * @return mapping task for the comment's thread, or {@code null}
+     */
+    @Nullable
+    private ThreadMappingTask findMappingTaskForComment(Comment comment, Map<Long, ThreadMappingTask> mappingTasksByThreadId) {
+        Long threadId = comment.getThread() != null ? comment.getThread().getId() : null;
+        if (threadId == null) {
+            return null;
+        }
+        return mappingTasksByThreadId.get(threadId);
+    }
+
+    /**
+     * Persists modified threads and comments.
+     *
+     * @param modifiedThreads  threads changed during mapping
+     * @param modifiedComments comments changed during inline-fix range mapping
+     */
+    private void persistModifiedThreadsAndComments(Set<CommentThread> modifiedThreads, Set<Comment> modifiedComments) {
         if (!modifiedThreads.isEmpty()) {
             commentThreadRepository.saveAll(modifiedThreads);
         }
         if (!modifiedComments.isEmpty()) {
             commentRepository.saveAll(modifiedComments);
         }
-        return List.copyOf(modifiedThreads);
     }
 
     /**
@@ -701,6 +774,10 @@ public class ExerciseReviewVersionChangeService {
     }
 
     private record LineRangeMappingResult(@Nullable Integer newStartLine, @Nullable Integer newEndLine, boolean outdated) {
+    }
+
+    private record MappingPreparation(Map<Long, ThreadMappingTask> mappingTasksByThreadId, Map<RepoDiffKey, Set<String>> requiredFilePathsByRepoDiff,
+            boolean hasProblemStatementTasks) {
     }
 
     private enum MappingSource {
