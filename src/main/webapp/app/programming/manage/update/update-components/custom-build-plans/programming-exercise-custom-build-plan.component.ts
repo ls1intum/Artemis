@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { LegacyBuildPlanAdapterService } from 'app/programming/shared/services/legacy-build-plan-adapter.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -17,6 +18,7 @@ import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, Build
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
+    private legacyBuildPlanAdapterService = inject(LegacyBuildPlanAdapterService);
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
@@ -42,17 +44,41 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     } as BuildPlanPhases;
 
     ngOnInit() {
-        const configJson = this.programmingExercise.buildConfig?.buildPlanConfiguration;
+        const buildConfig = this.programmingExercise.buildConfig;
+        const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
             try {
                 const parsed = JSON.parse(configJson);
                 if (parsed?.phases?.length) {
                     this.buildPlanPhases = parsed as BuildPlanPhases;
+                    return;
                 }
             } catch {
-                this.resetCustomBuildPlan();
+                // handled by legacy fallback below
             }
         }
+
+        const legacyBuildScript = buildConfig?.buildScript;
+        if (!legacyBuildScript?.trim() || !this.programmingExercise.programmingLanguage) {
+            this.resetCustomBuildPlan();
+            return;
+        }
+
+        // convert legacy format to the new phases
+        this.legacyBuildPlanAdapterService
+            .createBuildPhasesFromLegacyBuildScript(
+                legacyBuildScript,
+                configJson,
+                this.programmingExercise.programmingLanguage,
+                this.programmingExercise.projectType,
+                this.programmingExercise.staticCodeAnalysisEnabled,
+                this.programmingExercise.buildConfig?.sequentialTestRuns,
+            )
+            .subscribe({
+                next: (buildPlanPhases) => {
+                    this.buildPlanPhases = buildPlanPhases;
+                },
+            });
     }
 
     ngOnChanges(changes: SimpleChanges) {

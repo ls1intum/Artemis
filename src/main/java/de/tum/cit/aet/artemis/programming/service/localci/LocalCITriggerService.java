@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -88,6 +87,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
+    private final LegacyBuildPlanAdapterService legacyBuildPlanAdapterService;
+
     private final GitService gitService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -110,7 +111,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
             ExerciseDateService exerciseDateService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, LegacyBuildPlanAdapterService legacyBuildPlanAdapterService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
             BuildPhaseEvaluationService buildPhaseEvaluationService) {
@@ -120,6 +122,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.legacyBuildPlanAdapterService = legacyBuildPlanAdapterService;
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
@@ -341,35 +344,34 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         programmingExercise.setBuildConfig(buildConfig);
 
-        final List<BuildPhaseDTO> phases;
-        if (buildPlanPhasesDTO.isEmpty()) {
-            List<BuildPhaseDTO> templatePhases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
-            if (buildConfig.getBuildScript() != null) {
-                // for backwards compatibility derive phases from script
-                final List<String> resultPaths = BuildPhaseEvaluationService.gatherResultPaths(templatePhases).stream().toList();
-                phases = createBuildPhasesFromLegacyBuildScript(buildConfig.getBuildScript(), resultPaths);
+        List<BuildPhaseDTO> phases = null;
+        String dockerImage = null;
+
+        // legacy exercise handling
+        if (buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null) {
+            phases = legacyBuildPlanAdapterService.createBuildPhasesFromLegacyBuildScript(programmingExercise);
+            dockerImage = legacyBuildPlanAdapterService.extractLegacyDockerImage(programmingExercise);
+        }
+
+        if (phases == null) {
+            if (buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null) {
+                phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
             }
             else {
-                phases = templatePhases;
+                phases = buildPlanPhasesDTO.orElseThrow().phases();
             }
         }
-        else if (buildPlanPhasesDTO.orElseThrow().phases() == null) {
-            phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
-        }
-        else {
-            phases = buildPlanPhasesDTO.orElseThrow().phases();
+
+        if (dockerImage == null) {
+            if (buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null) {
+                dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
+            }
+            else {
+                dockerImage = buildPlanPhasesDTO.orElseThrow().dockerImage();
+            }
         }
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
-
-        // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
-        final String dockerImage;
-        if (buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null || buildPlanPhasesDTO.orElseThrow().dockerImage().isBlank()) {
-            dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
-        }
-        else {
-            dockerImage = buildPlanPhasesDTO.orElseThrow().dockerImage();
-        }
 
         final Set<String> gatheredGlobResultPaths = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         List<String> resultPaths = gatheredGlobResultPaths.stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
@@ -380,13 +382,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
                 buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
-    }
-
-    private static List<BuildPhaseDTO> createBuildPhasesFromLegacyBuildScript(String script, List<String> resultPaths) {
-        String wrappedScript = "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + "  local tmp_file=$(mktemp)\n"
-                + "cat << '__LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n" + script + "\n" + "__LEGACY_INNER_SCRIPT_END__\n" + "  chmod +x \"${tmp_file}\"\n"
-                + "  \"${tmp_file}\" \"$@\"\n";
-        return List.of(new BuildPhaseDTO("script", wrappedScript, BuildPhaseCondition.ALWAYS, false, resultPaths));
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
