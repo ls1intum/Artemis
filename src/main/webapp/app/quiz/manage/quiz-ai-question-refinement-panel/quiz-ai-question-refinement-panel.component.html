@@ -18,7 +18,7 @@
                 [ngModel]="refinePrompt()"
                 (ngModelChange)="refinePrompt.set($any($event))"
                 [disabled]="isRefining()"
-                (keydown.enter)="$event.preventDefault(); submitRefinement()"
+                (keydown.enter)="onEnterKey($event)"
             ></textarea>
             <button pButton type="button" class="refinement-submit-button" [disabled]="!refinePrompt().trim() || isRefining()" (click)="submitRefinement()">
                 @if (isRefining()) {

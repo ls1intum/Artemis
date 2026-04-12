@@ -50,11 +50,11 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final String PROMPT_REFINE_QUIZ_QUESTION_USER = "/prompts/hyperion/refine_quiz_question_user.st";
 
-    private static final int MAX_QUESTION_TEXT_LENGTH = 2_000;
+    private static final int MAX_QUESTION_TEXT_LENGTH = 10_000;
 
-    private static final int MAX_QUESTION_TITLE_LENGTH = 255;
+    private static final int MAX_QUESTION_TITLE_LENGTH = 500;
 
-    private static final int MAX_OPTION_TEXT_LENGTH = 500;
+    private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
     @Nullable
     private final ChatClient chatClient;
@@ -162,10 +162,6 @@ public class HyperionQuizQuestionGenerationService {
 
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
         String reasoning = sanitizeInput(output.reasoning());
-        if (reasoning.isBlank()) {
-            reasoning = "The question was refined according to your instructions.";
-        }
-
         return new QuizQuestionRefinementResponseDTO(refinedQuestion, reasoning);
     }
 

@@ -59,6 +59,7 @@
                 "refinement": {
                     "promptPlaceholder": "Beschreibe, wie die Frage verfeinert werden soll...",
                     "changesLabel": "Vorgenommene Änderungen",
+                    "defaultReasoning": "Die Frage wurde entsprechend Ihren Anweisungen verfeinert.",
                     "errors": {
                         "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
                     }
