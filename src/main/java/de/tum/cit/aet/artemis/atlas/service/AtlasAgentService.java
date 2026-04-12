@@ -331,7 +331,7 @@ public class AtlasAgentService {
                 boolean isPlanContinuation = text.startsWith("MULTI-STEP PLAN CONTINUATION");
 
                 if (isBriefing || isActionConfirmation || isPlanContinuation) {
-                    if (!isUser) {
+                    if (message.getMessageType() == MessageType.ASSISTANT) {
                         assistantIndex++;
                     }
                     continue;
@@ -339,15 +339,18 @@ public class AtlasAgentService {
 
                 if (isUser) {
                     result.add(new AtlasAgentHistoryMessageDTO(text, true, null, null, null, null));
+                    continue;
                 }
-                else {
-                    AtlasAgentSessionCacheService.MessagePreviewData previewData = previewHistory.get(assistantIndex);
-                    assistantIndex++;
-                    String historyText = text;
-                    result.add(new AtlasAgentHistoryMessageDTO(historyText, false, previewData != null ? previewData.competencyPreviews() : null,
-                            previewData != null ? previewData.relationPreviews() : null, previewData != null ? previewData.relationGraphPreview() : null,
-                            previewData != null ? previewData.exerciseMappingPreview() : null));
+
+                if (message.getMessageType() != MessageType.ASSISTANT) {
+                    continue;
                 }
+
+                AtlasAgentSessionCacheService.MessagePreviewData previewData = previewHistory.get(assistantIndex);
+                assistantIndex++;
+                result.add(new AtlasAgentHistoryMessageDTO(text, false, previewData != null ? previewData.competencyPreviews() : null,
+                        previewData != null ? previewData.relationPreviews() : null, previewData != null ? previewData.relationGraphPreview() : null,
+                        previewData != null ? previewData.exerciseMappingPreview() : null));
             }
 
             return result;

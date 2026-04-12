@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.cache.Cache;
@@ -212,10 +212,10 @@ public class AtlasAgentSessionCacheService {
         }
         Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
         if (history == null) {
-            history = new HashMap<>();
+            history = new ConcurrentHashMap<>();
+            cache.put(sessionId, history);
         }
         history.put(messageIndex, previewData);
-        cache.put(sessionId, history);
     }
 
     /**
