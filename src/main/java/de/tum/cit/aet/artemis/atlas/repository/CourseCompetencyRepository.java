@@ -268,6 +268,15 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+            WHERE c.course.id = :courseId
+            """)
+    List<CourseCompetency> findByCourseIdWithExercises(@Param("courseId") long courseId);
+
     default CourseCompetency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }

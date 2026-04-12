@@ -19,6 +19,8 @@
 @import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
 @import 'markdown-it-github-alerts/styles/github-base.css';
 
+@import 'primeicons/primeicons.css';
+
 // Smooth transition between themes
 * {
     transition:
@@ -808,6 +810,18 @@ Course Info Bar
     ul {
         margin-bottom: 0.75em;
     }
+
+    h1 {
+        font-size: 1.125rem;
+    }
+
+    h2 {
+        font-size: 1.05rem;
+    }
+
+    h3 {
+        font-size: 0.975rem;
+    }
 }
 
 /* Make PlantUML outputs responsive */
@@ -1383,7 +1397,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// About Iris modal backdrop
+// About Iris modal — PrimeNG variant (sidebar chat)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
 }
@@ -1396,6 +1410,18 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         position: relative;
         padding: 0;
     }
+}
+
+// About Iris modal — CDK MatDialog variant (exercise/lecture chat widget)
+.about-iris-backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.about-iris-dialog .mat-mdc-dialog-surface {
+    border-radius: 1rem;
+    overflow: hidden;
+    background-color: var(--iris-secondary-background);
+    padding: 0;
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)
@@ -1454,4 +1480,31 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     font-size: 12px;
     min-width: 200px;
     white-space: pre-line;
+}
+
+// Override Bootstrap's default popover max-width for AI feedback popover.
+.ai-feedback-popover {
+    max-width: 500px;
+}
+
+// Compact metadata layout for the narrow left panel in Iris split view
+.iris-split-left .result-metadata {
+    flex-wrap: wrap;
+
+    > span:not([class]) {
+        display: none;
+    }
+}
+
+// Global search modal sizing
+.global-search-dialog {
+    width: 100%;
+    max-width: 700px;
+    height: 60vh;
+    max-height: 600px;
+    // !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top"
+    margin-top: 15vh !important;
+    overflow: hidden;
+    background: var(--module-bg);
+    transition: max-width 250ms ease-out;
 }

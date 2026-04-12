@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
@@ -77,6 +78,9 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/search/ask")
+    private URL lectureSearchAskApiURL;
 
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
@@ -158,6 +162,10 @@ public class IrisRequestMockProvider {
 
     public void mockTutorSuggestionResponse(Consumer<PyrisTutorSuggestionPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/tutor-suggestion/run", PyrisTutorSuggestionPipelineExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockAutonomousTutorResponse(Consumer<PyrisAutonomousTutorPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
@@ -359,6 +367,24 @@ public class IrisRequestMockProvider {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockSearchAsk(Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockSearchAskError(HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withRawStatus(status.value()));
         // @formatter:on

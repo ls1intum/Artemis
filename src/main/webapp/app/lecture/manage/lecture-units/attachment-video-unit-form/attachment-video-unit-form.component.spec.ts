@@ -21,6 +21,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     setupTestBed({ zoneless: true });
@@ -41,6 +42,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
                 MockDirective(NgbTooltip),
+                MockDirective(FeatureToggleHideDirective),
             ],
             providers: [
                 provideHttpClient(),

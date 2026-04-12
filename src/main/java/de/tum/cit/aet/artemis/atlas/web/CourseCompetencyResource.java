@@ -222,6 +222,21 @@ public class CourseCompetencyResource {
     }
 
     /**
+     * GET courses/:courseId/course-competencies/course-progress : gets the course progress for all competencies of a course
+     *
+     * @param courseId the id of the course for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with body the list of course competency progress DTOs
+     */
+    @GetMapping("courses/{courseId}/course-competencies/course-progress")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<CourseCompetencyProgressDTO>> getAllCompetenciesCourseProgress(@PathVariable long courseId) {
+        log.debug("REST request to get course progress for all competencies in course: {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var progressList = courseCompetencyService.getCourseProgressForAllCompetencies(course);
+        return ResponseEntity.ok(progressList);
+    }
+
+    /**
      * Search for all course competencies by title, description, course title and semester. The result is pageable.
      *
      * @param search The pageable search containing the page size, page number and search terms

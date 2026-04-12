@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.configuration.SSLContextFactory;
 import org.springframework.cloud.configuration.TlsProperties;
-import org.springframework.cloud.netflix.eureka.RestClientTimeoutProperties;
+import org.springframework.cloud.netflix.eureka.TimeoutProperties;
 import org.springframework.cloud.netflix.eureka.http.DefaultEurekaClientHttpRequestFactorySupplier;
 import org.springframework.cloud.netflix.eureka.http.EurekaClientHttpRequestFactorySupplier;
 import org.springframework.cloud.netflix.eureka.http.RestClientDiscoveryClientOptionalArgs;
@@ -56,7 +56,7 @@ public class EurekaClientConfiguration {
         log.debug("Using RestClient for the Eureka client.");
         // The Eureka DiscoveryClientOptionalArgsConfiguration invokes a private method setupTLS.
         // This code is taken from that method.
-        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties(), Set.of());
+        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new TimeoutProperties(), Set.of());
         var args = new RestClientDiscoveryClientOptionalArgs(supplier, () -> restClientBuilderProvider.getIfAvailable(RestClient::builder));
         if (tlsProperties.isEnabled()) {
             SSLContextFactory factory = new SSLContextFactory(tlsProperties);

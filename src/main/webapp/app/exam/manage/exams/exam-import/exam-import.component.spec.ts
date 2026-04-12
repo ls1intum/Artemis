@@ -19,7 +19,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

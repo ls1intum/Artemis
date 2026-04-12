@@ -76,8 +76,8 @@ describe('MessageReplyInlineInputComponent', () => {
     });
 
     it('should invoke metis service with created message reply', () => {
-        component.posting = { ...metisPostToCreateUser1 };
-        component.ngOnChanges();
+        component.posting.set({ ...metisPostToCreateUser1 });
+        fixture.detectChanges();
 
         const newContent = 'new content';
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
@@ -85,21 +85,18 @@ describe('MessageReplyInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            title: undefined,
-        });
+        expect(metisServiceCreateStub).toHaveBeenCalledWith(expect.objectContaining({ content: newContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading).toBe(false);
-        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting, content: newContent });
+        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
     });
 
     it('should stop loading when metis service throws error during replying to message', () => {
         metisServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
         const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
 
-        component.posting = metisPostToCreateUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostToCreateUser1);
+        fixture.detectChanges();
 
         const newContent = 'new content';
         component.formGroup.setValue({
@@ -114,8 +111,8 @@ describe('MessageReplyInlineInputComponent', () => {
     });
 
     it('should invoke metis service with edited message reply', () => {
-        component.posting = directMessageUser1;
-        component.ngOnChanges();
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
 
         const editedContent = 'edited content';
 
@@ -125,11 +122,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            content: editedContent,
-            title: undefined,
-        });
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith(expect.objectContaining({ content: editedContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading).toBe(false);
     });
@@ -137,8 +130,8 @@ describe('MessageReplyInlineInputComponent', () => {
     it('should stop loading when metis service throws error during message replying', () => {
         metisServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
 
-        component.posting = directMessageUser1;
-        component.ngOnChanges();
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
 
         const editedContent = 'edited content';
         const onEditSpy = vi.spyOn(component.isModalOpen, 'emit');
@@ -156,7 +149,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
     describe('Draft functionality', () => {
         beforeEach(() => {
-            component.posting = directMessageUser1;
+            component.posting.set(directMessageUser1);
             vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 1 } as any);
             component.resetFormGroup();
             component.ngOnInit();
@@ -164,7 +157,7 @@ describe('MessageReplyInlineInputComponent', () => {
         });
 
         it('should save draft when content changes', () => {
-            component.ngOnChanges();
+            fixture.detectChanges();
 
             const saveDraft = 'test draft content';
             const saveDraftSpy = vi.spyOn(draftService, 'saveDraft');
@@ -194,7 +187,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         it('should load draft on init if available', () => {
             const draftContent = 'saved draft content';
-            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('thread_draft_1_1_1');
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('thread_draft_1_1_1');
             vi.spyOn(draftService, 'loadDraft').mockReturnValue(draftContent);
 
             component.ngOnInit();
@@ -203,8 +196,7 @@ describe('MessageReplyInlineInputComponent', () => {
             component['loadDraft']();
             vi.advanceTimersByTime(0);
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
-            expect(component.posting.content).toBe(draftContent);
+            expect(component.formGroup.get('content')?.value).toBe(draftContent);
         });
 
         it('should clear draft after successful reply creation', () => {
@@ -225,14 +217,13 @@ describe('MessageReplyInlineInputComponent', () => {
 
         it('should not save draft if conversation or post id is missing', () => {
             const saveDraftSpy = vi.spyOn(draftService, 'saveDraft');
-            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('');
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('');
 
-            component.posting = { content: '' };
+            component.posting.set({ content: '' } as any);
             component.ngOnInit();
 
             vi.advanceTimersByTime(0);
 
-            expect(getDraftKeySpy).not.toHaveBeenCalled();
             expect(saveDraftSpy).not.toHaveBeenCalled();
         });
     });

@@ -182,6 +182,13 @@ public class PlagiarismPostService extends PostingService {
         Post post = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
+        // Clear the bidirectional PlagiarismCase reference to avoid TransientObjectException in Hibernate 6.6
+        PlagiarismCase plagiarismCase = post.getPlagiarismCase();
+        if (plagiarismCase != null) {
+            plagiarismCase.setPost(null);
+            plagiarismCaseRepository.save(plagiarismCase);
+        }
+
         // delete
         postRepository.deleteById(postId);
         preparePostForBroadcast(post);

@@ -4,6 +4,7 @@ import { GroupChat } from 'app/communication/shared/entities/conversation/group-
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
+import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
 import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
@@ -248,8 +249,8 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         course: Course,
-        communicationAPIRequests,
-    ): Channel {
+        communicationAPIRequests: CommunicationAPIRequests,
+    ): Promise<Channel> {
         await login(user, `/courses/${course.id}/communication`);
         await this.acceptCodeOfConductButton();
         const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
@@ -270,7 +271,7 @@ export class CourseMessagesPage {
         login: (credentials: UserCredentials, url?: string) => Promise<void>,
         user: UserCredentials,
         courseId: number,
-        channelId: string,
+        channelId: number,
         messageText: string,
     ) {
         await login(user, `/courses/${courseId}/communication?conversationId=${channelId}`);
@@ -591,6 +592,261 @@ export class CourseMessagesPage {
         } else {
             await expect(groupChat).toBeHidden({ timeout: 15000 });
         }
+    }
+
+    /**
+     * Right-clicks a message to open context menu, then clicks the bookmark button.
+     * @param messageId - The ID of the message to bookmark.
+     */
+    async bookmarkMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with bookmark option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('/saved-posts') && (resp.request().method() === 'POST' || resp.request().method() === 'DELETE'),
+        );
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /bookmark|save/i }).click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is bookmarked or not.
+     * @param messageId - The ID of the message to check.
+     * @param isBookmarked - Whether the message should be bookmarked.
+     */
+    async checkMessageBookmarked(messageId: number, isBookmarked: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isBookmarked) {
+            await expect(postLocator.locator('.is-saved').first()).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.is-saved')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Adds an emoji reaction to a message via the reaction bar.
+     * @param messageId - The ID of the message to react to.
+     * @param emoji - The emoji search term (e.g., 'thumbsup').
+     */
+    async addReactionToMessage(messageId: number, emoji: string) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu which has "Add reaction"
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click the "Add reaction" item — this opens the emoji picker at the click location
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /reaction/i }).click();
+        // Search for the emoji and click it
+        await this.page.locator('.emoji-mart').waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-search input').fill(emoji);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/postings/reactions') && resp.request().method() === 'POST');
+        await this.page.locator('.emoji-mart').locator('.emoji-mart-scroll').locator('ngx-emoji').first().click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks that a reaction badge exists on a message.
+     * @param messageId - The ID of the message to check.
+     */
+    async checkReactionOnMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        // Reactions are displayed inside .emoji-container within the emoji-count reaction bar
+        await expect(postLocator.locator('.emoji-container').first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens the thread sidebar for a message by clicking the reply button.
+     * @param messageId - The ID of the message to open thread for.
+     */
+    async openThreadForMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with reply option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /reply/i }).click();
+        // Wait for the thread sidebar to become visible
+        await this.page.locator('.expanded-thread').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Types a reply in the thread sidebar and saves it.
+     * @param content - The reply content.
+     * @returns Promise<Post> representing the created reply.
+     */
+    async replyInThread(content: string): Promise<Post> {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyContainer = threadSidebar.locator('jhi-message-reply-inline-input jhi-posting-markdown-editor');
+        await setMonacoEditorContentByLocator(this.page, replyContainer, content);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
+        await threadSidebar.locator('jhi-message-reply-inline-input #save').click();
+        const response = await responsePromise;
+        return response.json();
+    }
+
+    /**
+     * Checks that a reply is visible in the thread sidebar.
+     * @param replyId - The ID of the reply to check.
+     * @param content - The expected content of the reply.
+     */
+    async checkThreadReply(replyId: number, content: string) {
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await expect(replyLocator).toBeVisible({ timeout: 10000 });
+        await expect(replyLocator.locator('.markdown-preview')).toContainText(content);
+    }
+
+    /**
+     * Clicks the "+" button and selects "Create direct message".
+     */
+    async createDirectMessageButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        const createBtn = this.page.locator('button', { hasText: 'Direct message' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
+    }
+
+    /**
+     * Forwards a message via the context menu.
+     * @param messageId - The ID of the message to forward.
+     */
+    async forwardMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu with forward option
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        await postLocator.locator('.dropdown-menu.show .forward').click();
+        // Wait for the forward dialog to appear
+        await this.page.locator('jhi-forward-message-dialog').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Pins or unpins a message via the context menu.
+     * @param messageId - The ID of the message to pin/unpin.
+     */
+    async pinMessage(messageId: number) {
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/messages/') && resp.request().method() === 'PUT');
+        await postLocator.locator('.dropdown-menu.show .dropdown-item', { hasText: /pin/i }).click();
+        await responsePromise;
+    }
+
+    /**
+     * Checks whether a message is pinned.
+     * @param messageId - The ID of the message to check.
+     * @param isPinned - Whether the message should be pinned.
+     */
+    async checkMessagePinned(messageId: number, isPinned: boolean) {
+        const postLocator = this.getSinglePost(messageId);
+        if (isPinned) {
+            await expect(postLocator.locator('.pinned-message, .pin-icon')).toBeVisible({ timeout: 10000 });
+        } else {
+            await expect(postLocator.locator('.pinned-message')).toHaveCount(0, { timeout: 10000 });
+        }
+    }
+
+    /**
+     * Edits a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to edit.
+     * @param newContent - The new content for the reply.
+     */
+    async editThreadReply(replyId: number, newContent: string) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        // Click "Edit Message" from the dropdown by matching translated text
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /edit/i }).click();
+
+        await setMonacoEditorContentByLocator(this.page, replyLocator, newContent);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
+        await replyLocator.locator('#save').click();
+        await responsePromise;
+    }
+
+    /**
+     * Deletes a reply in the thread sidebar.
+     * @param replyId - The ID of the reply to delete.
+     */
+    async deleteThreadReply(replyId: number) {
+        const threadSidebar = this.page.locator('.expanded-thread');
+        const replyLocator = threadSidebar.locator(`#item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'DELETE');
+        // Click "Delete Message" from the dropdown by matching translated text
+        await this.page.locator('.dropdown-menu.show .dropdown-item', { hasText: /delete/i }).click();
+        await responsePromise;
     }
 
     toggleSidebarAccordion(sidebarTitle: string) {

@@ -205,19 +205,10 @@ describe('PostingsMarkdownEditor', () => {
         );
     }
 
-    it('should have set the correct default commands on init if faq is enabled', () => {
-        vi.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
+    it('should always include faq reference action in default commands', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
-    });
-
-    it('should have set the correct default commands on init if faq is disabled', () => {
-        vi.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
-        component.ngOnInit();
-        containDefaultActions(component.defaultActions);
-        expect(component.defaultActions).toEqual(expect.not.arrayContaining([expect.any(FaqReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 

@@ -8,10 +8,11 @@ import { ExerciseManageButtonComponent } from 'app/exercise/exercise-create-butt
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-exercise-import-button',
-    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective],
+    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, ButtonModule],
     templateUrl: './exercise-import-button.component.html',
 })
 export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent {
@@ -63,9 +64,5 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
         } else {
             this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
         }
-    }
-
-    protected getTranslationSuffix(): string {
-        return 'importLabel';
     }
 }

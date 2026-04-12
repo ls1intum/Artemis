@@ -336,7 +336,7 @@ $update-footer-background: $neutral-dark;
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
-$edit-quiz-footer-background: $brighter-body-bg;
+$edit-quiz-footer-background: $body-bg;
 $quiz-exercise-detail-max-score-background: $artemis-dark;
 $quiz-exercise-detail-max-score-color: white;
 $quiz-edit-question-border: $neutral-dark-l-10;
@@ -705,3 +705,5 @@ $global-search-lecture-accent: #c084fc;
 $global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.18);
 $global-search-result-hover-border: rgba($global-search-lecture-accent, 0.4);
 $global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.08);
+$global-search-iris-accent: #60a5fa;
+$global-search-iris-accent-secondary: #93c5fd;

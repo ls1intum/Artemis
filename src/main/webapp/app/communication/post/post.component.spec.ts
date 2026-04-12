@@ -154,16 +154,16 @@ describe('PostComponent', () => {
     });
 
     it('should sort answers', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
+        component.posting.set(post);
+        component.posting()!.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.posting.answers = undefined;
+        component.posting.set(post);
+        component.posting()!.answers = unsortedAnswerArray;
+        component.posting()!.answers = undefined;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual([]);
     });
@@ -172,31 +172,31 @@ describe('PostComponent', () => {
         metisServiceGetLinkSpy = vi.spyOn(metisService, 'getLinkForPost');
         metisServiceGetQueryParamsSpy = vi.spyOn(metisService, 'getQueryParamsForPost');
 
-        component.posting = metisPostExerciseUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostExerciseUser1);
+        fixture.detectChanges();
 
         expect(metisServiceGetLinkSpy).toHaveBeenCalled();
-        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(expect.objectContaining({ id: metisPostExerciseUser1.id }));
         expect(component.routerLink).toEqual(['/courses', metisPostExerciseUser1.conversation?.course?.id, 'discussion']);
         expect(component.queryParams).toEqual({ searchText: '#' + metisPostExerciseUser1.id });
     });
 
     it('should initialize post without context information when shown in page section', () => {
         metisServiceGetPageTypeStub.mockReturnValue(PageType.PAGE_SECTION);
-        component.posting = metisPostLectureUser1;
+        component.posting.set(metisPostLectureUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
         expect(contextLink).toBeNull();
-        component.posting = metisPostExerciseUser1;
-        component.ngOnChanges();
+        component.posting.set(metisPostExerciseUser1);
+        fixture.detectChanges();
         fixture.changeDetectorRef.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
         expect(context).toBeNull();
     });
 
     it('should contain the posting content', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         fixture.changeDetectorRef.detectChanges();
 
         const header = getElement(debugElement, 'jhi-posting-content');
@@ -209,14 +209,14 @@ describe('PostComponent', () => {
     });
 
     it('should have correct content and title', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         expect(component.content).toBe(metisPostExerciseUser1.content);
-        expect(component.posting.title).toBe(metisPostExerciseUser1.title);
+        expect(component.posting()!.title).toBe(metisPostExerciseUser1.title);
     });
 
     it('should open create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
@@ -226,7 +226,7 @@ describe('PostComponent', () => {
     });
 
     it('should close create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
+        component.posting.set(metisPostExerciseUser1);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
@@ -329,12 +329,12 @@ describe('PostComponent', () => {
     });
 
     it('should return true if the post is pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        component.posting.set({ ...post, displayPriority: DisplayPriority.PINNED });
         expect(component.isPinned()).toBe(true);
     });
 
     it('should return false if the post is not pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.NONE };
+        component.posting.set({ ...post, displayPriority: DisplayPriority.NONE });
         expect(component.isPinned()).toBe(false);
     });
 
@@ -420,7 +420,7 @@ describe('PostComponent', () => {
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
         component.showDropdown = true;
-        component.posting = post;
+        component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
         const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
@@ -443,16 +443,16 @@ describe('PostComponent', () => {
         };
         // @ts-ignore method is private
         const spy = vi.spyOn(component, 'assignPostingToPost');
-        component.posting = mockPost;
+        component.posting.set(mockPost);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.posting).toBeInstanceOf(Post);
+        expect(component.posting()).toBeInstanceOf(Post);
         expect(spy).toHaveBeenCalled();
     });
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
@@ -468,7 +468,7 @@ describe('PostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
@@ -542,7 +542,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', {
             searchTerm: 'answer',
             selectedConversations: [],
@@ -553,47 +553,47 @@ describe('PostComponent', () => {
             sortingOrder: SortDirection.ASCENDING,
         });
         component.showSearchResultInAnswersHint = false;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.showSearchResultInAnswersHint).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
-        component.posting = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = false;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.showSearchResultInAnswersHint).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.showSearchResultInAnswersHint).toBe(false);
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.showSearchResultInAnswersHint).toBe(false);
     });
 
     // update to true when selected author is in answers
     it('should update showSearchResultInAnswersHint to true for selected author in answers', () => {
-        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
+        component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] });
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.showSearchResultInAnswersHint).toBe(true);
     });

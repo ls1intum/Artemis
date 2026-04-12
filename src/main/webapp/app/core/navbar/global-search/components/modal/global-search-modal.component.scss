@@ -25,6 +25,41 @@
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem 0.75rem;
+
+    &--split {
+        overflow: hidden;
+        padding: 0;
+    }
+}
+
+/* Iris split view — lecture results on the left, Iris answer slides in from the right */
+.iris-split-layout {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+.iris-split-left {
+    flex: 0 0 50%;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+}
+
+.iris-split-right {
+    flex: 0 0 50%;
+    animation: slideInFromRight 250ms ease-out both;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* Footer with keyboard shortcuts */

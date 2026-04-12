@@ -5,7 +5,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel } from '@tumaet/apollon';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

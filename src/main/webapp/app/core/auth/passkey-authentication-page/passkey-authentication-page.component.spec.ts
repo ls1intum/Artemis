@@ -120,13 +120,13 @@ describe('PasskeyAuthenticationPageComponent', () => {
             expect(navigateByUrlSpy).toHaveBeenCalledExactlyOnceWith('/admin/metrics');
         });
 
-        it('should navigate to home when redirectToOriginalUrlOrHome is called without returnUrl', () => {
+        it('should navigate to sign-in when redirectToOriginalUrlOrHome is called without returnUrl', () => {
             component.returnUrl = undefined;
             const navigateSpy = vi.spyOn(router, 'navigate');
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/sign-in']);
         });
     });
 

@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskResponseDTO;
 
 /**
  * REST controller for Iris lecture search.
@@ -43,5 +45,17 @@ public class IrisLectureSearchResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO) {
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit()));
+    }
+
+    /**
+     * POST api/iris/search-answer: Ask Iris to answer a question using lecture content.
+     *
+     * @param requestDTO the request containing the query and result limit
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the answer with sources
+     */
+    @PostMapping("search-answer")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PyrisSearchAskResponseDTO> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO) {
+        return ResponseEntity.ok(pyrisConnectorService.searchAsk(requestDTO.query(), requestDTO.limit()));
     }
 }

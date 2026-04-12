@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -8,5 +8,5 @@ import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/enti
 export class TutorialRegistrationsRegisterSearchBarStubComponent {
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
-    onStudentSelected = output<TutorialGroupRegisteredStudentDTO>();
+    onStudentSelected = output<TutorialGroupStudent>();
 }

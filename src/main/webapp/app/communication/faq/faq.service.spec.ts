@@ -12,7 +12,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
-import { EMPTY, of } from 'rxjs';
 
 describe('Faq Service', () => {
     setupTestBed({ zoneless: true });
@@ -270,11 +269,6 @@ describe('Faq Service', () => {
             expect(req.request.method).toBe('POST');
         });
     });
-    it('should make PUT request to enable FAQ', () => {
-        service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
-        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
-    });
-
     it('should stringify categories without mutating the original createFaqDTO', () => {
         const original = createFaqDTODefault;
         const originalRef = original.categories;

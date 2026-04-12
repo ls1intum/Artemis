@@ -3,16 +3,32 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 
 export function mockedActivatedRoute(params: any, queryParams: any = {}, data: any = {}, parentParams: any = {}, parentParentParams: any = {}): Provider {
+    const parentParentParamMap = convertToParamMap(parentParentParams);
+    const parentParamMap = convertToParamMap(parentParams);
+    const paramMap = convertToParamMap(params);
+    const queryParamMap = convertToParamMap(queryParams);
+
     return {
         provide: ActivatedRoute,
         useValue: {
             data: of(data),
-            paramMap: new BehaviorSubject(convertToParamMap(params)),
-            queryParamMap: new BehaviorSubject(convertToParamMap(queryParams)),
+            snapshot: {
+                paramMap,
+                queryParamMap,
+                data,
+            },
+            paramMap: new BehaviorSubject(paramMap),
+            queryParamMap: new BehaviorSubject(queryParamMap),
             parent: {
-                paramMap: new BehaviorSubject(convertToParamMap(parentParams)),
+                snapshot: {
+                    paramMap: parentParamMap,
+                },
+                paramMap: new BehaviorSubject(parentParamMap),
                 parent: {
-                    paramMap: new BehaviorSubject(convertToParamMap(parentParentParams)),
+                    snapshot: {
+                        paramMap: parentParentParamMap,
+                    },
+                    paramMap: new BehaviorSubject(parentParentParamMap),
                 },
             },
         },

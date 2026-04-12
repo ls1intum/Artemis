@@ -9,10 +9,10 @@
     [showHeader]="false"
     [closeOnEscape]="false"
     [dismissableMask]="true"
-    [style]="{ width: '100%', 'max-width': '700px', height: '60vh', 'max-height': '600px', 'margin-top': '15vh', overflow: 'hidden', background: 'var(--global-search-modal-bg)' }"
     contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
     position="top"
     styleClass="global-search-dialog"
+    [style.max-width]="currentView() === SearchView.Iris ? '1100px' : '700px'"
 >
     <!-- Search Input Container -->
     <jhi-global-search-input
@@ -24,7 +24,7 @@
         (filterRemoved)="removeFilter($event)"
     />
     <!-- Results Area -->
-    <div class="results-container">
+    <div class="results-container" [class.results-container--split]="currentView() === SearchView.Iris">
         @switch (currentView()) {
             @case (SearchView.Navigation) {
                 <jhi-global-search-navigation-view
@@ -49,9 +49,40 @@
                 />
             }
             @case (SearchView.Iris) {
-                <!-- Placeholder for Ask Iris view -->
-                <div class="p-3 text-center text-secondary">
-                    <p>Ask Iris placeholder - to be replaced with actual component from PR #12191</p>
+                <div class="iris-split-layout">
+                    <div class="iris-split-left overflow-y-auto">
+                        @if (irisSourceView() === SearchView.Lecture) {
+                            <jhi-global-search-lecture-results
+                                (back)="updateIrisSource(SearchView.Navigation)"
+                                (viewSelected)="updateIrisSource($event)"
+                                [searchQuery]="searchQuery()"
+                                [selectedIndex]="activeSplitPanel() === 'left' ? selectedIndex() : -1"
+                                [irisOpen]="true"
+                            />
+                        } @else {
+                            <jhi-global-search-navigation-view
+                                [searchQuery]="searchQuery()"
+                                [selectedIndex]="activeSplitPanel() === 'left' ? selectedIndex() : -1"
+                                [results]="results()"
+                                [hasSearched]="hasSearched()"
+                                [showResults]="showResults()"
+                                [isLoading]="isLoading()"
+                                [searchError]="searchError()"
+                                [activeFilters]="activeFilters()"
+                                (viewSelected)="updateIrisSource($event)"
+                                (entityClick)="onEntityClick($event)"
+                                [irisOpen]="true"
+                            />
+                        }
+                    </div>
+                    <div class="iris-split-right overflow-hidden">
+                        <jhi-global-search-iris-answer
+                            [query]="searchQuery()"
+                            [selectedSourceIndex]="activeSplitPanel() === 'right' ? selectedIndex() : -1"
+                            [active]="activeSplitPanel() === 'right'"
+                            (closeDrawer)="navigateTo(irisSourceView())"
+                        />
+                    </div>
                 </div>
             }
         }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -26,8 +27,8 @@ public class ProgrammingExerciseAtlasIrisService {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
     }
 
-    public void updateCompetencyProgressOnExerciseUpdate(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise programmingExerciseAfterUpdate) {
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(programmingExerciseAfterUpdate)));
+    public void updateCompetencyProgressOnExerciseUpdate(Set<Long> originalCompetencyIds, ProgrammingExercise programmingExerciseAfterUpdate) {
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, programmingExerciseAfterUpdate));
     }
 
 }

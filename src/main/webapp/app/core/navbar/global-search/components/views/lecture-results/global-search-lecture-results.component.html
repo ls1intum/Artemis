@@ -2,17 +2,17 @@
     <fa-icon [icon]="faArrowLeft" aria-hidden="true" />
     {{ 'entity.action.back' | artemisTranslate }}
 </button>
-@if (irisEnabled) {
+@if (irisEnabled && !irisOpen()) {
     <div #selectableItem>
         <jhi-global-search-action-item
-            [title]="'global.search.actions.askIrisTitle' | artemisTranslate"
-            [description]="'global.search.actions.askIrisDescription' | artemisTranslate"
+            [title]="'global.search.askIris' | artemisTranslate"
+            [description]="'global.search.askIrisDescription' | artemisTranslate"
             [selected]="selectedIndex() === 0"
-            accentColor="var(--bs-primary)"
-            secondaryAccentColor="var(--bs-info)"
+            accentColor="var(--global-search-iris-accent)"
+            secondaryAccentColor="var(--global-search-iris-accent-secondary)"
             (clicked)="viewSelected.emit(SearchView.Iris)"
         >
-            <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
+            <jhi-iris-logo slot="icon" [size]="IrisLogoSize.TEXT" aria-hidden="true" />
         </jhi-global-search-action-item>
     </div>
 }
@@ -45,7 +45,7 @@
                 #selectableItem
                 class="lecture-result-card border p-3 text-decoration-none d-block"
                 role="listitem"
-                [class.is-selected]="selectedIndex() === $index + (irisEnabled ? 1 : 0)"
+                [class.is-selected]="selectedIndex() === $index + (irisEnabled && !irisOpen() ? 1 : 0)"
                 [routerLink]="result.lectureUnit.link"
             >
                 <div class="d-flex align-items-start gap-2 mb-2">

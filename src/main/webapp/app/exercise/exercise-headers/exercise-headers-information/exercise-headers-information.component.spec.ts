@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -22,10 +24,11 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHeadersInformationComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseHeadersInformationComponent;
     let fixture: ComponentFixture<ExerciseHeadersInformationComponent>;
     let exerciseService: ExerciseService;
-    let getExerciseDetailsMock: jest.SpyInstance;
+    let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
 
     const exercise = {
         id: 42,
@@ -52,11 +55,15 @@ describe('ExerciseHeadersInformationComponent', () => {
                 fixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
                 component = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
                 component.exercise = { ...exercise };
                 fixture.detectChanges();
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -117,7 +124,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         component.studentParticipation = studentParticipation;
 
         const expectedDueDate = dayjs().add(7, 'days');
-        jest.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
+        vi.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
 
         if (component.course?.maxComplaintTimeDays) {
             component.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
@@ -135,7 +142,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         const pointsContent: StringNumberContent = { type: 'string', value: maxPoints };
         const pointsItem: InformationBox = { title: 'Points', content: pointsContent };
 
-        jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
+        vi.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
         component.informationBoxItems.push(component.getPointsItem('points', maxPoints, achievedPoints));
@@ -150,7 +157,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         const pointsContent: StringNumberContent = { type: 'string', value: bonusPoints };
         const pointsItem: InformationBox = { title: 'Bonus Points', content: pointsContent };
 
-        jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
+        vi.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
         component.informationBoxItems.push(component.getPointsItem('bonus', bonusPoints, achievedBonusPoints));
@@ -160,7 +167,7 @@ describe('ExerciseHeadersInformationComponent', () => {
     });
 
     it('should add start date item to informationBoxItems if startDate is in the future', () => {
-        const exercise = {
+        const exerciseWithStartDate = {
             id: 43,
             type: ExerciseType.TEXT,
             studentParticipations: [],
@@ -170,7 +177,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             startDate: dayjs().add(3, 'days'),
         } as unknown as Exercise;
 
-        component.exercise = { ...exercise };
+        component.exercise = { ...exerciseWithStartDate };
         const startDateContent: DateContent = {
             type: 'dateTime',
             value: dayjs().add(3, 'days'),
@@ -250,17 +257,14 @@ describe('ExerciseHeadersInformationComponent', () => {
     });
 
     it('should update submission policy item in informationBoxItems', () => {
-        // Mock the countSubmissions method
-        jest.spyOn(component, 'countSubmissions').mockImplementation(() => {});
+        vi.spyOn(component, 'countSubmissions').mockImplementation(() => {});
 
-        // Mock the getSubmissionPolicyItem method
         const mockSubmissionPolicyItem: InformationBox = {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: { type: 'string', value: 'Updated Item' } as StringNumberContent,
         };
-        jest.spyOn(component, 'getSubmissionPolicyItem').mockReturnValue(mockSubmissionPolicyItem);
+        vi.spyOn(component, 'getSubmissionPolicyItem').mockReturnValue(mockSubmissionPolicyItem);
 
-        // Initialize informationBoxItems with a mock item
         component.informationBoxItems = [
             {
                 title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
@@ -268,13 +272,9 @@ describe('ExerciseHeadersInformationComponent', () => {
             },
         ];
 
-        // Call the function
         component.updateSubmissionPolicyItem();
 
-        // Verify that countSubmissions was called
         expect(component.countSubmissions).toHaveBeenCalled();
-
-        // Verify that the item in informationBoxItems was updated
         expect(component.informationBoxItems).toHaveLength(1);
         expect(component.informationBoxItems[0]).toEqual(mockSubmissionPolicyItem);
     });
@@ -301,10 +301,55 @@ describe('ExerciseHeadersInformationComponent', () => {
         component.submissionPolicy.active = true;
         component.submissionPolicy.submissionLimit = 5;
 
-        const updateSubmissionPolicyItemSpy = jest.spyOn(component, 'updateSubmissionPolicyItem');
+        const updateSubmissionPolicyItemSpy = vi.spyOn(component, 'updateSubmissionPolicyItem');
 
         component.ngOnChanges();
 
         expect(updateSubmissionPolicyItemSpy).toHaveBeenCalled();
+    });
+
+    it('should not make status clickable when there are no sorted history results', () => {
+        component.sortedHistoryResults = [];
+        component.informationBoxItems = [
+            {
+                title: 'artemisApp.courseOverview.exerciseDetails.status',
+                content: { type: 'submissionStatus', value: exercise },
+                isContentComponent: true,
+            },
+        ];
+        fixture.changeDetectorRef.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const statusDiv = compiled.querySelector('div[class*="pe-auto"]');
+        expect(statusDiv).toBeNull();
+    });
+
+    it('should make status clickable when there are sorted history results', () => {
+        const result = { id: 1, score: 50, submission: { id: 1, participation: { id: 1, type: 'student' } } } as unknown as Result;
+        component.sortedHistoryResults = [result];
+        component.informationBoxItems = [
+            {
+                title: 'artemisApp.courseOverview.exerciseDetails.status',
+                content: { type: 'submissionStatus', value: exercise },
+                isContentComponent: true,
+            },
+        ];
+        fixture.changeDetectorRef.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const statusDiv = compiled.querySelector('[role="button"]');
+        expect(statusDiv).toBeTruthy();
+    });
+
+    it('should accept sortedHistoryResults input', () => {
+        const results = [{ id: 1, score: 80 } as Result, { id: 2, score: 90 } as Result];
+        component.sortedHistoryResults = results;
+        expect(component.sortedHistoryResults).toEqual(results);
+    });
+
+    it('should default sortedHistoryResults to empty array', () => {
+        const newFixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
+        const newComponent = newFixture.componentInstance;
+        expect(newComponent.sortedHistoryResults).toEqual([]);
     });
 });

@@ -98,8 +98,7 @@ examples.forEach((exampleChannel) => {
             fixture.detectChanges();
             canCreateChannel.mockReturnValue(true);
             component.canCreateChannel = canCreateChannel;
-            fixture.componentRef.setInput('createChannelFn', createChannelFn);
-            initializeDialog(component, fixture, { course, channelSubType: exampleChannel.subType });
+            initializeDialog(component, fixture, { course, channelSubType: exampleChannel.subType, createChannelFn });
 
             channelItems = fixture.debugElement.queryAll(By.css('jhi-channel-item')).map((debugElement) => debugElement.componentInstance);
         });

@@ -21,6 +21,11 @@ env:
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
   # This is the URL to the workflow run in the GitHub Actions UI.
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+  PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+  PLAYWRIGHT_REPORT_BRANCH: ${{ github.event.workflow_run.head_branch }}
+  PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+  PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
 
 jobs:
   # Job to determine which tests are relevant based on changed files (only for PRs)
@@ -79,6 +84,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase1
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     outputs:
       phase1_status: ${{ job.status }}
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
@@ -173,8 +180,12 @@ jobs:
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
@@ -188,6 +199,11 @@ jobs:
             const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
             const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
 
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('phase1-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
             body += `|-------|--------|---------|\n`;
@@ -200,13 +216,18 @@ jobs:
             body += failuresSection;
             body += reporterNote;
             body += infraNote;
+            body += flakinessTable;
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
             // <!-- OVERALL --> is a placeholder that the report-results job replaces
             // with Phase 2 notes (if any) and the final overall status line.
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -253,6 +274,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase2
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Update status to Phase 2
         run: |
@@ -344,8 +367,12 @@ jobs:
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
@@ -363,6 +390,11 @@ jobs:
             // alongside the overall status when it replaces <!-- OVERALL -->.
             core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote);
 
+            // Fetch flakiness scores for Phase 2 failed tests
+            const failedTests = parseFailedTests('phase2-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
                 owner: context.repo.owner,
@@ -373,6 +405,17 @@ jobs:
               // Only replace the Phase 2 row placeholder. The <!-- OVERALL --> marker
               // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
+
+              // Replace or insert Phase 2 flakiness table using idempotent markers
+              const phase2FlakinessMarker = /<!-- PHASE2_FLAKINESS -->[\s\S]*?<!-- \/PHASE2_FLAKINESS -->\n?/;
+              const phase2FlakinessBlock = flakinessTable
+                ? `<!-- PHASE2_FLAKINESS -->${flakinessTable}\n<!-- /PHASE2_FLAKINESS -->\n`
+                : '';
+              if (phase2FlakinessMarker.test(body)) {
+                body = body.replace(phase2FlakinessMarker, phase2FlakinessBlock);
+              } else if (flakinessTable) {
+                body = body.replace('<!-- OVERALL -->', phase2FlakinessBlock + '<!-- OVERALL -->');
+              }
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -390,8 +433,13 @@ jobs:
               body += `|-------|--------|---------|\n`;
               body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
               body += `${phase2Row}\n`;
+              body += flakinessTable;
               body += `<!-- OVERALL -->\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+              }
+              body += `\n`;
               body += `<!-- E2E Test Results -->`;
 
               await github.rest.issues.createComment({
@@ -426,6 +474,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Create pending status
         run: |
@@ -525,8 +575,12 @@ jobs:
         if: success() || failure()
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
         with:
           script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
@@ -538,6 +592,11 @@ jobs:
             const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
             const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
 
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('all-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
             body += `|-------|--------|---------|\n`;
@@ -545,9 +604,14 @@ jobs:
             body += failuresSection;
             body += reporterNote;
             body += infraNote;
+            body += flakinessTable;
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
-            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-all)`;
+            }
+            body += `\n`;
             body += `<!-- E2E Test Results -->`;
 
             if (existingCommentId) {
@@ -583,6 +647,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
     steps:
       - name: Create pending status
         run: |
@@ -781,7 +846,11 @@ jobs:
               const marker = '<!-- E2E Test Results -->';
               let body = `## End-to-End Test Results\n\n`;
               body += `**Overall: ${overallEmoji} ${description}**\n\n`;
-              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              }
+              body += `\n`;
               body += marker;
 
               await github.rest.issues.createComment({

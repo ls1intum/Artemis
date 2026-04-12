@@ -69,4 +69,16 @@ public interface BuildResultNotification {
      * @return list of static code analysis reports.
      */
     List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports();
+
+    /**
+     * Gets the exit code of the build script.
+     * Returns null for CI systems that do not provide this information
+     * For local CI: 0 = success, non-zero = failure.
+     *
+     * @return the build script exit code, or null if not available
+     */
+    @Nullable
+    default Integer buildScriptExitCode() {
+        return null;
+    }
 }

@@ -163,6 +163,7 @@
             "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal.",
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Du kannst aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
+            "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum, dem Startdatum und nach der Einreichungsfrist für Aufgaben sein, falls diese festgelegt wurden. Bitte überprüfe deine Auswahl nochmal.",
@@ -187,6 +188,9 @@
             "yes": "Ja",
             "bonus": "Bonus",
             "no": "Nein",
+            "createAction": "Erstellen",
+            "importAction": "Importieren",
+            "exportAction": "Exportieren",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
             "easy": "Leicht",
@@ -246,6 +250,15 @@
             "athenaFeedbackFailed": "Etwas ist schiefgelaufen... KI-Feedback konnte im Moment nicht generiert werden",
             "submissionAlreadyHasAthenaResult": "Für diese Abgabe liegt bereits ein KI-Ergebnis vor. Bitte reiche eine neue Abgabe ein, bevor du erneut KI-Feedback anfragst.",
             "noAthenaFeedbackOnEmptySubmission": "Du kannst kein KI-Feedback für eine leere Abgabe anfordern.",
+            "aiFeedbackPopover": {
+                "title": "KI-Feedback",
+                "description": "Du kannst KI-generiertes Feedback zu deiner Abgabe anfordern. Dieses Feedback ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
+                "selectedAiType": "Deine aktuelle KI-Auswahl: {{ type }}",
+                "aiType": {
+                    "CLOUD_AI": "Cloud KI",
+                    "LOCAL_AI": "Lokale KI"
+                }
+            },
             "startError": "<strong>Uh oh! Etwas ist schiefgelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
             "name": "Name",
             "studentId": "Login",

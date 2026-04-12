@@ -16,7 +16,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, EventEmitter, Input, NO_ERRORS_SCHEMA, Output } from '@angular/core';
+import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -45,19 +45,19 @@ const examples: ConversationDTO[] = [
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Output() scrolled = new EventEmitter<void>();
-    @Output() scrolledUp = new EventEmitter<void>();
+    readonly scrolled = output<void>();
+    readonly scrolledUp = output<void>();
 
-    @Input() infiniteScrollDistance = 2;
-    @Input() infiniteScrollUpDistance = 1.5;
-    @Input() infiniteScrollThrottle = 150;
-    @Input() infiniteScrollDisabled = false;
-    @Input() infiniteScrollContainer: any = null;
-    @Input() scrollWindow = true;
-    @Input() immediateCheck = false;
-    @Input() horizontal = false;
-    @Input() alwaysCallback = false;
-    @Input() fromRoot = false;
+    readonly infiniteScrollDistance = input(2);
+    readonly infiniteScrollUpDistance = input(1.5);
+    readonly infiniteScrollThrottle = input(150);
+    readonly infiniteScrollDisabled = input(false);
+    readonly infiniteScrollContainer = input<any>(null);
+    readonly scrollWindow = input(true);
+    readonly immediateCheck = input(false);
+    readonly horizontal = input(false);
+    readonly alwaysCallback = input(false);
+    readonly fromRoot = input(false);
 }
 examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {

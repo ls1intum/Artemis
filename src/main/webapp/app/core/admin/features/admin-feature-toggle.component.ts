@@ -124,7 +124,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/learning-analytics',
+        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',

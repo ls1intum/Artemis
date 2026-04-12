@@ -2,10 +2,9 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
-import { Buffer } from 'buffer';
 import { SEED_COURSES } from '../../support/seedData';
 import { generateUUID } from '../../support/utils';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 
 const WAIT_STATE = 'domcontentloaded';
 
@@ -163,71 +162,25 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             // Create competency first
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
-            // Create quiz exercise with competency link using direct API call
-            // Use a very short duration so the quiz ends quickly after submission
-            const quizExerciseDTO = {
+            // Create quiz exercise using the standard helper (ensures proper DTO conversion)
+            await login(admin);
+            // Use short duration so the quiz ends quickly after submission for faster progress calculation.
+            // start-now sets dueDate = now + duration + QUIZ_GRACE_PERIOD (5s).
+            // Results are processed at dueDate + 5s. With duration=15, results arrive ~25s after start.
+            const quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { course: nestedCourse },
+                quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
-                releaseDate: dayjs().subtract(1, 'hour').toISOString(),
-                startDate: null,
-                dueDate: dayjs().add(1, 'day').toISOString(),
-                difficulty: 'EASY',
-                mode: 'INDIVIDUAL',
-                includedInOverallScore: 'INCLUDED_COMPLETELY',
-                competencyLinks: [{ competency: { id: competency.id, type: 'competency' }, weight: 1 }],
-                categories: [],
-                channelName: 'exercise-progress-test-quiz',
-                randomizeQuestionOrder: false,
-                quizMode: 'SYNCHRONIZED',
-                // When startQuizNow is called, the server overrides dueDate to
-                // now + duration + QUIZ_GRACE_PERIOD (5s). Results are calculated at
-                // dueDate + 5s by QuizScheduleService. With duration=10, results are
-                // calculated ~20s after quiz start. Programmatic participation (login,
-                // navigate, tick, submit) takes ~5s, so 10s is sufficient.
-                duration: 10,
-                quizBatches: [{ startTime: dayjs().toISOString() }],
-                quizQuestions: [
-                    {
-                        type: 'multiple-choice',
-                        title: 'Test Question',
-                        text: 'Which answers are correct?',
-                        hint: 'Choose wisely',
-                        scoringType: 'PROPORTIONAL_WITHOUT_PENALTY',
-                        points: 10,
-                        randomizeOrder: false,
-                        singleChoice: false,
-                        answerOptions: [
-                            { isCorrect: true, text: 'Correct answer 1', hint: 'A hint', explanation: 'Correct' },
-                            { isCorrect: true, text: 'Correct answer 2', hint: 'A hint', explanation: 'Correct' },
-                            { isCorrect: false, text: 'Wrong answer 1', hint: 'A hint', explanation: 'Wrong' },
-                            { isCorrect: false, text: 'Wrong answer 2', hint: 'A hint', explanation: 'Wrong' },
-                        ],
-                    },
-                ],
-            };
-
-            const createResponse = await page.request.post(`api/quiz/courses/${nestedCourse.id}/quiz-exercises`, {
-                multipart: {
-                    exercise: {
-                        name: 'exercise',
-                        mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
-                    },
-                },
+                duration: 15,
+                competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             });
-            expect(createResponse.ok()).toBeTruthy();
-            const quizExercise = await createResponse.json();
 
-            // Make quiz visible and start it immediately
+            // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
 
-            // Login as student and navigate directly to quiz exercise
-            await login(studentOne);
-            await page.goto(`/courses/${nestedCourse.id}/exercises/${quizExercise.id}`);
-            await page.waitForLoadState('domcontentloaded');
-
-            // Start the exercise
-            await courseOverview.startExercise(quizExercise.id!);
+            // Login as student and navigate to quiz exercise
+            await login(studentOne, `/courses/${nestedCourse.id}/exercises/${quizExercise.id!}`);
 
             // Answer the multiple choice question - tick the first two options (correct answers)
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
@@ -237,7 +190,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const response = await quizExerciseMultipleChoice.submit();
             expect(response.status()).toBe(200);
 
-            // Wait for the quiz to end naturally and for competency progress to be calculated
+            // Wait for competency progress to be calculated (quiz results are processed asynchronously)
             await expect
                 .poll(
                     async () => {
@@ -259,8 +212,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Verify competency is visible with progress rings showing update
             await expect(page.getByText('Progress Test Competency')).toBeVisible();
-            const progressRings = page.locator('jhi-competency-rings').first();
-            await expect(progressRings).toBeVisible();
+            await expect(page.locator('jhi-competency-rings').first()).toBeVisible();
 
             // Navigate to competency detail to verify progress has increased
             await page.goto(`/courses/${nestedCourse.id}/competencies/${competency.id}`);
@@ -268,8 +220,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Check that the exercise shows in the competency detail
             await expect(page.getByRole('heading', { name: 'Progress Test Quiz' })).toBeVisible();
-
-            // Verify the progress ring is visible indicating progress tracking is working
             await expect(page.locator('jhi-competency-rings')).toBeVisible();
         });
     });
