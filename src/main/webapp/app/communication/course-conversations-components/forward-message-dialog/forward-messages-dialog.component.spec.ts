@@ -301,6 +301,7 @@ describe('ForwardMessageDialogComponent', () => {
         component.updateField(longText);
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
+        fixture.detectChanges();
 
         const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
 
@@ -313,6 +314,7 @@ describe('ForwardMessageDialogComponent', () => {
         component.updateField(longText);
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
+        fixture.detectChanges();
 
         const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
 
