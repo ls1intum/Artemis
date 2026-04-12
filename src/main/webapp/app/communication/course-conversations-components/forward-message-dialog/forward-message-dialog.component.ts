@@ -16,7 +16,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { catchError, map, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { NgClass } from '@angular/common';
+import { NgClass, NgStyle } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MetisService } from 'app/communication/service/metis.service';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +41,17 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        NgStyle,
+        ProfilePictureComponent,
+        NgClass,
+        PostingContentComponent,
+        MarkdownEditorMonacoComponent,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+    ],
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
@@ -68,6 +78,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
+    readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
