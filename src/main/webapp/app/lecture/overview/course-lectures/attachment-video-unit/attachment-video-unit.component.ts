@@ -93,6 +93,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // Split panel sizes (percentage values)
     private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
     private readonly _horizontalSplitSizes = signal<[number, number]>([50, 50]); // [video, pdf]
+    private readonly defaultTwoPaneSplitSizes: [number, number] = [50, 50];
+    private readonly defaultThreePaneVerticalSplitSizes: [number, number] = [66.67, 33.33];
+    private readonly defaultHorizontalSplitSizes: [number, number] = [50, 50];
+    private readonly minVerticalSplitSizes: [number, number] = [120, 120];
+    private readonly minHorizontalSplitSizes: [number, number] = [80, 80];
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
@@ -131,12 +136,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     });
 
     readonly showIrisSidebar = computed(() => {
-        const isFs = this.isFullscreen();
-        const settings = this.irisSettings();
-        const lecId = this.lectureId();
-        const isTutorial = this.lectureUnit().lecture?.isTutorialLecture;
-
-        return isFs && settings?.settings?.enabled && lecId !== undefined && !isTutorial;
+        return this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen();
     });
 
     readonly needsVerticalSplitter = computed(() => this.isFullscreen() && this.showIrisSidebar());
@@ -388,7 +388,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private initVerticalSplitter(elements: HTMLElement[]): void {
         this.verticalSplitInstance = Split(elements, {
             sizes: this._verticalSplitSizes(),
-            minSize: [500, 300], // main-content min 500px, iris min 300px
+            minSize: this.minVerticalSplitSizes,
             gutterSize: 12,
             cursor: 'col-resize',
             direction: 'horizontal',
@@ -411,7 +411,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private initHorizontalSplitter(elements: HTMLElement[]): void {
         this.horizontalSplitInstance = Split(elements, {
             sizes: this._horizontalSplitSizes(),
-            minSize: [200, 200], // video/pdf min 200px each
+            minSize: this.minHorizontalSplitSizes,
             gutterSize: 12,
             cursor: 'row-resize',
             direction: 'vertical',
@@ -479,12 +479,27 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private activateFullscreen(): void {
+        this.resetSplitSizesForFullscreen();
         afterNextRender(
             () => {
                 this.isFullscreen.set(true);
             },
             { injector: this.injector },
         );
+    }
+
+    private shouldShowIrisSidebarInFullscreen(): boolean {
+        const settings = this.irisSettings();
+        const lecId = this.lectureId();
+        const isTutorial = this.lectureUnit().lecture?.isTutorialLecture;
+        return !!settings?.settings?.enabled && lecId !== undefined && !isTutorial;
+    }
+
+    private resetSplitSizesForFullscreen(): void {
+        this._horizontalSplitSizes.set(this.defaultHorizontalSplitSizes);
+
+        const hasThreePaneLayout = this.shouldShowIrisSidebarInFullscreen() && this.hasVideo() && this.hasPdf();
+        this._verticalSplitSizes.set(hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultTwoPaneSplitSizes);
     }
 
     closeFullscreen(): void {

@@ -161,13 +161,13 @@ jhi-pdf-viewer.pdf-viewer-loading {
         > .main-content {
             // Don't set flex properties - let Split.js control them via inline styles
             flex: unset;
-            min-width: 500px;
+            min-width: 120px;
         }
 
         > .iris-sidebar {
             // Don't set flex properties - let Split.js control them
             position: relative;
-            min-width: 350px;
+            min-width: 120px;
             display: flex;
             flex-direction: column;
             background-color: var(--card-bg);

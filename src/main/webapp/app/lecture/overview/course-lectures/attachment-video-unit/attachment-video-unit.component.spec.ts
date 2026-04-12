@@ -582,6 +582,51 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('Resizable Splitters', () => {
+        it('resetSplitSizesForFullscreen: uses 50/50 defaults for two-panel layout with iris', () => {
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+
+            component['resetSplitSizesForFullscreen']();
+
+            expect(component.verticalSplitSizes()).toEqual([50, 50]);
+            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
+        });
+
+        it('resetSplitSizesForFullscreen: uses ~33/33/33 defaults for three-panel layout', () => {
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+
+            component['resetSplitSizesForFullscreen']();
+
+            expect(component.verticalSplitSizes()).toEqual([66.67, 33.33]);
+            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
+        });
+
+        it('resetSplitSizesForFullscreen: resets custom sizes back to defaults', () => {
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+
+            component['_verticalSplitSizes'].set([90, 10]);
+            component['_horizontalSplitSizes'].set([10, 90]);
+
+            component['resetSplitSizesForFullscreen']();
+
+            expect(component.verticalSplitSizes()).toEqual([66.67, 33.33]);
+            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
+        });
+
         it('needsVerticalSplitter: returns true when fullscreen with iris sidebar', () => {
             // Don't call detectChanges to avoid triggering the Iris sidebar component
             component.isFullscreen.set(true);
