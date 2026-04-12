@@ -1981,6 +1981,38 @@ describe('IrisBaseChatbotComponent', () => {
             const overlay = fixture.nativeElement.querySelector('.chip-preview-overlay');
             expect(overlay).toBeNull();
         });
+
+        const recreateFixtureForMode = (mode: ChatServiceMode) => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(mode));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        };
+
+        it('should call applyChipText with lecture-specific quiz starter when Quiz chip is clicked in lecture mode', () => {
+            recreateFixtureForMode(ChatServiceMode.LECTURE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter');
+        });
+
+        it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in programming exercise mode', () => {
+            recreateFixtureForMode(ChatServiceMode.PROGRAMMING_EXERCISE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+        });
+
+        it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in text exercise mode', () => {
+            recreateFixtureForMode(ChatServiceMode.TEXT_EXERCISE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+        });
     });
 
     describe('Cycling placeholder labels and ghost text', () => {

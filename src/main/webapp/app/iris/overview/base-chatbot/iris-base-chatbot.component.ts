@@ -310,15 +310,27 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    private static readonly QUIZ_CHIP = {
+    private static readonly QUIZ_COURSE_CHIP = {
         icon: faBrain,
         translationKey: 'artemisApp.iris.chat.suggestions.quiz',
         starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter',
     } as const;
 
+    private static readonly QUIZ_LECTURE_CHIP = {
+        icon: faBrain,
+        translationKey: 'artemisApp.iris.chat.suggestions.quiz',
+        starterKey: 'artemisApp.iris.chat.suggestions.quizLectureStarter',
+    } as const;
+
+    private static readonly QUIZ_EXERCISE_CHIP = {
+        icon: faBrain,
+        translationKey: 'artemisApp.iris.chat.suggestions.quiz',
+        starterKey: 'artemisApp.iris.chat.suggestions.quizExerciseStarter',
+    } as const;
+
     protected readonly courseSuggestionChips = [
         { icon: faGraduationCap, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
-        IrisBaseChatbotComponent.QUIZ_CHIP,
+        IrisBaseChatbotComponent.QUIZ_COURSE_CHIP,
         { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
     ] as const;
 
@@ -328,7 +340,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             translationKey: 'artemisApp.iris.chat.suggestions.learn',
             starterKey: 'artemisApp.iris.chat.placeholders.exercise.walkThrough',
         },
-        IrisBaseChatbotComponent.QUIZ_CHIP,
+        IrisBaseChatbotComponent.QUIZ_EXERCISE_CHIP,
         {
             icon: faCompass,
             translationKey: 'artemisApp.iris.chat.suggestions.tips',
@@ -342,7 +354,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             translationKey: 'artemisApp.iris.chat.suggestions.learn',
             starterKey: 'artemisApp.iris.chat.placeholders.lecture.keyPoints',
         },
-        IrisBaseChatbotComponent.QUIZ_CHIP,
+        IrisBaseChatbotComponent.QUIZ_LECTURE_CHIP,
         {
             icon: faCompass,
             translationKey: 'artemisApp.iris.chat.suggestions.tips',
