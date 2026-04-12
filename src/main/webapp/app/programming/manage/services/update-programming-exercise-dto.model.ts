@@ -144,7 +144,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         ? {
               sequentialTestRuns: exercise.buildConfig.sequentialTestRuns,
               buildPlanConfiguration: exercise.buildConfig.buildPlanConfiguration,
-              buildScript: exercise.buildConfig.buildScript,
+              buildScript: undefined,
               checkoutSolutionRepository: exercise.buildConfig.checkoutSolutionRepository ?? false,
               testCheckoutPath: exercise.buildConfig.testCheckoutPath,
               assignmentCheckoutPath: exercise.buildConfig.assignmentCheckoutPath,

@@ -882,10 +882,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
             if (phasesJSON) {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
+            } else {
+                this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             }
         } else {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
         }
+
+        this.programmingExercise.buildConfig!.buildScript = undefined;
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
@@ -1535,6 +1539,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         resetProgrammingForImport(this.programmingExercise);
 
+        this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!; // avoid detecting language as changed
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
         // we need to get it from the history object as setting the programming language

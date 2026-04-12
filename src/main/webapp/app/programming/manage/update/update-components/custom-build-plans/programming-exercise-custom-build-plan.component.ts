@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { LegacyBuildPlanAdapterService } from 'app/programming/shared/services/legacy-build-plan-adapter.service';
 
 @Component({
@@ -48,7 +48,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
             try {
-                const parsed = JSON.parse(configJson);
+                const parsed = parseBuildPlanPhases(configJson);
                 if (parsed?.phases?.length) {
                     this.buildPlanPhases = parsed as BuildPlanPhases;
                     return;

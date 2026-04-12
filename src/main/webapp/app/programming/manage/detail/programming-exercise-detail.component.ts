@@ -64,7 +64,7 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -490,7 +490,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        const buildPlanPhases = this.getBuildPlanPhases(exercise);
+        const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -785,19 +785,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
                 }
             });
-        }
-    }
-
-    private getBuildPlanPhases(exercise: ProgrammingExercise): BuildPlanPhases | undefined {
-        const buildPlanConfiguration = exercise.buildConfig?.buildPlanConfiguration;
-        if (!buildPlanConfiguration) {
-            return undefined;
-        }
-
-        try {
-            return JSON.parse(buildPlanConfiguration);
-        } catch {
-            return undefined;
         }
     }
 
