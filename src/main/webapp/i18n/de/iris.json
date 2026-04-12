@@ -155,7 +155,8 @@
                     },
                     "lecture": {
                         "keyPoints": "Was sind die wichtigsten Punkte, die ich aus dieser Vorlesung wissen sollte?",
-                        "summarise": "Fasse zusammen, was ich wissen sollte"
+                        "summarise": "Fasse zusammen, was ich wissen sollte",
+                        "whereToStart": "Ich stecke fest, wo soll ich anfangen?"
                     }
                 }
             },

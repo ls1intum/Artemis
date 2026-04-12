@@ -1485,6 +1485,46 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(trigger).not.toBeNull();
             },
         );
+
+        it('should return an empty activeSuggestionChips list when currentChatMode is undefined', () => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(undefined as unknown as ChatServiceMode));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect((component as any).activeSuggestionChips()).toEqual([]);
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it.each(['widget', 'embedded'] as const)('should render session title trigger when current session has messages even without past sessions (%s layout)', (layout) => {
+            const userMessage = {
+                sender: IrisSender.USER,
+                id: 99,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: 'hi' } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisUserMessage;
+
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', layout);
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.hasCurrentSessionContent()).toBe(true);
+            expect(component.hasSessionSwitcher()).toBe(true);
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
     });
 
     describe('onDeleteSession', () => {

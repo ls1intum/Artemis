@@ -155,7 +155,8 @@
                     },
                     "lecture": {
                         "keyPoints": "What are the key points I should know from this lecture?",
-                        "summarise": "Summarize what I should know"
+                        "summarise": "Summarize what I should know",
+                        "whereToStart": "I am stuck, where should I start?"
                     }
                 }
             },
