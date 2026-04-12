@@ -75,7 +75,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -177,7 +177,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     private WeaviateService weaviateService;
 
     @Autowired(required = false)
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableItemWeaviateService searchableItemWeaviateService;
 
     private static List<Arguments> testPerformJoin_args() {
         var now = ZonedDateTime.now();
@@ -1279,8 +1279,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
 
         // Insert the exercise into Weaviate first
-        if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.upsertExerciseAsync(quizExercise);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertExerciseAsync(quizExercise);
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }
 
@@ -1302,8 +1302,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
         // Insert the exercise into Weaviate first
-        if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.upsertExerciseAsync(quizExercise);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertExerciseAsync(quizExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise));
         }

@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Profile(PROFILE_CORE)
@@ -54,13 +57,17 @@ public class ChannelService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final SearchableItemWeaviateService searchableItemWeaviateService;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -129,6 +136,9 @@ public class ChannelService {
 
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertChannelAsync(updatedChannel);
+        }
         return updatedChannel;
     }
 
@@ -161,6 +171,9 @@ public class ChannelService {
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
             savedChannel = channelRepository.save(savedChannel);
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
+        }
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertChannelAsync(savedChannel);
         }
         return savedChannel;
     }
@@ -196,6 +209,9 @@ public class ChannelService {
      */
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
+            if (searchableItemWeaviateService != null) {
+                searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.CHANNEL, channel.getId());
+            }
             conversationService.deleteConversation(channel.getId());
         }
     }
@@ -241,6 +257,9 @@ public class ChannelService {
         channel.setIsArchived(true);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertChannelAsync(updatedChannel);
+        }
     }
 
     /**
@@ -256,6 +275,9 @@ public class ChannelService {
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertChannelAsync(updatedChannel);
+        }
     }
 
     /**

@@ -101,7 +101,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -199,7 +199,7 @@ public class ExamService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+    private final Optional<SearchableItemWeaviateService> searchableItemWeaviateService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -210,7 +210,8 @@ public class ExamService {
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            Optional<SearchableItemWeaviateService> searchableItemWeaviateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -238,7 +239,7 @@ public class ExamService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.exerciseWeaviateService = exerciseWeaviateService;
+        this.searchableItemWeaviateService = searchableItemWeaviateService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1587,17 +1588,23 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
+            searchableItemWeaviateService.ifPresent(service -> {
+                service.upsertExamAsync(examWithExercises);
+                service.updateExamExercisesAsync(examWithExercises);
+            });
         }
     }
 
     /**
-     * Syncs exam exercises with Weaviate.
+     * Syncs exam and its exercises with Weaviate.
      *
-     * @param exam the exam whose exercises should be synced
+     * @param exam the exam whose metadata and exercises should be synced
      */
     public void syncExamExercisesMetadata(Exam exam) {
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
+        searchableItemWeaviateService.ifPresent(service -> {
+            service.upsertExamAsync(exam);
+            service.updateExamExercisesAsync(exam);
+        });
     }
 
     /**

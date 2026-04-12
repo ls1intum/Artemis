@@ -15,8 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.LectureSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -66,8 +65,10 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return null;
         }
-        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-        var response = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.EXERCISE),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(exerciseId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
         }
@@ -89,16 +90,16 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, exercise.getId());
             assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
-            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
-            assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(exercise.getId());
+            assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
+            assertThat(properties.get(SearchableItemSchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(exercise.getId());
 
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
 
-            assertDateProperty(properties, ExerciseSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.START_DATE, exercise.getStartDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.DUE_DATE, exercise.getDueDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.START_DATE, exercise.getStartDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.DUE_DATE, exercise.getDueDate());
         });
     }
 
@@ -118,10 +119,10 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties).isNotNull();
             if (programmingExercise.getProgrammingLanguage() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+                assertThat(properties.get(SearchableItemSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
             }
             if (programmingExercise.getProjectType() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
+                assertThat(properties.get(SearchableItemSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
             }
         });
     }
@@ -142,7 +143,7 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
             assertThat(properties).isNotNull();
             if (modelingExercise.getDiagramType() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
+                assertThat(properties.get(SearchableItemSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
             }
         });
     }
@@ -163,10 +164,10 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
             assertThat(properties).isNotNull();
             if (quizExercise.getQuizMode() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
+                assertThat(properties.get(SearchableItemSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
             }
             if (quizExercise.getDuration() != null) {
-                assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
+                assertThat(((Number) properties.get(SearchableItemSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
             }
         });
     }
@@ -187,7 +188,7 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
             assertThat(properties).isNotNull();
             if (fileUploadExercise.getFilePattern() != null) {
-                assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
+                assertThat(properties.get(SearchableItemSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
             }
         });
     }
@@ -208,12 +209,12 @@ public final class WeaviateTestUtil {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
 
-            assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
+            assertThat(properties.get(SearchableItemSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
 
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_START_DATE, exam.getStartDate());
-            assertDateProperty(properties, ExerciseSchema.Properties.EXAM_END_DATE, exam.getEndDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.EXAM_START_DATE, exam.getStartDate());
+            assertDateProperty(properties, SearchableItemSchema.Properties.EXAM_END_DATE, exam.getEndDate());
         });
     }
 
@@ -263,8 +264,10 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return null;
         }
-        var collection = weaviateService.getCollection(LectureSchema.COLLECTION_NAME);
-        var response = collection.query.fetchObjects(query -> query.filters(Filter.property(LectureSchema.Properties.LECTURE_ID).eq(lectureId)).limit(1));
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.LECTURE),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
         }
@@ -285,11 +288,11 @@ public final class WeaviateTestUtil {
             var properties = queryLectureProperties(weaviateService, lecture.getId());
             assertThat(properties).as("Lecture %d should exist in Weaviate", lecture.getId()).isNotNull();
 
-            assertThat(properties.get(LectureSchema.Properties.TITLE)).isEqualTo(lecture.getTitle());
-            assertThat(((Number) properties.get(LectureSchema.Properties.LECTURE_ID)).longValue()).isEqualTo(lecture.getId());
+            assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(lecture.getTitle());
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(lecture.getId());
 
             Course course = lecture.getCourse();
-            assertThat(((Number) properties.get(LectureSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
         });
     }
 

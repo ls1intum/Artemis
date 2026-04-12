@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +45,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 
 /**
  * REST controller for managing Faqs.
@@ -69,11 +72,15 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
+    private final SearchableItemWeaviateService searchableItemWeaviateService;
+
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
+            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
+        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -101,6 +108,9 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertFaqAsync(savedFaq);
+        }
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -132,6 +142,9 @@ public class FaqResource {
         existingFaq.setCategories(updateFaqDTO.categories());
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertFaqAsync(updatedFaq);
+        }
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -174,6 +187,9 @@ public class FaqResource {
         }
         faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.FAQ, faqId);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
 

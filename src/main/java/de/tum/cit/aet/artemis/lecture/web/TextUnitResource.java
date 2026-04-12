@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -57,13 +59,17 @@ public class TextUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final SearchableItemWeaviateService searchableItemWeaviateService;
+
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
+            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository,
+            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -129,6 +135,10 @@ public class TextUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertLectureUnitAsync(existingTextUnit);
+        }
+
         // convert into DTO
         var result = new TextUnitDTO(existingTextUnit.getId(), existingTextUnit.getName(), existingTextUnit.getReleaseDate(), existingTextUnit.getContent(), existingTextUnit
                 .getCompetencyLinks().stream().map(link -> new CompetencyLinkDTO(new CompetencyDTO(link.getCompetency().getId()), link.getWeight())).collect(Collectors.toSet()));
@@ -164,6 +174,10 @@ public class TextUnitResource {
         // From now on, only use persistedUnit
         textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.upsertLectureUnitAsync(persistedUnit);
+        }
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);

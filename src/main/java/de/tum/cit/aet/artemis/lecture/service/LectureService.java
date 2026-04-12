@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -82,10 +84,12 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final SearchableItemWeaviateService searchableItemWeaviateService;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureUnitRepository lectureUnitRepository, ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -96,6 +100,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -188,6 +193,13 @@ public class LectureService {
         channelService.deleteChannel(lectureChannel);
 
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
+
+        // Clean up Weaviate: remove every lecture unit row that belonged to this lecture so the JPA
+        // cascade delete does not leave orphaned rows in the unified search index. The lecture row
+        // itself is removed by LectureResource.deleteLecture via deleteEntityAsync(LECTURE, ...).
+        if (searchableItemWeaviateService != null) {
+            searchableItemWeaviateService.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        }
 
         lectureRepository.deleteById(lecture.getId());
     }
