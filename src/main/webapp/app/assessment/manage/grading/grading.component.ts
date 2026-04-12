@@ -28,6 +28,7 @@ import { parse } from 'papaparse';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -42,7 +43,7 @@ const csvColumnsBonus = Object.freeze({
     upperBoundPercentage: 'upperBoundPercentage',
 });
 
-// needed to map from csv object to grade step
+// needed to map from csv object to the grade step
 export type CsvGradeStep = object;
 
 export enum GradeEditMode {
@@ -120,7 +121,7 @@ export class GradingComponent implements OnInit {
     gradeEditMode = GradeEditMode.PERCENTAGE;
 
     /**
-     * Mode picker options for switching between percentage and points in interval view.
+     * Mode picker options for switching between percentage and points in the interval view.
      */
     readonly intervalModePickerOptions: ModePickerOption<GradeEditMode>[] = [
         {
@@ -172,7 +173,7 @@ export class GradingComponent implements OnInit {
     // =========================================================================
 
     /**
-     * Switches the view mode between interval and detailed views.
+     * Switches the view mode between the interval and detailed views.
      */
     setViewMode(mode: GradingViewMode): void {
         this.viewMode.set(mode);
@@ -222,13 +223,13 @@ export class GradingComponent implements OnInit {
     }
 
     /**
-     * If the grading scale exists, sorts its grade steps,
+     * If the grading scale exists, sorts its grade steps
      * and sets the inclusivity and first passing grade properties
      */
-    handleFindResponse(gradingScale?: GradingScale): void {
-        if (gradingScale) {
-            gradingScale.gradeSteps = this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
-            this.gradingScale = gradingScale;
+    handleFindResponse(gradingScaleDTO?: GradingScaleDTO): void {
+        if (gradingScaleDTO) {
+            gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
+            this.gradingScale = toEntity(gradingScaleDTO, this.course, this.exam);
             this.existingGradingScale = true;
             this.setBoundInclusivity();
             this.determineFirstPassingGrade();
@@ -241,7 +242,7 @@ export class GradingComponent implements OnInit {
 
     /**
      * Sorts the grade steps by lower bound percentage, sets their inclusivity
-     * and passing grade properties and saves the grading scale via the service
+     * and passing grade properties, and saves the grading scale via the service
      */
     save(): void {
         this.isLoading = true;
@@ -281,16 +282,16 @@ export class GradingComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
+                catchError(() => of(new HttpResponse<GradingScaleDTO>({ status: 400 }))),
             )
             .subscribe((gradingSystemResponse) => {
                 this.handleSaveResponse(gradingSystemResponse.body!);
             });
     }
 
-    private handleSaveResponse(newGradingScale?: GradingScale): void {
-        if (newGradingScale) {
-            newGradingScale.gradeSteps = this.gradingService.sortGradeSteps(newGradingScale.gradeSteps);
+    private handleSaveResponse(newGradingScaleDTO?: GradingScaleDTO): void {
+        if (newGradingScaleDTO) {
+            newGradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(newGradingScaleDTO.gradeSteps.gradeSteps);
             this.existingGradingScale = true;
         }
     }
@@ -325,7 +326,7 @@ export class GradingComponent implements OnInit {
                 this.isLoading = false;
             },
             error: () => {
-                // Keep current state unchanged on error so UI remains consistent with server
+                // Keep the current state unchanged on error so the UI remains consistent with the server
                 this.isLoading = false;
             },
         });
@@ -399,14 +400,14 @@ export class GradingComponent implements OnInit {
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
         sortedGradeSteps = this.gradingService.sortGradeSteps(sortedGradeSteps);
         if (this.gradingScale.gradeType === GradeType.BONUS) {
-            // check if when the grade type is BONUS the bonus points are at least 0
+            // check if when the grade type is BONUS, the bonus points are at least 0
             for (const gradeStep of sortedGradeSteps) {
                 if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
                     return false;
                 }
             }
-            // check if when the grade type is BONUS the bonus points have strictly ascending values
+            // check if when the grade type is BONUS, the bonus points have strictly ascending values
             if (
                 !sortedGradeSteps
                     .map((gradeStep) => Number(gradeStep.gradeName))
@@ -424,7 +425,7 @@ export class GradingComponent implements OnInit {
                 return false;
             }
         }
-        // check if first and last grade step are valid
+        // check if the first and last grade steps are valid
         if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps.last()!.upperBoundPercentage < 100) {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
             return false;
@@ -636,7 +637,7 @@ export class GradingComponent implements OnInit {
             this.createGradeStepBasic();
         }
 
-        // Pop the existing sticky grade step, add new step, then re-append sticky step.
+        // Pop the existing sticky grade step, add a new step, then re-append the sticky step.
         // Because the array is empty after popping, the new step gets lowerBound=0 and upperBound=100,
         // giving it a proper interval of 100. This ensures setPercentageInterval works correctly.
         const stickyGradeStep = this.gradingScale.gradeSteps.pop()!;

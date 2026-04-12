@@ -125,7 +125,7 @@ describe('Lti13DeepLinkingComponent', () => {
             expect(redirectSpy).toHaveBeenCalledWith(window.location.href);
         });
 
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/sign-in']);
     });
 
     it('should not load course details and exercises on init when courseId is empty', async () => {

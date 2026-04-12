@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyMappingToolsService;
+import de.tum.cit.aet.artemis.atlas.service.ExerciseMappingToolsService;
 
 @Lazy
 @Configuration
@@ -57,5 +58,19 @@ public class AtlasAgentToolConfig {
     @Qualifier("competencyMapperToolCallbackProvider")
     public ToolCallbackProvider competencyMapperToolCallbackProvider(CompetencyMappingToolsService mapperToolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build();
+    }
+
+    /**
+     * Registers the tools for the Exercise Mapper sub-agent.
+     * This agent has access to exercise listing and exercise-to-competency mapping tools.
+     *
+     * @param exerciseMapperToolsService the service containing @Tool-annotated methods for exercise mapper
+     * @return ToolCallbackProvider that exposes the exercise mapper tools to Spring AI
+     */
+    @Bean
+    @Lazy
+    @Qualifier("exerciseMapperToolCallbackProvider")
+    public ToolCallbackProvider exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
+        return MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
     }
 }

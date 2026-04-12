@@ -1,36 +1,41 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { DatePipe, NgClass } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-chat-history-item',
     templateUrl: './chat-history-item.component.html',
-    styleUrls: ['./chat-history-item.component.scss'],
+    styleUrl: './chat-history-item.component.scss',
     standalone: true,
-    imports: [DatePipe, NgClass, FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe, MenuModule],
+    imports: [DatePipe, NgClass, FaIconComponent, ArtemisTranslatePipe, MenuModule, RouterLink, TooltipModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatHistoryItemComponent {
     private readonly translateService = inject(TranslateService);
-    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
-    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
-    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
     private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
 
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
     icon: Signal<IconProp | undefined> = computed(() => this.computeIcon(this.session()));
-    tooltipKey: Signal<string | undefined> = computed(() => this.computeTooltipKey(this.session()));
-    relatedEntityName: Signal<string | undefined> = computed(() => this.session().entityName);
+    tooltipText: Signal<string | undefined> = computed(() => {
+        this.currentLocale();
+        return this.computeTooltipText(this.session());
+    });
+    ariaLabelText: Signal<string | undefined> = computed(() => this.tooltipText());
+    entityRoute: Signal<string | undefined> = computed(() => this.computeEntityRoute(this.session()));
     readonly isNewChat = computed(() => {
         const title = this.session().title?.trim().toLowerCase();
         if (!title) {
@@ -54,6 +59,10 @@ export class ChatHistoryItemComponent {
         this.sessionClicked.emit(this.session());
     }
 
+    onEntityIconClick(event: Event): void {
+        event.stopPropagation();
+    }
+
     onMenuToggle(event: Event): void {
         event.stopPropagation();
         this.menuItems = [
@@ -74,6 +83,8 @@ export class ChatHistoryItemComponent {
         switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return faKeyboard;
+            case ChatServiceMode.TEXT_EXERCISE:
+                return faFont;
             case ChatServiceMode.LECTURE:
                 return faChalkboardUser;
             default:
@@ -81,12 +92,34 @@ export class ChatHistoryItemComponent {
         }
     }
 
-    private computeTooltipKey(session: IrisSessionDTO): string | undefined {
+    private computeTooltipText(session: IrisSessionDTO): string | undefined {
+        let key: string | undefined;
         switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
+                key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
+                break;
+            case ChatServiceMode.TEXT_EXERCISE:
+                key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.textExercise';
+                break;
             case ChatServiceMode.LECTURE:
-                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
+                key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
+                break;
+            default:
+                return undefined;
+        }
+        return this.translateService.instant(key, { name: session.entityName });
+    }
+
+    private computeEntityRoute(session: IrisSessionDTO): string | undefined {
+        if (!session.chatMode || !session.entityId) {
+            return undefined;
+        }
+        switch (session.chatMode) {
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+            case ChatServiceMode.TEXT_EXERCISE:
+                return `../exercises/${session.entityId}`;
+            case ChatServiceMode.LECTURE:
+                return `../lectures/${session.entityId}`;
             default:
                 return undefined;
         }

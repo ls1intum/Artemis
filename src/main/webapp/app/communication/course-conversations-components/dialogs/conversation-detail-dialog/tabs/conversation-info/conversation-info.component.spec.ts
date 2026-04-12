@@ -1,22 +1,20 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { channelRegex } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -33,14 +31,16 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationInfoComponent with ' + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConversationInfoComponent;
         let fixture: ComponentFixture<ConversationInfoComponent>;
         const course = { id: 1 } as Course;
-        const canChangeChannelProperties = jest.fn();
-        const canChangeGroupChatProperties = jest.fn();
-        let updateChannelSpy: jest.SpyInstance;
-        let updateGroupChatSpy: jest.SpyInstance;
-        let updateIsMutedSpy: jest.SpyInstance;
+        const canChangeChannelProperties = vi.fn();
+        const canChangeGroupChatProperties = vi.fn();
+        let updateChannelSpy: ReturnType<typeof vi.spyOn>;
+        let updateGroupChatSpy: ReturnType<typeof vi.spyOn>;
+        let updateIsMutedSpy: ReturnType<typeof vi.spyOn>;
         const exampleUpdatedGroupChat = generateExampleGroupChatDTO({ name: 'updated' });
         const exampleUpdatedChannel = generateExampleChannelDTO({
             name: 'updated',
@@ -48,13 +48,13 @@ examples.forEach((activeConversation) => {
             topic: 'updated',
         } as ChannelDTO);
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(async () => {
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [ConversationInfoComponent, TranslateModule.forRoot(), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
-                    MockProvider(NgbModal),
                     MockProvider(AlertService),
                     MockProvider(ConversationService),
                     MockProvider(CourseNotificationSettingService),
@@ -62,8 +62,8 @@ examples.forEach((activeConversation) => {
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 ],
-            }).compileComponents();
-        }));
+            });
+        });
 
         beforeEach(() => {
             canChangeChannelProperties.mockReturnValue(true);
@@ -77,7 +77,7 @@ examples.forEach((activeConversation) => {
 
             // Mock CourseNotificationSettingService
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
-            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+            vi.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
                 of({
                     selectedPreset: 1,
                     notificationTypeChannels: {
@@ -92,16 +92,17 @@ examples.forEach((activeConversation) => {
             const channelService = TestBed.inject(ChannelService);
             const groupChatService = TestBed.inject(GroupChatService);
             const conversationService = TestBed.inject(ConversationService);
-            updateChannelSpy = jest.spyOn(channelService, 'update');
+            updateChannelSpy = vi.spyOn(channelService, 'update');
             updateChannelSpy.mockReturnValue(of(new HttpResponse({ body: exampleUpdatedChannel })));
-            updateGroupChatSpy = jest.spyOn(groupChatService, 'update');
+            updateGroupChatSpy = vi.spyOn(groupChatService, 'update');
             updateGroupChatSpy.mockReturnValue(of(new HttpResponse({ body: exampleUpdatedGroupChat })));
-            updateIsMutedSpy = jest.spyOn(conversationService, 'updateIsMuted');
+            updateIsMutedSpy = vi.spyOn(conversationService, 'updateIsMuted');
             updateIsMutedSpy.mockReturnValue(of(new HttpResponse({ body: undefined })));
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.useRealTimers();
+            vi.restoreAllMocks();
         });
 
         it('should create', () => {
@@ -130,75 +131,81 @@ examples.forEach((activeConversation) => {
             }
         });
 
-        it('should hide the action buttons if the user is missing the permissions', () => {
+        it('should show editable input when user has permissions', () => {
             if (isChannelDTO(activeConversation)) {
-                checkThatActionButtonOfSectionExistsInTemplate('name');
-                checkThatActionButtonOfSectionExistsInTemplate('topic');
-                checkThatActionButtonOfSectionExistsInTemplate('description');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('#topic-input')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('#description-input')).toBeTruthy();
 
                 canChangeChannelProperties.mockReturnValue(false);
                 fixture.changeDetectorRef.detectChanges();
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('topic');
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('description');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('#topic-input')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('#description-input')).toBeFalsy();
             }
 
             if (isGroupChatDTO(activeConversation)) {
-                checkThatActionButtonOfSectionExistsInTemplate('name');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeTruthy();
                 canChangeGroupChatProperties.mockReturnValue(false);
                 fixture.changeDetectorRef.detectChanges();
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeFalsy();
             }
         });
 
-        it('should open the edit name dialog when the respective action button is clicked', fakeAsync(() => {
+        it('should auto-save name after debounce', () => {
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
-                genericEditPropertyDialogTest('name', {
-                    propertyName: 'name',
-                    maxPropertyLength: 20,
-                    isRequired: true,
-                    regexPattern: channelRegex,
-                });
-            }
-        }));
+                component.onNameInput('new-name');
+                expect(component.saveStatus()).toBe('unsaved');
+                vi.advanceTimersByTime(1000);
 
-        it('should open the edit topic dialog when the respective action button is clicked', fakeAsync(() => {
-            if (isChannelDTO(activeConversation)) {
-                genericEditPropertyDialogTest('topic', {
-                    propertyName: 'topic',
-                    maxPropertyLength: 250,
-                    isRequired: false,
-                    regexPattern: undefined,
-                });
+                if (isChannelDTO(activeConversation)) {
+                    expect(updateChannelSpy).toHaveBeenCalled();
+                } else {
+                    expect(updateGroupChatSpy).toHaveBeenCalled();
+                }
             }
-        }));
+        });
 
-        it('should open the edit description dialog when the respective action button is clicked', fakeAsync(() => {
+        it('should auto-save topic after debounce', () => {
             if (isChannelDTO(activeConversation)) {
-                genericEditPropertyDialogTest('description', {
-                    propertyName: 'description',
-                    maxPropertyLength: 250,
-                    isRequired: false,
-                    regexPattern: undefined,
-                });
+                component.onTopicInput('new topic');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).toHaveBeenCalled();
             }
-        }));
+        });
+
+        it('should auto-save description after debounce', () => {
+            if (isChannelDTO(activeConversation)) {
+                component.onDescriptionInput('new description');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).toHaveBeenCalled();
+            }
+        });
+
+        it('should not auto-save name if validation fails', () => {
+            if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
+                component.onNameInput('INVALID NAME');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).not.toHaveBeenCalled();
+                expect(updateGroupChatSpy).not.toHaveBeenCalled();
+            }
+        });
 
         it('should show notification section for all conversation types', () => {
             checkThatSectionExistsInTemplate('notification');
         });
 
-        it('should emit correct mute state on toggle with debounce logic', fakeAsync(() => {
+        it('should emit correct mute state on toggle with debounce logic', () => {
             activeConversation.isMuted = false;
-            component.onMuteToggle();
-            tick(100);
+            component.onMuteOptionChange(true);
+            vi.advanceTimersByTime(100);
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, true);
 
             activeConversation.isMuted = true;
-            component.onMuteToggle();
-            tick(100);
+            component.onMuteOptionChange(false);
+            vi.advanceTimersByTime(100);
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
-        }));
+        });
 
         it('should show correct notification message and link for ignored preset', () => {
             component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} } as any;
@@ -208,13 +215,13 @@ examples.forEach((activeConversation) => {
             expect(link).toBeTruthy();
         });
 
-        it('should handle errors when toggling mute state', fakeAsync(() => {
+        it('should handle errors when toggling mute state', () => {
             updateIsMutedSpy.mockReturnValue(throwError(() => new Error('Test error')));
-            const onErrorSpy = jest.spyOn(globalUtils, 'onError');
-            component.onMuteToggle();
-            tick(100);
+            const onErrorSpy = vi.spyOn(globalUtils, 'onError');
+            component.onMuteOptionChange(true);
+            vi.advanceTimersByTime(100);
             expect(onErrorSpy).toHaveBeenCalled();
-        }));
+        });
 
         it('should show enabled notification message', () => {
             component['notificationSettings'] = {
@@ -232,14 +239,14 @@ examples.forEach((activeConversation) => {
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 
-            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
-            expect(toggle.checked).toBeFalse();
+            const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
+            expect(muteSelectButton).toBeTruthy();
         });
 
-        it('should show disabled notification message when course notifications are disabled', fakeAsync(() => {
+        it('should show disabled notification message when course notifications are disabled', () => {
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
 
-            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+            vi.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
                 of({
                     selectedPreset: 3,
                     notificationTypeChannels: {
@@ -251,17 +258,17 @@ examples.forEach((activeConversation) => {
 
             activeConversation.isMuted = false;
             component['loadNotificationSettings']();
-            tick(); // Wait for the service response to be processed
+            vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeFalsy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
-        }));
+        });
 
-        it('should show muted notification message when conversation is muted', fakeAsync(() => {
+        it('should show muted notification message when conversation is muted', () => {
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
-            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+            vi.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
                 of({
                     selectedPreset: 1,
                     notificationTypeChannels: {
@@ -273,18 +280,18 @@ examples.forEach((activeConversation) => {
 
             activeConversation.isMuted = true;
             component['loadNotificationSettings']();
-            tick(); // Wait for the service response to be processed
+            vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 
-            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
-            expect(toggle.checked).toBeTrue();
-        }));
+            const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
+            expect(muteSelectButton).toBeTruthy();
+        });
 
-        it('should show error if loadNotificationSettings fails', fakeAsync(() => {
+        it('should show error if loadNotificationSettings fails', () => {
             const error = new HttpErrorResponse({
                 status: 400,
             });
@@ -292,17 +299,17 @@ examples.forEach((activeConversation) => {
             const alertService = TestBed.inject(AlertService);
             const translateService = TestBed.inject(TranslateService);
 
-            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(throwError(() => error));
-            jest.spyOn(alertService, 'error');
-            jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+            vi.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(throwError(() => error));
+            vi.spyOn(alertService, 'error');
+            vi.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
 
             component['loadNotificationSettings']();
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(alertService.error).toHaveBeenCalledWith('error.http.400');
-        }));
+        });
 
-        it('should handle error when updating group chat', fakeAsync(() => {
+        it('should handle error when updating group chat', () => {
             if (isGroupChatDTO(activeConversation)) {
                 const error = new HttpErrorResponse({
                     status: 400,
@@ -311,21 +318,22 @@ examples.forEach((activeConversation) => {
                 const alertService = TestBed.inject(AlertService);
                 const translateService = TestBed.inject(TranslateService);
 
-                jest.spyOn(groupChatService, 'update').mockReturnValue(throwError(() => error));
-                jest.spyOn(alertService, 'error');
-                jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+                vi.spyOn(groupChatService, 'update').mockReturnValue(throwError(() => error));
+                vi.spyOn(alertService, 'error');
+                vi.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
 
                 component['updateGroupChat'](activeConversation, 'name', 'new name');
-                tick();
+                vi.advanceTimersByTime(0);
 
                 expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+                expect(component.saveStatus()).toBe('unsaved');
             }
-        }));
+        });
 
         it('should not update group chat when course ID is not available', () => {
             if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
-                const updateSpy = jest.spyOn(groupChatService, 'update');
+                const updateSpy = vi.spyOn(groupChatService, 'update');
 
                 fixture.componentRef.setInput('course', {} as Course);
                 fixture.changeDetectorRef.detectChanges();
@@ -338,7 +346,7 @@ examples.forEach((activeConversation) => {
         it('should not update channel when course ID is not available', () => {
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
-                const updateSpy = jest.spyOn(channelService, 'update');
+                const updateSpy = vi.spyOn(channelService, 'update');
 
                 fixture.componentRef.setInput('course', {} as Course);
                 fixture.changeDetectorRef.detectChanges();
@@ -348,7 +356,7 @@ examples.forEach((activeConversation) => {
             }
         });
 
-        it('should handle error when updating channel', fakeAsync(() => {
+        it('should handle error when updating channel', () => {
             if (isChannelDTO(activeConversation)) {
                 const error = new HttpErrorResponse({
                     status: 400,
@@ -358,26 +366,29 @@ examples.forEach((activeConversation) => {
                 const alertService = TestBed.inject(AlertService);
                 const translateService = TestBed.inject(TranslateService);
 
-                jest.spyOn(channelService, 'update').mockReturnValue(throwError(() => error));
-                jest.spyOn(alertService, 'error');
-                jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+                vi.spyOn(channelService, 'update').mockReturnValue(throwError(() => error));
+                vi.spyOn(alertService, 'error');
+                vi.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
 
                 component['updateChannel'](activeConversation, 'name', 'new name');
-                tick();
+                vi.advanceTimersByTime(0);
 
                 expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+                expect(component.saveStatus()).toBe('unsaved');
             }
-        }));
+        });
 
-        function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
-            const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            expect(actionButtonElement).toBeTruthy();
-        }
+        it('should set save status to saved after successful update', () => {
+            if (isChannelDTO(activeConversation)) {
+                component.onNameInput('new-name');
+                vi.advanceTimersByTime(1000);
+                expect(component.saveStatus()).toBe('saved');
 
-        function checkThatActionButtonOfSectionDoesNotExistInTemplate(sectionName: string) {
-            const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            expect(actionButtonElement).toBeFalsy();
-        }
+                // Auto-reset to idle after 2s
+                vi.advanceTimersByTime(2000);
+                expect(component.saveStatus()).toBe('idle');
+            }
+        });
 
         function checkThatSectionExistsInTemplate(sectionName: string) {
             const section = fixture.debugElement.nativeElement.querySelector(`#${sectionName}-section`);
@@ -387,50 +398,6 @@ examples.forEach((activeConversation) => {
         function checkThatSectionDoesNotExistInTemplate(sectionName: string) {
             const section = fixture.debugElement.nativeElement.querySelector(`#${sectionName}-section`);
             expect(section).toBeFalsy();
-        }
-
-        function genericEditPropertyDialogTest(sectionName: string, expectedComponentInstance: any) {
-            const button = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    propertyName: undefined,
-                    maxPropertyLength: undefined,
-                    translationKeys: undefined,
-                    isRequired: undefined,
-                    regexPattern: undefined,
-                    initialize: () => {},
-                },
-                result: Promise.resolve('updated'),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.changeDetectorRef.detectChanges();
-
-            button.click();
-            tick();
-
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
-                for (const [key, value] of Object.entries(expectedComponentInstance)) {
-                    expect(mockModalRef.componentInstance[key as keyof typeof mockModalRef.componentInstance]).toEqual(value);
-                }
-                if (isGroupChatDTO(activeConversation)) {
-                    const expectedUpdateDTO = new GroupChatDTO();
-                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
-                    expect(updateGroupChatSpy).toHaveBeenCalledOnce();
-                    expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
-                }
-
-                if (isChannelDTO(activeConversation)) {
-                    const expectedUpdateDTO = new ChannelDTO();
-                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
-                    expect(updateChannelSpy).toHaveBeenCalledOnce();
-                    expect(updateChannelSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
-                }
-
-                expect((activeConversation as any)[expectedComponentInstance['propertyName']]).toBe('updated');
-            });
         }
     });
 });

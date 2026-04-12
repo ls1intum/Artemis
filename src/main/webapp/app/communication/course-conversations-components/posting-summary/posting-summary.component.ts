@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, input, output, untracked } from '@angular/core';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -47,14 +47,16 @@ export class PostingSummaryComponent {
 
     constructor() {
         effect(() => {
-            this.isShowPosting = this.post() !== undefined;
-            this.isShowSummary =
-                this.isShowPosting && this.post()!.conversation !== undefined && this.post()!.conversation!.type !== undefined && this.post()!.conversation!.title !== undefined;
-            this.isShowContent = this.isShowPosting && this.post()!.author !== undefined && this.post()!.content !== undefined && this.post()!.postingType !== undefined;
-            this.isAnswerPost = this.post()?.postingType === PostingType.ANSWER.valueOf();
-            if (this.post()) {
-                this.postingIsOfToday = dayjs().isSame(this.post()!.creationDate, 'day');
-            }
+            const post = this.post();
+            untracked(() => {
+                this.isShowPosting = post !== undefined;
+                this.isShowSummary = this.isShowPosting && post!.conversation !== undefined && post!.conversation!.type !== undefined && post!.conversation!.title !== undefined;
+                this.isShowContent = this.isShowPosting && post!.author !== undefined && post!.content !== undefined && post!.postingType !== undefined;
+                this.isAnswerPost = post?.postingType === PostingType.ANSWER.valueOf();
+                if (post) {
+                    this.postingIsOfToday = dayjs().isSame(post!.creationDate, 'day');
+                }
+            });
         });
     }
 

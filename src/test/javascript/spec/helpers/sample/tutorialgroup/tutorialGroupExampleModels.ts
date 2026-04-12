@@ -1,7 +1,11 @@
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupFormData, UserWithLabel } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import dayjs from 'dayjs/esm';
+import { User } from 'app/core/user/user.model';
+
+export class UserWithLabel extends User {
+    label: string;
+}
 
 export const generateExampleTutorialGroup = ({
     id = 1,
@@ -50,25 +54,4 @@ export const generateExampleTutorialGroup = ({
     exampleTutorialGroup.courseTitle = courseTitle;
     exampleTutorialGroup.tutorialGroupSchedule = tutorialGroupSchedule;
     return exampleTutorialGroup;
-};
-
-export const tutorialGroupToTutorialGroupFormData = (entity: TutorialGroup): TutorialGroupFormData => {
-    return {
-        title: entity.title,
-        capacity: entity.capacity,
-        campus: entity.campus,
-        language: entity.language,
-        additionalInformation: entity.additionalInformation,
-        isOnline: entity.isOnline,
-        teachingAssistant: entity.teachingAssistant,
-        schedule: {
-            location: entity.tutorialGroupSchedule?.location,
-            dayOfWeek: entity.tutorialGroupSchedule?.dayOfWeek,
-            startTime: entity.tutorialGroupSchedule?.startTime,
-            endTime: entity.tutorialGroupSchedule?.endTime,
-            repetitionFrequency: entity.tutorialGroupSchedule?.repetitionFrequency,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            period: [entity.tutorialGroupSchedule?.validFromInclusive?.toDate()!, entity.tutorialGroupSchedule?.validToInclusive?.toDate()!],
-        },
-    };
 };

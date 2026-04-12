@@ -24,7 +24,6 @@ export class CompetencyCardComponent {
     courseId = input<number | undefined>();
     competency = input<CourseCompetency>();
     isPrerequisite = input<boolean>();
-    hideProgress = input<boolean>(false);
     noProgressRings = input<boolean>(false);
 
     protected readonly getIcon = getIcon;

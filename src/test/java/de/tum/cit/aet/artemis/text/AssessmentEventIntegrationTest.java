@@ -108,19 +108,6 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         request.post("/api/text/event-insights/text-assessment/events", event, expected);
     }
 
-    /**
-     * Tests addition of a single event with event id not null. The event is auto generated in the server side,
-     * that is why we treat incoming events with an already generated id as badly formed requests
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent_withNotNullEventId() throws Exception {
-        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
-                textSubmission.getId());
-        event.setId(1L);
-        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {

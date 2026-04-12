@@ -22,8 +22,18 @@
             "updated": "Updated Exercise with identifier {{ param }}",
             "deleted": "Deleted Exercise with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exercise to confirm."
+                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
+                "testCourse": "test course",
+                "realCourse": "real course",
+                "summary": {
+                    "title": "Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfAssessments": "Number of Assessments",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts",
+                    "numberOfBuilds": "Number of Builds"
+                }
             },
             "reset": {
                 "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
@@ -126,6 +136,7 @@
             "assessmentDueDateError": "Assessment Due Date must be after Release, Start and Due Date. Please check your selection again.",
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
             "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students can participate in the exercise.",
+            "dates": "Dates",
             "dateNotSet": "No date set",
             "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
@@ -145,6 +156,9 @@
             "yes": "Yes",
             "bonus": "Bonus",
             "no": "No",
+            "createAction": "Create",
+            "importAction": "Import",
+            "exportAction": "Export",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",
@@ -204,6 +218,15 @@
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
             "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
+            "aiFeedbackPopover": {
+                "title": "AI Feedback",
+                "description": "You can request AI-generated feedback for your submission. This feedback is preliminary and can include mistakes. Consider checking important information.",
+                "selectedAiType": "Your current AI selection: {{ type }}",
+                "aiType": {
+                    "CLOUD_AI": "Cloud AI",
+                    "LOCAL_AI": "Local AI"
+                }
+            },
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",

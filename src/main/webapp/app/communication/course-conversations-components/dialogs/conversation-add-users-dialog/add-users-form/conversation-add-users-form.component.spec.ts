@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -11,6 +13,8 @@ import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conv
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import {
     AddUsersFormData,
     ConversationAddUsersFormComponent,
@@ -19,28 +23,37 @@ import {
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConversationAddUsersFormComponent;
         let fixture: ComponentFixture<ConversationAddUsersFormComponent>;
         const course = { id: 1 } as Course;
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(async () => {
             TestBed.configureTestingModule({
-                imports: [ReactiveFormsModule, FormsModule],
-                declarations: [ConversationAddUsersFormComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            }).compileComponents();
-        }));
+                imports: [
+                    ReactiveFormsModule,
+                    FormsModule,
+                    ConversationAddUsersFormComponent,
+                    MockComponent(CourseUsersSelectorComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockDirective(TranslateDirective),
+                ],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            });
+        });
 
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationAddUsersFormComponent);
             component = fixture.componentInstance;
-            component.courseId = course.id!;
-            component.activeConversation = activeConversation;
-            component.maxSelectable = 2;
+            fixture.componentRef.setInput('courseId', course.id!);
+            fixture.componentRef.setInput('activeConversation', activeConversation);
+            fixture.componentRef.setInput('maxSelectable', 2);
             fixture.detectChanges();
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should create', () => {
@@ -50,32 +63,32 @@ examples.forEach((activeConversation) => {
 
         it('should allow to switch to group mode only for channels', () => {
             if (isChannelDTO(activeConversation)) {
-                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeFalse();
+                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBe(false);
             } else {
-                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeTrue();
+                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBe(true);
             }
         });
 
         it('should hide parts of the form depending on which mode is selected', () => {
             if (isChannelDTO(activeConversation)) {
-                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeFalse();
+                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBe(false);
                 expect(component.mode).toBe('individual');
-                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeFalse();
-                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBeTrue();
+                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(false);
+                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(true);
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
-                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeTrue();
-                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBeFalse();
+                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(true);
+                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(false);
             } else {
-                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBeTrue();
+                expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBe(true);
                 expect(component.mode).toBe('individual');
-                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeFalse();
-                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBeTrue();
+                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(false);
+                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(true);
             }
         });
 
-        it('should block submit when no user is selected', fakeAsync(() => {
+        it('should block submit when no user is selected', () => {
             setFormValid();
             setSelectedUsers(undefined);
             checkFormIsInvalid();
@@ -83,29 +96,29 @@ examples.forEach((activeConversation) => {
             setFormValid();
             setSelectedUsers([]);
             checkFormIsInvalid();
-        }));
+        });
 
-        it('should block when too many users are selected', fakeAsync(() => {
+        it('should block when too many users are selected', () => {
             setFormValid();
             setSelectedUsers([{ id: 1 } as UserPublicInfoDTO, { id: 2 } as UserPublicInfoDTO, { id: 3 } as UserPublicInfoDTO]);
             checkFormIsInvalid();
-        }));
+        });
 
-        it('should block when in group mode and no mode is selected', fakeAsync(() => {
+        it('should block when in group mode and no mode is selected', () => {
             if (isChannelDTO(activeConversation)) {
                 setFormValid();
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
-                expect(component.isSubmitPossible).toBeFalse();
+                expect(component.isSubmitPossible).toBe(false);
             }
-        }));
+        });
 
-        it('should submit valid form in individual mode', fakeAsync(() => {
+        it('should submit valid form in individual mode', () => {
             setValidIndividualModeFormValues();
             fixture.changeDetectorRef.detectChanges();
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
+            expect(component.form.valid).toBe(true);
+            expect(component.isSubmitPossible).toBe(true);
             expect(component.mode).toBe('individual');
 
             const expectedAddUsersFormData: AddUsersFormData = {
@@ -116,15 +129,15 @@ examples.forEach((activeConversation) => {
             };
 
             clickSubmitButton(true, expectedAddUsersFormData);
-        }));
+        });
 
-        it('should submit valid form in group mode', fakeAsync(() => {
+        it('should submit valid form in group mode', () => {
             if (isChannelDTO(activeConversation)) {
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
                 fixture.changeDetectorRef.detectChanges();
                 setValidGroupModeFormValues();
                 fixture.changeDetectorRef.detectChanges();
-                expect(component.isSubmitPossible).toBeTrue();
+                expect(component.isSubmitPossible).toBe(true);
                 expect(component.mode).toBe('group');
 
                 const expectedAddUsersFormData: AddUsersFormData = {
@@ -136,7 +149,7 @@ examples.forEach((activeConversation) => {
 
                 clickSubmitButton(true, expectedAddUsersFormData);
             }
-        }));
+        });
 
         function setSelectedUsers(selectedUsers?: UserPublicInfoDTO[]) {
             component!.selectedUsersControl!.setValue(selectedUsers);
@@ -155,19 +168,19 @@ examples.forEach((activeConversation) => {
 
         function checkFormIsInvalid() {
             fixture.changeDetectorRef.detectChanges();
-            expect(component.form.invalid).toBeTrue();
-            expect(component.isSubmitPossible).toBeFalse();
+            expect(component.form.invalid).toBe(true);
+            expect(component.isSubmitPossible).toBe(false);
             clickSubmitButton(false);
         }
         function setFormValid() {
             setValidIndividualModeFormValues();
             fixture.changeDetectorRef.detectChanges();
-            expect(component.form.valid).toBeTrue();
-            expect(component.isSubmitPossible).toBeTrue();
+            expect(component.form.valid).toBe(true);
+            expect(component.isSubmitPossible).toBe(true);
         }
         const clickSubmitButton = async (expectSubmitEvent: boolean, expectedFormData?: AddUsersFormData) => {
-            const submitFormSpy = jest.spyOn(component, 'submitForm');
-            const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+            const submitFormSpy = vi.spyOn(component, 'submitForm');
+            const submitFormEventSpy = vi.spyOn(component.formSubmitted, 'emit');
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
             submitButton.click();

@@ -336,7 +336,7 @@ $update-footer-background: $neutral-dark;
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
-$edit-quiz-footer-background: $brighter-body-bg;
+$edit-quiz-footer-background: $body-bg;
 $quiz-exercise-detail-max-score-background: $artemis-dark;
 $quiz-exercise-detail-max-score-color: white;
 $quiz-edit-question-border: $neutral-dark-l-10;
@@ -672,6 +672,10 @@ $league-badge-master-color: hsl(270, 60%, 60%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
 
+// Tutorial Groups
+$registration-suggestion-panel-bg: #18181b;
+$registration-suggestion-panel-selection-bg: #27272a;
+
 // LLM Selection Popup
 $ai-modal-card-bg: $neutral-dark-l-10;
 $ai-modal-cloud-bg: linear-gradient(135deg, #5a6986 0%, #667189 100%);
@@ -689,5 +693,17 @@ $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;
 
-// Global search modal
-$global-search-modal-footer-bg: rgba($white, 0.03);
+// Global search modal - Artemis blue tones for dark mode
+$global-search-modal-bg: #1a2a3a;
+$global-search-modal-footer-bg: rgba(#3e8acc, 0.06);
+$global-search-item-hover-bg: rgba(#3e8acc, 0.12);
+$global-search-kbd-bg: #243447;
+$global-search-kbd-border: rgba(#5a9ed6, 0.3);
+$global-search-icon-bg: rgba(#3e8acc, 0.15);
+$global-search-border-color: rgba(#5a9ed6, 0.15);
+$global-search-lecture-accent: #c084fc;
+$global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.18);
+$global-search-result-hover-border: rgba($global-search-lecture-accent, 0.4);
+$global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.08);
+$global-search-iris-accent: #60a5fa;
+$global-search-iris-accent-secondary: #93c5fd;

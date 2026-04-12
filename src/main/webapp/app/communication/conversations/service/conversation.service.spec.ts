@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -8,14 +10,17 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ConversationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ConversationService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -29,10 +34,12 @@ describe('ConversationService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    it('searchMembersOfConversation', fakeAsync(() => {
+    it('searchMembersOfConversation', () => {
         const returnedFromService = [new ConversationUserDTO()];
         const expected = returnedFromService;
 
@@ -46,10 +53,10 @@ describe('ConversationService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('getConversationsOfUser', fakeAsync(() => {
+    it('getConversationsOfUser', () => {
         const returnedFromService = [new ConversationUserDTO()];
         const expected = returnedFromService;
 
@@ -63,10 +70,10 @@ describe('ConversationService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('updateIsFavorite', fakeAsync(() => {
+    it('updateIsFavorite', () => {
         service
             .updateIsFavorite(1, 1, true)
             .pipe(take(1))
@@ -74,10 +81,10 @@ describe('ConversationService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('updateIsHidden', fakeAsync(() => {
+    it('updateIsHidden', () => {
         service
             .updateIsHidden(1, 1, false)
             .pipe(take(1))
@@ -85,10 +92,10 @@ describe('ConversationService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('updateIsMuted', fakeAsync(() => {
+    it('updateIsMuted', () => {
         service
             .updateIsMuted(1, 1, false)
             .pipe(take(1))
@@ -96,12 +103,21 @@ describe('ConversationService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
     it('markAsRead', () => {
         service
             .markAsRead(1, 1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'PATCH' });
+        req.flush({});
+    });
+
+    it('markMessageAsUnread', () => {
+        service
+            .markMessageAsUnread(1, 1, 1)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'PATCH' });
@@ -121,7 +137,7 @@ describe('ConversationService', () => {
         service
             .checkIsCodeOfConductAccepted(1)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toBeTrue());
+            .subscribe((res) => expect(res.body).toBe(true));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(true);
     });

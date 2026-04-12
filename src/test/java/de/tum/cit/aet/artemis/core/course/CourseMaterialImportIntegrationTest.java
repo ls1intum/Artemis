@@ -37,12 +37,10 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
 
         // Create source course with some content
         sourceCourse = courseUtilService.createCourse();
-        sourceCourse.setFaqEnabled(true);
         sourceCourse = courseRepository.save(sourceCourse);
 
         // Create target course
         targetCourse = courseUtilService.createCourse();
-        targetCourse.setFaqEnabled(true);
         targetCourse = courseRepository.save(targetCourse);
 
         // Add FAQs to source course

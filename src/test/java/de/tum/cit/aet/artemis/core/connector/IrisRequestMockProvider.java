@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
@@ -74,6 +75,12 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v2/memiris")
     private URL memirisApiV2URL;
+
+    @Value("${artemis.iris.url}/api/v1/search/lectures")
+    private URL lectureSearchApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/search/ask")
+    private URL lectureSearchAskApiURL;
 
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
@@ -157,6 +164,10 @@ public class IrisRequestMockProvider {
         mockPostRequest("/tutor-suggestion/run", PyrisTutorSuggestionPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockAutonomousTutorResponse(Consumer<PyrisAutonomousTutorPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
+    }
+
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
@@ -191,10 +202,6 @@ public class IrisRequestMockProvider {
 
     public void mockProgressStalledEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/programming-exercise-chat/run?event=progress_stalled", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
-    }
-
-    public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/course-chat/run?event=jol", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockCourseChatResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
@@ -343,6 +350,44 @@ public class IrisRequestMockProvider {
         if (mockServer != null) {
             mockServer.verify();
         }
+    }
+
+    // -------------------- Lecture search endpoints --------------------
+
+    public void mockSearchLectures(Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockSearchLecturesError(HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockSearchAsk(Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockSearchAskError(HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
     }
 
     // -------------------- Memiris endpoints --------------------

@@ -106,6 +106,23 @@
                     }
                 }
 
+                .weight-select-sm {
+                    display: inline-flex;
+                    min-width: 8rem;
+                    max-width: 9rem;
+
+                    :deep(.p-select) {
+                        min-width: 8rem;
+                        max-width: 9rem;
+                        width: 100%;
+
+                        .p-select-label {
+                            white-space: nowrap;
+                            overflow: visible;
+                        }
+                    }
+                }
+
                 .relation-graph-preview-container {
                     .relation-graph-viewport {
                         height: 25rem;

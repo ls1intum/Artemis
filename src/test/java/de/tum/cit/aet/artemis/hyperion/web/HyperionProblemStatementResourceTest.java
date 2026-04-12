@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -30,7 +34,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -187,6 +195,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         long exerciseId = persistedExerciseId;
         mockConsistencyWithIssue();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        reset(websocketMessagingService);
 
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
 
@@ -199,6 +208,29 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 assertThat(comment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
             });
         });
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
+
+        ExerciseReviewThreadUpdateDTO syncPayload = captor.getValue();
+        assertThat(syncPayload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
+        assertThat(syncPayload.target()).isEqualTo(ExerciseEditorSyncTarget.REVIEW_COMMENTS);
+        assertThat(syncPayload.action()).isEqualTo(ReviewThreadSyncAction.THREAD_CREATED);
+        assertThat(syncPayload.thread()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldNotPersistConsistencyThreadsWhenSkipThreadContextIsTrue() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyWithIssue();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId).param("skipThreadContext", "true"))
+                .andExpect(status().isOk());
+
+        var threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        assertThat(threads).isEmpty();
     }
 
     @Test

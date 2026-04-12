@@ -53,9 +53,8 @@ public record CourseCreateDTO(
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
 
         // Course features
-        boolean faqEnabled, boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints,
-        @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess, String timeZone,
-        CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
+        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -112,7 +111,6 @@ public record CourseCreateDTO(
         course.setUnenrollmentEnabled(unenrollmentEnabled);
 
         // Course features
-        course.setFaqEnabled(faqEnabled);
         course.setLearningPathsEnabled(learningPathsEnabled);
         course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
