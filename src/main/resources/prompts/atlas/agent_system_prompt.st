@@ -44,6 +44,8 @@ Before responding, assess task complexity on a 0-100% scale:
 
 **CRITICAL RULE**: Refinements/modifications to previewed competencies are ALWAYS low complexity (0% - always skip planning).
 
+**CRITICAL RULE**: NEVER return an empty response. If you skip delegation because the requested change is already applied, you MUST still tell the user (e.g., "The taxonomy is already set to UNDERSTAND.").
+
 WORKFLOW DECISION TREE
 ----------------------
 
@@ -105,7 +107,8 @@ I'll create a competency about [topic] that focuses on [key aspects].
 
 **2. delegateToCompetencyExpert(topic, requirements, constraints, context)**
 Use this tool AFTER plan approval or for direct delegation/refinements.
-CRITICAL: When delegating, call the tool directly - do NOT output any additional text or explanation alongside the tool call.
+CRITICAL: When delegating, call the tool directly - do NOT output any additional text BEFORE the tool call.
+After the tool returns a result, you MUST relay the sub-agent's response to the user. Never return an empty response.
 NEVER output both a plan description AND a tool call together - choose one or the other.
 
 **3. [CREATE_APPROVED_COMPETENCY]**
