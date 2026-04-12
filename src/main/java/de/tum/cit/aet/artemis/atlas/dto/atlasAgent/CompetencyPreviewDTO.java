@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
+import java.io.Serializable;
+
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,5 +19,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param viewOnly     indicates whether this preview is read-only (true) or can be approved/saved (false/null)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyPreviewDTO(String title, String description, @NotNull String taxonomy, Long competencyId, Boolean viewOnly) {
+public record CompetencyPreviewDTO(String title, String description, @NotNull String taxonomy, Long competencyId, Boolean viewOnly) implements Serializable {
 }

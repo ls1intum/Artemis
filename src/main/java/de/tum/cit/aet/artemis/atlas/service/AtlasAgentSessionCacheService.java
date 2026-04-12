@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class AtlasAgentSessionCacheService {
      * Preview data associated with a single assistant message.
      */
     public record MessagePreviewData(@Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
-            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
+            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) implements Serializable {
     }
 
     private final CacheManager cacheManager;

@@ -141,6 +141,17 @@ public class AtlasAgentService {
             // Detect and initialize plan if orchestrator output a plan marker
             detectAndInitializePlan(response, message, sessionId);
 
+            // Detect approval markers in the response (user said "create it" / "looks good" and the main agent output the marker)
+            if (response != null && response.strip().equals(CREATE_APPROVED_COMPETENCY)) {
+                return handleCompetencyApproval(sessionId, courseId);
+            }
+            else if (response != null && response.strip().equals(CREATE_APPROVED_RELATION)) {
+                return handleRelationApproval(sessionId, courseId);
+            }
+            else if (response != null && response.strip().startsWith(CREATE_APPROVED_EXERCISE_MAPPING)) {
+                return handleExerciseMappingApproval(sessionId, courseId, response.strip());
+            }
+
             // Collect all preview data from ThreadLocals (whichever sub-agent was invoked via delegation tools)
             List<CompetencyPreviewDTO> competencyPreviews = CompetencyExpertToolsService.getAndClearPreviews();
 
