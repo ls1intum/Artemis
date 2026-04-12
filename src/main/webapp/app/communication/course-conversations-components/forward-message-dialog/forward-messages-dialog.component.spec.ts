@@ -295,4 +295,14 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.filteredChannels[0].name).toBe('General');
         expect(component.filteredUsers).toHaveLength(0);
     });
+
+    it('should disable send button if message is too long', () => {
+        const longText = 'a'.repeat(5001);
+        component.updateField(longText);
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+
+        expect(component.isMessageValid()).toBe(false);
+        expect(sendButton.disabled).toBe(true);
+    });
 });
