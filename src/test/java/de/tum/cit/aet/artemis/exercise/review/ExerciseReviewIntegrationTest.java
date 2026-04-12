@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.review;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
@@ -8,6 +12,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
@@ -31,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.InlineCodeChangeDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
@@ -158,6 +165,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO consistencyThread = createThreadWithConsistencyComment(exercise, "Consistency issue", false);
         CommentDTO consistencyComment = consistencyThread.comments().getFirst();
+        clearInvocations(websocketMessagingService);
 
         var updated = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewCommentInlineFixAppliedPath(exercise.getId(), consistencyComment.id())))
                 .contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isOk()).andReturn();
@@ -168,6 +176,12 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) updatedComment.content()).suggestedFix();
         assertThat(inlineFix).isNotNull();
         assertThat(inlineFix.applied()).isTrue();
+
+        ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        ExerciseReviewThreadUpdateDTO websocketPayload = (ExerciseReviewThreadUpdateDTO) websocketPayloadCaptor.getValue();
+        assertThat(websocketPayload.action()).isEqualTo(ReviewThreadSyncAction.COMMENT_UPDATED);
+        assertThat(websocketPayload.comment().id()).isEqualTo(consistencyComment.id());
     }
 
     @Test
@@ -239,6 +253,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
 
         UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
+        clearInvocations(websocketMessagingService);
         var mvcResult = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewThreadGroupResolvedPath(exercise.getId(), group.id())))
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk()).andReturn();
         List<CommentThreadDTO> updatedGroupThreads = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
@@ -249,6 +264,12 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
         assertThat(threads.stream().filter(thread -> List.of(first.id(), second.id()).contains(thread.id()))).allMatch(CommentThreadDTO::resolved);
         assertThat(threads.stream().filter(thread -> thread.id().equals(ungrouped.id())).findFirst().orElseThrow().resolved()).isFalse();
+
+        ArgumentCaptor<Object> websocketPayloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, times(2)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), websocketPayloadCaptor.capture());
+        List<ExerciseReviewThreadUpdateDTO> websocketPayloads = websocketPayloadCaptor.getAllValues().stream().map(ExerciseReviewThreadUpdateDTO.class::cast).toList();
+        assertThat(websocketPayloads).allMatch(payload -> payload.action() == ReviewThreadSyncAction.THREAD_UPDATED).extracting(payload -> payload.thread().id())
+                .containsExactlyInAnyOrder(first.id(), second.id());
     }
 
     @Test

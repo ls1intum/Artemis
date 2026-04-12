@@ -75,18 +75,19 @@ public class ExerciseReviewVersionChangeService {
      *
      * @param previousSnapshot the previous exercise snapshot
      * @param currentSnapshot  the current exercise snapshot
+     * @return modified threads that should be synchronized with active editors
      */
-    public void updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
+    public List<CommentThread> updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
         if (previousSnapshot == null || currentSnapshot == null) {
-            return;
+            return List.of();
         }
         if (!Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
-            return;
+            return List.of();
         }
 
         List<CommentThread> threads = commentThreadRepository.findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(currentSnapshot.id());
         if (threads.isEmpty()) {
-            return;
+            return List.of();
         }
 
         ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
@@ -131,7 +132,7 @@ public class ExerciseReviewVersionChangeService {
         }
 
         if (mappingTasksByThreadId.isEmpty()) {
-            return;
+            return List.of();
         }
 
         EditList problemStatementEdits = hasProblemStatementTasks ? calculateTextEdits(previousSnapshot.problemStatement(), currentSnapshot.problemStatement()) : null;
@@ -200,6 +201,7 @@ public class ExerciseReviewVersionChangeService {
         if (!modifiedComments.isEmpty()) {
             commentRepository.saveAll(modifiedComments);
         }
+        return List.copyOf(modifiedThreads);
     }
 
     /**

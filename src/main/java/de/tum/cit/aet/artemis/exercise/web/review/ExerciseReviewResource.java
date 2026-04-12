@@ -196,6 +196,7 @@ public class ExerciseReviewResource {
         log.debug("REST request to update resolved state of thread group {} for exercise {}", groupId, exerciseId);
         List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateGroupResolvedState(exerciseId, groupId, dto).stream()
                 .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
+        updatedThreads.forEach(updatedThread -> exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadUpdated(updatedThread)));
         return ResponseEntity.ok(updatedThreads);
     }
 
@@ -231,7 +232,9 @@ public class ExerciseReviewResource {
     public ResponseEntity<CommentDTO> markConsistencyInlineFixApplied(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to mark inline fix as applied for comment {} in exercise {}", commentId, exerciseId);
         Comment updated = exerciseReviewService.markConsistencyInlineFixApplied(exerciseId, commentId);
-        return ResponseEntity.ok(new CommentDTO(updated));
+        CommentDTO updatedComment = new CommentDTO(updated);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(updatedComment));
+        return ResponseEntity.ok(updatedComment);
     }
 
     private List<CommentDTO> mapComments(CommentThread thread) {
