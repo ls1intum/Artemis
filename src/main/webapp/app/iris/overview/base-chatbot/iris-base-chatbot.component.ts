@@ -234,7 +234,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return active?.chatMessage;
     });
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
-    readonly hasSessionSwitcher = computed(() => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader());
+    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0);
+    readonly hasSessionSwitcher = computed(
+        () => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader() && (this.hasCurrentSessionContent() || this.hasPastSessions()),
+    );
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
         const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
@@ -307,11 +310,54 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    protected readonly suggestionChips = [
+    protected readonly courseSuggestionChips = [
         { icon: faGraduationCap, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
         { icon: faBrain, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
         { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
     ] as const;
+
+    protected readonly exerciseSuggestionChips = [
+        {
+            icon: faGraduationCap,
+            translationKey: 'artemisApp.iris.chat.suggestions.learn',
+            starterKey: 'artemisApp.iris.chat.placeholders.exercise.walkThrough',
+        },
+        { icon: faBrain, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
+        {
+            icon: faCompass,
+            translationKey: 'artemisApp.iris.chat.suggestions.tips',
+            starterKey: 'artemisApp.iris.chat.placeholders.exercise.testsFailing',
+        },
+    ] as const;
+
+    protected readonly lectureSuggestionChips = [
+        {
+            icon: faGraduationCap,
+            translationKey: 'artemisApp.iris.chat.suggestions.learn',
+            starterKey: 'artemisApp.iris.chat.placeholders.lecture.keyPoints',
+        },
+        { icon: faBrain, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
+        {
+            icon: faCompass,
+            translationKey: 'artemisApp.iris.chat.suggestions.tips',
+            starterKey: 'artemisApp.iris.chat.placeholders.exercise.whereToStart',
+        },
+    ] as const;
+
+    protected readonly activeSuggestionChips = computed(() => {
+        const mode = this.currentChatMode();
+        switch (mode) {
+            case ChatServiceMode.COURSE:
+                return this.courseSuggestionChips;
+            case ChatServiceMode.LECTURE:
+                return this.lectureSuggestionChips;
+            case ChatServiceMode.TEXT_EXERCISE:
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+                return this.exerciseSuggestionChips;
+            default:
+                return [];
+        }
+    });
 
     readonly chipPreviewText = signal('');
     private readonly isChipTextApplied = signal(false);
@@ -420,7 +466,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return labels[this.placeholderIndex() % labels.length];
     });
 
-    readonly shouldUseRotatingPlaceholder = computed(() => this.isExerciseOrLectureMode() && !this.messages().length && !this.isEmbeddedChat());
+    readonly shouldUseRotatingPlaceholder = computed(() => this.isExerciseOrLectureMode() && !this.messages().length && this.layout() !== 'client');
 
     readonly ghostText = computed(() => {
         const input = this.newMessageTextContent();
