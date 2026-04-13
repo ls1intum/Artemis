@@ -14,7 +14,7 @@
 # ===================================================================
 
 artemis:
-    push-notification-relay: https://hermes.artemis.cit.tum.de
+    push-notification-relay: https://hermes-prod.artemis.cit.tum.de
     # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
     # and used profiles (localVC, ...) to a telemetry collection service.
     telemetry:
