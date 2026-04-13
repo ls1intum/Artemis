@@ -14,7 +14,9 @@ import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseGroupComponent, GroupUserInformationRow } from 'app/core/course/shared/course-group/course-group.component';
+import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
+import { ExportUserInformationRow } from 'app/shared/user-import/util/write-users-to-csv';
+import * as csvUtils from 'app/shared/user-import/util/write-users-to-csv';
 
 describe('CourseGroupComponent', () => {
     setupTestBed({ zoneless: true });
@@ -206,20 +208,20 @@ describe('CourseGroupComponent', () => {
 
     it('should generate csv correctly', () => {
         comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
-        const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+        const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
         comp.exportUserInformation();
 
-        expect(exportAsCsvMock).toHaveBeenCalledOnce();
-        const generatedRows = exportAsCsvMock.mock.calls[0][0];
+        expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+        const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
-        const expectedRow1 = {} as GroupUserInformationRow;
+        const expectedRow1 = {} as ExportUserInformationRow;
         expectedRow1[NAME_KEY] = '';
         expectedRow1[USERNAME_KEY] = courseGroupUser.login ?? '';
         expectedRow1[EMAIL_KEY] = '';
         expectedRow1[REGISTRATION_NUMBER_KEY] = '';
 
-        const expectedRow2 = {} as GroupUserInformationRow;
+        const expectedRow2 = {} as ExportUserInformationRow;
         expectedRow2[NAME_KEY] = '';
         expectedRow2[USERNAME_KEY] = courseGroupUser2.login ?? '';
         expectedRow2[EMAIL_KEY] = '';
@@ -232,11 +234,11 @@ describe('CourseGroupComponent', () => {
 
     it('should not export csv when there are no users', () => {
         comp.allGroupUsers.set([]);
-        const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+        const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
         comp.exportUserInformation();
 
-        expect(exportAsCsvMock).not.toHaveBeenCalled();
+        expect(exportUserInformationAsCsvMock).not.toHaveBeenCalled();
     });
 
     describe('dataTableRowClass', () => {
@@ -268,17 +270,17 @@ describe('CourseGroupComponent', () => {
         });
     });
 
-    describe('exportAsCsv', () => {
-        it('should call csv export functions', () => {
-            const rows: GroupUserInformationRow[] = [{ [NAME_KEY]: 'Test', [USERNAME_KEY]: 'test', [EMAIL_KEY]: 'test@test.com', [REGISTRATION_NUMBER_KEY]: '123' }];
+    describe('exportUserInformationAsCsv', () => {
+        it('should call csv export utility with rows, keys, and filename', () => {
+            const rows: ExportUserInformationRow[] = [{ [NAME_KEY]: 'Test', [USERNAME_KEY]: 'user', [EMAIL_KEY]: 'test@test.com', [REGISTRATION_NUMBER_KEY]: '123' }];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
-            // Mock URL.createObjectURL since it's not available in test environment
-            const createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url');
-            global.URL.createObjectURL = createObjectURLMock;
+            comp.allGroupUsers.set([{ ...courseGroupUser, name: 'Test', email: 'test@test.com', visibleRegistrationNumber: '123' }]);
+            comp.exportUserInformation();
 
-            // The function should not throw
-            expect(() => comp.exportAsCsv(rows, keys)).not.toThrow();
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledWith(rows, keys, 'test-export');
         });
     });
 
@@ -396,12 +398,12 @@ describe('CourseGroupComponent', () => {
                 visibleRegistrationNumber: '  12345  ',
             };
             comp.allGroupUsers.set([userWithAllProps]);
-            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportAsCsvMock.mock.calls[0][0];
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
             // Should trim all values
             expect(generatedRows[0][NAME_KEY]).toBe('Test Name');
@@ -413,12 +415,12 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedName = { ...courseGroupUser };
             delete (userWithUndefinedName as any).name;
             comp.allGroupUsers.set([userWithUndefinedName]);
-            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportAsCsvMock.mock.calls[0][0];
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
             // Should default to empty string
             expect(generatedRows[0][NAME_KEY]).toBe('');
@@ -428,12 +430,12 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedEmail = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedEmail as any).email;
             comp.allGroupUsers.set([userWithUndefinedEmail]);
-            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportAsCsvMock.mock.calls[0][0];
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
             // Should default to empty string
             expect(generatedRows[0][EMAIL_KEY]).toBe('');
@@ -443,12 +445,12 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedRegNum = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedRegNum as any).visibleRegistrationNumber;
             comp.allGroupUsers.set([userWithUndefinedRegNum]);
-            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportAsCsvMock.mock.calls[0][0];
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
             // Should default to empty string
             expect(generatedRows[0][REGISTRATION_NUMBER_KEY]).toBe('');
@@ -458,12 +460,12 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedLogin = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedLogin as any).login;
             comp.allGroupUsers.set([userWithUndefinedLogin]);
-            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
+            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportAsCsvMock.mock.calls[0][0];
+            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
+            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
 
             // Should default to empty string
             expect(generatedRows[0][USERNAME_KEY]).toBe('');

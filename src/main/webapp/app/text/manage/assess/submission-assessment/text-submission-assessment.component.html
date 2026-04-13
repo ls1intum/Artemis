@@ -54,7 +54,7 @@
                 <jhi-unreferenced-feedback
                     [(feedbacks)]="unreferencedFeedback"
                     [highlightDifferences]="highlightDifferences"
-                    (feedbacksChange)="validateFeedback()"
+                    (feedbacksChange)="validateFeedback($event)"
                     [readOnly]="readOnly"
                     [useDefaultFeedbackSuggestionBadgeText]="true"
                     [resultId]="result.id"
@@ -108,7 +108,7 @@
             <jhi-unreferenced-feedback
                 [(feedbacks)]="unreferencedFeedback"
                 [highlightDifferences]="highlightDifferences"
-                (feedbacksChange)="validateFeedback()"
+                (feedbacksChange)="validateFeedback($event)"
                 [readOnly]="readOnly"
                 [useDefaultFeedbackSuggestionBadgeText]="true"
                 [resultId]="result.id"

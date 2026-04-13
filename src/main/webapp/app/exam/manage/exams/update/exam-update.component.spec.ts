@@ -26,7 +26,7 @@ import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -40,6 +40,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 @Component({
     template: '',
@@ -95,7 +96,7 @@ describe('ExamUpdateComponent', () => {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({
-                                    body: new GradingScale(),
+                                    body: toGradingScaleDTO(new GradingScale()),
                                     status: 200,
                                 }),
                             );
@@ -948,7 +949,7 @@ describe('ExamUpdateComponent', () => {
                         findGradingScaleForExam: () => {
                             return of(
                                 new HttpResponse({
-                                    body: new GradingScale(),
+                                    body: toGradingScaleDTO(new GradingScale()),
                                     status: 200,
                                 }),
                             );

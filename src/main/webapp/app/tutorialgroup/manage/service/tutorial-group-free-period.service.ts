@@ -1,10 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateTimeString } from 'app/shared/util/date.utils';
+import { toISO8601DateTimeString } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodApiService } from 'app/openapi/api/tutorialGroupFreePeriodApi.service';
+import { convertTutorialGroupFreePeriodDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 
@@ -61,15 +62,9 @@ export class TutorialGroupFreePeriodService {
         return this.tutorialGroupFreePeriodApiService.delete(courseId, tutorialGroupConfigurationId, tutorialGroupFreePeriodId, 'response');
     }
 
-    convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
-        tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-        tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-        return tutorialGroupFreePeriod;
-    }
-
     private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriod>): HttpResponse<TutorialGroupFreePeriod> {
         if (res.body) {
-            this.convertTutorialGroupFreePeriodDatesFromServer(res.body);
+            convertTutorialGroupFreePeriodDatesFromServer(res.body);
         }
         return res;
     }

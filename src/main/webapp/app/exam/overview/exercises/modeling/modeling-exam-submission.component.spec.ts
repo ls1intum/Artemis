@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, input, model } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -50,7 +50,18 @@ describe('ModelingExamSubmissionComponent', () => {
 
     const resetComponent = () => {
         if (comp) {
-            mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ version: '2.0.0', model: true }) } as ModelingSubmission;
+            mockSubmission = {
+                explanationText: 'Test Explanation',
+                model: JSON.stringify({
+                    version: '3.0.0',
+                    type: 'ClassDiagram',
+                    size: { width: 200, height: 200 },
+                    interactive: { elements: {}, relationships: {} },
+                    elements: {},
+                    relationships: {},
+                    assessments: {},
+                }),
+            } as ModelingSubmission;
             const course = new Course();
             course.isAtLeastInstructor = true;
             mockExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -144,7 +155,10 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(StubModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel()).toEqual({ version: '2.0.0', model: true });
+            const umlModel = modelingEditor.componentInstance.umlModel();
+            expect(umlModel).toBeDefined();
+            expect(umlModel.version).toBe('4.0.0');
+            expect(umlModel.type).toBe('ClassDiagram');
             expect(modelingEditor.componentInstance.withExplanation()).toBeTrue();
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
@@ -233,18 +247,8 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     it('should update the model on submission version change', async () => {
-        const parsedModel = {
-            version: '3.0.0',
-            type: 'ClassDiagram',
-            size: { width: 220, height: 420 },
-            interactive: { elements: {}, relationships: {} },
-            elements: {},
-            relationships: {},
-            assessments: {},
-        } as UMLModel;
-
         jest.spyOn(comp, 'modelingEditor').mockReturnValue({
-            apollonEditor: { nextRender: Promise.resolve(), model: parsedModel } as unknown as ApollonEditor,
+            apollonEditor: { nextRender: Promise.resolve(), model: {} } as unknown as ApollonEditor,
         } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
@@ -253,7 +257,9 @@ describe('ModelingExamSubmissionComponent', () => {
         await comp.setSubmissionVersion(submissionVersion);
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
-        expect(comp.umlModel).toEqual(parsedModel);
+        expect(comp.umlModel).toBeDefined();
+        expect(comp.umlModel!.version).toBe('4.0.0');
+        expect(comp.umlModel!.type).toBe('ClassDiagram');
         expect(comp.explanationText).toBe('explanation');
     });
 });

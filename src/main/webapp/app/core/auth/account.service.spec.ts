@@ -811,6 +811,9 @@ describe('AccountService', () => {
     describe('test getAuthenticationState', () => {
         it('should return observable of user', () => {
             accountService.userIdentity.set(user);
+            // In zoneless mode, effects are deferred; flush them so the BehaviorSubject is updated
+            // before we subscribe (BehaviorSubject emits the current value immediately on subscribe).
+            TestBed.flushEffects();
 
             accountService.getAuthenticationState().subscribe((userState) => {
                 expect(userState).toEqual(user);

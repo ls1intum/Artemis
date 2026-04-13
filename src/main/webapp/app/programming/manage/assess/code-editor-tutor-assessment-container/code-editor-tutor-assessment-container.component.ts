@@ -596,7 +596,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      *  Validate the feedback of the assessment with the guarantee that it has changed.
      */
-    validateUpdatedFeedback(): void {
+    validateUpdatedFeedback(updatedFeedbacks?: Feedback[]): void {
+        if (updatedFeedbacks) {
+            this.unreferencedFeedback = updatedFeedbacks;
+        }
         this.validateFeedback();
         this.hasPendingChanges = true;
     }
@@ -720,7 +723,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const maxPoints = getTotalMaxPoints(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
-        const gradingInstructions = {}; // { instructionId: noOfEncounters }
+        const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
 
         feedbacks.forEach((feedback) => {
             // Check for feedback from automatic tests and store them separately
@@ -728,7 +731,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 scoreAutomaticTests += feedback.credits!;
             } else {
                 if (feedback.gradingInstruction) {
-                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
+                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, encounteredInstructions);
                 } else {
                     totalScore += feedback.credits!;
                 }

@@ -1,12 +1,14 @@
 import { Component, input } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailAccessLevel } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 @Component({
-    selector: 'jhi-course-tutorial-group-detail',
+    selector: 'jhi-tutorial-group-detail',
     template: '',
 })
 export class CourseTutorialGroupDetailStubComponent {
-    course = input.required<Course>();
-    tutorialGroup = input.required<TutorialGroupDetailDTO>();
+    courseId = input.required<number>();
+    tutorialGroup = input.required<TutorialGroupDetailData>();
+    isMessagingEnabled = input.required<boolean>();
+    loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
 }
