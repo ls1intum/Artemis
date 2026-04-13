@@ -476,8 +476,21 @@ The mapping file lists, for each Artemis module, the source paths that belong to
   "allTestPaths": [
     "e2e/atlas/",
     "e2e/course/",
-    "e2e/exam/",
-    "e2e/exercise/",
+    "e2e/exam/ExamAssessment.spec.ts",
+    "e2e/exam/ExamChecklists.spec.ts",
+    "e2e/exam/ExamCreationDeletion.spec.ts",
+    "e2e/exam/ExamDateVerification.spec.ts",
+    "e2e/exam/ExamManagement.spec.ts",
+    "e2e/exam/ExamParticipation.spec.ts",
+    "e2e/exam/ExamResults.spec.ts",
+    "e2e/exam/ExamTestRun.spec.ts",
+    "e2e/exam/test-exam/",
+    "e2e/exercise/ExerciseImport.spec.ts",
+    "e2e/exercise/file-upload/",
+    "e2e/exercise/modeling/",
+    "e2e/exercise/programming/",
+    "e2e/exercise/quiz-exercise/",
+    "e2e/exercise/text/",
     "e2e/lecture/",
     "e2e/Login.spec.ts",
     "e2e/Logout.spec.ts",
@@ -592,7 +605,9 @@ to wait until the database is up and running.
 
 ### 3. Playwright
 
-Playwright runs directly on the runner host (not in a container) and connects to the Artemis instance at `http://localhost:9000`.
+Playwright runs directly on the runner host (not in a container).
+The base URL is configurable via the `BASE_URL` environment variable read from
+`src/test/playwright/playwright.env` (defaults to `https://localhost`).
 The necessary configuration for the Playwright test suite is passed in via environment variables.
 Playwright only starts once Artemis has been fully booted.
 
