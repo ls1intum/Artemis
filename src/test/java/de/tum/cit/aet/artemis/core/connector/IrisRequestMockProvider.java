@@ -372,12 +372,12 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockSearchAsk(Object responseBody) {
+    public void mockSearchAsk() {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
             .andExpect(method(HttpMethod.POST))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+            .andRespond(withRawStatus(HttpStatus.ACCEPTED.value()));
         // @formatter:on
     }
 

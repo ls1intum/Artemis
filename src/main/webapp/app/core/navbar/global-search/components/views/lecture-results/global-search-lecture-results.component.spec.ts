@@ -165,20 +165,22 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('Keyboard navigation', () => {
-        it('should navigate to result link when Enter is pressed on a selected result', () => {
+        it('should navigate to lecture deep link when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
             // selectedIndex 1 because slot 0 is the iris action button (irisOpen defaults to false)
             fixture.componentRef.setInput('selectedIndex', 1);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith('/courses/1/lectures/1/units/1');
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'lectures', 1], {
+                queryParams: { unit: 1, page: 3, timestamp: undefined },
+            });
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {
@@ -186,7 +188,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             fixture.componentRef.setInput('selectedIndex', -1);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
 
             component.handleKeydown(event);
@@ -199,7 +201,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
 
             component.handleKeydown(event);
