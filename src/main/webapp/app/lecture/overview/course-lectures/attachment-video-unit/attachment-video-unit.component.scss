@@ -67,16 +67,17 @@ jhi-attachment-video-unit {
 
     .content-container--fullscreen {
         position: fixed;
-        inset: 4rem 2rem 2rem;
-        z-index: 1032;
+        inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
+        z-index: 5002;
         display: flex;
         gap: 0;
-        padding: 1rem;
+        padding: 0.75rem;
+        box-sizing: border-box;
         background-color: var(--card-bg);
-        border: 1px solid var(--card-border-color);
-        border-radius: 0.4rem;
+        border: 0;
+        border-radius: 0;
         overflow: hidden;
-        box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
+        box-shadow: none;
         flex-direction: row;
 
         .video-player-container,
@@ -248,8 +249,26 @@ jhi-attachment-video-unit {
 
     .fullscreen-overlay {
         position: fixed;
-        inset: 0;
-        z-index: 1031;
+        inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
+        z-index: 5001;
         background-color: rgba(0, 0, 0, 0.35);
+    }
+}
+
+body.lecture-combined-view-fullscreen-active {
+    .breadcrumb-container,
+    jhi-footer {
+        display: none !important;
+    }
+
+    .mat-drawer-container {
+        transform: none !important;
+    }
+
+    .mat-drawer-content {
+        z-index: 4000 !important;
+        width: 100vw !important;
+        margin-left: 0 !important;
+        transform: none !important;
     }
 }

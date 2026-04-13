@@ -83,6 +83,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
     protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
+    private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
@@ -114,14 +115,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly defaultHorizontalSplitSizes: [number, number] = [50, 50];
     private readonly minVerticalSplitSizes: [number, number] = [120, 120];
     private readonly minHorizontalSplitSizes: [number, number] = [80, 80];
+    private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
 
     private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
-    private fullscreenDrawerContentElement?: HTMLElement;
-    private previousDrawerContentZIndex?: string;
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -211,13 +211,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // Keep lecture fullscreen above drawer overlays without touching global.scss.
         effect(() => {
             const fullscreen = this.isFullscreen();
-            const container = this.contentContainer()?.nativeElement;
 
             untracked(() => {
-                if (fullscreen && container) {
-                    this.raiseDrawerContentZIndex(container);
+                if (fullscreen) {
+                    this.updateFullscreenTopOffset();
+                    this.setGlobalFullscreenState(true);
                 } else {
-                    this.restoreDrawerContentZIndex();
+                    this.clearFullscreenTopOffset();
+                    this.setGlobalFullscreenState(false);
                 }
             });
         });
@@ -470,41 +471,29 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.horizontalSplitInstance = undefined;
     }
 
-    private raiseDrawerContentZIndex(contentContainer: HTMLElement): void {
-        const drawerContent = contentContainer.closest('.mat-drawer-content');
-        if (!(drawerContent instanceof HTMLElement)) {
-            return;
-        }
-
-        if (this.fullscreenDrawerContentElement === drawerContent) {
-            return;
-        }
-
-        this.restoreDrawerContentZIndex();
-        this.fullscreenDrawerContentElement = drawerContent;
-        this.previousDrawerContentZIndex = drawerContent.style.zIndex;
-        drawerContent.style.zIndex = '4000';
+    private updateFullscreenTopOffset(): void {
+        const topOffset = this.getNavbarHeight();
+        this.hostElement.nativeElement.style.setProperty('--lecture-combined-view-top', `${topOffset}px`);
     }
 
-    private restoreDrawerContentZIndex(): void {
-        if (!this.fullscreenDrawerContentElement) {
-            return;
-        }
+    private clearFullscreenTopOffset(): void {
+        this.hostElement.nativeElement.style.removeProperty('--lecture-combined-view-top');
+    }
 
-        if (this.previousDrawerContentZIndex) {
-            this.fullscreenDrawerContentElement.style.zIndex = this.previousDrawerContentZIndex;
-        } else {
-            this.fullscreenDrawerContentElement.style.removeProperty('z-index');
-        }
+    private getNavbarHeight(): number {
+        const navbar = document.querySelector('nav.navbar.jh-navbar');
+        return navbar instanceof HTMLElement ? navbar.getBoundingClientRect().height : 0;
+    }
 
-        this.fullscreenDrawerContentElement = undefined;
-        this.previousDrawerContentZIndex = undefined;
+    private setGlobalFullscreenState(isFullscreen: boolean): void {
+        document.body.classList.toggle(this.fullscreenBodyClass, isFullscreen);
     }
 
     ngOnDestroy(): void {
         this.destroyVerticalSplitter();
         this.destroyHorizontalSplitter();
-        this.restoreDrawerContentZIndex();
+        this.clearFullscreenTopOffset();
+        this.setGlobalFullscreenState(false);
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }
@@ -574,6 +563,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     @HostListener('document:keydown.escape')
     onEscapePressed(): void {
         this.closeFullscreen();
+    }
+
+    @HostListener('window:resize')
+    onResize(): void {
+        if (this.isFullscreen()) {
+            this.updateFullscreenTopOffset();
+        }
     }
 
     private cancelPdfLoad(): void {
