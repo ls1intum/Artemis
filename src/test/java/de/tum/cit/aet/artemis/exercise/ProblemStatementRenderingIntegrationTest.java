@@ -197,7 +197,32 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("green");
+        // Assert the color was resolved (not that PlantUML rendered successfully — that's timing-dependent)
+        assertThat(result.html()).doesNotContain("testsColor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveTestsColorByTestName() throws Exception {
+        var testResults = List.of(new TestFeedbackInput(1L, "testClass[Vehicle]", true, null, 1.0));
+        var body = new ProblemStatementRenderRequest("@startuml\n!pragma layout smetana\nabstract class Vehicle <<abstract>> #text:testsColor(testClass[Vehicle]) {\n}\n@enduml",
+                testResults, null, "en", false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("testsColor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveTestsColorArrowByTestName() throws Exception {
+        var testResults = List.of(new TestFeedbackInput(1L, "testClass[Car]", false, null, 0.0));
+        var body = new ProblemStatementRenderRequest("@startuml\n!pragma layout smetana\nVehicle <|-- Car #testsColor(testClass[Car])\n@enduml", testResults, null, "en", false,
+                true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("testsColor");
     }
 
     // --- Locale ---

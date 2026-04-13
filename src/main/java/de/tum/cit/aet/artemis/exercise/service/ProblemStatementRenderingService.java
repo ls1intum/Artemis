@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -104,9 +105,17 @@ public class ProblemStatementRenderingService {
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
-    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(<testid>(\\d+)</testid>\\)>(.*?)</color>");
+    // Inner capture for testsColor(): matches <testid>123</testid> or test names like testClass[Vehicle] or testMoveCar(IOTester)
+    // Aligned with the Angular client regex: /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g
+    private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
 
-    private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(<testid>(\\d+)</testid>\\)");
+    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");
+
+    private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(" + TESTS_COLOR_INNER + "\\)");
+
+    private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
+
+    private static final Pattern TESTID_TAG_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
@@ -270,27 +279,48 @@ public class ProblemStatementRenderingService {
     }
 
     private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        // Build name-based lookup map for test name references (e.g. testClass[Vehicle])
+        Map<String, TestFeedbackDetail> testResultsByName = Map.of();
+        if (testResults != null) {
+            testResultsByName = new HashMap<>();
+            for (TestFeedbackDetail detail : testResults.values()) {
+                testResultsByName.put(detail.testName(), detail);
+            }
+        }
+        final Map<String, TestFeedbackDetail> byName = testResultsByName;
+
+        // <color:testsColor(...)>text</color>
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
-            String color = resolveTestColor(match.group(1), testResults);
+            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
             return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
         });
+        // #text:testsColor(...) — must be checked before #testsColor(...) to avoid partial match
+        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> {
+            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
+            return Matcher.quoteReplacement("#text:" + color);
+        });
+        // #testsColor(...)
         resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveTestColor(match.group(1), testResults);
+            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
             return Matcher.quoteReplacement("#" + color);
         });
         return resolved;
     }
 
-    private static String resolveTestColor(String testIdStr, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private static String resolveTestColor(String testRef, @Nullable Map<Long, TestFeedbackDetail> testResults, Map<String, TestFeedbackDetail> testResultsByName) {
         if (testResults == null) {
             return "grey";
         }
-        long testId = Long.parseLong(testIdStr);
-        TestFeedbackDetail detail = testResults.get(testId);
-        if (detail == null) {
-            return "grey";
+        // Try <testid>ID</testid> format
+        Matcher idMatcher = TESTID_TAG_PATTERN.matcher(testRef);
+        if (idMatcher.matches()) {
+            long testId = Long.parseLong(idMatcher.group(1));
+            TestFeedbackDetail detail = testResults.get(testId);
+            return detail == null ? "grey" : detail.passed() ? "green" : "red";
         }
-        return detail.passed() ? "green" : "red";
+        // Fall back to name-based lookup
+        TestFeedbackDetail detail = testResultsByName.get(testRef);
+        return detail == null ? "grey" : detail.passed() ? "green" : "red";
     }
 
     private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
