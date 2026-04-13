@@ -215,6 +215,30 @@ describe('ReviewCommentWidgetManager', () => {
         expect(editor.addLineWidget).toHaveBeenCalledWith(4, expect.stringContaining('review-comment-'), expect.any(HTMLElement));
     });
 
+    it('should update draft submit state and clear draft widgets', () => {
+        const editor = createEditorMock();
+        const vcRef = createViewContainerRefMock();
+        const config = createConfig();
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.updateHoverButton();
+        const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
+        addCallback(6);
+
+        const draftRef = vcRef.createComponent.mock.results[0].value;
+        config.canSubmit = () => false;
+        manager.updateDraftInputs();
+        manager.clearDrafts();
+        manager.renderWidgets();
+
+        expect(draftRef.setInput).toHaveBeenCalledWith('canSubmit', false);
+        expect(draftRef.submittedSubscription.unsubscribe).toHaveBeenCalled();
+        expect(draftRef.cancelSubscription.unsubscribe).toHaveBeenCalled();
+        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith('review-comment-file.java::5::');
+        expect(draftRef.destroy).toHaveBeenCalledOnce();
+        expect(vcRef.createComponent).toHaveBeenCalledOnce();
+    });
+
     it('should dispose draft and thread widgets on disposeAll', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
