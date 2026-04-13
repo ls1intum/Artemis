@@ -463,6 +463,7 @@ public class AtlasAgentService {
      * @return the response DTO with potential plan continuation
      */
     private AtlasAgentChatResponseDTO handleExerciseMappingApproval(String sessionId, Long courseId, String originalMessage) {
+        Long exerciseId = null;
         int payloadStart = originalMessage.indexOf(':');
         if (payloadStart != -1) {
             String json = originalMessage.substring(payloadStart + 1);
@@ -472,6 +473,7 @@ public class AtlasAgentService {
                 record ApprovalPayload(Long exerciseId, List<MappingSelection> mappings) {
                 }
                 ApprovalPayload payload = objectMapper.readValue(json, ApprovalPayload.class);
+                exerciseId = payload.exerciseId();
                 if (payload.mappings() != null && !payload.mappings().isEmpty()) {
                     List<ExerciseMappingToolsService.ExerciseCompetencyMappingOperation> selected = payload.mappings().stream()
                             .map(m -> new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(m.competencyId(), m.weight(), false, false)).toList();
@@ -483,8 +485,13 @@ public class AtlasAgentService {
             }
         }
 
+        String brief = CREATE_APPROVED_EXERCISE_MAPPING;
+        if (exerciseId != null) {
+            brief += "\nEXERCISE_ID: " + exerciseId;
+        }
+
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-        String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, CREATE_APPROVED_EXERCISE_MAPPING, courseId, sessionId);
+        String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, brief, courseId, sessionId);
 
         ExecutionPlanStateManagerService.StepResult stepResult = new ExecutionPlanStateManagerService.StepResult(List.of(), "Exercise mappings saved");
 
