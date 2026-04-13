@@ -115,13 +115,15 @@ public class ProblemStatementRenderingService {
 
     private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
-    private static final Pattern TESTID_TAG_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
-
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
     private static final String SVG_PLACEHOLDER_SUFFIX = "\"></span>";
 
     private static final Safelist HTML_SAFELIST = buildSafelist();
+
+    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create());
+
+    private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
 
     private final PlantUmlService plantUmlService;
 
@@ -225,7 +227,7 @@ public class ProblemStatementRenderingService {
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
         // Wrap in full HTML document
-        String document = "<!DOCTYPE html><html lang=\"" + locale + "\"><head><meta charset=\"UTF-8\">"
+        String document = "<!DOCTYPE html><html lang=\"" + locale.toLanguageTag() + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body>" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
@@ -233,6 +235,9 @@ public class ProblemStatementRenderingService {
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults, boolean darkMode) {
+        // Build name-based lookup map once for all diagrams
+        Map<String, TestFeedbackDetail> testResultsByName = buildTestResultsByName(testResults);
+
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -245,7 +250,7 @@ public class ProblemStatementRenderingService {
 
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
-            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
+            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults, testResultsByName);
 
             String inlineSvg = null;
             try {
@@ -283,16 +288,18 @@ public class ProblemStatementRenderingService {
         return svg;
     }
 
-    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults) {
-        // Build name-based lookup map for test name references (e.g. testClass[Vehicle])
-        Map<String, TestFeedbackDetail> testResultsByName = Map.of();
-        if (testResults != null) {
-            testResultsByName = new HashMap<>();
-            for (TestFeedbackDetail detail : testResults.values()) {
-                testResultsByName.put(detail.testName(), detail);
-            }
+    private static Map<String, TestFeedbackDetail> buildTestResultsByName(@Nullable Map<Long, TestFeedbackDetail> testResults) {
+        if (testResults == null) {
+            return Map.of();
         }
-        final Map<String, TestFeedbackDetail> byName = testResultsByName;
+        Map<String, TestFeedbackDetail> byName = new HashMap<>();
+        for (TestFeedbackDetail detail : testResults.values()) {
+            byName.put(detail.testName(), detail);
+        }
+        return byName;
+    }
+
+    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults, Map<String, TestFeedbackDetail> byName) {
 
         // <color:testsColor(...)>text</color>
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
@@ -317,7 +324,7 @@ public class ProblemStatementRenderingService {
             return "grey";
         }
         // Try <testid>ID</testid> format
-        Matcher idMatcher = TESTID_TAG_PATTERN.matcher(testRef);
+        Matcher idMatcher = TESTID_PATTERN.matcher(testRef);
         if (idMatcher.matches()) {
             long testId = Long.parseLong(idMatcher.group(1));
             TestFeedbackDetail detail = testResults.get(testId);
@@ -522,11 +529,10 @@ public class ProblemStatementRenderingService {
     }
 
     private String renderWithCommonMark(String markdown) {
-        var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
-        Parser parser = Parser.builder().extensions(extensions).build();
-        HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
-                .build();
-        String html = renderer.render(parser.parse(markdown));
+        // Parser is static (thread-safe). Renderer is per-call because it depends on the instance's serverUrl.
+        HtmlRenderer renderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
+                .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
+        String html = renderer.render(COMMONMARK_PARSER.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
