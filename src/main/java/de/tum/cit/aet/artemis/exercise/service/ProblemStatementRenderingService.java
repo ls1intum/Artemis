@@ -49,6 +49,10 @@ public class ProblemStatementRenderingService {
 
     private static final String RENDERER_VERSION = "1.0.0";
 
+    private static final String KATEX_VERSION = "0.16.44";
+
+    private static final String KATEX_BASE_PATH = "/webjars/katex/" + KATEX_VERSION + "/dist";
+
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
     private static final @Nullable String INTERACTIVE_JS = loadClasspathResource("problem-statement-js/interactive.js");
@@ -190,7 +194,7 @@ public class ProblemStatementRenderingService {
         if (includeCss) {
             String css = "";
             if (!mathFormulas.isEmpty()) {
-                css += "<link rel=\"stylesheet\" href=\"" + serverUrl + "/katex/katex.min.css\">";
+                css += "<link rel=\"stylesheet\" href=\"" + serverUrl + KATEX_BASE_PATH + "/katex.min.css\">";
             }
             if (EMBEDDED_CSS != null) {
                 css += "<style>" + EMBEDDED_CSS + "</style>";
@@ -203,7 +207,7 @@ public class ProblemStatementRenderingService {
 
         // Append KaTeX script tags if formulas were found
         if (!mathFormulas.isEmpty()) {
-            html += "<script src=\"" + serverUrl + "/katex/katex.min.js\"></script>";
+            html += "<script src=\"" + serverUrl + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
                 html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
             }
