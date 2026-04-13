@@ -3,6 +3,7 @@ import {
     Component,
     DestroyRef,
     ElementRef,
+    HostListener,
     Injector,
     NgZone,
     OnDestroy,
@@ -555,6 +556,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         this.isFullscreen.set(false);
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapePressed(): void {
+        this.closeFullscreen();
     }
 
     private cancelPdfLoad(): void {
