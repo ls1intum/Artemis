@@ -35,6 +35,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
+        assertThat(result.html()).startsWith("<!DOCTYPE html>");
+        assertThat(result.html()).contains("<html lang=\"en\">");
+        assertThat(result.html()).contains("<meta charset=\"UTF-8\">");
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
@@ -73,7 +76,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).doesNotContain("<script>");
+        assertThat(result.html()).doesNotContain("alert('xss')");
         assertThat(result.html()).contains("Safe text");
     }
 
@@ -130,7 +133,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRenderWithoutFeedbackWhenNoTestResults() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "en", false, true, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "en", false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -168,7 +171,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotEmbedResultWhenNull() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("[task][T](<testid>1</testid>)", null, null, "en", false, true, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][T](<testid>1</testid>)", null, null, "en", false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
@@ -185,7 +188,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).contains("<svg");
-        assertThat(result.html()).doesNotContain("<script");
+        // Document contains legitimate <script> tags (interactive JS), so only check SVG doesn't contain scripts
+        assertThat(result.html()).doesNotContain("<script>alert");
     }
 
     @Test

@@ -224,7 +224,12 @@ public class ProblemStatementRenderingService {
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
-        return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, interactiveScript);
+        // Wrap in full HTML document
+        String document = "<!DOCTYPE html><html lang=\"" + locale + "\"><head><meta charset=\"UTF-8\">"
+                + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body>" + html
+                + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
+
+        return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults, boolean darkMode) {
