@@ -94,7 +94,7 @@ public class ProgrammingExerciseBuildPlanService {
      * @throws JsonProcessingException when the build config cannot be serialized as JSON
      */
     public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (profileService.isJenkinsActive()) {
+        if (profileService.isJenkinsActive() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             return;
         }
 

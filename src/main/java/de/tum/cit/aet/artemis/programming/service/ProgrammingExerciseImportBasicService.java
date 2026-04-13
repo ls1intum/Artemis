@@ -22,8 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -46,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -55,8 +52,6 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 public class ProgrammingExerciseImportBasicService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportBasicService.class);
-
-    private final LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -100,8 +95,7 @@ public class ProgrammingExerciseImportBasicService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            LegacyBuildPlanConverterService legacyBuildPlanConverterService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -118,7 +112,6 @@ public class ProgrammingExerciseImportBasicService {
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
-        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
     }
 
     /**
@@ -147,8 +140,7 @@ public class ProgrammingExerciseImportBasicService {
     @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method
     // from another class
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise)
-            throws JsonProcessingException {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
         prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);
 
         // Note: same order as when creating an exercise
@@ -161,17 +153,11 @@ public class ProgrammingExerciseImportBasicService {
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the
             // exercise and want to reuse it from the existing exercise
-            if (originalProgrammingExercise.getBuildConfig().getBuildPlanPhases().isPresent()) {
-                newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
-            }
-            else {
-                // handle legacy format
-                BuildPlanPhasesDTO legacyBuildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(originalProgrammingExercise).orElse(null);
-                if (legacyBuildPlanPhases != null) {
-                    newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(legacyBuildPlanPhases.toBuildPlanConfiguration());
-                }
-            }
-            newProgrammingExercise.getBuildConfig().setBuildScript(null);
+            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+        }
+        if (!BuildPlanPhasesDTO.isInPhasesFormat(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
+                && newProgrammingExercise.getBuildConfig().getBuildScript() == null) {
+            newProgrammingExercise.getBuildConfig().setBuildScript(originalProgrammingExercise.getBuildConfig().getBuildScript());
         }
 
         // Hints, tasks, test cases and static code analysis categories

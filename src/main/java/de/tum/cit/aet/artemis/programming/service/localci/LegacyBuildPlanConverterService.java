@@ -17,9 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
 /**
  * In legacy LOCALCI exercises the buildPlanConfiguration was used only for the docker image and the result paths.
@@ -35,7 +32,10 @@ public class LegacyBuildPlanConverterService {
 
     private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
-    public Optional<BuildPlanPhasesDTO> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
+    public record DataFromLegacyFormat(String dockerImage, List<String> resultPaths, String buildScript) {
+    }
+
+    public Optional<DataFromLegacyFormat> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
         var buildConfig = programmingExercise.getBuildConfig();
         if (buildConfig == null || buildConfig.getBuildScript() == null) {
             return Optional.empty();
@@ -62,18 +62,12 @@ public class LegacyBuildPlanConverterService {
                 return Optional.empty();
             }
 
-            String wrappedScript = wrapLegacyBuildScript(buildConfig.getBuildScript());
-            List<BuildPhaseDTO> phases = List.of(new BuildPhaseDTO("script", wrappedScript, BuildPhaseCondition.ALWAYS, false, resultPaths));
-            return Optional.of(new BuildPlanPhasesDTO(phases, dockerImage));
+            String buildScript = "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + buildConfig.getBuildScript();
+            return Optional.of(new DataFromLegacyFormat(dockerImage, resultPaths, buildScript));
         }
         catch (JsonProcessingException e) {
             return Optional.empty();
         }
-    }
-
-    private static String wrapLegacyBuildScript(String legacyScript) {
-        return "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + "local tmp_file=$(mktemp)\n" + "cat << '  __LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n"
-                + legacyScript + "\n" + "__LEGACY_INNER_SCRIPT_END__\n" + "chmod +x \"${tmp_file}\"\n" + "\"${tmp_file}\" \"$@\"\n";
     }
 
     private static String parseDockerImage(JsonNode node) {

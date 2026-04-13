@@ -326,53 +326,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
+        programmingExercise.setBuildConfig(buildConfig);
         Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
 
-        return getBuildConfigFromPhases(buildPlanPhasesDTO, participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
-                programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
-    }
-
-    /**
-     * Creates a BuildConfig from the new BuildPlanPhases format.
-     * Evaluates phase conditions, assembles the build script from active phases,
-     * and extracts result paths only from active phases.
-     */
-    private BuildConfig getBuildConfigFromPhases(Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO, ProgrammingExerciseParticipation participation,
-            ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            String branch, ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
-            DockerRunConfig dockerRunConfig) {
-
-        programmingExercise.setBuildConfig(buildConfig);
-
-        List<BuildPhaseDTO> phases = null;
-        String dockerImage = null;
-
         // legacy exercise handling
-        if (buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null) {
-            BuildPlanPhasesDTO legacyPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise).orElse(null);
-            if (legacyPhases != null) {
-                phases = legacyPhases.phases();
-                dockerImage = legacyPhases.dockerImage();
+        final boolean shouldFallBackToLegacyHandling = buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null;
+        if (shouldFallBackToLegacyHandling) {
+            LegacyBuildPlanConverterService.DataFromLegacyFormat dataFromLegacyFormat = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)
+                    .orElse(null);
+            if (dataFromLegacyFormat != null) {
+                return new BuildConfig(dataFromLegacyFormat.buildScript(), dataFromLegacyFormat.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
+                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dataFromLegacyFormat.resultPaths(), buildConfig.getTimeoutSeconds(),
+                        buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
             }
         }
 
-        if (phases == null) {
-            if (buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null) {
-                phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
-            }
-            else {
-                phases = buildPlanPhasesDTO.orElseThrow().phases();
-            }
-        }
+        final boolean isMissingDefaultPhases = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null;
+        final List<BuildPhaseDTO> phases = isMissingDefaultPhases ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().phases();
 
-        if (dockerImage == null) {
-            if (buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null) {
-                dockerImage = buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise);
-            }
-            else {
-                dockerImage = buildPlanPhasesDTO.orElseThrow().dockerImage();
-            }
-        }
+        final boolean isMissingDefaultDockerImage = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null;
+        final String dockerImage = isMissingDefaultDockerImage ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().dockerImage();
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 

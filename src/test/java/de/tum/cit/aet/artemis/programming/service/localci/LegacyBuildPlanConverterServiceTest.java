@@ -41,16 +41,14 @@ class LegacyBuildPlanConverterServiceTest {
                 }
                 """, "echo hi");
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var legacyData = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
 
-        assertThat(buildPlanPhases).isPresent();
-        assertThat(buildPlanPhases.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
-        assertThat(buildPlanPhases.orElseThrow().phases()).hasSize(1);
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().name()).isEqualTo("script");
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().resultPaths()).containsExactly("build/test-results/test/*.xml", "coverage.xml");
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().script()).contains("cd /var/tmp/testing-dir\n");
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().script()).contains("cat << '  __LEGACY_INNER_SCRIPT_END__' > \"${tmp_file}\"\n");
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().script()).contains("echo hi\n");
+        assertThat(legacyData).isPresent();
+        assertThat(legacyData.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
+        assertThat(legacyData.orElseThrow().buildScript()).contains("echo hi");
+        assertThat(legacyData.orElseThrow().resultPaths().size()).isEqualTo(2);
+        assertThat(legacyData.orElseThrow().resultPaths().getFirst()).isEqualTo("build/test-results/test/*.xml");
+        assertThat(legacyData.orElseThrow().resultPaths().getLast()).isEqualTo("coverage.xml");
     }
 
     @Test
@@ -58,48 +56,6 @@ class LegacyBuildPlanConverterServiceTest {
         final ProgrammingExercise programmingExercise = createExercise("non legacy", "echo hi");
 
         assertThat(legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)).isEmpty();
-    }
-
-    @Test
-    void convertLegacyBuildPlanConfiguration_shouldAcceptBlankDockerImage() {
-        final ProgrammingExercise programmingExercise = createExercise("""
-                {
-                    "metadata": {
-                        "docker": {
-                            "image": "   "
-                        }
-                    },
-                    "actions": []
-                }
-                """, "echo hi");
-
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
-
-        assertThat(buildPlanPhases).isPresent();
-        assertThat(buildPlanPhases.orElseThrow().dockerImage()).isEmpty();
-    }
-
-    @Test
-    void convertLegacyBuildPlanConfiguration_shouldAcceptBlankResultPath() {
-        final ProgrammingExercise programmingExercise = createExercise("""
-                {
-                    "actions": [
-                        {
-                            "name": "test",
-                            "results": [
-                                {
-                                    "path": "   "
-                                }
-                            ]
-                        }
-                    ]
-                }
-                """, "echo hi");
-
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
-
-        assertThat(buildPlanPhases).isPresent();
-        assertThat(buildPlanPhases.orElseThrow().phases().getFirst().resultPaths()).containsExactly("");
     }
 
     @Test

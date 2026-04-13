@@ -878,18 +878,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private saveExerciseWithOptions(emptyRepositories: boolean) {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.customizeBuildPlan || this.isImportFromFile || this.isImportFromSharing) {
+        if (this.programmingExercise.customizeBuildPlan) {
             const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
             if (phasesJSON) {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
             } else {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             }
-        } else {
+            this.programmingExercise.buildConfig!.buildScript = undefined;
+        } else if (!this.isImportFromFile && !this.isImportFromSharing) {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            this.programmingExercise.buildConfig!.buildScript = undefined;
         }
-
-        this.programmingExercise.buildConfig!.buildScript = undefined;
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
