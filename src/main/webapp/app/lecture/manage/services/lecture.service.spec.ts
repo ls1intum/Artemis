@@ -77,7 +77,6 @@ describe('Lecture Service', () => {
             expect(requestBody.posts).toBeUndefined();
             expect(requestBody.isAtLeastEditor).toBeUndefined();
             expect(requestBody.isAtLeastInstructor).toBeUndefined();
-            expect(requestBody.visibleDate).toBeUndefined();
 
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
@@ -113,7 +112,6 @@ describe('Lecture Service', () => {
             expect(requestBody.posts).toBeUndefined();
             expect(requestBody.isAtLeastEditor).toBeUndefined();
             expect(requestBody.isAtLeastInstructor).toBeUndefined();
-            expect(requestBody.visibleDate).toBeUndefined();
 
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);

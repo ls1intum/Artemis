@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -67,10 +66,6 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public Set<Lecture> findAllByCourseIdWithEagerLectureUnits(long courseId) {
         return lectureRepository.findAllByCourseIdWithEagerLectureUnits(courseId);
-    }
-
-    public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
-        return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
     }
 
     public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(long courseId) {

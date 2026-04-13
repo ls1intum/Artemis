@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
@@ -20,18 +20,14 @@ const routes: Routes = [
             showSkeleton: false,
         },
         canActivate: [
-            (): Promise<boolean | UrlTree> => {
+            (): boolean | UrlTree => {
                 const accountService = inject(AccountService);
                 const router = inject(Router);
-                return accountService
-                    .identity()
-                    .then((account) => {
-                        if (account) {
-                            return router.parseUrl('/courses');
-                        }
-                        return true;
-                    })
-                    .catch(() => true);
+                // Identity is already resolved by the APP_INITIALIZER, so check synchronously
+                if (accountService.userIdentity()) {
+                    return router.parseUrl('/courses');
+                }
+                return true;
             },
         ],
     },
@@ -265,6 +261,15 @@ const routes: Routes = [
         loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
     },
     {
+        path: 'exams/rooms',
+        loadComponent: () => import('app/exam/manage/students/room-distribution/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.examRooms.management.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'features',
         loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.featureOverviewRoutes),
     },
@@ -280,6 +285,17 @@ const routes: Routes = [
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
+    },
+    // ===== PDF VIEWER IFRAME =====
+    {
+        path: 'pdf-viewer-iframe',
+        loadComponent: () => import('./lecture/shared/pdf-viewer/pdf-viewer-iframe-content.component').then((m) => m.PdfViewerIframeContentComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
+            hidePageRibbon: true,
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

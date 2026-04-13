@@ -12,13 +12,15 @@ import com.thoughtworks.qdox.model.JavaMember;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly throughout the other serializers in order to avoid code
  * repetition.
  */
 class SerializerUtil {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JsonObjectMapper.get();
 
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.

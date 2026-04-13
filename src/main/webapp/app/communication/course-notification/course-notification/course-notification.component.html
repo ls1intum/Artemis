@@ -22,6 +22,7 @@
                         [authorId]="authorId"
                         [authorName]="authorName"
                         [imageUrl]="addPublicFilePrefix(authorImageUrl)"
+                        [imageBackgroundColor]="isAuthorBot ? 'transparent' : undefined"
                     />
                 } @else {
                     <div class="course-notification-icon">

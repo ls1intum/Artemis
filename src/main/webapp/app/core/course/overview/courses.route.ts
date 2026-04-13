@@ -106,24 +106,67 @@ export const courseRoutes: Routes = [
                         loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         pathMatch: 'full',
                     },
+                    {
+                        path: 'text-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
+                    },
+                    {
+                        path: 'programming-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/programming/overview/programming-exercise-participation.route').then((m) => m.programmingExerciseParticipationRoute),
+                    },
+                    {
+                        path: 'modeling-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/modeling/overview/modeling-exercise-split-panel.route').then((m) => m.modelingExerciseSplitPanelRoute),
+                    },
+                    {
+                        path: 'file-upload-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/fileupload/overview/file-upload-participation.route').then((m) => m.fileUploadParticipationRoute),
+                    },
+                    {
+                        path: 'quiz-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
+                    },
                 ],
-            },
-            {
-                path: 'exercises/text-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
-            },
-            {
-                path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
-                loadComponent: () =>
-                    import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'artemisApp.programmingExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'exercises/:exerciseId/repository',
@@ -131,30 +174,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
-            },
-            {
-                path: 'exercises/modeling-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
-            },
-            {
-                path: 'exercises/quiz-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
-            },
-            {
-                path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
-                },
-                canActivate: [UserRouteAccessService],
-                canDeactivate: [PendingChangesGuard],
             },
 
             {
