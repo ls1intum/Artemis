@@ -328,7 +328,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'), false, response.competencyPreviews);
+                this.addMessage(
+                    response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                    response.exerciseMappingPreview,
+                );
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
