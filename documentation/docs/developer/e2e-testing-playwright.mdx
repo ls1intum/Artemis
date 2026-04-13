@@ -2,67 +2,43 @@ import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
-import playwrightBambooDeployment from './assets/playwright_bamboo_deployment_diagram.svg';
+import e2eHwSwMapping from './assets/playwright_hw_sw_mapping.png';
+import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 
 # E2E Testing with Playwright
 
 ## Background
 
-The Playwright test suite contains system tests verifying the most important features of Artemis.
-System tests test the whole system and therefore require a complete deployment of Artemis first.
-In order to prevent as many faults (bugs) as possible from being introduced into the develop branch,
-we want to execute the Playwright test suite whenever new commits are pushed to a Git branch
-(just like the unit and integration test suites).
+The Playwright test suite contains system tests that verify the most important user-facing workflows in Artemis.
+System tests exercise the complete technology stack — frontend, backend, database, and integrated services — by simulating real browser interactions.
+In order to detect regressions before they reach the `develop` branch, the pipeline runs the Playwright suite on every pull request and on every push to `develop`.
 
-To accomplish this we need to be able to dynamically deploy multiple different instances of Artemis at the same time.
-An ideal setup would be to deploy the whole Artemis system using Kubernetes.
-However, this setup is too complex at the moment.
-The main reason for the complexity is that it is very hard to automatically setup Docker containers for
-the external services (e.g. Jenkins) and connect them directly with Artemis.
+Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners rather than GitHub-hosted runners because
+they require substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
+Self-hosted runners do not start from a clean state between jobs; the pipeline cleans up leftover artifacts explicitly between phases.
 
-Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
-the prelive system, which is already properly setup in the university data center.
+To keep feedback cycles short, the pipeline uses a **two-phase execution model**: Phase 1 runs only the tests
+mapped to the files changed in the pull request, and Phase 2 runs the remaining tests only when Phase 1 passes.
+This gives developers targeted feedback within a few minutes for the tests most likely to surface a regression,
+without waiting for the full suite to complete.
 
-## Set up Playwright locally
+---
 
-To run the tests locally, developers need to set up Playwright on their machines.
-End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running.
-Playwright tests rely on the Playwright Node.js library, browser binaries, and some helper packages.
+## Running E2E Tests Locally
 
-**The recommended way to run E2E tests locally is the [fast local runner](#fast-local-runner-recommended-for-development)** — a single script
-(`./run-e2e-tests-local-fast.sh`) that handles database, server, client, and Playwright setup automatically.
-It auto-kills conflicting processes on ports 8080/9000, keeps services running between re-runs, and supports filtering individual tests.
-
-Alternatively, you can use the Docker-based scripts in `supporting_scripts/playwright` (see the README there),
-or set up everything manually as described below. The manual setup relies on fully configuring your local Artemis instance
-following [the server setup guide](./setup.mdx) and is useful when you need IntelliJ integration for debugging.
-
-### Supporting scripts overview
-
-The following helper scripts live in `supporting_scripts/playwright` and can be combined as needed:
-
-- `runArtemisInDocker_macOS.sh` / `runArtemisInDocker_linux.sh`: start the Artemis server/client plus database in Docker.
-- `setupUsers.sh`: create the Playwright test users.
-- `startPlaywright.sh`: run the full Playwright suite headless in the terminal.
-- `startPlaywrightUI.sh`: launch Playwright in UI mode for debugging.
-- `prepareVSCodeForE2ETests.sh`: install dependencies and patch the Playwright config so VS Code can discover and run the E2E tests directly from the Testing view.
-- `checkFlakiness.sh`: repeatedly run tests to investigate flaky behavior.
-
-The three steps for setting up Playwright with these supporting scripts are:
-
-1. Start Artemis by running `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh` (depending on your OS). This starts the database, server, and client; keep the client running and use a separate shell for the remaining steps.
-2. Create test users by running `setupUsers.sh` (skip if users already exist).
-3. Run tests either headless with `startPlaywright.sh`, in UI mode with `startPlaywrightUI.sh`, or via VS Code after running `prepareVSCodeForE2ETests.sh`.
+E2E tests require the full Artemis stack to be running: database, server, and client.
+The **recommended approach is the [fast local runner](#fast-local-runner-recommended-for-development)**,
+a single script that handles all of this automatically.
+Alternatively, you can use the Docker-based supporting scripts or set everything up manually.
 
 ### Fast local runner (recommended for development)
 
-For the fastest local development experience, use the `run-e2e-tests-local-fast.sh` script in the repository root.
-This is the **recommended way to run E2E tests locally** for both developers and AI agents.
-Unlike the Docker-based approach above, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
+Use `run-e2e-tests-local-fast.sh` in the repository root for the fastest local development experience.
+Unlike the Docker-based approach, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
 Services stay running between test runs, so re-runs only take seconds.
 
-The script automatically kills any processes occupying ports 8080 (server), 9000 (client), and 7921 (local VC SSH),
-so you don't need to manually stop conflicting processes before running it.
+The script automatically kills any processes on ports 8080 (server), 9000 (client), and 7921 (local VC SSH)
+before starting, so you do not need to stop conflicting processes manually.
 
 **Prerequisites:** Docker, Java 25+, Node.js 24+, npm.
 
@@ -71,7 +47,7 @@ so you don't need to manually stop conflicting processes before running it.
 - **Docker:** PostgreSQL only (port 5432)
 - **Host:** Spring Boot server via `./gradlew bootRun -x webapp` (port 8080)
 - **Host:** Angular client via `npm start` (port 9000, proxies API calls to 8080)
-- **Host:** Playwright tests connect to `http://localhost:9000`
+- **Host:** Playwright connects to `http://localhost:9000`
 
 **First run (starts everything):**
 
@@ -79,7 +55,7 @@ so you don't need to manually stop conflicting processes before running it.
 ./run-e2e-tests-local-fast.sh
 ```
 
-This starts PostgreSQL, boots the server (~30-90s), starts the client (~10-20s), then runs all Playwright tests.
+This starts PostgreSQL, boots the server (~30–90 s), starts the client (~10–20 s), then runs all Playwright tests.
 
 **Run specific tests:**
 
@@ -104,7 +80,7 @@ After the first run, services stay running. Skip startup for faster re-runs:
 # Run only specific tests
 ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
 
-# Open Playwright UI for debugging
+# Open Playwright UI for interactive debugging
 ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
 ```
 
@@ -126,31 +102,43 @@ After the first run, services stay running. Skip startup for faster re-runs:
 | `--headed` | Run Playwright in headed mode (visible browser) |
 | `--ui` | Open Playwright UI mode for interactive debugging |
 | `--video` | Enable video recording (off by default to save CPU) |
-| `--coverage` | Enable coverage collection (off by default, requires extra memory) |
-| `--debug` | Show server and client output inline (normally only in log files) |
+| `--coverage` | Enable JS coverage collection via monocart (off by default; requires extra memory) |
+| `--debug` | Show server and client output inline (normally written to log files only) |
 
 Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
 
-If you want to manually install playwright, you can follow these steps:
+### Supporting scripts overview
 
-### 1. Install dependencies
+The following helper scripts live in `supporting_scripts/playwright` and provide an alternative Docker-based workflow:
 
-First, navigate to the Playwright folder:
+- `runArtemisInDocker_macOS.sh` / `runArtemisInDocker_linux.sh`: start the Artemis server, client, and database in Docker containers.
+- `setupUsers.sh`: create the Playwright test users in a running Artemis instance.
+- `startPlaywright.sh`: run the full Playwright suite headless in the terminal.
+- `startPlaywrightUI.sh`: launch Playwright in UI mode for interactive debugging.
+- `prepareVSCodeForE2ETests.sh`: install dependencies and patch the Playwright config so VS Code can discover and run tests from the Testing sidebar.
+- `checkFlakiness.sh`: run a specific test repeatedly to detect non-deterministic failures before pushing to CI.
+
+The three steps for the Docker-based approach:
+
+1. Start Artemis with `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh`. Keep the process running and open a separate shell.
+2. Create test users with `setupUsers.sh` (skip if users already exist).
+3. Run tests headless with `startPlaywright.sh`, interactively with `startPlaywrightUI.sh`, or from VS Code after running `prepareVSCodeForE2ETests.sh`.
+
+### Manual setup
+
+Use manual setup when you need IntelliJ debugger integration or want full control over the running Artemis instance.
+Follow the [server setup guide](./setup.mdx) to prepare a locally running Artemis instance first.
+
+#### 1. Install dependencies
 
 ```bash
 cd src/test/playwright
-```
-
-Then install the dependencies:
-
-```bash
 npm install
 ```
 
-### 2. Customize Playwright configuration
+#### 2. Customize Playwright configuration
 
-We need to configure Playwright to match our local Artemis setup and user settings. All configurations are stored in
-the `playwright.env` file. The default configuration for an ICL setup looks as follows:
+All configuration is stored in `playwright.env`. The default configuration for a local ICL setup:
 
 ```text
 PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_
@@ -165,306 +153,450 @@ INSTRUCTOR_GROUP_NAME=instructors
 BASE_URL=http://localhost:9000
 EXERCISE_REPO_DIRECTORY=test-exercise-repos
 FAST_TEST_TIMEOUT_SECONDS=45
-SLOW_TEST_TIMEOUT_SECONDS=180
+SLOW_TEST_TIMEOUT_SECONDS=90
 ```
 
-Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
-`ADMIN_PASSWORD` match your Artemis admin user credentials.
+Make sure `BASE_URL` matches your Artemis client URL and the admin credentials match your local Artemis admin user.
 
-### 3. Configure test users
+#### 3. Configure test users
 
-Playwright tests require users with different roles to simulate concurrent user interactions. If you already
-have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
-`supporting_scripts/playwright` folder:
+Generate test users with the script in `supporting_scripts/playwright`:
 
 ```bash
 setupUsers.sh
 ```
 
-You can configure user IDs and check their corresponding user roles in the `src/test/playwright/support/users.ts` file.
-Usernames are defined automatically by appending the userId to the `PLAYWRIGHT_USERNAME_TEMPLATE`.
-At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
+You can review user IDs and their roles in `src/test/playwright/support/users.ts`.
+Usernames are formed by appending the user ID to `PLAYWRIGHT_USERNAME_TEMPLATE`.
 
-### 4. Setup Playwright package and its browser binaries
-
-Install Playwright browser binaries, set up the environment to ensure Playwright can locate these binaries.
-On some operating systems this might not work, and playwright needs to be manually installed via a package manager.
+#### 4. Set up Playwright and browser binaries
 
 ```bash
 npm run playwright:setup-local
 npm run playwright:init
 ```
 
-### 5. Open Playwright UI
+#### 5. Run tests
 
-To open the Playwright UI, run:
+Open the graphical UI:
 
 ```bash
 npm run playwright:open
 ```
 
-This opens a graphical interface that allows you to run individual tests, test files, or test suites while observing
-the test execution in a browser window.
-
-Another way to run tests is through the command line. To run all tests in the command line, use:
+Or run all tests in the terminal:
 
 ```bash
 npm run playwright:test
 ```
 
-To run a specific test file, use:
+To run a specific file:
 
 ```bash
-npx playwright test <path_to_test_file>
+npx playwright test src/test/playwright/e2e/atlas/CompetencyManagement.spec.ts
 ```
 
-If you want to run a specific test suite or a single test, add the `-g` flag to the previous command, followed by the
-test suite name or test name.
-For example, you can run the test suite "Course creation" located in the file `CourseManagement.spec.ts` using
-the command:
+To run a specific test or suite within a file, use the `-g` flag:
 
 ```bash
-npx playwright test src/test/playwright/tests/CourseManagement.spec.ts -g "Course creation"
+npx playwright test src/test/playwright/e2e/course/CourseManagement.spec.ts -g "Course creation"
 ```
 
-## Test parallelization
+---
 
-Running tests in parallel may speed up test execution. We achieve this using Playwright's built-in parallelization
-feature. By default, tests are configured to run in fully parallel mode. This means that all tests in all files are
-executed in parallel. Test execution tasks are divided among worker processes. Each process runs a separate browser
-instance and executes a subset of tests. The number of worker processes can be adjusted in the `playwright.config.js`
-file.
+## Test Organization
+
+### Test projects: fast and slow tests
+
+Playwright is configured with two test projects that run concurrently:
+
+| Project | Tag | Timeout (local) | Timeout (CI) | Use for |
+|---------|-----|-----------------|--------------|---------|
+| `fast-tests` | `@fast` or no tag | 45 s | 60 s | Tests that complete quickly and do not involve long-running background jobs |
+| `slow-tests` | `@slow` | 90 s | 90 s | Tests that wait for CI/CD builds, large data processing, or other asynchronous operations |
+
+Tag your test suite with `{ tag: '@slow' }` when it involves build pipelines or polling for background jobs; otherwise omit the tag (defaults to `fast-tests`):
+
+```typescript
+// Fast test (default)
+test.describe('Competency Management', { tag: '@fast' }, () => { ... });
+
+// Slow test
+test.describe('Programming Exercise Participation', { tag: '@slow' }, () => { ... });
+```
+
+By default, tests run with **5 parallel workers**. Each worker controls a separate browser instance.
+The number of workers is configurable via the `TEST_WORKER_PROCESSES` environment variable.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Using more worker processes divides the available computing resources, giving each worker fewer resources. Using too
-    many workers can lead to resource contention, slowing down individual test execution and potentially causing
-    timeouts.</p>
+    <p>Using more worker processes divides available compute resources among workers. Too many workers cause resource
+    contention, longer individual test execution, and increased timeout risk. Adjust <code>TEST_WORKER_PROCESSES</code>
+    to match your machine's capacity.</p>
 </Callout>
 
-To run tests sequentially (one after another), set the `workers` option to `1`. To run tests within each file
-sequentially, while running test files in parallel, set the `fullyParallel` option to `false`.
+Tests are configured with **2 automatic retries** on failure and a **10 s expect timeout** for assertions.
+Traces are collected on the first retry, and videos are recorded for every test run to aid debugging.
 
-## Best practices when writing new E2E tests
+### Global setup
 
-### Understanding the System and Requirements
+Before any test runs, `init/global-setup.ts` executes once. It provisions the Artemis instance with seed data
+needed by certain tests (e.g., persistent seed courses used by Atlas tests) and verifies that the application
+is reachable. If global setup fails, no tests are executed.
 
-Before writing tests, a deep understanding of the system and its requirements is crucial.
-This understanding guides determining what needs testing and what defines a successful test.
-The best way to understand is to consolidate the original system's developer or a person actively working on this
-component.
+---
 
-### Identify Main Test Scenarios
+## Writing E2E Tests
 
-Identify what are the main ways the component is supposed to be used. Try
-the action with all involved user roles and test as many different inputs as
-feasible.
+### Understanding the system and requirements
 
-### Identify Edge Test Scenarios
+Before writing tests, develop a thorough understanding of the workflow you are covering. Consult the original developer
+or a person actively working on the component to understand its intended behavior across all user roles.
 
-Next to the main test scenarios, there are also edge case scenarios. These
-tests include inputs/actions that are not supposed to be performed (e.g. enter
-a too-long input into a field) and test the error-handling capabilities of the
-platform.
+### Identify main and edge scenarios
 
-### Write Tests as Development Progresses
+Identify the primary ways the component is used and test them with all relevant user roles and representative inputs.
+Also cover edge cases: inputs that are not supposed to work (e.g., overly long text), and actions that should produce
+error states.
 
-Rather than leaving testing until the end, write tests alongside each piece of
-functionality. This approach ensures the code remains testable and makes
-identifying and fixing issues as they arise easier.
+### Write tests as development progresses
 
-### Keep Tests Focused
+Write tests alongside feature development rather than after the fact. This keeps code testable and makes issues
+easier to identify and fix early.
 
-Keep each test focused on one specific aspect of the code. If a test fails, it is
-easier to identify the issue when it does not check multiple functionalities at
-the same time.
+### Keep tests focused and independent
 
-### Make Tests Independent
+Each test should verify one specific behavior. Tests must not depend on each other or on external factors like the
+current date. Use API calls for setup tasks (e.g., creating a course) and UI interaction for the behavior under test.
+Clean up after each test in `afterEach`.
 
-Tests should operate independently from each other and external factors like
-the current date or time. Each test should be isolated. Use API calls for unrelated tasks, such as creating a
-course, and UI interaction for the appropriate testing steps. This also involves
-setting up a clean environment for every test suite.
+### Use descriptive test names
 
-### Use Descriptive Test Names
+Test names appear in CI comments and failure reports. Write them so that a reader who has not seen the code
+understands what scenario failed.
 
-Ensure each test name clearly describes what the test does. This strategy
-makes the test suite easier to understand and quickly identifies which test
-has failed.
+### Do not ignore failing tests
 
-### Use Similar Test Setups
+Investigate consistently failing tests immediately. A test that always fails is either broken or exposing a real defect.
+Leaving it broken degrades trust in the entire suite.
 
-Avoid using different setups for each test suite. For example, always check
-for the same HTTP response when deleting a course.
+### Regularly review and refactor tests
 
-### Do Not Ignore Failing Tests
+Tests accumulate technical debt just like production code. Review tests periodically for unnecessary complexity,
+duplicated setup logic, or outdated assumptions.
 
-If a test consistently fails, pay attention to it. Investigate as soon as possible
-and fix the issue, or update the test if the requirements have changed.
+---
 
-### Regularly Review and Refactor Your Tests
-
-Tests, like code, can accumulate technical debt. Regular reviews for duplication,
-unnecessary complexity, and other issues help maintain tests and enhance reliability.
-
-## Playwright testing best practices
+## Playwright-Specific Best Practices
 
 ### 1. Use page objects for common interactions
 
-Page objects are a design pattern that helps to abstract the details of the page structure and interactions. They
-encapsulate the page elements and their interactions with the page. This makes the tests more readable and
-maintainable.
-Page objects are stored in the `support/pageobjects` folder. Each page object is implemented as a class containing
-a Playwright page instance and may have instances of other page objects as well. Page object classes provide methods
-performing common user actions or returning frequently used locators.
-Page objects are registered as fixtures to make them easily accessible in tests without caring about their
-initialization and teardown.
+Page objects encapsulate the details of a page's structure and interactions. They are stored in
+`src/test/playwright/support/pageobjects/`. Each page object is a class containing a Playwright `page` instance
+and methods for common user actions. Page objects are registered as fixtures for easy injection into tests.
 
 ### 2. Use fixtures
 
-Test fixture in Playwright is a setup environment that prepares the necessary conditions and state required for your
-tests to run. It helps manage the initialization and cleanup tasks so that each test starts with a known state.
-We use fixtures for all POMs and common test commands such as `login`. Fixtures are defined in
-`support/fixtures.ts`.
+Fixtures manage test initialization and teardown so each test starts from a known state.
+All page objects and common commands (e.g., `login`) are available as fixtures defined in `support/fixtures.ts`.
 
-To create a fixture, define its instance inside a corresponding existing type or define a new one:
+To create a fixture:
 
 ```typescript
 export type ArtemisPageObjects = {
     loginPage: LoginPage;
 }
-```
 
-Ensure the base test (`base`) extends the fixture type. Define a fixture with the relevant name and return the
-desired instance as an argument of `use()` function as below:
-
-```typescript
 export const test = base.extend<ArtemisPageObjects>({
     loginPage: async ({ page }, use) => {
-      await use(new LoginPage(page));
+        await use(new LoginPage(page));
     }
 });
 ```
 
-Inject the fixture to tests when needed as an argument to the `test()` function as follows:
+Inject the fixture in a test:
 
 ```typescript
-test('Test name', async ({ fixtureName }) => {
-    // Test code
+test('Test name', async ({ loginPage }) => {
+    // use loginPage
 });
 ```
 
-### 3. Use uniquely identifiable locators
+### 3. Use `data-testid` locators
 
-Use unique locators to identify elements on the page. Playwright throws an error when interacting with a locator
-that matches multiple elements on the page. To ensure uniqueness, use locators based on the element's
-`data-testid`, `id`, unique `class` or a combination of these attributes.
+Prefer `data-testid` attributes over CSS selectors, text content, or ARIA roles as the primary locator strategy.
+Text-based and role-based locators break whenever the display text or component structure changes,
+turning a UI rename into a test failure that has nothing to do with a regression.
+A `data-testid` attribute survives UI refactors as long as the attribute itself is preserved.
 
-Avoid using the `nth()` method or the `nth-child` selector, as they rely on the element's position in the DOM
-hierarchy. Use these methods only when iterating over multiple similar elements.
+If a component does not have a `data-testid`, add one to its template:
 
-Avoid using locators that are prone to change. If a component lacks a unique selector,
-add a `data-testid` attribute with a unique value to its template. This ensures that the component is easily
-identifiable, making tests less likely to break when there are changes to the component.
+```html
+<button data-testid="submit-competency-button">Save</button>
+```
 
-### 4. Consider actionability of elements
+Then reference it in the test:
 
-Checking for the state of an element before interacting with it is crucial to avoid flaky behavior. Actions like
-clicking a button or typing into an input field require a particular state from the element, such as visible and
-enabled, which makes it actionable.  Playwright ensures that the elements you interact with are actionable before
-performing such actions.
+```typescript
+await page.getByTestId('submit-competency-button').click();
+```
 
-However, some complex interactions may require additional checks to ensure the element is in the desired state. For
-example, consider a case where we want to access the inner text of an element that is not visible yet. Use `waitFor()`
-function of a locator to wait for its `visible` state before accessing its inner text:
+Avoid `nth()` and `:nth-child` selectors; they couple tests to DOM position and break when sibling elements are added.
+
+### 4. Consider element actionability
+
+Playwright automatically waits for elements to be visible and enabled before performing actions such as `click()` or `fill()`.
+For cases where you need to access inner text or other properties before interaction, use `waitFor()` on the locator:
 
 ```typescript
 await page.locator('.clone-url').waitFor({ state: 'visible' });
-const urlText = await this.page.locator('.clone-url').innerText();
+const urlText = await page.locator('.clone-url').innerText();
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Avoid using <code>page.waitForSelector()</code> function to wait for an element to appear on the page. This function
-    waits for the visibility in the DOM, but it does not guarantee that the element is actionable. Always
-    prefer the <code>waitFor()</code> function of a locator instead.</p>
+    <p>Do not use <code>page.waitForSelector()</code>. It only checks DOM presence, not actionability.
+    Always prefer <code>locator.waitFor()</code>.</p>
 </Callout>
 
-In some cases, we may need to wait for the page to load completely before interacting with its elements. Use
-`waitForLoadState()` function to wait for the page to reach a specified load state:
+Use `waitForLoadState()` only when you need the entire page to finish loading, not when waiting for a specific element:
 
 ```typescript
 await page.waitForLoadState('load');
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Waiting for the page load state is not recommended if we are only interested in specific elements appearing on
-    the page - use <code>waitFor()</code> function of a locator instead.</p>
+    <p>Avoid waiting for load state when you are interested in a specific element — use <code>locator.waitFor()</code> instead.</p>
 </Callout>
 
-## Artemis Deployment on GitHub Runner
+### 5. AI-assisted test authoring with the Playwright MCP server
 
-Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
-The easiest way to accomplish this is to deploy Artemis locally on the GitHub runner, which executes the Playwright tests.
-Using `docker compose` the runner can start a MySQL database and the Artemis server (potentially as multi-node deployment) and the client locally.
+The repository integrates a Playwright Model Context Protocol (MCP) server that exposes the live application DOM
+to AI coding assistants such as GitHub Copilot and Claude Code.
 
-<Image src={playwrightBambooDeployment} alt="Artemis Deployment on GitHub runner for Playwright" size={ImageSize.large} caption="Artemis Deployment on GitHub runner for Playwright" />
+Without the MCP server, AI assistants can generate test structure and boilerplate but produce incorrect locators
+because they have no access to the running page state.
+With the MCP server active, the assistant can inspect the current DOM, retrieve the `data-testid` attributes
+attached to elements, and generate locators that reference those IDs directly.
 
-In total there are three Docker containers started on the GitHub runner:
+To use it, start Artemis locally (via the fast runner or any other method) and enable the Playwright MCP
+integration in your editor's AI assistant settings. The assistant can then:
+- Inspect the current page structure and available `data-testid` attributes
+- Generate accurate locators for the elements involved in the workflow
+- Produce a first-draft test that closely matches the actual DOM
 
-### 1. MySQL
+Review the generated test by running it locally, confirm that the interaction sequence matches the intended workflow,
+and correct any steps where the assistant misread the application state.
+This approach significantly reduces the gap between a first draft and a passing test.
 
-This container starts a MySQL database and exposes it on port 3306.
-The container automatically creates a new database 'Artemis' and configures it
-with the recommended settings for Artemis.
-The Playwright setup reuses the already existing
-[MySQL docker image](https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml)
-from the standard Artemis Docker setup.
+---
 
-### 2. Artemis Application
+## CI Pipeline
 
-The Docker image for the Artemis container is created from the already existing
-[Dockerfile](https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile).
-When the build of the Playwright test suite starts, it retrieves the Artemis executable (.war file).
-Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
-for the Artemis server.
+### Overview: two-phase execution
 
-The main configuration of the Artemis server are contained in the
-[Playwright environment configuration files](https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config).
-However, those files do not contain any security relevant information.
-Security relevant settings are instead passed to the Docker container via environment variables and GitHub secrets.
+Every pull request triggers a two-phase E2E pipeline. Phase 1 runs only the tests mapped to the files changed in
+the pull request; Phase 2 runs all remaining tests, but only when Phase 1 passes.
+This architecture ensures that developers receive targeted feedback within minutes for the tests most likely to surface
+a regression, while still running the full suite before merge.
 
-The Artemis container is also configured to
-[depend on](https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on)
-the MySQL container and uses
-[health checks](https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck)
-to wait until the MySQL container is up and running.
+<Image src={e2eCiPipelineSsd} alt="Two-phase CI pipeline activity diagram showing Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes" size={ImageSize.large} caption="Two-phase CI pipeline activity diagram. Phase 1 runs change-relevant tests first. If Phase 1 passes, Phase 2 runs the remaining tests. Both phases query Helios for flakiness scores and upload artifacts to the Reports Dashboard before posting the PR comment." />
 
-### 3. Playwright
+**Observed performance** (across 89 measured runs):
 
-Playwright offers a test environment [docker image](https://hub.docker.com/r/microsoft/playwright)
-to execute Playwright tests.
-The image contains Playwright browsers and browser system dependencies.
-However, Playwright itself is not included in the image.
-This is convenient for us because the image is smaller and the Artemis Playwright project requires
-additional dependencies to fully function.
-Therefore, the Artemis Playwright Docker container is configured to install all dependencies
-(using `npm ci`) upon start. This will also install Playwright itself.
-Afterwards the Artemis Playwright test suite is executed.
+| Metric | Phase 1 | Phase 2 | Full suite (single-phase baseline) |
+|--------|--------:|--------:|----------------------------------:|
+| Median duration | 4.3 min | 23.8 min | 27.7 min |
+| P90 duration | 8.3 min | 29.4 min | 32.2 min |
+| Pass rate | 82% | 64.4% (of runs that reach it) | — |
 
-The necessary configuration for the Playwright test suite is also passed in via environment variables.
-Furthermore, the Playwright container depends on the Artemis container and is only started
-once Artemis has been fully booted.
+When Phase 1 detects a failure, developers receive feedback within approximately four minutes and Phase 2
+does not consume compute resources.
+
+**For pushes to `develop` or `main`:** the pipeline skips the two-phase logic and runs the full suite in a single job.
+
+### Selective test execution and `e2e-test-mapping.json`
+
+The `determine-tests` CI job reads `.ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
+The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it:
+
+```json
+{
+  "mappings": {
+    "atlas": {
+      "sourcePaths": [
+        "src/main/java/de/tum/cit/aet/artemis/atlas/",
+        "src/main/webapp/app/atlas/"
+      ],
+      "testPaths": ["e2e/atlas/"]
+    },
+    "exam": {
+      "sourcePaths": [
+        "src/main/java/de/tum/cit/aet/artemis/exam/",
+        "src/main/webapp/app/exam/"
+      ],
+      "testPaths": ["e2e/exam/"]
+    }
+  },
+  "alwaysRunTests": [
+    "e2e/Login.spec.ts",
+    "e2e/Logout.spec.ts",
+    "e2e/SystemHealth.spec.ts"
+  ],
+  "runAllTestsPatterns": [
+    "src/main/resources/config/",
+    "docker/",
+    "build.gradle",
+    "angular.json"
+  ]
+}
+```
+
+The `determine-tests` job compares the PR branch against the base branch and maps each changed file to its module.
+The union of the test paths from all matched modules, plus the `alwaysRunTests` entries, forms the Phase 1 set.
+The remaining entries from `allTestPaths` form the Phase 2 set.
+
+**Special cases:**
+- If a changed file matches a `runAllTestsPatterns` entry (e.g., a Docker or Gradle file), the pipeline skips the two-phase split and runs all tests in a single job.
+- If only Playwright spec files were changed (no source changes), Phase 2 is skipped and only Phase 1 runs.
+- If no module mapping is found for a changed file, it falls through to Phase 2.
+
+**Adding tests for a new module:** add an entry to the `mappings` object in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
+This ensures Phase 1 selects the new tests when the corresponding source files change, and Phase 2 covers them otherwise.
+
+### PR comment reporting
+
+The pipeline posts a single comment on each pull request and updates it progressively as phases complete.
+The comment is never re-created; it accumulates results in place.
+
+A typical comment after both phases shows:
+
+- A phase table with status (✅ / ❌), test count, passed, skipped, failed, and wall-clock time for each phase
+- The test file paths assigned to each phase
+- Links to the workflow run and the full HTML test report on the Reports Dashboard
+- A collapsible section listing each failed test name and its duration
+- A flakiness score table for any failed tests (when Helios data is available)
+- An overall result line summarizing the outcome in plain language
+
+Phase 1 results are posted immediately when Phase 1 finishes. If Phase 2 runs, the same comment is updated with
+Phase 2 results and the final overall status.
+
+See [Find example PR comments](#example-pr-comments) for real examples of each possible outcome.
+
+### Helios flakiness scores
+
+After each phase completes, the pipeline queries the Helios API to retrieve flakiness scores for any tests that failed.
+The scores are included in the PR comment alongside the failed test names.
+
+A **flakiness score** reflects how often a test has non-deterministically produced different results over recent CI runs.
+A high score means the test has a history of failing without a code change and the current failure may be a flake.
+A low score means the test is normally stable and the failure is more likely a genuine regression.
+
+The Helios integration is active for all PR runs. Scores appear as a table in the `❌ Failed Tests` section of the
+PR comment when Helios returns data for the failed tests.
+
+### Reports Dashboard
+
+The Reports Dashboard is a web interface that stores and serves all E2E test artifacts from CI runs.
+It is accessible from the link in the PR comment.
+
+The dashboard provides:
+
+- **Aggregate view:** total runs, 30-day pass rate, average flakiness rate, pass rate trend chart, and runtime-by-phase chart
+- **Per-run view:** phase breakdown, test-level results with status and duration, links to the full HTML report and coverage report
+- **Failure detail view:** the full assertion error, stack trace, and an embedded video recording of the browser at the moment of failure
+
+The dashboard indexes runs by pull request and commit. Artifacts are retained until the pull request is merged.
+
+### Example PR comments
+
+Three outcomes are possible for a two-phase run:
+
+1. **Both phases pass** — The comment shows two green rows in the phase table and an overall ✅ result. See [PR #12516](https://github.com/ls1intum/Artemis/pull/12516) for an example.
+
+2. **Phase 1 passes, Phase 2 fails** — The comment shows a green Phase 1 row and a red Phase 2 row. The failed test section lists Phase 2 failures. See [PR #12489](https://github.com/ls1intum/Artemis/pull/12489) for an example.
+
+3. **Phase 1 fails, Phase 2 skipped** — The comment shows a red Phase 1 row and no Phase 2 row. Developers receive targeted failure feedback within a few minutes without waiting for the rest of the suite. See [PR #12487](https://github.com/ls1intum/Artemis/pull/12487) for an example.
+
+---
+
+## CI Deployment
+
+Every CI E2E run requires a complete Artemis deployment on the self-hosted runner.
+The runner starts all required services using Docker Compose and executes Playwright tests on the host.
+
+<Image src={e2eHwSwMapping} alt="Hardware-software mapping showing five nodes: Developer Machine, GitHub, Self-Hosted CI Runner, Reports Dashboard, and Helios" size={ImageSize.large} caption="Hardware-software mapping of the E2E testing infrastructure. The Developer Machine pushes to GitHub, which triggers the Actions Orchestrator. The Self-Hosted CI Runner executes tests and sends results to the Reports Dashboard and PR comments via the Report and Communication Handler. The Helios node provides flakiness scores." />
+
+The system operates across five nodes:
+
+### Developer Machine
+
+The developer writes and commits test code in the Artemis repository on their local machine,
+then pushes changes to GitHub, which triggers the CI pipeline.
+
+### GitHub
+
+GitHub hosts two components. The **Actions Orchestrator** receives push and pull request events and
+schedules pipeline jobs on the self-hosted runner. The **PR System** exposes the API through which
+the pipeline posts and updates pull request comments.
+
+### Self-Hosted CI Runner
+
+The runner is the primary execution node. It carries two responsibilities.
+
+The **Runner** component starts the application stack and executes the Playwright test suite.
+The stack consists of:
+
+- **PostgreSQL** — started via `docker compose` (`docker/postgres.yml`), exposed on port 5432
+- **Artemis application** — the Docker image built from `docker/artemis/Dockerfile`,
+  configured via files in `docker/artemis/config/` and environment variables from GitHub secrets
+- **Playwright** — executed directly on the runner host (not in Docker), connecting to the Artemis instance at `http://localhost:9000`
+
+The **Report and Communication Handler** aggregates run outputs, uploads artifacts to the Reports Dashboard,
+retrieves the resulting run permalink, queries the Helios API for flakiness scores of failed tests,
+and posts the consolidated comment to the GitHub PR System.
+
+Self-hosted runners do not start from a clean state between jobs. The pipeline explicitly cleans up
+test result files from Phase 1 before Phase 2 begins to prevent workspace pollution from inflating test counts.
+
+### Reports Dashboard
+
+The dashboard stores test artifacts and serves them via a web interface backed by a SQLite database.
+When the pipeline uploads a run, the dashboard generates a permalink to that specific run entry, which
+the Report and Communication Handler includes in the PR comment.
+
+### Helios
+
+The Helios node provides the flakiness scoring service. The Report and Communication Handler sends
+the names of any failed tests to the Helios API after each phase and receives scores reflecting
+each test's historical non-determinism rate.
+
+---
 
 ## Maintenance
 
-The Artemis Dockerfile as well as the MySQL image are already maintained because they are used in
-other Artemis Docker setups.
-Therefore, only Playwright and the Playwright Docker image require active maintenance.
-Since the Playwright test suite simulates a real user, it makes sense to execute the test suite with
-the latest browser versions.
-The Playwright Docker image we use always has browsers with specific versions installed.
-Therefore, the
-[docker-compose file](https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml)
-should be updated every month to make sure that the latest Playwright image is used.
+### Updating the Playwright Docker image
+
+The Playwright Docker image used in CI (`docker/playwright.yml`) pins a specific version that includes
+particular browser binaries. Update this image monthly to keep browsers current.
+Check the [Playwright release notes](https://playwright.dev/docs/release-notes) and update the image tag accordingly.
+
+### Updating `e2e-test-mapping.json`
+
+When a new Artemis module is created or an existing module is significantly reorganized:
+
+1. Add a new entry to `mappings` in `.ci/E2E-tests/e2e-test-mapping.json`.
+2. List the relevant `sourcePaths` (Java and Angular directories for the module).
+3. List the corresponding `testPaths` (spec file paths or directory paths).
+4. Add all new test paths to `allTestPaths` so Phase 2 covers them on unrelated PRs.
+
+Keeping the mapping accurate ensures Phase 1 selects the right tests when changes are made to each module.
+
+### Coverage reports
+
+The pipeline collects JavaScript coverage via `monocart-reporter` and uploads the merged report as an artifact.
+Coverage is off by default when running locally (to save memory) and enabled with `--coverage` in the fast runner.
+In CI, monocart merges coverage from parallel and sequential phases and outputs LCOV and HTML reports.
+
+---
 
 ## Functionalities Covered
 
@@ -478,22 +610,47 @@ should be updated every month to make sure that the latest Playwright image is u
   </thead>
   <tbody>
     <tr>
+      <td rowspan="6"><strong>Atlas</strong></td>
+      <td>Competency Management</td>
+      <td>Creating, editing, and deleting competencies; setting taxonomy levels and mastery thresholds; soft-deleting with linked exercise warnings</td>
+    </tr>
+    <tr>
+      <td>Competency–Exercise Interactions</td>
+      <td>Linking and unlinking exercises to competencies; verifying that exercise progress contributes to competency mastery</td>
+    </tr>
+    <tr>
+      <td>Competency–Lecture Unit Interactions</td>
+      <td>Linking lecture units to competencies; verifying lecture unit completion updates competency progress</td>
+    </tr>
+    <tr>
+      <td>Competency Import</td>
+      <td>Importing competencies from other courses; verifying imported data integrity</td>
+    </tr>
+    <tr>
+      <td>Learning Path Management</td>
+      <td>Enabling learning paths in a course; verifying the learning path activation flow</td>
+    </tr>
+    <tr>
+      <td>Student Competency Progress View</td>
+      <td>Student competency overview, mastery indicators, judgment of learning ratings, and progress tracking across lecture units and exercises</td>
+    </tr>
+    <tr>
       <td rowspan="3"><strong>Courses</strong></td>
       <td>Course Management</td>
-      <td>Creating, editing, deleting courses; adding/removing students from a course</td>
+      <td>Creating, editing, and deleting courses; adding and removing students</td>
     </tr>
     <tr>
       <td>Course Exercise</td>
-      <td>Tests filtering exercises based on their title</td>
+      <td>Filtering exercises by title within a course</td>
     </tr>
     <tr>
       <td>Course Communication</td>
-      <td>Messaging within courses, including channel creation, student participation, and message interactions</td>
+      <td>Channel-based messaging and group chat within courses, including channel creation, student participation, and message interactions</td>
     </tr>
     <tr>
-      <td rowspan="9"><strong>Exams</strong></td>
+      <td rowspan="10"><strong>Exams</strong></td>
       <td>Exam Management</td>
-      <td>Manage exam students and exercise groups</td>
+      <td>Managing exam students and exercise groups</td>
     </tr>
     <tr>
       <td>Exam Creation & Deletion</td>
@@ -501,19 +658,19 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Exam Participation</td>
-      <td>Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements</td>
+      <td>Early and normal hand-in; exam exercise participation for text, modeling, quiz, and programming (Git SSH/HTTPS) exercises; exam announcements</td>
     </tr>
     <tr>
       <td>Exam Assessment</td>
-      <td>Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling</td>
+      <td>Assessing modeling, text, quiz, and programming exercise submissions in exams, including complaint handling</td>
     </tr>
     <tr>
       <td>Exam Checklists</td>
-      <td>Exam setup checks, including student registration, exercise groups, and exam publication</td>
+      <td>Exam setup checks including student registration, exercise groups, and exam publication</td>
     </tr>
     <tr>
       <td>Exam Date Verification</td>
-      <td>Exams appear/disappear based on visibility dates</td>
+      <td>Exams appear and disappear based on visibility dates</td>
     </tr>
     <tr>
       <td>Exam Results</td>
@@ -525,12 +682,37 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Exam Statistics</td>
-      <td>Exam statistics is displayed correctly</td>
+      <td>Exam statistics are displayed correctly</td>
+    </tr>
+    <tr>
+      <td>PlantUML Diagram Isolation</td>
+      <td>PlantUML diagrams in exam exercises render in isolation without leaking state between participants</td>
+    </tr>
+    <tr>
+      <td rowspan="5"><strong>Test Exams</strong></td>
+      <td>Test Exam Creation & Deletion</td>
+      <td>Creating and deleting test exams</td>
+    </tr>
+    <tr>
+      <td>Test Exam Management</td>
+      <td>Managing test exam configuration and settings</td>
+    </tr>
+    <tr>
+      <td>Test Exam Participation</td>
+      <td>Participating in test exams as a student</td>
+    </tr>
+    <tr>
+      <td>Test Exam Student Exams</td>
+      <td>Generating and managing individual student exam instances</td>
+    </tr>
+    <tr>
+      <td>Test Exam Test Runs</td>
+      <td>Creating and managing test runs within a test exam</td>
     </tr>
     <tr>
       <td><strong>Exercises</strong></td>
       <td>Exercise Import</td>
-      <td>Importing text, quiz, modeling & programming exercises</td>
+      <td>Importing text, quiz, modeling, and programming exercises from other courses</td>
     </tr>
     <tr>
       <td rowspan="3"><strong>File Upload Exercises</strong></td>
@@ -552,7 +734,7 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Visibility Controls</td>
-      <td>Students can access released/unreleased exercises</td>
+      <td>Students can access released and unreleased exercises</td>
     </tr>
     <tr>
       <td>Participation</td>
@@ -577,11 +759,11 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Participation</td>
-      <td>Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation</td>
+      <td>Submitting code through the online editor and Git (HTTPS & SSH); Java, C, and Python submissions; team participation</td>
     </tr>
     <tr>
       <td>Static Code Analysis</td>
-      <td>Configuring SCA grading and handling submissions with SCA errors</td>
+      <td>Configuring SCA grading and handling submissions with SCA violations</td>
     </tr>
     <tr>
       <td rowspan="5"><strong>Quiz Exercises</strong></td>
@@ -590,19 +772,19 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Deletion & Export</td>
-      <td>Ensures quizzes can be deleted and exported</td>
+      <td>Quizzes can be deleted and exported</td>
     </tr>
     <tr>
       <td>Participation</td>
-      <td>Tests student participation in hidden, scheduled, and batch-based quizzes</td>
+      <td>Student participation in hidden, scheduled, and batch-based quizzes</td>
     </tr>
     <tr>
       <td>Assessment</td>
-      <td>Verifies automatic assessment for multiple-choice and short-answer quizzes</td>
+      <td>Automatic assessment for multiple-choice and short-answer quizzes</td>
     </tr>
     <tr>
       <td>Drag-and-Drop Mechanics</td>
-      <td>Ensures correct placement of draggable quiz elements</td>
+      <td>Correct placement of draggable quiz elements</td>
     </tr>
     <tr>
       <td rowspan="3"><strong>Text Exercises</strong></td>
@@ -611,21 +793,21 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Participation</td>
-      <td>Ensures students can submit text exercises</td>
+      <td>Students can submit text exercises</td>
     </tr>
     <tr>
       <td>Assessment & Complaints</td>
-      <td>Tests instructor assessments, feedback visibility, and complaint handling</td>
+      <td>Instructor assessments, student feedback visibility, and complaint handling</td>
     </tr>
     <tr>
       <td><strong>Lectures</strong></td>
       <td>Lecture Management</td>
-      <td>Creating and deleting lectures, managing existing lectures</td>
+      <td>Creating and deleting lectures; managing existing lecture content</td>
     </tr>
     <tr>
       <td rowspan="2"><strong>Authentication</strong></td>
       <td>Logging in</td>
-      <td>Logging in via UI and programmatically, login failures</td>
+      <td>Logging in via UI and programmatically; login failure handling</td>
     </tr>
     <tr>
       <td>Logging out</td>
@@ -634,7 +816,7 @@ should be updated every month to make sure that the latest Playwright image is u
     <tr>
       <td><strong>System Status</strong></td>
       <td>System status indicators</td>
-      <td>Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks</td>
+      <td>CI and VC server health; database, Hazelcast, and WebSocket health; readiness and ping checks</td>
     </tr>
   </tbody>
 </table>
