@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.SearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -174,6 +175,17 @@ public class PyrisJobService {
      * @param faqId    the ID of the faq associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
+    /**
+     * Adds a new search answer job to the job map.
+     * Used to track an async Ask Iris request and route the Pyris callback to the correct user via WebSocket.
+     *
+     * @param userLogin the login of the user who made the search request
+     * @return the generated job token
+     */
+    public String addSearchAnswerJob(String userLogin) {
+        return createTokenForJob(token -> new SearchAnswerJob(token, userLogin));
+    }
+
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);

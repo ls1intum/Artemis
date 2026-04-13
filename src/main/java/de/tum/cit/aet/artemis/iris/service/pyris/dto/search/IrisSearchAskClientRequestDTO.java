@@ -5,9 +5,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * DTO received from the client for an Ask Iris search request.
+ * The server adds artemisBaseUrl and authenticationToken before forwarding to Pyris.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, @JsonProperty("artemis_base_url") String artemisBaseUrl,
-        @JsonProperty("authentication_token") String authenticationToken) {
+public record IrisSearchAskClientRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit) {
 }
