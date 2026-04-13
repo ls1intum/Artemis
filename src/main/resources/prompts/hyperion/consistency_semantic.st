@@ -179,10 +179,10 @@ Analysis: Public type identifier conflicts with file/entity naming; classify as 
 - `relatedLocations[].startLine` and `relatedLocations[].endLine` must cover the smallest possible contiguous range needed for the inconsistency.
 - Prefer single-line ranges whenever possible, especially for simple renames.
 - Do not include surrounding unchanged lines for extra context.
-- Extend each location with optional `relatedLocations[].suggestedInlineFix`.
-- Fill `relatedLocations[].suggestedInlineFix` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, method/parameter identifier alignment).
-- If the location does not need a direct replacement, or the fix is complex/non-local, set `relatedLocations[].suggestedInlineFix` to `null`.
-- Use an empty string only when the intended direct replacement is to delete all selected lines. Do not use an empty string to mean "no inline fix".
+- Extend each location with `relatedLocations[].inlineFixOperation`: `NONE`, `REPLACE`, or `DELETE`.
+- Use `REPLACE` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, method/parameter identifier alignment). Then set `suggestedInlineFix` to the exact replacement.
+- Use `DELETE` only if the correct fix is deleting the selected lines. Then set `suggestedInlineFix` to an empty string.
+- Use `NONE` when the location does not need a direct replacement, or the fix is complex/non-local. Then set `suggestedInlineFix` to `null`.
 - When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
 
 # OUTPUT FORMAT
@@ -200,6 +200,7 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
           "filePath": "src/etc/BubbleSort.java",
           "startLine": 18,
           "endLine": 18,
+          "inlineFixOperation": "REPLACE",
           "suggestedInlineFix": "public double calculateTotal() {"
         },
         {
@@ -207,6 +208,7 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
           "filePath": "test/etc/MethodTest.java",
           "startLine": 24,
           "endLine": 24,
+          "inlineFixOperation": "REPLACE",
           "suggestedInlineFix": "assertEquals(42.0, order.calculateTotal());"
         },
         {
@@ -214,6 +216,7 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
           "filePath": "problem_statement.md",
           "startLine": 5,
           "endLine": 5,
+          "inlineFixOperation": "NONE",
           "suggestedInlineFix": null
         }
       ],

@@ -124,6 +124,60 @@ class HyperionConsistencyCheckServiceTest {
     }
 
     @Test
+    void checkConsistency_normalizesInlineFixOperation() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/main/java/App.java", "class App {}"));
+
+        String checkerJson = "{ \"issues\": [] }";
+        String verifierJson = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Parameters differ",
+                      "suggestedFix": "Align parameters",
+                      "relatedLocations": [
+                        {
+                          "type": "TEMPLATE_REPOSITORY",
+                          "filePath": "src/main/java/App.java",
+                          "startLine": 1,
+                          "endLine": 1,
+                          "inlineFixOperation": "NONE",
+                          "suggestedInlineFix": ""
+                        },
+                        {
+                          "type": "SOLUTION_REPOSITORY",
+                          "filePath": "src/main/java/App.java",
+                          "startLine": 2,
+                          "endLine": 2,
+                          "inlineFixOperation": "DELETE",
+                          "suggestedInlineFix": ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        var callCount = new AtomicInteger(0);
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            String json = callCount.incrementAndGet() <= 2 ? checkerJson : verifierJson;
+            return new ChatResponse(List.of(new Generation(new AssistantMessage(json))));
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(resp.issues()).singleElement().satisfies(issue -> {
+            assertThat(issue.relatedLocations()).hasSize(2);
+            assertThat(issue.relatedLocations().getFirst().suggestedInlineFix()).isNull();
+            assertThat(issue.relatedLocations().get(1).suggestedInlineFix()).isEmpty();
+        });
+    }
+
+    @Test
     void checkConsistency_tracksTokenUsageAndCosts() throws Exception {
         final var exercise = getProgrammingExercise();
 

@@ -357,9 +357,18 @@ public class HyperionConsistencyCheckService {
         };
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
                 : issue.relatedLocations().stream().filter(Objects::nonNull).map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(),
-                        loc.filePath(), loc.startLine(), loc.endLine(), loc.suggestedInlineFix())).toList();
+                        loc.filePath(), loc.startLine(), loc.endLine(), normalizeSuggestedInlineFix(loc))).toList();
         ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
+    }
+
+    @Nullable
+    private String normalizeSuggestedInlineFix(StructuredOutputSchema.ArtifactLocation location) {
+        if (location.inlineFixOperation() == StructuredOutputSchema.InlineFixOperation.DELETE) {
+            return "";
+        }
+        String suggestedInlineFix = location.suggestedInlineFix();
+        return suggestedInlineFix == null || suggestedInlineFix.isBlank() ? null : suggestedInlineFix;
     }
 
     /**
@@ -433,7 +442,11 @@ public class HyperionConsistencyCheckService {
             public List<ConsistencyIssue> issues = List.of();
         }
 
-        private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine, String suggestedInlineFix) {
+        private enum InlineFixOperation {
+            NONE, REPLACE, DELETE
+        }
+
+        private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine, String suggestedInlineFix, InlineFixOperation inlineFixOperation) {
         }
     }
 
