@@ -31,6 +31,8 @@ type MockedAccountService = {
     identity: ReturnType<typeof vi.fn>;
 };
 
+const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
+
 describe('WebauthnService', () => {
     setupTestBed({ zoneless: true });
 
@@ -96,6 +98,8 @@ describe('WebauthnService', () => {
     });
 
     afterEach(() => {
+        service.stopConditionalMediation();
+        vi.useRealTimers();
         vi.restoreAllMocks();
         Object.defineProperty(navigator, 'credentials', {
             value: originalCredentials,
@@ -682,6 +686,38 @@ describe('WebauthnService', () => {
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
             expect(onSuccess).not.toHaveBeenCalled();
         });
+
+        it('should abort and refresh the background challenge every 4:45 minutes', async () => {
+            vi.useFakeTimers();
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options?: CredentialRequestOptions) => {
+                return new Promise((_, reject) => {
+                    options?.signal?.addEventListener('abort', () => {
+                        reject(options.signal?.reason);
+                    });
+                }) as Promise<Credential | null>;
+            });
+
+            const abortSpy = vi.spyOn(service, 'abortPendingCredentialRequest');
+            service.startConditionalMediation(vi.fn());
+
+            await Promise.resolve();
+            const abortCallsAfterStart = abortSpy.mock.calls.length;
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS);
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(abortSpy).toHaveBeenCalledTimes(abortCallsAfterStart + 1);
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
+        });
     });
 
     describe('stopConditionalMediation', () => {
@@ -691,6 +727,37 @@ describe('WebauthnService', () => {
             service.stopConditionalMediation();
 
             expect(abortSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should stop refreshing the background challenge after stop is called', async () => {
+            vi.useFakeTimers();
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options?: CredentialRequestOptions) => {
+                return new Promise((_, reject) => {
+                    options?.signal?.addEventListener('abort', () => {
+                        reject(options.signal?.reason);
+                    });
+                }) as Promise<Credential | null>;
+            });
+
+            service.startConditionalMediation(vi.fn());
+            await Promise.resolve();
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(1);
+
+            service.stopConditionalMediation();
+            const callsBeforeTimerAdvance = webauthnApiService.getAuthenticationOptions.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS);
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(callsBeforeTimerAdvance);
         });
     });
 

@@ -15,6 +15,12 @@ import { InvalidStateError } from 'app/core/user/settings/passkey-settings/entit
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/errors/passkey-abort.error';
 
+/**
+ * Should be aligned and a bit lower than HazelcastPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
+ * As the interval is 5 minutes there currently, until the challenge expires we refresh the challenge every 4m45s.
+ */
+const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
+
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
     private readonly alertService = inject(AlertService);
@@ -42,6 +48,9 @@ export class WebauthnService {
      * field so the browser shows the passkey autofill dropdown.
      */
     private onConditionalMediationActive: (() => void) | undefined;
+    private conditionalMediationActiveCallback: (() => void) | undefined;
+    private conditionalMediationSuccessCallback: (() => void) | undefined;
+    private conditionalMediationRefreshIntervalId: ReturnType<typeof setInterval> | undefined;
 
     /**
      * Aborts any pending credential request (e.g., a conditional mediation request)
@@ -62,14 +71,18 @@ export class WebauthnService {
      * This is managed at the service level (not the component level) to avoid
      * lifecycle issues when the HomeComponent is destroyed and recreated during
      * logout navigation. The service ensures only one conditional mediation
-     * request is active at a time.
+     * request is active at a time and refreshes the background challenge before
+     * the server-side challenge TTL (5 minutes) expires.
      *
      * @param onSuccess callback invoked when the user selects a passkey and login succeeds
      */
     startConditionalMediation(onSuccess: () => void, onMediationActive?: () => void): void {
+        this.stopConditionalMediation();
         this.isRetryingConditionalMediation = false;
-        this.onConditionalMediationActive = onMediationActive;
-        this.runConditionalMediation(onSuccess);
+        this.conditionalMediationSuccessCallback = onSuccess;
+        this.conditionalMediationActiveCallback = onMediationActive;
+        this.runConditionalMediation();
+        this.startConditionalMediationRefreshTimer();
     }
 
     /**
@@ -77,9 +90,12 @@ export class WebauthnService {
      * Safe to call even if no conditional mediation is active.
      */
     stopConditionalMediation(): void {
+        this.stopConditionalMediationRefreshTimer();
         this.abortPendingCredentialRequest();
         this.isRetryingConditionalMediation = false;
         this.onConditionalMediationActive = undefined;
+        this.conditionalMediationActiveCallback = undefined;
+        this.conditionalMediationSuccessCallback = undefined;
     }
 
     /**
@@ -176,7 +192,7 @@ export class WebauthnService {
     async loginWithPasskey(isConditional: boolean = false) {
         try {
             if (!isConditional) {
-                this.abortPendingCredentialRequest();
+                this.stopConditionalMediation();
             }
             const authenticatorCredential = await this.getCredential(isConditional);
 
@@ -221,13 +237,20 @@ export class WebauthnService {
      * Retries once after user cancellation (NotAllowedError) so the browser
      * re-shows passkey suggestions.
      */
-    private async runConditionalMediation(onSuccess: () => void): Promise<void> {
+    private async runConditionalMediation(): Promise<void> {
+        const onSuccess = this.conditionalMediationSuccessCallback;
+        if (!onSuccess) {
+            return;
+        }
+
+        this.onConditionalMediationActive = this.conditionalMediationActiveCallback;
+
         try {
             await this.loginWithPasskey(true);
             onSuccess();
             this.isRetryingConditionalMediation = false;
         } catch (error) {
-            this.handleConditionalMediationError(error, onSuccess);
+            this.handleConditionalMediationError(error);
         }
     }
 
@@ -236,7 +259,7 @@ export class WebauthnService {
      * Silently ignores abort errors from our own AbortController.
      * Re-enables autocomplete after user cancellation (once, to prevent infinite loops).
      */
-    private handleConditionalMediationError(error: unknown, onSuccess: () => void): void {
+    private handleConditionalMediationError(error: unknown): void {
         if (error instanceof PasskeyAbortError) {
             return;
         }
@@ -247,7 +270,7 @@ export class WebauthnService {
 
         if (this.isUserCancelledPasskeyError(error) && !this.isRetryingConditionalMediation) {
             this.isRetryingConditionalMediation = true;
-            this.runConditionalMediation(onSuccess);
+            this.runConditionalMediation();
             return;
         }
 
@@ -271,6 +294,36 @@ export class WebauthnService {
             return error.name === 'AbortError' || error.name === 'NotAllowedError';
         }
         return false;
+    }
+
+    /**
+     * Refreshes conditional mediation before the 5-minute challenge expires by
+     * aborting the current background request and starting a fresh one.
+     */
+    private refreshConditionalMediation(): void {
+        if (!this.conditionalMediationSuccessCallback) {
+            return;
+        }
+
+        this.isRetryingConditionalMediation = false;
+        this.abortPendingCredentialRequest();
+        this.runConditionalMediation();
+    }
+
+    private startConditionalMediationRefreshTimer(): void {
+        this.stopConditionalMediationRefreshTimer();
+        this.conditionalMediationRefreshIntervalId = setInterval(() => {
+            this.refreshConditionalMediation();
+        }, CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS);
+    }
+
+    private stopConditionalMediationRefreshTimer(): void {
+        if (!this.conditionalMediationRefreshIntervalId) {
+            return;
+        }
+
+        clearInterval(this.conditionalMediationRefreshIntervalId);
+        this.conditionalMediationRefreshIntervalId = undefined;
     }
 
     /**
