@@ -52,6 +52,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
 
 // Must match the constants in the component
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
@@ -1969,7 +1970,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should render all three chips in fixed order: learn, quiz, tips', () => {
             fixture.detectChanges();
-            const chipKeys = (component as any).courseSuggestionChips.map((c: any) => c.translationKey);
+            const chipKeys = COURSE_SUGGESTION_CHIPS.map((chip) => chip.translationKey);
             expect(chipKeys).toEqual(['artemisApp.iris.chat.suggestions.learn', 'artemisApp.iris.chat.suggestions.quiz', 'artemisApp.iris.chat.suggestions.tips']);
         });
 
