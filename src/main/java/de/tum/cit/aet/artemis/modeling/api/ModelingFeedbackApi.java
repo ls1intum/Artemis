@@ -33,4 +33,15 @@ public class ModelingFeedbackApi extends AbstractModelingApi {
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, ModelingExercise modelingExercise) {
         return modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
     }
+
+    /**
+     * Triggers automatic Athena feedback for a modeling exercise submission inside a test exam. Soft-skips instead
+     * of throwing when Athena is unavailable, the submission is missing/empty or already has an Athena result.
+     *
+     * @param participation    the student participation associated with the modeling exercise
+     * @param modelingExercise the modeling exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+        modelingExerciseFeedbackService.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
+    }
 }

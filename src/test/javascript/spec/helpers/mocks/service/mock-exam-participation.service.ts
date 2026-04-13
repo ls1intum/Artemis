@@ -45,4 +45,8 @@ export class MockExamParticipationService {
     setEndView(isEndView: boolean): void {
         examEndViewSubject.next(false);
     }
+
+    requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
+        return of(undefined);
+    }
 }

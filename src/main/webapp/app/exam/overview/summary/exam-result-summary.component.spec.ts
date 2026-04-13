@@ -28,8 +28,15 @@ import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-ov
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { UserService } from 'app/core/user/shared/user.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
@@ -184,6 +191,9 @@ function sharedSetup(url: string[]) {
 
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: UserService, useValue: { updateLLMSelectionDecision: jest.fn().mockReturnValue(of(undefined)) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
@@ -558,5 +568,150 @@ describe('ExamResultSummaryComponent', () => {
             button.click();
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
+    });
+
+    describe('Request AI Feedback button', () => {
+        const feedbackRequestedKey = `artemis_exam_ai_feedback_requested_${studentExamForTestExam.id}`;
+
+        afterEach(() => {
+            localStorage.removeItem(feedbackRequestedKey);
+        });
+
+        it('should show the button for a submitted test exam when Athena is active', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).not.toBeNull();
+        });
+
+        it('should hide the button for a real exam', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            component.studentExam = { ...studentExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).toBeNull();
+        });
+
+        it('should hide the button when Athena is not active', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button).toBeNull();
+        });
+
+        it('should disable the button while feedback is being requested', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            component.isRequestingFeedback = true;
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(button.nativeElement.disabled).toBeTrue();
+        });
+
+        it('should call examParticipationService.requestAthenaFeedback on click', fakeAsync(() => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            const requestSpy = jest.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+            tick();
+
+            expect(requestSpy).toHaveBeenCalledOnce();
+            expect(component.feedbackRequested).toBeTrue();
+            expect(component.isRequestingFeedback).toBeFalse();
+            expect(localStorage.getItem(feedbackRequestedKey)).toBe('true');
+        }));
+
+        it('should start with the button disabled when local storage says feedback was already requested', () => {
+            localStorage.setItem(feedbackRequestedKey, 'true');
+
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            expect(component.feedbackRequested).toBeTrue();
+            expect(button.nativeElement.disabled).toBeTrue();
+        });
+
+        it('should not persist to local storage when the feedback request fails', fakeAsync(() => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            jest.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+            tick();
+
+            expect(localStorage.getItem(feedbackRequestedKey)).toBeNull();
+        }));
+
+        it('should handle error when feedback request fails', fakeAsync(() => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+            jest.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
+            button.nativeElement.click();
+            tick();
+
+            expect(component.feedbackRequested).toBeFalse();
+            expect(component.isRequestingFeedback).toBeFalse();
+        }));
     });
 });

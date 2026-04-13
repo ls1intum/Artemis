@@ -64,6 +64,36 @@ public class ModelingExerciseFeedbackService {
     }
 
     /**
+     * Triggers non-graded Athena feedback for a modeling exercise submission inside a test exam.
+     * <p>
+     * Unlike {@link #handleNonGradedFeedbackRequest(StudentParticipation, ModelingExercise)}, this method soft-skips
+     * (without throwing) when Athena is not configured, the latest submission is missing or empty, or an Athena
+     * result is already present. The generation itself runs asynchronously so that it does not block the caller.
+     *
+     * @param participation    the student participation associated with the exercise
+     * @param modelingExercise the modeling exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
+                .findLatestSubmission();
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
+        if (modelingSubmission.isEmpty()) {
+            return;
+        }
+        Result latestResult = modelingSubmission.getLatestResult();
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+            return;
+        }
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
+    }
+
+    /**
      * Handles the request for generating feedback for a modeling exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
      *

@@ -10,6 +10,30 @@
             <fa-icon [icon]="faPrint" />
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
+        @if (isTestExam && athenaEnabled && studentExam?.submitted && !testExamConduction) {
+            <button
+                id="requestAIFeedbackButton"
+                class="btn btn-secondary float-end me-2"
+                (click)="requestAIFeedback()"
+                [disabled]="
+                    isRequestingFeedback || feedbackRequested || hasAnyAthenaResultForCurrentAttempt || (athenaFeedbackLimit > 0 && athenaFeedbackUsed >= athenaFeedbackLimit)
+                "
+            >
+                @if (isRequestingFeedback) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                } @else {
+                    <fa-icon [icon]="faRobot" />
+                }
+                @if (feedbackRequested) {
+                    <span jhiTranslate="artemisApp.exam.examSummary.feedbackRequested"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.exam.examSummary.requestAIFeedback"></span>
+                }
+                @if (athenaFeedbackLimit > 0) {
+                    <span class="ms-1">({{ athenaFeedbackUsed }} / {{ athenaFeedbackLimit }})</span>
+                }
+            </button>
+        }
     </h2>
 </div>
 @if (studentExam && !studentExam.submitted) {

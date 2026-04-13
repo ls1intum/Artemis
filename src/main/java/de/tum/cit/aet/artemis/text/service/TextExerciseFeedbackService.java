@@ -67,6 +67,35 @@ public class TextExerciseFeedbackService {
     }
 
     /**
+     * Triggers non-graded Athena feedback for a text exercise submission inside a test exam.
+     * <p>
+     * Unlike {@link #handleNonGradedFeedbackRequest(StudentParticipation, TextExercise)}, this method soft-skips
+     * (without throwing) when Athena is not configured, the latest submission is missing or empty, or an Athena
+     * result is already present. The generation itself runs asynchronously so that it does not block the caller.
+     *
+     * @param participation the student participation associated with the exercise
+     * @param textExercise  the text exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
+        if (textSubmission.isEmpty()) {
+            return;
+        }
+        Result latestResult = textSubmission.getLatestResult();
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+            return;
+        }
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
+    }
+
+    /**
      * Handles the request for generating feedback for a text exercise.
      * Unlike programming exercises a tutor is not notified if Athena is not available.
      *

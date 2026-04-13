@@ -202,6 +202,22 @@ export class ExamParticipationService {
         );
     }
 
+    /**
+     * Requests Athena AI feedback for all text and modeling exercises in the given submitted test exam.
+     */
+    public requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
+        const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/request-feedback`;
+        return this.httpClient.post<void>(url, null);
+    }
+
+    /**
+     * Fetches how many Athena AI feedback requests the current user has used for this test exam and the cap.
+     */
+    public getAthenaFeedbackUsage(courseId: number, examId: number, studentExamId: number): Observable<{ used: number; limit: number }> {
+        const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/athena-feedback-usage`;
+        return this.httpClient.get<{ used: number; limit: number }>(url);
+    }
+
     private static breakCircularDependency(studentExam: StudentExam) {
         studentExam.exercises!.forEach((exercise) => {
             if (exercise.studentParticipations) {
