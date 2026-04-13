@@ -30,12 +30,6 @@ jhi-attachment-video-unit {
         border: 1px solid var(--lecture-combined-view-border);
         border-radius: var(--lecture-combined-view-radius);
         overflow: hidden;
-
-        // Use container query units when available to keep the iframe within both dimensions.
-        @supports (width: 1cqw) {
-            width: min(100cqw, calc(100cqh * 16 / 9));
-            height: min(100cqh, calc(100cqw * 9 / 16));
-        }
     }
 
     .video-iframe {
@@ -170,20 +164,6 @@ jhi-attachment-video-unit {
 
             fa-icon {
                 font-size: 1.25rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            flex-direction: column;
-
-            &.content-container--with-sidebar {
-                > .main-content {
-                    min-width: 0;
-                }
-
-                > .iris-sidebar {
-                    display: none;
-                }
             }
         }
 

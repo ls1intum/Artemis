@@ -98,12 +98,6 @@
     box-shadow: none;
     background: transparent;
     object-fit: contain;
-
-    // Prefer container query units so the player fits both width and height constraints.
-    @supports (width: 1cqw) {
-        width: min(100cqw, calc(100cqh * 16 / 9)) !important;
-        height: min(100cqh, calc(100cqw * 9 / 16)) !important;
-    }
 }
 
 :host-context(.content-container--fullscreen) .transcript-column {
