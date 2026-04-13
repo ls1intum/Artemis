@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequest;
+import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
-import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInput;
+import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
 @Profile(PROFILE_CORE)
@@ -52,14 +52,14 @@ public class ProblemStatementRenderingResource {
     @PostMapping(value = "problem-statement/render", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RenderedProblemStatementDTO> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequest renderRequest) {
+    public ResponseEntity<RenderedProblemStatementDTO> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) {
 
         log.debug("REST request to render problem statement (stateless)");
 
         Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = null;
         if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
             testResults = new HashMap<>();
-            for (TestFeedbackInput input : renderRequest.testResults()) {
+            for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
                     return ResponseEntity.badRequest().build();
                 }
