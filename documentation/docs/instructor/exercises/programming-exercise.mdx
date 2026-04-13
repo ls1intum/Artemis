@@ -565,6 +565,33 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 <Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
 
+### Review Comments
+
+During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.
+
+To add a review comment, open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, hover next to the relevant line, and use the comment action. If Artemis asks you to submit first, click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> so the comment can be attached to the current saved version of the file or problem statement.
+
+Review comments can be attached to:
+
+- Problem statement lines
+- Template repository files
+- Solution repository files
+- Test repository files
+- Auxiliary repository files
+
+Each review comment starts a thread at the selected location. Other instructors and editors working on the same exercise see new comments, replies, edits, deletions, and resolved states in real time. Files with unresolved review comments are marked in the file tree. Reply to a thread to continue the discussion, and resolve it when the issue has been addressed. Resolved threads remain available, but they are collapsed so open discussions stay visible.
+
+**Consistency Check Comments:** Hyperion's consistency check can create review comments for potential mismatches between the problem statement and the exercise repositories. These AI-created threads are labelled as consistency issues and show their severity and category. If one issue affects multiple artifacts, the related locations are grouped, and you can jump between them from the review comment. The issue navigator in the editor toolbar lets you move through the current consistency findings.
+
+Some consistency check comments may include a suggested inline fix. This suggested change is intended for simple, local corrections, such as aligning a name, signature, or small code fragment. Review the suggested change before applying it. For complex or ambiguous issues, Artemis may leave the suggested fix empty and only keep the explanatory review comment.
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        Review comments stay attached to saved exercise content. If the referenced line changes later, Artemis may mark the
+        thread as outdated. Re-check the referenced location before resolving the thread or applying an AI-suggested fix.
+    </p>
+</Callout>
+
 **Exercise Settings Synchronization:** On the edit page (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
 
 <Image src={collaborativeMetadataModal} alt="Settings conflict resolution modal" size={ImageSize.large} caption="Resolving conflicting exercise setting changes" />
