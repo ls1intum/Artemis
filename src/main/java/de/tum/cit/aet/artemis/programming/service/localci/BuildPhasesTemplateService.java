@@ -86,7 +86,7 @@ public class BuildPhasesTemplateService {
                 templateCache.put(uniqueKey, phases);
             }
             catch (IOException | IllegalArgumentException e) {
-                log.error("Failed to load windfile {}", resource.getFilename(), e);
+                log.error("Failed to load template {}", resource.getFilename(), e);
             }
         }
     }
@@ -178,7 +178,7 @@ public class BuildPhasesTemplateService {
                     buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
-            log.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+            log.info("No build phases for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
     }

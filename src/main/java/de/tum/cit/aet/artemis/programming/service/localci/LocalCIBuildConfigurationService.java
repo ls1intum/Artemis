@@ -55,7 +55,7 @@ public class LocalCIBuildConfigurationService {
         scriptBuilder.append("#!/usr/bin/env bash\n");
         scriptBuilder.append("set -e\n");
         scriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
-        scriptBuilder.append("export AEOLUS_INITIAL_DIRECTORY=${PWD}\n");
+        scriptBuilder.append("export INITIAL_WORKING_DIRECTORY=${PWD}\n");
 
         for (BuildPhaseDTO phase : activePhases) {
             appendPhaseFunction(scriptBuilder, phase);
@@ -88,11 +88,11 @@ public class LocalCIBuildConfigurationService {
     }
 
     private static void appendForceRunPostPhase(StringBuilder scriptBuilder, List<BuildPhaseDTO> forceRunPhase) {
-        scriptBuilder.append("final_aeolus_post_action () {\n");
+        scriptBuilder.append("final_force_run_post_action () {\n");
         scriptBuilder.append("  set +e # from now on, we don't exit on errors\n");
-        scriptBuilder.append("  echo '⚙️ executing final_aeolus_post_action'\n");
+        scriptBuilder.append("  echo '⚙️ executing final_force_run_post_action'\n");
         for (BuildPhaseDTO phase : forceRunPhase) {
-            scriptBuilder.append("  cd \"${AEOLUS_INITIAL_DIRECTORY}\"\n");
+            scriptBuilder.append("  cd \"${INITIAL_WORKING_DIRECTORY}\"\n");
             scriptBuilder.append("  ").append(phase.name()).append("\n");
         }
         scriptBuilder.append("}\n\n");
@@ -106,11 +106,11 @@ public class LocalCIBuildConfigurationService {
         scriptBuilder.append("  local _script_name\n");
         scriptBuilder.append("  _script_name=${BASH_SOURCE[0]:-$0}\n");
         if (hasRunAlwaysPhases) {
-            scriptBuilder.append("  trap final_aeolus_post_action EXIT\n\n");
+            scriptBuilder.append("  trap final_force_run_post_action EXIT\n\n");
         }
 
         for (BuildPhaseDTO phase : nonForceRunPhase) {
-            scriptBuilder.append("  cd \"${AEOLUS_INITIAL_DIRECTORY}\"\n");
+            scriptBuilder.append("  cd \"${INITIAL_WORKING_DIRECTORY}\"\n");
             scriptBuilder.append("  bash -c \"source ${_script_name} aeolus_sourcing; ").append(phase.name()).append("\"\n");
         }
 

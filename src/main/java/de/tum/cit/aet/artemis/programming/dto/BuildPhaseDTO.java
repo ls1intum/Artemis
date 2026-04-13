@@ -24,6 +24,6 @@ public record BuildPhaseDTO(@NotBlank @Pattern(regexp = BuildPhaseDTO.BUILD_PHAS
 
     public static final java.util.regex.Pattern BUILD_PHASE_NAME_PATTERN = java.util.regex.Pattern.compile(BUILD_PHASE_NAME_REGEX);
 
-    public static final Set<String> RESERVED_PHASE_NAMES = Set.of("main", "final_aeolus_post_action");
+    public static final Set<String> RESERVED_PHASE_NAMES = Set.of("main", "final_force_run_post_action");
 
 }

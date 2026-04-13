@@ -31,7 +31,7 @@ export interface BuildPlanPhases {
 }
 
 export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
-export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_aeolus_post_action']);
+export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post_action']);
 
 export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases | undefined {
     if (json == undefined) {
