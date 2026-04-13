@@ -166,6 +166,11 @@ FAST_TEST_TIMEOUT_SECONDS=45
 SLOW_TEST_TIMEOUT_SECONDS=90
 ```
 
+<Callout variant={CalloutVariant.info}>
+    <p><code>BASE_URL=http://localhost:9000</code> is correct for manual setup where the Angular dev server runs on port 9000.
+    The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://localhost</code> (no port, HTTPS) for the Docker-based setup.</p>
+</Callout>
+
 Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
 `ADMIN_PASSWORD` match your Artemis admin user credentials.
 
@@ -222,7 +227,7 @@ For example, you can run the test suite "Course creation" located in the file `C
 the command:
 
 ```bash
-npx playwright test src/test/playwright/e2e/course/CourseManagement.spec.ts -g "Course creation"
+npx playwright test e2e/course/CourseManagement.spec.ts -g "Course creation"
 ```
 
 ## Test parallelization
@@ -421,18 +426,18 @@ await page.waitForLoadState('load');
     the page - use <code>waitFor()</code> function of a locator instead.</p>
 </Callout>
 
-### 5. AI-assisted test authoring with the Playwright MCP server
+### 5. AI-assisted test authoring with a Playwright MCP server
 
-The repository integrates a Playwright Model Context Protocol (MCP) server that exposes the live application DOM
-to AI coding assistants such as GitHub Copilot and Claude Code.
+You can optionally use a Playwright Model Context Protocol (MCP) server as an external tool to expose the live
+application DOM to AI coding assistants such as GitHub Copilot and Claude Code while Artemis is running locally.
 
-Without the MCP server, AI assistants can generate test structure and boilerplate but produce incorrect locators
-because they have no access to the running page state. With the MCP server active, the assistant can inspect the
-current DOM, retrieve the `data-testid` attributes attached to elements, and generate locators that reference
-those IDs directly.
+Without access to the running page state, AI assistants can still generate test structure and boilerplate, but they
+may produce incorrect locators. When a separately configured Playwright MCP server is active, the assistant can
+inspect the current DOM, retrieve the `data-testid` attributes attached to elements, and generate locators that
+reference those IDs directly.
 
-To use it, start Artemis locally (via the fast runner or any other method) and enable the Playwright MCP
-integration in your editor's AI assistant settings. The assistant can then inspect page structure and generate
+To use this workflow, start Artemis locally (via the fast runner or any other method) and configure a Playwright MCP
+server in your editor or AI assistant environment. The assistant can then inspect page structure and generate
 accurate `data-testid`-based locators for the workflow under test. Review the generated test by running it locally,
 confirm that the interaction sequence matches the intended workflow, and correct any steps where the assistant
 misread the application state.
@@ -468,6 +473,16 @@ The mapping file lists, for each Artemis module, the source paths that belong to
 
 ```json
 {
+  "allTestPaths": [
+    "e2e/atlas/",
+    "e2e/course/",
+    "e2e/exam/",
+    "e2e/exercise/",
+    "e2e/lecture/",
+    "e2e/Login.spec.ts",
+    "e2e/Logout.spec.ts",
+    "e2e/SystemHealth.spec.ts"
+  ],
   "mappings": {
     "atlas": {
       "sourcePaths": [
