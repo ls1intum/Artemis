@@ -49,9 +49,7 @@ public class ProblemStatementRenderingService {
 
     private static final String RENDERER_VERSION = "1.0.0";
 
-    private static final String KATEX_VERSION = "0.16.44";
-
-    private static final String KATEX_BASE_PATH = "/webjars/katex/" + KATEX_VERSION + "/dist";
+    private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
