@@ -142,6 +142,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
+        this.lectureUnits = [];
         if (this.lectureId) {
             this.lectureService
                 .findWithDetails(this.lectureId)
@@ -244,11 +245,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const hasVideo = !!attachmentUnit.videoSource;
             const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
 
-            if (isPdf) {
+            if (!hasVideo) {
                 this.targetVideoTimestamp.set(undefined);
-            } else {
+            }
+            if (!isPdf) {
                 this.targetPdfPage.set(undefined);
             }
         } else {
