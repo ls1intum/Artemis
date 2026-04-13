@@ -27,7 +27,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
@@ -490,14 +489,11 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
+            Map<String, Object> parsedResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {
+            });
 
             // Verify the response contains expected WebAuthn registration options fields
-            assertThat(parsedResponse.has("challenge")).isTrue();
-            assertThat(parsedResponse.has("rp")).isTrue();
-            assertThat(parsedResponse.has("user")).isTrue();
-            assertThat(parsedResponse.has("pubKeyCredParams")).isTrue();
-            assertThat(parsedResponse.has("timeout")).isTrue();
+            assertThat(parsedResponse).containsKeys("challenge", "rp", "user", "pubKeyCredParams", "timeout");
         }
 
         @Test
@@ -533,12 +529,11 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
+            Map<String, Object> parsedResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {
+            });
 
             // Verify the response contains expected WebAuthn authentication options fields
-            assertThat(parsedResponse.has("challenge")).isTrue();
-            assertThat(parsedResponse.has("timeout")).isTrue();
-            assertThat(parsedResponse.has("rpId")).isTrue();
+            assertThat(parsedResponse).containsKeys("challenge", "timeout", "rpId");
         }
 
         @Test
@@ -547,11 +542,10 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
+            Map<String, Object> parsedResponse = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {
+            });
 
-            assertThat(parsedResponse.has("challenge")).isTrue();
-            assertThat(parsedResponse.has("timeout")).isTrue();
-            assertThat(parsedResponse.has("rpId")).isTrue();
+            assertThat(parsedResponse).containsKeys("challenge", "timeout", "rpId");
         }
     }
 
