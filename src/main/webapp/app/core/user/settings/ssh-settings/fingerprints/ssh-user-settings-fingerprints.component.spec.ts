@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -7,6 +9,8 @@ import { SshUserSettingsFingerprintsComponent } from 'app/core/user/settings/ssh
 import { SshUserSettingsFingerprintsService } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 describe('SshUserSettingsFingerprintsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<SshUserSettingsFingerprintsComponent>;
     let comp: SshUserSettingsFingerprintsComponent;
     const mockFingerprints: { [key: string]: string } = {
@@ -14,15 +18,15 @@ describe('SshUserSettingsFingerprintsComponent', () => {
     };
 
     let fingerPintsServiceMock: {
-        getSshFingerprints: jest.Mock;
+        getSshFingerprints: ReturnType<typeof vi.fn>;
     };
     let translateService: TranslateService;
 
     beforeEach(async () => {
         fingerPintsServiceMock = {
-            getSshFingerprints: jest.fn(),
+            getSshFingerprints: vi.fn(),
         };
-        jest.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(console, 'error').mockImplementation(() => {});
         await TestBed.configureTestingModule({
             providers: [
                 { provide: SshUserSettingsFingerprintsService, useValue: fingerPintsServiceMock },
@@ -36,6 +40,10 @@ describe('SshUserSettingsFingerprintsComponent', () => {
         translateService.use('en');
 
         fingerPintsServiceMock.getSshFingerprints.mockImplementation(() => Promise.resolve(mockFingerprints));
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display fingerprints', async () => {

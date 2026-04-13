@@ -602,10 +602,65 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Nested
+    class GetAllCompetenciesCourseProgress {
+
+        @BeforeEach
+        void cleanupCompetencyExerciseLinks() {
+            var allLinks = competencyExerciseLinkRepository.findAllByCompetencyId(courseCompetency.getId());
+            var linksToDelete = allLinks.stream()
+                    .filter(link -> !link.getExercise().getId().equals(textExercise.getId()) && !link.getExercise().getId().equals(teamTextExercise.getId())).toList();
+            competencyExerciseLinkRepository.deleteAll(linksToDelete);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldGetAllCompetenciesCourseProgressAsEditor() throws Exception {
+            var result = request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.OK, CourseCompetencyProgressDTO.class);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetAllCompetenciesCourseProgressAsInstructor() throws Exception {
+            var result = request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.OK, CourseCompetencyProgressDTO.class);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnProgressForAllCompetencies() throws Exception {
+            var secondCompetency = competencyUtilService.createCompetency(course);
+
+            var result = request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.OK, CourseCompetencyProgressDTO.class);
+
+            assertThat(result).hasSize(2);
+            assertThat(result).anyMatch(dto -> dto.competencyId() == courseCompetency.getId());
+            assertThat(result).anyMatch(dto -> dto.competencyId() == secondCompetency.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldReturnForbiddenForTutor() throws Exception {
+            request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnForbiddenForStudent() throws Exception {
+            request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
+        }
+    }
+
+    @Nested
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
             request.get("/api/atlas/course-competencies/for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class);
+            request.getList("/api/atlas/courses/" + course.getId() + "/course-competencies/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
 
             // relations
             CompetencyRelation relation = new CompetencyRelation();

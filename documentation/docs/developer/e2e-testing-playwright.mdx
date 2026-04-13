@@ -28,14 +28,14 @@ the prelive system, which is already properly setup in the university data cente
 To run the tests locally, developers need to set up Playwright on their machines.
 End-to-end tests test entire workflows; therefore, they require the whole Artemis setup - database, client, and server to be running.
 Playwright tests rely on the Playwright Node.js library, browser binaries, and some helper packages.
-To run playwright tests locally, you need to start the Artemis server and client, have the correct users set up and install and run playwright.
-This setup should be used for debugging, and creating new tests for your code, but needs intellij to work, and relies on fully setting up your local Artemis instance
-following [the server setup guide](./setup.mdx).
 
-For a quick test setup with only three steps, you can use the scripts provided in `supporting_scripts/playwright`.
-The README explains what you need to do.
-It sets up Artemis inside a dockerized environment, creates users and directly starts playwright. The main drawback with this setup is, that you cannot
-easily change the version of Artemis itself.
+**The recommended way to run E2E tests locally is the [fast local runner](#fast-local-runner-recommended-for-development)** — a single script
+(`./run-e2e-tests-local-fast.sh`) that handles database, server, client, and Playwright setup automatically.
+It auto-kills conflicting processes on ports 8080/9000, keeps services running between re-runs, and supports filtering individual tests.
+
+Alternatively, you can use the Docker-based scripts in `supporting_scripts/playwright` (see the README there),
+or set up everything manually as described below. The manual setup relies on fully configuring your local Artemis instance
+following [the server setup guide](./setup.mdx) and is useful when you need IntelliJ integration for debugging.
 
 ### Supporting scripts overview
 
@@ -53,6 +53,83 @@ The three steps for setting up Playwright with these supporting scripts are:
 1. Start Artemis by running `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh` (depending on your OS). This starts the database, server, and client; keep the client running and use a separate shell for the remaining steps.
 2. Create test users by running `setupUsers.sh` (skip if users already exist).
 3. Run tests either headless with `startPlaywright.sh`, in UI mode with `startPlaywrightUI.sh`, or via VS Code after running `prepareVSCodeForE2ETests.sh`.
+
+### Fast local runner (recommended for development)
+
+For the fastest local development experience, use the `run-e2e-tests-local-fast.sh` script in the repository root.
+This is the **recommended way to run E2E tests locally** for both developers and AI agents.
+Unlike the Docker-based approach above, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
+Services stay running between test runs, so re-runs only take seconds.
+
+The script automatically kills any processes occupying ports 8080 (server), 9000 (client), and 7921 (local VC SSH),
+so you don't need to manually stop conflicting processes before running it.
+
+**Prerequisites:** Docker, Java 25+, Node.js 24+, npm.
+
+**Architecture:**
+
+- **Docker:** PostgreSQL only (port 5432)
+- **Host:** Spring Boot server via `./gradlew bootRun -x webapp` (port 8080)
+- **Host:** Angular client via `npm start` (port 9000, proxies API calls to 8080)
+- **Host:** Playwright tests connect to `http://localhost:9000`
+
+**First run (starts everything):**
+
+```bash
+./run-e2e-tests-local-fast.sh
+```
+
+This starts PostgreSQL, boots the server (~30-90s), starts the client (~10-20s), then runs all Playwright tests.
+
+**Run specific tests:**
+
+Use `--filter` with a pattern (supports regex) to run only matching tests:
+
+```bash
+# Run tests with "Quiz" in the name
+./run-e2e-tests-local-fast.sh --filter "Quiz"
+
+# Run tests matching multiple patterns
+./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"
+```
+
+**Re-run tests (services already running):**
+
+After the first run, services stay running. Skip startup for faster re-runs:
+
+```bash
+# Run all tests (skips starting services that are already running)
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db
+
+# Run only specific tests
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
+
+# Open Playwright UI for debugging
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
+```
+
+**Stop everything:**
+
+```bash
+./run-e2e-tests-local-fast.sh --stop
+```
+
+**Available options:**
+
+| Flag | Description |
+|------|-------------|
+| `--stop` | Kill server, client, and database; exit |
+| `--filter <pattern>` | Run only tests matching the pattern (supports regex, e.g., `"Quiz"` or `"Quiz\|Exam"`) |
+| `--skip-server` | Reuse already-running server |
+| `--skip-client` | Reuse already-running client |
+| `--skip-db` | Reuse already-running PostgreSQL |
+| `--headed` | Run Playwright in headed mode (visible browser) |
+| `--ui` | Open Playwright UI mode for interactive debugging |
+| `--video` | Enable video recording (off by default to save CPU) |
+| `--coverage` | Enable coverage collection (off by default, requires extra memory) |
+| `--debug` | Show server and client output inline (normally only in log files) |
+
+Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
 
 If you want to manually install playwright, you can follow these steps:
 

@@ -1,55 +1,58 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-
-import javaScaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
+import cScaSubmission from '../../../fixtures/exercise/programming/c/static_code_analysis/submission.json';
+import { ProgrammingLanguage } from '../../../support/constants';
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
-import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
+import { Commands } from '../../../support/commands';
+import { BUILD_RESULT_TIMEOUT } from 'src/test/playwright/support/timeouts';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-test.describe('Static code analysis tests', { tag: '@sequential' }, () => {
-    let course: Course;
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+
+test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     let exercise: ProgrammingExercise;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create C exercise with SCA, submit via API', async ({ login, exerciseAPIRequests, waitForParticipationBuildToFinish }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50 });
+        exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50, programmingLanguage: ProgrammingLanguage.C });
+        // Wait for both template build (SCA categories) and solution build (test cases).
+        // Both must complete before the student submits to ensure correct score calculation.
+        await exerciseAPIRequests.configureScaCategoriesViaApi(exercise.id!);
+        await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
+        // Deactivate LeakSanitizer test — it always fails on ARM64 Docker (macOS).
+        // Setting weight=0 excludes it from score calculation.
+        await exerciseAPIRequests.deactivateTestCases(exercise.id!, ['TestOutputLSan']);
+        // Start student participation and submit code with SCA issues.
+        await login(studentOne);
+        const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
+        const participation = await response.json();
+        // Create sca_issues.c first — it doesn't exist in the template repo,
+        // and the PUT /files endpoint can only update existing files.
+        await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, 'sca_issues.c');
+        await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, cScaSubmission);
+        // Wait for the build to complete via API so the test doesn't have to poll the UI
+        await waitForParticipationBuildToFinish(participation.id!);
     });
 
-    test('Configures SCA grading and makes a successful submission with SCA errors', async ({
-        login,
-        programmingExercisesScaConfig,
-        programmingExerciseOverview,
-        programmingExerciseEditor,
-        programmingExerciseScaFeedback,
-    }) => {
-        // Configure SCA grading
+    test.afterEach('Delete exercise to prevent DB accumulation', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        await programmingExercisesScaConfig.visit(course.id!, exercise.id!);
-        await programmingExercisesScaConfig.makeEveryScaCategoryInfluenceGrading();
-        await programmingExercisesScaConfig.saveChanges();
-
-        // Make submission with SCA errors
-        await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-        await programmingExerciseOverview.openCodeEditor(exercise.id!);
-        await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaScaSubmission, async () => {
-            // Use exercise-scoped locator and check for text content
-            const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-            await expect(resultScore).toContainText(javaScaSubmission.expectedResult, { timeout: 30000 });
-            await resultScore.click();
-            await programmingExerciseScaFeedback.shouldShowPointChart();
-            // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
-            // tests is the score, which hardly verifies the SCA functionality
-            await programmingExerciseScaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5');
-            await programmingExerciseScaFeedback.shouldShowCodeIssue("Avoid unused private fields such as 'LITERAL_TWO'.", '0.5');
-            await programmingExerciseScaFeedback.shouldShowCodeIssue("de.test.BubbleSort.literal1 isn't final but should be", '2.5');
-            await programmingExerciseScaFeedback.shouldShowCodeIssue('Unread public/protected field: de.test.BubbleSort.literal1', '0.2');
-            await programmingExerciseScaFeedback.closeModal();
-        });
+        await exerciseAPIRequests.deleteProgrammingExercise(exercise.id!);
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test('Verifies SCA feedback is displayed correctly after submission', async ({ login, page, programmingExerciseScaFeedback }) => {
+        // The beforeEach creates a C exercise, waits for solution build, submits, and waits for
+        // the student build — all of which can take several minutes under CI load.
+        test.setTimeout(300000);
+        await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+        const resultScore = page.locator('#exercise-headers-information').locator('#result-score');
+        const expectedScore = resultScore.getByText(cScaSubmission.expectedResult);
+        // Build is already confirmed complete via API. Use reloadUntilFound as a fallback
+        // in case the page needs a moment to render the result.
+        await Commands.reloadUntilFound(page, expectedScore, 5000, BUILD_RESULT_TIMEOUT);
+        await resultScore.click();
+        await programmingExerciseScaFeedback.shouldShowPointChart();
+        await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_x'", '0.2');
+        await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_y'", '0.2');
+        await programmingExerciseScaFeedback.closeModal();
     });
 });

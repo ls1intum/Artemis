@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -13,32 +15,34 @@ import { provideRouter } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('AccountInformationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
 
-    let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: jest.Mock };
-    let userSettingsServiceMock: { updateProfilePicture: jest.Mock; removeProfilePicture: jest.Mock };
-    let dialogServiceMock: { open: jest.Mock };
-    let alertServiceMock: { addAlert: jest.Mock };
+    let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: ReturnType<typeof vi.fn> };
+    let userSettingsServiceMock: { updateProfilePicture: ReturnType<typeof vi.fn>; removeProfilePicture: ReturnType<typeof vi.fn> };
+    let dialogServiceMock: { open: ReturnType<typeof vi.fn> };
+    let alertServiceMock: { addAlert: ReturnType<typeof vi.fn> };
     let dialogCloseSubject: Subject<string | undefined>;
 
     beforeEach(async () => {
         dialogCloseSubject = new Subject<string | undefined>();
         accountServiceMock = {
             userIdentity: signal<User | undefined>({ id: 99, internal: true } as User),
-            setImageUrl: jest.fn(),
+            setImageUrl: vi.fn(),
         };
         userSettingsServiceMock = {
-            updateProfilePicture: jest.fn(),
-            removeProfilePicture: jest.fn(),
+            updateProfilePicture: vi.fn(),
+            removeProfilePicture: vi.fn(),
         };
         dialogServiceMock = {
-            open: jest.fn().mockReturnValue({
+            open: vi.fn().mockReturnValue({
                 onClose: dialogCloseSubject.asObservable(),
             } as Partial<DynamicDialogRef>),
         };
         alertServiceMock = {
-            addAlert: jest.fn(),
+            addAlert: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -53,6 +57,10 @@ describe('AccountInformationComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize and have current user from signal', () => {

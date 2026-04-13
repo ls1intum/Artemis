@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
@@ -7,21 +9,30 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CalendarDesktopWeekPresentationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarDesktopWeekPresentationComponent>;
 
     const startOfMonday = dayjs('2025-05-05');
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarDesktopWeekPresentationComponent],
-            declarations: [
+            imports: [
+                CalendarDesktopWeekPresentationComponent,
                 MockComponent(CalendarDayBadgeComponent),
                 MockComponent(CalendarEventsPerDaySectionComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarDesktopWeekPresentationComponent);

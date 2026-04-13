@@ -1,31 +1,30 @@
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { SEED_COURSES } from '../../support/seedData';
+import { generateUUID } from '../../support/utils';
+
+const course = { id: SEED_COURSES.atlas1.id } as any;
 
 test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
-    let course: Course;
     let exercise: TextExercise;
-    const exerciseTitle = 'Text Exercise';
-    const competenciesData = [
-        { title: 'Problem Solving', description: 'Ability to solve complex problems' },
-        { title: 'Code Quality', description: 'Writing clean and maintainable code' },
-    ];
+    let competenciesData: Array<{ title: string; description: string }>;
 
-    test.beforeEach('Setup course with competencies and exercise', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Setup competencies and exercise', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-
+        const uid = generateUUID();
+        competenciesData = [
+            { title: 'Problem Solving ' + uid, description: 'Ability to solve complex problems' },
+            { title: 'Code Quality ' + uid, description: 'Writing clean and maintainable code' },
+        ];
         for (const competency of competenciesData) {
             await courseManagementAPIRequests.createCompetency(course, competency.title, competency.description);
         }
-        exercise = await exerciseAPIRequests.createTextExercise({ course }, exerciseTitle);
+        exercise = await exerciseAPIRequests.createTextExercise({ course }, 'Text ' + uid);
     });
 
-    test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 
     test('Links exercise to single competency', async ({ page, courseManagementExercises, competencyManagement }) => {
         await page.goto(`/course-management/${course.id}/exercises`);

@@ -32,10 +32,13 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
@@ -47,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Participation.
@@ -287,8 +291,8 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise)) {
-            throw new IllegalStateException("Only programming and quiz exercises support the practice mode at the moment");
+        if (exercise instanceof FileUploadExercise) {
+            throw new IllegalStateException("File upload exercises do not support practice mode.");
         }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
@@ -331,6 +335,11 @@ public class ParticipationService {
             participation.setAttempt(1);
             if (participation.getInitializationDate() == null) {
                 participation.setInitializationDate(ZonedDateTime.now());
+            }
+
+            boolean isTextOrModelingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
+            if (isTextOrModelingExercise && !submissionRepository.existsByParticipationId(participation.getId())) {
+                submissionRepository.initializeSubmission(participation, exercise, null);
             }
         }
 
@@ -709,6 +718,41 @@ public class ParticipationService {
             }
             else {
                 newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            }
+
+            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation);
+            }
+        }
+
+        return changedParticipations;
+    }
+
+    /**
+     * Updates individual due dates for participations based on DTOs.
+     * Similar to updateIndividualDueDates but accepts DTOs instead of entities.
+     *
+     * @param exercise       the exercise the participations belong to.
+     * @param dueDateUpdates the DTOs containing participation IDs and new individual due dates.
+     * @return all participations where the individual due date actually changed.
+     */
+    public List<StudentParticipation> updateIndividualDueDatesFromDTOs(final Exercise exercise, final List<ParticipationDueDateUpdateDTO> dueDateUpdates) {
+        final List<StudentParticipation> changedParticipations = new ArrayList<>();
+
+        for (final ParticipationDueDateUpdateDTO dto : dueDateUpdates) {
+            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(dto.id());
+            if (optionalOriginalParticipation.isEmpty()) {
+                continue;
+            }
+            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
+
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = dto.individualDueDate();
             }
 
             if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {

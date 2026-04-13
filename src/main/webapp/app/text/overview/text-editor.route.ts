@@ -24,4 +24,13 @@ export const textEditorRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'participate/:participationId/submission/:submissionId/result/:resultId',
+        loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];

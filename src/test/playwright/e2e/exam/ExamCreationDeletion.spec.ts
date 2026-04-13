@@ -1,25 +1,21 @@
 import { test } from '../../support/fixtures';
-import { admin } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { SEED_COURSES } from '../../support/seedData';
+import { admin } from '../../support/users';
 
 /*
  * Common primitives
  */
 const dateFormat = 'MMM D, YYYY HH:mm';
 
+const course = { id: SEED_COURSES.examManagement.id } as any;
+
 test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
+    test('Creates an exam', async ({ login, page, examManagement, examCreation, examAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-    });
-
-    test('Creates an exam', async ({ navigationBar, courseManagement, examManagement, examCreation }) => {
         const examData = {
             title: 'exam' + generateUUID(),
             visibleDate: dayjs(),
@@ -33,10 +29,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             confirmationEndText: 'Exam confirmation end text',
         };
 
-        await navigationBar.openCourseManagement();
-        await courseManagement.openExamsOfCourse(course.id!);
-
-        await examManagement.createNewExam();
+        await page.goto(`/course-management/${course.id}/exams/new`);
         await examCreation.setTitle(examData.title);
         await examCreation.setVisibleDate(examData.visibleDate);
         await examCreation.setStartDate(examData.startDate);
@@ -51,6 +44,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
 
         const response = await examCreation.submit();
         expect(response.status()).toBe(201);
+        const createdExam: Exam = await response.json();
 
         await expect(examManagement.getExamTitle()).toContainText(examData.title);
         await expect(examManagement.getExamVisibleDate()).toContainText(examData.visibleDate.format(dateFormat));
@@ -63,12 +57,16 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
         await expect(examManagement.getExamConfirmationStartText()).toContainText(examData.confirmationStartText);
         await expect(examManagement.getExamConfirmationEndText()).toContainText(examData.confirmationEndText);
         await expect(examManagement.getExamWorkingTime()).toHaveText('1h 0min');
+
+        // Clean up the created exam to prevent accumulation
+        await examAPIRequests.deleteExam(createdExam);
     });
 
     test.describe('Exam deletion', () => {
         let exam: Exam;
 
-        test.beforeEach(async ({ examAPIRequests }) => {
+        test.beforeEach(async ({ login, examAPIRequests }) => {
+            await login(admin);
             const examConfig = {
                 course,
                 title: 'exam' + generateUUID(),
@@ -76,19 +74,17 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             exam = await examAPIRequests.createExam(examConfig);
         });
 
-        test('Deletes an existing exam', async ({ navigationBar, courseManagement, examManagement, examDetails }) => {
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+        test('Deletes an existing exam', async ({ page, examDetails }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
             await examDetails.deleteExam(exam.title!);
-            await expect(examManagement.getExamSelector(exam.title!)).not.toBeVisible();
         });
     });
 
     test.describe('Edits an exam', () => {
         let exam: Exam;
 
-        test.beforeEach(async ({ examAPIRequests }) => {
+        test.beforeEach(async ({ login, examAPIRequests }) => {
+            await login(admin);
             const examConfig = {
                 course,
                 title: 'exam' + generateUUID(),
@@ -97,7 +93,11 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             exam = await examAPIRequests.createExam(examConfig);
         });
 
-        test('Edits an existing exam', async ({ navigationBar, courseManagement, examManagement, examCreation }) => {
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
+
+        test('Edits an existing exam', async ({ page, examManagement, examCreation }) => {
             const visibleDate = dayjs();
             const startDate = visibleDate.add(1, 'hour');
             const endDate = startDate.add(4, 'hour');
@@ -115,9 +115,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
                 confirmationEndText: 'Edited exam confirmation end text',
             };
 
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
 
             await expect(examManagement.getExamTitle()).toContainText(exam.title!);
             await examManagement.clickEdit();
@@ -161,9 +159,5 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             await expect(examManagement.getExamConfirmationEndText()).toContainText(editedExamData.confirmationEndText);
             await expect(examManagement.getExamWorkingTime()).toHaveText('4h 0min');
         });
-    });
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

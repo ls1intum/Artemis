@@ -1,8 +1,14 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.prerequisite.title"></h4>
-    <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
-</div>
-<div class="modal-body">
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '70dvw' }"
+    [header]="'artemisApp.prerequisite.title' | artemisTranslate"
+>
     <div class="container">
         @if (isLoading) {
             <div class="d-flex justify-content-center">
@@ -18,4 +24,4 @@
             </div>
         }
     </div>
-</div>
+</p-dialog>

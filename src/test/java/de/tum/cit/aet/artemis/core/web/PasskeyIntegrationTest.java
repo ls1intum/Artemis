@@ -379,7 +379,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
-            assertThat(passkeys).hasSize(2);
+            // Only assert on the credentials we created, since other admin users may have passkeys from other tests
+            assertThat(passkeys).extracting(PasskeyAdminDTO::credentialId).contains(credential1.getCredentialId(), credential2.getCredentialId());
 
             PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
             assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());

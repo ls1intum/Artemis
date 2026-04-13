@@ -165,8 +165,8 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQLDialect / org.hibernate.dialect.MySQLDialect
-        database: h2 # Alternatives h2 / POSTGRESQL / MYSQL
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database: POSTGRESQL
         open-in-view: false
         show-sql: false
         hibernate:
@@ -247,11 +247,10 @@ zonky:
         database:
             prefetching:
                 concurrency: 1
-            # Default: H2 (in-process, no Docker). Override via Gradle tasks:
-            #   ./gradlew testPostgres -x webapp  (PostgreSQL via Testcontainers)
-            #   ./gradlew testMysql -x webapp     (MySQL via Testcontainers)
+            # Default: PostgreSQL via Testcontainers (Docker required).
+            # Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker).
             # Connection pooling for Testcontainers is handled by TestDataSourcePoolConfig.
-            type: H2
+            type: POSTGRES
             postgres:
                 docker:
                     image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}

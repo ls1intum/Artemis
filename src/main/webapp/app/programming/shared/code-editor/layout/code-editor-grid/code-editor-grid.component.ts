@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, Renderer2, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, Renderer2, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -14,7 +14,7 @@ import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor
     encapsulation: ViewEncapsulation.None,
     imports: [FaIconComponent],
 })
-export class CodeEditorGridComponent implements AfterViewInit {
+export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private renderer = inject(Renderer2);
 
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
@@ -51,6 +51,13 @@ export class CodeEditorGridComponent implements AfterViewInit {
     // Icons
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
+
+    ngOnDestroy(): void {
+        this.interactResizableMain?.unset();
+        this.interactResizableLeft?.unset();
+        this.interactResizableRight?.unset();
+        this.interactResizableBottom?.unset();
+    }
 
     /**
      * After the view was initialized, we create an interact.js resizable object,

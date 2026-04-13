@@ -94,7 +94,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
 
-    private boolean memirisEnabled = false;
+    private boolean memirisEnabled = true;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.

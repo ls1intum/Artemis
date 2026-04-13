@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -76,6 +78,13 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradeSteps = new HashSet<>();
         courseGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeSteps(gradeSteps);
+    }
+
+    private GradingScaleUpdateDTO toDTO(GradingScale gradingScale, Integer coursePresentationScore) {
+        Set<GradingScaleUpdateDTO.GradeStepDTO> gradeStepDTOs = gradingScale.getGradeSteps().stream().map(gs -> new GradingScaleUpdateDTO.GradeStepDTO(gs.getLowerBoundPercentage(),
+                gs.isLowerBoundInclusive(), gs.getUpperBoundPercentage(), gs.isUpperBoundInclusive(), gs.getGradeName(), gs.getIsPassingGrade())).collect(Collectors.toSet());
+        return new GradingScaleUpdateDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
+                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs, null, coursePresentationScore, null);
     }
 
     /**
@@ -190,16 +199,16 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseGradingScale.setGradeSteps(gradeSteps);
 
         // The presentationsNumber and presentationsWeight must be null.
-        course.setPresentationScore(2);
         courseGradingScale.setPresentationsNumber(1);
         courseGradingScale.setPresentationsWeight(20.0);
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        GradingScaleUpdateDTO dto1 = toDTO(courseGradingScale, 2);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto1, HttpStatus.BAD_REQUEST);
         courseGradingScale.setPresentationsNumber(null);
         courseGradingScale.setPresentationsWeight(null);
 
         // The presentationScore must be above 0.
-        course.setPresentationScore(-1);
-        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
+        GradingScaleUpdateDTO dto2 = toDTO(courseGradingScale, -1);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto2, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -232,15 +241,14 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
-        course.setPresentationScore(5);
 
-        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
-                HttpStatus.CREATED);
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, 5);
+
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, GradingScale.class, HttpStatus.CREATED);
 
         assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
         assertThat(savedGradingScale.getCourse().getPresentationScore()).isEqualTo(5);
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
 
     /**

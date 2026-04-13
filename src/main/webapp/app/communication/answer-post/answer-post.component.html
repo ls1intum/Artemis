@@ -1,10 +1,10 @@
 <div
-    [id]="'item-' + posting.id"
+    [id]="'item-' + posting()?.id"
     class="answer-post hover-container"
-    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage, 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage(), 'is-saved': !isConsecutive() && posting()?.isSaved, 'non-consecutive': !isConsecutive() }"
 >
-    @if (posting.isSaved) {
-        <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
+    @if (posting()?.isSaved) {
+        <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
             <div class="post-is-saved-message-content">
                 <fa-icon [icon]="faBookmark" />
                 <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
@@ -12,16 +12,16 @@
         </div>
     }
     @if (isConsecutive()) {
-        <span class="post-time fs-small" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-            {{ posting.creationDate | artemisDate: 'time' }}
+        <span class="post-time fs-small" ngbTooltip="{{ posting()?.creationDate | artemisDate: 'time' }}">
+            {{ posting()?.creationDate | artemisDate: 'time' }}
         </span>
     }
     @if (!isConsecutive()) {
         <div class="ps-3">
             <jhi-posting-header
-                [posting]="posting"
+                [posting]="posting()"
                 [readOnlyMode]="isReadOnlyMode()"
-                [isCommunicationPage]="isCommunicationPage"
+                [isCommunicationPage]="isCommunicationPage()"
                 [lastReadDate]="lastReadDate()"
                 [isDeleted]="isDeleted"
                 (onUserNameClicked)="onUserNameClicked()"
@@ -29,13 +29,13 @@
         </div>
     }
     @if (!createAnswerPostModal.isInputOpen) {
-        <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }" (contextmenu)="onRightClick($event)">
+        <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown">
                 <jhi-posting-content
-                    [content]="posting.content"
-                    [isEdited]="!!posting.updatedDate"
-                    [author]="posting.author"
-                    [posting]="posting"
+                    [content]="posting()?.content"
+                    [isEdited]="!!posting()?.updatedDate"
+                    [author]="posting()?.author"
+                    [posting]="posting()"
                     [isReply]="true"
                     [isDeleted]="isDeleted"
                     [deleteTimerInSeconds]="deleteTimerInSeconds"
@@ -47,9 +47,9 @@
                     <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode()"
                         [course]="course"
-                        [posting]="posting"
+                        [posting]="posting()"
                         [isLastAnswer]="isLastAnswer()"
-                        [isThreadSidebar]="isThreadSidebar"
+                        [isThreadSidebar]="isThreadSidebar()"
                         (openPostingCreateEditModal)="createAnswerPostModal.open()"
                         (reactionsUpdated)="onReactionsUpdated($event)"
                         (mayDeleteOutput)="onMayDelete($event)"
@@ -66,12 +66,12 @@
     </div>
     @if (!isDeleted) {
         <div animate.enter="reactions-entering" animate.leave="reactions-leaving">
-            <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }">
+            <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting()?.isSaved && isConsecutive() }">
                 <jhi-posting-reactions-bar
                     [isReadOnlyMode]="isReadOnlyMode()"
-                    [posting]="posting"
+                    [posting]="posting()"
                     [isLastAnswer]="isLastAnswer()"
-                    [isThreadSidebar]="isThreadSidebar"
+                    [isThreadSidebar]="isThreadSidebar()"
                     (openPostingCreateEditModal)="createAnswerPostModal.open()"
                     (reactionsUpdated)="onReactionsUpdated($event)"
                     [isEmojiCount]="true"
@@ -81,7 +81,7 @@
         </div>
     }
 </div>
-<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef()" />
+<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting()" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef()" />
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown) {
@@ -103,8 +103,8 @@
             </button>
         }
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
-            <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
-            <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+            <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
+            <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
         </button>
         <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
             <fa-icon [icon]="faShare" class="item-icon" />

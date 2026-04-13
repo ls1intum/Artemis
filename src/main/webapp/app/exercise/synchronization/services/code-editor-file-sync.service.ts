@@ -109,6 +109,7 @@ export class CodeEditorFileSyncService {
     // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private fileTreeChangeSubject = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
     private stateReplacedSubject = new Subject<{ filePath: string } & FileSyncState>();
+    private initialSyncFinalizedSubject = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
 
     /**
      * Stream emitting file tree changes (create/delete/rename) from remote peers.
@@ -124,6 +125,20 @@ export class CodeEditorFileSyncService {
      */
     get stateReplaced$(): Observable<{ filePath: string } & FileSyncState> {
         return this.stateReplacedSubject.asObservable();
+    }
+
+    /**
+     * Stream emitted once per file when initial synchronization finalized.
+     *
+     * `contentDivergedFromFallback` indicates whether the finalized shared content differs from
+     * the initial fallback content loaded from the server for this file. Consumers can use this
+     * to decide whether the file should be marked as dirty after bootstrap.
+     *
+     * `finalContent` is the finalized shared text after applying winner-response/fallback and all
+     * buffered updates.
+     */
+    get initialSyncFinalized$(): Observable<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }> {
+        return this.initialSyncFinalizedSubject.asObservable();
     }
 
     /**
@@ -231,6 +246,15 @@ export class CodeEditorFileSyncService {
      */
     isFileOpen(filePath: string): boolean {
         return this.fileDocs.has(this.buildKey(filePath));
+    }
+
+    /**
+     * Whether an open file is still awaiting initial synchronization.
+     *
+     * Returns false when the file is not open.
+     */
+    isFileAwaitingInitialSync(filePath: string): boolean {
+        return this.getEntryByFilePath(filePath)?.awaitingInitialSync ?? false;
     }
 
     /**
@@ -441,7 +465,7 @@ export class CodeEditorFileSyncService {
             auxiliaryRepositoryId: this.auxiliaryRepositoryId,
         };
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
-        entry.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(entry, filePath), INITIAL_SYNC_FINALIZE_DELAY_MS);
+        entry.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(entry), INITIAL_SYNC_FINALIZE_DELAY_MS);
     }
 
     private respondWithFullContent(entry: FileSyncEntry, filePath: string, responseTo: string): void {
@@ -500,7 +524,19 @@ export class CodeEditorFileSyncService {
         this.replaceDocumentWithRemoteState(entry, entry.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
-    private finalizeInitialSync(entry: FileSyncEntry, filePath: string): void {
+    /**
+     * Finalize a file's bootstrap sync phase.
+     *
+     * Resolution order:
+     * 1) apply winning full-content response (if any),
+     * 2) otherwise seed fallback server content,
+     * 3) replay buffered incremental updates.
+     *
+     * After finalization, emits:
+     * - `contentDivergedFromFallback`: whether finalized shared content differs from fallback,
+     * - `finalContent`: finalized shared text.
+     */
+    private finalizeInitialSync(entry: FileSyncEntry): void {
         if (!entry.pendingInitialSync) {
             return;
         }
@@ -533,8 +569,11 @@ export class CodeEditorFileSyncService {
                 Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             });
         }
-        this.flushQueuedFullContentRequests(entry, filePath);
+        this.flushQueuedFullContentRequests(entry, entry.filePath);
+        const finalContent = entry.text.toString();
+        const contentDivergedFromFallback = finalContent !== entry.fallbackInitialContent;
         entry.awaitingInitialSync = false;
+        this.initialSyncFinalizedSubject.next({ filePath: entry.filePath, contentDivergedFromFallback, finalContent });
         if (entry.pendingInitialSync.timeoutId) {
             clearTimeout(entry.pendingInitialSync.timeoutId);
         }

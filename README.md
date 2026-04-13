@@ -2,7 +2,7 @@
 
 [![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build.yml)
 [![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
-[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
+[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/deploy-documentation.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
@@ -91,19 +91,14 @@ Additional services are available in the EduTelligence suite for advanced deploy
 
 The Artemis development team prioritizes the following areas in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
-* **Short term**: Further improve the communication features with mobile apps for iOS and Android
-* **Short term**: Add the possibility to use Iris for questions on all exercise types and lectures (partly done)
-* **Short term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
-* **Short term**: Improve the LTI integration with Moodle
+* **Medium term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
 * **Medium term**: Improve the REST API of the server application
-* **Medium term**: Integrate an online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience
 * **Medium term**: Add more learning analytics features while preserving data privacy
 * **Medium term**: Improve the user experience, usability and navigation
 * **Medium term**: Add automatic generation of hints for programming exercises
 * **Medium term**: Add GenAI support for reviewing exercises for instructors
 * **Medium term**: Add GenAI support for learning analytics (partly done)
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
-* **Long term**: Develop an exchange platform for exercises
 
 ## Contributing
 

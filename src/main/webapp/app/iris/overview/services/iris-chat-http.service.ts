@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { map, tap } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
@@ -26,18 +27,18 @@ export class IrisChatHttpService {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Response<IrisMessage[]> {
-        return this.httpClient.get<IrisMessage[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
+        return this.httpClient.get<IrisMessageResponseDTO[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
-                const messages = response.body;
-                if (!messages) return response;
+                const dtos = response.body;
+                if (!dtos) return response as unknown as HttpResponse<IrisMessage[]>;
 
-                const modifiedMessages = messages.map((message) => {
-                    return Object.assign({}, message, {
-                        sentAt: convertDateFromServer(message.sentAt),
-                    });
+                const messages: IrisMessage[] = dtos.map((dto) => {
+                    return Object.assign({}, dto, {
+                        sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
+                    }) as IrisMessage;
                 });
 
-                modifiedMessages.sort((a, b) => {
+                messages.sort((a, b) => {
                     if (a.sentAt && b.sentAt) {
                         if (a.sentAt === b.sentAt) return 0;
                         return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
@@ -46,8 +47,8 @@ export class IrisChatHttpService {
                 });
 
                 return Object.assign({}, response, {
-                    body: modifiedMessages,
-                });
+                    body: messages,
+                }) as HttpResponse<IrisMessage[]>;
             }),
         );
     }
@@ -57,8 +58,8 @@ export class IrisChatHttpService {
      * @param sessionId of the session
      * @param request  the message request DTO containing content and optional uncommitted files
      */
-    createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisUserMessage> {
-        return this.httpClient.post<IrisUserMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
+    createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
+        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
     }
 
     /**
@@ -75,9 +76,9 @@ export class IrisChatHttpService {
      * @param {IrisUserMessage} message
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessageResponseDTO> {
         message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
-        return this.httpClient.post<IrisAssistantMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;
@@ -93,8 +94,8 @@ export class IrisChatHttpService {
      * @param {boolean} helpful rating of the message
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-    rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
-        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
+    rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessageResponseDTO> {
+        return this.httpClient.put<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
     getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {

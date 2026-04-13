@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClient } from '@angular/common/http';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -22,12 +24,13 @@ describe('OrganizationSelectorComponent', () => {
     organization2.id = 6;
     organization2.name = 'orgTwo';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 LocalStorageService,
                 SessionStorageService,
                 MockProvider(DynamicDialogRef),
+                MockProvider(AlertService),
                 {
                     provide: DynamicDialogConfig,
                     useValue: {
@@ -40,38 +43,61 @@ describe('OrganizationSelectorComponent', () => {
             ],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(OrganizationSelectorComponent);
-                component = fixture.componentInstance;
-                organizationService = TestBed.inject(OrganizationManagementService);
-            });
-    });
+            .compileComponents();
 
-    beforeEach(() => {
+        fixture = TestBed.createComponent(OrganizationSelectorComponent);
+        component = fixture.componentInstance;
+        organizationService = TestBed.inject(OrganizationManagementService);
         jest.clearAllMocks();
     });
 
-    it('should load organizations and filter out the already assigned ones', fakeAsync(() => {
-        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
+    it('should load organizations via paginated endpoint', () => {
+        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
-        fixture.changeDetectorRef.detectChanges();
-        tick();
+        component.loadOrganizations({} as TableLazyLoadEvent);
 
         expect(component).toBeTruthy();
-        expect(component.availableOrganizations[0]).toBe(organization2);
-    }));
+        expect(component.isLoading()).toBeFalse();
+        expect(component.totalCount()).toBe(2);
+        expect(component.organizations()).toHaveLength(2);
+    });
+
+    it('should call getOrganizations without withCounts (uses default false)', () => {
+        const spy = jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+        component.loadOrganizations({} as TableLazyLoadEvent);
+
+        // No second argument means the service default (false) is used — no counts requested
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy.mock.calls[0]).toHaveLength(1);
+    });
+
+    it('should mark already-assigned organizations as disabled', () => {
+        // organization1 (id=5) is in the dialog config as already assigned
+        expect(component.isAlreadyAssigned()(organization1)).toBeTrue();
+        expect(component.isAlreadyAssigned()(organization2)).toBeFalse();
+    });
+
+    it('should handle error when loading organizations', () => {
+        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
+
+        component.loadOrganizations({} as TableLazyLoadEvent);
+
+        expect(component.isLoading()).toBeFalse();
+        expect(component.totalCount()).toBe(0);
+        expect(component.organizations()).toHaveLength(0);
+    });
 
     it('should close modal with organization', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
         const closeSpy = jest.spyOn(dialogRef, 'close');
 
-        component.closeModal(organization1);
+        component.selectOrganization(organization1);
 
         expect(closeSpy).toHaveBeenCalledWith(organization1);
     });
 
-    it('should close modal with undefined', () => {
+    it('should close modal with undefined on cancel', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
         const closeSpy = jest.spyOn(dialogRef, 'close');
 

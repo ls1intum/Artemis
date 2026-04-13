@@ -20,6 +20,7 @@ export class IrisAssistantMessage implements BaseEntity {
     sender: IrisSender.LLM;
     helpful?: boolean;
     accessedMemories?: MemirisMemory[];
+    createdMemories?: MemirisMemory[];
 }
 
 export class IrisUserMessage implements BaseEntity {
@@ -28,6 +29,7 @@ export class IrisUserMessage implements BaseEntity {
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
     messageDifferentiator?: number;
+    accessedMemories?: MemirisMemory[];
     createdMemories?: MemirisMemory[];
 }
 
@@ -36,6 +38,8 @@ export class IrisArtifactMessage implements BaseEntity {
     content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.ARTIFACT;
+    accessedMemories?: MemirisMemory[];
+    createdMemories?: MemirisMemory[];
 }
 
 export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;

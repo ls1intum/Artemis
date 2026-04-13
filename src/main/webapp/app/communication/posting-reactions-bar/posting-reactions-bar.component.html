@@ -167,7 +167,7 @@
                 (click)="bookmarkPosting()"
                 [ngbTooltip]="(getSaved() ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
             >
-                <fa-icon [icon]="getSaved() ? faBookmark : faBookmark" />
+                <fa-icon [icon]="getSaved() ? faBookmark : farBookmark" />
             </button>
             <!-- Forward button -->
             <button
@@ -177,6 +177,17 @@
                 [ngbTooltip]="'artemisApp.metis.post.forwardMessage' | artemisTranslate"
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
+            </button>
+        }
+        <!-- Mark as unread button -->
+        @if (canMarkAsUnread && !isEmojiCount()) {
+            <button
+                class="reaction-button clickable px-2 fs-small"
+                [disabled]="isReadOnlyMode()"
+                (click)="markMessageAsUnread()"
+                [ngbTooltip]="'artemisApp.metis.post.markAsUnread' | artemisTranslate"
+            >
+                <fa-icon [icon]="faEnvelopeOpenText" cdkOverlayOrigin />
             </button>
         }
     </div>

@@ -65,6 +65,19 @@ public class IrisMemoryResource {
     }
 
     /**
+     * DELETE iris/user/memories: Delete all Memiris memories for the current user.
+     *
+     * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
+     */
+    @DeleteMapping("user/memories")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deleteAllMemories() {
+        var user = userRepository.getUser();
+        pyrisConnectorService.deleteAllMemirisMemories(user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * GET iris/user/memory/{memoryId}: Retrieve a Memiris memory with its learnings and connections.
      *
      * @param memoryId the id of the memory to retrieve

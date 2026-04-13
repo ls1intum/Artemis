@@ -1,8 +1,8 @@
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
+import { SEED_COURSES } from '../../support/seedData';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
 import { ExerciseType } from '../../support/constants';
@@ -13,14 +13,16 @@ import { Page } from '@playwright/test';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
-test.describe('Exam Checklists', async () => {
-    let course: Course;
+const course = { id: SEED_COURSES.examManagement.id } as any;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+test.describe('Exam Checklists', async () => {
+    let lastCreatedExam: Exam | undefined;
+
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        if (lastCreatedExam) {
+            await examAPIRequests.deleteExam(lastCreatedExam);
+            lastCreatedExam = undefined;
+        }
     });
 
     test.describe('Exercise group checks', { tag: '@fast' }, () => {
@@ -31,7 +33,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_EXERCISE_GROUP);
@@ -50,7 +52,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
@@ -76,12 +78,12 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examDetails.openExerciseGroups();
             await examExerciseGroups.clickAddExerciseGroup();
@@ -98,19 +100,19 @@ test.describe('Exam Checklists', async () => {
             examAPIRequests,
             exerciseAPIRequests,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), textExerciseTemplate);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
             const exerciseTemplate = { ...textExerciseTemplate };
             exerciseTemplate.maxPoints = maxPointsOfFirstExercise - 1;
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), exerciseTemplate);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
         });
 
@@ -120,27 +122,27 @@ test.describe('Exam Checklists', async () => {
             examDetails,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, {}, false);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
         });
     });
 
     test('Instructor registers a student to exam and at least one student check is marked', { tag: '@fast' }, async ({ page, login, examDetails, studentExamManagement }) => {
-        const exam = await createExam(course, page);
+        const exam = (lastCreatedExam = await createExam(course, page));
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_STUDENT);
@@ -154,7 +156,7 @@ test.describe('Exam Checklists', async () => {
         let exam: Exam;
 
         test.beforeEach('Create exam', async ({ page }) => {
-            exam = await createExam(course, page);
+            exam = lastCreatedExam = await createExam(course, page);
         });
 
         test.beforeEach('Add exercise groups and register exam students', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
@@ -189,7 +191,7 @@ test.describe('Exam Checklists', async () => {
     });
 
     test('Instructor sets the publish results and review dates and the corresponding checks are marked', { tag: '@fast' }, async ({ page, login, examDetails, examCreation }) => {
-        const exam = await createExam(course, page);
+        const exam = (lastCreatedExam = await createExam(course, page));
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.PUBLISHING_DATE_SET);
@@ -253,7 +255,7 @@ test.describe('Exam Checklists', async () => {
                 endDate: dayjs().add(1, 'day'),
                 publishResultsDate: dayjs().add(2, 'day'),
             };
-            const exam = await createExam(course, page, examConfig);
+            const exam = (lastCreatedExam = await createExam(course, page, examConfig));
             for (let i = 0; i < exam.numberOfExercisesInExam!; i++) {
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum-short.txt' });
             }
@@ -269,13 +271,9 @@ test.describe('Exam Checklists', async () => {
             await examDetails.checkItemChecked(ExamChecklistItem.UNSUBMITTED_EXERCISES);
         },
     );
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
 });
 
-async function createExam(course: Course, page: Page, customConfig?: any) {
+async function createExam(course: any, page: Page, customConfig?: any) {
     const NUMBER_OF_EXERCISES = 2;
     const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
 
@@ -291,8 +289,9 @@ async function createExam(course: Course, page: Page, customConfig?: any) {
     return await examAPIRequests.createExam(examConfig);
 }
 
-async function navigateToExamDetailsPage(page: Page, course: Course, exam: Exam) {
+async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
     await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+    await page.waitForLoadState('networkidle');
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {

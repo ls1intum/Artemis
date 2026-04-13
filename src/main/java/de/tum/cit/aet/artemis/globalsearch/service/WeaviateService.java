@@ -44,11 +44,14 @@ public class WeaviateService {
 
     private final String collectionPrefix;
 
+    private final String vectorizerModule;
+
     private final boolean isTestProfile;
 
     public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
         this.client = client;
         this.collectionPrefix = properties.collectionPrefix();
+        this.vectorizerModule = properties.vectorizerModule();
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 
@@ -68,7 +71,7 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
-        log.info("Initializing Weaviate collections...");
+        log.info("Initializing Weaviate collections with vectorizer module: {}", vectorizerModule);
 
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
@@ -94,9 +97,27 @@ public class WeaviateService {
             log.info("Creating collection '{}'...", collectionName);
 
             client.collections.create(collectionName, collection -> {
-                // Explicitly disable vectorization; text2vec-transformers will be added in a separate PR
-                // In a follow-up PR we will configure text2vec-transformers vectorizer for automatic embeddings
-                collection.vectorConfig(VectorConfig.selfProvided());
+                // Configure vectorizer based on deployment setup
+                // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
+                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
+                switch (vectorizerModule) {
+                    case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
+                        log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
+                        collection.vectorConfig(VectorConfig.text2vecTransformers());
+                    }
+                    case WeaviateConfigurationProperties.VECTORIZER_NONE -> {
+                        log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
+                        collection.vectorConfig(VectorConfig.selfProvided());
+                    }
+                    default -> {
+                        log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", vectorizerModule);
+                        collection.vectorConfig(VectorConfig.selfProvided());
+                    }
+                }
+
+                // Enable null state indexing so that properties with null values can be used in filters
+                // (e.g. release_date IS NULL, or filtering on exam properties that are null for non-exam exercises)
+                collection.invertedIndex(idx -> idx.indexNulls(true));
 
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
@@ -113,6 +134,10 @@ public class WeaviateService {
 
             log.info("Successfully created collection '{}'", collectionName);
         }
+        catch (IOException e) {
+            log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
+            throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
+        }
         catch (WeaviateApiException e) {
             // In test environments, multiple Spring contexts may share one Weaviate instance,
             // causing a race condition between the exists() check and create() call.
@@ -121,12 +146,8 @@ public class WeaviateService {
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-                throw new WeaviateException("Failed to create collection: " + collectionName, e);
+                throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
-        }
-        catch (IOException e) {
-            log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-            throw new WeaviateException("Failed to create collection: " + collectionName, e);
         }
     }
 
@@ -158,5 +179,17 @@ public class WeaviateService {
      */
     public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
         return client.collections.use(resolveCollectionName(collectionName));
+    }
+
+    /**
+     * Returns whether a text vectorizer is configured that can automatically
+     * create embeddings from text. When this returns {@code false}, only keyword
+     * (BM25) search should be used instead of hybrid search because hybrid search
+     * requires a vectorizer to convert the query text into a vector.
+     *
+     * @return {@code true} if a text vectorizer is available, {@code false} otherwise
+     */
+    public boolean isVectorizerAvailable() {
+        return WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(vectorizerModule);
     }
 }

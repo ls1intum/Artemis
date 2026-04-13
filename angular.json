@@ -119,6 +119,11 @@
                 "glob": "**/*",
                 "input": "./node_modules/monaco-editor/bundles/vs",
                 "output": "vs"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
+                "output": "assets/ngx-extended-pdf-viewer"
               }
             ],
             "styles": [

@@ -93,4 +93,17 @@ public class AtlasMLApi extends AbstractAtlasApi {
     public boolean mapCompetencyToCompetency(Long sourceCompetencyId, Long targetCompetencyId) {
         return atlasMLService.mapCompetencyToCompetency(sourceCompetencyId, targetCompetencyId);
     }
+
+    /**
+     * Maps a competency to an exercise in AtlasML.
+     * Updates the exercise's competency list in the vector store so the exercise embedding
+     * reflects the newly linked competency.
+     *
+     * @param exerciseId   the exercise ID
+     * @param competencyId the competency ID to link
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToExercise(Long exerciseId, Long competencyId) {
+        return atlasMLService.mapCompetencyToExercise(exerciseId, competencyId);
+    }
 }

@@ -8,7 +8,7 @@
             placeholder="{{ 'artemisApp.course.exercise.search.searchPlaceholder' | artemisTranslate }}"
             aria-label="Filter Search Field"
             aria-describedby="filter-search-field"
-            (keyup)="setSearchValue(filterForm.value.searchFilter)"
+            (input)="setSearchValue(filterForm.value.searchFilter)"
         />
         <div class="position-relative my-auto mn-icon-field">
             @if (filterForm.value.searchFilter) {

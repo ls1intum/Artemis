@@ -1,60 +1,57 @@
-@if (channel) {
-    <div class="d-flex justify-content-between align-items-start channel-item">
-        <div class="ms-2 me-auto">
-            <div class="fw-bold">
-                <span>
-                    <jhi-channel-icon [isPublic]="channel.isPublic!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
-                </span>
-                <span>{{ channel.name }}</span>
+<div class="d-flex justify-content-between align-items-start channel-item">
+    <div class="ms-2 me-auto">
+        <div class="fw-bold">
+            <span>
+                <jhi-channel-icon [isPublic]="channel().isPublic!" [isAnnouncementChannel]="channel().isAnnouncementChannel!" />
+            </span>
+            <span>{{ channel().name }}</span>
+        </div>
+        @if (channel().isMember) {
+            <span class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
+        }
+        <span> {{ channel().numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
+        @if (channel().description && channel().description!.length > 0) {
+            <div>
+                <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel().description }}</span>
             </div>
-            @if (channel.isMember) {
-                <span class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
-            }
-            <span> {{ channel.numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
-            @if (channel.description && channel.description.length > 0) {
-                <div>
-                    <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
-                </div>
-            }
-            @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
-                <div>
-                    <span
-                        class="badge bg-info rounded-pill"
-                        jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
-                        [translateValues]="{ title: channel.tutorialGroupTitle }"
-                    ></span>
-                </div>
-            }
-        </div>
-        <div class="interaction">
-            @if (canJoinChannel(channel)) {
-                <button
-                    [id]="'register' + channel.id"
-                    type="button"
-                    class="btn btn-primary"
-                    (click)="emitChannelAction($event, 'register')"
-                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.join"
-                ></button>
-                <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
-            }
-            @if (!!channel.isMember) {
-                <button
-                    [id]="'view' + channel.id"
-                    type="button"
-                    class="btn btn-secondary"
-                    (click)="emitChannelAction($event, 'view')"
-                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.view"
-                ></button>
-            }
-            @if (canLeaveConversation(channel)) {
-                <button
-                    [id]="'deregister' + channel.id"
-                    type="button"
-                    class="btn btn-danger"
-                    (click)="emitChannelAction($event, 'deregister')"
-                    jhiTranslate="artemisApp.dialogs.channelOverview.actions.leave"
-                ></button>
-            }
-        </div>
+        }
+        @if (channel().tutorialGroupId && channel().tutorialGroupTitle) {
+            <div>
+                <span
+                    class="badge bg-info rounded-pill"
+                    jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                    [translateValues]="{ title: channel().tutorialGroupTitle }"
+                ></span>
+            </div>
+        }
     </div>
-}
+    <div class="interaction">
+        @if (canJoinChannel(channel())) {
+            <button
+                [id]="'register' + channel().id"
+                type="button"
+                class="btn btn-primary"
+                (click)="emitChannelAction($event, 'register')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.join"
+            ></button>
+        }
+        @if (!!channel().isMember) {
+            <button
+                [id]="'view' + channel().id"
+                type="button"
+                class="btn btn-secondary"
+                (click)="emitChannelAction($event, 'view')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.view"
+            ></button>
+        }
+        @if (canLeaveConversation(channel())) {
+            <button
+                [id]="'deregister' + channel().id"
+                type="button"
+                class="btn btn-danger"
+                (click)="emitChannelAction($event, 'deregister')"
+                jhiTranslate="artemisApp.dialogs.channelOverview.actions.leave"
+            ></button>
+        }
+    </div>
+</div>

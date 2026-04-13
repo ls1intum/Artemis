@@ -69,10 +69,14 @@ export class DragAndDropQuiz {
         await nthChild.click({ force: true });
     }
 
-    async generateQuizExercise() {
+    async generateQuizExercise(): Promise<number> {
         await this.page.locator('#generate-quiz-exercise').click();
-        await this.page.locator('#quiz-save').isVisible();
+        await this.page.locator('#quiz-save').waitFor({ state: 'visible' });
+        const responsePromise = this.page.waitForResponse(/api\/quiz\/(courses|exercise-groups)\/\d+\/quiz-exercises$/);
         await this.page.locator('#quiz-save').click();
+        const response = await responsePromise;
+        const exercise = await response.json();
+        return exercise.id;
     }
 
     async waitForQuizExerciseToBeGenerated() {
@@ -80,7 +84,7 @@ export class DragAndDropQuiz {
     }
 
     async previewQuiz() {
-        await this.page.locator('#preview-quiz').click();
+        await this.page.locator('#preview-quiz').first().click();
     }
 
     async waitForQuizPreviewToLoad() {

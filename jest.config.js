@@ -7,8 +7,8 @@ const esModules = [
     '@angular/forms',
     '@angular/localize',
     '@angular/material',
-    '@angular/platform-browser-dynamic',
     '@angular/platform-browser',
+    '@angular/platform-browser-dynamic',
     '@angular/router',
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
@@ -52,6 +52,7 @@ const esModules = [
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
+    'ngx-extended-pdf-viewer',
     'ngx-infinite-scroll',
     'primeng',
     'rxjs/operators',
@@ -84,73 +85,80 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
-        '<rootDir>/src/main/webapp/**/*.ts',
-        '!<rootDir>/src/main/webapp/**/*.module.ts',        // ignore modules files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.route.ts',         // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
-        '!<rootDir>/src/main/webapp/app/openapi/**',        // ignore openapi files because they are generated
+        '!<rootDir>/src/main/webapp/**/*.module.ts',        // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts',         // ignore route files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/app/assessment/**',     // assessment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/navbar/global-search/**', // global search uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/communication/**',   // communication module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/**',           // core module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/openapi/**',        // ignore openapi files because they are generated
         '!<rootDir>/src/main/webapp/app/quiz/**',           // quiz module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**',           // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/lti/**',            // lti module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/table-view/**',          // table view module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/components/buttons/**',  // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',           // inline-refinement-button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/hyperion/**',                                              // hyperion module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**',                    // programming version history module uses Vitest (see vitest.config.ts)
+        '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
-        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
-        '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/account/',      // core account module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search uses Vitest
+        '<rootDir>/src/main/webapp/app/communication/',      // communication module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/',              // core module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
+        '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
+        '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
+        '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
-        '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
-        '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
-        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
-        '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils use Vitest
+        '<rootDir>/src/main/webapp/app/shared/table-view/', // table view module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 88.7,
-            branches: 73.5,
-            functions: 82.34,
-            lines: 88.85,
+            statements: 86.2,
+            branches: 74.5,
+            functions: 76,
+            lines: 87.1,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -175,28 +183,32 @@ module.exports = {
     testPathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
-        '<rootDir>/src/main/webapp/app/core/account/',  // core account module
-        '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
-        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search
+        '<rootDir>/src/main/webapp/app/communication/', // communication module
+        '<rootDir>/src/main/webapp/app/core/',          // core module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
+        '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
+        '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
-        '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
-        '<rootDir>/src/main/webapp/app/iris/',          // iris module
-        '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
+        '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',    // migrated to Vitest
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
+        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
-        '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
+        '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
+        '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
     ],
     testTimeout: 3000,
     testMatch: [
@@ -214,7 +226,6 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
-        'monaco-editor/esm/vs/editor/edcore.main': '<rootDir>/src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts',
         '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
         '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
     },

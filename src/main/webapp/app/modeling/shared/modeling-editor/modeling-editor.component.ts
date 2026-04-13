@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
@@ -29,6 +29,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private readonly modalService = inject(NgbModal);
     private readonly sanitizer = inject(DomSanitizer);
+    private readonly elementRef = inject(ElementRef);
 
     showHelpButton = input(true);
     withExplanation = input(false);
@@ -124,6 +125,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 scale: 0.8,
             });
 
+            // Expose the ApollonEditor instance on the host DOM element for E2E test access.
+            // In production mode, ng.getComponent() is not available, so tests use this property instead.
+            (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
                 if (this.isDestroyed) {
                     return;
@@ -153,6 +158,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
+            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
         }
     }
 
@@ -193,6 +199,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
+        super.ngOnDestroy();
         this.isDestroyed = true;
         try {
             this.destroyApollonEditor();

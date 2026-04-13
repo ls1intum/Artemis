@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.connector;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -102,5 +103,23 @@ public class AtlasMLRequestMockProvider {
         var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/save");
         mockServer.expect(ExpectedCount.manyTimes(), MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
                 .andRespond(MockRestResponseCreators.withSuccess("", MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Allows any suggest-competencies call to AtlasML to return an empty list (used as default to avoid external calls in tests).
+     */
+    public void mockSuggestCompetenciesAny() throws Exception {
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/suggest");
+        mockServer.expect(ExpectedCount.manyTimes(), MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
+                .andRespond(MockRestResponseCreators.withSuccess(mapper.writeValueAsString(new SuggestCompetencyResponseDTO(List.of())), MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Allows any map-competency-to-exercise call to AtlasML to succeed (used as default to avoid external calls in tests).
+     */
+    public void mockMapCompetencyToExerciseAny() {
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/map-competency-to-exercise");
+        mockServer.expect(ExpectedCount.manyTimes(), MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
+                .andRespond(MockRestResponseCreators.withSuccess("true", MediaType.APPLICATION_JSON));
     }
 }

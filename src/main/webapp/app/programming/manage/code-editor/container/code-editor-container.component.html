@@ -75,6 +75,7 @@
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
             [selectedRepository]="selectedRepository()"
             [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
+            [fileSyncService]="fileSyncService()"
             [buildAnnotations]="annotations"
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"

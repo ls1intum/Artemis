@@ -32,12 +32,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
+import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseReviewThreadUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
@@ -69,6 +74,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
+
+    @Autowired
+    private CommentThreadRepository commentThreadRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -432,6 +440,48 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.changedFields()).contains("programmingData.auxiliaryRepositories");
+    }
+
+    /**
+     * Ensures review thread updates are synchronized when line references change after a new exercise version.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReviewThreadSynchronizationBroadcastWhenThreadLocationChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exercise.setProblemStatement("line-1\nline-2\nline-3\n");
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        CommentThread thread = new CommentThread();
+        thread.setExercise(exercise);
+        thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        thread.setInitialLineNumber(2);
+        thread.setLineNumber(2);
+        thread.setOutdated(false);
+        thread.setResolved(false);
+        commentThreadRepository.saveAndFlush(thread);
+
+        reset(websocketMessagingService);
+
+        exercise.setProblemStatement("line-1\ninserted\nline-2\nline-3\n");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+
+        assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);
+        assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.REVIEW_COMMENTS);
+        assertThat(payload.action()).isEqualTo(ReviewThreadSyncAction.THREAD_UPDATED);
+        assertThat(payload.thread()).isNotNull();
+        assertThat(payload.thread().id()).isEqualTo(thread.getId());
+        assertThat(payload.thread().lineNumber()).isEqualTo(3);
+        assertThat(payload.thread().outdated()).isFalse();
     }
 
     /**

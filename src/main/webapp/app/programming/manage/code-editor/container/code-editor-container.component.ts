@@ -29,10 +29,12 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { editor } from 'monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -60,6 +62,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
     private changeDetector = inject(ChangeDetectorRef);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
@@ -184,24 +187,74 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /**
-     * Update the file badges for the code editor (includes both ungraded feedback suggestions and graded feedbacks)
+     * Updates file-browser badges for code files and the Problem Statement entry
+     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
      */
     updateFileBadges() {
-        this.fileBadges = {};
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
 
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        this.fileBadges = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            this.fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        this.changeDetector.markForCheck();
+    }
+
+    private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
         // Combine feedback suggestions (ungraded) and graded feedbacks from submission
         const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
-
-        // Get unique file paths with feedback
-        const filePathsWithFeedback = Array.from(
-            new Set(allFeedbacks.map((feedback: Feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath): filePath is string => filePath !== undefined)),
-        );
-
-        for (const filePath of filePathsWithFeedback) {
-            // Count the number of feedbacks for this file
-            const feedbackCount = allFeedbacks.filter((feedback: Feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
-            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, feedbackCount)];
+        for (const feedback of allFeedbacks) {
+            const filePath = Feedback.getReferenceFilePath(feedback);
+            if (!filePath) {
+                continue;
+            }
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.FEEDBACK_SUGGESTION, 1);
         }
+    }
+
+    private collectReviewThreadBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
+        if (!this.enableExerciseReviewComments()) {
+            return;
+        }
+
+        const selectedRepository = this.selectedRepository();
+        const selectedAuxiliaryRepositoryId = this.selectedAuxiliaryRepositoryId();
+        const reviewThreads = this.exerciseReviewCommentService.threads();
+        for (const thread of reviewThreads) {
+            // File badges should only reflect active threads that still need attention.
+            if (thread.resolved || thread.outdated) {
+                continue;
+            }
+            if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+                this.addBadgeCount(fileBadgesByType, PROBLEM_STATEMENT_IDENTIFIER, FileBadgeType.REVIEW_COMMENT, 1);
+                continue;
+            }
+            if (!matchesSelectedRepository(thread, selectedRepository, selectedAuxiliaryRepositoryId)) {
+                continue;
+            }
+            const filePath = thread.filePath ?? thread.initialFilePath;
+            if (!filePath) {
+                continue;
+            }
+            // Count one badge item per thread, independent of the number of comments inside it.
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.REVIEW_COMMENT, 1);
+        }
+    }
+
+    private addBadgeCount(fileBadgesByType: Map<string, Map<FileBadgeType, number>>, filePath: string, badgeType: FileBadgeType, countToAdd: number): void {
+        if (countToAdd <= 0) {
+            return;
+        }
+        let badgeCountsByType = fileBadgesByType.get(filePath);
+        if (!badgeCountsByType) {
+            badgeCountsByType = new Map<FileBadgeType, number>();
+            fileBadgesByType.set(filePath, badgeCountsByType);
+        }
+        const existingCount = badgeCountsByType.get(badgeType) ?? 0;
+        badgeCountsByType.set(badgeType, existingCount + countToAdd);
     }
 
     /**
@@ -314,6 +367,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * When the content of a file changes, set it as unsaved.
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        const syncService = this.fileSyncService();
+        if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
+            return;
+        }
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }

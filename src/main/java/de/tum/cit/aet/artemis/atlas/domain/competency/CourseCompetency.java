@@ -87,9 +87,6 @@ public abstract class CourseCompetency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies" })
     private CourseCompetency linkedCourseCompetency;
 
-    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private final Set<CompetencyJol> competencyJols = new HashSet<>();
-
     public abstract String getType();
 
     public CourseCompetency() {

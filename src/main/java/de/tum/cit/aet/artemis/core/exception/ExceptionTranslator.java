@@ -199,6 +199,14 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return new ResponseEntity<>("Too Many Requests", headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleWeaviateException(de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException ex, NativeWebRequest request) {
+        log.error("Weaviate operation failed: {}", ex.getMessage(), ex);
+        Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).withTitle("Weaviate Error")
+                .withDetail("An internal error occurred while processing the request").with(MESSAGE_KEY, "error.weaviateOperationFailed").build();
+        return create(ex, problem, request);
+    }
+
     @ExceptionHandler(PasskeyAuthenticationException.class)
     public ResponseEntity<Problem> handlePasskeyAuthenticationException(PasskeyAuthenticationException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).withTitle("Forbidden").withDetail(ex.getMessage()).with(MESSAGE_KEY, ex.getErrorKey())

@@ -17,7 +17,7 @@ const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
 const tutorCodeFeedbackPoints = -2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
+test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
     let dueDate: dayjs.Dayjs;
@@ -29,8 +29,8 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        dueDate = dayjs().add(15, 'seconds');
-        assessmentDueDate = dueDate.add(20, 'seconds');
+        dueDate = dayjs().add(20, 'seconds');
+        assessmentDueDate = dueDate.add(25, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
             releaseDate: dayjs(),
@@ -44,7 +44,7 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaPartiallySuccessfulSubmission);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
-            await page.waitForTimeout(dueDate.diff(now, 'ms'));
+            await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
         }
     });
 
@@ -74,7 +74,7 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         // Wait until the assessment due date is over
         const now = dayjs();
         if (now.isBefore(assessmentDueDate)) {
-            await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
+            await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
         }
 
         // Verify assessment as student

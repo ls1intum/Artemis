@@ -146,7 +146,7 @@
                                                         </thead>
                                                         @if (assessmentsNames) {
                                                             <tbody>
-                                                                @for (feedback of referencedFeedback; track feedback) {
+                                                                @for (feedback of referencedFeedback; track feedback.id) {
                                                                     <tr [hidden]="!shouldBeDisplayed(feedback)">
                                                                         <td>
                                                                             @if (feedback.reference) {

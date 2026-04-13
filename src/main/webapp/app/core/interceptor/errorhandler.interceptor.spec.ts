@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
@@ -6,6 +8,8 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe(`ErrorHandlerInterceptor`, () => {
+    setupTestBed({ zoneless: true });
+
     let errorHandlerInterceptor: ErrorHandlerInterceptor;
 
     let eventManagerMock: EventManager;
@@ -13,10 +17,10 @@ describe(`ErrorHandlerInterceptor`, () => {
 
     beforeEach(() => {
         eventManagerMock = {
-            broadcast: jest.fn(),
+            broadcast: vi.fn(),
         } as any as EventManager;
         accountServiceMock = {
-            isAuthenticated: jest.fn(),
+            isAuthenticated: vi.fn(),
         } as any as AccountService;
 
         TestBed.configureTestingModule({
@@ -27,7 +31,7 @@ describe(`ErrorHandlerInterceptor`, () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([400, 401, 403, 404, 500])('should broadcast http errors', (status: number) => {
@@ -35,7 +39,7 @@ describe(`ErrorHandlerInterceptor`, () => {
         const mockHandler = {
             handle: () => throwError(() => error),
         };
-        jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+        vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
@@ -53,7 +57,7 @@ describe(`ErrorHandlerInterceptor`, () => {
             const mockHandler = {
                 handle: () => throwError(() => error),
             };
-            const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
+            const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
             errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 

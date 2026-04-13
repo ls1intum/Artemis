@@ -1,0 +1,136 @@
+.mcq-container {
+    max-width: 500px;
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--iris-received-message-background);
+    border: 1px solid var(--border-color);
+}
+
+.mcq-question {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition:
+        border-color 0.15s,
+        background-color 0.15s;
+    font-size: 0.9rem;
+
+    &:hover:not(:disabled) {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 5%, transparent);
+    }
+
+    &.selected {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
+    }
+
+    &.correct {
+        border-color: var(--bs-success);
+        background: color-mix(in srgb, var(--bs-success) 10%, transparent);
+    }
+
+    &.incorrect {
+        border-color: var(--bs-danger);
+        background: color-mix(in srgb, var(--bs-danger) 10%, transparent);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.mcq-option-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--border-color);
+    font-weight: 600;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.mcq-option-text {
+    flex: 1;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.mcq-submit {
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: var(--white);
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+}
+
+.mcq-feedback {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+
+    &-correct {
+        background: color-mix(in srgb, var(--bs-success) 15%, transparent);
+        color: var(--bs-success);
+    }
+
+    &-incorrect {
+        background: color-mix(in srgb, var(--bs-danger) 15%, transparent);
+        color: var(--bs-danger);
+    }
+}
+
+.mcq-explanation {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--body-color);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+
+    strong {
+        margin-right: 0.25rem;
+    }
+}

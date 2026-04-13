@@ -379,6 +379,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // Test
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate(CourseCompetency newCompetency) throws Exception {
         newCompetency.setTitle("Example Title");
+        newCompetency.setMasteryThreshold(42);
         createCall(course.getId(), newCompetency, HttpStatus.FORBIDDEN);
     }
 

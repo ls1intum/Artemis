@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -71,12 +72,12 @@ public class IrisMessageResource {
      */
     @GetMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
+    public ResponseEntity<List<IrisMessageResponseDTO>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllBySessionId(sessionId);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
     }
 
     /**
@@ -89,7 +90,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -109,7 +110,7 @@ public class IrisMessageResource {
         irisSessionService.requestMessageFromIris(session, uncommittedFiles);
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
-        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
+        return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
     }
 
     /**
@@ -142,7 +143,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -158,7 +159,7 @@ public class IrisMessageResource {
         }
         irisSessionService.requestMessageFromIris(session);
 
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(message));
     }
 
     /**
@@ -172,7 +173,7 @@ public class IrisMessageResource {
      */
     @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/helpful")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody(required = false) Boolean helpful) {
+    public ResponseEntity<IrisMessageResponseDTO> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         if (!Objects.equals(session.getId(), sessionId)) {
@@ -185,6 +186,6 @@ public class IrisMessageResource {
         }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
-        return ResponseEntity.ok(savedMessage);
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(savedMessage));
     }
 }

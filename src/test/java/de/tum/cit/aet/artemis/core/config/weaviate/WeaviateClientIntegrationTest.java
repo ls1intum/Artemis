@@ -42,7 +42,7 @@ class WeaviateClientIntegrationTest {
         int httpPort = weaviate.getMappedPort(8080);
         int grpcPort = weaviate.getMappedPort(50051);
 
-        var properties = new WeaviateConfigurationProperties(true, host, httpPort, grpcPort, "http", TEST_COLLECTION_PREFIX);
+        var properties = new WeaviateConfigurationProperties(true, host, httpPort, grpcPort, "http", TEST_COLLECTION_PREFIX, WeaviateConfigurationProperties.VECTORIZER_NONE);
         var config = new WeaviateClientConfiguration(properties);
 
         try (WeaviateClient client = config.weaviateClient()) {

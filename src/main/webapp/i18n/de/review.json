@@ -9,6 +9,8 @@
             "loadFailed": "Die Review-Kommentare konnten nicht geladen werden.",
             "commentMenu": "Kommentar-Aktionen",
             "deleteComment": "L\u00f6schen",
+            "deleteCommentConfirmTitle": "Kommentar löschen",
+            "deleteCommentConfirmText": "Dadurch wird der Kommentar dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
             "deleteFailed": "Der Review-Kommentar konnte nicht gel\u00f6scht werden.",
             "replyPlaceholder": "Antwort hinzuf\u00fcgen...",
             "replySubmit": "Antworten",

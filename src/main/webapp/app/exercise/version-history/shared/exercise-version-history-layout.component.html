@@ -1,0 +1,14 @@
+<div class="version-history-layout">
+    <p-splitter [panelSizes]="[30, 70]" styleClass="version-history-splitter" layout="horizontal">
+        <ng-template #panel>
+            <section class="left-pane">
+                <ng-content select="[version-history-left]" />
+            </section>
+        </ng-template>
+        <ng-template #panel>
+            <section class="right-pane">
+                <ng-content select="[version-history-right]" />
+            </section>
+        </ng-template>
+    </p-splitter>
+</div>

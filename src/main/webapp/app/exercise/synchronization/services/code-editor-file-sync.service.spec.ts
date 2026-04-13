@@ -218,6 +218,22 @@ describe('CodeEditorFileSyncService', () => {
             );
         });
 
+        it('emits initialSyncFinalized payload with non-divergent fallback content', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Fallback content');
+            const finalizedSpy = vi.fn();
+            const sub = service.initialSyncFinalized$.subscribe(finalizedSpy);
+
+            vi.advanceTimersByTime(500);
+
+            expect(finalizedSpy).toHaveBeenCalledExactlyOnceWith({
+                filePath: FILE_PATH,
+                contentDivergedFromFallback: false,
+                finalContent: 'Fallback content',
+            });
+            sub.unsubscribe();
+        });
+
         it('uses earliest leader response during initial sync', () => {
             service.init(EXERCISE_ID, TARGET);
             const state = service.openFile(FILE_PATH, '')!;
@@ -253,6 +269,39 @@ describe('CodeEditorFileSyncService', () => {
 
             vi.advanceTimersByTime(500);
             expect(state.text.toString()).toBe('Earlier leader');
+        });
+
+        it('emits initialSyncFinalized payload with divergence when remote winner differs from fallback', () => {
+            service.init(EXERCISE_ID, TARGET);
+            service.openFile(FILE_PATH, 'Fallback');
+            const finalizedSpy = vi.fn();
+            const sub = service.initialSyncFinalized$.subscribe(finalizedSpy);
+
+            const requestCall = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, msg]) => msg.eventType === ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_REQUEST && (msg as any).filePath === FILE_PATH,
+            );
+            const requestId = (requestCall?.[1] as any).requestId as string;
+
+            const remoteDoc = new Y.Doc();
+            remoteDoc.getText('file-content').insert(0, 'Remote winner');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_SYNC_FULL_CONTENT_RESPONSE,
+                target: TARGET,
+                filePath: FILE_PATH,
+                responseTo: requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(remoteDoc)),
+                leaderTimestamp: 100,
+                timestamp: 1,
+            });
+
+            vi.advanceTimersByTime(500);
+
+            expect(finalizedSpy).toHaveBeenCalledExactlyOnceWith({
+                filePath: FILE_PATH,
+                contentDivergedFromFallback: true,
+                finalContent: 'Remote winner',
+            });
+            sub.unsubscribe();
         });
 
         it('buffers incremental updates during initial sync', () => {

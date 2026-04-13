@@ -1,5 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock pdfjs-dist BEFORE importing the component
+vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
+    return {
+        __esModule: true,
+        GlobalWorkerOptions: {
+            workerSrc: '',
+        },
+        getDocument: vi.fn(() => ({ promise: Promise.resolve({ numPages: 0, getPage: vi.fn(), destroy: vi.fn() }) })),
+    };
+});
+
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentType } from 'app/lecture/shared/entities/attachment.model';
@@ -114,9 +126,8 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     it('should get file name', () => {
-        const getFileNameSpy = vi.spyOn(component, 'getFileName');
         fixture.detectChanges();
-        expect(getFileNameSpy).toHaveReturnedWith('test.pdf');
+        expect(component.getFileName()).toBe('test.pdf');
     });
 
     it('should handle download', () => {
@@ -413,5 +424,151 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.hasAttachment()).toBe(false);
         expect(component.getFileName()).toBe('');
+    });
+
+    describe('PDF functionality', () => {
+        it('isPdf: returns true for PDF file extension', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.pdf';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('isPdf: returns false for non-PDF file extensions', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.docx';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
+        it('isPdf: handles uppercase PDF extension', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('hasPdf: returns true when has attachment and is PDF', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('hasPdf: returns false when no attachment', () => {
+            component.lectureUnit().attachment = undefined;
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
+        it('hasPdf: returns false when attachment is not PDF', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
+        it('loadPdf: loads PDF as blob and creates object URL', async () => {
+            const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
+            const mockUrl = 'blob:http://localhost/test-pdf';
+            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockUrl);
+
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            expect(component.isPdfLoading()).toBe(false);
+
+            // Trigger toggleCollapse to load PDF
+            component.toggleCollapse(false);
+
+            expect(component.isPdfLoading()).toBe(true);
+
+            // Mock the HTTP request for PDF file
+            const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            expect(req.request.method).toBe('GET');
+            req.flush(testBlob);
+
+            await fixture.whenStable();
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pdfUrl()).toBe(mockUrl);
+            expect(createObjectURLSpy).toHaveBeenCalledWith(testBlob);
+
+            createObjectURLSpy.mockRestore();
+        });
+
+        it('loadPdf: handles error gracefully', async () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            component.toggleCollapse(false);
+
+            expect(component.isPdfLoading()).toBe(true);
+
+            // Mock the HTTP request to return an error with proper blob error response
+            const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            req.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
+
+            await fixture.whenStable();
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pdfUrl()).toBeUndefined();
+        });
+
+        it('toggleCollapse: resets pdfUrl when collapsed', async () => {
+            component.pdfUrl.set('blob:http://localhost/old-pdf');
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            component.toggleCollapse(true);
+
+            expect(component.pdfUrl()).toBeUndefined();
+        });
+
+        it('toggleCollapse: loads both video and PDF when both present', async () => {
+            const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
+            const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
+            const mockUrl = 'blob:http://localhost/test-pdf';
+
+            component.lectureUnit().videoSource = src;
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+
+            vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockUrl);
+            vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+
+            fixture.detectChanges();
+
+            component.toggleCollapse(false);
+
+            // Mock video playlist request
+            const videoReq = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+            videoReq.flush(playlist);
+
+            // Mock PDF request
+            const pdfReq = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            pdfReq.flush(testBlob);
+
+            await fixture.whenStable();
+
+            expect(component.playlistUrl()).toBe(playlist);
+            expect(component.pdfUrl()).toBe(mockUrl);
+        });
+
+        it('ngOnDestroy: cleanup', async () => {
+            const mockUrl = 'blob:http://localhost/test-pdf';
+            component.pdfUrl.set(mockUrl);
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+
+            // Clean up any pending requests first
+            httpMock
+                .match(() => true)
+                .forEach((req) => {
+                    req.flush(new Blob());
+                });
+
+            expect(() => component.ngOnDestroy()).not.toThrow();
+        });
     });
 });

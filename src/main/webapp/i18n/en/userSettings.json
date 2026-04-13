@@ -255,12 +255,13 @@
                 "chooseNow": "Choose Now",
                 "learnMore": "Learn more about your options",
                 "dataManagement": "Data Management",
-                "dataManagementInfo": "Here you can review and delete your stored AI interactions. This covers all chat conversations with Iris across every course you are enrolled in.",
+                "dataManagementInfo": "Here you can review and delete your stored AI interactions. This covers all chat conversations with Iris across every course you are enrolled in, as well as any long-term memories Iris has stored about you.",
                 "dataStats": "You currently have {{sessions}} chat sessions with a total of {{messages}} messages.",
+                "memoryStats": "Iris also has {{memories}} long-term memories stored about you.",
                 "noData": "You don't have any AI interactions yet.",
-                "deleteQuestion": "Are you sure you want to delete all your AI interactions? This action cannot be undone.",
-                "deleteSuccess": "All AI interactions have been successfully deleted.",
-                "deleteFailure": "Failed to delete AI interactions. Please try again.",
+                "deleteQuestion": "Are you sure you want to delete all your AI interactions and long-term memories? This action cannot be undone.",
+                "deleteSuccess": "All AI interactions and long-term memories have been successfully deleted.",
+                "deleteFailure": "Failed to delete AI data. Please try again.",
                 "typeDeleteAllToConfirm": "To confirm, please type"
             },
             "quizTrainingSettings": {

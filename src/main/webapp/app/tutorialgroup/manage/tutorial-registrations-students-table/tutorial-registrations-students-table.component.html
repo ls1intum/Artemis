@@ -1,0 +1,48 @@
+<div class="table-frame">
+    @let actionColumn = removeActionColumnInfo();
+    <table class="table-header">
+        <thead>
+            <tr class="header-row">
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
+                @if (actionColumn) {
+                    <th class="action-column" [jhiTranslate]="actionColumn.headerStringKey"></th>
+                }
+            </tr>
+        </thead>
+    </table>
+    <div class="scroll-container">
+        <table class="table-body">
+            <tbody>
+                @for (student of studentsWithCompleteProfilePictureUrl(); track student.id) {
+                    <tr class="table-row">
+                        <td>
+                            <span class="student-property">
+                                <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="student.profilePictureUrl" />
+                                {{ student.name }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="student-property">{{ student.login }}</span>
+                        </td>
+                        <td>
+                            <span class="student-property">{{ student.email }}</span>
+                        </td>
+                        <td>
+                            <span class="student-property">{{ student.registrationNumber }}</span>
+                        </td>
+                        @if (actionColumn) {
+                            <td class="action-column">
+                                <button class="remove-button" (click)="actionColumn.onRemove($event, student)">
+                                    <span class="pi pi-times" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

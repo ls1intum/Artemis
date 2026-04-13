@@ -8,13 +8,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -161,7 +164,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            message.addContent(parseResultContent(statusUpdate.result()));
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
@@ -217,6 +220,78 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
         return updatedJob.get();
+    }
+
+    /**
+     * Parses the result string from the LLM response.
+     * If the result is a valid JSON object with a "type" field equal to "mcq", it is stored as JSON content.
+     * Otherwise, it is stored as plain text content.
+     *
+     * @param result The result string from the LLM
+     * @return The appropriate IrisMessageContent (JSON or text)
+     */
+    private IrisMessageContent parseResultContent(String result) {
+        String trimmed = result.strip();
+        if (trimmed.startsWith("{")) {
+            try {
+                JsonNode jsonNode = objectMapper.readTree(trimmed);
+                if (jsonNode.has("type") && "mcq".equals(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
+                    return new IrisJsonMessageContent(jsonNode);
+                }
+            }
+            catch (JsonProcessingException e) {
+                // Not valid JSON, fall through to text content
+            }
+        }
+        return new IrisTextMessageContent(result);
+    }
+
+    /**
+     * Validates that a JSON node has the required MCQ shape expected by the client:
+     * a non-empty "question" string, an "options" array with at least two entries
+     * (each having a "text" string and a "correct" boolean) where exactly one option
+     * is marked correct, and an "explanation" string.
+     *
+     * @param node the JSON node to validate
+     * @return true if the node represents a valid MCQ
+     */
+    private boolean isValidMcqNode(JsonNode node) {
+        JsonNode question = node.get("question");
+        if (question == null || !question.isTextual() || question.asText().isBlank()) {
+            return false;
+        }
+
+        JsonNode options = node.get("options");
+        if (options == null || !options.isArray() || options.size() < 2) {
+            return false;
+        }
+        int correctCount = 0;
+        for (JsonNode option : options) {
+            if (!option.isObject()) {
+                return false;
+            }
+            JsonNode text = option.get("text");
+            JsonNode correct = option.get("correct");
+            if (text == null || !text.isTextual() || text.asText().isBlank()) {
+                return false;
+            }
+            if (correct == null || !correct.isBoolean()) {
+                return false;
+            }
+            if (correct.asBoolean()) {
+                correctCount++;
+            }
+        }
+        if (correctCount != 1) {
+            return false;
+        }
+
+        JsonNode explanation = node.get("explanation");
+        if (explanation == null || !explanation.isTextual() || explanation.asText().isBlank()) {
+            return false;
+        }
+
+        return true;
     }
 
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

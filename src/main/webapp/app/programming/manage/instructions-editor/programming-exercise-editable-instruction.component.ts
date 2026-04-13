@@ -111,9 +111,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
     private problemStatementStateReplacementSubscription?: Subscription;
+    private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
+    private suppressUnsavedForNextProblemStatementChange = false;
+    private dirtySignalSuppressedDuringInitialSync = false;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -277,7 +280,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     updateProblemStatement(problemStatement: string) {
         if (this.exercise().problemStatement !== problemStatement) {
-            this.unsavedChanges = true;
+            if (this.suppressUnsavedForNextProblemStatementChange) {
+                this.suppressUnsavedForNextProblemStatementChange = false;
+            } else if (this.shouldMarkProblemStatementAsUnsaved()) {
+                this.unsavedChanges = true;
+            } else {
+                this.dirtySignalSuppressedDuringInitialSync = true;
+            }
             // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
@@ -290,6 +299,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     generateHtml() {
         this.generateHtmlSubject.next();
+    }
+
+    private shouldMarkProblemStatementAsUnsaved(): boolean {
+        // During initial sync bootstrap, incoming Yjs content may replace the initial server state.
+        // We adopt this content without marking the statement as locally unsaved.
+        if (this.problemStatementSyncState && this.problemStatementSyncService.isAwaitingInitialSync()) {
+            return false;
+        }
+        return true;
     }
 
     private setupTestCaseSubscription() {
@@ -509,14 +527,51 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.dirtySignalSuppressedDuringInitialSync = false;
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const normalizedText = this.normalizeLineEndings(initialText);
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        model.setValue('');
+        this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
+        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
+            ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
+                if (contentChangedDuringFinalize && this.dirtySignalSuppressedDuringInitialSync) {
+                    this.suppressUnsavedForNextProblemStatementChange = true;
+                }
+                if (contentDivergedFromFallback) {
+                    this.unsavedChanges = true;
+                }
+                this.dirtySignalSuppressedDuringInitialSync = false;
+            },
+        );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
-            model.setValue(syncState.text.toString());
+            this.suppressUnsavedForNextProblemStatementChange = true;
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
         });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
     }
 
     /**
@@ -525,10 +580,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private teardownProblemStatementSync() {
         this.problemStatementStateReplacementSubscription?.unsubscribe();
         this.problemStatementStateReplacementSubscription = undefined;
+        this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();
+        this.problemStatementInitialSyncFinalizedSubscription = undefined;
         this.problemStatementBinding?.destroy();
         this.problemStatementBinding = undefined;
         this.problemStatementBindingDestroyed = false;
         this.problemStatementSyncState = undefined;
+        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.dirtySignalSuppressedDuringInitialSync = false;
         this.problemStatementSyncService.reset();
     }
 

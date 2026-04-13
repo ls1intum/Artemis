@@ -1,18 +1,12 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
-
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
 
-let course: Course;
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
-test.describe('Quiz Exercise Drop Location Spec', { tag: '@fast' }, () => {
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-    });
-
+test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
     test.describe('DnD Quiz drop locations', () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, quizExerciseCreation, quizExerciseDragAndDropQuiz }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
@@ -33,11 +27,11 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@fast' }, () => {
             await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 1);
             await quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 2);
 
-            await quizExerciseDragAndDropQuiz.generateQuizExercise();
+            const exerciseId = await quizExerciseDragAndDropQuiz.generateQuizExercise();
             await quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
 
-            await page.goto(`/course-management/${course.id}/exercises`);
-            await quizExerciseDragAndDropQuiz.previewQuiz();
+            // Navigate directly to the exercise detail to preview, avoiding slow exercises list
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${exerciseId}/preview`);
             await quizExerciseDragAndDropQuiz.waitForQuizPreviewToLoad();
 
             const containerBounds = await page.locator('.click-layer').first().boundingBox();
@@ -48,7 +42,5 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

@@ -40,7 +40,7 @@ export class OnlineEditorPage {
             );
             await this.page.waitForTimeout(500);
         }
-        await this.page.waitForTimeout(5000);
+        await this.page.waitForTimeout(500);
     }
 
     async deleteFile(exerciseID: number, name: string) {
@@ -58,7 +58,7 @@ export class OnlineEditorPage {
 
     async openFileWithName(exerciseID: number, name: string) {
         await this.findFile(exerciseID, name).click();
-        await this.page.waitForTimeout(2000);
+        await this.page.waitForTimeout(500);
     }
 
     async submit(exerciseID: number) {

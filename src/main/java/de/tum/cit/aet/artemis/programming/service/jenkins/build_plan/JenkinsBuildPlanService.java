@@ -200,7 +200,15 @@ public class JenkinsBuildPlanService {
         existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
         // remove potential username from repo URI. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URI
-        final var repoUri = newRepoUri.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        final String repoUri;
+        var schemeEnd = newRepoUri.indexOf("://");
+        var atIndex = schemeEnd >= 0 ? newRepoUri.indexOf('@', schemeEnd + 3) : -1;
+        if (schemeEnd >= 0 && atIndex >= 0) {
+            repoUri = newRepoUri.substring(0, schemeEnd + 3) + newRepoUri.substring(atIndex + 1);
+        }
+        else {
+            repoUri = newRepoUri;
+        }
         final Document jobConfig = jenkinsJobService.getJobConfig(buildProjectKey, buildPlanKey);
 
         try {

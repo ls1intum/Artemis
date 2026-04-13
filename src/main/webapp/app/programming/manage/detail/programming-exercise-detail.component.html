@@ -63,8 +63,14 @@
                                 </a>
                             </jhi-feature-overlay>
                         }
+                        @if (programmingExercise.isAtLeastEditor) {
+                            <a [routerLink]="[baseResource, 'version-history']" class="btn btn-info btn-sm">
+                                <fa-icon [icon]="faHistory" />
+                                <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
+                            </a>
+                        }
                         @if (canAccessParticipationsAndScores) {
-                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
+                            <a [routerLink]="[baseResource, 'scores']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
                             </a>
@@ -123,14 +129,14 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="programmingExercise.title || ''"
-                                entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                 [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                 [translateValues]="{
                                     courseTitle: programmingExercise.course!.title,
                                     courseType: programmingExercise.course!.testCourse
-                                        ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                                        : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                        ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                 }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"

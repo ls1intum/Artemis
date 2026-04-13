@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -60,18 +61,18 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_createsNewSession() throws Exception {
         // When: User requests current session for the first time
-        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.CREATED);
 
         // Then: A new session should be created
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.id()).isNotNull();
 
         // Verify session was saved in database
         var sessionsInDb = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(textExercise.getId(),
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
         assertThat(sessionsInDb).hasSize(1);
-        assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.getId());
+        assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.id());
         assertThat(sessionsInDb.getFirst().getExerciseId()).isEqualTo(textExercise.getId());
     }
 
@@ -84,12 +85,12 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         existingSession = irisTextExerciseChatSessionRepository.save(existingSession);
 
         // When: User requests current session
-        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.OK);
 
         // Then: The existing session should be returned
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(existingSession.getId());
+        assertThat(response.id()).isEqualTo(existingSession.getId());
     }
 
     @Test
@@ -105,12 +106,12 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         newerSession = irisTextExerciseChatSessionRepository.save(newerSession);
 
         // When: User requests current session
-        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.OK);
 
         // Then: The latest session should be returned
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(newerSession.getId());
+        assertThat(response.id()).isEqualTo(newerSession.getId());
     }
 
     @Test
@@ -121,15 +122,15 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         // When: Both users request current session
-        var response1 = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response1 = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.CREATED);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        var response2 = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response2 = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.CREATED);
 
         // Then: Each user should have their own session
-        assertThat(response1.getId()).isNotEqualTo(response2.getId());
+        assertThat(response1.id()).isNotEqualTo(response2.id());
 
         // Verify in database
         var student1Sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(textExercise.getId(), student1.getId());
@@ -137,8 +138,8 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
 
         assertThat(student1Sessions).hasSize(1);
         assertThat(student2Sessions).hasSize(1);
-        assertThat(student1Sessions.getFirst().getId()).isEqualTo(response1.getId());
-        assertThat(student2Sessions.getFirst().getId()).isEqualTo(response2.getId());
+        assertThat(student1Sessions.getFirst().getId()).isEqualTo(response1.id());
+        assertThat(student2Sessions.getFirst().getId()).isEqualTo(response2.id());
     }
 
     @Test
@@ -152,7 +153,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         activateIrisFor(otherExercise);
 
         // When/Then: Request should be forbidden (student1 with TEST_PREFIX is not in otherCourse)
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + otherExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + otherExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -166,29 +167,29 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         activateIrisFor(examExercise);
 
         // When/Then: Request should fail with conflict
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + examExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + examExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = "nonExistentUser", roles = "USER")
     void testGetCurrentSessionOrCreateIfNotExists_notFoundForInvalidExerciseId() throws Exception {
         // When/Then: Request with invalid exercise ID should return 403 (authorization check happens before existence check)
-        request.postWithResponseBody("/api/iris/text-exercise-chat/999999/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/999999/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCurrentSessionOrCreateIfNotExists_tutorCanAccessSession() throws Exception {
         // When: Tutor requests current session
-        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.CREATED);
 
         // Then: Tutor should successfully create/get a session
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.id()).isNotNull();
 
         // Verify the session is in the database with correct exercise ID
-        var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.getId()).orElseThrow();
+        var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.id()).orElseThrow();
         assertThat(sessionFromDb.getExerciseId()).isEqualTo(textExercise.getId());
     }
 
@@ -196,15 +197,15 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCurrentSessionOrCreateIfNotExists_instructorCanAccessSession() throws Exception {
         // When: Instructor requests current session
-        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
+        var response = request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class,
                 HttpStatus.CREATED);
 
         // Then: Instructor should successfully create/get a session
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.id()).isNotNull();
 
         // Verify the session is in the database with correct exercise ID
-        var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.getId()).orElseThrow();
+        var sessionFromDb = irisTextExerciseChatSessionRepository.findById(response.id()).orElseThrow();
         assertThat(sessionFromDb.getExerciseId()).isEqualTo(textExercise.getId());
     }
 
@@ -215,7 +216,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
 
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }

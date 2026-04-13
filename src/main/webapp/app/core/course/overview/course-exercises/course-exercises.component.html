@@ -1,32 +1,36 @@
 <div class="d-flex horizontal-scroll">
-    @if (course) {
-        @if (!isShownViaLti) {
+    @if (course()) {
+        @if (!isShownViaLti()) {
             <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+                @if (sidebarData(); as data) {
+                    <jhi-sidebar
+                        [itemSelected]="exerciseSelected()"
+                        [courseId]="courseId()"
+                        [sidebarData]="data"
+                        [collapseState]="DEFAULT_COLLAPSE_STATE"
+                        [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                        [showFilter]="true"
+                    />
+                }
+            </div>
+        } @else if (isMultiLaunch()) {
+            @if (sidebarData(); as data) {
                 <jhi-sidebar
-                    [itemSelected]="exerciseSelected"
-                    [courseId]="courseId"
-                    [sidebarData]="sidebarData"
+                    [itemSelected]="exerciseSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="data"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [showFilter]="true"
                 />
-            </div>
-        } @else if (isMultiLaunch) {
-            <jhi-sidebar
-                [itemSelected]="exerciseSelected"
-                [courseId]="courseId"
-                [sidebarData]="sidebarData"
-                [collapseState]="DEFAULT_COLLAPSE_STATE"
-                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
-                [showFilter]="true"
-            />
+            }
         }
 
-        @if (exerciseSelected) {
+        @if (exerciseSelected()) {
             <div
                 [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
                 class="content-width module-bg rounded-3"
-                [ngStyle]="isShownViaLti ? { height: '90vh', position: 'relative' } : {}"
+                [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
             >
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>

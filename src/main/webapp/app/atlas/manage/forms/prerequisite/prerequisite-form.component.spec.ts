@@ -108,6 +108,7 @@ describe('PrerequisiteFormComponent', () => {
             vi.advanceTimersByTime(250); // async validator fires after 250ms and fully filled in form should now be valid!
             expect(prerequisiteFormComponent.form.valid).toBeTruthy();
             expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
+            expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledWith(0, undefined);
             const submitFormSpy = vi.spyOn(prerequisiteFormComponent, 'submitForm');
             const submitFormEventSpy = vi.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
@@ -193,7 +194,7 @@ describe('PrerequisiteFormComponent', () => {
                 ),
             );
             prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
-            prerequisiteFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
+            prerequisiteFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
             prerequisiteFormComponentFixture.detectChanges();
 
             const titleControl = prerequisiteFormComponent.titleControl!;
@@ -211,6 +212,31 @@ describe('PrerequisiteFormComponent', () => {
             titleControl.setValue('nameExisting');
             vi.advanceTimersByTime(250);
             expect(titleControl.errors?.titleUnique).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('validator should exclude the edited prerequisite id when checking titles', () => {
+        vi.useFakeTimers();
+        try {
+            const getTitlesSpy = vi.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [],
+                        status: 200,
+                    }),
+                ),
+            );
+            prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
+            prerequisiteFormComponentFixture.componentRef.setInput('courseId', 42);
+            prerequisiteFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
+            prerequisiteFormComponentFixture.detectChanges();
+
+            prerequisiteFormComponent.titleControl!.setValue('changed title');
+            vi.advanceTimersByTime(250);
+
+            expect(getTitlesSpy).toHaveBeenLastCalledWith(42, 7);
         } finally {
             vi.useRealTimers();
         }

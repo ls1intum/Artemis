@@ -16,7 +16,6 @@ export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
 
 // Constants
-export const USER_ID_SELECTOR = 'USERID';
 export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
 
 // Timeformat
@@ -70,7 +69,9 @@ export class AdditionalData {
     expectedScore?: number;
     textFixture?: string;
     practiceMode?: boolean;
+    skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    programmingLanguage?: ProgrammingLanguage;
 }
 
 // Exercise
