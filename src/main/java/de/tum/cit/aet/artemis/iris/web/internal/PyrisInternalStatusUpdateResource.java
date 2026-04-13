@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisSearchAnswerCallbackDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSearchWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
@@ -34,8 +36,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.SearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
 /**
  * REST controller for providing Pyris access to Artemis internal data and status updates.
@@ -52,9 +56,12 @@ public class PyrisInternalStatusUpdateResource {
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
-    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
+    private final IrisWebsocketService irisWebsocketService;
+
+    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
+        this.irisWebsocketService = irisWebsocketService;
     }
 
     /**
@@ -277,6 +284,29 @@ public class PyrisInternalStatusUpdateResource {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/search/runs/{runId}/status} : Receive an async Ask Iris callback from Pyris.
+     * Pyris calls this endpoint twice per request: once with the plain answer (cited=false) and once
+     * with inline citation markers (cited=true). Each push is forwarded to the requesting user via WebSocket.
+     *
+     * @param runId   the job token generated when the request was initiated
+     * @param dto     the callback payload containing cited flag, answer text, and sources
+     * @param request the HTTP request (used to extract the Bearer token for authentication)
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the authenticated job
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("search/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> receiveSearchAnswerUpdate(@PathVariable String runId, @RequestBody IrisSearchAnswerCallbackDTO dto, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, SearchAnswerJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        irisWebsocketService.send(job.userLogin(), "search/" + runId, new IrisSearchWebsocketDTO(dto.cited(), dto.answer(), dto.sources()));
         return ResponseEntity.ok().build();
     }
 
