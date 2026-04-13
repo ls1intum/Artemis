@@ -20,8 +20,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
- * Integration tests for {@link ExerciseWeaviateService} using a real Weaviate Testcontainer.
+ * Integration tests for {@link SearchableItemWeaviateService} using a real Weaviate Testcontainer.
  * <p>
  * These tests verify that exercise metadata is correctly stored, updated, and deleted
  * in Weaviate when the corresponding service methods are invoked.
@@ -42,7 +42,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
     private static final String TEST_PREFIX = "exweaviateint";
 
     @Autowired
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableItemWeaviateService searchableItemWeaviateService;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -72,20 +72,20 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-            assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
-            assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
+            assertThat(properties.get(SearchableItemSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+            assertThat(properties.get(SearchableItemSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
@@ -95,25 +95,25 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
 
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
-                assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
-                assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
+                assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(updatedTitle);
+                assertThat(((Number) properties.get(SearchableItemSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
+                assertThat(((Number) properties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId());
             });
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
-            exerciseWeaviateService.deleteExerciseAsync(programmingExercise.getId());
+            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.EXERCISE, programmingExercise.getId());
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
         }
@@ -126,7 +126,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update problem statement via endpoint
@@ -138,7 +138,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(ExerciseSchema.Properties.PROBLEM_STATEMENT)).isEqualTo(newProblem);
+                assertThat(properties.get(SearchableItemSchema.Properties.DESCRIPTION)).isEqualTo(newProblem);
             });
         }
 
@@ -146,7 +146,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
-            exerciseWeaviateService.upsertExerciseAsync(programmingExercise);
+            searchableItemWeaviateService.upsertExerciseAsync(programmingExercise);
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             // Update timeline via endpoint
@@ -161,7 +161,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(ExerciseSchema.Properties.DUE_DATE)).isNotNull();
+                assertThat(properties.get(SearchableItemSchema.Properties.DUE_DATE)).isNotNull();
             });
         }
     }

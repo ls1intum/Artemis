@@ -4,18 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
 
 class WeaviateSchemasTest {
 
     @Test
-    void allSchemas_containsExerciseSchema() {
-        assertThat(WeaviateSchemas.ALL_SCHEMAS).contains(ExerciseSchema.SCHEMA);
+    void allSchemas_containsSearchableItemSchema() {
+        assertThat(WeaviateSchemas.ALL_SCHEMAS).contains(SearchableItemSchema.SCHEMA);
     }
 
     @Test
-    void getSchema_returnsExerciseSchemaByName() {
-        assertThat(WeaviateSchemas.getSchema(ExerciseSchema.COLLECTION_NAME)).isEqualTo(ExerciseSchema.SCHEMA);
+    void getSchema_returnsSearchableItemSchemaByName() {
+        assertThat(WeaviateSchemas.getSchema(SearchableItemSchema.COLLECTION_NAME)).isEqualTo(SearchableItemSchema.SCHEMA);
     }
 
     @Test

@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,7 +49,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     private static final String TEST_PREFIX = "exweaviateres";
 
     @Autowired
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableItemWeaviateService searchableItemWeaviateService;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -124,11 +124,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
         // Index all exercises in Weaviate
-        exerciseWeaviateService.upsertExerciseAsync(releasedExercise);
-        exerciseWeaviateService.upsertExerciseAsync(unreleasedExercise);
-        exerciseWeaviateService.upsertExerciseAsync(notStartedExamExercise);
-        exerciseWeaviateService.upsertExerciseAsync(ongoingExamExercise);
-        exerciseWeaviateService.upsertExerciseAsync(endedExamExercise);
+        searchableItemWeaviateService.upsertExerciseAsync(releasedExercise);
+        searchableItemWeaviateService.upsertExerciseAsync(unreleasedExercise);
+        searchableItemWeaviateService.upsertExerciseAsync(notStartedExamExercise);
+        searchableItemWeaviateService.upsertExerciseAsync(ongoingExamExercise);
+        searchableItemWeaviateService.upsertExerciseAsync(endedExamExercise);
 
         // Wait for all exercises to be indexed
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
