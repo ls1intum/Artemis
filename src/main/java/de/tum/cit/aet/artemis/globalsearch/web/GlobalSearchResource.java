@@ -32,6 +32,10 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -46,6 +50,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Conditional(WeaviateEnabled.class)
 @RestController
 @RequestMapping("api/")
+@Tag(name = "Global Search", description = "Weaviate-based semantic search across all entity types")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
@@ -85,8 +90,17 @@ public class GlobalSearchResource {
      */
     @GetMapping("search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") String query, @RequestParam(value = "types", required = false) String types,
-            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+    @Operation(summary = "Perform a unified semantic search across entity types", description = """
+            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels)
+            with a consistent response format. When courseId is not specified, the search is performed
+            globally across all courses the authenticated user has access to. Per-type access rules are
+            enforced server-side via compound Weaviate filters.""")
+    @ApiResponse(responseCode = "200", description = "Search results matching the query")
+    @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
+    public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
+            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel) or 'all'; default 'all'") String types,
+            @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
+            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–100, default 10)") int limit) {
         log.debug("REST request for global search with query: '{}', types: {}, courseId: {}, limit: {}", query, types, courseId, limit);
 
         Set<String> requestedTypes = parseTypes(types);

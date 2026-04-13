@@ -6,6 +6,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Unified DTO for global search results across all entity types.
@@ -15,7 +16,12 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * renderer simple.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalSearchResultDTO(String id, String type, String title, String description, String badge, Map<String, Object> metadata) {
+@Schema(description = "Unified search result representing an entity found via global search")
+public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of the entity") String id,
+        @Schema(description = "Entity type, e.g. 'exercise', 'lecture', 'exam'") String type, @Schema(description = "Display title of the entity") String title,
+        @Schema(description = "Short description or body text excerpt") String description,
+        @Schema(description = "Human-readable badge label, e.g. 'Programming', 'Quiz', 'Lecture'") String badge,
+        @Schema(description = "Additional type-specific metadata such as courseId, dueDate, or points") Map<String, Object> metadata) {
 
     /**
      * Creates a search result DTO from a raw Weaviate property map returned by the unified
