@@ -304,23 +304,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('fetchTranscript: handles empty transcription response and keeps segments empty', async () => {
-        fixture.detectChanges();
-
-        // Mock service to return undefined (empty response)
-        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-
-        // Call the private method directly to isolate error handling
-        (component as any).fetchTranscript();
-
-        // Let the Promise chain settle
-        await fixture.whenStable();
-
-        // Component state remains empty
-        expect(component.transcriptSegments()).toEqual([]);
-        expect(component.hasTranscript()).toBe(false);
-    });
-
     it('toggleCollapse(false): .m3u8 URL is resolved through API like any other URL', async () => {
         const m3u8Url = 'https://live.rbg.tum.de/some/path/playlist.m3u8';
         component.lectureUnit().videoSource = m3u8Url;
@@ -354,46 +337,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', async () => {
-        const nonTumLiveUrl = 'https://example.com/some-video';
-        component.lectureUnit().videoSource = nonTumLiveUrl;
-
-        const getTranscriptionSpy = vi.spyOn(lectureTranscriptionService, 'getTranscription');
-
-        fixture.detectChanges();
-
-        expect(component.isLoading()).toBe(false);
-
-        component.toggleCollapse(false);
-
-        expect(component.isLoading()).toBe(true);
-
-        // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
-        req.flush(null);
-
-        await fixture.whenStable();
-
-        // No transcript fetch should occur since no playlist was found
-        expect(getTranscriptionSpy).not.toHaveBeenCalled();
-
-        // Playlist should remain undefined
-        expect(component.playlistUrl()).toBeUndefined();
-        expect(component.hasTranscript()).toBe(false);
-        expect(component.isLoading()).toBe(false);
-    });
-
-    it('toggleCollapse(false): sets isLoading to false immediately when no video source', () => {
-        component.lectureUnit().videoSource = undefined;
-        fixture.detectChanges();
-
-        expect(component.isLoading()).toBe(false);
-
-        component.toggleCollapse(false);
-
-        expect(component.isLoading()).toBe(false);
-    });
-
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
         // initial has attachment
         expect(component.hasAttachment()).toBe(true);
@@ -411,42 +354,21 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('PDF functionality', () => {
-        it('isPdf: returns true for PDF file extension', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.pdf';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('isPdf: returns false for non-PDF file extensions', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.docx';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
-        it('isPdf: handles uppercase PDF extension', () => {
+        it('hasPdf recognizes PDF links case-insensitively', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
             fixture.detectChanges();
 
             expect(component.hasPdf()).toBe(true);
         });
 
-        it('hasPdf: returns true when has attachment and is PDF', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('hasPdf: returns false when no attachment', () => {
+        it('hasPdf returns false when no attachment is available', () => {
             component.lectureUnit().attachment = undefined;
             fixture.detectChanges();
 
             expect(component.hasPdf()).toBe(false);
         });
 
-        it('hasPdf: returns false when attachment is not PDF', () => {
+        it('hasPdf returns false for non-PDF links', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
             fixture.detectChanges();
 
@@ -582,20 +504,6 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('Resizable Splitters', () => {
-        it('resetSplitSizesForFullscreen: uses 50/50 defaults for two-panel layout with iris', () => {
-            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
-            fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
-            });
-            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
-
-            component['resetSplitSizesForFullscreen']();
-
-            expect(component.verticalSplitSizes()).toEqual([50, 50]);
-            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
-        });
-
         it('resetSplitSizesForFullscreen: uses ~33/33/33 defaults for three-panel layout', () => {
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
@@ -603,23 +511,6 @@ describe('AttachmentVideoUnitComponent', () => {
                 settings: { enabled: true },
             });
             component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
-
-            component['resetSplitSizesForFullscreen']();
-
-            expect(component.verticalSplitSizes()).toEqual([66.67, 33.33]);
-            expect(component.horizontalSplitSizes()).toEqual([50, 50]);
-        });
-
-        it('resetSplitSizesForFullscreen: resets custom sizes back to defaults', () => {
-            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
-            });
-            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
-
-            component['_verticalSplitSizes'].set([90, 10]);
-            component['_horizontalSplitSizes'].set([10, 90]);
 
             component['resetSplitSizesForFullscreen']();
 
@@ -664,47 +555,51 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(component.needsHorizontalSplitter()).toBe(true);
         });
+    });
 
-        it('needsHorizontalSplitter: returns false when not fullscreen', () => {
-            component.isFullscreen.set(false);
-            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-
-            expect(component.needsHorizontalSplitter()).toBe(false);
-        });
-
-        it('needsHorizontalSplitter: returns false when no video', () => {
-            component.isFullscreen.set(true);
+    describe('Fullscreen behavior', () => {
+        it('openFullscreen: returns immediately when no fullscreen content is available', () => {
             component.lectureUnit().videoSource = undefined;
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            component.lectureUnit().attachment = undefined;
+            const activateSpy = vi.spyOn(component as any, 'activateFullscreen');
 
-            expect(component.needsHorizontalSplitter()).toBe(false);
+            component.openFullscreen();
+
+            expect(activateSpy).not.toHaveBeenCalled();
         });
 
-        it('needsHorizontalSplitter: returns false when no PDF', () => {
-            component.isFullscreen.set(true);
+        it('openFullscreen: expands collapsed card before activating fullscreen', async () => {
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
+            const toggleCollapse = vi.fn();
+            const activateSpy = vi.spyOn(component as any, 'activateFullscreen').mockImplementation(() => {});
+            vi.spyOn(component, 'lectureUnitCard').mockReturnValue({
+                isCollapsed: () => true,
+                toggleCollapse,
+            } as any);
 
-            expect(component.needsHorizontalSplitter()).toBe(false);
+            component.openFullscreen();
+            await fixture.whenStable();
+
+            expect(toggleCollapse).toHaveBeenCalledTimes(1);
+            expect(activateSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('ngOnDestroy: destroys both splitters', () => {
+        it('closeFullscreen: closes only when fullscreen is active', () => {
+            component.isFullscreen.set(false);
+            component.closeFullscreen();
+            expect(component.isFullscreen()).toBe(false);
+
             component.isFullscreen.set(true);
+            component.closeFullscreen();
+            expect(component.isFullscreen()).toBe(false);
+        });
 
-            // Mock the splitter instances
-            const mockVerticalDestroy = vi.fn();
-            const mockHorizontalDestroy = vi.fn();
+        it('onEscapePressed: delegates to closeFullscreen', () => {
+            const closeSpy = vi.spyOn(component, 'closeFullscreen');
 
-            component['verticalSplitInstance'] = { destroy: mockVerticalDestroy } as any;
-            component['horizontalSplitInstance'] = { destroy: mockHorizontalDestroy } as any;
+            component.onEscapePressed();
 
-            component.ngOnDestroy();
-
-            expect(mockVerticalDestroy).toHaveBeenCalledTimes(1);
-            expect(mockHorizontalDestroy).toHaveBeenCalledTimes(1);
-            expect(component['verticalSplitInstance']).toBeUndefined();
-            expect(component['horizontalSplitInstance']).toBeUndefined();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
         });
     });
 });

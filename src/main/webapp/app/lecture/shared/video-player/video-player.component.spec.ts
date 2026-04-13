@@ -571,4 +571,133 @@ describe('VideoPlayerComponent', () => {
             expect(setSignalSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('Fullscreen sizing helpers', () => {
+        it('initializeResizer exits early when required elements are missing', () => {
+            vi.spyOn(component, 'videoColumn').mockReturnValue(undefined);
+            vi.spyOn(component, 'videoWrapper').mockReturnValue(undefined);
+            vi.spyOn(component, 'resizerHandle').mockReturnValue(undefined);
+
+            (component as any).initializeResizer();
+
+            expect(getMockInteract()).not.toHaveBeenCalled();
+        });
+
+        it('syncFullscreenVideoWidth resets auto-applied width when not in fullscreen', () => {
+            const wrapperEl = document.createElement('div');
+            const videoColumnEl = document.createElement('div');
+            videoColumnEl.style.flex = '0 0 auto';
+            videoColumnEl.style.width = '450px';
+            (component as any).autoFullscreenWidthApplied = true;
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+            vi.spyOn(component as any, 'isFullscreenContext').mockReturnValue(false);
+
+            (component as any).syncFullscreenVideoWidth(videoColumnEl, wrapperEl);
+
+            expect(videoColumnEl.style.flex).toBe('');
+            expect(videoColumnEl.style.width).toBe('');
+            expect((component as any).autoFullscreenWidthApplied).toBe(false);
+        });
+
+        it('syncFullscreenVideoWidth keeps user-defined ratio in fullscreen', () => {
+            const wrapperEl = document.createElement('div');
+            const videoColumnEl = document.createElement('div');
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 700,
+                height: 700,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+            Object.defineProperty(videoColumnEl, 'clientHeight', { value: 600, configurable: true });
+            (component as any).fullscreenVideoWidthRatio = 0.5;
+            vi.spyOn(component as any, 'isFullscreenContext').mockReturnValue(true);
+
+            (component as any).syncFullscreenVideoWidth(videoColumnEl, wrapperEl);
+
+            expect(videoColumnEl.style.width).toBe('500px');
+            expect((component as any).autoFullscreenWidthApplied).toBe(false);
+        });
+    });
+
+    describe('Initial seek helpers', () => {
+        it('queueInitialSeek applies immediately when metadata is already available', () => {
+            const applySpy = vi.spyOn(component as any, 'applyInitialSeek');
+            const localVideoElement = document.createElement('video');
+            Object.defineProperty(localVideoElement, 'readyState', { value: 1, configurable: true });
+
+            (component as any).queueInitialSeek(localVideoElement, 7);
+
+            expect(applySpy).toHaveBeenCalledWith(localVideoElement, 7);
+        });
+
+        it('queueInitialSeek replaces an existing loadedmetadata listener', () => {
+            const localVideoElement = document.createElement('video');
+            Object.defineProperty(localVideoElement, 'readyState', { value: 0, configurable: true });
+            const previousHandler = vi.fn();
+            const removeSpy = vi.spyOn(localVideoElement, 'removeEventListener');
+            (component as any).loadedmetadataHandler = previousHandler;
+
+            (component as any).queueInitialSeek(localVideoElement, 5);
+
+            expect(removeSpy).toHaveBeenCalledWith('loadedmetadata', previousHandler);
+            expect((component as any).loadedmetadataHandler).toBeTypeOf('function');
+        });
+
+        it('applyInitialSeek ignores timestamps beyond finite duration', () => {
+            const localVideoElement = document.createElement('video');
+            Object.defineProperty(localVideoElement, 'duration', { value: 10, configurable: true });
+            Object.defineProperty(localVideoElement, 'currentTime', { value: 0, writable: true, configurable: true });
+            const updateSpy = vi.spyOn(component, 'updateCurrentSegment');
+
+            (component as any).applyInitialSeek(localVideoElement, 11);
+
+            expect(localVideoElement.currentTime).toBe(0);
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('updateCurrentSegment scrolls transcript viewer when available', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', [{ startTime: 10, endTime: 12, text: 'A' }]);
+            await render();
+
+            const scrollSpy = vi.fn();
+            vi.spyOn(component, 'transcriptViewer').mockReturnValue({ scrollToSegment: scrollSpy } as any);
+
+            component.updateCurrentSegment(10.1);
+
+            expect(scrollSpy).toHaveBeenCalledWith(0);
+        });
+
+        it('ngOnDestroy removes loadedmetadata listener and clears pending seek', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const handler = vi.fn();
+            (component as any).loadedmetadataHandler = handler;
+            (component as any).pendingInitialSeek = 12;
+            const removeSpy = vi.spyOn(videoElement, 'removeEventListener');
+
+            component.ngOnDestroy();
+
+            expect(removeSpy).toHaveBeenCalledWith('loadedmetadata', handler);
+            expect((component as any).loadedmetadataHandler).toBeUndefined();
+            expect((component as any).pendingInitialSeek).toBeUndefined();
+        });
+    });
 });

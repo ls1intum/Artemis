@@ -5,8 +5,9 @@ import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUni
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockComponent } from 'ng-mocks';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 describe('LectureUnitComponent', () => {
     setupTestBed({ zoneless: true });
@@ -30,11 +31,17 @@ describe('LectureUnitComponent', () => {
                     useClass: MockTranslateService,
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LectureUnitComponent, {
+                remove: { imports: [CompetencyContributionComponent] },
+                add: { imports: [MockComponent(CompetencyContributionComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(LectureUnitComponent);
         component = fixture.componentInstance;
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('lectureUnit', lectureUnit);
         fixture.componentRef.setInput('showViewIsolatedButton', true);
         fixture.componentRef.setInput('isPresentationMode', false);
@@ -42,67 +49,65 @@ describe('LectureUnitComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('initializes correctly', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should handle isolated view', async () => {
+    it('handleIsolatedView emits and stops propagation', () => {
         const emitSpy = vi.spyOn(component.onShowIsolated, 'emit');
-        const handleIsolatedViewSpy = vi.spyOn(component, 'handleIsolatedView');
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
 
-        fixture.detectChanges();
+        component.handleIsolatedView(event);
 
-        const viewIsolatedButton = fixture.debugElement.query(By.css('#view-isolated-button'));
-        viewIsolatedButton.nativeElement.click();
-
-        expect(handleIsolatedViewSpy).toHaveBeenCalledTimes(1);
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should toggle completion', async () => {
-        const toggleCompletionSpy = vi.spyOn(component, 'toggleCompletion');
-        const onCompletionEmitSpy = vi.spyOn(component.onCompletion, 'emit');
+    it('handleOriginalVersionView emits and stops propagation', () => {
+        const emitSpy = vi.spyOn(component.onShowOriginalVersion, 'emit');
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
 
-        fixture.detectChanges();
+        component.handleOriginalVersionView(event);
 
-        const completedCheckbox = fixture.debugElement.query(By.css('#completed-checkbox'));
-        completedCheckbox.nativeElement.click();
-
-        expect(toggleCompletionSpy).toHaveBeenCalledTimes(1);
-        expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should toggle collapse', async () => {
-        const toggleCollapseSpy = vi.spyOn(component, 'toggleCollapse');
-        const onCollapseEmitSpy = vi.spyOn(component.onCollapse, 'emit');
+    it('handleFullscreen emits and stops propagation', () => {
+        const emitSpy = vi.spyOn(component.onFullscreen, 'emit');
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
 
-        fixture.detectChanges();
+        component.handleFullscreen(event);
 
-        const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
-        collapseButton.nativeElement.click();
-
-        expect(toggleCollapseSpy).toHaveBeenCalledTimes(1);
-        expect(onCollapseEmitSpy).toHaveBeenCalledTimes(1);
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle original version view', async () => {
-        const handleOriginalVersionViewSpy = vi.spyOn(component, 'handleOriginalVersionView');
-        const onShowOriginalVersionEmitSpy = vi.spyOn(component.onShowOriginalVersion, 'emit');
+    it('toggleCompletion emits inverse completion state', () => {
+        const emitSpy = vi.spyOn(component.onCompletion, 'emit');
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
 
-        fixture.componentRef.setInput('showOriginalVersionButton', true);
+        component.toggleCompletion(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledWith(false);
+    });
+
+    it('toggleCollapse expands and emits collapse state', async () => {
+        const collapseSpy = vi.spyOn(component.onCollapse, 'emit');
+        const scrollSpy = vi.fn();
+        (fixture.nativeElement as any).scrollIntoView = scrollSpy;
+
         fixture.detectChanges();
+        component.toggleCollapse();
+        await fixture.whenStable();
 
-        const event = new MouseEvent('click');
-        const button = fixture.debugElement.query(By.css('#view-original-version-button'));
-
-        expect(button).not.toBeNull();
-
-        button.nativeElement.dispatchEvent(event);
-
-        expect(handleOriginalVersionViewSpy).toHaveBeenCalledTimes(1);
-        expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledTimes(1);
+        expect(component.isCollapsed()).toBe(false);
+        expect(collapseSpy).toHaveBeenCalledWith(false);
+        expect(scrollSpy).toHaveBeenCalled();
     });
 });
