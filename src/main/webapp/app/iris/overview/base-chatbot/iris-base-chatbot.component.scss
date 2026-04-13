@@ -393,7 +393,7 @@ pre {
 
 :host:not(.layout-embedded) .chat-layout {
     border: 1px solid var(--border-color);
-    border-radius: var(--iris-chat-shell-border-radius, #{$iris-border-radius-sm});
+    border-radius: $iris-border-radius-sm;
 }
 
 .chat-container {
@@ -402,7 +402,7 @@ pre {
 
     .chat-header {
         background-color: var(--iris-primary-background);
-        border-radius: var(--iris-chat-shell-border-radius, #{$iris-border-radius-sm}) var(--iris-chat-shell-border-radius, #{$iris-border-radius-sm}) 0 0;
+        border-radius: $iris-border-radius-sm $iris-border-radius-sm 0 0;
         position: relative;
         display: flex;
         justify-content: flex-end;

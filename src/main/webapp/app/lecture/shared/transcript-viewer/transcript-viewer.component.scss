@@ -1,5 +1,5 @@
 /* Host element participates in parent flex layout */
-:host {
+jhi-transcript-viewer {
     flex: 1;
     min-width: 200px;
 }
@@ -142,8 +142,7 @@
     border-radius: 0.25rem;
     transition: background 0.2s;
 
-    /* Highlight marks */
-    ::ng-deep mark {
+    mark {
         background-color: var(--bs-warning-bg-subtle);
         color: inherit;
         padding: 0.1rem 0.2rem;
@@ -175,15 +174,16 @@
     padding: 2rem 1rem;
 }
 
-:host-context(.content-container--fullscreen) .search-input {
+.content-container--fullscreen jhi-transcript-viewer .search-input {
     font-size: 1rem;
 }
 
-:host-context(.content-container--fullscreen) .search-nav {
+.content-container--fullscreen jhi-transcript-viewer .search-nav {
     font-size: 0.95rem;
 }
 
-:host-context(.content-container--fullscreen) .transcript-line {
+/* Slightly larger typography improves readability in fullscreen split view. */
+.content-container--fullscreen jhi-transcript-viewer .transcript-line {
     font-size: 1rem;
     line-height: 1.5;
     padding: 0.5rem 0.625rem;

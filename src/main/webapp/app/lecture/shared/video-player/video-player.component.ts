@@ -68,8 +68,11 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
     /** Keep the manually selected video width ratio stable while resizing fullscreen pane */
     private fullscreenVideoWidthRatio: number | undefined;
+    /** Last observed wrapper width in px, used to skip unnecessary fullscreen reflows. */
     private lastObservedWrapperWidth = 0;
+    /** Last observed video column height in px, used to detect aspect-ratio constraints. */
     private lastObservedVideoHeight = 0;
+    /** Tracks whether width was auto-constrained to prevent fullscreen overflow. */
     private autoFullscreenWidthApplied = false;
 
     private viewReady = signal<boolean>(false);
@@ -235,6 +238,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
+    /**
+     * In fullscreen, keeps the video column within the available height while preserving 16:9.
+     * If the user dragged the divider, the relative width ratio is preserved across pane resizes.
+     */
     private syncFullscreenVideoWidth(videoColumnEl: HTMLDivElement, wrapperEl: HTMLDivElement): void {
         const wrapperWidth = wrapperEl.getBoundingClientRect().width;
         if (!wrapperWidth) {
@@ -288,6 +295,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.autoFullscreenWidthApplied = false;
     }
 
+    /** Calculates the maximum width allowed by current column height at 16:9 ratio. */
     private getHeightLimitedMaxWidth(videoColumnEl: HTMLDivElement, wrapperWidth: number): number {
         const height = videoColumnEl.clientHeight;
         if (!height) {
@@ -297,6 +305,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         return Math.min(wrapperWidth, Math.max(1, heightLimitedWidth));
     }
 
+    /** Detects whether the player is rendered inside lecture-unit fullscreen mode. */
     private isFullscreenContext(wrapperEl: HTMLDivElement): boolean {
         return !!wrapperEl.closest('.content-container--fullscreen');
     }

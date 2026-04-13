@@ -1,5 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, Injector, NgZone, OnDestroy, afterNextRender, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    Injector,
+    NgZone,
+    OnDestroy,
+    ViewEncapsulation,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Split from 'split.js';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
@@ -13,7 +29,6 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
-    faExpand,
     faFile,
     faFileArchive,
     faFileCode,
@@ -61,10 +76,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
+    encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
-    protected readonly faExpand = faExpand;
     protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
@@ -104,6 +119,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
+    private fullscreenDrawerContentElement?: HTMLElement;
+    private previousDrawerContentZIndex?: string;
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -186,6 +203,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this.ngZone.runOutsideAngular(() => {
                         this.initHorizontalSplitter([videoEl, pdfEl]);
                     });
+                }
+            });
+        });
+
+        // Keep lecture fullscreen above drawer overlays without touching global.scss.
+        effect(() => {
+            const fullscreen = this.isFullscreen();
+            const container = this.contentContainer()?.nativeElement;
+
+            untracked(() => {
+                if (fullscreen && container) {
+                    this.raiseDrawerContentZIndex(container);
+                } else {
+                    this.restoreDrawerContentZIndex();
                 }
             });
         });
@@ -397,14 +428,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this._verticalSplitSizes.set([sizes[0], sizes[1]]);
                 });
             },
-            gutter: (_index, direction) => {
-                const gutter = document.createElement('div');
-                gutter.className = `gutter gutter-${direction}`;
-                const handle = document.createElement('div');
-                handle.className = 'split-gutter-handle';
-                gutter.appendChild(handle);
-                return gutter;
-            },
         });
     }
 
@@ -420,14 +443,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this._horizontalSplitSizes.set([sizes[0], sizes[1]]);
                 });
             },
-            gutter: (_index, direction) => {
-                const gutter = document.createElement('div');
-                gutter.className = `gutter gutter-${direction}`;
-                const handle = document.createElement('div');
-                handle.className = 'split-gutter-handle';
-                gutter.appendChild(handle);
-                return gutter;
-            },
         });
     }
 
@@ -441,9 +456,41 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.horizontalSplitInstance = undefined;
     }
 
+    private raiseDrawerContentZIndex(contentContainer: HTMLElement): void {
+        const drawerContent = contentContainer.closest('.mat-drawer-content');
+        if (!(drawerContent instanceof HTMLElement)) {
+            return;
+        }
+
+        if (this.fullscreenDrawerContentElement === drawerContent) {
+            return;
+        }
+
+        this.restoreDrawerContentZIndex();
+        this.fullscreenDrawerContentElement = drawerContent;
+        this.previousDrawerContentZIndex = drawerContent.style.zIndex;
+        drawerContent.style.zIndex = '4000';
+    }
+
+    private restoreDrawerContentZIndex(): void {
+        if (!this.fullscreenDrawerContentElement) {
+            return;
+        }
+
+        if (this.previousDrawerContentZIndex) {
+            this.fullscreenDrawerContentElement.style.zIndex = this.previousDrawerContentZIndex;
+        } else {
+            this.fullscreenDrawerContentElement.style.removeProperty('z-index');
+        }
+
+        this.fullscreenDrawerContentElement = undefined;
+        this.previousDrawerContentZIndex = undefined;
+    }
+
     ngOnDestroy(): void {
         this.destroyVerticalSplitter();
         this.destroyHorizontalSplitter();
+        this.restoreDrawerContentZIndex();
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }

@@ -1,17 +1,14 @@
-:host {
+jhi-attachment-video-unit {
     --lecture-combined-view-bg: var(--bs-gray-100, #f8f9fa);
     --lecture-combined-view-border: var(--card-border-color);
     --lecture-combined-view-radius: 0.15rem;
-}
 
-.video-player-container,
-.pdf-viewer-spacing {
-    padding-block: 20px;
-}
+    .video-player-container,
+    .pdf-viewer-spacing {
+        padding-block: 20px;
+    }
 
-.video-player-container {
-    // In fullscreen: enable centering container with gray background and border
-    &.video-player-container--fullscreen {
+    .video-player-container--fullscreen {
         padding-block: 0;
         display: flex;
         align-items: center;
@@ -24,20 +21,8 @@
         overflow: hidden;
         container-type: size;
     }
-}
 
-.video-iframe-wrapper {
-    width: 100%;
-
-    // Embedded mode: use aspect ratio for consistent display
-    &:not(.video-iframe-wrapper--fullscreen) {
-        aspect-ratio: 16 / 9;
-        position: relative;
-    }
-
-    // Fullscreen mode: adaptive sizing
-    &.video-iframe-wrapper--fullscreen {
-        // Keep 16:9 and fit into whichever container side is limiting
+    .video-iframe-wrapper--fullscreen {
         aspect-ratio: 16 / 9;
         width: 100%;
         max-width: 100%;
@@ -46,277 +31,205 @@
         border-radius: var(--lecture-combined-view-radius);
         overflow: hidden;
 
+        // Use container query units when available to keep the iframe within both dimensions.
         @supports (width: 1cqw) {
             width: min(100cqw, calc(100cqh * 16 / 9));
             height: min(100cqh, calc(100cqw * 9 / 16));
         }
     }
-}
 
-.video-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-
-    // Embedded mode: absolute positioning
-    .video-iframe-wrapper:not(.video-iframe-wrapper--fullscreen) & {
-        position: absolute;
-        top: 0;
-        left: 0;
+    .video-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
     }
-}
 
-.pdf-viewer-spacing {
-    position: relative;
-}
-
-.pdf-loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-}
-
-jhi-pdf-viewer.pdf-viewer-loading {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.content-container--hidden {
-    display: none;
-}
-
-.content-container--embedded {
-    display: block;
-}
-
-.content-container--fullscreen {
-    position: fixed;
-    inset: 4rem 2rem 2rem 2rem;
-    z-index: 1032;
-    display: flex;
-    gap: 0; // No gap when using Split.js - gutters are inserted by Split.js
-    padding: 1rem;
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border-color);
-    border-radius: 0.4rem;
-    overflow: hidden;
-    box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
-    flex-direction: row;
-
-    // Remove padding in fullscreen for optimal space usage
-    .video-player-container,
     .pdf-viewer-spacing {
-        padding-block: 0;
+        position: relative;
     }
 
-    // Content takes full width by default
-    > .main-content {
-        flex: 1;
-        min-width: 0;
+    .pdf-loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+    }
+
+    jhi-pdf-viewer.pdf-viewer-loading {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .content-container--hidden {
+        display: none;
+    }
+
+    .content-container--embedded {
+        display: block;
+    }
+
+    .content-container--fullscreen {
+        position: fixed;
+        inset: 4rem 2rem 2rem 2rem;
+        z-index: 1032;
         display: flex;
-        flex-direction: column;
-        gap: 0; // No gap when using Split.js
+        gap: 0;
+        padding: 1rem;
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border-color);
+        border-radius: 0.4rem;
         overflow: hidden;
+        box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
+        flex-direction: row;
 
-        // Enable children to shrink and fill available space
-        > * {
-            flex-shrink: 1;
-            min-height: 0;
+        .video-player-container,
+        .pdf-viewer-spacing {
+            padding-block: 0;
         }
-    }
 
-    // Optimize PDF and Video containers for fullscreen
-    .pdf-viewer-spacing,
-    .video-player-container,
-    .video-container-wrapper {
-        // Don't set flex properties - let Split.js control them via inline styles
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        background-color: var(--lecture-combined-view-bg);
-
-        jhi-pdf-viewer {
-            height: 100%;
-        }
-    }
-
-    // When only one content type (video OR pdf), fill available space
-    .pdf-viewer-spacing:only-child,
-    .video-player-container:only-child,
-    .video-container-wrapper:only-child {
-        flex: 1;
-    }
-
-    // When sidebar is present, adjust layout
-    &.content-container--with-sidebar {
-        // No gap - Split.js handles spacing via gutters
         > .main-content {
-            // Don't set flex properties - let Split.js control them via inline styles
-            flex: unset;
-            min-width: 120px;
-        }
-
-        > .iris-sidebar {
-            // Don't set flex properties - let Split.js control them
-            position: relative;
-            min-width: 120px;
+            flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
-            background-color: var(--card-bg);
+            gap: 0;
             overflow: hidden;
-            padding-top: 2.5rem; // Space for close button at top
 
-            > jhi-lecture-chatbot {
-                --iris-chat-shell-border-radius: 0.15rem;
+            > * {
+                flex-shrink: 1;
+                min-height: 0;
             }
         }
-    }
 
-    // Close button for Iris sidebar (matching PDF viewer style)
-    .iris-sidebar__close-button {
-        position: absolute;
-        top: 0.0625rem;
-        right: 0.125rem;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border: none;
-        background-color: transparent;
-        color: var(--bs-body-color);
-        cursor: pointer;
-        transition: opacity 0.2s ease;
-        border-radius: 0.25rem;
+        .pdf-viewer-spacing,
+        .video-player-container,
+        .video-container-wrapper {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--lecture-combined-view-bg);
 
-        &:hover,
-        &:active {
-            opacity: 0.8;
-            background-color: rgba(0, 0, 0, 0.05);
+            jhi-pdf-viewer {
+                height: 100%;
+            }
         }
 
-        &:focus-visible {
-            outline: 2px solid var(--bs-primary);
-            outline-offset: -2px;
+        .pdf-viewer-spacing:only-child,
+        .video-player-container:only-child,
+        .video-container-wrapper:only-child {
+            flex: 1;
         }
-
-        fa-icon {
-            font-size: 1.25rem;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        flex-direction: column;
 
         &.content-container--with-sidebar {
             > .main-content {
-                min-width: 0;
+                flex: unset;
+                min-width: 120px;
             }
 
             > .iris-sidebar {
-                display: none; // Hide sidebar on mobile
+                position: relative;
+                min-width: 120px;
+                display: flex;
+                flex-direction: column;
+                background-color: var(--card-bg);
+                overflow: hidden;
+                padding-top: 2.5rem;
             }
         }
-    }
 
-    // Split.js gutter styling (copied from ResizablePanelsComponent pattern)
+        .iris-sidebar__close-button {
+            position: absolute;
+            top: 0.0625rem;
+            right: 0.125rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            background-color: transparent;
+            color: var(--bs-body-color);
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            border-radius: 0.25rem;
 
-    // Vertical gutter (for content | iris horizontal resizing)
-    ::ng-deep .gutter.gutter-horizontal {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 12px;
-        cursor: col-resize;
-        background-color: transparent;
-        flex-shrink: 0;
+            &:hover,
+            &:active {
+                opacity: 0.8;
+                background-color: rgba(0, 0, 0, 0.05);
+            }
 
-        &::before {
-            display: none;
-        }
-    }
+            &:focus-visible {
+                outline: 2px solid var(--bs-primary);
+                outline-offset: -2px;
+            }
 
-    // Horizontal gutter (for video | pdf vertical resizing)
-    ::ng-deep .gutter.gutter-vertical {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 12px;
-        cursor: row-resize;
-        background-color: transparent;
-        flex-shrink: 0;
-
-        &::before {
-            display: none;
-        }
-    }
-
-    // Two-line visual indicator (matches ResizablePanelsComponent)
-    ::ng-deep .split-gutter-handle {
-        display: flex;
-        pointer-events: none;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            background: var(--bs-body-color);
-            border-radius: 1px;
-        }
-    }
-
-    // Horizontal gutter handle (vertical lines)
-    ::ng-deep .gutter-horizontal .split-gutter-handle {
-        flex-direction: row;
-        gap: 1px;
-
-        &::before,
-        &::after {
-            width: 2px;
-            height: 12px;
-        }
-    }
-
-    // Vertical gutter handle (horizontal lines)
-    ::ng-deep .gutter-vertical .split-gutter-handle {
-        flex-direction: column;
-        gap: 1px;
-
-        &::before,
-        &::after {
-            width: 12px;
-            height: 2px;
-        }
-    }
-
-    // Ensure video-container-wrapper exists for jhi-video-player case
-    .video-container-wrapper {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background-color: var(--lecture-combined-view-bg);
-
-        > jhi-video-player {
-            flex: 1;
-            min-width: 0;
-            min-height: 0;
+            fa-icon {
+                font-size: 1.25rem;
+            }
         }
 
-        &.video-container-wrapper--fullscreen {
+        @media (max-width: 768px) {
+            flex-direction: column;
+
+            &.content-container--with-sidebar {
+                > .main-content {
+                    min-width: 0;
+                }
+
+                > .iris-sidebar {
+                    display: none;
+                }
+            }
+        }
+
+        .gutter.gutter-horizontal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 12px;
+            cursor: col-resize;
+            background-color: transparent;
+            flex-shrink: 0;
+        }
+
+        .gutter.gutter-vertical {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 12px;
+            cursor: row-resize;
+            background-color: transparent;
+            flex-shrink: 0;
+        }
+
+        .video-container-wrapper {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--lecture-combined-view-bg);
+
+            > jhi-video-player {
+                flex: 1;
+                min-width: 0;
+                min-height: 0;
+            }
+        }
+
+        .video-container-wrapper--fullscreen {
             border: 1px solid var(--lecture-combined-view-border);
             border-radius: var(--lecture-combined-view-radius);
         }
     }
-}
 
-.fullscreen-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1031;
-    background-color: rgba(0, 0, 0, 0.35);
+    .fullscreen-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1031;
+        background-color: rgba(0, 0, 0, 0.35);
+    }
 }
