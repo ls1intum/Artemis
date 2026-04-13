@@ -160,6 +160,16 @@ export class PdfViewerComponent {
         this.resetFullscreenLayering();
     }
 
+    onFullscreenEscape(event: Event): void {
+        if (!this.isFullscreen()) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeFullscreen();
+    }
+
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);

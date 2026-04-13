@@ -11,7 +11,7 @@
     [attr.aria-modal]="isFullscreen() ? 'true' : null"
     [attr.tabindex]="isFullscreen() ? '0' : null"
     (click)="$event.stopPropagation()"
-    (keydown.escape)="closeFullscreen()"
+    (keydown.escape)="onFullscreenEscape($event)"
 >
     @if (isLoading()) {
         <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100">

@@ -560,8 +560,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.isFullscreen.set(false);
     }
 
-    @HostListener('document:keydown.escape')
-    onEscapePressed(): void {
+    @HostListener('document:keydown.escape', ['$event'])
+    onEscapePressed(event: Event): void {
+        if (event.defaultPrevented || this.hasOpenPdfFullscreen()) {
+            return;
+        }
+
         this.closeFullscreen();
     }
 
@@ -589,6 +593,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (url && url.startsWith('blob:')) {
             URL.revokeObjectURL(url);
         }
+    }
+
+    private hasOpenPdfFullscreen(): boolean {
+        return this.hostElement.nativeElement.querySelector('.pdf-fullscreen-window') instanceof HTMLElement;
     }
 
     /**

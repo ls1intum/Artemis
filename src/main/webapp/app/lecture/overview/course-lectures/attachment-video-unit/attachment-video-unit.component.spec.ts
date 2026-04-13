@@ -686,10 +686,31 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('onEscapePressed: delegates to closeFullscreen', () => {
             const closeSpy = vi.spyOn(component, 'closeFullscreen');
+            const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 
-            component.onEscapePressed();
+            component.onEscapePressed(event);
 
             expect(closeSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('onEscapePressed: does not close when event was already handled', () => {
+            const closeSpy = vi.spyOn(component, 'closeFullscreen');
+            const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+            event.preventDefault();
+
+            component.onEscapePressed(event);
+
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('onEscapePressed: does not close when pdf fullscreen is active', () => {
+            const closeSpy = vi.spyOn(component, 'closeFullscreen');
+            vi.spyOn(component as any, 'hasOpenPdfFullscreen').mockReturnValue(true);
+            const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+
+            component.onEscapePressed(event);
+
+            expect(closeSpy).not.toHaveBeenCalled();
         });
     });
 });
