@@ -429,6 +429,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this._verticalSplitSizes.set([sizes[0], sizes[1]]);
                 });
             },
+            gutter: (_index, direction) => this.createSplitGutter(direction),
         });
     }
 
@@ -444,7 +445,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this._horizontalSplitSizes.set([sizes[0], sizes[1]]);
                 });
             },
+            gutter: (_index, direction) => this.createSplitGutter(direction),
         });
+    }
+
+    private createSplitGutter(direction: string): HTMLElement {
+        const gutter = document.createElement('div');
+        gutter.className = `gutter gutter-${direction}`;
+
+        const handle = document.createElement('div');
+        handle.className = 'split-gutter-handle';
+        gutter.appendChild(handle);
+
+        return gutter;
     }
 
     private destroyVerticalSplitter(): void {

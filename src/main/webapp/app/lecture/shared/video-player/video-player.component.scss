@@ -89,8 +89,8 @@
 
 :host-context(.content-container--fullscreen) .video-player {
     position: static;
-    width: auto !important;
-    height: auto !important;
+    width: min(100cqw, calc(100cqh * 16 / 9)) !important;
+    height: min(100cqh, calc(100cqw * 9 / 16)) !important;
     max-width: 100%;
     max-height: 100%;
     aspect-ratio: 16 / 9;

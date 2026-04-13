@@ -24,7 +24,8 @@ jhi-attachment-video-unit {
 
     .video-iframe-wrapper--fullscreen {
         aspect-ratio: 16 / 9;
-        width: 100%;
+        width: min(100cqw, calc(100cqh * 16 / 9));
+        height: min(100cqh, calc(100cqw * 9 / 16));
         max-width: 100%;
         max-height: 100%;
         border: 1px solid var(--lecture-combined-view-border);
@@ -198,6 +199,45 @@ jhi-attachment-video-unit {
             cursor: row-resize;
             background-color: transparent;
             flex-shrink: 0;
+        }
+
+        .gutter.gutter-horizontal::before,
+        .gutter.gutter-vertical::before {
+            display: none;
+        }
+
+        .split-gutter-handle {
+            display: flex;
+            gap: 1px;
+            pointer-events: none;
+
+            &::before,
+            &::after {
+                content: '';
+                display: block;
+                background: var(--bs-body-color);
+                border-radius: 1px;
+            }
+        }
+
+        .gutter-horizontal .split-gutter-handle {
+            flex-direction: row;
+
+            &::before,
+            &::after {
+                width: 2px;
+                height: 12px;
+            }
+        }
+
+        .gutter-vertical .split-gutter-handle {
+            flex-direction: column;
+
+            &::before,
+            &::after {
+                width: 12px;
+                height: 2px;
+            }
         }
 
         .video-container-wrapper--fullscreen {
