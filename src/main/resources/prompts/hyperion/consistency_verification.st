@@ -112,7 +112,7 @@ A valid issue must have at least 2 locations establishing the contradiction. If 
 - If a caller in the solution is affected by the conflict (e.g., method return type change breaks a call site), add that location
 
 ## Inline fix suggestions
-Each `relatedLocations[]` entry may include `suggestedInlineFix`. It can be `null` or empty. Add or change it only for simple, local line replacements where the correct replacement is obvious (e.g., a rename, return type, visibility, parameter, or signature fix). Leave it `null` for locations that do not need a direct replacement or where the fix is complex/non-local. When present, it must be the exact replacement code for `startLine..endLine` only, without explanations or markdown.
+Each `relatedLocations[]` entry may include `suggestedInlineFix`. Add or change it only for simple, local line replacements where the correct replacement is obvious (e.g., a rename, return type, visibility, parameter, or signature fix). Leave it `null` for locations that do not need a direct replacement or where the fix is complex/non-local. Use an empty string only when the intended direct replacement is to delete all selected lines; do not use an empty string to mean "no inline fix". When present, it must be the exact replacement code for `startLine..endLine` only, without explanations or markdown.
 
 ---
 

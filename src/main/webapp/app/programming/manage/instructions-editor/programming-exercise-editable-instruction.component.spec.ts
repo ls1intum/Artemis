@@ -46,6 +46,8 @@ import { ProblemStatementSyncService } from 'app/exercise/synchronization/servic
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { signal } from '@angular/core';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -55,6 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
+    let exerciseReviewCommentService: ExerciseReviewCommentService;
 
     let subscribeForTestCaseSpy: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
@@ -145,6 +148,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                exerciseReviewCommentService = TestBed.inject(ExerciseReviewCommentService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
@@ -665,6 +669,68 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.inlineRefinementPosition()).toBeUndefined();
         expect(comp.selectedTextForRefinement()).toBe('');
         expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should persist problem statement and mark inline fix as applied', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('live editor value'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+        (exerciseReviewCommentService.threads as any).set([
+            {
+                id: 10,
+                comments: [
+                    {
+                        id: 20,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        createdDate: '2024-01-01T00:00:00Z',
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                        },
+                    },
+                ],
+            },
+        ]);
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).toHaveBeenCalledExactlyOnceWith(20);
+    });
+
+    it('should ignore inline fix application while instructions are already saving', () => {
+        comp.savingInstructions = true;
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).not.toHaveBeenCalled();
+    });
+
+    it('should delegate diff-mode refinement actions to the markdown editor', () => {
+        const updateProblemStatementSpy = jest.spyOn(comp, 'updateProblemStatement');
+        const applyRefinedContent = jest.fn();
+        const revertAll = jest.fn();
+        comp.markdownEditorMonaco = {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: {
+                getText: jest.fn().mockReturnValue('reverted content'),
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.applyRefinedContent('refined content');
+        comp.revertAll();
+
+        expect(applyRefinedContent).toHaveBeenCalledExactlyOnceWith('refined content');
+        expect(revertAll).toHaveBeenCalledOnce();
+        expect(updateProblemStatementSpy).toHaveBeenCalledExactlyOnceWith('reverted content');
     });
 
     it('should get current content from editor', () => {

@@ -106,7 +106,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         return content;
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
-    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.firstConsistencyIssueContent()?.suggestedFix);
+    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
         const groupId = this.thread().groupId;
@@ -513,5 +513,15 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }
 
         return undefined;
+    }
+
+    private getValidSuggestedInlineFix(inlineFix: InlineCodeChange | null | undefined): InlineCodeChange | undefined {
+        if (!inlineFix || inlineFix.expectedCode == null || inlineFix.replacementCode == null || inlineFix.applied == null) {
+            return undefined;
+        }
+        if (inlineFix.startLine == null || inlineFix.endLine == null || inlineFix.startLine < 1 || inlineFix.endLine < inlineFix.startLine) {
+            return undefined;
+        }
+        return inlineFix;
     }
 }

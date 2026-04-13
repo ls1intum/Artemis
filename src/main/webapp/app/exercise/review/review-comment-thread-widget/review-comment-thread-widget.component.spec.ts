@@ -344,6 +344,65 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
     });
 
+    it('should hide malformed suggested inline fix with null replacement code', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix: {
+                            startLine: 5,
+                            endLine: 5,
+                            expectedCode: 'foo',
+                            replacementCode: null,
+                            applied: false,
+                        },
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toBeUndefined();
+    });
+
+    it('should keep deletion suggested inline fixes with empty replacement code', () => {
+        const suggestedFix = {
+            startLine: 5,
+            endLine: 5,
+            expectedCode: 'foo',
+            replacementCode: '',
+            applied: false,
+        };
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix,
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
+    });
+
     it('should emit apply-inline-fix event', () => {
         const inlineFix = {
             startLine: 2,

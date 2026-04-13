@@ -239,6 +239,43 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotPersistInlineFixWhenSuggestedInlineFixIsNull() {
+        createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Rename parameter in statement",
+                "Align parameter naming", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, null)));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            assertThat(((ConsistencyIssueCommentContentDTO) content).suggestedFix()).isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldPersistDeletionInlineFixWhenSuggestedInlineFixIsEmptyString() {
+        createExerciseVersion();
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Remove obsolete statement line",
+                "Remove obsolete line", List.of(new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2, "")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            var content = thread.getComments().iterator().next().getContent();
+            assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            InlineCodeChangeDTO inlineFix = ((ConsistencyIssueCommentContentDTO) content).suggestedFix();
+            assertThat(inlineFix).isNotNull();
+            assertThat(inlineFix.expectedCode()).isEqualTo("Line 2");
+            assertThat(inlineFix.replacementCode()).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldKeepPreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
         CommentThread oldConsistencyThread = persistThread(programmingExercise);
         Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");

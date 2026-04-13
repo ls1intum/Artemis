@@ -144,6 +144,7 @@ Analysis: Problem contradicts itself about return type
 - Extend each location with optional `relatedLocations[].suggestedInlineFix`.
 - Fill `relatedLocations[].suggestedInlineFix` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, return type, visibility, parameter name/order, straightforward signature correction).
 - If the location does not need a direct replacement, or the fix is complex/non-local, set `relatedLocations[].suggestedInlineFix` to `null`.
+- Use an empty string only when the intended direct replacement is to delete all selected lines. Do not use an empty string to mean "no inline fix".
 - When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
 
 # OUTPUT FORMAT
