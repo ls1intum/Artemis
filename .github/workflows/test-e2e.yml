@@ -182,6 +182,12 @@ jobs:
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
@@ -190,14 +196,14 @@ jobs:
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
-            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
+            const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
+            const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
 
             // Fetch flakiness scores for failed tests
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
@@ -369,6 +375,10 @@ jobs:
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
@@ -379,10 +389,10 @@ jobs:
 
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -577,6 +587,10 @@ jobs:
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
         with:
           script: |
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
@@ -587,10 +601,10 @@ jobs:
 
             const emoji = '${{ steps.format-results.outputs.status-emoji }}';
             const status = '${{ steps.format-results.outputs.status-text }}';
-            const details = `${{ steps.format-results.outputs.details }}`;
-            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
-            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
-            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
 
             // Fetch flakiness scores for failed tests
             const failedTests = parseFailedTests('all-test-results/results.xml');
@@ -794,20 +808,22 @@ jobs:
         if: always() && github.event.workflow_run.event == 'pull_request'
         uses: actions/github-script@v8
         continue-on-error: true
+        env:
+          INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
         with:
           script: |
             const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const status = `${{ steps.overall-status.outputs.status }}`;
-            const description = `${{ steps.overall-status.outputs.description }}`;
+            const status = '${{ steps.overall-status.outputs.status }}';
+            const description = '${{ steps.overall-status.outputs.description }}';
             const overallEmoji = status === 'success' ? '✅' : '❌';
             const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
 
             const phase1Result = '${{ needs.run-e2e-relevant.result }}';
             const phase2Result = '${{ needs.run-e2e-remaining.result }}';
-            const phase2Notes = `${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}`;
+            const phase2Notes = process.env.INPUT_PHASE2_NOTES || '';
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
