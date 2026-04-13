@@ -1,15 +1,12 @@
 import {
     faArrowDown,
-    faBrain,
     faCheck,
     faChevronDown,
     faCircleInfo,
     faCircleNotch,
-    faCompass,
     faCompress,
     faCopy,
     faExpand,
-    faGraduationCap,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -90,6 +87,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
+import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 // Session history time bucket boundaries (in days ago)
@@ -310,72 +308,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    private static readonly QUIZ_COURSE_CHIP = {
-        icon: faBrain,
-        translationKey: 'artemisApp.iris.chat.suggestions.quiz',
-        starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter',
-    } as const;
-
-    private static readonly QUIZ_LECTURE_CHIP = {
-        icon: faBrain,
-        translationKey: 'artemisApp.iris.chat.suggestions.quiz',
-        starterKey: 'artemisApp.iris.chat.suggestions.quizLectureStarter',
-    } as const;
-
-    private static readonly QUIZ_EXERCISE_CHIP = {
-        icon: faBrain,
-        translationKey: 'artemisApp.iris.chat.suggestions.quiz',
-        starterKey: 'artemisApp.iris.chat.suggestions.quizExerciseStarter',
-    } as const;
-
-    protected readonly courseSuggestionChips = [
-        { icon: faGraduationCap, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
-        IrisBaseChatbotComponent.QUIZ_COURSE_CHIP,
-        { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
-    ] as const;
-
-    protected readonly exerciseSuggestionChips = [
-        {
-            icon: faGraduationCap,
-            translationKey: 'artemisApp.iris.chat.suggestions.learn',
-            starterKey: 'artemisApp.iris.chat.placeholders.exercise.walkThrough',
-        },
-        IrisBaseChatbotComponent.QUIZ_EXERCISE_CHIP,
-        {
-            icon: faCompass,
-            translationKey: 'artemisApp.iris.chat.suggestions.tips',
-            starterKey: 'artemisApp.iris.chat.placeholders.exercise.testsFailing',
-        },
-    ] as const;
-
-    protected readonly lectureSuggestionChips = [
-        {
-            icon: faGraduationCap,
-            translationKey: 'artemisApp.iris.chat.suggestions.learn',
-            starterKey: 'artemisApp.iris.chat.placeholders.lecture.keyPoints',
-        },
-        IrisBaseChatbotComponent.QUIZ_LECTURE_CHIP,
-        {
-            icon: faCompass,
-            translationKey: 'artemisApp.iris.chat.suggestions.tips',
-            starterKey: 'artemisApp.iris.chat.placeholders.lecture.whereToStart',
-        },
-    ] as const;
-
-    protected readonly activeSuggestionChips = computed(() => {
-        const mode = this.currentChatMode();
-        switch (mode) {
-            case ChatServiceMode.COURSE:
-                return this.courseSuggestionChips;
-            case ChatServiceMode.LECTURE:
-                return this.lectureSuggestionChips;
-            case ChatServiceMode.TEXT_EXERCISE:
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return this.exerciseSuggestionChips;
-            default:
-                return [];
-        }
-    });
+    protected readonly activeSuggestionChips = createActiveSuggestionChips(this.currentChatMode);
 
     readonly chipPreviewText = signal('');
     private readonly isChipTextApplied = signal(false);
