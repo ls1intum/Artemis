@@ -337,6 +337,54 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
+    it('fetchTranscript: handles empty transcription response and keeps segments empty', async () => {
+        fixture.detectChanges();
+
+        vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+
+        (component as any).fetchTranscript();
+        await fixture.whenStable();
+
+        expect(component.transcriptSegments()).toEqual([]);
+        expect(component.hasTranscript()).toBe(false);
+    });
+
+    it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', async () => {
+        const nonTumLiveUrl = 'https://example.com/some-video';
+        component.lectureUnit().videoSource = nonTumLiveUrl;
+
+        const getTranscriptionSpy = vi.spyOn(lectureTranscriptionService, 'getTranscription');
+
+        fixture.detectChanges();
+
+        expect(component.isLoading()).toBe(false);
+
+        component.toggleCollapse(false);
+
+        expect(component.isLoading()).toBe(true);
+
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
+        req.flush(null);
+
+        await fixture.whenStable();
+
+        expect(getTranscriptionSpy).not.toHaveBeenCalled();
+        expect(component.playlistUrl()).toBeUndefined();
+        expect(component.hasTranscript()).toBe(false);
+        expect(component.isLoading()).toBe(false);
+    });
+
+    it('toggleCollapse(false): sets isLoading to false immediately when no video source', () => {
+        component.lectureUnit().videoSource = undefined;
+        fixture.detectChanges();
+
+        expect(component.isLoading()).toBe(false);
+
+        component.toggleCollapse(false);
+
+        expect(component.isLoading()).toBe(false);
+    });
+
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
         // initial has attachment
         expect(component.hasAttachment()).toBe(true);
@@ -354,6 +402,48 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('PDF functionality', () => {
+        it('isPdf: returns true for PDF file extension', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.pdf';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('isPdf: returns false for non-PDF file extensions', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.docx';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
+        it('isPdf: handles uppercase PDF extension', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('hasPdf: returns true when has attachment and is PDF', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
+        });
+
+        it('hasPdf: returns false when no attachment', () => {
+            component.lectureUnit().attachment = undefined;
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
+        it('hasPdf: returns false when attachment is not PDF', () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(false);
+        });
+
         it('hasPdf recognizes PDF links case-insensitively', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
             fixture.detectChanges();
