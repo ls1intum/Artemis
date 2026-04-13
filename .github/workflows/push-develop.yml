@@ -71,7 +71,7 @@ jobs:
           echo "has_aeolus=$(has_match '^src/main/resources/templates/aeolus/')" >> "$GITHUB_OUTPUT"
           echo "has_gradle=$(has_match '(^|/)gradle/|^gradlew$|^gradlew\\.bat$|^build\\.gradle$|^settings\\.gradle$')" >> "$GITHUB_OUTPUT"
 
-          if echo "$CHANGED_FILES" | rg -q '^(src/main/|src/test/|docker/|gradle/|build\.gradle|settings\.gradle|package\.json|package-lock\.json|tsconfig|angular\.json|vite|playwright|webpack|\.github/workflows/)'; then
+          if echo "$CHANGED_FILES" | rg -q '^(src/main/|src/test/|docker/|gradle/|build\.gradle|settings\.gradle|package\.json|package-lock\.json|tsconfig|angular\.json|vite|playwright|webpack|\.github/workflows/|__FORCE_BUILD__)'; then
             echo "build_relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "build_relevant=false" >> "$GITHUB_OUTPUT"
