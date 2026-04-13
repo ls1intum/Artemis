@@ -100,7 +100,9 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         const result = this.lectureResults()[resultIndex];
         if (result) {
             event.preventDefault();
-            this.router.navigateByUrl(result.lectureUnit.link);
+            this.router.navigate(['/courses', result.course.id, 'lectures', result.lecture.id], {
+                queryParams: { unit: result.lectureUnit.id, page: result.lectureUnit.pageNumber, timestamp: result.lectureUnit.startTime },
+            });
         }
     }
 }
