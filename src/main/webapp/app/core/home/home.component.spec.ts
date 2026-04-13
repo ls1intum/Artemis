@@ -155,6 +155,42 @@ describe('HomeComponent', () => {
         expect(loginSpy).toHaveBeenCalled();
     });
 
+    describe('loginWithPasskey', () => {
+        it('should handle login success', async () => {
+            const loginWithPasskeySpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await component.loginWithPasskey();
+
+            expect(loginWithPasskeySpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should restart passkey autofill after user aborts passkey login', async () => {
+            const cancellationError = new DOMException('User cancelled', 'NotAllowedError');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(cancellationError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).resolves.toBeUndefined();
+
+            expect(prefillPasskeysSpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+
+        it('should rethrow non-abort passkey login errors', async () => {
+            const networkError = new Error('Network error');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(networkError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).rejects.toThrow(networkError);
+
+            expect(prefillPasskeysSpy).not.toHaveBeenCalled();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;

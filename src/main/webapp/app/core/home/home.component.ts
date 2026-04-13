@@ -185,8 +185,20 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     async loginWithPasskey() {
-        await this.webauthnService.loginWithPasskey();
-        this.handleLoginSuccess();
+        try {
+            await this.webauthnService.loginWithPasskey();
+            this.handleLoginSuccess();
+        } catch (error) {
+            if (this.isPasskeyLoginAbortError(error)) {
+                await this.prefillPasskeysIfPossible();
+                return;
+            }
+            throw error;
+        }
+    }
+
+    private isPasskeyLoginAbortError(error: unknown): boolean {
+        return error instanceof DOMException && (error.name === 'AbortError' || error.name === 'NotAllowedError');
     }
 
     /**
