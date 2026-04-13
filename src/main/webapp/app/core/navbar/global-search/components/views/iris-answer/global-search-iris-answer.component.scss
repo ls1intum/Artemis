@@ -114,3 +114,24 @@
     cursor: not-allowed;
     font-weight: 500;
 }
+
+// Placeholder bubble rendered while waiting for cited answer (replaces [cite-loading:keyword] markers)
+:host ::ng-deep .iris-citation-skeleton {
+    display: inline-block;
+    width: 4rem;
+    height: 1.125rem;
+    vertical-align: middle;
+    border-radius: 0.75rem;
+    background: linear-gradient(90deg, var(--bs-secondary-bg) 25%, var(--bs-tertiary-bg) 50%, var(--bs-secondary-bg) 75%);
+    background-size: 200% 100%;
+    animation: iris-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes iris-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
