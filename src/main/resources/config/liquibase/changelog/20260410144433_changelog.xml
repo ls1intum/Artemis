@@ -8,6 +8,9 @@
 
     <!-- Step 1: Add new columns entity_id and chat_mode -->
     <changeSet id="20260410144433-1-add-columns" author="senan-aslan">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_session" columnName="entity_id"/></not>
+        </preConditions>
         <addColumn tableName="iris_session">
             <column name="entity_id" type="BIGINT"/>
             <column name="chat_mode" type="VARCHAR(50)"/>
