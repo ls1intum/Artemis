@@ -216,6 +216,7 @@ public class AtlasAgentSessionCacheService {
             cache.put(sessionId, history);
         }
         history.put(messageIndex, previewData);
+        cache.put(sessionId, history);
     }
 
     /**
