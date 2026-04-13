@@ -41,10 +41,10 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly threads = signal<CommentThread[]>([]);
 
     /**
-     * Local-only selection of review threads that should be forwarded to Hyperion code generation.
+     * Local-only selection of review threads that should be forwarded to Hyperion code generation as feedback.
      * This state is scoped to the active exercise/editor session and is never persisted independently.
      */
-    readonly fixBatchThreadIds = signal<number[]>([]);
+    readonly selectedFeedbackThreadIds = signal<number[]>([]);
 
     /**
      * Sets the active exercise context and clears thread state when it changes.
@@ -109,12 +109,12 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Toggles whether a thread should be included in the next Hyperion fix batch.
+     * Toggles whether a thread should be included as feedback in the next Hyperion generation request.
      *
      * @param threadId The thread id to toggle.
      */
-    toggleThreadInFixBatch(threadId: number): void {
-        this.fixBatchThreadIds.update((threadIds) => {
+    toggleThreadFeedbackSelection(threadId: number): void {
+        this.selectedFeedbackThreadIds.update((threadIds) => {
             if (threadIds.includes(threadId)) {
                 return threadIds.filter((existingThreadId) => existingThreadId !== threadId);
             }
@@ -126,26 +126,26 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Checks whether a thread is currently selected for Hyperion code generation.
      *
      * @param threadId The thread id to inspect.
-     * @returns True if the thread is part of the local fix batch.
+     * @returns True if the thread is part of the local feedback selection.
      */
-    isThreadInFixBatch(threadId: number): boolean {
-        return this.fixBatchThreadIds().includes(threadId);
+    isThreadSelectedAsFeedback(threadId: number): boolean {
+        return this.selectedFeedbackThreadIds().includes(threadId);
     }
 
     /**
-     * Returns currently selected fix-batch thread ids that still belong to the active repository context.
+     * Returns currently selected feedback thread ids that still belong to the active repository context.
      *
      * @param repositoryType The repository currently selected in the code editor.
      * @param auxiliaryRepositoryId The selected auxiliary repository id, if applicable.
      * @returns The filtered thread ids in user selection order.
      */
-    getFixBatchThreadIdsForRepository(repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): number[] {
+    getSelectedFeedbackThreadIdsForRepository(repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): number[] {
         const matchingThreadIds = new Set(
             this.threads()
                 .filter((thread) => !thread.resolved && !thread.outdated && matchesSelectedRepository(thread, repositoryType, auxiliaryRepositoryId))
                 .map((thread) => thread.id),
         );
-        return this.fixBatchThreadIds().filter((threadId) => matchingThreadIds.has(threadId));
+        return this.selectedFeedbackThreadIds().filter((threadId) => matchingThreadIds.has(threadId));
     }
 
     /**
@@ -385,16 +385,16 @@ export class ExerciseReviewCommentService implements OnDestroy {
 
     private setThreads(threads: CommentThread[]): void {
         this.threads.set(threads);
-        this.reconcileFixBatchThreadIds(threads);
+        this.reconcileSelectedFeedbackThreadIds(threads);
     }
 
     private updateThreads(updater: (threads: CommentThread[]) => CommentThread[]): void {
         this.setThreads(updater(this.threads()));
     }
 
-    private reconcileFixBatchThreadIds(threads: CommentThread[]): void {
+    private reconcileSelectedFeedbackThreadIds(threads: CommentThread[]): void {
         const validThreadIds = new Set(threads.filter((thread) => !thread.resolved && !thread.outdated).map((thread) => thread.id));
-        this.fixBatchThreadIds.update((threadIds) => threadIds.filter((threadId) => validThreadIds.has(threadId)));
+        this.selectedFeedbackThreadIds.update((threadIds) => threadIds.filter((threadId) => validThreadIds.has(threadId)));
     }
 
     /**

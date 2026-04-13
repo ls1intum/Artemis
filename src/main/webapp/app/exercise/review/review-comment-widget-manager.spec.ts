@@ -88,7 +88,7 @@ describe('ReviewCommentWidgetManager', () => {
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
         onAdd: vi.fn(),
         showLocationWarning: () => false,
-        showFixBatchAction: () => false,
+        showFeedbackAction: () => false,
         ...overrides,
     });
 

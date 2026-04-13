@@ -37,18 +37,18 @@ public class HyperionCodeGenerationTaskService {
      * @param exercise                  target exercise
      * @param courseId                  resolved course id for telemetry attribution
      * @param repositoryType            target repository type
-     * @param hyperionFixBatchThreadIds selected review-thread ids to forward into the prompt context
+     * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @param cleanup                   optional cleanup action to run after job completion
      */
     @Async
-    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, List<Long> hyperionFixBatchThreadIds,
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds,
             Runnable cleanup) {
         var topicSuffix = "code-generation/jobs/" + jobId;
         var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);
 
         publisher.started();
         try {
-            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, hyperionFixBatchThreadIds, publisher);
+            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, selectedFeedbackThreadIds, publisher);
         }
         catch (Exception ex) {
             publisher.error("Unhandled error: " + ex.getMessage());

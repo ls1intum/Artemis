@@ -39,6 +39,12 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Conditional(HyperionEnabled.class)
 public class HyperionReviewCommentContextRendererService {
 
+    private static final Comparator<Comment> CHRONOLOGICAL_COMMENT_ORDER = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+
+    private static final Comparator<Comment> NEWEST_FIRST_COMMENT_ORDER = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.reverseOrder()))
+            .thenComparing(Comment::getId, Comparator.nullsLast(Comparator.reverseOrder()));
+
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewCommentContextRendererService.class);
 
     /** Maximum number of characters kept per serialized comment text in prompt context. */
@@ -47,11 +53,32 @@ public class HyperionReviewCommentContextRendererService {
     /** Maximum number of serialized comments included in prompt context. */
     private static final int MAX_SERIALIZED_COMMENTS = 100;
 
-    /** Maximum number of selected fix-batch threads included in prompt context. */
-    private static final int MAX_SELECTED_FIX_BATCH_THREADS = 25;
+    /** Maximum number of selected feedback threads included in prompt context. */
+    private static final int MAX_SELECTED_FEEDBACK_THREADS = 25;
 
     /** Suffix appended when serialized comment text is truncated. */
     private static final String TRUNCATED_SUFFIX = "... (truncated)";
+
+    private static final class RemainingSerializedComments {
+
+        private int remainingComments;
+
+        private RemainingSerializedComments(int remainingComments) {
+            this.remainingComments = remainingComments;
+        }
+
+        private boolean exhausted() {
+            return remainingComments <= 0;
+        }
+
+        private int remainingComments() {
+            return remainingComments;
+        }
+
+        private void consume(int consumedComments) {
+            remainingComments -= consumedComments;
+        }
+    }
 
     private final CommentThreadRepository commentThreadRepository;
 
@@ -141,9 +168,9 @@ public class HyperionReviewCommentContextRendererService {
      * @param exerciseId     the exercise id
      * @param repositoryType the repository currently being generated
      * @param threadIds      the explicitly selected review-thread ids
-     * @return JSON payload containing the selected fix-batch threads
+     * @return JSON payload containing the selected feedback threads
      */
-    public String renderCodeGenerationFixBatch(long exerciseId, RepositoryType repositoryType, Collection<Long> threadIds) {
+    public String renderCodeGenerationSelectedFeedback(long exerciseId, RepositoryType repositoryType, Collection<Long> threadIds) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("repositoryType", repositoryType != null ? repositoryType.name() : null);
 
@@ -158,7 +185,7 @@ public class HyperionReviewCommentContextRendererService {
             return serializePayload(payload, exerciseId);
         }
 
-        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FIX_BATCH_THREADS).toList();
+        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FEEDBACK_THREADS).toList();
         if (orderedThreadIds.isEmpty()) {
             payload.put("threads", List.of());
             return serializePayload(payload, exerciseId);
@@ -169,16 +196,16 @@ public class HyperionReviewCommentContextRendererService {
             threadOrder.put(orderedThreadIds.get(index), index);
         }
 
-        int[] remainingSerializedComments = { MAX_SERIALIZED_COMMENTS };
+        RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
         List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
                 .filter(thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated())
                 .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
         for (CommentThread thread : selectedThreads) {
-            if (remainingSerializedComments[0] <= 0) {
+            if (remainingSerializedComments.exhausted()) {
                 break;
             }
-            Map<String, Object> serializedThread = serializeSelectedFixBatchThread(thread, remainingSerializedComments);
+            Map<String, Object> serializedThread = serializeSelectedFeedbackThread(thread, remainingSerializedComments);
             if (serializedThread != null) {
                 serializedThreads.add(serializedThread);
             }
@@ -211,36 +238,43 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
-     * Serializes one explicitly selected fix-batch thread while consuming from the shared global comment budget.
+     * Serializes one explicitly selected feedback thread while consuming from the shared global comment budget.
      *
      * @param thread                      the selected review thread
-     * @param remainingSerializedComments mutable single-element array holding the remaining global comment budget
+     * @param remainingSerializedComments mutable remaining comment limit shared across all selected threads
      * @return serialized thread payload, or {@code null} when the thread contributes no serializable comments
      */
-    private Map<String, Object> serializeSelectedFixBatchThread(CommentThread thread, int[] remainingSerializedComments) {
-        if (thread == null || remainingSerializedComments == null || remainingSerializedComments.length == 0 || remainingSerializedComments[0] <= 0 || thread.getComments() == null
-                || thread.getComments().isEmpty()) {
+    private Map<String, Object> serializeSelectedFeedbackThread(CommentThread thread, RemainingSerializedComments remainingSerializedComments) {
+        if (!hasSerializableComments(thread, remainingSerializedComments)) {
             return null;
         }
 
-        Comparator<Comment> chronologicalCommentOrder = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder()));
-        Comparator<Comment> newestFirstCommentOrder = Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.reverseOrder()));
-
-        List<Map<String, Object>> serializedComments = thread.getComments().stream().sorted(newestFirstCommentOrder).limit(remainingSerializedComments[0])
-                .sorted(chronologicalCommentOrder).map(comment -> {
-                    Map<String, Object> serializedComment = new LinkedHashMap<>();
-                    serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
-                    serializedComment.put("text", extractCommentText(comment.getContent()));
-                    return serializedComment;
-                }).toList();
-
+        List<Map<String, Object>> serializedComments = serializeThreadComments(thread, remainingSerializedComments.remainingComments());
         if (serializedComments.isEmpty()) {
             return null;
         }
-        remainingSerializedComments[0] -= serializedComments.size();
+        remainingSerializedComments.consume(serializedComments.size());
 
+        return createSerializedThreadPayload(thread, serializedComments);
+    }
+
+    private boolean hasSerializableComments(CommentThread thread, RemainingSerializedComments remainingSerializedComments) {
+        return thread != null && remainingSerializedComments != null && !remainingSerializedComments.exhausted() && thread.getComments() != null && !thread.getComments().isEmpty();
+    }
+
+    private List<Map<String, Object>> serializeThreadComments(CommentThread thread, int remainingCommentBudget) {
+        return thread.getComments().stream().sorted(NEWEST_FIRST_COMMENT_ORDER).limit(remainingCommentBudget).sorted(CHRONOLOGICAL_COMMENT_ORDER)
+                .map(this::createSerializedCommentPayload).toList();
+    }
+
+    private Map<String, Object> createSerializedCommentPayload(Comment comment) {
+        Map<String, Object> serializedComment = new LinkedHashMap<>();
+        serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
+        serializedComment.put("text", extractCommentText(comment.getContent()));
+        return serializedComment;
+    }
+
+    private Map<String, Object> createSerializedThreadPayload(CommentThread thread, List<Map<String, Object>> serializedComments) {
         Map<String, Object> serializedThread = new LinkedHashMap<>();
         serializedThread.put("id", thread.getId());
         serializedThread.put("targetType", thread.getTargetType() != null ? thread.getTargetType().name() : null);

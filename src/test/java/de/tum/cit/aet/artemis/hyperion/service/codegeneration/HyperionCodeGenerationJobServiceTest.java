@@ -97,9 +97,9 @@ class HyperionCodeGenerationJobServiceTest {
         HyperionCodeGenerationJobService.JobInfo existingJob = new HyperionCodeGenerationJobService.JobInfo("job-1", "testuser", 42L, RepositoryType.SOLUTION, Instant.now());
         when(jobMap.putIfAbsent(eq("42"), any(HyperionCodeGenerationJobService.JobInfo.class))).thenReturn(existingJob);
 
-        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION)).isInstanceOf(ConflictException.class)
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, null)).isInstanceOf(ConflictException.class)
                 .hasMessageContaining("Code generation already running for this exercise");
-        verify(taskService, never()).runJobAsync(eq("job-1"), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), any(Runnable.class));
+        verify(taskService, never()).runJobAsync(eq("job-1"), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), any(), any(Runnable.class));
     }
 
     @Test

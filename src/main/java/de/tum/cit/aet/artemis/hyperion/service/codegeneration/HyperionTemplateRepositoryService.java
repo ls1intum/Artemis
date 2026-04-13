@@ -60,9 +60,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
+            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
         String solutionCode = contextRenderer.getExistingSolutionCode(exercise, gitService);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("problemStatement", exercise.getProblemStatement());
         templateVariables.put("solutionCode", solutionCode);
         templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
@@ -77,8 +77,8 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
+            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/2_file_structure.st", templateVariables);
     }
@@ -91,9 +91,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
+            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/3_headers.st", templateVariables);
@@ -107,9 +107,9 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
      */
     @Override
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
-        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, fixBatchReviewThreads);
+            String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/4_logic.st", templateVariables);

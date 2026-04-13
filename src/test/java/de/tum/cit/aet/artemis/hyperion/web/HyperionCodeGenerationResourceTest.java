@@ -78,7 +78,7 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, null);
     }
 
     @Test
@@ -94,7 +94,7 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-456");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, null);
     }
 
     @Test
@@ -110,7 +110,7 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-789");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS, null);
     }
 
     @Test
@@ -154,13 +154,13 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
-    void validateGenerationRequest_withTooManyFixBatchThreadIds_throwsException() {
-        int maxFixBatchThreadIds = (int) ReflectionTestUtils.getField(HyperionCodeGenerationResource.class, "MAX_FIX_BATCH_THREAD_IDS");
+    void validateGenerationRequest_withTooManySelectedFeedbackThreadIds_throwsException() {
+        int maxSelectedFeedbackThreadIds = (int) ReflectionTestUtils.getField(HyperionCodeGenerationResource.class, "MAX_SELECTED_FEEDBACK_THREAD_IDS");
         CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false,
-                java.util.stream.LongStream.rangeClosed(1, maxFixBatchThreadIds + 1L).boxed().toList());
+                java.util.stream.LongStream.rangeClosed(1, maxSelectedFeedbackThreadIds + 1L).boxed().toList());
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("Too many fix-batch thread ids");
+                .hasMessageContaining("Too many selected feedback thread ids");
     }
 
     @Test
@@ -267,7 +267,7 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
-    void generateCode_withSelectedFixBatchThreads_forwardsThreadIds() {
+    void generateCode_withSelectedFeedbackThreads_forwardsThreadIds() {
         CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, List.of(4L, 8L));
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
@@ -282,10 +282,10 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
-    void validateGenerationRequest_withInvalidFixBatchThreadIds_throwsException() {
+    void validateGenerationRequest_withInvalidSelectedFeedbackThreadIds_throwsException() {
         CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, List.of(1L, 0L));
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("Fix-batch thread ids must be positive");
+                .hasMessageContaining("Selected feedback thread ids must be positive");
     }
 }

@@ -24,8 +24,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
-            toggleThreadInFixBatch: vi.fn(),
-            isThreadInFixBatch: vi.fn().mockReturnValue(false),
+            toggleThreadFeedbackSelection: vi.fn(),
+            isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             threads: signal([]),
         };
 
@@ -181,22 +181,22 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
-    it('should toggle fix-batch membership when enabled', () => {
-        fixture.componentRef.setInput('showFixBatchAction', true);
+    it('should toggle feedback selection when enabled', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
 
-        comp.toggleFixBatch();
+        comp.toggleFeedbackSelection();
 
-        expect(reviewCommentService.toggleThreadInFixBatch).toHaveBeenCalledWith(1);
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
     });
 
-    it('should hide the fix-batch action for outdated threads', () => {
-        fixture.componentRef.setInput('showFixBatchAction', true);
+    it('should hide the feedback action for outdated threads', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
 
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.addToFixBatch');
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeFromFixBatch');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
     it('should detect edited comments', () => {

@@ -549,7 +549,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         );
     }
 
-    private scheduleReviewCommentRenderForSelectedFile(): void {
+    public scheduleReviewCommentRenderForSelectedFile(): void {
         if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
             this.pendingReviewRenderFile = undefined;
             return;
@@ -731,7 +731,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
-                showFixBatchAction: (thread) =>
+                showFeedbackAction: (thread) =>
                     thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                     thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                     thread.targetType === CommentThreadLocationType.TEST_REPO,

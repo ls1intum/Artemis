@@ -90,10 +90,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenExecutionCompletesWithPartialOutcome_sendsDonePayloadWithCompletionStatusAndAttempts() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, cleanup);
+        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, List.of(), cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), eq(List.of()), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
@@ -118,10 +118,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenPublisherSendsFileUpdate_forwardsIterationInPayload() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, cleanup);
+        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, List.of(), cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(List.of()), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().fileUpdated("src/main/java/App.java", RepositoryType.TEMPLATE, 2);

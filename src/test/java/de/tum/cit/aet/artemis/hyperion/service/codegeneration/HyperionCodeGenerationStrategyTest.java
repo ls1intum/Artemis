@@ -123,11 +123,11 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void normalizeFixBatchReviewThreads_withOversizedValidJson_trimsThreadsAndReturnsValidJson() throws Exception {
-        int maxLength = getMaxFixBatchReviewThreadsLength();
+    void normalizeSelectedFeedbackThreads_withOversizedValidJson_trimsThreadsAndReturnsValidJson() throws Exception {
+        int maxLength = getMaxSelectedFeedbackThreadsLength();
         String oversizedPayload = createOversizedThreadsPayload(80, 300);
 
-        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeFixBatchReviewThreads", oversizedPayload);
+        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedPayload);
 
         assertThat(normalized).isNotNull();
         assertThat(normalized.length()).isLessThanOrEqualTo(maxLength);
@@ -140,14 +140,14 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void normalizeFixBatchReviewThreads_withOversizedInvalidJson_returnsLastValidObject() throws Exception {
-        int maxLength = getMaxFixBatchReviewThreadsLength();
+    void normalizeSelectedFeedbackThreads_withOversizedInvalidJson_returnsLastValidObject() throws Exception {
+        int maxLength = getMaxSelectedFeedbackThreadsLength();
         String validPayload = createOversizedThreadsPayload(2, 120);
         assertThat(validPayload.length()).isLessThan(maxLength);
 
         String oversizedInvalidPayload = validPayload + " {\"threads\":[" + "x".repeat(maxLength);
 
-        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeFixBatchReviewThreads", oversizedInvalidPayload);
+        String normalized = ReflectionTestUtils.invokeMethod(strategy, "normalizeSelectedFeedbackThreads", oversizedInvalidPayload);
 
         assertThat(normalized).isEqualTo(OBJECT_MAPPER.writeValueAsString(OBJECT_MAPPER.readTree(validPayload)));
         assertThat(OBJECT_MAPPER.readTree(normalized).path("threads").size()).isEqualTo(2);
@@ -396,8 +396,8 @@ class HyperionCodeGenerationServiceTest {
         return new ChatResponse(List.of(generation), metadata);
     }
 
-    private int getMaxFixBatchReviewThreadsLength() {
-        return (int) ReflectionTestUtils.getField(HyperionCodeGenerationService.class, "MAX_FIX_BATCH_REVIEW_THREADS_LENGTH");
+    private int getMaxSelectedFeedbackThreadsLength() {
+        return (int) ReflectionTestUtils.getField(HyperionCodeGenerationService.class, "MAX_SELECTED_FEEDBACK_THREADS_LENGTH");
     }
 
     private String createOversizedThreadsPayload(int threadCount, int commentLength) throws Exception {
@@ -420,28 +420,28 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
+                String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }

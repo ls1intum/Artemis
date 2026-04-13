@@ -45,8 +45,8 @@ class HyperionReviewCommentContextRendererServiceTest {
     }
 
     @Test
-    void renderCodeGenerationFixBatch_limitsSelectedThreadIdsBeforeQuery() {
-        int maxSelectedThreads = (int) ReflectionTestUtils.getField(HyperionReviewCommentContextRendererService.class, "MAX_SELECTED_FIX_BATCH_THREADS");
+    void renderCodeGenerationSelectedFeedback_limitsSelectedThreadIdsBeforeQuery() {
+        int maxSelectedThreads = (int) ReflectionTestUtils.getField(HyperionReviewCommentContextRendererService.class, "MAX_SELECTED_FEEDBACK_THREADS");
         List<Long> threadIds = new ArrayList<>();
         threadIds.add(1L);
         threadIds.add(2L);
@@ -58,7 +58,7 @@ class HyperionReviewCommentContextRendererServiceTest {
 
         when(commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(eq(7L), anyCollection())).thenReturn(List.of());
 
-        contextRendererService.renderCodeGenerationFixBatch(7L, RepositoryType.SOLUTION, threadIds);
+        contextRendererService.renderCodeGenerationSelectedFeedback(7L, RepositoryType.SOLUTION, threadIds);
 
         ArgumentCaptor<Collection<Long>> threadIdsCaptor = ArgumentCaptor.forClass(Collection.class);
         verify(commentThreadRepository).findWithCommentsByExerciseIdAndIdIn(eq(7L), threadIdsCaptor.capture());
@@ -68,13 +68,13 @@ class HyperionReviewCommentContextRendererServiceTest {
     }
 
     @Test
-    void renderCodeGenerationFixBatch_appliesGlobalCommentBudgetAcrossThreads() throws Exception {
+    void renderCodeGenerationSelectedFeedback_appliesGlobalCommentBudgetAcrossThreads() throws Exception {
         int maxSerializedComments = (int) ReflectionTestUtils.getField(HyperionReviewCommentContextRendererService.class, "MAX_SERIALIZED_COMMENTS");
         CommentThread firstThread = createThread(11L, CommentThreadLocationType.SOLUTION_REPO, maxSerializedComments);
         CommentThread secondThread = createThread(12L, CommentThreadLocationType.SOLUTION_REPO, 5);
         when(commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(9L, List.of(11L, 12L))).thenReturn(List.of(firstThread, secondThread));
 
-        String result = contextRendererService.renderCodeGenerationFixBatch(9L, RepositoryType.SOLUTION, List.of(11L, 12L));
+        String result = contextRendererService.renderCodeGenerationSelectedFeedback(9L, RepositoryType.SOLUTION, List.of(11L, 12L));
 
         JsonNode payload = OBJECT_MAPPER.readTree(result);
         assertThat(payload.path("threads")).hasSize(1);
@@ -83,12 +83,12 @@ class HyperionReviewCommentContextRendererServiceTest {
     }
 
     @Test
-    void renderCodeGenerationFixBatch_keepsNewestCommentsWithinBudgetInChronologicalOrder() throws Exception {
+    void renderCodeGenerationSelectedFeedback_keepsNewestCommentsWithinBudgetInChronologicalOrder() throws Exception {
         int maxSerializedComments = (int) ReflectionTestUtils.getField(HyperionReviewCommentContextRendererService.class, "MAX_SERIALIZED_COMMENTS");
         CommentThread thread = createThread(13L, CommentThreadLocationType.SOLUTION_REPO, maxSerializedComments + 2);
         when(commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(10L, List.of(13L))).thenReturn(List.of(thread));
 
-        String result = contextRendererService.renderCodeGenerationFixBatch(10L, RepositoryType.SOLUTION, List.of(13L));
+        String result = contextRendererService.renderCodeGenerationSelectedFeedback(10L, RepositoryType.SOLUTION, List.of(13L));
 
         JsonNode comments = OBJECT_MAPPER.readTree(result).path("threads").get(0).path("comments");
         assertThat(comments).hasSize(maxSerializedComments);

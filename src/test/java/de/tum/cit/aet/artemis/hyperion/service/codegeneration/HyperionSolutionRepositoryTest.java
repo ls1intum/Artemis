@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class HyperionSolutionRepositoryServiceTest {
 
-    private static final String EMPTY_FIX_BATCH_REVIEW_THREADS = "{\"threads\":[]}";
+    private static final String EMPTY_SELECTED_FEEDBACK_THREADS = "{\"threads\":[]}";
 
     @Mock
     private ChatModel chatModel;
@@ -76,7 +76,7 @@ class HyperionSolutionRepositoryServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = solutionRepository.generateSolutionPlan(user, exercise, 1L, "build logs", "repo structure", "consistency issues",
-                EMPTY_FIX_BATCH_REVIEW_THREADS);
+                EMPTY_SELECTED_FEEDBACK_THREADS);
 
         assertThat(result).isNotNull();
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
@@ -92,7 +92,7 @@ class HyperionSolutionRepositoryServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = solutionRepository.defineFileStructure(user, exercise, 1L, "solution plan", "repo structure", "consistency issues",
-                EMPTY_FIX_BATCH_REVIEW_THREADS);
+                EMPTY_SELECTED_FEEDBACK_THREADS);
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles()).hasSize(1);
@@ -110,7 +110,7 @@ class HyperionSolutionRepositoryServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson));
 
         CodeGenerationResponseDTO result = solutionRepository.generateClassAndMethodHeaders(user, exercise, 1L, "solution plan", "repo structure", "consistency issues",
-                EMPTY_FIX_BATCH_REVIEW_THREADS);
+                EMPTY_SELECTED_FEEDBACK_THREADS);
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("void sort()");
@@ -128,7 +128,7 @@ class HyperionSolutionRepositoryServiceTest {
                 .thenReturn(createChatResponse(coreLogicJson));
 
         CodeGenerationResponseDTO result = solutionRepository.generateCoreLogic(user, exercise, 1L, "solution plan", "repo structure", "consistency issues",
-                EMPTY_FIX_BATCH_REVIEW_THREADS);
+                EMPTY_SELECTED_FEEDBACK_THREADS);
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("implementation");
@@ -147,7 +147,7 @@ class HyperionSolutionRepositoryServiceTest {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI service error"));
 
-        assertThatThrownBy(() -> solutionRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", "consistency issues", EMPTY_FIX_BATCH_REVIEW_THREADS))
+        assertThatThrownBy(() -> solutionRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", "consistency issues", EMPTY_SELECTED_FEEDBACK_THREADS))
                 .isInstanceOf(NetworkingException.class).hasMessageContaining("AI request failed");
     }
 

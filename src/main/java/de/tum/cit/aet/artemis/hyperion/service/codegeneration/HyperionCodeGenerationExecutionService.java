@@ -332,11 +332,11 @@ public class HyperionCodeGenerationExecutionService {
      * @param user                      the initiating user
      * @param courseId                  the resolved course id for telemetry attribution
      * @param repositoryType            repository type to generate
-     * @param hyperionFixBatchThreadIds selected review-thread ids to forward into the prompt context
+     * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @param publisher                 event publisher for websocket updates
      * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, List<Long> hyperionFixBatchThreadIds,
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds,
             HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
@@ -350,7 +350,8 @@ public class HyperionCodeGenerationExecutionService {
         GenerationExecutionResult executionResult;
 
         try {
-            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, publisher, setupResult.repository(), repositoryUri, executionProgress);
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, selectedFeedbackThreadIds, publisher, setupResult.repository(), repositoryUri,
+                    executionProgress);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -387,16 +388,17 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
-            HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, GenerationExecutionProgress executionProgress)
-            throws Exception {
+            List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri,
+            GenerationExecutionProgress executionProgress) throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
+        String selectedFeedbackThreads = buildSelectedFeedbackPrompt(exercise, repositoryType, selectedFeedbackThreadIds);
         String lastBuildLogs = null;
 
         for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
             executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
-                    lastBuildLogs, consistencyIssues, executionProgress);
+                    lastBuildLogs, consistencyIssues, selectedFeedbackThreads, executionProgress);
             if (attemptResult != null) {
                 executionProgress.buildResultOutcome = attemptResult.buildResultOutcome();
                 executionProgress.result = executionProgress.buildResultOutcome.result();
@@ -415,9 +417,9 @@ public class HyperionCodeGenerationExecutionService {
 
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
-            String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
+            String consistencyIssues, String selectedFeedbackThreads, GenerationExecutionProgress executionProgress) throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
+        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues, selectedFeedbackThreads);
         if (generatedFiles == null || generatedFiles.isEmpty()) {
             return null;
         }
@@ -554,15 +556,15 @@ public class HyperionCodeGenerationExecutionService {
      *
      * @param exercise                  the programming exercise to analyze
      * @param repositoryType            the repository currently being generated
-     * @param hyperionFixBatchThreadIds the explicitly selected review-thread ids
+     * @param selectedFeedbackThreadIds the explicitly selected review-thread ids
      * @return serialized selected-thread prompt context
      */
-    private String buildFixBatchReviewThreadsPrompt(ProgrammingExercise exercise, RepositoryType repositoryType, List<Long> hyperionFixBatchThreadIds) {
+    private String buildSelectedFeedbackPrompt(ProgrammingExercise exercise, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds) {
         try {
-            return reviewCommentContextRendererService.renderCodeGenerationFixBatch(exercise.getId(), repositoryType, hyperionFixBatchThreadIds);
+            return reviewCommentContextRendererService.renderCodeGenerationSelectedFeedback(exercise.getId(), repositoryType, selectedFeedbackThreadIds);
         }
         catch (RuntimeException e) {
-            log.warn("Selected fix-batch review-thread rendering failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            log.warn("Selected feedback thread rendering failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
             return "{\"repositoryType\":\"" + repositoryType.name() + "\",\"threads\":[]}";
         }
     }

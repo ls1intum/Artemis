@@ -148,6 +148,83 @@
     font-size: 0.95rem;
 }
 
+.code-generation-popover__feedback-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--p-content-border-color);
+}
+
+.code-generation-popover__feedback-header,
+.code-generation-feedback-summary-card__header,
+.code-generation-feedback-summary-thread {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.code-generation-popover__feedback-header,
+.code-generation-feedback-summary-card__header {
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.code-generation-feedback-summary-total,
+.code-generation-feedback-summary-card__count {
+    font-size: 0.8125rem;
+    color: var(--p-text-muted-color);
+}
+
+.code-generation-feedback-summary-empty {
+    padding: 0.75rem;
+    border: 1px dashed var(--p-content-border-color);
+    border-radius: var(--p-border-radius);
+    font-size: 0.875rem;
+    color: var(--p-text-muted-color);
+}
+
+.code-generation-feedback-summary-list,
+.code-generation-feedback-summary-threads {
+    display: flex;
+    flex-direction: column;
+}
+
+.code-generation-feedback-summary-list {
+    gap: 0.5rem;
+}
+
+.code-generation-feedback-summary-card {
+    padding: 0.75rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius);
+    background: var(--p-content-background);
+}
+
+.code-generation-feedback-summary-card__title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.code-generation-feedback-summary-threads {
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--p-content-border-color);
+}
+
+.code-generation-feedback-summary-thread {
+    align-items: center;
+    justify-content: space-between;
+}
+
+.code-generation-feedback-summary-thread__location {
+    overflow-wrap: anywhere;
+    font-size: 0.875rem;
+}
+
 .code-generation-status-grid,
 .code-generation-activity-list {
     display: flex;

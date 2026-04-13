@@ -37,7 +37,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
-    readonly showFixBatchAction = input<boolean>(false);
+    readonly showFeedbackAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
@@ -72,7 +72,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
-    readonly isInFixBatch = computed(() => this.reviewCommentService.isThreadInFixBatch(this.thread().id));
+    readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
         const firstComment = this.firstComment();
@@ -190,13 +190,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Toggles whether the current thread should be included in the next Hyperion fix batch.
+     * Toggles whether the current thread should be included as feedback in the next Hyperion generation request.
      */
-    toggleFixBatch(): void {
-        if (!this.showFixBatchAction()) {
+    toggleFeedbackSelection(): void {
+        if (!this.showFeedbackAction()) {
             return;
         }
-        this.reviewCommentService.toggleThreadInFixBatch(this.thread().id);
+        this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
     }
 
     /**

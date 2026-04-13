@@ -22,7 +22,7 @@ export type ReviewCommentWidgetManagerConfig = {
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
-    showFixBatchAction: (thread: CommentThread) => boolean;
+    showFeedbackAction: (thread: CommentThread) => boolean;
 };
 
 export class ReviewCommentWidgetManager {
@@ -86,7 +86,7 @@ export class ReviewCommentWidgetManager {
             }
             widgetRef.setInput('thread', thread);
             widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
-            widgetRef.setInput('showFixBatchAction', this.config.showFixBatchAction(thread));
+            widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
         }
         return updated;
     }
@@ -207,7 +207,7 @@ export class ReviewCommentWidgetManager {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
                 widgetRef.setInput('thread', thread);
                 widgetRef.setInput('showLocationWarning', showLocationWarning);
-                widgetRef.setInput('showFixBatchAction', this.config.showFixBatchAction(thread));
+                widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
                 if (!this.collapseState.has(thread.id)) {
                     const shouldCollapse = thread.resolved || showLocationWarning;
                     this.collapseState.set(thread.id, shouldCollapse);
@@ -219,7 +219,7 @@ export class ReviewCommentWidgetManager {
             } else {
                 widgetRef.setInput('thread', thread);
                 widgetRef.setInput('showLocationWarning', showLocationWarning);
-                widgetRef.setInput('showFixBatchAction', this.config.showFixBatchAction(thread));
+                widgetRef.setInput('showFeedbackAction', this.config.showFeedbackAction(thread));
             }
             this.editor.disposeWidgetsByPrefix(widgetId);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);

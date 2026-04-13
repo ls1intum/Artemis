@@ -44,7 +44,7 @@ public class HyperionCodeGenerationResource {
 
     private static final String ENTITY_NAME = "hyperionCodeGeneration";
 
-    private static final int MAX_FIX_BATCH_THREAD_IDS = 25;
+    private static final int MAX_SELECTED_FEEDBACK_THREAD_IDS = 25;
 
     private final UserRepository userRepository;
 
@@ -91,7 +91,7 @@ public class HyperionCodeGenerationResource {
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         Long courseId = resolveCourseId(exercise);
-        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.hyperionFixBatchThreadIds());
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.selectedFeedbackThreadIds());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
     }
@@ -106,7 +106,7 @@ public class HyperionCodeGenerationResource {
     private void validateGenerationRequest(long exerciseId, CodeGenerationRequestDTO request) {
         validateExerciseId(exerciseId);
         validateRepositoryType(request.repositoryType());
-        validateFixBatchThreadIds(request.hyperionFixBatchThreadIds());
+        validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
     }
 
     private void validateExerciseId(long exerciseId) {
@@ -124,16 +124,16 @@ public class HyperionCodeGenerationResource {
         }
     }
 
-    private void validateFixBatchThreadIds(List<Long> hyperionFixBatchThreadIds) {
-        if (hyperionFixBatchThreadIds == null) {
+    private void validateSelectedFeedbackThreadIds(List<Long> selectedFeedbackThreadIds) {
+        if (selectedFeedbackThreadIds == null) {
             return;
         }
-        if (hyperionFixBatchThreadIds.size() > MAX_FIX_BATCH_THREAD_IDS) {
-            throw new BadRequestAlertException("Too many fix-batch thread ids", ENTITY_NAME, "tooManyFixBatchThreadIds");
+        if (selectedFeedbackThreadIds.size() > MAX_SELECTED_FEEDBACK_THREAD_IDS) {
+            throw new BadRequestAlertException("Too many selected feedback thread ids", ENTITY_NAME, "tooManySelectedFeedbackThreadIds");
         }
-        boolean hasInvalidThreadId = hyperionFixBatchThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
+        boolean hasInvalidThreadId = selectedFeedbackThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
         if (hasInvalidThreadId) {
-            throw new BadRequestAlertException("Fix-batch thread ids must be positive", ENTITY_NAME, "invalidFixBatchThreadIds");
+            throw new BadRequestAlertException("Selected feedback thread ids must be positive", ENTITY_NAME, "invalidSelectedFeedbackThreadIds");
         }
     }
 

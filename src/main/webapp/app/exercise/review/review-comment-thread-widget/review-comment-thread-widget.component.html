@@ -176,12 +176,12 @@
                         {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                     }
                 </button>
-                @if (showFixBatchAction() && !thread().outdated && (!thread().resolved || isInFixBatch())) {
-                    <button pButton type="button" severity="secondary" size="small" (click)="toggleFixBatch()">
-                        @if (isInFixBatch()) {
-                            {{ 'artemisApp.review.removeFromFixBatch' | artemisTranslate }}
+                @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
+                    <button pButton type="button" severity="secondary" size="small" (click)="toggleFeedbackSelection()">
+                        @if (isSelectedAsFeedback()) {
+                            {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
                         } @else {
-                            {{ 'artemisApp.review.addToFixBatch' | artemisTranslate }}
+                            {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
                         }
                     </button>
                 }
