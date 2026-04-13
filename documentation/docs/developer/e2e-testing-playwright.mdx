@@ -469,7 +469,8 @@ does not consume compute resources.
 ### Selective test execution and `e2e-test-mapping.json`
 
 The `determine-tests` CI job reads `.ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
-The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it:
+The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it.
+All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
 
 ```json
 {
@@ -618,10 +619,11 @@ other Artemis Docker setups.
 Therefore, only Playwright and the Playwright Docker image require active maintenance.
 Since the Playwright test suite simulates a real user, it makes sense to execute the test suite with
 the latest browser versions.
-The Playwright Docker image we use always has browsers with specific versions installed.
-Therefore, the
+If you run Playwright inside Docker locally (using `docker/playwright.yml`), the Playwright Docker image
+has browsers at specific pinned versions. The
 [docker-compose file](https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml)
-should be updated every month to make sure that the latest Playwright image is used.
+should be updated monthly to pull the latest Playwright image with up-to-date browsers.
+This step does not apply to CI, where Playwright runs directly on the host (not in a container).
 
 When a new Artemis module is created or an existing module is significantly reorganized, update
 `.ci/E2E-tests/e2e-test-mapping.json`:
