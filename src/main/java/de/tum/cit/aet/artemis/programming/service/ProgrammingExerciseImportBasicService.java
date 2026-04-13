@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -47,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.LegacyBuildPlanAdapterService;
+import de.tum.cit.aet.artemis.programming.service.localci.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -57,7 +56,7 @@ public class ProgrammingExerciseImportBasicService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportBasicService.class);
 
-    private final LegacyBuildPlanAdapterService legacyBuildPlanAdapterService;
+    private final LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -102,7 +101,7 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            LegacyBuildPlanAdapterService legacyBuildPlanAdapterService) {
+            LegacyBuildPlanConverterService legacyBuildPlanConverterService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -119,7 +118,7 @@ public class ProgrammingExerciseImportBasicService {
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
-        this.legacyBuildPlanAdapterService = legacyBuildPlanAdapterService;
+        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
     }
 
     /**
@@ -167,10 +166,12 @@ public class ProgrammingExerciseImportBasicService {
             }
             else {
                 // handle legacy format
-                List<BuildPhaseDTO> phases = legacyBuildPlanAdapterService.createBuildPhasesFromLegacyBuildScript(originalProgrammingExercise);
-                String image = legacyBuildPlanAdapterService.extractLegacyDockerImage(originalProgrammingExercise);
-                newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
+                BuildPlanPhasesDTO legacyBuildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(originalProgrammingExercise).orElse(null);
+                if (legacyBuildPlanPhases != null) {
+                    newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(legacyBuildPlanPhases.toBuildPlanConfiguration());
+                }
             }
+            newProgrammingExercise.getBuildConfig().setBuildScript(null);
         }
 
         // Hints, tasks, test cases and static code analysis categories

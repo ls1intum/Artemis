@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
-import { LegacyBuildPlanAdapterService } from 'app/programming/shared/services/legacy-build-plan-adapter.service';
+import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -18,7 +18,7 @@ import { LegacyBuildPlanAdapterService } from 'app/programming/shared/services/l
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
-    private legacyBuildPlanAdapterService = inject(LegacyBuildPlanAdapterService);
+    private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
@@ -65,20 +65,13 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         }
 
         // convert legacy format to the new phases
-        this.legacyBuildPlanAdapterService
-            .createBuildPhasesFromLegacyBuildScript(
-                legacyBuildScript,
-                configJson,
-                this.programmingExercise.programmingLanguage,
-                this.programmingExercise.projectType,
-                this.programmingExercise.staticCodeAnalysisEnabled,
-                this.programmingExercise.buildConfig?.sequentialTestRuns,
-            )
-            .subscribe({
-                next: (buildPlanPhases) => {
-                    this.buildPlanPhases = buildPlanPhases;
-                },
-            });
+        const convertedBuildPlanPhases = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(legacyBuildScript, configJson);
+        if (convertedBuildPlanPhases) {
+            this.buildPlanPhases = convertedBuildPlanPhases;
+            return;
+        }
+
+        this.resetCustomBuildPlan();
     }
 
     ngOnChanges(changes: SimpleChanges) {

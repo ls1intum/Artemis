@@ -87,7 +87,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
-    private final LegacyBuildPlanAdapterService legacyBuildPlanAdapterService;
+    private final LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     private final GitService gitService;
 
@@ -111,7 +111,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
             ExerciseDateService exerciseDateService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, LegacyBuildPlanAdapterService legacyBuildPlanAdapterService,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, LegacyBuildPlanConverterService legacyBuildPlanConverterService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
@@ -122,7 +122,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
-        this.legacyBuildPlanAdapterService = legacyBuildPlanAdapterService;
+        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
@@ -349,8 +349,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         // legacy exercise handling
         if (buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null) {
-            phases = legacyBuildPlanAdapterService.createBuildPhasesFromLegacyBuildScript(programmingExercise);
-            dockerImage = legacyBuildPlanAdapterService.extractLegacyDockerImage(programmingExercise);
+            BuildPlanPhasesDTO legacyPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise).orElse(null);
+            if (legacyPhases != null) {
+                phases = legacyPhases.phases();
+                dockerImage = legacyPhases.dockerImage();
+            }
         }
 
         if (phases == null) {

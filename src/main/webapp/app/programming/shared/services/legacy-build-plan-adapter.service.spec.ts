@@ -1,64 +1,120 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { LegacyBuildPlanAdapterService } from 'app/programming/shared/services/legacy-build-plan-adapter.service';
+import { LegacyBuildPlanConverterService } from './legacy-build-plan-converter.service';
 
-describe('LegacyBuildPlanAdapterService', () => {
-    let service: LegacyBuildPlanAdapterService;
-
-    const buildPhasesTemplateServiceMock = {
-        getTemplate: vi.fn(),
-    };
+describe('LegacyBuildPlanConverterService', () => {
+    let service: LegacyBuildPlanConverterService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [LegacyBuildPlanAdapterService, { provide: BuildPhasesTemplateService, useValue: buildPhasesTemplateServiceMock }],
+            providers: [LegacyBuildPlanConverterService],
         });
 
-        service = TestBed.inject(LegacyBuildPlanAdapterService);
+        service = TestBed.inject(LegacyBuildPlanConverterService);
     });
 
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    it('should extract legacy docker image', () => {
-        const dockerImage = service.extractLegacyDockerImage('{"metadata":{"docker":{"image":"legacy/image:2.0"}}}');
-        expect(dockerImage).toBe('legacy/image:2.0');
-    });
-
-    it('should create wrapped legacy phase and fetch result paths from template endpoint', async () => {
-        buildPhasesTemplateServiceMock.getTemplate.mockReturnValue(
-            of({
-                phases: [
-                    { name: 'compile', script: 'echo compile', condition: 'ALWAYS', forceRun: false, resultPaths: ['build/test-results/test/*.xml'] },
-                    { name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: ['build/test-results/test/*.xml', 'coverage.xml'] },
+    it('should convert legacy build plan configuration', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: ' legacy/image:2.0 ' } },
+                actions: [
+                    {
+                        name: 'compile',
+                        results: [{ path: ' build/test-results/test/*.xml ' }],
+                    },
+                    {
+                        name: 'test',
+                        results: [{ path: 'coverage.xml' }],
+                    },
                 ],
-                dockerImage: 'ignored',
             }),
         );
 
-        // Await the observable using firstValueFrom to ensure assertions are actually executed
-        const buildPlanPhases = await firstValueFrom(
-            service.createBuildPhasesFromLegacyBuildScript(
-                './gradlew test',
-                '{"metadata":{"docker":{"image":"legacy/image:2.0"}}}',
-                ProgrammingLanguage.JAVA,
-                ProjectType.PLAIN_MAVEN,
-                false,
-                false,
-            ),
+        expect(buildPlanPhases).toBeDefined();
+        expect(buildPlanPhases?.dockerImage).toBe('legacy/image:2.0');
+        expect(buildPlanPhases?.phases).toHaveLength(1);
+        expect(buildPlanPhases?.phases[0].name).toBe('script');
+        expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['build/test-results/test/*.xml', 'coverage.xml']);
+        expect(buildPlanPhases?.phases[0].script).toContain('cd /var/tmp/testing-dir\n');
+        expect(buildPlanPhases?.phases[0].script).toContain('cat << \'  __LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"\n');
+        expect(buildPlanPhases?.phases[0].script).toContain('./gradlew test\n');
+    });
+
+    it('should return undefined for invalid json', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration('./gradlew test', 'non legacy');
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
+    it('should return undefined for missing docker image', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                actions: [],
+            }),
         );
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, false, false);
-        expect(buildPlanPhases.dockerImage).toBe('legacy/image:2.0');
-        expect(buildPlanPhases.phases).toHaveLength(1);
-        expect(buildPlanPhases.phases[0].name).toBe('script');
-        expect(buildPlanPhases.phases[0].resultPaths).toEqual(['build/test-results/test/*.xml', 'coverage.xml']);
-        expect(buildPlanPhases.phases[0].script).toContain('cd /var/tmp/testing-dir\n');
-        expect(buildPlanPhases.phases[0].script).toContain('cat << \'__LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"\n');
-        expect(buildPlanPhases.phases[0].script).toContain('./gradlew test\n');
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
+    it('should accept blank docker image', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: '   ' } },
+                actions: [],
+            }),
+        );
+
+        expect(buildPlanPhases).toBeDefined();
+        expect(buildPlanPhases?.dockerImage).toBe('');
+    });
+
+    it('should accept blank result path', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: 'legacy/image:2.0' } },
+                actions: [
+                    {
+                        results: [{ path: '   ' }],
+                    },
+                ],
+            }),
+        );
+
+        expect(buildPlanPhases).toBeDefined();
+        expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['']);
+    });
+
+    it('should return undefined for missing actions', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: 'legacy/image:2.0' } },
+            }),
+        );
+
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
+    it('should return undefined for non-textual result path', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: 'legacy/image:2.0' } },
+                actions: [
+                    {
+                        results: [{ path: 7 }],
+                    },
+                ],
+            }),
+        );
+
+        expect(buildPlanPhases).toBeUndefined();
     });
 });
