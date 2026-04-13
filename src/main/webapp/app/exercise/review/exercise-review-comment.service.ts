@@ -61,6 +61,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         this.pendingSyncUpdates = [];
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
+        this.selectedFeedbackThreadIds.set([]);
         this.synchronizationSubscription?.unsubscribe();
         this.synchronizationSubscription = undefined;
         this.subscribedExerciseId = undefined;
