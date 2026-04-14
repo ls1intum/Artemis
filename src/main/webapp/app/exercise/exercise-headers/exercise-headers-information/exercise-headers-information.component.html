@@ -14,17 +14,19 @@
                 >
                     <jhi-information-box [informationBoxData]="informationBoxItem">
                         <span contentComponent class="d-flex align-items-center gap-1">
-                            <jhi-submission-result-status
-                                class="text-truncate result pe-none"
-                                [exercise]="informationBoxItem.content.value"
-                                [studentParticipation]="studentParticipation"
-                                [triggerLastGraded]="!isPractice"
-                                [showUngradedResults]="isPractice"
-                                [showCompletion]="false"
-                                [showBadge]="false"
-                                [showProgressBar]="true"
-                                [isInSidebarCard]="true"
-                            />
+                            <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
+                                <jhi-submission-result-status
+                                    class="text-truncate result"
+                                    [exercise]="informationBoxItem.content.value"
+                                    [studentParticipation]="studentParticipation"
+                                    [triggerLastGraded]="!isPractice"
+                                    [showUngradedResults]="isPractice"
+                                    [showCompletion]="false"
+                                    [showBadge]="false"
+                                    [showProgressBar]="true"
+                                    [isInSidebarCard]="false"
+                                />
+                            </span>
                             <jhi-result-history-dropdown
                                 #resultHistoryDropdown
                                 [exercise]="exercise"
