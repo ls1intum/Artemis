@@ -470,6 +470,17 @@ describe('ExerciseEditorSyncService', () => {
     });
 
     describe('reconnected$', () => {
+        it('does not emit on initial connect (wasEverConnectedBefore=false)', () => {
+            let emitCount = 0;
+            const sub = service.reconnected$.subscribe(() => emitCount++);
+
+            connectionState$.next(new ConnectionState(false, false));
+            connectionState$.next(new ConnectionState(true, true));
+
+            expect(emitCount).toBe(0);
+            sub.unsubscribe();
+        });
+
         it('emits when connection transitions from disconnected to connected', () => {
             let emitCount = 0;
             const sub = service.reconnected$.subscribe(() => emitCount++);

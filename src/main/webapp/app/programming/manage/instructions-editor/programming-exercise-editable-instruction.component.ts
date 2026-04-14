@@ -124,6 +124,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private suppressUnsavedForNextProblemStatementChange = false;
     private dirtySignalSuppressedDuringInitialSync = false;
     private reconnectionSubscription?: Subscription;
+    private reconnectionFinalizeSubscription?: Subscription;
     /**
      * When true, the editor is showing a diff view after reconnection so the user
      * can selectively apply their unsaved changes to the current synced version.
@@ -626,8 +627,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.initializeProblemStatementSync(exerciseId, serverContent);
 
         // 3. After sync finalizes, compare snapshot to new content
-        this.problemStatementSyncService.initialSyncFinalized$.pipe(take(1)).subscribe(({ finalContent }) => {
+        this.reconnectionFinalizeSubscription?.unsubscribe();
+        this.reconnectionFinalizeSubscription = this.problemStatementSyncService.initialSyncFinalized$.pipe(take(1)).subscribe(({ finalContent }) => {
             if (snapshot === finalContent) {
+                this.dismissReconnectionDiff();
                 return;
             }
             // 4. Show diff view: left = user's unsaved snapshot, right = latest synced version
@@ -658,6 +661,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Tear down Yjs synchronization and release Monaco binding resources.
      */
     private teardownProblemStatementSync() {
+        this.reconnectionFinalizeSubscription?.unsubscribe();
+        this.reconnectionFinalizeSubscription = undefined;
         this.problemStatementStateReplacementSubscription?.unsubscribe();
         this.problemStatementStateReplacementSubscription = undefined;
         this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();

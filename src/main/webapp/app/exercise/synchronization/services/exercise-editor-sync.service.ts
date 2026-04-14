@@ -234,26 +234,15 @@ export class ExerciseEditorSyncService {
     }
 
     /**
-     * Emits each time the WebSocket connection transitions from disconnected → connected.
-     *
-     * Uses `pairwise()` on the `connected` boolean, so it requires at least two distinct
-     * connection state emissions before it can fire. This means it will also emit on the
-     * very first `false → true` transition (initial connect) if the connection state
-     * starts as disconnected. Consumers should be aware of this if they only want
-     * reconnection events after a prior successful connection.
-     *
-     * Since this is a getter, each access creates a fresh pipe chain with its own
-     * `pairwise()` buffer. Consumers should subscribe once and keep the subscription.
+     * Emits each time the WebSocket connection transitions from disconnected → connected
+     * after a prior successful connection (i.e. true reconnections only, not the initial connect).
      */
-    get reconnected$(): Observable<void> {
-        return this.websocketService.connectionState.pipe(
-            map((state) => state.connected),
-            distinctUntilChanged(),
-            pairwise(),
-            filter(([wasConnected, isConnected]) => !wasConnected && isConnected),
-            map(() => undefined),
-        );
-    }
+    readonly reconnected$: Observable<void> = this.websocketService.connectionState.pipe(
+        distinctUntilChanged((prev, curr) => prev.connected === curr.connected),
+        pairwise(),
+        filter(([prev, curr]) => !prev.connected && curr.connected && prev.wasEverConnectedBefore),
+        map(() => undefined),
+    );
 
     /**
      * The unique session identifier for this browser tab/window.
