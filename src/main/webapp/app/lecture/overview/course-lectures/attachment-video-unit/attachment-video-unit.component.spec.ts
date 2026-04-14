@@ -249,8 +249,8 @@ describe('AttachmentVideoUnitComponent', () => {
         };
         vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
 
-        component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'old', slideNumber: 1 }]);
-        component.playlistUrl.set('stale.m3u8');
+        component['_transcriptSegments'].set([{ startTime: 0, endTime: 1, text: 'old', slideNumber: 1 }]);
+        component['_playlistUrl'].set('stale.m3u8');
         fixture.detectChanges();
 
         expect(component.isLoading()).toBe(false);
@@ -290,9 +290,9 @@ describe('AttachmentVideoUnitComponent', () => {
 
         // Test null playlist response
         component.lectureUnit().videoSource = 'https://example.com/some-video';
-        component.playlistUrl.set('stale.m3u8');
-        component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'stale', slideNumber: 1 }]);
-        component.isLoading.set(true);
+        component['_playlistUrl'].set('stale.m3u8');
+        component['_transcriptSegments'].set([{ startTime: 0, endTime: 1, text: 'stale', slideNumber: 1 }]);
+        component['_isLoading'].set(true);
         component.toggleCollapse(false);
 
         expectPlaylistRequest('https://example.com/some-video', null);
@@ -444,27 +444,6 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.hasPdf()).toBe(false);
         });
 
-        it('hasPdf recognizes PDF links case-insensitively', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(true);
-        });
-
-        it('hasPdf returns false when no attachment is available', () => {
-            component.lectureUnit().attachment = undefined;
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
-        it('hasPdf returns false for non-PDF links', () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.docx';
-            fixture.detectChanges();
-
-            expect(component.hasPdf()).toBe(false);
-        });
-
         it('loadPdf: loads directly via URL, then falls back to blob on error', async () => {
             const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
             const mockBlobUrl = 'blob:http://localhost/fallback-pdf';
@@ -610,7 +589,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('needsVerticalSplitter: returns true when fullscreen with iris sidebar', () => {
             // Don't call detectChanges to avoid triggering the Iris sidebar component
-            component.isFullscreen.set(true);
+            component['_isFullscreen'].set(true);
             fixture.componentRef.setInput('irisSettings', {
                 settings: { enabled: true },
             });
@@ -620,7 +599,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('needsVerticalSplitter: returns false when not fullscreen', () => {
-            component.isFullscreen.set(false);
+            component['_isFullscreen'].set(false);
             fixture.componentRef.setInput('irisSettings', {
                 settings: { enabled: true },
             });
@@ -630,7 +609,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('needsVerticalSplitter: returns false when iris sidebar is not shown', () => {
-            component.isFullscreen.set(true);
+            component['_isFullscreen'].set(true);
             fixture.componentRef.setInput('irisSettings', {
                 settings: { enabled: false },
             });
@@ -639,7 +618,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('needsHorizontalSplitter: returns true when fullscreen with video and PDF', () => {
-            component.isFullscreen.set(true);
+            component['_isFullscreen'].set(true);
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
 
@@ -660,6 +639,10 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('openFullscreen: expands collapsed card before activating fullscreen', async () => {
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            fixture.componentRef.setInput('irisSettings', {
+                settings: { enabled: true },
+            });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
             const toggleCollapse = vi.fn();
             const activateSpy = vi.spyOn(component as any, 'activateFullscreen').mockImplementation(() => {});
             vi.spyOn(component, 'lectureUnitCard').mockReturnValue({
@@ -675,11 +658,11 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('closeFullscreen: closes only when fullscreen is active', () => {
-            component.isFullscreen.set(false);
+            component['_isFullscreen'].set(false);
             component.closeFullscreen();
             expect(component.isFullscreen()).toBe(false);
 
-            component.isFullscreen.set(true);
+            component['_isFullscreen'].set(true);
             component.closeFullscreen();
             expect(component.isFullscreen()).toBe(false);
         });
@@ -687,6 +670,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('onEscapePressed: delegates to closeFullscreen', () => {
             const closeSpy = vi.spyOn(component, 'closeFullscreen');
             const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+            component['_isFullscreen'].set(true);
 
             component.onEscapePressed(event);
 

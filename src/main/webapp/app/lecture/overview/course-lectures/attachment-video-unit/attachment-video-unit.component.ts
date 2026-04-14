@@ -170,7 +170,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen();
     });
 
-    readonly needsVerticalSplitter = computed(() => this.isFullscreen() && this.showIrisSidebar());
+    readonly needsVerticalSplitter = computed(() => this.showIrisSidebar());
 
     readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf());
 
