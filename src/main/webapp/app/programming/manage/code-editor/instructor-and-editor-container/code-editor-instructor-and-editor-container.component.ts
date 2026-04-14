@@ -1627,10 +1627,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onEditorLoaded() {
         if (this.fileToJumpOn) {
-            // File already loaded, file load event will not fire
+            // File already loaded: avoid re-running the file-load/sync path, which is only
+            // needed when Monaco actually switches files. We only need the deferred line jump.
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
-                this.codeEditorContainer?.monacoEditor?.scheduleReviewCommentRenderForSelectedFile?.();
-                this.onFileLoad(this.fileToJumpOn!);
+                if (this.lineJumpOnFileLoad !== undefined) {
+                    this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+                }
+                this.lineJumpOnFileLoad = undefined;
+                this.fileToJumpOn = undefined;
                 return;
             }
 

@@ -1350,18 +1350,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(jumpSpy).toHaveBeenCalledWith(issue.lineNumber);
         }));
 
-        it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
+        it('onEditorLoaded jumps directly when file is already selected', () => {
             const targetFile = 'src/tests/ExampleTest.java';
+            const targetLine = 42;
             comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = targetLine;
             (comp as any).codeEditorContainer.selectedFile = targetFile;
 
             const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
 
             comp.onEditorLoaded();
 
-            expect((comp as any).codeEditorContainer.monacoEditor.scheduleReviewCommentRenderForSelectedFile).toHaveBeenCalled();
-            expect(onFileLoadSpy).toHaveBeenCalledWith(targetFile);
+            expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
+            expect(onFileLoadSpy).not.toHaveBeenCalled();
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
         });
 
         it('onEditorLoaded sets selectedFile when file is not selected yet', () => {
