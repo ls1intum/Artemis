@@ -11,6 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
@@ -62,6 +63,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should not reload template when config did not change', () => {
@@ -167,5 +169,74 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         expect(serialized).toBeDefined();
         expect(JSON.parse(serialized!)).toEqual(templatePhases);
+    });
+
+    it('should convert legacy build plan on init when no phases config exists', () => {
+        const legacyPhases: BuildPlanPhases = {
+            phases: [{ name: 'script', script: 'legacy', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+            dockerImage: 'legacy:1.0',
+        };
+        programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+        programmingExercise.buildConfig!.buildScript = './gradlew test';
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        // Mock the legacy converter
+        const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
+        jest.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
+        comp.ngOnInit();
+        expect(comp.buildPlanPhases).toEqual(legacyPhases);
+    });
+
+    it('should reset when legacy conversion fails', () => {
+        programmingExercise.buildConfig!.buildPlanConfiguration = 'not undefined';
+        programmingExercise.buildConfig!.buildScript = './gradlew test';
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
+        jest.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(undefined);
+        comp.ngOnInit();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+        expect(programmingExercise.buildConfig?.buildScript).toBeUndefined();
+    });
+
+    it('should reset when no build script exists on init', () => {
+        programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+        programmingExercise.buildConfig!.buildScript = undefined;
+        comp.ngOnInit();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+    });
+
+    it('should fall through to legacy when parsed phases are empty', () => {
+        programmingExercise.buildConfig!.buildPlanConfiguration = JSON.stringify({ phases: [] });
+        programmingExercise.buildConfig!.buildScript = undefined;
+        comp.ngOnInit();
+        expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+    });
+
+    it('should return undefined from getBuildPlanPhasesJSON when names are invalid', () => {
+        comp.buildPlanPhases = {
+            phases: [{ name: 'bad name', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+        };
+        expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+    });
+
+    it('should return undefined from getBuildPlanPhasesJSON for reserved phase names', () => {
+        comp.buildPlanPhases = {
+            phases: [{ name: 'main', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+        };
+        expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+    });
+
+    it('should return undefined from getBuildPlanPhasesJSON for duplicate names', () => {
+        comp.buildPlanPhases = {
+            phases: [
+                { name: 'Build', script: 'a', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'build', script: 'b', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+            ],
+        };
+        expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+    });
+
+    it('should return undefined from getBuildPlanPhasesJSON when phases are empty', () => {
+        comp.buildPlanPhases = { phases: [] };
+        expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
     });
 });
