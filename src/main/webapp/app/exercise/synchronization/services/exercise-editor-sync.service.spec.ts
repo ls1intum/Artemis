@@ -468,6 +468,54 @@ describe('ExerciseEditorSyncService', () => {
             expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
         });
     });
+
+    describe('reconnected$', () => {
+        it('emits when connection transitions from disconnected to connected', () => {
+            let emitCount = 0;
+            const sub = service.reconnected$.subscribe(() => emitCount++);
+
+            connectionState$.next(new ConnectionState(false, true));
+            connectionState$.next(new ConnectionState(true, true));
+
+            expect(emitCount).toBe(1);
+            sub.unsubscribe();
+        });
+
+        it('does not emit when staying connected', () => {
+            let emitCount = 0;
+            const sub = service.reconnected$.subscribe(() => emitCount++);
+
+            connectionState$.next(new ConnectionState(true, true));
+            connectionState$.next(new ConnectionState(true, true));
+
+            expect(emitCount).toBe(0);
+            sub.unsubscribe();
+        });
+
+        it('does not emit when staying disconnected', () => {
+            let emitCount = 0;
+            const sub = service.reconnected$.subscribe(() => emitCount++);
+
+            connectionState$.next(new ConnectionState(false, true));
+            connectionState$.next(new ConnectionState(false, true));
+
+            expect(emitCount).toBe(0);
+            sub.unsubscribe();
+        });
+
+        it('emits for each disconnected-to-connected transition', () => {
+            let emitCount = 0;
+            const sub = service.reconnected$.subscribe(() => emitCount++);
+
+            connectionState$.next(new ConnectionState(false, true));
+            connectionState$.next(new ConnectionState(true, true));
+            connectionState$.next(new ConnectionState(false, true));
+            connectionState$.next(new ConnectionState(true, true));
+
+            expect(emitCount).toBe(2);
+            sub.unsubscribe();
+        });
+    });
 });
 
 describe('repositoryTypeToSyncTarget', () => {

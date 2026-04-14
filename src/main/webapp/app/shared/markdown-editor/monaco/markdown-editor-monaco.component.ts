@@ -348,12 +348,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private cachedSelection?: CachedSelectionWithText;
     /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
     private windowScrollHandler?: () => void;
-    /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
-    protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
-    /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
-    protected readonly diffSuggestionLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.suggestionLabel'), {
+    /** Optional override for the left diff-pane label. Falls back to the default "Your Original" translation. */
+    readonly diffOriginalLabelOverride = input<string | undefined>(undefined);
+    /** Optional override for the right diff-pane label. Falls back to the default "AI Suggestion" translation. */
+    readonly diffModifiedLabelOverride = input<string | undefined>(undefined);
+
+    private readonly defaultDiffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), {
         initialValue: '',
     });
+    private readonly defaultDiffSuggestionLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.suggestionLabel'), {
+        initialValue: '',
+    });
+    /** Reactive translated label for the left (original) diff-pane header. Uses override if provided. */
+    protected readonly diffOriginalLabel = computed(() => this.diffOriginalLabelOverride() || this.defaultDiffOriginalLabel());
+    /** Reactive translated label for the right (modified) diff-pane header. Uses override if provided. */
+    protected readonly diffSuggestionLabel = computed(() => this.diffModifiedLabelOverride() || this.defaultDiffSuggestionLabel());
     /** Reactive translated hint text for the unified diff view (updates on language change). */
     protected readonly diffUnifiedHint = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.unifiedHint'), { initialValue: '' });
     targetWrapperHeight?: number;
@@ -1014,6 +1023,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     applyRefinedContent(refined: string): void {
         this.applyDiffContent(refined);
+    }
+
+    /**
+     * Sets the content of the LEFT (original/read-only) side of the diff editor.
+     */
+    setDiffOriginalContent(content: string): void {
+        this.monacoEditor?.setDiffOriginalContent(content);
     }
 
     /**

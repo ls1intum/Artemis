@@ -307,6 +307,11 @@
                     "suggestionLabel": "AI Suggestion",
                     "unifiedHint": "→ highlighted in red will be removed, highlighted in green will be added →"
                 },
+                "reconnectionDiff": {
+                    "originalLabel": "Your Unsaved Changes",
+                    "modifiedLabel": "Latest Version",
+                    "done": "Done"
+                },
                 "aiRefining": "AI is updating the problem statement...",
                 "generate": "Generate",
                 "refine": "Refine",

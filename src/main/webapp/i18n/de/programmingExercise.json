@@ -307,6 +307,11 @@
                     "suggestionLabel": "KI-Vorschlag",
                     "unifiedHint": "→ rot markiert wird entfernt, grün markiert wird hinzugefügt →"
                 },
+                "reconnectionDiff": {
+                    "originalLabel": "Deine ungespeicherten Änderungen",
+                    "modifiedLabel": "Aktuelle Version",
+                    "done": "Fertig"
+                },
                 "aiRefining": "KI aktualisiert die Aufgabenstellung...",
                 "generate": "Generieren",
                 "refine": "Verfeinern",

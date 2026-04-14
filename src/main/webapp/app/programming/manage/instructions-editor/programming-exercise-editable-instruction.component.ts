@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, of, take, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
@@ -19,6 +19,7 @@ import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { NgClass } from '@angular/common';
+import { ButtonDirective } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -34,6 +35,8 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { TranslateService } from '@ngx-translate/core';
 import {
     EditorSelectionWithPosition,
     INLINE_REFINEMENT_PROMPT_WIDTH_PX,
@@ -53,6 +56,7 @@ import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline
     imports: [
         MarkdownEditorMonacoComponent,
         NgClass,
+        ButtonDirective,
         FaIconComponent,
         TranslateDirective,
         NgbTooltip,
@@ -70,6 +74,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+    private translateService = inject(TranslateService);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -117,6 +123,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementBindingDestroyed = false;
     private suppressUnsavedForNextProblemStatementChange = false;
     private dirtySignalSuppressedDuringInitialSync = false;
+    private reconnectionSubscription?: Subscription;
+    /**
+     * When true, the editor is showing a diff view after reconnection so the user
+     * can selectively apply their unsaved changes to the current synced version.
+     */
+    reconnectionDiffActive = signal(false);
+    /** Translated label for the left (original) diff pane during reconnection conflict. */
+    reconnectionOriginalLabel = signal<string | undefined>(undefined);
+    /** Translated label for the right (modified) diff pane during reconnection conflict. */
+    reconnectionModifiedLabel = signal<string | undefined>(undefined);
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -166,6 +182,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Emits diff line change information when in diff mode */
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
+    /**
+     * The effective editor mode. Returns 'diff' when a reconnection conflict is being
+     * resolved, otherwise delegates to the parent-provided mode input.
+     */
+    readonly effectiveMode = computed<MonacoEditorMode>(() => (this.reconnectionDiffActive() ? 'diff' : this.mode()));
+
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
         // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
@@ -212,6 +234,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRenderSubscription) {
             this.forceRenderSubscription.unsubscribe();
         }
+        this.reconnectionSubscription?.unsubscribe();
+        this.reconnectionSubscription = undefined;
         this.teardownProblemStatementSync();
     }
 
@@ -234,6 +258,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.initializeProblemStatementSync(exercise.id, exercise.problemStatement ?? '');
+        // Subscribe once to reconnection events. Unlike the sync subscriptions inside
+        // initializeProblemStatementSync (which are torn down and recreated), this
+        // subscription persists for the component's lifetime and is not recreated on
+        // re-init, keeping the pairwise() buffer state consistent.
+        this.reconnectionSubscription = this.exerciseEditorSyncService.reconnected$.subscribe(() => {
+            this.handleReconnection(exercise.id!);
+        });
     }
 
     /** Save the problem statement on the server.
@@ -572,6 +603,55 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
     private enforceLfEol(model: editor.ITextModel): void {
         model.setEOL(editor.EndOfLineSequence.LF);
+    }
+
+    /**
+     * Handle WebSocket reconnection after a network outage.
+     *
+     * Snapshots the current editor content, tears down the Yjs sync, and re-initializes
+     * from scratch (same as page load). After the sync finalizes, compares the snapshot
+     * to the new synced content. If they differ, switches the editor to diff mode so the
+     * user can selectively apply their unsaved changes.
+     */
+    private handleReconnection(exerciseId: number) {
+        if (!this.markdownEditorMonaco?.monacoEditor || !this.problemStatementSyncState) {
+            return;
+        }
+        // 1. Snapshot local content before teardown
+        const snapshot = this.problemStatementSyncState.text.toString();
+
+        // 2. Teardown and re-init sync from scratch
+        this.teardownProblemStatementSync();
+        const serverContent = this.exercise().problemStatement ?? '';
+        this.initializeProblemStatementSync(exerciseId, serverContent);
+
+        // 3. After sync finalizes, compare snapshot to new content
+        this.problemStatementSyncService.initialSyncFinalized$.pipe(take(1)).subscribe(({ finalContent }) => {
+            if (snapshot === finalContent) {
+                return;
+            }
+            // 4. Show diff view: left = user's unsaved snapshot, right = latest synced version
+            this.reconnectionOriginalLabel.set(this.translateService.instant('artemisApp.programmingExercise.problemStatement.reconnectionDiff.originalLabel'));
+            this.reconnectionModifiedLabel.set(this.translateService.instant('artemisApp.programmingExercise.problemStatement.reconnectionDiff.modifiedLabel'));
+            this.reconnectionDiffActive.set(true);
+            // Override the LEFT (original/read-only) side with the user's snapshot.
+            // The RIGHT side already has the synced content (it's the underlying editor model).
+            // setTimeout(0) defers until after Angular processes the mode='diff' input change
+            // and wires up the diff editor.
+            setTimeout(() => {
+                this.markdownEditorMonaco?.setDiffOriginalContent(snapshot);
+            }, 0);
+        });
+    }
+
+    /**
+     * Dismiss the reconnection diff view and return to normal editing mode.
+     * Called when the user finishes reviewing their unsaved changes.
+     */
+    dismissReconnectionDiff() {
+        this.reconnectionDiffActive.set(false);
+        this.reconnectionOriginalLabel.set(undefined);
+        this.reconnectionModifiedLabel.set(undefined);
     }
 
     /**

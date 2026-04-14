@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { concatMap, filter, take, tap } from 'rxjs/operators';
+import { concatMap, distinctUntilChanged, filter, map, pairwise, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -231,6 +231,28 @@ export class ExerciseEditorSyncService {
      */
     private getTopic(exerciseId: number): string {
         return `/topic/exercises/${exerciseId}/synchronization`;
+    }
+
+    /**
+     * Emits each time the WebSocket connection transitions from disconnected → connected.
+     *
+     * Uses `pairwise()` on the `connected` boolean, so it requires at least two distinct
+     * connection state emissions before it can fire. This means it will also emit on the
+     * very first `false → true` transition (initial connect) if the connection state
+     * starts as disconnected. Consumers should be aware of this if they only want
+     * reconnection events after a prior successful connection.
+     *
+     * Since this is a getter, each access creates a fresh pipe chain with its own
+     * `pairwise()` buffer. Consumers should subscribe once and keep the subscription.
+     */
+    get reconnected$(): Observable<void> {
+        return this.websocketService.connectionState.pipe(
+            map((state) => state.connected),
+            distinctUntilChanged(),
+            pairwise(),
+            filter(([wasConnected, isConnected]) => !wasConnected && isConnected),
+            map(() => undefined),
+        );
     }
 
     /**

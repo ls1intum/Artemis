@@ -5,7 +5,7 @@
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
-            [mode]="mode()"
+            [mode]="effectiveMode()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight()"
@@ -21,6 +21,8 @@
             [isReadOnly]="isGeneratingOrRefining()"
             [isAiLoading]="isAiApplying()"
             [renderSideBySide]="renderSideBySide()"
+            [diffOriginalLabelOverride]="reconnectionOriginalLabel()"
+            [diffModifiedLabelOverride]="reconnectionModifiedLabel()"
             (diffLineChange)="diffLineChange.emit($event)"
             (markdownChange)="updateProblemStatement($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
@@ -43,6 +45,14 @@
                 }
             </div>
         </jhi-markdown-editor-monaco>
+
+        @if (reconnectionDiffActive()) {
+            <div class="reconnection-diff-actions d-flex gap-2 p-2 justify-content-end">
+                <button pButton type="button" severity="success" size="small" (click)="dismissReconnectionDiff()">
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.reconnectionDiff.done"></span>
+                </button>
+            </div>
+        }
 
         <!-- Floating inline refinement button - hidden during active refinement -->
         @if (inlineRefinementPosition() && hyperionEnabled && !isAiApplying() && selectionPositionInfo()) {
