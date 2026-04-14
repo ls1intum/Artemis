@@ -45,7 +45,7 @@ The cleanup has four orthogonal concerns. Each can be verified independently dur
 
 ### New `tumlive/` module structure
 
-```
+```text
 src/main/java/de/tum/cit/aet/artemis/tumlive/
 ├── api/
 │   └── TumLiveApi.java              (moved from nebula/api/)

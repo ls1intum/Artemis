@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.tumlive.config.TumLiveEnabled;
 import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 
 /**
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 @Lazy
 @RestController
 @RequestMapping("api/tumlive/")
+@Conditional(TumLiveEnabled.class)
 public class TumLiveResource {
 
     private static final Logger log = LoggerFactory.getLogger(TumLiveResource.class);

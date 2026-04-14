@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.tumlive.api;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.tumlive.config.TumLiveEnabled;
 import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 
 /**
@@ -14,6 +16,7 @@ import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
  */
 @Controller
 @Lazy
+@Conditional(TumLiveEnabled.class)
 public class TumLiveApi implements AbstractApi {
 
     private final TumLiveService tumLiveService;

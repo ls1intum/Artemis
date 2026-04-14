@@ -25,7 +25,7 @@ Full design rationale: `docs/superpowers/specs/2026-04-14-nebula-removal-design.
 
 ## File Structure After Change
 
-```
+```text
 src/main/java/de/tum/cit/aet/artemis/tumlive/          (NEW MODULE)
 ├── api/TumLiveApi.java                                (moved from nebula/api/)
 ├── service/TumLiveService.java                        (moved from nebula/service/)
@@ -443,8 +443,8 @@ git rm src/main/webapp/i18n/en/nebula.json src/main/webapp/i18n/de/nebula.json
 - [ ] **Step 3: Edit `de/featureToggles.json`**
 
 Apply the same two edits with German translations. Keep parity with English per AGENTS.md i18n rule. Suggested:
-  - `description`: `"Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion."`
-  - `disableWarning`: `"Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."`
+- `description`: `"Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion."`
+- `disableWarning`: `"Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."`
 
 - [ ] **Step 4: Verify JSON validity**
 
