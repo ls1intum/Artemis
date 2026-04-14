@@ -1005,7 +1005,7 @@ public class ParticipationService {
         String assessmentNote = (latestResult != null && latestResult.getAssessmentNote() != null) ? latestResult.getAssessmentNote().getNote() : null;
 
         // Duration in seconds
-        long durationInSeconds = 0;
+        Long durationInSeconds = null;
         if (completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }

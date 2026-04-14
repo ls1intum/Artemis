@@ -12,5 +12,5 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ParticipationScoreDTO(long participationId, ZonedDateTime initializationDate, int submissionCount, String participantName, String participantIdentifier,
         Long studentId, Long teamId, Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote,
-        long durationInSeconds, Long submissionId, Boolean buildFailed, String buildPlanId, String repositoryUri, boolean testRun) {
+        Long durationInSeconds, Long submissionId, Boolean buildFailed, String buildPlanId, String repositoryUri, boolean testRun) {
 }

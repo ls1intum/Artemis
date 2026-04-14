@@ -1,12 +1,12 @@
-.filter-dropdown-default,
-.filter-dropdown-active {
+.p-select.filter-dropdown-default,
+.p-select.filter-dropdown-active {
+    .p-select-label {
+        padding-right: 0;
+    }
+
     .p-overlay {
         right: 0;
         left: auto !important;
-
-        .p-select-label {
-            padding-right: 0;
-        }
 
         .p-select-list-container {
             overflow: hidden;
@@ -16,7 +16,7 @@
     }
 }
 
-.filter-dropdown-default {
+.p-select.filter-dropdown-default {
     background-color: var(--bs-secondary);
     border-color: var(--bs-secondary);
 
@@ -34,7 +34,7 @@
     }
 }
 
-.filter-dropdown-active {
+.p-select.filter-dropdown-active {
     background-color: var(--bs-success);
     border-color: var(--bs-success);
 

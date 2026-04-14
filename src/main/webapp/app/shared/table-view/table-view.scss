@@ -32,6 +32,49 @@
         .p-paginator {
             padding-bottom: 0 !important;
             justify-content: start !important;
+
+            // Reduce nav button size (Aura default: 2.5rem × 2.5rem)
+            --p-paginator-padding: 0.25rem 0;
+            --p-paginator-nav-button-width: 2.1875rem;
+            --p-paginator-nav-button-height: 2.1875rem;
+
+            // Reduce page/nav button font size and icon size
+            .p-paginator-page,
+            .p-paginator-first,
+            .p-paginator-prev,
+            .p-paginator-next,
+            .p-paginator-last {
+                font-size: 0.875rem;
+
+                .p-icon {
+                    width: 0.875rem;
+                    height: 0.875rem;
+                }
+            }
+
+            // Reduce rows-per-page dropdown size (trigger + inline overlay options)
+            .p-paginator-rpp-dropdown {
+                .p-select-label {
+                    font-size: 0.875rem;
+                    padding-block: 0.375rem;
+                    padding-inline: 0.625rem;
+                }
+
+                .p-select-dropdown .p-icon {
+                    width: 0.875rem;
+                    height: 0.875rem;
+                }
+
+                .p-select-option {
+                    font-size: 0.875rem;
+                    padding: 0.375rem 0.625rem;
+                }
+            }
+
+            // Reduce current page report text size
+            .p-paginator-current {
+                font-size: 0.875rem;
+            }
         }
     }
 }

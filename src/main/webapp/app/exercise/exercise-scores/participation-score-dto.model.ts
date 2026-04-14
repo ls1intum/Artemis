@@ -15,7 +15,7 @@ export interface ParticipationScoreDTO {
     completionDate?: dayjs.Dayjs;
     assessmentType?: AssessmentType;
     assessmentNote?: string;
-    durationInSeconds: number;
+    durationInSeconds?: number;
     submissionId?: number;
     buildFailed?: boolean;
     buildPlanId?: string;

@@ -937,6 +937,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
+                 AND r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
