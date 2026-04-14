@@ -113,8 +113,8 @@ public class ProgrammingExerciseBuildPlanService {
         // existing config in Windfile format, convert to phases
         Windfile windfile = buildConfig.getWindfile();
 
-        // no usable config (null, unparseable, or windfile with no script actions), load default windfile template
-        if ((windfile == null || windfile.scriptActions().isEmpty()) && aeolusTemplateService.isPresent()) {
+        // no config at all, load default windfile template
+        if (windfile == null && buildConfig.getBuildPlanConfiguration() == null && aeolusTemplateService.isPresent()) {
             windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
         }
 
