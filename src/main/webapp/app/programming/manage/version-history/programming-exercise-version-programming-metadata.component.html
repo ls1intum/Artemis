@@ -219,8 +219,8 @@
                                         <pre class="json-block">{{ currentBuildScript() ?? '-' }}</pre>
                                     </div>
                                 </div>
-                            } @else if (buildScript(); as buildScript) {
-                                <div class="markdown-block markdown-preview" [innerHTML]="buildScript"></div>
+                            } @else if (buildScript(); as buildScriptHtml) {
+                                <div class="markdown-block markdown-preview" [innerHTML]="buildScriptHtml"></div>
                             } @else {
                                 <div class="markdown-block markdown-block--empty" jhiTranslate="artemisApp.programmingExercise.versionHistory.snapshot.noBuildScript"></div>
                             }

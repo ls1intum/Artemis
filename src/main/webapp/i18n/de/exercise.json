@@ -85,7 +85,7 @@
                 "revert": {
                     "tooltip": "Zurücksetzen auf: {{ value }}",
                     "confirmHeader": "Zurücksetzen bestätigen",
-                    "confirmMessage": "Möchten Sie <strong>{{ field }}</strong> wirklich von <strong>\"{{ currentValue }}\"</strong> auf <strong>\"{{ targetValue }}\"</strong> zurücksetzen?",
+                    "confirmMessage": "Möchtest du <strong>{{ field }}</strong> wirklich von <strong>\"{{ currentValue }}\"</strong> auf <strong>\"{{ targetValue }}\"</strong> zurücksetzen?",
                     "confirmMessageProblemStatement": "Die <strong>Aufgabenstellung</strong> wird auf die vorherige Version zurückgesetzt (der rot hervorgehobene Teil).",
                     "success": "{{ field }} wurde erfolgreich zurückgesetzt.",
                     "error": "{{ field }} konnte nicht zurückgesetzt werden."

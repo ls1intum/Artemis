@@ -57,6 +57,7 @@ export interface MetadataFieldRow {
             }
         </div>
     `,
+    styleUrl: './metadata-field-row.component.scss',
     imports: [ButtonModule, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, effect, input, signal, viewChild } 
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
-import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 
 @Component({
     selector: 'jhi-exercise-version-markdown-diff',
@@ -36,7 +35,6 @@ export class ExerciseVersionMarkdownDiffComponent {
 
     readonly original = input<string | undefined>();
     readonly modified = input<string | undefined>();
-    readonly domainActions = input<TextEditorDomainAction[]>([]);
     readonly initialEditorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.MEDIUM);
 
     readonly editor = viewChild(MonacoDiffEditorComponent);

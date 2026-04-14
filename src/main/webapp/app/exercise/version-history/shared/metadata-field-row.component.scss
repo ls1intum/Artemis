@@ -1,0 +1,4 @@
+@use 'version-metadata-shared' as shared;
+
+@include shared.version-metadata-base;
+@include shared.version-metadata-diff;

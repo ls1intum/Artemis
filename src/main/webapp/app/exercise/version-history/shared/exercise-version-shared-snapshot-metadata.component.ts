@@ -12,9 +12,6 @@ import { isRevertable } from 'app/exercise/version-history/shared/revert-field.r
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -103,8 +100,6 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
 
     protected readonly faRotateLeft = faRotateLeft;
 
-    readonly problemStatementDiffActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
-
     readonly isDiffView = computed(() => this.viewMode() === 'changes' && !!this.previousSnapshot());
 
     constructor() {
@@ -155,14 +150,14 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             this.toField(
                 'presentationScoreEnabled',
                 'artemisApp.exercise.versionHistory.snapshot.presentationScoreEnabled',
-                booleanLabel(this.translateService, snapshot.presentationScoreEnabled),
-                booleanLabel(this.translateService, previousSnapshot?.presentationScoreEnabled),
+                snapshot.presentationScoreEnabled,
+                previousSnapshot?.presentationScoreEnabled,
             ),
             this.toField(
                 'secondCorrectionEnabled',
                 'artemisApp.exercise.versionHistory.snapshot.secondCorrectionEnabled',
-                booleanLabel(this.translateService, snapshot.secondCorrectionEnabled),
-                booleanLabel(this.translateService, previousSnapshot?.secondCorrectionEnabled),
+                snapshot.secondCorrectionEnabled,
+                previousSnapshot?.secondCorrectionEnabled,
             ),
             this.toField(
                 'feedbackSuggestionModule',
@@ -197,14 +192,14 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             this.toField(
                 'allowFeedbackRequests',
                 'artemisApp.programmingExercise.timeline.manualFeedbackRequests',
-                booleanLabel(this.translateService, snapshot.allowFeedbackRequests),
-                booleanLabel(this.translateService, previousSnapshot?.allowFeedbackRequests),
+                snapshot.allowFeedbackRequests,
+                previousSnapshot?.allowFeedbackRequests,
             ),
             this.toField(
                 'allowComplaintsForAutomaticAssessments',
                 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
-                booleanLabel(this.translateService, snapshot.allowComplaintsForAutomaticAssessments),
-                booleanLabel(this.translateService, previousSnapshot?.allowComplaintsForAutomaticAssessments),
+                snapshot.allowComplaintsForAutomaticAssessments,
+                previousSnapshot?.allowComplaintsForAutomaticAssessments,
             ),
         ]);
     });
@@ -235,14 +230,14 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             this.toField(
                 'plagiarism.continuousPlagiarismControlEnabled',
                 'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlEnabled',
-                booleanLabel(this.translateService, snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled),
-                booleanLabel(this.translateService, previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled),
+                snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled,
+                previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled,
             ),
             this.toField(
                 'plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled',
                 'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlPostDueDateChecksEnabled',
-                booleanLabel(this.translateService, snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled),
-                booleanLabel(this.translateService, previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled),
+                snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled,
+                previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled,
             ),
             this.toField(
                 'plagiarism.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
@@ -338,8 +333,8 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         return {
             id,
             label: this.translateLabel(labelKey),
-            currentDisplay: typeof currentRaw === 'boolean' ? String(currentRaw) : (currentRaw ?? '-'),
-            previousDisplay: typeof previousRaw === 'boolean' ? String(previousRaw) : (previousRaw ?? '-'),
+            currentDisplay: typeof currentRaw === 'boolean' ? (booleanLabel(this.translateService, currentRaw) ?? '-') : (currentRaw ?? '-'),
+            previousDisplay: typeof previousRaw === 'boolean' ? (booleanLabel(this.translateService, previousRaw) ?? '-') : (previousRaw ?? '-'),
             currentRaw,
             previousRaw,
             changed: valuesDiffer(currentRaw, previousRaw),

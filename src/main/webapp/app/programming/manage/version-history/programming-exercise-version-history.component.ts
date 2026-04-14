@@ -468,7 +468,12 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
                     if (requestToken !== this.snapshotRequestToken && target === 'selected' && this.selectedVersionId() !== versionId) {
                         return;
                     }
-                    this.snapshotCache.update((snapshotCache) => ({ ...snapshotCache, [versionId]: snapshot }));
+                    this.snapshotCache.update((snapshotCache) => {
+                        const nextCache: Record<number, ExerciseSnapshotDTO> = {};
+                        Object.assign(nextCache, snapshotCache);
+                        nextCache[versionId] = snapshot;
+                        return nextCache;
+                    });
                 },
                 error: () => {
                     if (target === 'selected') {
@@ -478,7 +483,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
                         return;
                     }
 
-                    this.diffBaseError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+                    if (this.viewMode() === 'changes' && this.previousVersionId() === versionId) {
+                        this.diffBaseError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+                    }
                 },
             });
     }
@@ -495,13 +502,14 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
 
     private setSnapshotLoading(versionId: number, isLoading: boolean): void {
         this.loadingSnapshots.update((loadingSnapshots) => {
+            const nextLoadingSnapshots: Record<number, boolean> = {};
+            Object.assign(nextLoadingSnapshots, loadingSnapshots);
             if (!isLoading) {
-                const nextLoadingSnapshots = { ...loadingSnapshots };
                 delete nextLoadingSnapshots[versionId];
-                return nextLoadingSnapshots;
+            } else {
+                nextLoadingSnapshots[versionId] = true;
             }
-
-            return { ...loadingSnapshots, [versionId]: true };
+            return nextLoadingSnapshots;
         });
     }
 }

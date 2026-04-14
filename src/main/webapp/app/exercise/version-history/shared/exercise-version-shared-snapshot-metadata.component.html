@@ -202,11 +202,7 @@
                     }
                 </div>
                 @if (isDiffView()) {
-                    <jhi-exercise-version-markdown-diff
-                        [original]="previousSnapshot()?.problemStatement"
-                        [modified]="snapshot().problemStatement"
-                        [domainActions]="problemStatementDiffActions"
-                    />
+                    <jhi-exercise-version-markdown-diff [original]="previousSnapshot()?.problemStatement" [modified]="snapshot().problemStatement" />
                 } @else if (problemStatement(); as problemStatement) {
                     <div class="markdown-block markdown-block--problem markdown-preview" [innerHTML]="problemStatement"></div>
                 } @else {
