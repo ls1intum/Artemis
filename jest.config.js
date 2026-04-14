@@ -214,6 +214,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
+        '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // implemented with Vitest
     ],
     testTimeout: 3000,
     testMatch: [

@@ -58,6 +58,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
+            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
