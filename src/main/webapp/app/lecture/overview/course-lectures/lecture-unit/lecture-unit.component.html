@@ -26,7 +26,12 @@
                     </button>
                 }
                 @if (showFullscreenButton()) {
-                    <button id="fullscreen-button" class="btn btn-sm btn-primary" (click)="handleFullscreen($event)">
+                    <button
+                        id="fullscreen-button"
+                        class="btn btn-sm btn-primary"
+                        [attr.aria-label]="'artemisApp.lectureUnit.fullscreen' | artemisTranslate"
+                        (click)="handleFullscreen($event)"
+                    >
                         <fa-icon [icon]="faExpand" />
                     </button>
                 }

@@ -122,6 +122,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
+    private _previouslyFocusedElement: HTMLElement | null = null;
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -144,7 +145,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
 
-    readonly hasFullscreenContent = computed(() => this.hasVideo() || this.hasPdf());
+    readonly hasRenderableVideo = computed(() => !!this.videoUrl());
+
+    readonly hasFullscreenContent = computed(() => (this.hasRenderableVideo() || this.hasPdf()) && this.shouldShowIrisSidebarInFullscreen());
 
     readonly lectureId = computed(() => this.lectureUnit().lecture?.id);
 
@@ -159,7 +162,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly needsVerticalSplitter = computed(() => this.isFullscreen() && this.showIrisSidebar());
 
-    readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasVideo() && this.hasPdf());
+    readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf());
 
     readonly contentContainerClasses = computed(() => ({
         'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
@@ -503,6 +506,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        // Capture currently focused element for restoration on close
+        const activeEl = document.activeElement;
+        if (activeEl instanceof HTMLElement) {
+            this._previouslyFocusedElement = activeEl;
+        }
+
         const card = this.lectureUnitCard();
 
         // Auto-expand if collapsed
@@ -533,9 +542,34 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         afterNextRender(
             () => {
                 this.isFullscreen.set(true);
+                // Move focus into fullscreen container after it's rendered
+                afterNextRender(
+                    () => {
+                        this.focusFullscreenContainer();
+                    },
+                    { injector: this.injector },
+                );
             },
             { injector: this.injector },
         );
+    }
+
+    private focusFullscreenContainer(): void {
+        const container = this.contentContainer()?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        // Try to focus the first focusable element inside the container
+        const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const focusableElements = container.querySelectorAll(focusableSelector);
+
+        if (focusableElements.length > 0) {
+            (focusableElements[0] as HTMLElement).focus();
+        } else {
+            // If no focusable elements, focus the container itself (has tabindex="0" in fullscreen)
+            container.focus();
+        }
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
@@ -548,7 +582,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private resetSplitSizesForFullscreen(): void {
         this._horizontalSplitSizes.set(this.defaultHorizontalSplitSizes);
 
-        const hasThreePaneLayout = this.shouldShowIrisSidebarInFullscreen() && this.hasVideo() && this.hasPdf();
+        const hasThreePaneLayout = this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf();
         this._verticalSplitSizes.set(hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultTwoPaneSplitSizes);
     }
 
@@ -557,15 +591,28 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        // Don't close parent fullscreen if PDF viewer is in its own fullscreen
+        if (this.hasOpenPdfFullscreen()) {
+            return;
+        }
+
+        // Restore focus to previously focused element if it still exists
+        if (this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement)) {
+            this._previouslyFocusedElement.focus();
+        }
+        this._previouslyFocusedElement = null;
+
         this.isFullscreen.set(false);
     }
 
     @HostListener('document:keydown.escape', ['$event'])
     onEscapePressed(event: Event): void {
-        if (event.defaultPrevented || this.hasOpenPdfFullscreen()) {
+        if (!this.isFullscreen() || event.defaultPrevented || this.hasOpenPdfFullscreen()) {
             return;
         }
 
+        event.preventDefault();
+        event.stopPropagation();
         this.closeFullscreen();
     }
 

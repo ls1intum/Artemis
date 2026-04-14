@@ -75,7 +75,7 @@
                 } @else if (isFullscreen()) {
                     <div #videoContainer class="video-player-container video-player-container--fullscreen">
                         <div class="video-iframe-wrapper video-iframe-wrapper--fullscreen">
-                            <iframe id="videoFrame" class="video-iframe" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                            <iframe id="videoFrame-fullscreen" class="video-iframe" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                         </div>
                     </div>
                 } @else {
