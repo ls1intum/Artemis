@@ -97,6 +97,11 @@ class ContentExtractionServiceTest {
     }
 
     @Test
+    void extractContent_nullExercise_throwsException() {
+        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void extractContent_unsupportedExerciseType_throwsIllegalArgumentException() {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle("UML Diagram");
