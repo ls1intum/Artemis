@@ -23,7 +23,9 @@
                 "attachmentVersion": "Attachment version: "
             },
             "completedTooltip": "Click to mark this content as uncompleted",
-            "uncompletedTooltip": "Click to mark this content as completed"
+            "uncompletedTooltip": "Click to mark this content as completed",
+            "openFullscreen": "Open fullscreen",
+            "closeFullscreen": "Close fullscreen"
         },
         "textUnit": {
             "created": "New text content created",

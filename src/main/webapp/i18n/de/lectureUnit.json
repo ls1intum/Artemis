@@ -23,7 +23,9 @@
                 "attachmentVersion": "Dateiversion: "
             },
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
-            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren"
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
+            "openFullscreen": "Vollbild öffnen",
+            "closeFullscreen": "Vollbild schließen"
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",
