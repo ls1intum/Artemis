@@ -23,6 +23,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/shared/constants/input.constants';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -648,6 +649,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should enforce the title maxlength on the short answer question input', () => {
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
     });
 
     it('should return highest spot number', () => {
