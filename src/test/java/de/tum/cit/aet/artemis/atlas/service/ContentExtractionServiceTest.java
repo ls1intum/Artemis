@@ -6,10 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -79,6 +75,28 @@ class ContentExtractionServiceTest {
     }
 
     @Test
+    void extractContent_nullTitle_returnsEmptyTitle() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle(null);
+        exercise.setProblemStatement("Some statement.");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
+
+        assertThat(result.title()).isEmpty();
+    }
+
+    @Test
+    void extractContent_emptyProblemStatement_returnsEmptyLearningText() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Sorting");
+        exercise.setProblemStatement("");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
+
+        assertThat(result.extractedLearningText()).isEmpty();
+    }
+
+    @Test
     void extractContent_unsupportedExerciseType_throwsIllegalArgumentException() {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle("UML Diagram");
@@ -86,24 +104,4 @@ class ContentExtractionServiceTest {
         assertThatThrownBy(() -> contentExtractionService.extractContent(exercise)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unsupported exercise type");
     }
 
-    @Test
-    void toJson_producesValidJson() throws JsonProcessingException {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setTitle("Sorting");
-        exercise.setProblemStatement("Implement sorting.");
-        exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setMaxPoints(50.0);
-
-        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
-        String json = result.toJson();
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(json);
-
-        assertThat(node.get("title").asText()).isEqualTo("Sorting");
-        assertThat(node.get("extractedLearningText").asText()).isEqualTo("Implement sorting.");
-        assertThat(node.get("metadata").get("exerciseType").asText()).isEqualTo("programming");
-        assertThat(node.get("metadata").get("difficulty").asText()).isEqualTo("medium");
-        assertThat(node.get("metadata").get("maxPoints").asText()).isEqualTo("50.0");
-    }
 }

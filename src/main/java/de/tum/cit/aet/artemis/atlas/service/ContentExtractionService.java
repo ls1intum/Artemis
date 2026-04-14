@@ -39,6 +39,7 @@ public class ContentExtractionService {
      * @throws IllegalArgumentException if the exercise type is not yet supported
      */
     public ExtractedContentDTO extractContent(Exercise exercise) {
+        Objects.requireNonNull(exercise, "exercise must not be null");
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             return extractFromProgrammingExercise(programmingExercise);
         }
@@ -46,9 +47,10 @@ public class ContentExtractionService {
     }
 
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise) {
-        String title = exercise.getTitle();
+        String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         String learningText = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
 
+        // LinkedHashMap preserves insertion order for deterministic JSON serialization
         Map<String, String> metadata = new LinkedHashMap<>();
         metadata.put("exerciseType", ExerciseType.PROGRAMMING.getValue());
 
