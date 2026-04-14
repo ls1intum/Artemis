@@ -51,6 +51,7 @@
         [ngClass]="contentContainerClasses()"
         [attr.role]="isFullscreen() ? 'dialog' : null"
         [attr.aria-modal]="isFullscreen() ? 'true' : null"
+        [attr.aria-label]="fullscreenAriaLabel()"
         [attr.tabindex]="isFullscreen() ? '0' : null"
         (click)="$event.stopPropagation()"
     >

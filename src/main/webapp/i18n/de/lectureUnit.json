@@ -25,7 +25,9 @@
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
             "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
             "openFullscreen": "Vollbild öffnen",
-            "closeFullscreen": "Vollbild schließen"
+            "closeFullscreen": "Vollbild schließen",
+            "fullscreenView": "Vollbildansicht von {{ title }}",
+            "lectureUnit": "Vorlesungsinhalt"
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",

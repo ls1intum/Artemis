@@ -59,6 +59,7 @@ import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -90,6 +91,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly injector = inject(Injector);
     private readonly ngZone = inject(NgZone);
+    private readonly translateService = inject(TranslateService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -116,6 +118,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly minVerticalSplitSizes: [number, number] = [120, 120];
     private readonly minHorizontalSplitSizes: [number, number] = [80, 80];
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
+    private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
@@ -123,6 +126,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
     private _previouslyFocusedElement: HTMLElement | null = null;
+    private _focusTrapHandler?: (event: KeyboardEvent) => void;
+    private _inertElements: HTMLElement[] = [];
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -171,6 +176,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         'content-container--with-sidebar': this.isFullscreen() && this.showIrisSidebar(),
     }));
 
+    readonly fullscreenAriaLabel = computed(() => {
+        if (!this.isFullscreen()) {
+            return undefined;
+        }
+        const unitName = this.lectureUnit().name ?? this.translateService.instant('artemisApp.lectureUnit.lectureUnit');
+        return `${this.translateService.instant('artemisApp.lectureUnit.fullscreenView', { title: unitName })}`;
+    });
+
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
@@ -212,6 +225,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         });
 
         // Keep lecture fullscreen above drawer overlays without touching global.scss.
+        // Also handle accessibility setup/cleanup.
         effect(() => {
             const fullscreen = this.isFullscreen();
 
@@ -222,6 +236,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 } else {
                     this.clearFullscreenTopOffset();
                     this.setGlobalFullscreenState(false);
+                    this.cleanupFullscreenAccessibility();
                 }
             });
         });
@@ -497,6 +512,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.destroyHorizontalSplitter();
         this.clearFullscreenTopOffset();
         this.setGlobalFullscreenState(false);
+        this.cleanupFullscreenAccessibility();
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }
@@ -560,16 +576,62 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        // Try to focus the first focusable element inside the container
-        const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-        const focusableElements = container.querySelectorAll(focusableSelector);
+        this.setupFocusTrap(container);
+        this.setBackgroundInert(true);
 
-        if (focusableElements.length > 0) {
-            (focusableElements[0] as HTMLElement).focus();
+        const focusableElements = container.querySelectorAll(this.focusableSelector);
+        (focusableElements.length > 0 ? (focusableElements[0] as HTMLElement) : container).focus();
+    }
+
+    private setupFocusTrap(container: HTMLElement): void {
+        this._focusTrapHandler = (event: KeyboardEvent) => {
+            if (event.key !== 'Tab') {
+                return;
+            }
+
+            const elements = Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter((el) => el.offsetParent !== null);
+            if (elements.length === 0) {
+                return event.preventDefault();
+            }
+
+            const active = document.activeElement;
+            const isAtBoundary = event.shiftKey ? active === elements[0] || active === container : active === elements[elements.length - 1];
+
+            if (isAtBoundary) {
+                event.preventDefault();
+                (event.shiftKey ? elements[elements.length - 1] : elements[0]).focus();
+            }
+        };
+
+        // Listener is removed in cleanupFullscreenAccessibility() called from ngOnDestroy()
+        container.addEventListener('keydown', this._focusTrapHandler);
+    }
+
+    private setBackgroundInert(inert: boolean): void {
+        if (inert) {
+            Array.from(document.body.children).forEach((child) => {
+                if (child instanceof HTMLElement && child !== this.hostElement.nativeElement && !child.contains(this.hostElement.nativeElement)) {
+                    this._inertElements.push(child);
+                    child.setAttribute('inert', '');
+                    child.setAttribute('aria-hidden', 'true');
+                }
+            });
         } else {
-            // If no focusable elements, focus the container itself (has tabindex="0" in fullscreen)
-            container.focus();
+            this._inertElements.forEach((el) => {
+                el.removeAttribute('inert');
+                el.removeAttribute('aria-hidden');
+            });
+            this._inertElements = [];
         }
+    }
+
+    private cleanupFullscreenAccessibility(): void {
+        const container = this.contentContainer()?.nativeElement;
+        if (container && this._focusTrapHandler) {
+            container.removeEventListener('keydown', this._focusTrapHandler);
+            this._focusTrapHandler = undefined;
+        }
+        this.setBackgroundInert(false);
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
@@ -587,16 +649,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     closeFullscreen(): void {
-        if (!this.isFullscreen()) {
+        if (!this.isFullscreen() || this.hasOpenPdfFullscreen()) {
             return;
         }
 
-        // Don't close parent fullscreen if PDF viewer is in its own fullscreen
-        if (this.hasOpenPdfFullscreen()) {
-            return;
-        }
-
-        // Restore focus to previously focused element if it still exists
         if (this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement)) {
             this._previouslyFocusedElement.focus();
         }

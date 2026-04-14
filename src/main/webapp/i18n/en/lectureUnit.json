@@ -25,7 +25,9 @@
             "completedTooltip": "Click to mark this content as uncompleted",
             "uncompletedTooltip": "Click to mark this content as completed",
             "openFullscreen": "Open fullscreen",
-            "closeFullscreen": "Close fullscreen"
+            "closeFullscreen": "Close fullscreen",
+            "fullscreenView": "Fullscreen view of {{ title }}",
+            "lectureUnit": "Lecture Content"
         },
         "textUnit": {
             "created": "New text content created",
