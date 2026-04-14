@@ -9,20 +9,23 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Extracts learning-relevant content from exercises into {@link ExtractedContentDTO}s
- * for downstream LLM consumption. Currently supports {@link ProgrammingExercise}.
+ * Extracts learning-relevant content from {@link LearningObject}s (exercises and lecture units)
+ * into {@link ExtractedContentDTO}s for downstream LLM consumption. Currently supports
+ * {@link ProgrammingExercise}; other exercise types and lecture unit types will follow.
  * <p>
- * To add a new exercise type:
+ * To add a new learning object type:
  * <ol>
- * <li>Add an {@code instanceof} branch in {@link #extractContent(Exercise)}</li>
+ * <li>Add an {@code instanceof} branch in {@link #extractContent(LearningObject)} for the new
+ * {@code LearningObject} subtype</li>
  * <li>Create a private {@code extractFrom*()} method accepting the concrete type</li>
- * <li>Always set {@code exerciseType} in metadata via {@link ExerciseType#getValue()}</li>
+ * <li>Always set {@code exerciseType} in metadata via {@link ExerciseType#getValue()} (for exercises)
+ * or an equivalent type discriminator for lecture units</li>
  * <li>Add corresponding tests in {@code ContentExtractionServiceTest}</li>
  * </ol>
  */
@@ -32,18 +35,18 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public class ContentExtractionService {
 
     /**
-     * Extracts learning-relevant content from the given exercise.
+     * Extracts learning-relevant content from the given learning object.
      *
-     * @param exercise the exercise to extract content from
+     * @param learningObject the learning object to extract content from
      * @return a DTO containing the title, learning text, and metadata
-     * @throws IllegalArgumentException if the exercise type is not yet supported
+     * @throws IllegalArgumentException if the learning object type is not yet supported
      */
-    public ExtractedContentDTO extractContent(Exercise exercise) {
-        Objects.requireNonNull(exercise, "exercise must not be null");
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
+    public ExtractedContentDTO extractContent(LearningObject learningObject) {
+        Objects.requireNonNull(learningObject, "learningObject must not be null");
+        if (learningObject instanceof ProgrammingExercise programmingExercise) {
             return extractFromProgrammingExercise(programmingExercise);
         }
-        throw new IllegalArgumentException("Unsupported exercise type: " + exercise.getClass().getSimpleName());
+        throw new IllegalArgumentException("Unsupported learning object type: " + learningObject.getClass().getSimpleName());
     }
 
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise) {

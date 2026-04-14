@@ -97,16 +97,16 @@ class ContentExtractionServiceTest {
     }
 
     @Test
-    void extractContent_nullExercise_throwsException() {
-        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class).hasMessage("exercise must not be null");
+    void extractContent_nullLearningObject_throwsException() {
+        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class).hasMessage("learningObject must not be null");
     }
 
     @Test
-    void extractContent_unsupportedExerciseType_throwsIllegalArgumentException() {
+    void extractContent_unsupportedLearningObjectType_throwsIllegalArgumentException() {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle("UML Diagram");
 
-        assertThatThrownBy(() -> contentExtractionService.extractContent(exercise)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unsupported exercise type");
+        assertThatThrownBy(() -> contentExtractionService.extractContent(exercise)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unsupported learning object type");
     }
 
 }
