@@ -109,10 +109,10 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
         String targetUri = UriComponentsBuilder.fromUriString(redirectUri).queryParam("jwt", jwt).build().toUriString();
 
         // Audit log (without JWT in URI)
-        auditEventRepository
-                .add(new AuditEvent(Instant.now(), processedAuth.getName(), "SAML2_EXTERNAL_REDIRECT_SUCCESS", Map.of("redirectScheme", URI.create(redirectUri).getScheme())));
+        String scheme = URI.create(redirectUri).getScheme();
+        auditEventRepository.add(new AuditEvent(Instant.now(), processedAuth.getName(), "SAML2_EXTERNAL_REDIRECT_SUCCESS", Map.of("redirectScheme", scheme)));
 
-        log.info("SAML2 external redirect for user '{}' to scheme '{}'", processedAuth.getName(), URI.create(redirectUri).getScheme());
+        log.info("SAML2 external redirect for user '{}' to scheme '{}'", processedAuth.getName(), scheme);
 
         response.sendRedirect(targetUri);
     }

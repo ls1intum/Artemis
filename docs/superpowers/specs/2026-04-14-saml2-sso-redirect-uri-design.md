@@ -72,7 +72,7 @@ saml2:
   external-token-remember-me: false  # Default: standard token validity for external clients
 ```
 
-- Empty list = feature disabled. If `redirect_uri` is provided while the feature is disabled, the request is rejected with HTTP 400 (not silently ignored — this makes capability detection explicit for clients)
+- Empty list = feature disabled. If `redirect_uri` is provided while the feature is disabled, it is silently ignored and the user is redirected to `/` (standard web flow). Note: The RelayState resolver API does not support HTTP error responses, so a strict HTTP 400 rejection is not possible at this layer. The user will complete the IdP login and land on the web UI instead of the external client callback.
 - `http` and `https` are always rejected, even if configured (hardcoded blocklist)
 
 Implementation: New fields in `SAML2Properties.java` (following existing JavaBean getter/setter style):
@@ -122,7 +122,7 @@ Wraps Spring's `OpenSaml5AuthenticationRequestResolver` to:
       - No fragment component
    b. Store validated redirect_uri in Hazelcast distributed map keyed by UUID nonce (TTL 5 min)
    c. Set nonce as RelayState via `setRelayStateResolver()`
-3. If `redirect_uri` is present but allowlist is empty (feature disabled): reject with HTTP 400 (explicit capability detection for clients)
+3. If `redirect_uri` is present but allowlist is empty (feature disabled): silently ignored (RelayState resolver cannot send HTTP error responses), user proceeds through normal web flow
 4. If no `redirect_uri`: use default behavior (no RelayState modification)
 
 ### New: `HazelcastSaml2RedirectUriRepository`
@@ -197,7 +197,7 @@ hazelcastRepo.save(nonce, redirectUri);  // TTL configured on map (5 min)
 | Scenario | Behavior |
 |----------|----------|
 | No `redirect_uri` parameter | `super.onAuthenticationSuccess()` → redirect to `/`, SPA handles JWT exchange |
-| Empty allowlist + `redirect_uri` provided | HTTP 400 (explicit rejection, not silent ignore) |
+| Empty allowlist + `redirect_uri` provided | Silently ignored, standard web flow (RelayState resolver cannot send HTTP errors) |
 | User already has active IdP SSO session | Flow completes without IdP login screen, RelayState preserved |
 | User cancels IdP login | SAML2 error flow, no redirect. Standard Spring Security handling |
 | `redirect_uri` has existing query params | JWT appended correctly via `UriComponentsBuilder` |
