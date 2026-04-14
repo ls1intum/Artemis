@@ -54,10 +54,20 @@ public class WeaviateService {
 
     private final boolean isTestProfile;
 
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
+    private final boolean isOpenApiDocsGeneration;
+
+    /**
+     * The {@code @Lazy} on {@code client} makes Spring inject a proxy instead of eagerly
+     * creating the {@link WeaviateClient} bean (whose constructor opens a network connection).
+     * During OpenAPI docs generation ({@code artemis.openapi-docs-generation=true}) the
+     * {@link #initializeCollections()} method returns early, so the proxy is never resolved
+     * and no Weaviate instance needs to be running.
+     */
+    public WeaviateService(@Lazy WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
         this.client = client;
         this.properties = properties;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
+        this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
     }
 
     /**
@@ -76,6 +86,11 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
+        if (isOpenApiDocsGeneration) {
+            log.info("OpenAPI docs generation mode: skipping Weaviate collection initialization");
+            return;
+        }
+
         log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", properties.scheme(), properties.httpHost(), properties.httpPort(),
                 properties.grpcPort(), properties.vectorizerModule());
 

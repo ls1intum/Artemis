@@ -27,6 +27,7 @@
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.globalsearch.web",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
+                "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",
                 "-Dspringdoc.api-docs.enabled=true",
                 "-Dspringdoc.pre-loading-enabled=true",
