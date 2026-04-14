@@ -159,6 +159,12 @@ public class SAML2Service {
             throw new UserNotActivatedException("User was disabled.");
         }
 
+        if (user.get().isInternal()) {
+            log.debug("User {} is currently internal. Changing to external as SAML2 login is happening.", user.get());
+            user.get().setInternal(false);
+            userRepository.save(user.get());
+        }
+
         String login = user.get().getLogin();
         auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
@@ -204,6 +210,7 @@ public class SAML2Service {
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
         newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
         newUser.setGroups(new HashSet<>());
+        newUser.setInternal(false);
 
         // userService.createUser(ManagedUserVM) does create an activated User
         // a random password is generated
