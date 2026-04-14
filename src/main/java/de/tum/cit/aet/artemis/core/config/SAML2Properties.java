@@ -45,6 +45,10 @@ public class SAML2Properties {
 
     private Set<ExtractionPattern> valueExtractionPatterns = Set.of();
 
+    private List<String> allowedRedirectSchemes = List.of();
+
+    private boolean externalTokenRememberMe = false;
+
     /**
      * Validates SAML2 configuration properties on bean creation
      * EventListener cannot be used here, as the bean is lazy
@@ -212,6 +216,42 @@ public class SAML2Properties {
      */
     public void setValueExtractionPatterns(Set<ExtractionPattern> valueExtractionPatterns) {
         this.valueExtractionPatterns = valueExtractionPatterns;
+    }
+
+    /**
+     * Gets the allowed redirect URI schemes for external client authentication.
+     *
+     * @return the list of allowed schemes (e.g., "vscode", "artemis-ios")
+     */
+    public List<String> getAllowedRedirectSchemes() {
+        return allowedRedirectSchemes;
+    }
+
+    /**
+     * Sets the allowed redirect URI schemes.
+     *
+     * @param allowedRedirectSchemes the allowed schemes
+     */
+    public void setAllowedRedirectSchemes(List<String> allowedRedirectSchemes) {
+        this.allowedRedirectSchemes = allowedRedirectSchemes;
+    }
+
+    /**
+     * Gets whether external client tokens should use rememberMe (long-lived) validity.
+     *
+     * @return true if rememberMe validity should be used
+     */
+    public boolean isExternalTokenRememberMe() {
+        return externalTokenRememberMe;
+    }
+
+    /**
+     * Sets whether external client tokens should use rememberMe validity.
+     *
+     * @param externalTokenRememberMe true for long-lived tokens
+     */
+    public void setExternalTokenRememberMe(boolean externalTokenRememberMe) {
+        this.externalTokenRememberMe = externalTokenRememberMe;
     }
 
     /**
