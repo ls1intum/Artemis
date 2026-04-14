@@ -80,7 +80,13 @@ public class JacksonDeserializerInitializationConfig {
                             "firstName": "Test",
                             "lastName": "User",
                             "email": "test@test.com",
-                            "activated": true
+                            "activated": true,
+                            "deleted": false,
+                            "langKey": "en",
+                            "internal": true,
+                            "memirisEnabled": true,
+                            "selectedLLMUsage": "CLOUD_AI",
+                            "bot": false
                         }],
                         "courses": [{
                             "id": 1,
@@ -174,7 +180,10 @@ public class JacksonDeserializerInitializationConfig {
                                     "name": "Another User"
                                 }
                             }]
-                        }]
+                        }],
+                        "plagiarismCase": {
+                            "id": 1
+                        }
                     }
                     """;
             objectMapper.readValue(sampleJson, Post.class);
@@ -198,7 +207,7 @@ public class JacksonDeserializerInitializationConfig {
                                 "firstName": "Test",
                                 "lastName": "Student"
                             },
-                            "type": "STUDENT"
+                            "type": "INSTRUCTOR_REGISTRATION"
                         }]
                     }
                     """;
