@@ -15,8 +15,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -55,7 +53,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseBasis_baseReferencesGotCloned() throws JsonProcessingException {
+    void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         final var newlyImported = importExerciseBase();
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
@@ -89,7 +87,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("submissionPolicyProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) throws JsonProcessingException {
+    void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var imported = importExerciseBaseWithSubmissionPolicy(submissionPolicy);
         assertThat(imported.getSubmissionPolicy()).isNotNull();
         assertThat(imported.getSubmissionPolicy()).isInstanceOf(SubmissionPolicy.class);
@@ -231,25 +229,25 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoBuildPlanAccessSecretForImportedExercise() throws JsonProcessingException {
+    void testNoBuildPlanAccessSecretForImportedExercise() {
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
         assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret()).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDifferentBuildPlanAccessSecretForImportedExercise() throws JsonProcessingException {
+    void testDifferentBuildPlanAccessSecretForImportedExercise() {
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
         assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
     }
 
-    private ProgrammingExercise importExerciseBase() throws JsonProcessingException {
+    private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
-    private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) throws JsonProcessingException {
+    private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var toBeImported = createToBeImportedWithSubmissionPolicy(submissionPolicy);
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }

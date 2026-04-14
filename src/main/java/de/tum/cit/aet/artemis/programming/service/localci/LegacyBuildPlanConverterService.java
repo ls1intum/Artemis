@@ -35,6 +35,13 @@ public class LegacyBuildPlanConverterService {
     public record DataFromLegacyFormat(String dockerImage, List<String> resultPaths, String buildScript) {
     }
 
+    /**
+     * If successful it returns a present {@link DataFromLegacyFormat} containing data for
+     * a {@link de.tum.cit.aet.artemis.buildagent.dto.BuildConfig}
+     *
+     * @param programmingExercise the exercise that is assumed to be legacy
+     * @return the extracted data
+     */
     public Optional<DataFromLegacyFormat> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
         var buildConfig = programmingExercise.getBuildConfig();
         if (buildConfig == null || buildConfig.getBuildScript() == null) {
