@@ -115,9 +115,13 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-        String expectedBuildConfig = new BuildPlanPhasesDTO(phases, null).toBuildPlanConfiguration();
+
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
+        String expectedBuildConfig = new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration();
+
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
         assertThat(exercise.getBuildConfig().getBuildScript()).isNull();
         // test that the method does not throw an exception when the exercise is null

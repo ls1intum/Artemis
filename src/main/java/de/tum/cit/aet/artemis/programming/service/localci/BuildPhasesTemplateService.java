@@ -76,7 +76,7 @@ public class BuildPhasesTemplateService {
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
-                if (filename == null || !filename.endsWith(".yamlString")) {
+                if (filename == null || !filename.endsWith(".yaml")) {
                     continue;
                 }
                 String directory = resource.getURL().getPath().split("templates/phases/")[1].split("/")[0];
@@ -131,7 +131,7 @@ public class BuildPhasesTemplateService {
 
         String yamlString = null;
         try {
-            Path resourcePath = Path.of("templates", "phases", programmingLanguage.name(), templateFileName);
+            Path resourcePath = Path.of("templates", "phases", programmingLanguage.name().toLowerCase(), templateFileName);
             var resource = this.resourceLoaderService.getResource(resourcePath);
             if (resource != null && resource.exists()) {
                 yamlString = readResourceAsString(resource);
