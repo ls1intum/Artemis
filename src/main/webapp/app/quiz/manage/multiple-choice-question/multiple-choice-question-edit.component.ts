@@ -5,7 +5,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
@@ -53,11 +53,14 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     question = input.required<MultipleChoiceQuestion>();
     questionIndex = input.required<number>();
+    hyperionEnabled = input(false);
 
     questionUpdated = output();
     questionDeleted = output();
     questionMoveUp = output();
     questionMoveDown = output();
+    refineRequested = output();
+    collapseChanged = output<boolean>();
 
     questionEditorText = '';
     isQuestionCollapsed: boolean;
@@ -83,6 +86,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     // Icons
     faTrash = faTrash;
+    faWandMagicSparkles = faWandMagicSparkles;
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
@@ -255,6 +259,25 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.changeDetector.detectChanges();
         this.showMultipleChoiceQuestionVisual = true;
         this.changeDetector.detectChanges();
+    }
+
+    toggleCollapse(): void {
+        this.isQuestionCollapsed = !this.isQuestionCollapsed;
+        this.collapseChanged.emit(this.isQuestionCollapsed);
+    }
+
+    /**
+     * Reload the markdown editor content from the current question state.
+     * Called after an external update (e.g. AI refinement) mutates the question object in-place.
+     */
+    reloadFromQuestion(): void {
+        this.questionEditorText = this.generateMarkdown();
+        const editor = this.markdownEditor();
+        if (editor) {
+            editor.markdown = this.questionEditorText;
+        }
+        this.resetMultipleChoicePreview();
+        this.resetMultipleChoiceVisual();
     }
 
     /**
