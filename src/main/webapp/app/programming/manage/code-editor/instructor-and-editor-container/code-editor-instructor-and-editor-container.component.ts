@@ -572,8 +572,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         };
         if (!checkOnly) {
             const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
-                this.selectedRepository,
-                this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+                repositoryType,
+                repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
             );
             if (selectedFeedbackThreadIds.length > 0) {
                 request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
