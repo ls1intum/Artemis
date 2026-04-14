@@ -24,6 +24,7 @@
     }
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.programmingExercises'"
+        [leadingIcon]="iconMap[ExerciseType.PROGRAMMING]"
         [exerciseCount]="programmingExercisesCount()"
         [hidden]="shouldHideExerciseCard('programming')"
         [course]="course()!"
@@ -40,6 +41,7 @@
     </jhi-course-exercise-card>
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.quizExercises'"
+        [leadingIcon]="iconMap[ExerciseType.QUIZ]"
         [exerciseCount]="quizExercisesCount()"
         [hidden]="shouldHideExerciseCard('quiz')"
         [course]="course()!"
@@ -57,6 +59,7 @@
     @if (modelingExerciseEnabled()) {
         <jhi-course-exercise-card
             [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
+            [leadingIcon]="iconMap[ExerciseType.MODELING]"
             [exerciseCount]="modelingExercisesCount()"
             [hidden]="shouldHideExerciseCard('modeling')"
             [course]="course()!"
@@ -75,6 +78,7 @@
     @if (textExerciseEnabled()) {
         <jhi-course-exercise-card
             [headingJhiTranslate]="'artemisApp.course.textExercises'"
+            [leadingIcon]="iconMap[ExerciseType.TEXT]"
             [exerciseCount]="textExercisesCount()"
             [hidden]="shouldHideExerciseCard('text')"
             [course]="course()!"
@@ -93,6 +97,7 @@
     @if (fileUploadExerciseEnabled()) {
         <jhi-course-exercise-card
             [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
+            [leadingIcon]="iconMap[ExerciseType.FILE_UPLOAD]"
             [exerciseCount]="fileUploadExercisesCount()"
             [hidden]="shouldHideExerciseCard('file-upload')"
             [course]="course()!"
