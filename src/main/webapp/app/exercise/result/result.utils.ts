@@ -16,7 +16,7 @@ import { Participation, ParticipationType, getLatestSubmission } from 'app/exerc
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -217,6 +217,17 @@ export const evaluateTemplateStatus = (
             } else {
                 // the due date is over, further submissions are no longer possible, no result after assessment due date
                 // TODO why is this distinct from the case above? The submission can still be graded and often is.
+                return ResultTemplateStatus.NO_RESULT;
+            }
+        } else if (isPracticeMode(participation as StudentParticipation)) {
+            // Practice mode submissions are not in due time but should show AI feedback statuses, not LATE/LATE_NO_FEEDBACK
+            if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
+                return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
+                return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+            } else if (initializedResultWithScore(result)) {
+                return ResultTemplateStatus.HAS_RESULT;
+            } else {
                 return ResultTemplateStatus.NO_RESULT;
             }
         } else if (initializedResultWithScore(result) && (!assessmentDueDate || assessmentDueDate.isBefore(dayjs()) || !isManualResult(result))) {

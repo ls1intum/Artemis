@@ -55,7 +55,7 @@
             @if (result && result.id) {
                 <jhi-unreferenced-feedback
                     [(feedbacks)]="unreferencedFeedback"
-                    (feedbacksChange)="validateAssessment()"
+                    (feedbacksChange)="validateAssessment($event)"
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
                     [resultId]="result.id"

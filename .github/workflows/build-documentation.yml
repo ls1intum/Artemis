@@ -28,6 +28,10 @@ jobs:
         working-directory: documentation
         run: npm ci
 
+      - name: Documentation Code Style
+        working-directory: documentation
+        run: npm run lint
+
       - name: Build Docusaurus site
         working-directory: documentation
         run: npm run build

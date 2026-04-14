@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -75,14 +76,14 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisCourseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
@@ -93,7 +94,7 @@ public class IrisCourseChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisCourseChatSession>> getAllSessions(@PathVariable Long courseId) {
+    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -102,7 +103,7 @@ public class IrisCourseChatSessionResource {
 
         var sessions = irisCourseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok(sessions);
+        return ResponseEntity.ok(sessions.stream().map(IrisChatSessionResponseDTO::of).toList());
     }
 
     /**
@@ -115,13 +116,13 @@ public class IrisCourseChatSessionResource {
      */
     @PostMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.createSession(course, user);
         var uriString = "/api/iris/sessions/" + session.getId();
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 }

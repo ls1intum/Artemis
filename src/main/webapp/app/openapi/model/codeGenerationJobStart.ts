@@ -9,7 +9,9 @@
  */
 
 
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
 export interface CodeGenerationJobStart { 
     jobId?: string;
+    repositoryType?: RepositoryType;
 }
-

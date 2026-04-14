@@ -36,6 +36,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
                 this.initializeForm();
             }
             const fd = this.formData();
+            this.updateTitleUniqueValidator();
             if (this.isEditMode() && fd) {
                 this.setFormValues(fd);
             }
@@ -44,6 +45,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     ngOnChanges(changes: SimpleChanges): void {
         this.initializeForm();
+        this.updateTitleUniqueValidator();
         const fd = this.formData();
         if (this.isEditMode() && fd) {
             this.setFormValues(fd);

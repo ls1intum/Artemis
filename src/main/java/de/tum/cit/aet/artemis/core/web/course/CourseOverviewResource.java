@@ -271,10 +271,7 @@ public class CourseOverviewResource {
         }
 
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
-            course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
-            course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
+            userRepository.setUserCountsForCourse(course);
         }
 
         return ResponseEntity.ok(course);

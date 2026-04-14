@@ -67,8 +67,8 @@ export class MetisConversationService implements OnDestroy {
             this.userId = user.id!;
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
             this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
-                if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
-                    this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+                if (postDTO.action === MetisPostAction.CREATE && postDTO.post?.author?.id !== this.userId) {
+                    this.handleNewMessage(postDTO.post?.conversation?.id, postDTO.post?.conversation?.lastMessageDate);
                 }
             });
         });

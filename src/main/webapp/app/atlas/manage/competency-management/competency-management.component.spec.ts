@@ -130,6 +130,8 @@ describe('CompetencyManagementComponent', () => {
             } as Prerequisite,
         ]);
 
+        vi.spyOn(courseCompetencyApiService, 'getCourseProgressForCourse').mockResolvedValue([courseCompetencyProgress]);
+
         const profileInfoResponse = {
             activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;

@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
@@ -18,6 +17,7 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
         test('Create a new modeling exercise', async ({ login, page, courseManagementExercises, modelingExerciseCreation, modelingExerciseEditor, modelingExerciseAssessment }) => {
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exercises`);
+            await page.waitForLoadState('networkidle');
             await courseManagementExercises.createModelingExercise();
             await modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
             await modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
@@ -26,11 +26,13 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             modelingExercise = await response.json();
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            await page.waitForLoadState('networkidle');
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
-            await expect(page.locator(MODELING_EDITOR_CANVAS).locator('g').nth(0)).toBeAttached();
+            await expect(page.locator('.react-flow__node').first()).toBeAttached();
             await modelingExerciseCreation.save();
 
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
+            await page.waitForLoadState('networkidle');
             await modelingExerciseEditor.clickCreateExampleSubmission();
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
@@ -45,7 +47,9 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            await expect(modelingExerciseEditor.getModelingCanvas()).toBeAttached();
+            await page.waitForLoadState('networkidle');
+            await modelingExerciseEditor.waitForExampleSolutionEditor();
+            await expect(modelingExerciseEditor.getModelingCanvas()).toBeVisible();
         });
 
         test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {

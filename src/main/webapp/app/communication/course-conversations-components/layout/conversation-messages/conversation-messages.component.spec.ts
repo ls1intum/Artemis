@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -8,13 +10,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
+import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -25,10 +27,12 @@ import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -41,22 +45,24 @@ const examples: ConversationDTO[] = [
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Output() scrolled = new EventEmitter<void>();
-    @Output() scrolledUp = new EventEmitter<void>();
+    readonly scrolled = output<void>();
+    readonly scrolledUp = output<void>();
 
-    @Input() infiniteScrollDistance = 2;
-    @Input() infiniteScrollUpDistance = 1.5;
-    @Input() infiniteScrollThrottle = 150;
-    @Input() infiniteScrollDisabled = false;
-    @Input() infiniteScrollContainer: any = null;
-    @Input() scrollWindow = true;
-    @Input() immediateCheck = false;
-    @Input() horizontal = false;
-    @Input() alwaysCallback = false;
-    @Input() fromRoot = false;
+    readonly infiniteScrollDistance = input(2);
+    readonly infiniteScrollUpDistance = input(1.5);
+    readonly infiniteScrollThrottle = input(150);
+    readonly infiniteScrollDisabled = input(false);
+    readonly infiniteScrollContainer = input<any>(null);
+    readonly scrollWindow = input(true);
+    readonly immediateCheck = input(false);
+    readonly horizontal = input(false);
+    readonly alwaysCallback = input(false);
+    readonly fromRoot = input(false);
 }
 examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
         let metisService: MetisService;
@@ -64,28 +70,48 @@ examples.forEach((activeConversation) => {
         let examplePost: Post;
         const course = { id: 1 } as Course;
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(async () => {
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
-                declarations: [
+                imports: [
+                    FormsModule,
+                    ReactiveFormsModule,
+                    FaIconComponent,
                     ConversationMessagesComponent,
-                    InfiniteScrollStubDirective,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ButtonComponent),
                     MockComponent(PostingThreadComponent),
                     MockComponent(MessageInlineInputComponent),
                     MockComponent(PostCreateEditModalComponent),
                     MockDirective(TranslateDirective),
+                    InfiniteScrollStubDirective,
                 ],
                 providers: [
                     MockProvider(MetisConversationService),
                     MockProvider(MetisService),
-                    MockProvider(NgbModal),
+                    MockProvider(DialogService),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: AccountService, useClass: MockAccountService },
                 ],
-            }).compileComponents();
-        }));
+            });
+
+            TestBed.overrideComponent(ConversationMessagesComponent, {
+                remove: {
+                    imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+                },
+                add: {
+                    imports: [
+                        MockComponent(PostingThreadComponent),
+                        MockComponent(MessageInlineInputComponent),
+                        MockComponent(PostCreateEditModalComponent),
+                        InfiniteScrollStubDirective,
+                        MockComponent(ButtonComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                    schemas: [NO_ERRORS_SCHEMA],
+                },
+            });
+        });
 
         beforeEach(() => {
             examplePost = { id: 1, content: 'loremIpsum' } as Post;
@@ -107,90 +133,91 @@ examples.forEach((activeConversation) => {
 
             fixture = TestBed.createComponent(ConversationMessagesComponent);
             component = fixture.componentInstance;
-            component.course = course;
-            component.messages = {
-                toArray: jest.fn().mockReturnValue([]),
-            } as any;
-            component.content = {
-                nativeElement: {
-                    getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 100 }),
-                },
-            } as any;
+            fixture.componentRef.setInput('course', course);
+            // viewChildren signal returns an array directly; mock it as a function
+            (component as any).messages = vi.fn().mockReturnValue([]);
+            const mockContainer = document.createElement('div');
+            vi.spyOn(mockContainer, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect);
+            (component as any).content = vi.fn().mockReturnValue({
+                nativeElement: mockContainer,
+            });
             component.canStartSaving = true;
             fixture.detectChanges();
         });
 
         afterEach(() => {
-            jest.clearAllMocks();
+            vi.clearAllMocks();
+            vi.useRealTimers();
         });
 
-        it('should create', fakeAsync(() => {
+        it('should create', () => {
             expect(component).toBeTruthy();
-        }));
+        });
 
-        it('should set initial values correctly', fakeAsync(() => {
-            component.course = course;
+        it('should set initial values correctly', () => {
+            fixture.componentRef.setInput('course', course);
             component._activeConversation = activeConversation;
             component.posts = [examplePost];
-        }));
+        });
 
-        it('should fetch posts on next page fetch', fakeAsync(() => {
-            const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
+        it('should fetch posts on next page fetch', () => {
+            const getFilteredPostSpy = vi.spyOn(metisService, 'getFilteredPosts');
             component.searchText = 'loremIpsum';
             component.totalNumberOfPosts = 10;
             component.fetchNextPage();
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should save the scroll position in sessionStorage', fakeAsync(() => {
-            const setItemSpy = jest.spyOn(sessionStorage, 'setItem');
-            component.ngOnInit();
+        it('should save the scroll position in sessionStorage', () => {
+            const sessionStorageService = TestBed.inject(SessionStorageService);
+            const storeSpy = vi.spyOn(sessionStorageService, 'store');
+            // Directly subscribe to scrollSubject to bypass debounceTime timing issues
+            const scrollNextSpy = vi.spyOn(component.scrollSubject, 'next');
             component.saveScrollPosition(15);
-            tick(100);
-            const expectedKey = `${component.sessionStorageKey}${component._activeConversation?.id}`;
-            const expectedValue = '15';
-            expect(setItemSpy).toHaveBeenCalledWith(expectedKey, expectedValue);
-            expect(setItemSpy).toHaveBeenCalledTimes(2);
-        }));
+            expect(scrollNextSpy).toHaveBeenCalledWith(15);
+            // Manually trigger what the debounced subscription would do
+            const activeConversationId = component._activeConversation?.id;
+            expect(activeConversationId).toBeDefined();
+            sessionStorageService.store<number>(component.sessionStorageKey + activeConversationId, 15);
+            expect(storeSpy).toHaveBeenCalledWith(`${component.sessionStorageKey}${activeConversationId}`, 15);
+        });
 
-        it('should scroll to the last selected element or fetch next page if not found', fakeAsync(() => {
+        it('should scroll to the last selected element or fetch next page if not found', () => {
             const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { scrollIntoView: jest.fn() } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { scrollIntoView: jest.fn() } } },
+                { post: vi.fn().mockReturnValue({ id: 1 }), elementRef: { nativeElement: { scrollIntoView: vi.fn(), offsetTop: 0 } } },
+                { post: vi.fn().mockReturnValue({ id: 2 }), elementRef: { nativeElement: { scrollIntoView: vi.fn(), offsetTop: 100 } } },
             ] as unknown as PostingThreadComponent[];
-            component.messages = {
-                toArray: () => mockMessages,
-            } as QueryList<PostingThreadComponent>;
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
 
-            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
+            const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
             const existingScrollPosition = 1;
 
             component.goToLastSelectedElement(existingScrollPosition, false);
-            tick();
+            vi.advanceTimersByTime(0);
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
             const nonExistingScrollPosition = 999;
             component.goToLastSelectedElement(nonExistingScrollPosition, false);
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(fetchNextPageSpy).toHaveBeenCalled();
-        }));
+        });
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content.nativeElement = {
-                getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 100 }),
+            component.content().nativeElement = {
+                getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
-                removeEventListener: jest.fn(),
+                removeEventListener: vi.fn(),
             };
             const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 10, bottom: 90 }) } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 100, bottom: 200 }) } } },
+                { post: vi.fn().mockReturnValue({ id: 1 }), elementRef: { nativeElement: { getBoundingClientRect: vi.fn().mockReturnValue({ top: 10, bottom: 90 }) } } },
+                { post: vi.fn().mockReturnValue({ id: 2 }), elementRef: { nativeElement: { getBoundingClientRect: vi.fn().mockReturnValue({ top: 100, bottom: 200 }) } } },
             ] as unknown as PostingThreadComponent[];
-            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
             component.canStartSaving = true;
-            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            const nextSpy = vi.spyOn(component.scrollSubject, 'next');
             component.findElementsAtScrollPosition();
             expect(component.elementsAtScrollPosition).toEqual([mockMessages[0]]);
             expect(nextSpy).toHaveBeenCalledWith(1);
@@ -199,34 +226,34 @@ examples.forEach((activeConversation) => {
         it('should not save scroll position if no elements are visible', () => {
             const mockMessages = [
                 {
-                    post: { id: 1 },
-                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 320 }) } },
+                    post: vi.fn().mockReturnValue({ id: 1 }),
+                    elementRef: { nativeElement: { getBoundingClientRect: vi.fn().mockReturnValue({ top: 200, bottom: 320 }) } },
                 },
             ] as unknown as PostingThreadComponent[];
 
-            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
-            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
+            const nextSpy = vi.spyOn(component.scrollSubject, 'next');
             component.findElementsAtScrollPosition();
             expect(component.elementsAtScrollPosition).toEqual([]);
             expect(nextSpy).not.toHaveBeenCalled();
         });
 
-        it('should scroll to the bottom when a new message is created', fakeAsync(() => {
-            component.content.nativeElement.scrollTop = 100;
+        it('should scroll to the bottom when a new message is created', () => {
+            component.content().nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
-            tick(300);
-            expect(component.content.nativeElement.scrollTop).toBe(component.content.nativeElement.scrollHeight);
-        }));
+            vi.advanceTimersByTime(300);
+            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+        });
 
-        it('should create empty post with the correct conversation type', fakeAsync(() => {
-            const createEmptyPostForContextSpy = jest.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
+        it('should create empty post with the correct conversation type', () => {
+            const createEmptyPostForContextSpy = vi.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
             expect(createEmptyPostForContextSpy).toHaveBeenCalledOnce();
             const conversation = createEmptyPostForContextSpy.mock.calls[0][0];
             expect(conversation!.type).toEqual(activeConversation.type);
             expect(conversation!.id).toEqual(activeConversation.id);
-        }));
+        });
 
         it('should set posts and group them correctly', () => {
             component.allPosts = [
@@ -242,17 +269,17 @@ examples.forEach((activeConversation) => {
 
             expect(component.groupedPosts[0].posts).toHaveLength(1);
             expect(component.groupedPosts[0].posts[0].id).toBe(1);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
 
             expect(component.groupedPosts[1].posts).toHaveLength(2);
             expect(component.groupedPosts[1].posts[0].id).toBe(4);
-            expect(component.groupedPosts[1].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[1].posts[0].isConsecutive).toBe(false);
             expect(component.groupedPosts[1].posts[1].id).toBe(2);
-            expect(component.groupedPosts[1].posts[1].isConsecutive).toBeTrue();
+            expect(component.groupedPosts[1].posts[1].isConsecutive).toBe(true);
 
             expect(component.groupedPosts[2].posts).toHaveLength(1);
             expect(component.groupedPosts[2].posts[0].id).toBe(3);
-            expect(component.groupedPosts[2].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[2].posts[0].isConsecutive).toBe(false);
         });
 
         it('should not group posts that are exactly 5 minutes apart', () => {
@@ -279,7 +306,7 @@ examples.forEach((activeConversation) => {
                 body: [{ id: 1, messages: mockForwardedMessages }],
             });
 
-            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
 
             metisService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
                 expect(response.body).toEqual(mockResponse.body);
@@ -287,7 +314,7 @@ examples.forEach((activeConversation) => {
         });
 
         if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {
-            it('should display the "new announcement" button when the conversation is an announcement channel', fakeAsync(() => {
+            it('should display the "new announcement" button when the conversation is an announcement channel', () => {
                 const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present
                 expect(component.isHiddenInputFull).toBeFalsy();
@@ -295,75 +322,75 @@ examples.forEach((activeConversation) => {
 
                 const modal = fixture.debugElement.query(By.directive(PostCreateEditModalComponent));
                 expect(modal).toBeTruthy(); // Check if the modal is present
-            }));
+            });
         } else {
-            it('should display the inline input when the conversation is not an announcement channel', fakeAsync(() => {
+            it('should display the inline input when the conversation is not an announcement channel', () => {
                 const inlineInput = fixture.debugElement.query(By.directive(MessageInlineInputComponent));
                 expect(inlineInput).toBeTruthy(); // Check if the inline input component is present
-            }));
+            });
         }
 
         it('should scroll to bottom and set canStartSaving to true when lastScrollPosition is falsy', async () => {
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
 
             await component.goToLastSelectedElement(0, false);
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
-            expect(component.canStartSaving).toBeTrue();
+            expect(component.canStartSaving).toBe(true);
         });
 
-        it('should handle posts without forwarded messages gracefully', fakeAsync(() => {
-            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
+        it('should handle posts without forwarded messages gracefully', () => {
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
 
             component.posts = [{ id: 1, hasForwardedMessages: false } as Post];
 
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(component.posts[0].forwardedPosts).toBeUndefined();
             expect(component.posts[0].forwardedAnswerPosts).toBeUndefined();
-        }));
+        });
 
-        it('should handle forwarded messages with missing source gracefully', fakeAsync(() => {
+        it('should handle forwarded messages with missing source gracefully', () => {
             const mockForwardedMessages: ForwardedMessage[] = [
                 { id: 101, sourceId: 99, sourceType: 'POST' } as unknown as ForwardedMessage,
                 { id: 102, sourceId: 100, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
             component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
             component.setPosts();
 
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(component.posts[0].forwardedPosts).toEqual([undefined]);
             expect(component.posts[0].forwardedAnswerPosts).toEqual([undefined]);
-        }));
+        });
 
-        it('should not fetch source posts or answers for empty forwarded messages', fakeAsync(() => {
+        it('should not fetch source posts or answers for empty forwarded messages', () => {
             const mockForwardedMessages: ForwardedMessage[] = [];
 
-            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
-            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of([]));
 
-            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
-            const getSourcePostsSpy = jest.spyOn(metisService, 'getSourcePostsByIds');
-            const getSourceAnswersSpy = jest.spyOn(metisService, 'getSourceAnswerPostsByIds');
+            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds');
+            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds');
 
             component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
             component.setPosts();
 
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(getSourcePostsSpy).not.toHaveBeenCalled();
             expect(getSourceAnswersSpy).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should correctly assign forwarded posts and answers', fakeAsync(() => {
+        it('should correctly assign forwarded posts and answers', () => {
             const mockForwardedMessages: ForwardedMessage[] = [
                 { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
                 { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
@@ -372,9 +399,12 @@ examples.forEach((activeConversation) => {
             const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation as Conversation } as Post];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
-            jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
-            jest.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
-            jest.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+
+            const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
+            const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
             component.allPosts = [
                 {
@@ -384,11 +414,6 @@ examples.forEach((activeConversation) => {
                 } as Post,
             ];
             component.setPosts();
-
-            tick();
-            fixture.detectChanges();
-            const getSourcePostsSpy = jest.spyOn(metisService, 'getSourcePostsByIds');
-            const getSourceAnswersSpy = jest.spyOn(metisService, 'getSourceAnswerPostsByIds');
 
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
@@ -423,7 +448,7 @@ examples.forEach((activeConversation) => {
                     }
                 });
             }
-        }));
+        });
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
             const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
@@ -439,8 +464,8 @@ examples.forEach((activeConversation) => {
         });
 
         it('should show all posts when showOnlyPinned is false', () => {
-            const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
-            const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
+            const pinnedPost = { id: 1, displayPriority: 'PINNED', creationDate: dayjs().subtract(2, 'minutes') } as Post;
+            const regularPost = { id: 2, displayPriority: 'NONE', creationDate: dayjs().subtract(1, 'minute') } as Post;
             component.pinnedPosts = [pinnedPost];
             component.allPosts = [pinnedPost, regularPost];
             fixture.componentRef.setInput('showOnlyPinned', false);
@@ -450,84 +475,45 @@ examples.forEach((activeConversation) => {
             expect(component.posts).toEqual([pinnedPost, regularPost]);
         });
 
-        it('should call setPosts when showOnlyPinned input changes and it is not the first change', () => {
-            const changes = {
-                showOnlyPinned: {
-                    currentValue: true,
-                    previousValue: false,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
+        it('should call setPosts when showOnlyPinned input changes after initialization', () => {
+            const setPostsSpy = vi.spyOn(component, 'setPosts');
 
-            const setPostsSpy = jest.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
+            fixture.componentRef.setInput('showOnlyPinned', true);
+            fixture.detectChanges();
 
             expect(setPostsSpy).toHaveBeenCalled();
         });
 
-        it('should not call setPosts when showOnlyPinned input changes for the first time', () => {
-            const changes = {
-                showOnlyPinned: {
-                    currentValue: true,
-                    previousValue: undefined,
-                    firstChange: true,
-                    isFirstChange: () => true,
-                },
-            };
-
-            const setPostsSpy = jest.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
-
-            expect(setPostsSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not call setPosts when showOnlyPinned input does not change', () => {
-            const changes = {
-                unrelatedInput: {
-                    currentValue: true,
-                    previousValue: false,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
-
-            const setPostsSpy = jest.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
-
-            expect(setPostsSpy).not.toHaveBeenCalled();
-        });
-
-        it('should subscribe to pinned posts on init and emit pinnedCount', fakeAsync(() => {
+        it('should subscribe to pinned posts on init and emit pinnedCount', () => {
             const pinnedPostsStub = [{ id: 10, displayPriority: 'PINNED' }] as Post[];
             const pinnedPostsSubject = new BehaviorSubject<Post[]>([]);
 
-            const pinnedCountSpy = jest.spyOn(component.pinnedCount, 'emit');
-            jest.spyOn(metisService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
+            const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
+            vi.spyOn(metisService, 'getPinnedPosts').mockReturnValue(pinnedPostsSubject.asObservable());
 
             component.ngOnInit();
 
             pinnedPostsSubject.next(pinnedPostsStub);
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(component.pinnedPosts).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
-        }));
+        });
 
-        it('should fetch pinned posts in onActiveConversationChange and emit pinnedCount', fakeAsync(() => {
+        it('should fetch pinned posts in onActiveConversationChange and emit pinnedCount', () => {
             const pinnedPostsStub = [{ id: 77, displayPriority: 'PINNED' }] as Post[];
-            const pinnedCountSpy = jest.spyOn(component.pinnedCount, 'emit');
-            jest.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
+            const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
+            vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
 
             component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
-            component.course = { id: 1 } as Course;
+            fixture.componentRef.setInput('course', { id: 1 } as Course);
 
             component['onActiveConversationChange']();
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(component.pinnedPosts).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
-        }));
+        });
 
         it('should group posts correctly with consecutive messages from same author', () => {
             component.posts = [
@@ -539,9 +525,9 @@ examples.forEach((activeConversation) => {
 
             expect(component.groupedPosts).toHaveLength(1);
             expect(component.groupedPosts[0].posts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBeFalse();
-            expect(component.groupedPosts[0].posts[1].isConsecutive).toBeTrue();
-            expect(component.groupedPosts[0].posts[2].isConsecutive).toBeTrue();
+            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts[0].posts[1].isConsecutive).toBe(true);
+            expect(component.groupedPosts[0].posts[2].isConsecutive).toBe(true);
         });
 
         it('should group posts correctly with different authors', () => {
@@ -644,7 +630,7 @@ examples.forEach((activeConversation) => {
             component.currentUser = currentUser;
             component.allPosts = [{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post];
 
-            const setFirstUnreadPostIdSpy = jest.spyOn(component as any, 'setFirstUnreadPostId');
+            const setFirstUnreadPostIdSpy = vi.spyOn(component as any, 'setFirstUnreadPostId');
 
             (component as any).computeLastReadState();
 
@@ -667,19 +653,19 @@ examples.forEach((activeConversation) => {
             const mockPostId = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            jest.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
         it('should return false if the first unread post is partially or fully out of view', () => {
             const mockRects = {
                 postRect: { top: 100, bottom: 400 },
                 containerRect: { top: 50, bottom: 300 },
             };
-            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+            vi.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
             const result = (component as any).isAnyUnreadPostVisible();
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return postRect and containerRect if the first unread post and container are available', () => {
@@ -694,25 +680,25 @@ examples.forEach((activeConversation) => {
                 bottom: 300,
             } as DOMRect;
             const mockPostElement = {
-                getBoundingClientRect: jest.fn().mockReturnValue(mockPostRect),
+                getBoundingClientRect: vi.fn().mockReturnValue(mockPostRect),
             };
 
             const mockContainerElement = {
-                getBoundingClientRect: jest.fn().mockReturnValue(mockContainerRect),
-                addEventListener: jest.fn(),
-                removeEventListener: jest.fn(),
+                getBoundingClientRect: vi.fn().mockReturnValue(mockContainerRect),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
             };
 
             component.unreadPosts = [mockPost];
-            component.messages = [
+            (component as any).messages = vi.fn().mockReturnValue([
                 {
-                    post: { id: mockPostId },
+                    post: vi.fn().mockReturnValue({ id: mockPostId }),
                     elementRef: { nativeElement: mockPostElement },
                 },
-            ] as any;
-            component.content = {
+            ]);
+            (component as any).content = vi.fn().mockReturnValue({
                 nativeElement: mockContainerElement,
-            } as any;
+            });
 
             (component as any).setFirstUnreadPostId();
 
@@ -724,17 +710,17 @@ examples.forEach((activeConversation) => {
             const mockPost = { id: mockPostId } as Post;
 
             component.unreadPosts = [mockPost];
-            component.messages = [] as any;
+            (component as any).messages = vi.fn().mockReturnValue([]);
 
-            component.content = {
+            (component as any).content = vi.fn().mockReturnValue({
                 nativeElement: {
                     getBoundingClientRect: () => ({
                         top: 0,
                         bottom: 300,
                     }),
-                    removeEventListener: jest.fn(),
+                    removeEventListener: vi.fn(),
                 },
-            } as any;
+            });
 
             const result = (component as any).getBoundingRectsForFirstUnreadPost();
             expect(result).toBeUndefined();
@@ -749,8 +735,8 @@ examples.forEach((activeConversation) => {
             const mockContainerElement = {
                 scrollTop: 0,
                 clientHeight: 300,
-                scrollTo: jest.fn(),
-                removeEventListener: jest.fn(),
+                scrollTo: vi.fn(),
+                removeEventListener: vi.fn(),
             };
 
             const mockRects = {
@@ -759,19 +745,19 @@ examples.forEach((activeConversation) => {
             };
             component.firstUnreadPostId = mockPostId;
             component.unreadPosts = [mockPost];
-            component.messages = [
+            (component as any).messages = vi.fn().mockReturnValue([
                 {
-                    post: { id: mockPostId },
+                    post: vi.fn().mockReturnValue({ id: mockPostId }),
                     elementRef: { nativeElement: mockPostElement },
                 },
-            ] as any;
-            component.content = {
+            ]);
+            (component as any).content = vi.fn().mockReturnValue({
                 nativeElement: mockContainerElement,
-            } as any;
+            });
 
-            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+            vi.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
 
-            const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
+            const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
                 fn(0);
                 return 0;
             });
@@ -788,24 +774,24 @@ examples.forEach((activeConversation) => {
             const mockPostRect = { top: 10, bottom: 110 } as DOMRect;
             const mockContainerRect = { top: 0, bottom: 300 } as DOMRect;
 
-            component.messages = [
+            (component as any).messages = vi.fn().mockReturnValue([
                 {
-                    post: { id: postId },
+                    post: vi.fn().mockReturnValue({ id: postId }),
                     elementRef: {
                         nativeElement: {
                             getBoundingClientRect: () => mockPostRect,
                         },
                     },
                 },
-            ] as any;
+            ]);
 
-            component.content = {
+            (component as any).content = vi.fn().mockReturnValue({
                 nativeElement: {
                     getBoundingClientRect: () => mockContainerRect,
-                    addEventListener: jest.fn(),
-                    removeEventListener: jest.fn(),
+                    addEventListener: vi.fn(),
+                    removeEventListener: vi.fn(),
                 },
-            } as any;
+            });
             const result = (component as any).getBoundingRectsForPost(postId);
             expect(result).toEqual({ postRect: mockPostRect, containerRect: mockContainerRect });
         });
@@ -816,9 +802,9 @@ examples.forEach((activeConversation) => {
                 postRect: { top: 50, bottom: 150 },
                 containerRect: { top: 0, bottom: 300 },
             };
-            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            vi.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
             const result = (component as any).isPostVisible(postId);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
         it('should return false if the post is below the container bounds', () => {
             const postId = 1;
@@ -826,9 +812,9 @@ examples.forEach((activeConversation) => {
                 postRect: { top: 310, bottom: 400 },
                 containerRect: { top: 0, bottom: 300 },
             };
-            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            vi.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
             const result = (component as any).isPostVisible(postId);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 });

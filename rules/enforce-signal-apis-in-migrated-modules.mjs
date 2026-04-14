@@ -12,6 +12,7 @@ const MIGRATED_MODULES = [
     "assessment",
     "atlas",
     "buildagent",
+    "communication",
     "core",
     "fileupload",
     "iris",

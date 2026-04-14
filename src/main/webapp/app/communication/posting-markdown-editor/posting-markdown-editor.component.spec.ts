@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { NgStyle } from '@angular/common';
@@ -47,6 +49,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('PostingsMarkdownEditor', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingMarkdownEditorComponent;
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
@@ -54,52 +58,56 @@ describe('PostingsMarkdownEditor', () => {
     let metisService: MetisService;
     let fileService: FileService;
     let lectureService: LectureService;
-    let findLectureWithDetailsSpy: jest.SpyInstance;
+    let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
 
     const backdropClickSubject = new Subject<void>();
     const mockOverlayRef = {
-        attach: jest.fn().mockReturnValue({ location: { nativeElement: document.createElement('div') } }),
-        backdropClick: jest.fn(() => backdropClickSubject.asObservable()),
-        detach: jest.fn(),
-        dispose: jest.fn(),
-        scrollStrategies: { reposition: jest.fn() },
+        attach: vi.fn().mockReturnValue({ location: { nativeElement: document.createElement('div') } }),
+        backdropClick: vi.fn(() => backdropClickSubject.asObservable()),
+        detach: vi.fn(),
+        dispose: vi.fn(),
+        scrollStrategies: { reposition: vi.fn() },
     };
 
     const mockOverlay = {
-        create: jest.fn().mockReturnValue(mockOverlayRef),
-        scrollStrategies: { reposition: jest.fn().mockReturnValue({}) },
+        create: vi.fn().mockReturnValue(mockOverlayRef),
+        scrollStrategies: { reposition: vi.fn().mockReturnValue({}) },
     };
 
-    const mockEditor: jest.Mocked<TextEditor> = {
-        getPosition: jest.fn(),
-        setPosition: jest.fn(),
-        focus: jest.fn(),
-        addAction: jest.fn(),
-        executeAction: jest.fn(),
-        layout: jest.fn(),
-        replaceTextAtRange: jest.fn(),
-        getDomNode: jest.fn(),
-        triggerCompletion: jest.fn(),
-        getTextAtRange: jest.fn(),
-        getLineText: jest.fn(),
-        getNumberOfLines: jest.fn(),
-        getEndPosition: jest.fn(),
-        getSelection: jest.fn(),
-        setSelection: jest.fn(),
-        revealRange: jest.fn(),
-        addCompleter: jest.fn(),
-        addPasteListener: jest.fn(),
-        getFullText: jest.fn(),
+    const mockEditor: Record<keyof TextEditor, any> = {
+        getPosition: vi.fn(),
+        setPosition: vi.fn(),
+        focus: vi.fn(),
+        addAction: vi.fn(),
+        executeAction: vi.fn(),
+        layout: vi.fn(),
+        replaceTextAtRange: vi.fn(),
+        getDomNode: vi.fn(),
+        triggerCompletion: vi.fn(),
+        getTextAtRange: vi.fn(),
+        getLineText: vi.fn(),
+        getNumberOfLines: vi.fn(),
+        getEndPosition: vi.fn(),
+        getSelection: vi.fn(),
+        setSelection: vi.fn(),
+        revealRange: vi.fn(),
+        addCompleter: vi.fn(),
+        addPasteListener: vi.fn(),
+        getFullText: vi.fn(),
     };
 
     const mockPositionStrategy = {
-        left: jest.fn().mockReturnThis(),
-        top: jest.fn().mockReturnThis(),
+        left: vi.fn().mockReturnThis(),
+        top: vi.fn().mockReturnThis(),
     };
 
     const overlayPositionBuilderMock = {
-        global: jest.fn().mockReturnValue(mockPositionStrategy),
+        global: vi.fn().mockReturnValue(mockPositionStrategy),
     };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         if (typeof PointerEvent === 'undefined') {
@@ -118,15 +126,15 @@ describe('PostingsMarkdownEditor', () => {
         };
 
         mockEditor.getDomNode.mockReturnValue({
-            addEventListener: jest.fn(),
+            addEventListener: vi.fn(),
         } as any);
 
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         (ListAction as any).editorsWithListener = new WeakMap<TextEditor, boolean>();
 
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent), NgStyle],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
@@ -143,26 +151,27 @@ describe('PostingsMarkdownEditor', () => {
                 provideHttpClientTesting(),
             ],
             declarations: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                fileService = TestBed.inject(FileService);
-                metisService = TestBed.inject(MetisService);
-                lectureService = TestBed.inject(LectureService);
+        });
+        TestBed.overrideComponent(PostingMarkdownEditorComponent, {
+            remove: { imports: [MarkdownEditorMonacoComponent] },
+            add: { imports: [MockComponent(MarkdownEditorMonacoComponent)] },
+        });
+        fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        fileService = TestBed.inject(FileService);
+        metisService = TestBed.inject(MetisService);
+        lectureService = TestBed.inject(LectureService);
 
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
-                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
-                findLectureWithDetailsSpy.mockReturnValue(returnValue);
-                fixture.autoDetectChanges();
-                mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
-                component.ngOnInit();
-                component.content = metisPostExerciseUser1.content;
+        findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+        const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        fixture.autoDetectChanges();
+        mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
+        component.ngOnInit();
+        component.content = metisPostExerciseUser1.content;
 
-                mockEmojiSelect.next({ emoji: { native: '😀' }, event: new PointerEvent('click') });
-            });
+        mockEmojiSelect.next({ emoji: { native: '\u{1F600}' }, event: new PointerEvent('click') });
     });
 
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
@@ -173,7 +182,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
-        jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
+        vi.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
@@ -196,48 +205,39 @@ describe('PostingsMarkdownEditor', () => {
         );
     }
 
-    it('should have set the correct default commands on init if faq is enabled', () => {
-        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
+    it('should always include faq reference action in default commands', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
-    it('should have set the correct default commands on init if faq is disabled', () => {
-        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
-        component.ngOnInit();
-        containDefaultActions(component.defaultActions);
-        expect(component.defaultActions).toEqual(expect.not.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
-    });
-
     it('should show the correct amount of characters below the markdown input', () => {
-        component.maxContentLength = 200;
+        fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
-        expect(charCounter.textContent).toContain(component.maxContentLength.toString());
+        expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
         expect(charCounter.style.color).not.toBe('red');
     });
 
     it('should show the correct amount of characters in red if max length exceeded', () => {
-        component.maxContentLength = 5;
+        fixture.componentRef.setInput('maxContentLength', 5);
         fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
-        expect(charCounter.textContent).toContain(component.maxContentLength.toString());
+        expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
         expect(charCounter.style.color).toBe('red');
     });
 
     it('should initialize markdown correctly with post content', () => {
-        component.maxContentLength = 200;
+        fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         expect(mockMarkdownEditorComponent.markdown).toEqual(component.content);
     });
 
     it('should update value if markdown change is emitted', () => {
-        component.maxContentLength = 200;
+        fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         mockMarkdownEditorComponent.markdownChange.emit('updated text');
         expect(component.content).toBe('updated text');
@@ -254,38 +254,38 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should register onChange', () => {
-        const onChange = jest.fn();
+        const onChange = vi.fn();
         component.registerOnChange(onChange);
         expect(component.onChange).toBe(onChange);
     });
 
     it('should call preventDefault when the user presses enter', () => {
-        component.suppressNewlineOnEnter = true;
+        fixture.componentRef.setInput('suppressNewlineOnEnter', true);
         const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
         expect(preventDefaultSpy).toHaveBeenCalledOnce();
     });
 
     it('should not call preventDefault when the user presses shift+enter', () => {
-        component.suppressNewlineOnEnter = true;
+        fixture.componentRef.setInput('suppressNewlineOnEnter', true);
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
     it('should not suppress newlines on enter if disabled', () => {
-        component.suppressNewlineOnEnter = false;
+        fixture.componentRef.setInput('suppressNewlineOnEnter', false);
         const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
     it('should not create emoji picker if position is not set', () => {
         const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
 
         expect(mockOverlay.create).not.toHaveBeenCalled();
         expect(mockOverlayRef.attach).not.toHaveBeenCalled();
@@ -295,7 +295,7 @@ describe('PostingsMarkdownEditor', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
 
         expect(mockOverlayRef.attach).toHaveBeenCalledWith(expect.any(ComponentPortal));
         expect(mockOverlayRef.backdropClick).toHaveBeenCalled();
@@ -305,33 +305,33 @@ describe('PostingsMarkdownEditor', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
-        const mockPositionStrategy = {
-            left: jest.fn().mockReturnThis(),
-            top: jest.fn().mockReturnThis(),
+        const localMockPositionStrategy = {
+            left: vi.fn().mockReturnThis(),
+            top: vi.fn().mockReturnThis(),
         };
 
         mockOverlay.create.mockReturnValue(mockOverlayRef);
-        overlayPositionBuilderMock.global.mockReturnValue(mockPositionStrategy);
+        overlayPositionBuilderMock.global.mockReturnValue(localMockPositionStrategy);
 
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
 
         expect(mockOverlay.create).toHaveBeenCalledWith({
-            positionStrategy: mockPositionStrategy,
+            positionStrategy: localMockPositionStrategy,
             hasBackdrop: true,
             backdropClass: 'cdk-overlay-transparent-backdrop',
             scrollStrategy: mockOverlay.scrollStrategies.reposition(),
             width: '0',
         });
 
-        expect(mockPositionStrategy.left).toHaveBeenCalledWith(`85px`);
-        expect(mockPositionStrategy.top).toHaveBeenCalledWith(`185px`);
+        expect(localMockPositionStrategy.left).toHaveBeenCalledWith(`85px`);
+        expect(localMockPositionStrategy.top).toHaveBeenCalledWith(`185px`);
     });
 
     it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
         backdropClickSubject.next();
 
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
@@ -341,9 +341,9 @@ describe('PostingsMarkdownEditor', () => {
         const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
 
         emojiAction['overlayRef'] = mockOverlayRef as any;
-        const destroySpy = jest.spyOn(emojiAction as any, 'destroyEmojiPicker');
+        const destroySpy = vi.spyOn(emojiAction as any, 'destroyEmojiPicker');
 
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
 
         expect(destroySpy).toHaveBeenCalled();
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
@@ -361,10 +361,10 @@ describe('PostingsMarkdownEditor', () => {
 
     const simulateKeydownEvent = (key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
         const event = new KeyboardEvent('keydown', { key, ...modifiers });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
-        const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+        const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
 
-        const addEventListenerMock = (mockEditor.getDomNode()?.addEventListener as jest.Mock).mock;
+        const addEventListenerMock = mockEditor.getDomNode()?.addEventListener.mock;
         const keydownListener = addEventListenerMock.calls.find((call: any) => call[0] === 'keydown')[1];
         keydownListener(event);
 
@@ -380,7 +380,7 @@ describe('PostingsMarkdownEditor', () => {
         } as TextEditorPosition);
         mockEditor.getLineText.mockReturnValue('- First line');
 
-        bulletedListAction.run(mockEditor);
+        bulletedListAction.run(mockEditor as unknown as TextEditor);
 
         const { preventDefaultSpy } = simulateKeydownEvent('Enter', { shiftKey: true });
 
@@ -398,7 +398,7 @@ describe('PostingsMarkdownEditor', () => {
         } as TextEditorPosition);
         mockEditor.getLineText.mockReturnValue('- First line');
 
-        bulletedListAction.run(mockEditor);
+        bulletedListAction.run(mockEditor as unknown as TextEditor);
 
         const { preventDefaultSpy, stopPropagationSpy } = simulateKeydownEvent('Enter', { metaKey: true });
 
@@ -428,7 +428,7 @@ describe('PostingsMarkdownEditor', () => {
             new TextEditorRange(new TextEditorPosition(startLineNumber, 1), new TextEditorPosition(endLineNumber, lines[lines.length - 1].length + 1)),
         );
 
-        action.run(mockEditor);
+        action.run(mockEditor as unknown as TextEditor);
 
         const replaceCalls = mockEditor.replaceTextAtRange.mock.calls;
         expect(replaceCalls).toHaveLength(1);
@@ -570,10 +570,10 @@ describe('PostingsMarkdownEditor', () => {
 
         component.defaultActions = [bulletedListAction];
 
-        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+        const handleActionClickSpy = vi.spyOn(component.markdownEditor(), 'handleActionClick');
 
         const mockModel = {
-            getLineContent: jest.fn().mockReturnValue('- List item'),
+            getLineContent: vi.fn().mockReturnValue('- List item'),
         } as unknown as monaco.editor.ITextModel;
         const mockPosition = { lineNumber: 1 } as monaco.Position;
 
@@ -584,10 +584,10 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should handle invalid line content gracefully', () => {
         const mockModel = {
-            getLineContent: jest.fn().mockReturnValue(''),
+            getLineContent: vi.fn().mockReturnValue(''),
         } as unknown as monaco.editor.ITextModel;
         const mockPosition = { lineNumber: 1 } as monaco.Position;
-        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+        const handleActionClickSpy = vi.spyOn(component.markdownEditor(), 'handleActionClick');
 
         (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
         expect(handleActionClickSpy).not.toHaveBeenCalled();
@@ -602,8 +602,8 @@ describe('PostingsMarkdownEditor', () => {
         mockEditor.getLineText.mockReturnValue('- First line');
         mockEditor.getTextAtRange.mockReturnValue('');
 
-        const replaceTextSpy = jest.spyOn(mockEditor, 'replaceTextAtRange');
-        bulletedListAction.run(mockEditor);
+        const replaceTextSpy = vi.spyOn(mockEditor, 'replaceTextAtRange');
+        bulletedListAction.run(mockEditor as unknown as TextEditor);
 
         expect(replaceTextSpy).not.toHaveBeenCalled();
 
@@ -620,9 +620,9 @@ describe('PostingsMarkdownEditor', () => {
         const mockCursorPosition = new TextEditorPosition(1, 5);
         mockEditor.getPosition.mockReturnValue(mockCursorPosition);
 
-        emojiAction.insertEmojiAtCursor(mockEditor, '😀');
+        emojiAction.insertEmojiAtCursor(mockEditor as unknown as TextEditor, '\u{1F600}');
 
-        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\u{1F600}');
         expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(1, 7));
         expect(mockEditor.focus).toHaveBeenCalled();
     });
@@ -641,12 +641,12 @@ describe('PostingsMarkdownEditor', () => {
         };
 
         mockOverlayRef.attach.mockReturnValue(componentRef);
-        emojiAction.run(mockEditor);
+        emojiAction.run(mockEditor as unknown as TextEditor);
 
-        const selectionEvent = { emoji: { native: '😀' }, event: new PointerEvent('click') };
+        const selectionEvent = { emoji: { native: '\u{1F600}' }, event: new PointerEvent('click') };
         emojiSelectSubject.next(selectionEvent);
 
-        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '😀');
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\u{1F600}');
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
     });
 });

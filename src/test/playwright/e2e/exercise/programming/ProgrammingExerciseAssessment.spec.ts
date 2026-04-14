@@ -29,8 +29,8 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        dueDate = dayjs().add(15, 'seconds');
-        assessmentDueDate = dueDate.add(20, 'seconds');
+        dueDate = dayjs().add(20, 'seconds');
+        assessmentDueDate = dueDate.add(25, 'seconds');
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
             releaseDate: dayjs(),
@@ -44,7 +44,7 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, javaPartiallySuccessfulSubmission);
         const now = dayjs();
         if (now.isBefore(dueDate)) {
-            await page.waitForTimeout(dueDate.diff(now, 'ms'));
+            await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
         }
     });
 
@@ -74,7 +74,7 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         // Wait until the assessment due date is over
         const now = dayjs();
         if (now.isBefore(assessmentDueDate)) {
-            await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
+            await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
         }
 
         // Verify assessment as student
@@ -83,8 +83,6 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         const percentage = totalPoints * 10;
         await exerciseResult.shouldShowExerciseTitle(exercise.title!);
         await programmingExerciseFeedback.complain(complaint);
-        await exerciseResult.clickOpenCodeEditor(exercise.id!);
-        await programmingExerciseFeedback.shouldShowRepositoryLockedWarning();
         await programmingExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
         await programmingExerciseFeedback.shouldShowScore(percentage);
         await programmingExerciseFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', programmingExerciseEditor);

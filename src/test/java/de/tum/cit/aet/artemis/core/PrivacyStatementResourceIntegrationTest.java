@@ -22,10 +22,9 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.PrivacyStatementDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -229,7 +228,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", "test");
         requestBody.put("language", "FRENCH");
-        request.put("/api/core/admin/privacy-statement", new ObjectMapper().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/privacy-statement", JsonObjectMapper.get().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
     }
 
     @Test

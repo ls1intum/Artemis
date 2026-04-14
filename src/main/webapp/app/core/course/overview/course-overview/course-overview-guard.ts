@@ -65,13 +65,13 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = !!course?.numberOfTutorialGroups;
                 break;
             case CourseOverviewRoutePath.DASHBOARD:
-                hasAccess = !!(course?.studentCourseAnalyticsDashboardEnabled || course?.irisEnabledInCourse);
+                hasAccess = !!course?.studentCourseAnalyticsDashboardEnabled;
                 break;
             case CourseOverviewRoutePath.IRIS:
                 hasAccess = course?.irisEnabledInCourse ?? false;
                 break;
             case CourseOverviewRoutePath.FAQ:
-                hasAccess = course?.faqEnabled ?? false;
+                hasAccess = (course?.numberOfAcceptedFaqs ?? 0) > 0;
                 break;
             case CourseOverviewRoutePath.LEARNING_PATH:
                 hasAccess = course?.learningPathsEnabled ?? false;
@@ -87,8 +87,11 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = false;
         }
         if (!hasAccess) {
-            // Default route, redirect to exercises if the user does not have access to the requested route
-            this.router.navigate([`/courses/${course?.id}/exercises`]);
+            if (type === CourseOverviewRoutePath.DASHBOARD && course?.irisEnabledInCourse) {
+                this.router.navigate([`/courses/${course?.id}/iris`]);
+            } else {
+                this.router.navigate([`/courses/${course?.id}/exercises`]);
+            }
         }
         return of(hasAccess);
     };

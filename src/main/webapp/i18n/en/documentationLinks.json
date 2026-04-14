@@ -22,6 +22,7 @@
             "units": "lecture content.",
             "assessment": "assessments.",
             "statistics": "statistics.",
+            "studentstatistics": "statistics.",
             "suspiciousbehavior": "suspicious behavior."
         }
     }
