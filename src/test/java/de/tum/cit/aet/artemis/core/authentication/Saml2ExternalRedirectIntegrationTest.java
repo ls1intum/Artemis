@@ -154,6 +154,42 @@ class Saml2ExternalRedirectIntegrationTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
+    void testInactiveUserReturns403() throws Exception {
+        // First create the user via a successful redirect
+        String nonce = "test-nonce-inactive";
+        redirectUriRepository.save(nonce, "vscode://artemis/callback");
+
+        var handler = createHandler();
+
+        Saml2AuthenticatedPrincipal principal = createPrincipal();
+        Saml2Authentication authentication = new Saml2Authentication(principal, "credentials", null);
+        TestSecurityContextHolder.setAuthentication(authentication);
+
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.setParameter("RelayState", nonce);
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+        handler.onAuthenticationSuccess(mockRequest, mockResponse, authentication);
+        assertThat(mockResponse.getStatus()).isEqualTo(HttpServletResponse.SC_MOVED_TEMPORARILY);
+
+        // Now deactivate the user
+        var user = userTestRepository.findOneByLogin(STUDENT_NAME).orElseThrow();
+        user.setActivated(false);
+        userTestRepository.saveAndFlush(user);
+
+        // Try again — should get 403
+        String nonce2 = "test-nonce-inactive-2";
+        redirectUriRepository.save(nonce2, "vscode://artemis/callback");
+        TestSecurityContextHolder.setAuthentication(authentication);
+
+        MockHttpServletRequest mockRequest2 = new MockHttpServletRequest();
+        mockRequest2.setParameter("RelayState", nonce2);
+        MockHttpServletResponse mockResponse2 = new MockHttpServletResponse();
+        handler.onAuthenticationSuccess(mockRequest2, mockResponse2, authentication);
+
+        assertThat(mockResponse2.getStatus()).isEqualTo(HttpServletResponse.SC_FORBIDDEN);
+    }
+
+    @Test
     void testExistingSaml2WebFlowUnchanged() throws Exception {
         Saml2AuthenticatedPrincipal principal = createPrincipal();
         Saml2Authentication authentication = new Saml2Authentication(principal, "credentials", null);
