@@ -3,7 +3,7 @@
         <div class="question-options card-header question-card-header" [hidden]="showPreview()">
             <button
                 class="btn question-collapse"
-                (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                (click)="toggleCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
@@ -43,7 +43,7 @@
                 <div class="col-3 col-lg-1 mt-1">
                     <button
                         class="btn question-collapse"
-                        (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                        (click)="toggleCollapse()"
                         [attr.aria-expanded]="!isQuestionCollapsed"
                         [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                     >
@@ -201,10 +201,15 @@
                     </div>
                 </div>
             } @else {
-                <div class="form-group">
-                    <div class="delete-button" (click)="deleteQuestion()">
+                <div class="form-group question-action-buttons">
+                    @if (hyperionEnabled()) {
+                        <button type="button" class="refine-button" aria-label="Refine question" (click)="refineRequested.emit()">
+                            <fa-icon [icon]="faWandMagicSparkles" size="2x" />
+                        </button>
+                    }
+                    <button type="button" class="delete-button" aria-label="Delete question" (click)="deleteQuestion()">
                         <fa-icon [icon]="faTrash" size="2x" />
-                    </div>
+                    </button>
                 </div>
             }
         </div>
