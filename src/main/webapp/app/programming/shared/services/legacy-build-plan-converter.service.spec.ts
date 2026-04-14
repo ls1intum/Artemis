@@ -53,6 +53,16 @@ describe('LegacyBuildPlanConverterService', () => {
         expect(buildPlanPhases).toBeUndefined();
     });
 
+    it('should return undefined for missing legacy script or build config', () => {
+        expect(service.convertLegacyBuildPlanConfiguration(undefined, '{}')).toBeUndefined();
+        expect(service.convertLegacyBuildPlanConfiguration('./gradlew test', undefined)).toBeUndefined();
+    });
+
+    it('should return undefined when parsed configuration is not an object', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration('./gradlew test', JSON.stringify(['legacy']));
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
     it('should return undefined for missing docker image', () => {
         const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
             './gradlew test',
@@ -99,6 +109,34 @@ describe('LegacyBuildPlanConverterService', () => {
             './gradlew test',
             JSON.stringify({
                 metadata: { docker: { image: 'legacy/image:2.0' } },
+            }),
+        );
+
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
+    it('should return undefined for non-array actions', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: 'legacy/image:2.0' } },
+                actions: 'invalid',
+            }),
+        );
+
+        expect(buildPlanPhases).toBeUndefined();
+    });
+
+    it('should return undefined for malformed action results', () => {
+        const buildPlanPhases = service.convertLegacyBuildPlanConfiguration(
+            './gradlew test',
+            JSON.stringify({
+                metadata: { docker: { image: 'legacy/image:2.0' } },
+                actions: [
+                    {
+                        results: 'invalid',
+                    },
+                ],
             }),
         );
 
