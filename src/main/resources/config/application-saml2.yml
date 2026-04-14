@@ -24,6 +24,13 @@ saml2:
     email-pattern: '{email}'
     registration-number-pattern: '{uid}'
     lang-key-pattern: 'en' # can be a pattern or fixed to en/de
+    # Allowed URI schemes for external client redirect after SAML2 authentication.
+    # Empty list (default) = feature disabled. If redirect_uri is provided while disabled, HTTP 400 is returned.
+    # Example: ['vscode', 'artemis-ios', 'artemis-android']
+    # WARNING: http and https schemes are always rejected regardless of this setting.
+    allowed-redirect-schemes: []
+    # Whether external client tokens should use long-lived (rememberMe) validity. Default: false.
+    external-token-remember-me: false
     # It is also possible to only extract parts of the attribute values.
     # For each attribute key exactly one regular expression can optionally be defined that is used to extract only parts
     # of the received value. The regular expression must match the whole value. It also has to contain a named capture
