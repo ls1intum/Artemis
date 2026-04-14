@@ -121,7 +121,7 @@
         </div>
 
         @if (showIrisSidebar()) {
-            <div #irisSidebar class="iris-sidebar" role="complementary" aria-label="Iris AI Assistant Chat">
+            <div #irisSidebar class="iris-sidebar" role="complementary" [attr.aria-label]="'artemisApp.lectureUnit.irisSidebarLabel' | artemisTranslate">
                 <jhi-lecture-chatbot [lectureId]="lectureId()!" />
                 <button
                     class="iris-sidebar__close-button"

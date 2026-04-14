@@ -27,6 +27,7 @@
             "openFullscreen": "Vollbild öffnen",
             "closeFullscreen": "Vollbild schließen",
             "fullscreenView": "Vollbildansicht von {{ title }}",
+            "irisSidebarLabel": "Iris KI-Assistent Chat",
             "lectureUnit": "Vorlesungsinhalt"
         },
         "textUnit": {

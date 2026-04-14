@@ -127,7 +127,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private horizontalSplitInstance?: Split.Instance;
     private _previouslyFocusedElement: HTMLElement | null = null;
     private _focusTrapHandler?: (event: KeyboardEvent) => void;
-    private _inertElements: HTMLElement[] = [];
+    private _inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -609,19 +609,37 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private setBackgroundInert(inert: boolean): void {
         if (inert) {
-            Array.from(document.body.children).forEach((child) => {
-                if (child instanceof HTMLElement && child !== this.hostElement.nativeElement && !child.contains(this.hostElement.nativeElement)) {
-                    this._inertElements.push(child);
-                    child.setAttribute('inert', '');
-                    child.setAttribute('aria-hidden', 'true');
+            let current: HTMLElement | null = this.hostElement.nativeElement;
+            while (current && current !== document.body) {
+                const parent = current.parentElement;
+                if (!parent) {
+                    break;
+                }
+                Array.from(parent.children).forEach((sibling) => {
+                    if (!(sibling instanceof HTMLElement) || sibling === current || this._inertElements.has(sibling)) {
+                        return;
+                    }
+                    this._inertElements.set(sibling, {
+                        hadInert: sibling.hasAttribute('inert'),
+                        previousAriaHidden: sibling.getAttribute('aria-hidden'),
+                    });
+                    sibling.setAttribute('inert', '');
+                    sibling.setAttribute('aria-hidden', 'true');
+                });
+                current = parent;
+            }
+        } else {
+            this._inertElements.forEach((state, el) => {
+                if (!state.hadInert) {
+                    el.removeAttribute('inert');
+                }
+                if (state.previousAriaHidden === null) {
+                    el.removeAttribute('aria-hidden');
+                } else {
+                    el.setAttribute('aria-hidden', state.previousAriaHidden);
                 }
             });
-        } else {
-            this._inertElements.forEach((el) => {
-                el.removeAttribute('inert');
-                el.removeAttribute('aria-hidden');
-            });
-            this._inertElements = [];
+            this._inertElements.clear();
         }
     }
 
@@ -653,12 +671,18 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        if (this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement)) {
-            this._previouslyFocusedElement.focus();
-        }
+        const elementToRestore = this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement) ? this._previouslyFocusedElement : undefined;
         this._previouslyFocusedElement = null;
-
         this.isFullscreen.set(false);
+
+        if (elementToRestore) {
+            afterNextRender(
+                () => {
+                    elementToRestore.focus();
+                },
+                { injector: this.injector },
+            );
+        }
     }
 
     @HostListener('document:keydown.escape', ['$event'])

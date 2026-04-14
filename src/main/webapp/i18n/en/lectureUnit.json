@@ -27,6 +27,7 @@
             "openFullscreen": "Open fullscreen",
             "closeFullscreen": "Close fullscreen",
             "fullscreenView": "Fullscreen view of {{ title }}",
+            "irisSidebarLabel": "Iris AI Assistant Chat",
             "lectureUnit": "Lecture Content"
         },
         "textUnit": {
