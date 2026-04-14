@@ -446,6 +446,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionGenerationResponse'}
+  /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
+    post:
+      tags: [hyperion-quiz-question-generation]
+      operationId: refineQuizQuestion
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -875,6 +895,9 @@ components:
           description: Answer options
           items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
           minItems: 1
+        hint: {type: string, description: Optional hint for the overall question}
+        explanation: {type: string, description: Optional explanation for the overall
+            question}
       required: [options, questionText, title, type]
     ChecklistAnalysisResponse:
       type: object
@@ -1026,6 +1049,23 @@ components:
           type: array
           items: {type: string}
       required: [name]
+    QuizQuestionRefinementRequest:
+      type: object
+      description: Request to refine an existing quiz question using a user prompt
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+        refinementPrompt: {type: string, description: User instructions describing
+            how the question should be changed, maxLength: 2000, minLength: 1}
+      required: [question, refinementPrompt]
+    QuizQuestionRefinementResponse:
+      type: object
+      description: Response containing the refined quiz question and a summary of
+        the changes made
+      properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+        reasoning: {type: string, description: Brief explanation of what was changed
+            during refinement, minLength: 1}
+      required: [reasoning, question]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1304,6 +1344,8 @@ components:
       properties:
         text: {type: string, description: Answer option text, minLength: 1}
         correct: {type: boolean, description: Whether this option is correct}
+        hint: {type: string, description: Optional hint}
+        explanation: {type: string, description: Optional explanation}
       required: [text]
     TutorialGroupFreePeriod:
       type: object
