@@ -98,7 +98,7 @@ class ContentExtractionServiceTest {
 
     @Test
     void extractContent_nullExercise_throwsException() {
-        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> contentExtractionService.extractContent(null)).isInstanceOf(NullPointerException.class).hasMessage("exercise must not be null");
     }
 
     @Test
