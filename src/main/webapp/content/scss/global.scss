@@ -1508,3 +1508,8 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
 }
+
+/* Hide Iris chatbot button when lecture unit fullscreen is active */
+body.lecture-combined-view-fullscreen-active jhi-exercise-chatbot-button {
+    display: none;
+}

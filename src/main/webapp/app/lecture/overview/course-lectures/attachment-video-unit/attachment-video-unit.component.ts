@@ -104,10 +104,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
     readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
-    readonly isFullscreen = signal<boolean>(false);
-    readonly transcriptSegments = signal<TranscriptSegment[]>([]);
-    readonly playlistUrl = signal<string | undefined>(undefined);
-    readonly isLoading = signal<boolean>(false);
+    private readonly _isFullscreen = signal<boolean>(false);
+    private readonly _transcriptSegments = signal<TranscriptSegment[]>([]);
+    private readonly _playlistUrl = signal<string | undefined>(undefined);
+    private readonly _isLoading = signal<boolean>(false);
+
+    readonly isFullscreen = this._isFullscreen.asReadonly();
+    readonly transcriptSegments = this._transcriptSegments.asReadonly();
+    readonly playlistUrl = this._playlistUrl.asReadonly();
+    readonly isLoading = this._isLoading.asReadonly();
 
     // Split panel sizes (percentage values)
     private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
@@ -323,14 +328,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private triggerContentLoad(): void {
         // reset stale state
-        this.transcriptSegments.set([]);
-        this.playlistUrl.set(undefined);
-        this.isLoading.set(true);
+        this._transcriptSegments.set([]);
+        this._playlistUrl.set(undefined);
+        this._isLoading.set(true);
 
         const src = this.lectureUnit().videoSource;
 
         if (!src) {
-            this.isLoading.set(false);
+            this._isLoading.set(false);
             if (this.hasPdf()) {
                 this.loadPdf();
             }
@@ -344,15 +349,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             .subscribe({
                 next: (resolvedUrl) => {
                     if (resolvedUrl) {
-                        this.playlistUrl.set(resolvedUrl);
+                        this._playlistUrl.set(resolvedUrl);
                         this.fetchTranscript();
                     }
-                    this.isLoading.set(false);
+                    this._isLoading.set(false);
                 },
                 error: () => {
                     // Failed to resolve playlist URL, will fall back to iframe
-                    this.playlistUrl.set(undefined);
-                    this.isLoading.set(false);
+                    this._playlistUrl.set(undefined);
+                    this._isLoading.set(false);
                 },
             });
         if (this.hasPdf()) {
@@ -377,11 +382,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             )
             .subscribe({
                 next: (segments) => {
-                    this.transcriptSegments.set(segments);
+                    this._transcriptSegments.set(segments);
                 },
                 error: () => {
                     // Failed to fetch transcript, video player will work without it
-                    this.transcriptSegments.set([]);
+                    this._transcriptSegments.set([]);
                 },
             });
     }
@@ -557,7 +562,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.resetSplitSizesForFullscreen();
         afterNextRender(
             () => {
-                this.isFullscreen.set(true);
+                this._isFullscreen.set(true);
                 // Move focus into fullscreen container after it's rendered
                 afterNextRender(
                     () => {
@@ -673,7 +678,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         const elementToRestore = this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement) ? this._previouslyFocusedElement : undefined;
         this._previouslyFocusedElement = null;
-        this.isFullscreen.set(false);
+        this._isFullscreen.set(false);
 
         if (elementToRestore) {
             afterNextRender(

@@ -272,8 +272,3 @@ body.lecture-combined-view-fullscreen-active {
         transform: none !important;
     }
 }
-
-/* Hide Iris floating button when fullscreen is active */
-jhi-course-lecture-details:has(.content-container--fullscreen) jhi-exercise-chatbot-button {
-    display: none !important;
-}
