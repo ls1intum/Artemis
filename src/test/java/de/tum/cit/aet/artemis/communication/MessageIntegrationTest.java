@@ -740,6 +740,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String conversationId = createdPost1.getConversation().getId().toString();
         String messageId = createdPost1.getId().toString();
 
+        // Wait for async unread count increments from message creation to complete before marking as read,
+        // otherwise mark-as-read's async reset could race with pending increments
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
+        });
+
         // establish baseline: mark conversation as read and verify unread count is 0
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/mark-as-read", null, HttpStatus.OK);
         await().untilAsserted(() -> {
