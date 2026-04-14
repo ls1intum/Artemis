@@ -214,7 +214,7 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled()))) {
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
         }
         else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
