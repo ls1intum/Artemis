@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * Tracks the processing state of a lecture unit through the automated content processing pipeline.
- * This includes transcription generation (Nebula) and ingestion into Pyris/Iris.
+ * This includes transcription generation and ingestion into Pyris/Iris.
  * <p>
  * The processing state allows:
  * - Recovery after node restart (checking for stuck states)

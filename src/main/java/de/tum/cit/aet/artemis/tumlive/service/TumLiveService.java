@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula.service;
+package de.tum.cit.aet.artemis.tumlive.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,16 +9,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
-@Conditional(NebulaEnabled.class)
 @Service
 @Lazy
 public class TumLiveService {

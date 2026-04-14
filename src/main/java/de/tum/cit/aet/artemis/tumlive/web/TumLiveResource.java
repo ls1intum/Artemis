@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula.web;
+package de.tum.cit.aet.artemis.tumlive.web;
 
 import java.net.URI;
 import java.util.Optional;
@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,33 +15,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
+import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 
 /**
- * REST controller for managing Nebula-powered lecture transcriptions and related utilities.
+ * REST controller for managing TUM Live lecture transcriptions and related utilities.
  */
-@Conditional(NebulaEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/nebula/")
-public class NebulaTranscriptionResource {
+@RequestMapping("api/tumlive/")
+public class TumLiveResource {
 
-    private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(TumLiveResource.class);
 
     private final TumLiveService tumLiveService;
 
-    public NebulaTranscriptionResource(TumLiveService tumLiveService) {
+    public TumLiveResource(TumLiveService tumLiveService) {
         this.tumLiveService = tumLiveService;
     }
 
     /**
-     * GET /video-utils/tum-live-playlist : Fetch TUM Live playlist URL for transcription.
+     * GET /playlist : Fetch TUM Live playlist URL for transcription.
      *
      * @param url the TUM Live video URL to fetch the playlist for
      * @return the ResponseEntity with status 200 (OK) and playlist URL if found, 404 (Not Found) if no playlist exists, or 400 (Bad Request) for invalid input
      */
-    @GetMapping("video-utils/tum-live-playlist")
+    @GetMapping("playlist")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getTumLivePlaylist(@RequestParam @NotBlank String url) {
         log.info("Received request to fetch playlist for TUM Live URL");

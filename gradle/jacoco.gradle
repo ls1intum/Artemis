@@ -1,6 +1,6 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    //This also needs to be lowered if we merge nebula PRs
+    // Individual module thresholds may need adjustment when merging PRs that add new uncovered classes
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 152]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
@@ -20,7 +20,6 @@ ext {
         "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.860, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  1],
-        "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
         "programming"   :          ["INSTRUCTION": 0.819, "CLASS": 28],
         "quiz"          :          ["INSTRUCTION": 0.865, "CLASS":  3],
