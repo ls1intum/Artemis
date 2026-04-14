@@ -170,7 +170,7 @@ public class IrisSessionService {
             case IrisChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
             case IrisTutorSuggestionSession tutorSuggestionSession ->
                 (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorSuggestionSessionService, tutorSuggestionSession);
-            case null, default -> throw new BadRequestException("Unknown Iris session type ");
+            case null, default -> throw new BadRequestException("Unknown Iris session type: " + (session != null ? session.getClass().getSimpleName() : "null"));
         };
     }
 

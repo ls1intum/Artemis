@@ -23,7 +23,7 @@ public class IrisChatSession extends IrisSession {
     private long courseId;
 
     @JsonIgnore
-    private Long entityId;
+    private long entityId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "chat_mode")
@@ -66,7 +66,7 @@ public class IrisChatSession extends IrisSession {
         return entityId;
     }
 
-    public void setEntityId(Long entityId) {
+    public void setEntityId(long entityId) {
         this.entityId = entityId;
     }
 

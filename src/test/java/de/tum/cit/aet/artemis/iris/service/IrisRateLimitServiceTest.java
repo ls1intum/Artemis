@@ -211,16 +211,16 @@ class IrisRateLimitServiceTest {
         // Create a service with absent optional APIs
         var rateLimitServiceWithAbsentApis = new IrisRateLimitService(irisMessageRepository, irisSettingsService, Optional.empty());
 
-        // Text exercise session should fall back to application defaults when API is absent
-        var textSession = new IrisChatSession();
-        textSession.setEntityId(88L);
+        // Tutor suggestion session should fall back to application defaults when postRepository is absent,
+        // because the course ID cannot be resolved without it
+        var tutorSession = new IrisTutorSuggestionSession(66L, user);
 
         var applicationDefaults = new IrisRateLimitConfiguration(100, 24);
         when(irisSettingsService.getApplicationRateLimitDefaults()).thenReturn(applicationDefaults);
         when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(0);
 
         // Should not throw - falls back to application defaults without exceptions
-        var info = rateLimitServiceWithAbsentApis.getRateLimitInformation(textSession, user);
+        var info = rateLimitServiceWithAbsentApis.getRateLimitInformation(tutorSession, user);
         assertThat(info.rateLimit()).isEqualTo(100);
         verify(irisSettingsService).getApplicationRateLimitDefaults();
     }

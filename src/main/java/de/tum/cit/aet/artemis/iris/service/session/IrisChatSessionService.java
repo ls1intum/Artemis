@@ -279,8 +279,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
-        CompletableFuture.runAsync(
-                () -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission), Map.of()));
+        try {
+            CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings),
+                    Optional.of(submission), Map.of()));
+        }
+        catch (Exception e) {
+            log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
+        }
     }
 
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {

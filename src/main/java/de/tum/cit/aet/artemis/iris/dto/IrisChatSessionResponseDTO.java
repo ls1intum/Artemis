@@ -19,7 +19,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  *
  * @param id                the session ID
  * @param mode              the chat mode enum
- * @param entityId          the ID of the associated domain entity (course, exercise, lecture, or post)
+ * @param entityId          the ID of the associated domain entity (course, exercise, lecture, or post);
+ *                              nullable for {@link de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession}
+ *                              since its {@code postId} field is a boxed {@code Long}
  * @param userId            the owning user's ID
  * @param title             optional user-assigned session title
  * @param creationDate      when the session was created
@@ -28,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  * @param citationInfo      optional citation metadata resolved from message content
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisChatSessionResponseDTO(long id, IrisChatMode mode, long entityId, long userId, @Nullable String title, ZonedDateTime creationDate,
+public record IrisChatSessionResponseDTO(long id, IrisChatMode mode, @Nullable Long entityId, long userId, @Nullable String title, ZonedDateTime creationDate,
         @Nullable List<IrisMessageResponseDTO> messages, @Nullable String latestSuggestions, @Nullable List<IrisCitationMetaDTO> citationInfo) {
 
     /**

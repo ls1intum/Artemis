@@ -146,7 +146,7 @@ public class IrisChatSessionResource {
         if (!(irisSession instanceof IrisChatSession chatSession)) {
             throw new BadRequestException("Session is not a chat session");
         }
-        if (chatSession.getCourseId() != courseId) {
+        if (chatSession.getCourseId() != courseId.longValue()) {
             throw new BadRequestException("Session does not belong to the specified course");
         }
 
@@ -230,7 +230,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
-        if (user.getId() == null || session.getUserId() != user.getId()) {
+        if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
             throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
         }
         log.info("REST request to delete Iris chat session {} for user id {}", sessionId, user.getId());
