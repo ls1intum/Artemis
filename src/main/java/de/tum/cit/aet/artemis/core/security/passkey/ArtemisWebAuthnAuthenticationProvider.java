@@ -74,7 +74,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
             if (this.passkeyCredentialsRepository.findByCredentialId(credentialId).isEmpty()) {
-                log.error("Passkey login attempt with unregistered credential id '{}'", credentialId);
+                log.warn("Passkey login attempt with unregistered credential id '{}'", credentialId);
                 throw new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
             }
 
