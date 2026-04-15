@@ -1,3 +1,4 @@
+import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/base64.util';
@@ -218,9 +219,9 @@ export class WebauthnService {
             }
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.status === 403) {
+            } else if (error.status === HttpStatusCode.Forbidden) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
-            } else if (error.status === 404) {
+            } else if (error.status === HttpStatusCode.NotFound) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
