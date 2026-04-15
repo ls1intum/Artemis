@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.lecture.web.LectureResource.AttachmentVideoUnitDTO
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
-import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 class LectureResourceAttachmentVideoUnitDTOTest {
 
@@ -90,11 +88,9 @@ class LectureResourceAttachmentVideoUnitDTOTest {
         unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
         var resolver = mock(VideoSourceResolver.class);
-        var ytService = mock(YouTubeUrlService.class);
-        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE));
-        when(ytService.extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).thenReturn(Optional.of("dQw4w9WgXcQ"));
+        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ"));
 
-        var dto = AttachmentVideoUnitDTO.from(unit, resolver, ytService, "YOUTUBE_LIVE");
+        var dto = AttachmentVideoUnitDTO.from(unit, resolver, "YOUTUBE_LIVE");
 
         assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
     }
@@ -105,11 +101,9 @@ class LectureResourceAttachmentVideoUnitDTOTest {
         unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
         var resolver = mock(VideoSourceResolver.class);
-        var ytService = mock(YouTubeUrlService.class);
-        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE));
-        when(ytService.extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).thenReturn(Optional.of("dQw4w9WgXcQ"));
+        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ"));
 
-        var dto = AttachmentVideoUnitDTO.from(unit, resolver, ytService, null);
+        var dto = AttachmentVideoUnitDTO.from(unit, resolver, null);
 
         assertThat(dto.transcriptionErrorCode()).isNull();
     }

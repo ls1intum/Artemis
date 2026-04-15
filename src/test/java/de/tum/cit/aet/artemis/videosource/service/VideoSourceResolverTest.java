@@ -27,6 +27,7 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(null).resolve(null);
         assertThat(resolved.url()).isNull();
         assertThat(resolved.type()).isNull();
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     @Test
@@ -34,6 +35,7 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(null).resolve("   ");
         assertThat(resolved.url()).isEqualTo("   ");
         assertThat(resolved.type()).isNull();
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     // ── TUM Live absent ───────────────────────────────────────────────────────
@@ -43,12 +45,14 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(null).resolve("https://youtu.be/dQw4w9WgXcQ");
         assertThat(resolved.url()).isEqualTo("https://youtu.be/dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
+        assertThat(resolved.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
     }
 
     @Test
     void absentTumLiveApiYouTubeWatchUrlReturnsYouTubeType() {
         var resolved = withTumLive(null).resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
+        assertThat(resolved.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
     }
 
     @Test
@@ -56,6 +60,7 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(null).resolve("https://vimeo.com/123456");
         assertThat(resolved.url()).isEqualTo("https://vimeo.com/123456");
         assertThat(resolved.type()).isNull();
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     // ── TUM Live present ──────────────────────────────────────────────────────
@@ -67,6 +72,7 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(api).resolve("https://live.rbg.tum.de/?course=foo&streamId=1");
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/pl.m3u8");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     @Test
@@ -75,6 +81,7 @@ class VideoSourceResolverTest {
         when(api.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
         var resolved = withTumLive(api).resolve("https://youtu.be/dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
+        assertThat(resolved.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
     }
 
     @Test
@@ -84,6 +91,7 @@ class VideoSourceResolverTest {
         // URL is a YouTube URL, but TUM Live matches first
         var resolved = withTumLive(api).resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     // ── TUM Live throws ───────────────────────────────────────────────────────
@@ -95,6 +103,7 @@ class VideoSourceResolverTest {
         var resolved = withTumLive(api).resolve("https://live.rbg.tum.de/?x=1");
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/?x=1");
         assertThat(resolved.type()).isNull();
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 
     @Test
@@ -104,5 +113,6 @@ class VideoSourceResolverTest {
         // The URL looks like a YouTube URL — but after a TUM Live exception we must return null type, not YOUTUBE
         var resolved = withTumLive(api).resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         assertThat(resolved.type()).isNull();
+        assertThat(resolved.youtubeVideoId()).isNull();
     }
 }

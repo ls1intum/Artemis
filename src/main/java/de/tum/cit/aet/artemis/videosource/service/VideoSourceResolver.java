@@ -47,24 +47,25 @@ public class VideoSourceResolver {
      */
     public ResolvedVideo resolve(String videoSource) {
         if (videoSource == null || videoSource.isBlank()) {
-            return new ResolvedVideo(videoSource, null);
+            return new ResolvedVideo(videoSource, null, null);
         }
         if (tumLiveApi.isPresent()) {
             try {
                 Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
                 if (resolved.isPresent()) {
                     log.info("Resolved TUM Live URL to HLS playlist for video source resolution");
-                    return new ResolvedVideo(resolved.get(), VideoSourceType.TUM_LIVE);
+                    return new ResolvedVideo(resolved.get(), VideoSourceType.TUM_LIVE, null);
                 }
             }
             catch (RuntimeException e) {
                 log.warn("TUM Live resolution failed; falling back to raw URL", e);
-                return new ResolvedVideo(videoSource, null);
+                return new ResolvedVideo(videoSource, null, null);
             }
         }
         if (youTubeUrlService.isYouTubeUrl(videoSource)) {
-            return new ResolvedVideo(videoSource, VideoSourceType.YOUTUBE);
+            String youtubeVideoId = youTubeUrlService.extractYouTubeVideoId(videoSource).orElse(null);
+            return new ResolvedVideo(videoSource, VideoSourceType.YOUTUBE, youtubeVideoId);
         }
-        return new ResolvedVideo(videoSource, null);
+        return new ResolvedVideo(videoSource, null, null);
     }
 }
