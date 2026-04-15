@@ -82,6 +82,9 @@
             }
         },
         "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "Diese URL sieht wie eine YouTube-URL aus, konnte aber nicht verarbeitet werden. Unterstützte Formate: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+            },
             "created": "Neuer Datei-/Video-Inhalt erstellt",
             "updated": "Datei-/Video-Inhalt aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",

@@ -82,6 +82,9 @@
             }
         },
         "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "This looks like a YouTube URL but couldn't be parsed. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+            },
             "created": "New file/video content created",
             "updated": "File/video content updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
