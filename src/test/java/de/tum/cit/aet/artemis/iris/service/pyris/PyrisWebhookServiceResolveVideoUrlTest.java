@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 class PyrisWebhookServiceResolveVideoUrlTest {
@@ -19,8 +20,9 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     private final YouTubeUrlService youTubeUrlService = new YouTubeUrlService();
 
     private PyrisWebhookService withTumLive(TumLiveApi tumLiveApi) {
+        VideoSourceResolver resolver = new VideoSourceResolver(Optional.ofNullable(tumLiveApi), youTubeUrlService);
         return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(IrisSettingsService.class), Optional.empty(), Optional.empty(),
-                Optional.empty(), Optional.ofNullable(tumLiveApi), youTubeUrlService);
+                Optional.empty(), resolver);
     }
 
     @Test

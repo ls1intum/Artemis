@@ -41,9 +41,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
-import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
-import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
 
 @Lazy
 @Service
@@ -64,24 +63,21 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
-    private final Optional<TumLiveApi> tumLiveApi;
-
-    private final YouTubeUrlService youTubeUrlService;
+    private final VideoSourceResolver videoSourceResolver;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<TumLiveApi> tumLiveApi, YouTubeUrlService youTubeUrlService) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolver videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.tumLiveApi = tumLiveApi;
-        this.youTubeUrlService = youTubeUrlService;
+        this.videoSourceResolver = videoSourceResolver;
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -148,26 +144,7 @@ public class PyrisWebhookService {
      * @return the resolved HLS playlist URL, or the original URL if resolution is not applicable
      */
     ResolvedVideo resolveVideoUrl(String videoSource) {
-        if (videoSource == null || videoSource.isBlank()) {
-            return new ResolvedVideo(videoSource, null);
-        }
-        if (tumLiveApi.isPresent()) {
-            try {
-                Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
-                if (resolved.isPresent()) {
-                    log.info("Resolved TUM Live URL to HLS playlist for Iris ingestion");
-                    return new ResolvedVideo(resolved.get(), VideoSourceType.TUM_LIVE);
-                }
-            }
-            catch (RuntimeException e) {
-                log.warn("TUM Live resolution failed; falling back to raw URL", e);
-                return new ResolvedVideo(videoSource, null);
-            }
-        }
-        if (youTubeUrlService.isYouTubeUrl(videoSource)) {
-            return new ResolvedVideo(videoSource, VideoSourceType.YOUTUBE);
-        }
-        return new ResolvedVideo(videoSource, null);
+        return videoSourceResolver.resolve(videoSource);
     }
 
     /**
@@ -331,7 +308,4 @@ public class PyrisWebhookService {
     public IngestionState getFaqIngestionState(long courseId, long faqId) {
         return pyrisConnectorService.getFaqIngestionState(courseId, faqId);
     }
-}
-
-record ResolvedVideo(String url, VideoSourceType type) {
 }
