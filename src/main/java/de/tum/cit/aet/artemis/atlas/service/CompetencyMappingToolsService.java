@@ -312,6 +312,8 @@ public class CompetencyMappingToolsService {
                     continue;
                 }
 
+                // id absent (null) or the primitive-default 0L -> treat as "new relation, create it".
+                // The LLM may serialize a missing id either way; both forms must be handled identically.
                 if (rel.id() == null || rel.id() == 0L) {
                     competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     createCount++;

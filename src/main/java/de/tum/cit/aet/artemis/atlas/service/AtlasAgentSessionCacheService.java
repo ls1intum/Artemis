@@ -67,6 +67,13 @@ public class AtlasAgentSessionCacheService {
 
     private final CacheManager cacheManager;
 
+    /**
+     * Per-session locks serializing read-modify-write on the preview history cache entry.
+     * Prevents concurrent {@link #storePreviewForMessage} calls for the same session from
+     * overwriting each other's history maps.
+     */
+    private final ConcurrentHashMap<String, Object> previewHistoryLocks = new ConcurrentHashMap<>();
+
     public AtlasAgentSessionCacheService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
@@ -210,13 +217,18 @@ public class AtlasAgentSessionCacheService {
         if (cache == null) {
             return;
         }
-        Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
-        if (history == null) {
-            history = new ConcurrentHashMap<>();
+        // Serialize per-session read-modify-write: without this, concurrent calls for the same session
+        // can both observe a null history, each create a fresh map, and the final cache.put leaves only
+        // the last writer's map — silently dropping the loser's messageIndex entry.
+        Object lock = previewHistoryLocks.computeIfAbsent(sessionId, k -> new Object());
+        synchronized (lock) {
+            Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
+            if (history == null) {
+                history = new ConcurrentHashMap<>();
+            }
+            history.put(messageIndex, previewData);
             cache.put(sessionId, history);
         }
-        history.put(messageIndex, previewData);
-        cache.put(sessionId, history);
     }
 
     /**
@@ -245,5 +257,6 @@ public class AtlasAgentSessionCacheService {
         if (cache != null) {
             cache.evict(sessionId);
         }
+        previewHistoryLocks.remove(sessionId);
     }
 }
