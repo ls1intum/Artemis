@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.tumlive.api;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
@@ -14,6 +17,7 @@ import de.tum.cit.aet.artemis.tumlive.service.YouTubeService;
  */
 @Controller
 @Lazy
+@Profile(PROFILE_CORE)
 public class YouTubeApi implements AbstractApi {
 
     private final YouTubeService youTubeService;

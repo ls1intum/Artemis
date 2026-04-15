@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.tumlive.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
@@ -10,6 +12,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Lazy
+@Profile(PROFILE_CORE)
 public class YouTubeService {
 
     private static final Logger log = LoggerFactory.getLogger(YouTubeService.class);
