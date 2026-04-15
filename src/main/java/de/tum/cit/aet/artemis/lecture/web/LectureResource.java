@@ -402,7 +402,7 @@ public class LectureResource {
             var attachment = unit.getAttachment();
             var resolved = videoSourceResolver.resolve(unit.getVideoSource());
             return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), new ArrayList<>(), attachment != null ? AttachmentDTO.from(attachment) : null, unit.getReleaseDate(),
-                    "attachment", resolved.url(), resolved.type(), resolved.youtubeVideoId(), transcriptionErrorCode);
+                    "attachment", unit.getVideoSource(), resolved.type(), resolved.youtubeVideoId(), transcriptionErrorCode);
         }
     }
 

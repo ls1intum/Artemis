@@ -107,4 +107,28 @@ class LectureResourceAttachmentVideoUnitDTOTest {
 
         assertThat(dto.transcriptionErrorCode()).isNull();
     }
+
+    /**
+     * Regression test: when the resolver returns a different (playlist) URL for a TUM Live watch URL,
+     * the DTO must expose the original watch URL, not the resolved playlist URL.
+     * This ensures the frontend can re-resolve the URL via the playlist endpoint, which only
+     * understands watch URLs (not playlist URLs).
+     */
+    @Test
+    void factoryExposesRawVideoSourceNotResolvedPlaylistUrl() {
+        String watchUrl = "https://live.rbg.tum.de/w/foo/123";
+        String playlistUrl = "https://live.rbg.tum.de/playlist/foo/123.m3u8";
+
+        var unit = new AttachmentVideoUnit();
+        unit.setVideoSource(watchUrl);
+
+        var resolver = mock(VideoSourceResolver.class);
+        when(resolver.resolve(watchUrl)).thenReturn(new ResolvedVideo(playlistUrl, VideoSourceType.TUM_LIVE, null));
+
+        var dto = AttachmentVideoUnitDTO.from(unit, resolver, null);
+
+        assertThat(dto.videoSource()).isEqualTo(watchUrl);
+        assertThat(dto.videoSource()).isNotEqualTo(playlistUrl);
+        assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.TUM_LIVE);
+    }
 }
