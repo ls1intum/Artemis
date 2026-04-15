@@ -61,6 +61,8 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 
+type SplitterConfig = { direction: 'horizontal' | 'vertical'; sizes: [number, number]; minSizes: [number, number]; cursor: string; onDragEnd: (sizes: number[]) => void };
+
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
@@ -108,11 +110,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly _transcriptSegments = signal<TranscriptSegment[]>([]);
     private readonly _playlistUrl = signal<string | undefined>(undefined);
     private readonly _isLoading = signal<boolean>(false);
+    private readonly _hasPdfFullscreen = signal<boolean>(false);
 
     readonly isFullscreen = this._isFullscreen.asReadonly();
     readonly transcriptSegments = this._transcriptSegments.asReadonly();
     readonly playlistUrl = this._playlistUrl.asReadonly();
     readonly isLoading = this._isLoading.asReadonly();
+    readonly hasPdfFullscreen = this._hasPdfFullscreen.asReadonly();
 
     // Split panel sizes (percentage values)
     private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
@@ -441,35 +445,43 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
-    private initVerticalSplitter(elements: HTMLElement[]): void {
-        this.verticalSplitInstance = Split(elements, {
-            sizes: this._verticalSplitSizes(),
-            minSize: this.minVerticalSplitSizes,
+    private initSplitter(elements: HTMLElement[], config: SplitterConfig): Split.Instance {
+        return Split(elements, {
+            sizes: config.sizes,
+            minSize: config.minSizes,
             gutterSize: 12,
-            cursor: 'col-resize',
-            direction: 'horizontal',
+            cursor: config.cursor,
+            direction: config.direction,
             onDragEnd: (sizes) => {
                 this.ngZone.run(() => {
-                    this._verticalSplitSizes.set([sizes[0], sizes[1]]);
+                    config.onDragEnd(sizes);
                 });
             },
             gutter: (_index, direction) => this.createSplitGutter(direction),
         });
     }
 
-    private initHorizontalSplitter(elements: HTMLElement[]): void {
-        this.horizontalSplitInstance = Split(elements, {
-            sizes: this._horizontalSplitSizes(),
-            minSize: this.minHorizontalSplitSizes,
-            gutterSize: 12,
-            cursor: 'row-resize',
-            direction: 'vertical',
+    private initVerticalSplitter(elements: HTMLElement[]): void {
+        this.verticalSplitInstance = this.initSplitter(elements, {
+            direction: 'horizontal',
+            sizes: this._verticalSplitSizes(),
+            minSizes: this.minVerticalSplitSizes,
+            cursor: 'col-resize',
             onDragEnd: (sizes) => {
-                this.ngZone.run(() => {
-                    this._horizontalSplitSizes.set([sizes[0], sizes[1]]);
-                });
+                this._verticalSplitSizes.set([sizes[0], sizes[1]]);
             },
-            gutter: (_index, direction) => this.createSplitGutter(direction),
+        });
+    }
+
+    private initHorizontalSplitter(elements: HTMLElement[]): void {
+        this.horizontalSplitInstance = this.initSplitter(elements, {
+            direction: 'vertical',
+            sizes: this._horizontalSplitSizes(),
+            minSizes: this.minHorizontalSplitSizes,
+            cursor: 'row-resize',
+            onDragEnd: (sizes) => {
+                this._horizontalSplitSizes.set([sizes[0], sizes[1]]);
+            },
         });
     }
 
@@ -540,15 +552,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // Trigger card expansion (this will automatically sync _isCollapsed via onCollapse event)
             card.toggleCollapse();
 
-            // Wait for content to render before activating fullscreen using proper render cycle
+            // Wait for content to render before activating fullscreen
             afterNextRender(
                 () => {
-                    afterNextRender(
-                        () => {
-                            this.activateFullscreen();
-                        },
-                        { injector: this.injector },
-                    );
+                    this.activateFullscreen();
                 },
                 { injector: this.injector },
             );
@@ -560,16 +567,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private activateFullscreen(): void {
         this.resetSplitSizesForFullscreen();
+        this._isFullscreen.set(true);
+
+        // Move focus into fullscreen container after it's rendered
         afterNextRender(
             () => {
-                this._isFullscreen.set(true);
-                // Move focus into fullscreen container after it's rendered
-                afterNextRender(
-                    () => {
-                        this.focusFullscreenContainer();
-                    },
-                    { injector: this.injector },
-                );
+                this.focusFullscreenContainer();
             },
             { injector: this.injector },
         );
@@ -588,13 +591,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         (focusableElements.length > 0 ? (focusableElements[0] as HTMLElement) : container).focus();
     }
 
+    private getFocusableElements(container: HTMLElement): HTMLElement[] {
+        return Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter(
+            (el) => el.offsetParent !== null && !el.hasAttribute('disabled') && el.tabIndex >= 0,
+        );
+    }
+
     private setupFocusTrap(container: HTMLElement): void {
         this._focusTrapHandler = (event: KeyboardEvent) => {
             if (event.key !== 'Tab') {
                 return;
             }
 
-            const elements = Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter((el) => el.offsetParent !== null);
+            const elements = this.getFocusableElements(container);
             if (elements.length === 0) {
                 return event.preventDefault();
             }
@@ -672,7 +681,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     closeFullscreen(): void {
-        if (!this.isFullscreen() || this.hasOpenPdfFullscreen()) {
+        if (!this.isFullscreen() || this.hasPdfFullscreen()) {
             return;
         }
 
@@ -692,7 +701,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     @HostListener('document:keydown.escape', ['$event'])
     onEscapePressed(event: Event): void {
-        if (!this.isFullscreen() || event.defaultPrevented || this.hasOpenPdfFullscreen()) {
+        if (!this.isFullscreen() || event.defaultPrevented || this.hasPdfFullscreen()) {
             return;
         }
 
@@ -727,8 +736,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    private hasOpenPdfFullscreen(): boolean {
-        return this.hostElement.nativeElement.querySelector('.pdf-fullscreen-window') instanceof HTMLElement;
+    protected onPdfFullscreenChange(isFullscreen: boolean): void {
+        this._hasPdfFullscreen.set(isFullscreen);
     }
 
     /**

@@ -59,6 +59,7 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     readonly isNarrowColumn = computed(() => this.transcriptColumnWidthPx() > 0 && this.transcriptColumnWidthPx() < 420);
 
     private resizeObserver?: ResizeObserver;
+    private resizeAnimationFrameId?: number;
 
     ngAfterViewInit(): void {
         const transcriptColumn = this.transcriptColumnRef()?.nativeElement;
@@ -68,14 +69,24 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
 
         this.transcriptColumnWidthPx.set(transcriptColumn.getBoundingClientRect().width);
         this.resizeObserver = new ResizeObserver((entries) => {
-            const width = entries[0]?.contentRect.width ?? transcriptColumn.getBoundingClientRect().width;
-            this.transcriptColumnWidthPx.set(width);
+            if (this.resizeAnimationFrameId !== undefined) {
+                window.cancelAnimationFrame(this.resizeAnimationFrameId);
+            }
+            this.resizeAnimationFrameId = window.requestAnimationFrame(() => {
+                const width = entries[0]?.contentRect.width ?? transcriptColumn.getBoundingClientRect().width;
+                this.transcriptColumnWidthPx.set(width);
+                this.resizeAnimationFrameId = undefined;
+            });
         });
         this.resizeObserver.observe(transcriptColumn);
     }
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        if (this.resizeAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.resizeAnimationFrameId);
+            this.resizeAnimationFrameId = undefined;
+        }
     }
 
     /**

@@ -67,6 +67,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
+    /** Animation frame ID for debouncing resize updates */
+    private resizeAnimationFrameId?: number;
+
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
@@ -196,7 +199,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         // Use ResizeObserver to reliably sync transcript height whenever video column size changes
         this.resizeObserver = new ResizeObserver(() => {
-            this.syncTranscriptHeight();
+            if (this.resizeAnimationFrameId !== undefined) {
+                window.cancelAnimationFrame(this.resizeAnimationFrameId);
+            }
+            this.resizeAnimationFrameId = window.requestAnimationFrame(() => {
+                this.syncTranscriptHeight();
+                this.resizeAnimationFrameId = undefined;
+            });
         });
         this.resizeObserver.observe(videoColumnEl);
     }
@@ -332,6 +341,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
             this.resizeObserver = undefined;
+        }
+
+        // Clean up animation frame
+        if (this.resizeAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.resizeAnimationFrameId);
+            this.resizeAnimationFrameId = undefined;
         }
     }
 }

@@ -49,6 +49,7 @@ export class PdfViewerComponent {
     readonly pageRendered = output<{ pdfUrl: string }>();
     readonly loadError = output<{ pdfUrl: string }>();
     readonly downloadRequested = output<void>();
+    readonly isFullscreenChange = output<boolean>();
 
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
@@ -150,6 +151,7 @@ export class PdfViewerComponent {
         }
         this.applyFullscreenLayering();
         this.isFullscreen.set(true);
+        this.isFullscreenChange.emit(true);
     }
 
     closeFullscreen(): void {
@@ -157,6 +159,7 @@ export class PdfViewerComponent {
             return;
         }
         this.isFullscreen.set(false);
+        this.isFullscreenChange.emit(false);
         this.resetFullscreenLayering();
     }
 

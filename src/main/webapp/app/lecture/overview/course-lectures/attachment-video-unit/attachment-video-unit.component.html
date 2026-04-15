@@ -73,16 +73,10 @@
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
                         <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
                     </div>
-                } @else if (isFullscreen()) {
-                    <div #videoContainer class="video-player-container video-player-container--fullscreen">
-                        <div class="video-iframe-wrapper video-iframe-wrapper--fullscreen">
-                            <iframe id="videoFrame-fullscreen" class="video-iframe" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
-                        </div>
-                    </div>
                 } @else {
-                    <div #videoContainer class="video-player-container">
-                        <div class="ratio ratio-16x9">
-                            <iframe id="videoFrame" class="rounded w-100 h-100 border-0" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                    <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                        <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'ratio ratio-16x9'">
+                            <iframe [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                         </div>
                     </div>
                 }
@@ -114,6 +108,7 @@
                             (pageRendered)="onPdfPageRendered($event)"
                             (loadError)="onPdfLoadError($event)"
                             (downloadRequested)="handleDownload()"
+                            (isFullscreenChange)="onPdfFullscreenChange($event)"
                         />
                     </div>
                 }
