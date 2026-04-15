@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 

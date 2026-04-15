@@ -423,8 +423,7 @@ public class AttachmentVideoUnitResource {
      * @param videoSource the videoSource URL from the request payload
      */
     private void validateYouTubeVideoSource(String videoSource) {
-        if (videoSource != null && !videoSource.isBlank() && youTubeUrlService.hasYouTubeHost(videoSource)
-                && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
+        if (videoSource != null && !videoSource.isBlank() && youTubeUrlService.hasYouTubeHost(videoSource) && youTubeUrlService.extractYouTubeVideoId(videoSource).isEmpty()) {
             throw new BadRequestAlertException("Invalid YouTube URL format", ENTITY_NAME, "invalidYouTubeUrl");
         }
     }

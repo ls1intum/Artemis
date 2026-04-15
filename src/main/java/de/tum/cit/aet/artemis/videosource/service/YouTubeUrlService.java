@@ -19,14 +19,7 @@ import org.springframework.stereotype.Service;
 @Lazy
 public class YouTubeUrlService {
 
-    private static final Set<String> YOUTUBE_HOSTS = Set.of(
-        "youtube.com",
-        "www.youtube.com",
-        "m.youtube.com",
-        "youtu.be",
-        "youtube-nocookie.com",
-        "www.youtube-nocookie.com"
-    );
+    private static final Set<String> YOUTUBE_HOSTS = Set.of("youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "youtube-nocookie.com", "www.youtube-nocookie.com");
 
     private static final Pattern VIDEO_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{11}$");
 
