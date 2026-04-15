@@ -299,15 +299,31 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
-            // since login is successful, go to the stored previousState and clear the previousState
-            const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
-            if (redirect && redirect !== '') {
-                this.sessionStorageService.store('previousUrl', '');
-                this.router.navigateByUrl(redirect);
-            } else {
-                this.router.navigate(['courses']);
+            // Do not navigate away while the passkey setup modal is open,
+            // as it would destroy the modal before the user can interact with it.
+            if (this.showPasskeyModal()) {
+                return;
             }
+            this.navigateAfterLogin();
+        }
+    }
+
+    onPasskeyModalVisibleChange(visible: boolean): void {
+        this.showPasskeyModal.set(visible);
+        if (!visible && this.account) {
+            this.navigateAfterLogin();
+        }
+    }
+
+    private navigateAfterLogin(): void {
+        // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
+        // since login is successful, go to the stored previousState and clear the previousState
+        const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
+        if (redirect && redirect !== '') {
+            this.sessionStorageService.store('previousUrl', '');
+            this.router.navigateByUrl(redirect);
+        } else {
+            this.router.navigate(['courses']);
         }
     }
 
