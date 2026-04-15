@@ -5,6 +5,21 @@ import { TranscriptViewerComponent } from './transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { TranslateModule } from '@ngx-translate/core';
 
+class MockResizeObserver {
+    static instances: MockResizeObserver[] = [];
+    callback: ResizeObserverCallback;
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+
+    constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        MockResizeObserver.instances.push(this);
+    }
+}
+
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
 describe('TranscriptViewerComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -18,6 +33,7 @@ describe('TranscriptViewerComponent', () => {
     ];
 
     beforeEach(async () => {
+        MockResizeObserver.instances = [];
         // Mock scrollTo for the test environment (jsdom does not define it)
         Element.prototype.scrollTo = vi.fn();
 
@@ -124,5 +140,15 @@ describe('TranscriptViewerComponent', () => {
 
         component.scrollToSegment(999);
         expect(scrollToSpy).not.toHaveBeenCalled();
+    });
+
+    it('should observe transcript width changes', () => {
+        const observer = MockResizeObserver.instances[0];
+        expect(observer).toBeDefined();
+
+        observer.callback([{ contentRect: { width: 360 } } as ResizeObserverEntry], observer as unknown as ResizeObserver);
+
+        expect(component.transcriptColumnWidthPx()).toBe(360);
+        expect(component.isNarrowColumn()).toBe(true);
     });
 });

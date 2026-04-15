@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,7 +15,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
     templateUrl: './transcript-viewer.component.html',
     styleUrls: ['./transcript-viewer.component.scss'],
 })
-export class TranscriptViewerComponent {
+export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     /** Transcript segments to display */
     transcriptSegments = input<TranscriptSegment[]>([]);
 
@@ -25,8 +25,14 @@ export class TranscriptViewerComponent {
     /** Event emitted when user clicks on a transcript segment */
     segmentClicked = output<number>();
 
+    /** Reference to the root transcript container */
+    private transcriptColumnRef = viewChild<ElementRef<HTMLElement>>('transcriptColumn');
+
     /** Reference to the scrollable transcript list container */
     private transcriptListRef = viewChild<ElementRef<HTMLElement>>('transcriptList');
+
+    /** Current transcript column width in pixels */
+    readonly transcriptColumnWidthPx = signal<number>(0);
 
     /** Search query for filtering transcript segments */
     searchQuery = signal<string>('');
@@ -48,6 +54,29 @@ export class TranscriptViewerComponent {
 
     /** Check if search is active */
     isSearchActive = computed(() => this.searchQuery().length > 0);
+
+    /** Whether the transcript currently has little horizontal space */
+    readonly isNarrowColumn = computed(() => this.transcriptColumnWidthPx() > 0 && this.transcriptColumnWidthPx() < 420);
+
+    private resizeObserver?: ResizeObserver;
+
+    ngAfterViewInit(): void {
+        const transcriptColumn = this.transcriptColumnRef()?.nativeElement;
+        if (!transcriptColumn || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+
+        this.transcriptColumnWidthPx.set(transcriptColumn.getBoundingClientRect().width);
+        this.resizeObserver = new ResizeObserver((entries) => {
+            const width = entries[0]?.contentRect.width ?? transcriptColumn.getBoundingClientRect().width;
+            this.transcriptColumnWidthPx.set(width);
+        });
+        this.resizeObserver.observe(transcriptColumn);
+    }
+
+    ngOnDestroy(): void {
+        this.resizeObserver?.disconnect();
+    }
 
     /**
      * Computes the filtered transcript segments based on the current search query.

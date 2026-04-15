@@ -167,6 +167,18 @@
     padding-left: calc(0.5rem - 3px);
 }
 
+.transcript-column--narrow {
+    .search-nav {
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        font-size: 0.8rem;
+    }
+
+    .search-results {
+        min-width: auto;
+    }
+}
+
 .no-results {
     text-align: center;
     color: var(--gray-600);

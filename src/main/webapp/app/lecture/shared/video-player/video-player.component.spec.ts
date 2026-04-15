@@ -317,9 +317,8 @@ describe('VideoPlayerComponent', () => {
             // Simulate drag to position 600px from left
             moveListener({ clientX: 600 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('600px');
+            expect(videoColumnEl.style.flex).toBe('0 0 60%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps video column width to minimum', async () => {
@@ -347,7 +346,7 @@ describe('VideoPlayerComponent', () => {
             // Try to drag below minimum (300px)
             moveListener({ clientX: 100 });
 
-            expect(videoColumnEl.style.width).toBe('300px');
+            expect(videoColumnEl.style.flex).toBe('0 0 30%');
         });
 
         it('clamps video column width to maximum', async () => {
@@ -375,7 +374,7 @@ describe('VideoPlayerComponent', () => {
             // Try to drag beyond maximum (1000 - 250 = 750px)
             moveListener({ clientX: 900 });
 
-            expect(videoColumnEl.style.width).toBe('750px');
+            expect(videoColumnEl.style.flex).toBe('0 0 75%');
         });
 
         it('resets video column styles on window resize', async () => {
@@ -401,9 +400,8 @@ describe('VideoPlayerComponent', () => {
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             draggableConfig.listeners.move({ clientX: 500 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('500px');
+            expect(videoColumnEl.style.flex).toBe('0 0 50%');
+            expect(videoColumnEl.style.width).toBe('');
 
             // Trigger window resize
             window.dispatchEvent(new Event('resize'));
@@ -572,7 +570,7 @@ describe('VideoPlayerComponent', () => {
         });
     });
 
-    describe('Fullscreen sizing helpers', () => {
+    describe('Layout helpers', () => {
         it('initializeResizer exits early when required elements are missing', () => {
             vi.spyOn(component, 'videoColumn').mockReturnValue(undefined);
             vi.spyOn(component, 'videoWrapper').mockReturnValue(undefined);
@@ -583,56 +581,30 @@ describe('VideoPlayerComponent', () => {
             expect(getMockInteract()).not.toHaveBeenCalled();
         });
 
-        it('syncFullscreenVideoWidth resets auto-applied width when not in fullscreen', () => {
-            const wrapperEl = document.createElement('div');
+        it('syncTranscriptHeight exits when transcript column is missing', () => {
             const videoColumnEl = document.createElement('div');
-            videoColumnEl.style.flex = '0 0 auto';
-            videoColumnEl.style.width = '450px';
-            (component as any).autoFullscreenWidthApplied = true;
+            const wrapperEl = document.createElement('div');
 
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 500,
-                height: 500,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
-            vi.spyOn(component as any, 'isFullscreenContext').mockReturnValue(false);
+            vi.spyOn(component, 'videoColumn').mockReturnValue({ nativeElement: videoColumnEl } as any);
+            vi.spyOn(component, 'videoWrapper').mockReturnValue({ nativeElement: wrapperEl } as any);
 
-            (component as any).syncFullscreenVideoWidth(videoColumnEl, wrapperEl);
-
-            expect(videoColumnEl.style.flex).toBe('');
-            expect(videoColumnEl.style.width).toBe('');
-            expect((component as any).autoFullscreenWidthApplied).toBe(false);
+            expect(() => (component as any).syncTranscriptHeight()).not.toThrow();
         });
 
-        it('syncFullscreenVideoWidth keeps user-defined ratio in fullscreen', () => {
-            const wrapperEl = document.createElement('div');
+        it('syncTranscriptHeight applies at least minimum height', () => {
             const videoColumnEl = document.createElement('div');
+            const wrapperEl = document.createElement('div');
+            const transcriptColumnEl = document.createElement('div');
+            transcriptColumnEl.className = 'transcript-column';
+            wrapperEl.appendChild(transcriptColumnEl);
 
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 700,
-                height: 700,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
-            Object.defineProperty(videoColumnEl, 'clientHeight', { value: 600, configurable: true });
-            (component as any).fullscreenVideoWidthRatio = 0.5;
-            vi.spyOn(component as any, 'isFullscreenContext').mockReturnValue(true);
+            Object.defineProperty(videoColumnEl, 'offsetHeight', { value: 200, configurable: true });
+            vi.spyOn(component, 'videoColumn').mockReturnValue({ nativeElement: videoColumnEl } as any);
+            vi.spyOn(component, 'videoWrapper').mockReturnValue({ nativeElement: wrapperEl } as any);
 
-            (component as any).syncFullscreenVideoWidth(videoColumnEl, wrapperEl);
+            (component as any).syncTranscriptHeight();
 
-            expect(videoColumnEl.style.width).toBe('500px');
-            expect((component as any).autoFullscreenWidthApplied).toBe(false);
+            expect(transcriptColumnEl.style.maxHeight).toBe('500px');
         });
     });
 
