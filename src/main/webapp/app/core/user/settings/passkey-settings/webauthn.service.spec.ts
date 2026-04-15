@@ -518,6 +518,24 @@ describe('WebauthnService', () => {
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
         });
 
+        it('should show no passkey found error alert for 404 errors', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            const error404 = { status: 404 } as any;
+            webauthnApiService.loginWithPasskey.mockRejectedValue(error404);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey(true)).rejects.toEqual(error404);
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
+        });
+
         it('should show error alert for generic errors even when conditional', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({

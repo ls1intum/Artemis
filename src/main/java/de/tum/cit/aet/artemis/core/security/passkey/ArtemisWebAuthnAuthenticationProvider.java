@@ -69,6 +69,10 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
         try {
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
+            if (this.passkeyCredentialsRepository.findByCredentialId(credentialId).isEmpty()) {
+                throw new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
+            }
+
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();
             Optional<User> user = this.userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);

@@ -27,6 +27,9 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
             if (exception instanceof UserNotActivatedException) {
                 response.setStatus(HttpStatus.FORBIDDEN.value());
             }
+            else if (exception instanceof NoPasskeyFoundException) {
+                response.setStatus(HttpStatus.NOT_FOUND.value());
+            }
             else {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
             }
