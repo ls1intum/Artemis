@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260415-1-add-lecture-unit-processing-state-error-code" author="videosource">
+    <changeSet id="20260415-1-add-lecture-unit-processing-state-error-code" author="bassner">
         <addColumn tableName="lecture_unit_processing_state">
             <column name="error_code" type="VARCHAR(64)">
                 <constraints nullable="true"/>
