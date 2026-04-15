@@ -31,6 +31,8 @@ type MockedAccountService = {
     identity: ReturnType<typeof vi.fn>;
 };
 
+const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
+
 describe('WebauthnService', () => {
     setupTestBed({ zoneless: true });
 
@@ -96,6 +98,8 @@ describe('WebauthnService', () => {
     });
 
     afterEach(() => {
+        service.stopConditionalMediation();
+        vi.useRealTimers();
         vi.restoreAllMocks();
         Object.defineProperty(navigator, 'credentials', {
             value: originalCredentials,
@@ -202,17 +206,17 @@ describe('WebauthnService', () => {
             expect(console.error).toHaveBeenCalled();
         });
 
-        it('should handle generic error during login with noPasskeyFound message', async () => {
+        it('should handle generic error during login', async () => {
             const genericError = new Error('Network error');
             vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey()).rejects.toThrow(genericError);
-            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
             expect(console.error).toHaveBeenCalledWith(genericError);
         });
 
-        it('should handle error from webauthnApiService.loginWithPasskey with noPasskeyFound message', async () => {
+        it('should handle error from webauthnApiService.loginWithPasskey', async () => {
             const apiError = new Error('API error');
             vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
             vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
@@ -220,7 +224,7 @@ describe('WebauthnService', () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey()).rejects.toThrow(apiError);
-            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
             expect(console.error).toHaveBeenCalledWith(apiError);
         });
 
@@ -496,7 +500,7 @@ describe('WebauthnService', () => {
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
 
-        it('should show login error alert for 401 errors even when conditional', async () => {
+        it('should show error alert for 401 errors even when conditional', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
@@ -511,28 +515,10 @@ describe('WebauthnService', () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey(true)).rejects.toEqual(error401);
-            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
-        });
-
-        it('should show loginDeactivated error alert for 403 errors when conditional', async () => {
-            const challenge = new Uint8Array([1, 2, 3]);
-            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
-                challenge: encodeAsBase64Url(challenge),
-                timeout: 60000,
-                rpId: 'example.com',
-            } as any);
-            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
-            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
-            const error403 = { status: 403 } as any;
-            webauthnApiService.loginWithPasskey.mockRejectedValue(error403);
-            vi.spyOn(console, 'error').mockImplementation(() => {});
-
-            await expect(service.loginWithPasskey(true)).rejects.toEqual(error403);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
         });
 
-        it('should show noPasskeyFound error alert for generic errors even when conditional', async () => {
+        it('should show error alert for generic errors even when conditional', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
@@ -544,7 +530,7 @@ describe('WebauthnService', () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey(true)).rejects.toThrow(genericError);
-            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
         });
     });
 
@@ -622,6 +608,29 @@ describe('WebauthnService', () => {
             expect(onSuccess).toHaveBeenCalledOnce();
         });
 
+        it('should invoke onMediationActive callback after navigator.credentials.get is called', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
+
+            const onSuccess = vi.fn();
+            const onMediationActive = vi.fn();
+            service.startConditionalMediation(onSuccess, onMediationActive);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(onMediationActive).toHaveBeenCalledOnce();
+            expect(onSuccess).toHaveBeenCalledOnce();
+        });
+
         it('should silently handle PasskeyAbortError without calling onSuccess', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
@@ -677,6 +686,38 @@ describe('WebauthnService', () => {
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
             expect(onSuccess).not.toHaveBeenCalled();
         });
+
+        it('should abort and refresh the background challenge every 4:45 minutes', async () => {
+            vi.useFakeTimers();
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options?: CredentialRequestOptions) => {
+                return new Promise((_, reject) => {
+                    options?.signal?.addEventListener('abort', () => {
+                        reject(options.signal?.reason);
+                    });
+                }) as Promise<Credential | null>;
+            });
+
+            const abortSpy = vi.spyOn(service, 'abortPendingCredentialRequest');
+            service.startConditionalMediation(vi.fn());
+
+            await Promise.resolve();
+            const abortCallsAfterStart = abortSpy.mock.calls.length;
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS);
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(abortSpy).toHaveBeenCalledTimes(abortCallsAfterStart + 1);
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
+        });
     });
 
     describe('stopConditionalMediation', () => {
@@ -686,6 +727,37 @@ describe('WebauthnService', () => {
             service.stopConditionalMediation();
 
             expect(abortSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should stop refreshing the background challenge after stop is called', async () => {
+            vi.useFakeTimers();
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+
+            vi.spyOn(navigator.credentials, 'get').mockImplementation((options?: CredentialRequestOptions) => {
+                return new Promise((_, reject) => {
+                    options?.signal?.addEventListener('abort', () => {
+                        reject(options.signal?.reason);
+                    });
+                }) as Promise<Credential | null>;
+            });
+
+            service.startConditionalMediation(vi.fn());
+            await Promise.resolve();
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(1);
+
+            service.stopConditionalMediation();
+            const callsBeforeTimerAdvance = webauthnApiService.getAuthenticationOptions.mock.calls.length;
+
+            await vi.advanceTimersByTimeAsync(CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS);
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(callsBeforeTimerAdvance);
         });
     });
 
