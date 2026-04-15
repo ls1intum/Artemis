@@ -2,15 +2,22 @@ package de.tum.cit.aet.artemis.lecture.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 class LectureResourceAttachmentVideoUnitDTOTest {
 
@@ -73,5 +80,37 @@ class LectureResourceAttachmentVideoUnitDTOTest {
     void transcriptionErrorCodeIsExposed() {
         var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ", "YOUTUBE_LIVE");
         assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
+    }
+
+    // --- factory method wiring tests ---
+
+    @Test
+    void factoryPropagatesTranscriptionErrorCode() {
+        var unit = new AttachmentVideoUnit();
+        unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
+
+        var resolver = mock(VideoSourceResolver.class);
+        var ytService = mock(YouTubeUrlService.class);
+        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE));
+        when(ytService.extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).thenReturn(Optional.of("dQw4w9WgXcQ"));
+
+        var dto = AttachmentVideoUnitDTO.from(unit, resolver, ytService, "YOUTUBE_LIVE");
+
+        assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
+    }
+
+    @Test
+    void factoryWithNullErrorCodeProducesNullTranscriptionErrorCode() {
+        var unit = new AttachmentVideoUnit();
+        unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
+
+        var resolver = mock(VideoSourceResolver.class);
+        var ytService = mock(YouTubeUrlService.class);
+        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE));
+        when(ytService.extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).thenReturn(Optional.of("dQw4w9WgXcQ"));
+
+        var dto = AttachmentVideoUnitDTO.from(unit, resolver, ytService, null);
+
+        assertThat(dto.transcriptionErrorCode()).isNull();
     }
 }
