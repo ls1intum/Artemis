@@ -31,14 +31,14 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
     /**
      * DTO containing the minimal information of the participant needed in the complaint.
      */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ParticipantDTO(Long id, Boolean isStudent) {
     }
 
     /**
      * DTO containing the minimal information of {@link Result} needed in complaint.
      */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
             Long assessorId) {
 
