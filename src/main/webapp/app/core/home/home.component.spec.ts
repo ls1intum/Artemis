@@ -34,6 +34,7 @@ describe('HomeComponent', () => {
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
     let loginService: LoginService;
+    let webauthnService: WebauthnService;
     let localStorageService: LocalStorageService;
 
     let router: MockRouter;
@@ -76,6 +77,7 @@ describe('HomeComponent', () => {
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         loginService = TestBed.inject(LoginService);
+        webauthnService = TestBed.inject(WebauthnService);
         fixture.detectChanges();
     });
 
@@ -153,6 +155,42 @@ describe('HomeComponent', () => {
         expect(loginSpy).toHaveBeenCalled();
     });
 
+    describe('loginWithPasskey', () => {
+        it('should handle login success', async () => {
+            const loginWithPasskeySpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await component.loginWithPasskey();
+
+            expect(loginWithPasskeySpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should restart passkey autofill after user aborts passkey login', async () => {
+            const cancellationError = new DOMException('User cancelled', 'NotAllowedError');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(cancellationError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).resolves.toBeUndefined();
+
+            expect(prefillPasskeysSpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+
+        it('should rethrow non-abort passkey login errors', async () => {
+            const networkError = new Error('Network error');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(networkError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).rejects.toThrow(networkError);
+
+            expect(prefillPasskeysSpy).not.toHaveBeenCalled();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
@@ -206,6 +244,61 @@ describe('HomeComponent', () => {
             component.openSetupPasskeyModal();
 
             expect(component.showPasskeyModal()).toBe(true);
+        });
+    });
+
+    describe('prefillPasskeysIfPossible', () => {
+        it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
+            component.isPasskeyEnabled = true;
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+        });
+
+        it('should not call startConditionalMediation if passkey is disabled', async () => {
+            component.isPasskeyEnabled = false;
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call startConditionalMediation if conditional mediation is unavailable', async () => {
+            component.isPasskeyEnabled = true;
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(false),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not throw if PublicKeyCredential is undefined', async () => {
+            component.isPasskeyEnabled = true;
+            (window as any).PublicKeyCredential = undefined;
+
+            await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should stop conditional mediation on destroy', () => {
+            const stopSpy = vi.spyOn(webauthnService, 'stopConditionalMediation');
+
+            component.ngOnDestroy();
+
+            expect(stopSpy).toHaveBeenCalledOnce();
         });
     });
 });
