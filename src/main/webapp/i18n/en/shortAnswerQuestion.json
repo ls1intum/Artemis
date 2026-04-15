@@ -26,7 +26,7 @@
                 "text": "Text",
                 "visual": "Visual",
                 "visualModeHeadline": "Visual Mode",
-                "visualModeExplanation": "Please highlight one word an click on the Add Spot button to create one spot with the corresponding solution"
+                "visualModeExplanation": "Please highlight one word and click on the Add Spot button to create one spot with the corresponding solution"
             },
             "addShortAnswerSolution": "Add Short Answer Solution"
         }
