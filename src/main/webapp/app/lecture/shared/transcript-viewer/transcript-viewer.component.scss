@@ -1,5 +1,5 @@
 /* Host element participates in parent flex layout */
-jhi-transcript-viewer {
+:host {
     flex: 1;
     min-width: 200px;
 }
@@ -174,16 +174,16 @@ jhi-transcript-viewer {
     padding: 2rem 1rem;
 }
 
-.content-container--fullscreen jhi-transcript-viewer .search-input {
+:host-context(.content-container--fullscreen) .search-input {
     font-size: 1rem;
 }
 
-.content-container--fullscreen jhi-transcript-viewer .search-nav {
+:host-context(.content-container--fullscreen) .search-nav {
     font-size: 0.95rem;
 }
 
 /* Slightly larger typography improves readability in fullscreen split view. */
-.content-container--fullscreen jhi-transcript-viewer .transcript-line {
+:host-context(.content-container--fullscreen) .transcript-line {
     font-size: 1rem;
     line-height: 1.5;
     padding: 0.5rem 0.625rem;

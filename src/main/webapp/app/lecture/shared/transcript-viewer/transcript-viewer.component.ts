@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewEncapsulation, computed, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,7 +14,6 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
     imports: [CommonModule, FormsModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './transcript-viewer.component.html',
     styleUrls: ['./transcript-viewer.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class TranscriptViewerComponent {
     /** Transcript segments to display */
