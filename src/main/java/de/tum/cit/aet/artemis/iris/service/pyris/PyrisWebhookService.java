@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.tumlive.api.TumLiveApi;
+import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
 
 @Lazy
 @Service
