@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -61,7 +62,7 @@ public class ContentExtractionService {
             metadata.put("difficulty", exercise.getDifficulty().name().toLowerCase());
         }
         if (exercise.getMaxPoints() != null) {
-            metadata.put("maxPoints", exercise.getMaxPoints().toString());
+            metadata.put("maxPoints", String.format(Locale.ROOT, "%.1f", exercise.getMaxPoints()));
         }
 
         return new ExtractedContentDTO(title, learningText, metadata);

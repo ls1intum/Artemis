@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class ContentExtractionServiceTest {
@@ -103,10 +103,45 @@ class ContentExtractionServiceTest {
 
     @Test
     void extractContent_unsupportedLearningObjectType_throwsIllegalArgumentException() {
-        ModelingExercise exercise = new ModelingExercise();
-        exercise.setTitle("UML Diagram");
+        TextUnit textUnit = new TextUnit();
+        textUnit.setName("Intro");
 
-        assertThatThrownBy(() -> contentExtractionService.extractContent(exercise)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unsupported learning object type");
+        assertThatThrownBy(() -> contentExtractionService.extractContent(textUnit)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported learning object type");
+    }
+
+    @Test
+    void extractContent_metadataIsImmutable_throwsOnMutation() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Sorting");
+        exercise.setProblemStatement("Sort things.");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
+
+        assertThatThrownBy(() -> result.metadata().put("foo", "bar")).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void extractContent_whitespaceProblemStatement_passesThrough() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Sorting");
+        exercise.setProblemStatement("   ");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
+
+        assertThat(result.extractedLearningText()).isEqualTo("   ");
+    }
+
+    @Test
+    void extractContent_maxPointsWithFloatingPointDrift_isFormatted() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Sorting");
+        exercise.setProblemStatement("Sort things.");
+        exercise.setMaxPoints(0.1 + 0.2);
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
+
+        assertThat(result.metadata()).containsEntry("maxPoints", "0.3");
     }
 
 }
