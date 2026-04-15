@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,6 +24,13 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Comment;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.DocumentType;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.XmlDeclaration;
 import org.jsoup.safety.Safelist;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,6 +47,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
@@ -60,21 +70,20 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String DARK_MODE_CSS = loadClasspathResource("problem-statement-css/dark-mode.css");
 
-    // Dangerous SVG constructs that PlantUML should never generate but we strip as defense-in-depth
-    private static final Pattern SVG_DANGEROUS_PATTERN = Pattern.compile("<script|</script|\\bon\\w+\\s*=|javascript:|foreignObject|<image|<use[\\s>]", Pattern.CASE_INSENSITIVE);
+    // Elements that are never safe in SVG — defense-in-depth against compromised PlantUML output
+    private static final Set<String> SVG_DENIED_ELEMENTS = Set.of("script", "foreignobject", "use", "image");
 
-    /**
-     * Holds feedback detail for a single test case.
-     */
-    public record TestFeedbackDetail(long testId, String testName, boolean passed, @Nullable String message, @Nullable Double credits) {
-    }
+    // Presentation attributes that can contain url(...) references — only local fragment refs (#id) are allowed
+    private static final Set<String> SVG_URL_BEARING_ATTRIBUTES = Set.of("fill", "stroke", "filter", "clip-path", "mask", "marker-start", "marker-mid", "marker-end");
 
-    /**
-     * Holds result-level summary data for the interactive modal (score, submission info).
-     */
-    public record ResultSummary(@Nullable Double score, @Nullable Double maxPoints, @Nullable Double bonusPoints, @Nullable String commitHash, @Nullable String submissionDate,
-            @Nullable String assessmentType) {
-    }
+    // Pattern matching url(...) references — used to check if attribute values or CSS contain external URLs
+    private static final Pattern URL_REFERENCE_PATTERN = Pattern.compile("url\\s*\\(", Pattern.CASE_INSENSITIVE);
+
+    // Pattern matching only local fragment refs: url(#id) — these are safe
+    private static final Pattern LOCAL_URL_REF_PATTERN = Pattern.compile("^\\s*url\\s*\\(\\s*#[^)]+\\)\\s*$", Pattern.CASE_INSENSITIVE);
+
+    // Dangerous CSS patterns: external url(), expression(), @import, -moz-binding
+    private static final Pattern DANGEROUS_CSS_PATTERN = Pattern.compile("expression\\s*\\(|@import|(-moz-binding)", Pattern.CASE_INSENSITIVE);
 
     private static final @Nullable String KATEX_AUTO_RENDER_JS = loadClasspathResource("problem-statement-js/katex-auto-render.js");
 
@@ -82,10 +91,10 @@ public class ProblemStatementRenderingService {
     private static final Pattern INLINE_FORMULA_LINE = Pattern.compile(".+\\$\\$[^$]+\\$\\$|\\$\\$[^$]+\\$\\$.+");
 
     /** Display math: $$...$$ on its own line (after formula compatibility transform). */
-    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$([\\s\\S]+?)\\$\\$$", Pattern.MULTILINE);
+    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$((?:[^$]|\\$(?!\\$))+)\\$\\$$", Pattern.MULTILINE);
 
-    /** Inline math: $...$, but not inside other $ signs. */
-    private static final Pattern INLINE_MATH_PATTERN = Pattern.compile("(?<!\\$)\\$(?!\\$)(.+?)(?<!\\$)\\$(?!\\$)");
+    /** Inline math: $...$, but not inside other $ signs. Uses [^$\n]+ instead of .+? to prevent ReDoS via O(N^2) backtracking. */
+    private static final Pattern INLINE_MATH_PATTERN = Pattern.compile("(?<!\\$)\\$(?!\\$)([^$\n]+)\\$(?!\\$)");
 
     private static final String MATH_PLACEHOLDER_PREFIX = "\u0000MATH_";
 
@@ -100,19 +109,44 @@ public class ProblemStatementRenderingService {
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
+    /**
+     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}
+     * where test identifiers are typically {@code <testid>123</testid>} values resolved from the exercise's test cases.
+     * The test list supports optional parenthesized suffixes for each identifier.
+     * <p>
+     * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
+     * <p>
+     * Example: {@code [task][Implement Sorting](<testid>1</testid>,<testid>2</testid>)}
+     */
     private static final Pattern TASK_PATTERN = Pattern
             .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
-    // Inner capture for testsColor(): matches <testid>123</testid> or test names like testClass[Vehicle] or testMoveCar(IOTester)
-    // Aligned with the Angular client regex: /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g
+    /**
+     * Captures a single test identifier inside {@code testsColor(...)}.
+     * Matches test names like {@code testClass[Vehicle]} or {@code testMoveCar(IOTester)},
+     * allowing one level of parenthesized suffix.
+     * Aligned with the Angular client regex: {@code /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g}
+     */
     private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
 
+    /**
+     * PlantUML color tag: {@code <color:testsColor(testName)>text</color>}.
+     * Group 1: test identifier, Group 2: inner text to be colored.
+     */
     private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");
 
+    /**
+     * PlantUML arrow/element coloring: {@code #testsColor(testName)}.
+     * Group 1: test identifier.
+     */
     private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
+    /**
+     * PlantUML text coloring: {@code #text:testsColor(testName)}.
+     * Group 1: test identifier.
+     */
     private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
@@ -133,11 +167,15 @@ public class ProblemStatementRenderingService {
 
     private final String serverUrl;
 
+    private final HtmlRenderer commonMarkRenderer;
+
     public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, @Value("${server.url}") String serverUrl) {
         this.plantUmlService = plantUmlService;
         this.objectMapper = objectMapper;
         this.messageSource = messageSource;
         this.serverUrl = serverUrl;
+        this.commonMarkRenderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
+                .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
     }
 
     /**
@@ -153,7 +191,7 @@ public class ProblemStatementRenderingService {
      * @param includeCss    if true, prepends embedded CSS to the HTML output
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale,
+    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
             boolean darkMode, boolean includeJs, boolean includeCss) {
 
         if (markdown == null || markdown.isBlank()) {
@@ -234,9 +272,9 @@ public class ProblemStatementRenderingService {
         return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults, boolean darkMode) {
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
         // Build name-based lookup map once for all diagrams
-        Map<String, TestFeedbackDetail> testResultsByName = buildTestResultsByName(testResults);
+        Map<String, TestFeedbackInputDTO> testResultsByName = buildTestResultsByName(testResults);
 
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
@@ -258,7 +296,7 @@ public class ProblemStatementRenderingService {
                 rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
                 rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
                 rawSvg = rawSvg.replace("background:#FFFFFF;", "");
-                inlineSvg = rejectDangerousSvg(rawSvg);
+                inlineSvg = sanitizeSvg(rawSvg);
             }
             catch (Exception e) {
                 log.error("Failed to generate inline SVG for diagram {} in stateless render", diagramId, e);
@@ -277,29 +315,132 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Defense-in-depth: reject SVG if it contains dangerous constructs that PlantUML should never generate.
-     * Falls back to a safe error message instead of inlining the suspect SVG.
+     * Defense-in-depth SVG sanitizer using jsoup's XML parser and a DOM-based deny list.
+     * Removes dangerous elements, event handler attributes, unsafe href/URL references,
+     * and dangerous CSS patterns. Preserves legitimate PlantUML SVG output.
+     * <p>
+     * Package-private for unit testing in {@code SvgSanitizerTest}.
      */
-    private static String rejectDangerousSvg(String svg) {
-        if (SVG_DANGEROUS_PATTERN.matcher(svg).find()) {
-            log.warn("PlantUML SVG contained dangerous construct — falling back to error placeholder");
-            return "<div class=\"alert alert-danger\">SVG rejected for security reasons</div>";
-        }
-        return svg;
+    static String sanitizeSvg(String svg) {
+        Document doc = Jsoup.parse(svg, "", org.jsoup.parser.Parser.xmlParser());
+        removeNonElementNodes(doc);
+        sanitizeElements(doc);
+        return doc.html();
     }
 
-    private static Map<String, TestFeedbackDetail> buildTestResultsByName(@Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private static void removeNonElementNodes(Node parent) {
+        for (Node child : new ArrayList<>(parent.childNodes())) {
+            if (child instanceof XmlDeclaration || child instanceof DocumentType || child instanceof Comment) {
+                child.remove();
+            }
+        }
+    }
+
+    private static void sanitizeElements(Element parent) {
+        for (Element child : new ArrayList<>(parent.children())) {
+            String tag = child.tagName().toLowerCase(Locale.ROOT);
+
+            // Remove denied elements entirely
+            if (SVG_DENIED_ELEMENTS.contains(tag)) {
+                log.warn("SVG sanitizer removed disallowed element: <{}>", tag);
+                child.remove();
+                continue;
+            }
+
+            // Remove event handler attributes (on*)
+            for (Attribute attr : new ArrayList<>(child.attributes().asList())) {
+                String attrKey = attr.getKey().toLowerCase(Locale.ROOT);
+
+                if (attrKey.startsWith("on")) {
+                    child.removeAttr(attr.getKey());
+                    continue;
+                }
+
+                // Sanitize href / xlink:href
+                if ("href".equals(attrKey) || "xlink:href".equals(attrKey)) {
+                    String value = attr.getValue().strip().toLowerCase(Locale.ROOT);
+                    if (value.startsWith("javascript:") || value.startsWith("data:")) {
+                        child.removeAttr(attr.getKey());
+                    }
+                    else if (!"a".equals(tag) && !value.startsWith("#")) {
+                        // On non-<a> elements, only allow local fragment refs
+                        child.removeAttr(attr.getKey());
+                    }
+                    continue;
+                }
+
+                // Check URL-bearing presentation attributes
+                if (SVG_URL_BEARING_ATTRIBUTES.contains(attrKey)) {
+                    String value = attr.getValue();
+                    if (URL_REFERENCE_PATTERN.matcher(value).find() && !LOCAL_URL_REF_PATTERN.matcher(value).matches()) {
+                        child.removeAttr(attr.getKey());
+                    }
+                    continue;
+                }
+
+                // Sanitize inline style attributes
+                if ("style".equals(attrKey)) {
+                    String value = attr.getValue();
+                    if (DANGEROUS_CSS_PATTERN.matcher(value).find() || containsExternalUrlReference(value)) {
+                        child.removeAttr(attr.getKey());
+                    }
+                }
+            }
+
+            // Sanitize <style> element text content
+            // In XML parser mode, <style> content is stored as text nodes (not DataNodes),
+            // so we use html() to get the raw content rather than data()
+            if ("style".equals(tag)) {
+                String cssContent = child.html();
+                if (DANGEROUS_CSS_PATTERN.matcher(cssContent).find() || containsExternalUrlReference(cssContent)) {
+                    // Replace with empty style rather than removing (PlantUML themes rely on style elements)
+                    child.html("");
+                    log.warn("SVG sanitizer cleared dangerous CSS content from <style> element");
+                }
+            }
+
+            // Recurse into children
+            sanitizeElements(child);
+        }
+    }
+
+    /**
+     * Checks if CSS text contains url(...) references that are not local fragment refs.
+     */
+    private static boolean containsExternalUrlReference(String css) {
+        Matcher urlMatcher = URL_REFERENCE_PATTERN.matcher(css);
+        while (urlMatcher.find()) {
+            // Extract the url(...) value starting from this match position
+            int start = urlMatcher.start();
+            int parenOpen = css.indexOf('(', start);
+            int parenClose = css.indexOf(')', parenOpen);
+            if (parenClose > parenOpen) {
+                String urlValue = css.substring(parenOpen + 1, parenClose).strip();
+                // Strip quotes
+                if ((urlValue.startsWith("'") && urlValue.endsWith("'")) || (urlValue.startsWith("\"") && urlValue.endsWith("\""))) {
+                    urlValue = urlValue.substring(1, urlValue.length() - 1).strip();
+                }
+                // Only local fragment refs (#id) are safe
+                if (!urlValue.startsWith("#")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, TestFeedbackInputDTO> buildTestResultsByName(@Nullable Map<Long, TestFeedbackInputDTO> testResults) {
         if (testResults == null) {
             return Map.of();
         }
-        Map<String, TestFeedbackDetail> byName = new HashMap<>();
-        for (TestFeedbackDetail detail : testResults.values()) {
+        Map<String, TestFeedbackInputDTO> byName = new HashMap<>();
+        for (TestFeedbackInputDTO detail : testResults.values()) {
             byName.put(detail.testName(), detail);
         }
         return byName;
     }
 
-    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults, Map<String, TestFeedbackDetail> byName) {
+    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> byName) {
 
         // <color:testsColor(...)>text</color>
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
@@ -319,7 +460,7 @@ public class ProblemStatementRenderingService {
         return resolved;
     }
 
-    private static String resolveTestColor(String testRef, @Nullable Map<Long, TestFeedbackDetail> testResults, Map<String, TestFeedbackDetail> testResultsByName) {
+    private static String resolveTestColor(String testRef, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> testResultsByName) {
         if (testResults == null) {
             return "grey";
         }
@@ -327,15 +468,15 @@ public class ProblemStatementRenderingService {
         Matcher idMatcher = TESTID_PATTERN.matcher(testRef);
         if (idMatcher.matches()) {
             long testId = Long.parseLong(idMatcher.group(1));
-            TestFeedbackDetail detail = testResults.get(testId);
+            TestFeedbackInputDTO detail = testResults.get(testId);
             return detail == null ? "grey" : detail.passed() ? "green" : "red";
         }
         // Fall back to name-based lookup
-        TestFeedbackDetail detail = testResultsByName.get(testRef);
+        TestFeedbackInputDTO detail = testResultsByName.get(testRef);
         return detail == null ? "grey" : detail.passed() ? "green" : "red";
     }
 
-    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
+    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
 
@@ -364,8 +505,8 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total, @Nullable Map<Long, TestFeedbackDetail> testResults,
-            Locale locale) {
+    private String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total,
+            @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
         String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
         String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
@@ -392,10 +533,10 @@ public class ProblemStatementRenderingService {
         return html.toString();
     }
 
-    private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackDetail> testResults) {
+    private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackInputDTO> testResults) {
         List<Map<String, Object>> feedbackList = new ArrayList<>();
         for (Long testId : testIds) {
-            TestFeedbackDetail detail = testResults.get(testId);
+            TestFeedbackInputDTO detail = testResults.get(testId);
             if (detail != null) {
                 Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("name", detail.testName());
@@ -418,7 +559,7 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private String buildResultAttribute(@Nullable ResultSummary resultSummary) {
+    private String buildResultAttribute(@Nullable ResultSummaryInputDTO resultSummary) {
         if (resultSummary == null) {
             return "";
         }
@@ -431,14 +572,14 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static @Nullable String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private static @Nullable String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
         if (testResults == null || testIds.isEmpty()) {
             return null;
         }
         boolean anyFailed = false;
         boolean anyNotExecuted = false;
         for (Long testId : testIds) {
-            TestFeedbackDetail detail = testResults.get(testId);
+            TestFeedbackInputDTO detail = testResults.get(testId);
             if (detail == null) {
                 anyNotExecuted = true;
             }
@@ -455,13 +596,13 @@ public class ProblemStatementRenderingService {
         return "success";
     }
 
-    private static int countPassedTests(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private static int countPassedTests(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
         if (testResults == null) {
             return 0;
         }
         int success = 0;
         for (Long testId : testIds) {
-            TestFeedbackDetail detail = testResults.get(testId);
+            TestFeedbackInputDTO detail = testResults.get(testId);
             if (detail != null && detail.passed()) {
                 success++;
             }
@@ -529,10 +670,7 @@ public class ProblemStatementRenderingService {
     }
 
     private String renderWithCommonMark(String markdown) {
-        // Parser is static (thread-safe). Renderer is per-call because it depends on the instance's serverUrl.
-        HtmlRenderer renderer = HtmlRenderer.builder().extensions(COMMONMARK_EXTENSIONS)
-                .attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl)).build();
-        String html = renderer.render(COMMONMARK_PARSER.parse(markdown));
+        String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
@@ -585,7 +723,7 @@ public class ProblemStatementRenderingService {
      * @param input the string to hash
      * @return the hex-encoded SHA-256 hash
      */
-    public static String computeHash(String input) {
+    private static String computeHash(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -619,7 +757,7 @@ public class ProblemStatementRenderingService {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
-            log.warn("Could not load classpath resource: {}", path);
+            log.error("Could not load classpath resource: {}", path);
             return null;
         }
     }

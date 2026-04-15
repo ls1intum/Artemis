@@ -299,4 +299,73 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.interactiveScript()).isNull();
         assertThat(result.html()).contains("<h1>Hello</h1>");
     }
+
+    // --- Duplicate test ID rejection ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectDuplicateTestIds() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0), new TestFeedbackInputDTO(1L, "testB", false, null, 0.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][T](<testid>1</testid>)", testResults, null, "en", false, true, null);
+
+        request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // --- PlantUML diagram limit ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLimitPlantUmlDiagrams() throws Exception {
+        StringBuilder markdown = new StringBuilder();
+        for (int i = 0; i < 11; i++) {
+            markdown.append("@startuml\n!pragma layout smetana\nclass C").append(i).append("\n@enduml\n\n");
+        }
+        var body = new ProblemStatementRenderRequestDTO(markdown.toString(), null, null, "en", false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("Diagram limit exceeded");
+    }
+
+    // --- Code block masking ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotProcessTaskInsideCodeBlock() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("```\n[task][Sneaky](<testid>1</testid>)\n```", null, null, "en", false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // Check that "Sneaky" was not processed as a task — it should appear as code, not as a task span
+        assertThat(result.html()).doesNotContain("data-task-name=\"Sneaky\"");
+        assertThat(result.html()).contains("<code>");
+    }
+
+    // --- CSS toggle ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExcludeCssWhenFlagIsFalse() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, true, false);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<style>");
+        assertThat(result.html()).doesNotContain("<link rel=\"stylesheet\"");
+    }
+
+    // --- Renderer version stability ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnStableRendererVersion() throws Exception {
+        var body1 = new ProblemStatementRenderRequestDTO("# First", null, null, "en", false, true, null);
+        var body2 = new ProblemStatementRenderRequestDTO("# Second", null, null, "en", false, true, null);
+
+        RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result1.rendererVersion()).isEqualTo("1.0.0");
+        assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
+    }
 }

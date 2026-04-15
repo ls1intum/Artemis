@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
@@ -56,24 +57,18 @@ public class ProblemStatementRenderingResource {
 
         log.debug("REST request to render problem statement (stateless)");
 
-        Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = null;
+        Map<Long, TestFeedbackInputDTO> testResults = null;
         if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
             testResults = new HashMap<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
                     return ResponseEntity.badRequest().build();
                 }
-                testResults.put(input.testId(),
-                        new ProblemStatementRenderingService.TestFeedbackDetail(input.testId(), input.testName(), input.passed(), input.message(), input.credits()));
+                testResults.put(input.testId(), input);
             }
         }
 
-        ProblemStatementRenderingService.ResultSummary resultSummary = null;
-        if (renderRequest.resultSummary() != null) {
-            var rs = renderRequest.resultSummary();
-            resultSummary = new ProblemStatementRenderingService.ResultSummary(rs.score(), rs.maxPoints(), rs.bonusPoints(), rs.commitHash(), rs.submissionDate(),
-                    rs.assessmentType());
-        }
+        ResultSummaryInputDTO resultSummary = renderRequest.resultSummary();
 
         String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
         Locale locale = Locale.forLanguageTag(lang);
