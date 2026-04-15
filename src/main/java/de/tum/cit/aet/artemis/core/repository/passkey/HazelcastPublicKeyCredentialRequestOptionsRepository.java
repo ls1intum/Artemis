@@ -1,20 +1,29 @@
 package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.WEBAUTHN_CHALLENGE_COOKIE_NAME;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.util.WebUtils;
 
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
@@ -25,14 +34,18 @@ import com.hazelcast.map.IMap;
  * to store and synchronize WebAuthn authentication request options across multiple nodes.
  *
  * <p>
- * This implementation ensures that authentication challenges (e.g., Face ID, fingerprint scan)
- * remain consistent in clustered environments, supporting stateless or load-balanced deployments.
+ * Instead of relying on HTTP sessions (which are not available under {@code SessionCreationPolicy.STATELESS}),
+ * this implementation uses a random challenge lookup ID stored in a cookie ({@value WEBAUTHN_CHALLENGE_COOKIE_NAME}) as the
+ * key for looking up challenge options in a distributed Hazelcast map. This ensures that the challenge
+ * correlation between the options request ({@code POST /webauthn/authenticate/options}) and the
+ * authentication request ({@code POST /login/webauthn}) works reliably across multiple nodes,
+ * and also supports conditional mediation (passkey autofill) where the pending credential request
+ * may remain open for an extended period.
  * </p>
  *
  * <p>
- * The repository stores options in Hazelcast with a short time-to-live (2 minutes by default),
- * since authentication is a fast, single-step user interaction. Stored options are removed after use
- * or expiration.
+ * The repository stores options in Hazelcast with a time-to-live of 5 minutes to accommodate
+ * conditional mediation scenarios where users may not interact immediately.
  * </p>
  *
  * <p>
@@ -46,88 +59,103 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
 
+    private static final String DEVELOPMENT_PROFILE = "dev";
+
     /** Hazelcast map name for storing credential request options */
     private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
-    /** Default session attribute name used to store options in the local session */
-    static final String DEFAULT_ATTR_NAME = PublicKeyCredentialRequestOptionsRepository.class.getName().concat(".ATTR_NAME");
+    /** Time-to-live in seconds: 5 minutes to support conditional mediation (passkey autofill) */
+    private static final int AUTH_OPTIONS_TIME_TO_LIVE_SECONDS = 300;
 
-    /** Session attribute name used internally */
-    private final String attrName = DEFAULT_ATTR_NAME;
-
-    /** Hazelcast instance injected via constructor */
     private final HazelcastInstance hazelcastInstance;
 
-    /** Reference to the Hazelcast distributed map */
+    private final Environment environment;
+
     private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
 
-    /**
-     * Constructs the repository using the injected Hazelcast instance.
-     *
-     * @param hazelcastInstance the shared Hazelcast cluster instance
-     */
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Environment environment) {
         this.hazelcastInstance = hazelcastInstance;
+        this.environment = environment;
     }
 
     /**
      * Initializes the Hazelcast map configuration after dependency injection.
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     * EventListener cannot be used here, as the bean is lazy.
      *
-     * <p>
-     * Sets the time-to-live for WebAuthn request options to 2 minutes.
-     * </p>
+     * @see <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
-        int AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS = 120; // 2 minutes
-
         MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS);
+        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_SECONDS);
         authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
     /**
-     * Saves the given {@link PublicKeyCredentialRequestOptions} in both the local HTTP session
-     * and the Hazelcast distributed map.
+     * Saves the given {@link PublicKeyCredentialRequestOptions} in the Hazelcast distributed map
+     * and sets a cookie with the challenge lookup ID.
      *
      * <p>
-     * If {@code options} is {@code null}, the entry is removed instead.
+     * When {@code options} is not {@code null}, a new random challenge lookup ID is generated, stored as the
+     * Hazelcast map key, and set as a cookie on the response. When {@code options} is {@code null}
+     * (cleanup after authentication), the existing challenge lookup ID is read from the cookie, the Hazelcast
+     * entry is removed, and the cookie is deleted.
      * </p>
      *
-     * @param request  the current HTTP request (used to get the session)
-     * @param response the current HTTP response (not used)
-     * @param options  the WebAuthn challenge options to store or remove
+     * @param request  the current HTTP request
+     * @param response the current HTTP response (used to set the challenge lookup ID cookie)
+     * @param options  the WebAuthn challenge options to store, or {@code null} to remove
      */
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
-        HttpSession session = request.getSession();
-        session.setAttribute(this.attrName, options);
-
-        if (options != null) {
-            authOptionsMap.put(session.getId(), options);
+        boolean storeNewChallenge = options != null;
+        if (storeNewChallenge) {
+            String challengeLookupId = UUID.randomUUID().toString();
+            authOptionsMap.put(challengeLookupId, options);
+            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(challengeLookupId, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
+            log.debug("Saved PublicKeyCredentialRequestOptions to Hazelcast with challengeLookupId: {}", challengeLookupId);
         }
         else {
-            authOptionsMap.remove(session.getId());
+            // clear old challenge
+            Cookie existingCookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
+            if (existingCookie != null) {
+                log.debug("Removing PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", existingCookie.getValue());
+                authOptionsMap.remove(existingCookie.getValue());
+            }
+            response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie("", 0).toString());
         }
     }
 
     /**
      * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the Hazelcast map
-     * using the requested session ID from the HTTP request.
+     * using the challenge lookup ID from the {@value WEBAUTHN_CHALLENGE_COOKIE_NAME} cookie.
      *
-     * @param request the HTTP request (used to extract session ID)
-     * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if not found or session is missing
+     * @param request the HTTP request (used to extract the challenge lookup ID cookie)
+     * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if the cookie
+     *         is missing or no matching entry exists in Hazelcast
      */
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
-        String sessionId = request.getRequestedSessionId();
-        if (sessionId == null) {
-            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
+        Cookie cookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
+        if (cookie == null || cookie.getValue().isBlank()) {
+            log.warn("No {} cookie found. The cookie may have expired or was not set. Unable to load PublicKeyCredentialRequestOptions.", WEBAUTHN_CHALLENGE_COOKIE_NAME);
             return null;
         }
 
-        return authOptionsMap.get(sessionId);
+        PublicKeyCredentialRequestOptions options = authOptionsMap.get(cookie.getValue());
+        if (options != null) {
+            log.debug("Loaded PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", cookie.getValue());
+        }
+        else {
+            log.warn("No PublicKeyCredentialRequestOptions found in Hazelcast for challengeLookupId: {}. The entry may have expired.", cookie.getValue());
+        }
+        return options;
+    }
+
+    private ResponseCookie buildChallengeCookie(String value, int maxAgeSeconds) {
+        Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+        boolean isSecure = !activeProfiles.contains(DEVELOPMENT_PROFILE);
+
+        return ResponseCookie.from(WEBAUTHN_CHALLENGE_COOKIE_NAME, value).httpOnly(true).sameSite("Lax").secure(isSecure).path("/").maxAge(maxAgeSeconds).build();
     }
 }
