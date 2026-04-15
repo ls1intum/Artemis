@@ -62,6 +62,30 @@ class YouTubeUrlServiceTest {
         assertThat(service.hasYouTubeHost(url)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            // percent-encoded query value decodes to 'dQw4w9WgXcQ'
+            "https://www.youtube.com/watch?v=%64Qw4w9WgXcQ",
+            // percent-encoded path prefix decodes to '/embed/'
+            "https://www.youtube.com/%65mbed/dQw4w9WgXcQ" })
+    void acceptsPercentEncodedEquivalentsThatDecodeToValidId(String url) {
+        assertThat(service.extractYouTubeVideoId(url)).contains("dQw4w9WgXcQ");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            // user-info segment: host is youtube.com but with credentials-style prefix
+            "https://user:pass@youtube.com/watch?v=dQw4w9WgXcQ",
+            // user-info pointing at non-YouTube actual host
+            "https://youtube.com@evil.com/watch?v=dQw4w9WgXcQ",
+            // non-ASCII IDN look-alike (Cyrillic 'е' in 'youtubе.com')
+            "https://youtubе.com/watch?v=dQw4w9WgXcQ",
+            // percent-encoded host bytes (not decoded by URI.getHost on malformed input)
+            "https://%77ww.youtube.com/watch?v=dQw4w9WgXcQ" })
+    void rejectsHostileHosts(String url) {
+        assertThat(service.extractYouTubeVideoId(url)).isEmpty();
+    }
+
     @Test
     void hostSetInvariant_extractableImpliesHasYouTubeHost() {
         validUrlsAndIds().forEach(args -> {

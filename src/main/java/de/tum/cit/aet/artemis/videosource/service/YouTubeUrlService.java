@@ -40,6 +40,10 @@ public class YouTubeUrlService {
             if (uri.getHost() == null) {
                 return Optional.empty();
             }
+            // Reject URLs with user-info (e.g. https://user:pass@youtube.com/...) — common phishing shape
+            if (uri.getUserInfo() != null) {
+                return Optional.empty();
+            }
             return Optional.of(uri);
         }
         catch (URISyntaxException e) {
