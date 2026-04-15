@@ -31,8 +31,6 @@ artemis:
     user-management:
         passkey:
             enabled: false
-    nebula:
-        enabled: false
     weaviate:
         enabled: false
     sharing:
