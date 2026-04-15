@@ -6,13 +6,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -26,12 +29,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
  * By performing dummy deserializations at startup, we ensure the deserializer cache is
  * properly populated before any tests run, eliminating the race condition.
  * <p>
- * We focus on key "root" entities that:
- * <ul>
- * <li>Have complex bidirectional relationships with {@code @JsonIgnoreProperties}</li>
- * <li>Are commonly returned in REST responses with nested data</li>
- * <li>Contain many nested entity types (initializing them also initializes their children)</li>
- * </ul>
+ * Leaf entity types (User, Course) are initialized first, then composite types that
+ * reference them (Organization, TutorialGroup). This ordering ensures all referenced
+ * deserializers are cached before any composite type attempts to resolve them.
  */
 @TestConfiguration
 public class JacksonDeserializerInitializationConfig {
@@ -48,147 +48,68 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
-        // Initialize Organization with nested User and Course
-        initializeOrganization();
+        // Phase 1: Initialize leaf entity types first to ensure their deserializers are
+        // fully cached before any composite type tries to reference them concurrently.
+        initializeType(User.class, """
+                {"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User", "email": "test@test.com", "activated": true}
+                """);
 
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
+        initializeType(Course.class, """
+                {"id": 1, "title": "Test Course", "shortName": "TC"}
+                """);
 
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
+        initializeType(TutorialGroupRegistration.class, """
+                {"id": 1, "type": "INSTRUCTOR_REGISTRATION"}
+                """);
 
-        // Initialize Post with nested PlagiarismCase
-        initializePost();
+        // Phase 2: Initialize composite entity types that reference the leaf types above.
+        initializeType(Organization.class, """
+                {
+                    "id": 1, "name": "Test Org", "shortName": "TO", "emailPattern": ".*@test.com",
+                    "users": [{"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User", "email": "test@test.com", "activated": true}],
+                    "courses": [{"id": 1, "title": "Test Course", "shortName": "TC"}]
+                }
+                """);
 
-        // Initialize TutorialGroup with nested TutorialGroupRegistration and User
-        initializeTutorialGroup();
+        initializeType(TutorialGroup.class, """
+                {
+                    "id": 1, "title": "Test Group",
+                    "registrations": [{"id": 1, "student": {"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User"}, "type": "INSTRUCTOR_REGISTRATION"}]
+                }
+                """);
+
+        initializeType(Exam.class, """
+                {"id": 1, "title": "Test Exam", "exerciseGroups": [{"id": 1, "title": "Test Group", "exercises": []}], "studentExams": [{"id": 1, "submitted": false}]}
+                """);
+
+        initializeType(Post.class, """
+                {"id": 1, "content": "Test post", "plagiarismCase": {"id": 1}}
+                """);
 
         log.debug("Successfully initialized Jackson deserializers");
     }
 
-    private void initializeOrganization() {
+    /**
+     * Forces Jackson to build and cache the complete deserializer chain for the given type.
+     * Uses both constructType (to resolve the type hierarchy) and readValue (to trigger
+     * full deserializer resolution including nested property deserializers).
+     */
+    private void initializeType(Class<?> type, String sampleJson) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "name": "Test Organization",
-                        "shortName": "TO",
-                        "emailPattern": ".*@test.com",
-                        "users": [{
-                            "id": 1,
-                            "login": "testuser",
-                            "firstName": "Test",
-                            "lastName": "User",
-                            "email": "test@test.com",
-                            "activated": true
-                        }],
-                        "courses": [{
-                            "id": 1,
-                            "title": "Test Course",
-                            "shortName": "TC"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Organization.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
-        }
-    }
+            // Step 1: Force type resolution through the type factory
+            JavaType javaType = objectMapper.getTypeFactory().constructType(type);
 
-    private void initializeCourse() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
-                            "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
-                            "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Course.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
-        }
-    }
+            // Step 2: Create a reader which forces deserializer resolution for the type
+            objectMapper.readerFor(javaType);
 
-    private void initializeExam() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
-                            "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Exam.class);
+            // Step 3: Perform an actual deserialization to ensure all nested deserializers
+            // (including property-level ones) are fully resolved and cached
+            objectMapper.readValue(sampleJson, type);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializePost() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "content": "Test post",
-                        "plagiarismCase": {
-                            "id": 1
-                        }
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Post.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeTutorialGroup() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Group",
-                        "registrations": [{
-                            "id": 1,
-                            "student": {
-                                "id": 1,
-                                "login": "testuser",
-                                "firstName": "Test",
-                                "lastName": "User"
-                            },
-                            "type": "INSTRUCTOR_REGISTRATION"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, TutorialGroup.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
+            // Log but don't fail - the key goal is deserializer cache population,
+            // which happens during type/reader construction even if data parsing fails
+            log.warn("Pre-initialization for {} completed with warning: {}", type.getSimpleName(), e.getMessage());
         }
     }
 }
