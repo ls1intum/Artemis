@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,8 @@ import de.tum.cit.aet.artemis.core.service.RateLimitService;
  * @see org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationProvider
  */
 public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisWebAuthnAuthenticationProvider.class);
 
     private final WebAuthnRelyingPartyOperations relyingPartyOperations;
 
@@ -70,6 +74,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
             if (this.passkeyCredentialsRepository.findByCredentialId(credentialId).isEmpty()) {
+                log.error("Passkey login attempt with unregistered credential id '{}'", credentialId);
                 throw new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
             }
 
