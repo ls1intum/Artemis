@@ -340,7 +340,6 @@ public class LectureResource {
          * @param lecture The lecture to convert
          * @return The converted lecture DTO
          */
-        @SuppressWarnings("deprecation") // Lecture attachments are deprecated; migrate to AttachmentUnit
         public static GetLecturesDTO from(Lecture lecture) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();

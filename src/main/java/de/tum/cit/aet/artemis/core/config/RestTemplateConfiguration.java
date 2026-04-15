@@ -144,7 +144,6 @@ public class RestTemplateConfiguration {
     }
 
     @NonNull
-    @SuppressWarnings("removal") // MappingJackson2XmlHttpMessageConverter is deprecated but still used by RestTemplate defaults
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor, RestTemplate restTemplate) {
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {

@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -131,7 +130,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         long start = System.nanoTime();
 
         if (auxiliaryRepository.getVcsRepositoryUri() == null) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+            return ResponseEntity.unprocessableEntity()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "repositoryNotConfigured", "The auxiliary repository is not configured correctly."))
                     .body(null);
         }

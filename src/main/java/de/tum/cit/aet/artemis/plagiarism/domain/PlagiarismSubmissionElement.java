@@ -44,7 +44,6 @@ public class PlagiarismSubmissionElement extends DomainObject {
      * @param submissionDirectory  the directory to which all student submissions have been downloaded / stored
      * @return a new PlagiarismSubmissionElement instance
      */
-    @SuppressWarnings("removal") // Token.getLength() has no replacement in JPlag API
     public static PlagiarismSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission plagiarismSubmission, Exercise exercise, File submissionDirectory) {
         PlagiarismSubmissionElement textSubmissionElement = new PlagiarismSubmissionElement();
 
