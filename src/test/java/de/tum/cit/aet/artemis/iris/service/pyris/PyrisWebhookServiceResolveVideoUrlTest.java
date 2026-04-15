@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
-import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
-import de.tum.cit.aet.artemis.nebula.api.YouTubeApi;
+import de.tum.cit.aet.artemis.tumlive.api.TumLiveApi;
+import de.tum.cit.aet.artemis.tumlive.api.YouTubeApi;
 
 /**
  * Unit tests for {@link PyrisWebhookService#resolveVideoUrl(String)}, covering the

@@ -320,6 +320,20 @@ If Iris does not respond, check:
 - **Docker resources**: Ensure Docker has at least 4 GB of memory allocated.
 - **Missing models**: Check Pyris logs for `No model found for ...` warnings and add the missing model to `llm_config.yml`.
 
+### Lecture Video Transcription
+
+Artemis can automatically transcribe lecture recordings by delegating the work to Pyris via the lecture ingestion webhook. Artemis detects the video source, forwards the URL to Pyris, and tags the request with a `videoSourceType` field (`TUM_LIVE` or `YOUTUBE`) so Pyris can pick the appropriate download strategy.
+
+Supported sources:
+
+- **TUM-Live (GoCast):** Artemis resolves the public video URL to an HLS playlist via the TUM-Live API and forwards the playlist URL to Pyris. Pyris downloads the audio with FFmpeg and transcribes it with Whisper.
+- **YouTube (public and unlisted):** Artemis recognizes the YouTube URL, passes it through unchanged to Pyris, and tags the request so Pyris knows to use `yt-dlp` for the download. **Private YouTube videos are not supported** because Pyris cannot authenticate with YouTube to access them.
+
+Prerequisites:
+
+- *(For TUM-Live videos)* A running instance of <a href="https://github.com/TUM-Dev/gocast">GoCast (TUM-Live)</a> where the lecture recordings are hosted in a public course. Set `artemis.tum-live.api-base-url` to the TUM-Live API endpoint (include the `/api/v2` suffix).
+- *(For YouTube videos)* Pyris workers must have outbound HTTPS access to `youtu.be`, `*.youtube.com`, and `*.googlevideo.com`, and `yt-dlp` must be available in the Pyris runtime. No YouTube API key is required.
+
 ---
 
 ## Athena Service
@@ -351,107 +365,6 @@ artemis:
 ```
 
 The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
-
----
-
-## Nebula Setup Guide
-
-<Callout variant={CalloutVariant.info}>
-  <p>Nebula is part of the EduTelligence suite. For a successful integration, ensure that the versions you deploy remain compatible with your Artemis release by consulting the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">EduTelligence compatibility matrix</a>.</p>
-</Callout>
-
-### Overview
-
-Nebula provides AI-powered processing pipelines for lecture videos. Artemis currently integrates with the **Transcriber** service to automatically generate lecture transcripts (including slide-number alignment) for attachment video units.
-
-#### Supported Video Sources
-
-<Callout variant={CalloutVariant.info}>
-  <p>Transcription itself is performed by <strong>Pyris/Iris</strong> (not by the Nebula service). The <code>artemis.nebula.*</code> namespace is retained for URL-detection helpers (TUM-Live playlist resolution, YouTube URL validation) that run inside Artemis. The actual webhook that triggers transcription is the lecture ingestion webhook, delivered to Pyris.</p>
-</Callout>
-
-Artemis supports automatic transcription for videos from the following sources:
-
-- **TUM-Live (GoCast):** Artemis resolves the public video URL to an HLS playlist via the TUM-Live API and forwards the playlist URL to Pyris. Pyris downloads the audio with FFmpeg and transcribes it with Whisper.
-- **YouTube (public and unlisted):** Artemis recognizes the YouTube URL, passes it through unchanged to Pyris, and tags the request so Pyris knows to use `yt-dlp` for the download. **Private YouTube videos are not supported** because Pyris cannot authenticate with YouTube to access them.
-
-The lecture ingestion webhook payload includes a `videoSourceType` field (`TUM_LIVE` or `YOUTUBE`) so that Pyris can select the appropriate download strategy. The field is omitted when the source cannot be identified, in which case Pyris falls back to its default behavior.
-
-### Artemis Configuration
-
-#### Prerequisites
-
-- A running Artemis instance with the `scheduling` Spring profile enabled.
-- A shared secret that will be used both in Artemis and in the Nebula gateway.
-- *(For TUM-Live videos)* A running instance of <a href="https://github.com/TUM-Dev/gocast">GoCast (TUM-Live)</a> where the lecture recordings are hosted in a public course.
-- *(For YouTube videos)* Pyris workers must have outbound HTTPS access to `*.youtube.com` and `*.googlevideo.com`, and `yt-dlp` must be available in the Pyris runtime. No YouTube API key is required.
-
-#### Enable the Nebula module
-
-Set the Nebula toggle, URL, and shared secret in your Artemis configuration. The secret you specify here must match the API key that Nebula expects in the `Authorization` header.
-```yaml
-artemis:
-  nebula:
-    enabled: true
-    url: https://nebula.example.com
-    secret-token: your-shared-secret
-
-  tum-live:
-    # Ensure this URL points to your GoCast (TUM-Live) instance. Add the /api/v2 suffix.
-    api-base-url: https://api.tum.live.example.com/api/v2
-```
-
-<Callout variant={CalloutVariant.info}>
-  <p>Artemis uses `server.url` internally when contacting Nebula. Make sure the property reflects the external URL of your Artemis instance.</p>
-</Callout>
-
-#### Starting transcriptions inside Artemis
-
-After Nebula is configured, instructors can launch transcriptions from the lecture unit editor. See the lecture management guide for the detailed, instructor-facing workflow.
-
-### Nebula Service Deployment
-
-#### Prerequisites
-
-- **Python 3.12**
-- **Poetry**
-- **FFmpeg** available in `PATH`
-- **Docker** and **Docker Compose** if you plan to run the API gateway or production deployment
-
-#### Local development workflow
-
-The EduTelligence repository provides step-by-step instructions for running Nebula locally. Follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-quick-start-for-developers">Quick Start for Developers</a> section and start only the **Transcriber Service** (skip the FAQ service). When configuring the Nginx gateway, make sure the `map` block includes the same shared secret you configured in Artemis. Once running, the relevant health checks are at:
-```bash
-curl http://localhost:3007/transcribe/health
-curl http://localhost:3007/health
-```
-
-#### Production deployment
-
-For production deployments, follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-production-deployment">Production Deployment guide in the Nebula README</a> and provision only the transcriber container plus the nginx gateway. Use distinct configuration files (`.env`, `llm_config.production.yml`, `nginx.production.conf`), keep Whisper / GPT-5 credentials secure, and omit the FAQ service unless you plan to experiment with rewriting features.
-
-After the stack is up, verify that the gateway responds:
-```bash
-curl https://nebula.example.com/health
-curl -H "Authorization: your-shared-secret" https://nebula.example.com/transcribe/health
-```
-
-#### Connecting Artemis and Nebula
-
-When both sides are configured:
-
-- Artemis sends transcription jobs to `POST /transcribe/start` with the shared secret.
-- Nebula processes the job asynchronously and exposes status updates via `GET /transcribe/status/{jobId}`.
-- The Artemis scheduler polls Nebula every 30 seconds and persists completed transcripts on the associated lecture unit.
-
-If Artemis reports unauthorized or internal errors when starting a job, double-check that:
-
-- `artemis.nebula.enabled=true`
-- The `artemis.nebula.url` matches the Nginx gateway URL (including scheme)
-- The Artemis secret token equals the key configured in Nginx (`map $http_authorization $api_key_valid`)
-- Nebula can reach its configured Whisper and GPT-5 endpoints (inspect the transcriber logs for HTTP 401/429/500 responses)
-
-With those pieces in place, instructors can automatically transcribe lecture recordings from TUM-Live and YouTube without manual copy/paste workflows.
 
 ---
 

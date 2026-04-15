@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula.service;
+package de.tum.cit.aet.artemis.tumlive.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

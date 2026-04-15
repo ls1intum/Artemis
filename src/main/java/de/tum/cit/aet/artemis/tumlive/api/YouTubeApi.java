@@ -1,22 +1,20 @@
-package de.tum.cit.aet.artemis.nebula.api;
+package de.tum.cit.aet.artemis.tumlive.api;
 
 import java.util.Optional;
 
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.nebula.service.YouTubeService;
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.tumlive.service.YouTubeService;
 
 /**
  * API for YouTube operations.
  * This class allows other modules to interact with the YouTube service.
  */
-@Conditional(NebulaEnabled.class)
 @Controller
 @Lazy
-public class YouTubeApi extends AbstractNebulaApi {
+public class YouTubeApi implements AbstractApi {
 
     private final YouTubeService youTubeService;
 

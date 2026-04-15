@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula.service;
+package de.tum.cit.aet.artemis.tumlive.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -9,17 +9,13 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
 /**
  * Service for detecting and extracting video IDs from YouTube URLs.
  * Supports standard watch URLs, shortened youtu.be URLs, embed URLs, and live URLs.
  */
-@Conditional(NebulaEnabled.class)
 @Service
 @Lazy
 public class YouTubeService {

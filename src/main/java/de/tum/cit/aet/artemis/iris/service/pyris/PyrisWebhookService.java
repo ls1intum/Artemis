@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.VideoSourceType;
-import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
-import de.tum.cit.aet.artemis.nebula.api.YouTubeApi;
+import de.tum.cit.aet.artemis.tumlive.api.TumLiveApi;
+import de.tum.cit.aet.artemis.tumlive.api.YouTubeApi;
 
 @Lazy
 @Service
