@@ -116,8 +116,8 @@
                 "error": {
                     "invalidCredential": "Es wurde ein ungültiger Passkey bereitgestellt. Bitte versuche es erneut mit einem anderen Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
                     "login": "Login mit Passkey fehlgeschlagen. Bitte lade die Seite neu und versuche es erneut.",
-                    "loginDeactivated": "Login mit Passkey fehlgeschlagen, da dein Konto deaktiviert wurde. Bitte wende dich an einen Administrator.",
-                    "noPasskeyFound": "Kein Passkey für Artemis gefunden. Bitte stelle sicher, dass du einen Passkey in deinen Kontoeinstellungen registriert hast, oder verwende eine andere Anmeldemethode.",
+                    "loginDeactivated": "Login mit Passkey fehlgeschlagen, da dein Konto deaktiviert wurde.",
+                    "noPasskeyFound": "Kein Passkey für Artemis gefunden. Bitte nutze eine andere Anmeldemethode und überprüfe in deinen Nutzereinstellungen in Artemis und in deinem Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.), dass du einen Passkey für Artemis registriert hast.",
                     "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
                     "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
                     "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
