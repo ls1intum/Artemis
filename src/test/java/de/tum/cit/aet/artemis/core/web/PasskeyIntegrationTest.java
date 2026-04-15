@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.servlet.http.Cookie;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -21,7 +23,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -726,14 +727,14 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * End-to-end tests for the complete passkey authentication flow.
+     * Integration tests for the complete passkey authentication flow.
      * <p>
      * These tests use {@link WebAuthnClientSimulator} to simulate what a browser's
-     * navigator.credentials.get() API would produce, enabling true end-to-end testing
-     * of passkey login without requiring actual hardware authenticators.
+     * navigator.credentials.get() API would produce, enabling testing of passkey login
+     * without requiring actual hardware authenticators.
      */
     @Nested
-    class FullPasskeyAuthenticationE2ETests {
+    class FullPasskeyAuthenticationTests {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -764,38 +765,37 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String storedCredentialId = credentials.getFirst().getCredentialId();
             assertThat(storedCredentialId).as("Stored credential ID should match the authenticator's credential ID").isEqualTo(expectedCredentialId);
 
-            // Step 2: Get authentication options (using a shared session for the authentication flow)
-            // The session is required because the challenge is stored in the session and validated on login
-            MockHttpSession authSession = new MockHttpSession();
+            // Step 2: Get authentication options
+            // The challenge is stored in Hazelcast and looked up via a cookie
             MockHttpServletResponse authOptionsResponse = request
-                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession).with(anonymous()))
-                    .andExpect(status().isOk()).andReturn().getResponse();
+                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).with(anonymous())).andExpect(status().isOk()).andReturn()
+                    .getResponse();
 
             Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
             });
             String authChallenge = (String) authOptions.get("challenge");
+
+            // Extract the webauthn-challenge cookie from the response
+            Cookie challengeCookie = authOptionsResponse.getCookie("webauthn-challenge");
+            assertThat(challengeCookie).as("webauthn-challenge cookie should be set").isNotNull();
 
             // Step 3: Create authentication response using the same authenticator
             String userHandle = webAuthnClientSimulator.encodeUserHandle(user.getId());
             VirtualAuthenticator authenticatorWithIncrementedCount = authenticator.withIncrementedCount();
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId, userHandle);
 
-            // Step 4: Submit authentication (using the same session that has the challenge stored)
-            // We need to set the requestedSessionId so the server can retrieve the stored challenge
+            // Step 4: Submit authentication with the challenge cookie so the server can look up the stored challenge
             String authRequestBody = objectMapper.writeValueAsString(authResponse);
-            MockHttpServletResponse loginResponse = request.performMvcRequest(
-                    post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession).with(anonymous()).with(mockRequest -> {
-                        mockRequest.setRequestedSessionId(authSession.getId());
-                        return mockRequest;
-                    })).andExpect(status().isOk()).andReturn().getResponse();
+            MockHttpServletResponse loginResponse = request
+                    .performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).cookie(challengeCookie).with(anonymous()))
+                    .andExpect(status().isOk()).andReturn().getResponse();
 
             // Step 5: Verify successful authentication
             String responseBody = loginResponse.getContentAsString();
             assertThat(responseBody).contains("redirectUrl");
 
             // Verify JWT cookie was set
-            assertThat(loginResponse.getHeader("Set-Cookie")).isNotNull();
-            assertThat(loginResponse.getHeader("Set-Cookie")).contains("jwt");
+            assertThat(loginResponse.getCookie("jwt")).as("JWT cookie should be set after successful passkey authentication").isNotNull();
         }
 
         @Test
@@ -807,25 +807,25 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // Create a virtual authenticator that was never registered
             VirtualAuthenticator unregisteredAuthenticator = webAuthnClientSimulator.createVirtualAuthenticator();
 
-            // Get authentication options (using shared session for the authentication flow)
-            MockHttpSession authSession = new MockHttpSession();
-            MockHttpServletResponse authOptionsResponse = request
-                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession)).andExpect(status().isOk()).andReturn()
-                    .getResponse();
+            // Get authentication options
+            MockHttpServletResponse authOptionsResponse = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse();
 
             Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
             });
+
+            // Extract the webauthn-challenge cookie
+            Cookie challengeCookie = authOptionsResponse.getCookie("webauthn-challenge");
+            assertThat(challengeCookie).as("webauthn-challenge cookie should be set").isNotNull();
 
             // Try to authenticate with unregistered credential
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(unregisteredAuthenticator, (String) authOptions.get("challenge"), origin,
                     rpId, webAuthnClientSimulator.encodeUserHandle(999999L));
 
-            // Authentication should fail (using same session with requestedSessionId set)
-            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).session(authSession)
-                    .with(mockRequest -> {
-                        mockRequest.setRequestedSessionId(authSession.getId());
-                        return mockRequest;
-                    })).andExpect(status().isUnauthorized());
+            // Authentication should fail
+            request.performMvcRequest(
+                    post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).cookie(challengeCookie))
+                    .andExpect(status().isUnauthorized());
         }
     }
 }
