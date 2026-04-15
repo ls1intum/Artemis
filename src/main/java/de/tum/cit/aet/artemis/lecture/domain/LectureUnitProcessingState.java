@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * Tracks the processing state of a lecture unit through the automated content processing pipeline.
- * This includes transcription generation (Nebula) and ingestion into Pyris/Iris.
+ * This includes transcription generation and ingestion into Pyris/Iris.
  * <p>
  * The processing state allows:
  * - Recovery after node restart (checking for stuck states)
@@ -237,7 +237,7 @@ public class LectureUnitProcessingState extends DomainObject {
         this.phase = ProcessingPhase.FAILED;
         this.errorKey = key;
         this.lastUpdated = ZonedDateTime.now();
-        this.retryEligibleAt = null; // No more retries in failed state
+        this.retryEligibleAt = null;
     }
 
     /**

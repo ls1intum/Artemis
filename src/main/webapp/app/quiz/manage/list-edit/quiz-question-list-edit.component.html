@@ -13,10 +13,22 @@
                             #editMultipleChoice
                             [question]="quizQuestion"
                             [questionIndex]="i + 1"
+                            [hyperionEnabled]="hyperionEnabled()"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
+                            (refineRequested)="toggleRefinement(quizQuestion)"
+                            (collapseChanged)="handleCollapseChanged(quizQuestion, $event)"
                         />
                     </div>
+                    @if (hyperionEnabled()) {
+                        <jhi-quiz-ai-question-refinement-panel
+                            [question]="quizQuestion"
+                            [courseId]="courseId()"
+                            [isOpen]="openRefinementQuestions().has(quizQuestion)"
+                            [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
+                            (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
+                        />
+                    }
                 }
                 @if (quizQuestion.type === DRAG_AND_DROP) {
                     <div>
@@ -26,7 +38,7 @@
                             [questionIndex]="i + 1"
                             [filePool]="fileMap"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
                             (addNewFile)="handleFileAdded($event)"
                             (removeFile)="handleFileRemoved($event)"
                         />
@@ -39,7 +51,7 @@
                             [question]="quizQuestion"
                             [questionIndex]="i + 1"
                             (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(i)"
+                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
                         />
                     </div>
                 }
@@ -60,7 +72,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                 </button>
             </div>
-            <div class="col-12 col-sm-6 col-xl mb-1">
+            <div class="col-12 col-sm-6 col-xl mb-1" [jhiFeatureToggleHide]="ApollonQuizDragAndDrop">
                 <button id="quiz-import-apollon-dnd-question" class="btn btn-block btn-success" (click)="importApollonDragAndDropQuestion()">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
