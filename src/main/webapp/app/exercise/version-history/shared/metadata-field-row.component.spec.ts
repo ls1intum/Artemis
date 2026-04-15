@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MetadataFieldRow, MetadataFieldRowComponent } from 'app/exercise/version-history/shared/metadata-field-row.component';
@@ -113,7 +113,7 @@ describe('MetadataFieldRowComponent', () => {
         const el: HTMLElement = fixture.nativeElement;
         const unsetSpan = el.querySelector('[jhiTranslate="global.generic.unset"]');
         expect(unsetSpan).toBeTruthy();
-        expect(unsetSpan!.classList.contains('metadata-row__value--empty')).toBeTrue();
+        expect(unsetSpan!.classList.contains('metadata-row__value--empty')).toBe(true);
     });
 
     it('should show currentDisplay when showUnsetLabel is false even if field is empty', () => {
@@ -139,8 +139,8 @@ describe('MetadataFieldRowComponent', () => {
         const oldSpan = el.querySelector('.metadata-diff__value--old');
         const newSpan = el.querySelector('.metadata-diff__value--new');
 
-        expect(oldSpan!.classList.contains('metadata-diff__value--empty')).toBeTrue();
-        expect(newSpan!.classList.contains('metadata-diff__value--empty')).toBeTrue();
+        expect(oldSpan!.classList.contains('metadata-diff__value--empty')).toBe(true);
+        expect(newSpan!.classList.contains('metadata-diff__value--empty')).toBe(true);
     });
 
     it('should not apply empty CSS classes in diff view when previousEmpty and currentEmpty are false', () => {
@@ -151,7 +151,7 @@ describe('MetadataFieldRowComponent', () => {
         const oldSpan = el.querySelector('.metadata-diff__value--old');
         const newSpan = el.querySelector('.metadata-diff__value--new');
 
-        expect(oldSpan!.classList.contains('metadata-diff__value--empty')).toBeFalse();
-        expect(newSpan!.classList.contains('metadata-diff__value--empty')).toBeFalse();
+        expect(oldSpan!.classList.contains('metadata-diff__value--empty')).toBe(false);
+        expect(newSpan!.classList.contains('metadata-diff__value--empty')).toBe(false);
     });
 });

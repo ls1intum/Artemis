@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseVersionHistoryComponent } from 'app/programming/manage/version-history/programming-exercise-version-history.component';
 import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -234,7 +234,7 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         );
         fixture.detectChanges();
 
-        expect(component.showDiffTab()).toBeFalse();
+        expect(component.showDiffTab()).toBe(false);
         expect(component.viewMode()).toBe('full');
     });
 

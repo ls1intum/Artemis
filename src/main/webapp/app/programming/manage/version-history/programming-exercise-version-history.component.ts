@@ -373,7 +373,7 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     /** Reads a deeply nested property from an object using a dot-separated path. */
     private getNestedValue(obj: object, path: string): unknown {
         return path.split('.').reduce<unknown>((current, key) => {
-            if (typeof current === 'object' && current !== undefined && current !== null) {
+            if (typeof current === 'object' && current !== null) {
                 return (current as Record<string, unknown>)[key];
             }
             return undefined;
@@ -383,6 +383,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     /** Sets a deeply nested property on an object using a dot-separated path, creating intermediate objects as needed. */
     private setNestedValue(obj: object, path: string, value: unknown): void {
         const keys = path.split('.');
+        if (keys.some((key) => key === '__proto__' || key === 'constructor' || key === 'prototype')) {
+            return;
+        }
         let current: Record<string, unknown> = obj as Record<string, unknown>;
         for (let i = 0; i < keys.length - 1; i++) {
             if (current[keys[i]] === undefined || current[keys[i]] === null || typeof current[keys[i]] !== 'object') {
@@ -470,7 +473,11 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
                     }
                     this.snapshotCache.update((snapshotCache) => {
                         const nextCache: Record<number, ExerciseSnapshotDTO> = {};
-                        Object.assign(nextCache, snapshotCache);
+                        for (const key in snapshotCache) {
+                            if (Object.prototype.hasOwnProperty.call(snapshotCache, key)) {
+                                nextCache[key] = snapshotCache[key];
+                            }
+                        }
                         nextCache[versionId] = snapshot;
                         return nextCache;
                     });
@@ -480,6 +487,12 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
                         if (this.selectedVersionId() === versionId) {
                             this.snapshotError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
                         }
+                        return;
+                    }
+
+                    // Guard against stale predecessor requests: if the user has switched
+                    // versions since this request was issued, ignore the error.
+                    if (requestToken !== this.snapshotRequestToken) {
                         return;
                     }
 
@@ -503,7 +516,11 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     private setSnapshotLoading(versionId: number, isLoading: boolean): void {
         this.loadingSnapshots.update((loadingSnapshots) => {
             const nextLoadingSnapshots: Record<number, boolean> = {};
-            Object.assign(nextLoadingSnapshots, loadingSnapshots);
+            for (const key in loadingSnapshots) {
+                if (Object.prototype.hasOwnProperty.call(loadingSnapshots, key)) {
+                    nextLoadingSnapshots[key] = loadingSnapshots[key];
+                }
+            }
             if (!isLoading) {
                 delete nextLoadingSnapshots[versionId];
             } else {

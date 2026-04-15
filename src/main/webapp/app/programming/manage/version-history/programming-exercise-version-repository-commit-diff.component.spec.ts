@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { of } from 'rxjs';
 import { ProgrammingExerciseVersionRepositoryCommitDiffComponent } from 'app/programming/manage/version-history/programming-exercise-version-repository-commit-diff.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
@@ -66,7 +66,7 @@ describe('ProgrammingExerciseVersionRepositoryCommitDiffComponent', () => {
         fixture.componentRef.setInput('currentCommitId', 'commit-b');
         fixture.detectChanges();
 
-        expect(component.shouldRender()).toBeFalse();
+        expect(component.shouldRender()).toBe(false);
     });
 
     it('should return false for shouldRender when currentCommitId is undefined', () => {
@@ -74,7 +74,7 @@ describe('ProgrammingExerciseVersionRepositoryCommitDiffComponent', () => {
         fixture.componentRef.setInput('currentCommitId', undefined);
         fixture.detectChanges();
 
-        expect(component.shouldRender()).toBeFalse();
+        expect(component.shouldRender()).toBe(false);
     });
 
     it('should return false for shouldRender when both commit IDs are the same', () => {
@@ -82,7 +82,7 @@ describe('ProgrammingExerciseVersionRepositoryCommitDiffComponent', () => {
         fixture.componentRef.setInput('currentCommitId', 'same-commit');
         fixture.detectChanges();
 
-        expect(component.shouldRender()).toBeFalse();
+        expect(component.shouldRender()).toBe(false);
     });
 
     it('should return true for shouldRender when both commit IDs are present and different', () => {
@@ -90,14 +90,14 @@ describe('ProgrammingExerciseVersionRepositoryCommitDiffComponent', () => {
         fixture.componentRef.setInput('currentCommitId', 'commit-b');
         fixture.detectChanges();
 
-        expect(component.shouldRender()).toBeTrue();
+        expect(component.shouldRender()).toBe(true);
     });
 
     it('should have correct initial state', () => {
         fixture.detectChanges();
 
-        expect(component.isLoading()).toBeFalse();
-        expect(component.error()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.error()).toBe(false);
         expect(component.repositoryDiffInformation()).toBeUndefined();
     });
 
@@ -106,7 +106,7 @@ describe('ProgrammingExerciseVersionRepositoryCommitDiffComponent', () => {
         fixture.componentRef.setInput('currentCommitId', undefined);
         fixture.detectChanges();
 
-        expect(component.shouldRender()).toBeFalse();
+        expect(component.shouldRender()).toBe(false);
         // Angular leaves a <!--container--> comment for the @if block; no visible elements should be rendered
         expect(fixture.nativeElement.querySelector('.repository-commit-diff')).toBeNull();
         expect(fixture.nativeElement.querySelector('jhi-git-diff-report')).toBeNull();

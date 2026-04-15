@@ -32,6 +32,7 @@ export interface MetadataFieldRow {
                         rounded
                         size="small"
                         class="metadata-diff__revert"
+                        [attr.aria-label]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field().previousDisplay }"
                         [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field().previousDisplay }"
                         tooltipPosition="right"
                         (click)="revertField.emit({ fieldId: field().id, fieldLabel: field().label, previousRaw: field().previousRaw })"

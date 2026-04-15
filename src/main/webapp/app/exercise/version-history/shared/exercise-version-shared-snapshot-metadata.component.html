@@ -190,6 +190,10 @@
                             rounded
                             size="small"
                             class="metadata-diff__revert"
+                            [attr.aria-label]="
+                                'artemisApp.exercise.versionHistory.revert.tooltip'
+                                    | artemisTranslate: { value: ('artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate) }
+                            "
                             [pTooltip]="
                                 'artemisApp.exercise.versionHistory.revert.tooltip'
                                     | artemisTranslate: { value: ('artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate) }
