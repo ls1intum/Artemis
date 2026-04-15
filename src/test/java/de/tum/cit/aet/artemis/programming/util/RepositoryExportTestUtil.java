@@ -27,7 +27,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -392,8 +391,8 @@ public final class RepositoryExportTestUtil {
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
         repo.workingCopyGitRepo.push().setRemote("origin").call();
 
-        // Wait for the bare repository to be fully ready, including the specific commit
-        waitForBareRepositoryReady(repo, commit.getId().getName());
+        // Wait for the bare repository to be fully ready for cloning operations
+        waitForBareRepositoryReady(repo);
 
         return commit;
     }
@@ -440,15 +439,7 @@ public final class RepositoryExportTestUtil {
                                 log.debug("Bare repository commit {} is not resolvable yet, waiting...", commitHash);
                                 return false;
                             }
-                            RevCommit commit = revWalk.parseCommit(commitId);
-                            // Walk the tree to verify blob objects are accessible
-                            try (TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
-                                treeWalk.addTree(commit.getTree());
-                                treeWalk.setRecursive(true);
-                                while (treeWalk.next()) {
-                                    git.getRepository().open(treeWalk.getObjectId(0));
-                                }
-                            }
+                            revWalk.parseCommit(commitId);
                         }
                     }
                     return true;
