@@ -657,6 +657,25 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(activateSpy).toHaveBeenCalledTimes(1);
         });
 
+        it('focusFullscreenContainer: focuses the fullscreen container instead of the first child control', () => {
+            const container = document.createElement('div');
+            const firstFocusable = document.createElement('input');
+            container.appendChild(firstFocusable);
+
+            const setupFocusTrapSpy = vi.spyOn(component as any, 'setupFocusTrap').mockImplementation(() => {});
+            const setBackgroundInertSpy = vi.spyOn(component as any, 'setBackgroundInert').mockImplementation(() => {});
+            vi.spyOn(component, 'contentContainer').mockReturnValue({ nativeElement: container } as any);
+            const containerFocusSpy = vi.spyOn(container, 'focus');
+            const firstFocusableFocusSpy = vi.spyOn(firstFocusable, 'focus');
+
+            component['focusFullscreenContainer']();
+
+            expect(setupFocusTrapSpy).toHaveBeenCalledWith(container);
+            expect(setBackgroundInertSpy).toHaveBeenCalledWith(true);
+            expect(containerFocusSpy).toHaveBeenCalledTimes(1);
+            expect(firstFocusableFocusSpy).not.toHaveBeenCalled();
+        });
+
         it('closeFullscreen: closes only when fullscreen is active', () => {
             component['_isFullscreen'].set(false);
             component.closeFullscreen();
@@ -689,12 +708,32 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('onEscapePressed: does not close when pdf fullscreen is active', () => {
             const closeSpy = vi.spyOn(component, 'closeFullscreen');
-            vi.spyOn(component as any, 'hasOpenPdfFullscreen').mockReturnValue(true);
+            component['_isFullscreen'].set(true);
+            component['onPdfFullscreenChange'](true);
             const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 
             component.onEscapePressed(event);
 
             expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('setBackgroundInert: keeps sticky navbar interactive in fullscreen', () => {
+            const host = fixture.nativeElement as HTMLElement;
+            const wrapper = document.createElement('div');
+            const navbar = document.createElement('div');
+            navbar.className = 'sticky-top-navbar';
+            wrapper.append(navbar, host);
+            document.body.appendChild(wrapper);
+
+            try {
+                component['setBackgroundInert'](true);
+
+                expect(navbar.hasAttribute('inert')).toBe(false);
+                expect(navbar.hasAttribute('aria-hidden')).toBe(false);
+            } finally {
+                component['setBackgroundInert'](false);
+                wrapper.remove();
+            }
         });
     });
 });

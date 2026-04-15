@@ -586,9 +586,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         this.setupFocusTrap(container);
         this.setBackgroundInert(true);
-
-        const focusableElements = container.querySelectorAll(this.focusableSelector);
-        (focusableElements.length > 0 ? (focusableElements[0] as HTMLElement) : container).focus();
+        container.focus();
     }
 
     private getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -621,6 +619,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         container.addEventListener('keydown', this._focusTrapHandler);
     }
 
+    private shouldSkipBackgroundInert(element: HTMLElement): boolean {
+        return element.classList.contains('sticky-top-navbar') || element.matches('jhi-navbar') || !!element.querySelector('jhi-navbar');
+    }
+
     private setBackgroundInert(inert: boolean): void {
         if (inert) {
             let current: HTMLElement | null = this.hostElement.nativeElement;
@@ -630,7 +632,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     break;
                 }
                 Array.from(parent.children).forEach((sibling) => {
-                    if (!(sibling instanceof HTMLElement) || sibling === current || this._inertElements.has(sibling)) {
+                    if (!(sibling instanceof HTMLElement) || sibling === current || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
                         return;
                     }
                     this._inertElements.set(sibling, {
