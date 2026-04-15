@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * A Lecture can consist of multiple LectureUnits (e.g. Attachment, Text, Video, ExerciseUnit, etc.) that can be linked to competencies.
- * Artemis supports automatic lecture transcription using Nebula for video lecture units and adds lecture content to Pyris for better AI assistance by Iris.
+ * Artemis supports automatic lecture transcription for video lecture units and adds lecture content to Pyris for better AI assistance by Iris.
  * Some features depend on the configuration, consult the documentation for details.
  * See {@link de.tum.cit.aet.artemis.atlas.config.AtlasEnabled} and {@link de.tum.cit.aet.artemis.core.config.Constants} for more information.
  * Tutorial lectures are a special type of lectures that are not shown in the main lecture list, but in the tutorial section.

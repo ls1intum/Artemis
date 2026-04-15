@@ -83,7 +83,7 @@ describe('AttachmentVideoUnitComponent', () => {
     let mockLectureTranscriptionService: any;
 
     function expectPlaylistRequest(url: string, response: string | null) {
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === url);
+        const req = httpMock.expectOne((request) => request.url === '/api/tumlive/playlist' && request.params.get('url') === url);
         expect(req.request.method).toBe('GET');
         req.flush(response);
     }
@@ -279,7 +279,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.toggleCollapse(false);
         expect(component.isLoading()).toBe(true);
 
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+        const req = httpMock.expectOne((request) => request.url === '/api/tumlive/playlist');
         req.flush('Not found', { status: 404, statusText: 'Not Found' });
         await fixture.whenStable();
 
@@ -341,7 +341,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request (even .m3u8 URLs go through the API)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === m3u8Url);
+        const req = httpMock.expectOne((request) => request.url === '/api/tumlive/playlist' && request.params.get('url') === m3u8Url);
         expect(req.request.method).toBe('GET');
         req.flush(m3u8Url);
 
@@ -369,7 +369,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
+        const req = httpMock.expectOne((request) => request.url === '/api/tumlive/playlist' && request.params.get('url') === nonTumLiveUrl);
         req.flush(null);
 
         await fixture.whenStable();
@@ -555,7 +555,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component.toggleCollapse(false);
 
             // Mock video playlist request
-            const videoReq = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+            const videoReq = httpMock.expectOne((request) => request.url === '/api/tumlive/playlist');
             videoReq.flush(playlist);
 
             await fixture.whenStable();
