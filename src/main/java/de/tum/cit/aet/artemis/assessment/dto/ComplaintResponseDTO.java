@@ -25,11 +25,11 @@ import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
  * @param lockEndDate         the time when the lock will end (can be {@code null} if the lock has already ended or if the response is not a lock response)
  * @param complaintIsAccepted whether the complaint was accepted
  * @param complaintId         the ID of the associated complaint
- * @param reviewer            the name and login of the reviewer who submitted the response (can be {@code null} if the reviewer information is hidden)
+ * @param reviewer            the name and login of the reviewer who submitted the response
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedDateTime submittedTime, Boolean isCurrentlyLocked, ZonedDateTime lockEndDate,
-        Boolean complaintIsAccepted, @NotNull Long complaintId, UserWithIdAndLoginDTO reviewer) {
+        Boolean complaintIsAccepted, @NotNull Long complaintId, @NotNull UserWithIdAndLoginDTO reviewer) {
 
     /**
      * Creates a {@link ComplaintResponseDTO} from a {@link ComplaintResponse} entity.
@@ -41,13 +41,11 @@ public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedD
     public static ComplaintResponseDTO of(ComplaintResponse entity) {
         Objects.requireNonNull(entity, "The complaint response must be set");
         Objects.requireNonNull(entity.getComplaint(), "The associated complaint must exist");
-
-        UserWithIdAndLoginDTO reviewerDTO = null;
-        if (entity.getReviewer() != null && entity.getReviewer().getLogin() != null) {
-            reviewerDTO = new UserWithIdAndLoginDTO(entity.getReviewer().getId(), entity.getReviewer().getLogin());
-        }
+        Objects.requireNonNull(entity.getReviewer(), "Reviewer must exist");
+        String reviewerLogin = entity.getReviewer().getLogin();
+        Objects.requireNonNull(reviewerLogin, "Reviewer login must exist");
 
         return new ComplaintResponseDTO(entity.getId(), entity.getResponseText(), entity.getSubmittedTime(), entity.isCurrentlyLocked(), entity.lockEndDate(),
-                entity.getComplaint().isAccepted(), entity.getComplaint().getId(), reviewerDTO);
+                entity.getComplaint().isAccepted(), entity.getComplaint().getId(), new UserWithIdAndLoginDTO(entity.getReviewer().getId(), reviewerLogin));
     }
 }

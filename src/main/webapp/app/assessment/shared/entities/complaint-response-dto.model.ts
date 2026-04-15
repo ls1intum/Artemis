@@ -23,5 +23,5 @@ export class ComplaintResponseDTO {
     public lockEndDate?: dayjs.Dayjs;
     public complaintIsAccepted?: boolean;
     public complaintId: number;
-    public reviewer?: UserIdAndLoginDTO;
+    public reviewer: UserIdAndLoginDTO;
 }

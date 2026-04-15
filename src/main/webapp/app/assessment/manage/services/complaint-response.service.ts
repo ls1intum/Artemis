@@ -9,7 +9,7 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { User } from 'app/core/user/user.model';
 
-type EntityResponseType = HttpResponse<ComplaintResponse>;
+type EntityResponseType = HttpResponse<ComplaintResponseDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintResponseService {
@@ -58,21 +58,20 @@ export class ComplaintResponseService {
         return this.http.delete<void>(`${this.resourceUrl}/${complaintId}/response`, { observe: 'response' });
     }
 
-    createLock(complaintId: number): Observable<EntityResponseType> {
+    createLock(complaintId: number): Observable<HttpResponse<ComplaintResponse>> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
+            .post<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<EntityResponseType> {
-        return this.http.patch<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
+    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<HttpResponse<ComplaintResponse>> {
+        return this.http
+            .patch<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.convertComplaintResponseDatesFromServer(res.body);
-        }
-        return res;
+    public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): HttpResponse<ComplaintResponse> {
+        return res.clone({ body: res.body ? this.convertComplaintResponseFromServer(res.body) : undefined });
     }
 
     public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
