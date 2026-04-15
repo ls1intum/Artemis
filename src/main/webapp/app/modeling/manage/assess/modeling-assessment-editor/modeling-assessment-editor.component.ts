@@ -111,6 +111,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faQuestionCircle = faQuestionCircle;
 
+    complaintLoaded = false;
+
     constructor() {
         const translateService = this.translateService;
 
@@ -245,6 +247,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.checkPermissions();
+        this.complaintLoaded = false;
         this.getComplaint();
 
         if (this.result && this.submission) {
@@ -302,6 +305,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private getComplaint(): void {
         if (!this.submission) {
+            this.complaintLoaded = true;
             return;
         }
         this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
@@ -310,6 +314,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 this.complaint = res.body;
+                this.complaintLoaded = true;
             },
             error: () => {
                 this.onError();
@@ -357,6 +362,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (this.modelingExercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
+            }
+            if (!this.result?.completionDate) {
+                return this.isAssessor;
+            }
+            if (!this.complaintLoaded) {
+                return false;
             }
             if (this.complaint && this.isAssessor) {
                 // If there is a complaint, the original assessor cannot override the result anymore.
