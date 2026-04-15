@@ -59,7 +59,7 @@ public class ContentExtractionService {
         metadata.put("exerciseType", ExerciseType.PROGRAMMING.getValue());
 
         if (exercise.getDifficulty() != null) {
-            metadata.put("difficulty", exercise.getDifficulty().name().toLowerCase());
+            metadata.put("difficulty", exercise.getDifficulty().name().toLowerCase(Locale.ROOT));
         }
         if (exercise.getMaxPoints() != null) {
             metadata.put("maxPoints", String.format(Locale.ROOT, "%.1f", exercise.getMaxPoints()));
