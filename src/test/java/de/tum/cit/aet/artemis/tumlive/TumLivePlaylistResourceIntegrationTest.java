@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture;
+package de.tum.cit.aet.artemis.tumlive;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -13,17 +13,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Integration tests for the Nebula transcription resource.
- * Tests for starting transcriptions have been removed as transcription
- * is now triggered automatically by the LectureContentProcessingService.
- * Cancel transcription tests require additional setup and are covered elsewhere.
+ * Integration tests for the TUM Live playlist resource.
  */
-class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TumLivePlaylistResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "nebulatranscriptionresource";
+    private static final String TEST_PREFIX = "tumliveplaylistresource";
 
     @Autowired
-    private MockMvc restNebulaTranscriptionMockMvc;
+    private MockMvc restTumLivePlaylistMockMvc;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
@@ -32,7 +29,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Non-TUM-Live URLs should return 404
-        restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://youtube.com/watch?v=123")).andExpect(status().isNotFound());
+        restTumLivePlaylistMockMvc.perform(get("/api/tumlive/playlist").param("url", "https://youtube.com/watch?v=123")).andExpect(status().isNotFound());
     }
 
     @Test
@@ -42,6 +39,6 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Invalid TUM Live URL format should return 404
-        restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
+        restTumLivePlaylistMockMvc.perform(get("/api/tumlive/playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
     }
 }
