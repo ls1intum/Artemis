@@ -500,7 +500,7 @@ describe('WebauthnService', () => {
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
 
-        it('should show error alert for 401 errors even when conditional', async () => {
+        it('should show deactivated error alert for 403 errors even when conditional', async () => {
             const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
@@ -510,11 +510,11 @@ describe('WebauthnService', () => {
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
             vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
             vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
-            const error401 = { status: 401 } as any;
-            webauthnApiService.loginWithPasskey.mockRejectedValue(error401);
+            const error403 = { status: 403 } as any;
+            webauthnApiService.loginWithPasskey.mockRejectedValue(error403);
             vi.spyOn(console, 'error').mockImplementation(() => {});
 
-            await expect(service.loginWithPasskey(true)).rejects.toEqual(error401);
+            await expect(service.loginWithPasskey(true)).rejects.toEqual(error403);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
         });
 
