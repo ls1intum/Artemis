@@ -141,7 +141,6 @@ The following members of the project management team are responsible for specifi
 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Hyperion              | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| Nebula                | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
