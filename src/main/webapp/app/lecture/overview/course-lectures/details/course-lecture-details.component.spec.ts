@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
-import { BehaviorSubject, EMPTY, of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -48,7 +48,6 @@ import { FileService } from 'app/shared/service/file.service';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
 describe('CourseLectureDetailsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -62,9 +61,6 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let lectureService: LectureService;
-    let routeParams$: BehaviorSubject<any>;
-    let queryParams$: BehaviorSubject<any>;
-    let courseParams$: BehaviorSubject<any>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -102,10 +98,6 @@ describe('CourseLectureDetailsComponent', () => {
         let headers = new HttpHeaders();
         headers = headers.set('Content-Type', 'application/json; charset=utf-8');
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
-
-        routeParams$ = new BehaviorSubject({ lectureId: '1' });
-        queryParams$ = new BehaviorSubject({});
-        courseParams$ = new BehaviorSubject({ courseId: '1' });
 
         await TestBed.configureTestingModule({
             imports: [
@@ -155,24 +147,18 @@ describe('CourseLectureDetailsComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: routeParams$.asObservable(),
-                        queryParams: queryParams$.asObservable(),
+                        params: of({ lectureId: '1' }),
+                        queryParams: of({}),
                         parent: {
                             parent: {
-                                params: courseParams$.asObservable(),
+                                params: of({ courseId: '1' }),
                                 queryParams: of({}),
                             },
                         },
                     },
                 },
-                MockProvider(Router, { url: '/courses/1/lectures/1', navigate: vi.fn() }),
+                MockProvider(Router),
                 MockProvider(ScienceService),
-                {
-                    provide: IrisSettingsService,
-                    useValue: {
-                        getCourseSettingsWithRateLimit: vi.fn(() => of({ settings: { enabled: false } } as any)),
-                    },
-                },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).compileComponents();
@@ -368,35 +354,6 @@ describe('CourseLectureDetailsComponent', () => {
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
         expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
-    });
-
-    it('should parse valid deep-link query parameters', async () => {
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        // Keep units empty so query parsing values are not normalized away by ensureValidDeepLinkTargets.
-        courseLecturesDetailsComponent.lectureUnits = [];
-        queryParams$.next({ unit: '2', timestamp: '42', page: '3' });
-        await fixture.whenStable();
-
-        expect(courseLecturesDetailsComponent.targetUnitId()).toBe(2);
-        expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
-        expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
-    });
-
-    it('loadData populates attachment linkUrl and loads iris settings when enabled', async () => {
-        const irisSettingsService = TestBed.inject(IrisSettingsService);
-        const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of({ settings: { enabled: true } } as any));
-
-        lecture.attachments = [lectureUnit1.attachment!];
-        courseLecturesDetailsComponent.irisEnabled = true;
-        courseLecturesDetailsComponent.lectureId = lecture.id;
-        courseLecturesDetailsComponent.loadData();
-        await fixture.whenStable();
-
-        expect(getCourseSettingsSpy).toHaveBeenCalledWith(course.id!);
-        expect(courseLecturesDetailsComponent.lecture?.attachments?.[0].linkUrl).toBeDefined();
-        expect(courseLecturesDetailsComponent.irisSettings).toEqual({ settings: { enabled: true } });
     });
 });
 

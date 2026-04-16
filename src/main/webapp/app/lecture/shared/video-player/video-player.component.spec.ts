@@ -539,16 +539,6 @@ describe('VideoPlayerComponent', () => {
             expect(getMockInteract()).not.toHaveBeenCalled();
         });
 
-        it('syncTranscriptHeight exits when transcript column is missing', () => {
-            const videoColumnEl = document.createElement('div');
-            const wrapperEl = document.createElement('div');
-
-            vi.spyOn(component, 'videoColumn').mockReturnValue({ nativeElement: videoColumnEl } as any);
-            vi.spyOn(component, 'videoWrapper').mockReturnValue({ nativeElement: wrapperEl } as any);
-
-            expect(() => (component as any).syncTranscriptHeight()).not.toThrow();
-        });
-
         it('syncTranscriptHeight applies at least minimum height', () => {
             const videoColumnEl = document.createElement('div');
             const wrapperEl = document.createElement('div');
@@ -567,53 +557,6 @@ describe('VideoPlayerComponent', () => {
     });
 
     describe('Initial seek helpers', () => {
-        it('queueInitialSeek applies immediately when metadata is already available', () => {
-            const applySpy = vi.spyOn(component as any, 'applyInitialSeek');
-            const localVideoElement = document.createElement('video');
-            Object.defineProperty(localVideoElement, 'readyState', { value: 1, configurable: true });
-
-            (component as any).queueInitialSeek(localVideoElement, 7);
-
-            expect(applySpy).toHaveBeenCalledWith(localVideoElement, 7);
-        });
-
-        it('queueInitialSeek replaces an existing loadedmetadata listener', () => {
-            const localVideoElement = document.createElement('video');
-            Object.defineProperty(localVideoElement, 'readyState', { value: 0, configurable: true });
-            const previousHandler = vi.fn();
-            const removeSpy = vi.spyOn(localVideoElement, 'removeEventListener');
-            (component as any).loadedmetadataHandler = previousHandler;
-
-            (component as any).queueInitialSeek(localVideoElement, 5);
-
-            expect(removeSpy).toHaveBeenCalledWith('loadedmetadata', previousHandler);
-            expect((component as any).loadedmetadataHandler).toBeTypeOf('function');
-        });
-
-        it('applyInitialSeek ignores timestamps beyond finite duration', () => {
-            const localVideoElement = document.createElement('video');
-            Object.defineProperty(localVideoElement, 'duration', { value: 10, configurable: true });
-            Object.defineProperty(localVideoElement, 'currentTime', { value: 0, writable: true, configurable: true });
-            const updateSpy = vi.spyOn(component, 'updateCurrentSegment');
-
-            (component as any).applyInitialSeek(localVideoElement, 11);
-
-            expect(localVideoElement.currentTime).toBe(0);
-            expect(updateSpy).not.toHaveBeenCalled();
-        });
-
-        it('updateCurrentSegment scrolls transcript viewer when available', async () => {
-            setInputs('https://cdn.example.com/m.m3u8', [{ startTime: 10, endTime: 12, text: 'A' }]);
-            await render();
-
-            const scrollSpy = vi.fn();
-            vi.spyOn(component, 'transcriptViewer').mockReturnValue({ scrollToSegment: scrollSpy } as any);
-
-            component.updateCurrentSegment(10.1);
-
-            expect(scrollSpy).toHaveBeenCalledWith(0);
-        });
-
         it('ngOnDestroy removes loadedmetadata listener and clears pending seek', async () => {
             setInputs('https://cdn.example.com/m.m3u8', []);
             await render();

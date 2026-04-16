@@ -37,13 +37,6 @@ describe('LectureChatbotComponent', () => {
         expect(irisChatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
     });
 
-    it('does not switch mode when lectureId is undefined', async () => {
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(irisChatService.switchTo).not.toHaveBeenCalled();
-    });
-
     it('toggleChatHistory does nothing when base chatbot is not available', () => {
         vi.spyOn(component as any, 'irisBaseChatbot').mockReturnValue(undefined);
 

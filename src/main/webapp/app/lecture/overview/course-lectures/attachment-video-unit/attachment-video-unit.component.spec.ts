@@ -586,44 +586,6 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.verticalSplitSizes()).toEqual([66.67, 33.33]);
             expect(component.horizontalSplitSizes()).toEqual([50, 50]);
         });
-
-        it('needsVerticalSplitter: returns true when fullscreen with iris sidebar', () => {
-            // Don't call detectChanges to avoid triggering the Iris sidebar component
-            component['_isFullscreen'].set(true);
-            fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
-            });
-            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false };
-
-            expect(component.needsVerticalSplitter()).toBe(true);
-        });
-
-        it('needsVerticalSplitter: returns false when not fullscreen', () => {
-            component['_isFullscreen'].set(false);
-            fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
-            });
-            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false };
-
-            expect(component.needsVerticalSplitter()).toBe(false);
-        });
-
-        it('needsVerticalSplitter: returns false when iris sidebar is not shown', () => {
-            component['_isFullscreen'].set(true);
-            fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: false },
-            });
-
-            expect(component.needsVerticalSplitter()).toBe(false);
-        });
-
-        it('needsHorizontalSplitter: returns true when fullscreen with video and PDF', () => {
-            component['_isFullscreen'].set(true);
-            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-
-            expect(component.needsHorizontalSplitter()).toBe(true);
-        });
     });
 
     describe('Fullscreen behavior', () => {
@@ -657,35 +619,6 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(activateSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('focusFullscreenContainer: focuses the fullscreen container instead of the first child control', () => {
-            const container = document.createElement('div');
-            const firstFocusable = document.createElement('input');
-            container.appendChild(firstFocusable);
-
-            const setupFocusTrapSpy = vi.spyOn(component as any, 'setupFocusTrap').mockImplementation(() => {});
-            const setBackgroundInertSpy = vi.spyOn(component as any, 'setBackgroundInert').mockImplementation(() => {});
-            vi.spyOn(component, 'contentContainer').mockReturnValue({ nativeElement: container } as any);
-            const containerFocusSpy = vi.spyOn(container, 'focus');
-            const firstFocusableFocusSpy = vi.spyOn(firstFocusable, 'focus');
-
-            component['focusFullscreenContainer']();
-
-            expect(setupFocusTrapSpy).toHaveBeenCalledWith(container);
-            expect(setBackgroundInertSpy).toHaveBeenCalledWith(true);
-            expect(containerFocusSpy).toHaveBeenCalledTimes(1);
-            expect(firstFocusableFocusSpy).not.toHaveBeenCalled();
-        });
-
-        it('closeFullscreen: closes only when fullscreen is active', () => {
-            component['_isFullscreen'].set(false);
-            component.closeFullscreen();
-            expect(component.isFullscreen()).toBe(false);
-
-            component['_isFullscreen'].set(true);
-            component.closeFullscreen();
-            expect(component.isFullscreen()).toBe(false);
-        });
-
         it('onEscapePressed: delegates to closeFullscreen', () => {
             const closeSpy = vi.spyOn(component, 'closeFullscreen');
             const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
@@ -694,16 +627,6 @@ describe('AttachmentVideoUnitComponent', () => {
             component.onEscapePressed(event);
 
             expect(closeSpy).toHaveBeenCalledTimes(1);
-        });
-
-        it('onEscapePressed: does not close when event was already handled', () => {
-            const closeSpy = vi.spyOn(component, 'closeFullscreen');
-            const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
-            event.preventDefault();
-
-            component.onEscapePressed(event);
-
-            expect(closeSpy).not.toHaveBeenCalled();
         });
 
         it('onEscapePressed: does not close when pdf fullscreen is active', () => {

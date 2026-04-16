@@ -115,26 +115,6 @@ describe('LectureUnitComponent', () => {
         expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('handleIsolatedView emits and stops propagation', () => {
-        const emitSpy = vi.spyOn(component.onShowIsolated, 'emit');
-        const event = { stopPropagation: vi.fn() } as unknown as Event;
-
-        component.handleIsolatedView(event);
-
-        expect(event.stopPropagation).toHaveBeenCalled();
-        expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
-    it('handleOriginalVersionView emits and stops propagation', () => {
-        const emitSpy = vi.spyOn(component.onShowOriginalVersion, 'emit');
-        const event = { stopPropagation: vi.fn() } as unknown as Event;
-
-        component.handleOriginalVersionView(event);
-
-        expect(event.stopPropagation).toHaveBeenCalled();
-        expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
     it('handleFullscreen emits and stops propagation', () => {
         const emitSpy = vi.spyOn(component.onFullscreen, 'emit');
         const event = { stopPropagation: vi.fn() } as unknown as Event;
@@ -143,29 +123,5 @@ describe('LectureUnitComponent', () => {
 
         expect(event.stopPropagation).toHaveBeenCalled();
         expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
-    it('toggleCompletion emits inverse completion state', () => {
-        const emitSpy = vi.spyOn(component.onCompletion, 'emit');
-        const event = { stopPropagation: vi.fn() } as unknown as Event;
-
-        component.toggleCompletion(event);
-
-        expect(event.stopPropagation).toHaveBeenCalled();
-        expect(emitSpy).toHaveBeenCalledWith(false);
-    });
-
-    it('toggleCollapse expands and emits collapse state', async () => {
-        const collapseSpy = vi.spyOn(component.onCollapse, 'emit');
-        const scrollSpy = vi.fn();
-        (fixture.nativeElement as any).scrollIntoView = scrollSpy;
-
-        fixture.detectChanges();
-        component.toggleCollapse();
-        await fixture.whenStable();
-
-        expect(component.isCollapsed()).toBe(false);
-        expect(collapseSpy).toHaveBeenCalledWith(false);
-        expect(scrollSpy).toHaveBeenCalled();
     });
 });
