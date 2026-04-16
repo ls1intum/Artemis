@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
-class VideoSourceResolverTest {
+class VideoSourceResolverServiceServiceTest {
 
     private final YouTubeUrlService youTubeUrlService = new YouTubeUrlService();
 
-    private VideoSourceResolver withTumLive(TumLiveApi tumLiveApi) {
-        return new VideoSourceResolver(Optional.ofNullable(tumLiveApi), youTubeUrlService);
+    private VideoSourceResolverService withTumLive(TumLiveApi tumLiveApi) {
+        return new VideoSourceResolverService(Optional.ofNullable(tumLiveApi), youTubeUrlService);
     }
 
     // ── null / blank ─────────────────────────────────────────────────────────

@@ -1,10 +1,12 @@
-package de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook;
+package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 
 class PyrisLectureIngestionStatusUpdateDTOSerializationTest {
 

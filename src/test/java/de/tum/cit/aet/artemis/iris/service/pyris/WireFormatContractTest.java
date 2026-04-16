@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.service.pyris.dto;
+package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

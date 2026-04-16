@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
@@ -8,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Lazy
+@Profile(PROFILE_CORE)
 public class YouTubeUrlService {
 
     private static final Set<String> YOUTUBE_HOSTS = Set.of("youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "youtube-nocookie.com", "www.youtube-nocookie.com");

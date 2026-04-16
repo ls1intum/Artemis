@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -28,19 +28,20 @@ class LectureResourceAttachmentVideoUnitDTOTest {
 
     @Test
     void youTubeTypeRequiresYouTubeVideoId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtube.com/watch?v=dQw4w9WgXcQ", VideoSourceType.YOUTUBE, null, null));
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtube.com/watch?v=dQw4w9WgXcQ", VideoSourceType.YOUTUBE, null, null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void tumLiveTypeForbidsYouTubeVideoId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/foo", VideoSourceType.TUM_LIVE, "dQw4w9WgXcQ", null));
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/foo", VideoSourceType.TUM_LIVE, "dQw4w9WgXcQ", null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void nullTypeForbidsYouTubeVideoId() {
-        assertThrows(IllegalArgumentException.class, () -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/1", null, "dQw4w9WgXcQ", null));
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/1", null, "dQw4w9WgXcQ", null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

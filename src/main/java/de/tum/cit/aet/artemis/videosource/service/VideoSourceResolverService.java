@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
@@ -25,15 +28,16 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  */
 @Service
 @Lazy
-public class VideoSourceResolver {
+@Profile(PROFILE_CORE)
+public class VideoSourceResolverService {
 
-    private static final Logger log = LoggerFactory.getLogger(VideoSourceResolver.class);
+    private static final Logger log = LoggerFactory.getLogger(VideoSourceResolverService.class);
 
     private final Optional<TumLiveApi> tumLiveApi;
 
     private final YouTubeUrlService youTubeUrlService;
 
-    public VideoSourceResolver(Optional<TumLiveApi> tumLiveApi, YouTubeUrlService youTubeUrlService) {
+    public VideoSourceResolverService(Optional<TumLiveApi> tumLiveApi, YouTubeUrlService youTubeUrlService) {
         this.tumLiveApi = tumLiveApi;
         this.youTubeUrlService = youTubeUrlService;
     }
