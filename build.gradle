@@ -424,7 +424,8 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 
-    implementation "org.springframework.security:spring-security-saml2-service-provider:7.0.4"
+    // Spring Boot 4 moved SAML2 auto-configuration to a separate module (creates RelyingPartyRegistrationRepository bean)
+    implementation "org.springframework.boot:spring-boot-starter-security-saml2"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
