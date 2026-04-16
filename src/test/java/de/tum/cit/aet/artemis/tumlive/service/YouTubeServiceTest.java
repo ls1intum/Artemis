@@ -117,4 +117,22 @@ class YouTubeServiceTest {
     void shouldRejectNonHttpSchemes(String url) {
         assertThat(youTubeService.extractYouTubeVideoId(url)).isEmpty();
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            // over-long id in watch?v=...
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ123",
+            // too-short id in watch?v=...
+            "https://www.youtube.com/watch?v=short",
+            // over-long id in path-style URLs
+            "https://www.youtube.com/embed/dQw4w9WgXcQ123", "https://www.youtube.com/shorts/dQw4w9WgXcQ123", "https://youtu.be/dQw4w9WgXcQ123",
+            // non-video endpoints that embed a YouTube URL as a parameter
+            "https://www.youtube.com/oembed?url=https://youtu.be/dQw4w9WgXcQ", "https://www.youtube.com/redirect?q=https://youtu.be/dQw4w9WgXcQ",
+            // unknown paths on a YouTube host
+            "https://www.youtube.com/", "https://www.youtube.com/feed/trending", "https://www.youtube.com/channel/UCtest", "https://www.youtube.com/user/someuser",
+            // v param missing a value
+            "https://www.youtube.com/watch?v=" })
+    void shouldRejectMalformedOrNonVideoYouTubeUrls(String url) {
+        assertThat(youTubeService.extractYouTubeVideoId(url)).isEmpty();
+    }
 }
