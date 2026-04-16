@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -166,16 +165,6 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @param environment the Spring environment
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @param environment the Spring environment
@@ -254,9 +243,6 @@ public class ArtemisConfigHelper {
             if (isPasskeyRequiredForAdmin(environment)) {
                 enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
             }
-        }
-        if (isNebulaEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_NEBULA);
         }
         if (isSharingEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
