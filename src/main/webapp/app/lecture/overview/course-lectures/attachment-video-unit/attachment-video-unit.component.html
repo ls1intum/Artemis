@@ -56,7 +56,7 @@
         } @else if (transcriptionErrorMessage()) {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
-                    <iframe id="videoFrame" class="rounded" [src]="iframeFallbackUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                    <iframe id="videoFrameError" class="rounded" [src]="iframeFallbackUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                 </div>
             </div>
             <div class="transcription-error-banner">{{ transcriptionErrorMessage() }}</div>

@@ -228,7 +228,6 @@ public class SecurityConfiguration {
      * the browser blocks them.
      * </p>
      */
-    // YouTube IFrame API — verify additional origins (s.ytimg.com etc.) during manual testing (Task 18)
     static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:";
 
     /**

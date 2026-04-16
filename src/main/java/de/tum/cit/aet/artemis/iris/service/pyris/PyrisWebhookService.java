@@ -121,19 +121,21 @@ public class PyrisWebhookService {
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
-        // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type
+        // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
+        // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.
         ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        String videoUrl = resolved.type() != null ? resolved.url() : null;
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
 
             return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     PyrisLectureTranscriptionDTO.of(transcription), lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription,
-                    lectureUnitLink, resolved.url(), resolved.type());
+                    lectureUnitLink, videoUrl, resolved.type());
         }
 
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
-                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, resolved.url(), resolved.type());
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type());
     }
 
     /**

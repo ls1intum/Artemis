@@ -1,5 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, input, output, signal, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import interact from 'interactjs';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
@@ -17,7 +16,7 @@ const YT_STATE_BUFFERING = 3;
 @Component({
     selector: 'jhi-youtube-player',
     standalone: true,
-    imports: [CommonModule, YouTubePlayer, TranscriptViewerComponent],
+    imports: [YouTubePlayer, TranscriptViewerComponent],
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +36,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
 
+    private readonly destroyRef = inject(DestroyRef);
     private youtubePlayer: { getCurrentTime: () => number; seekTo: (s: number, allowSeekAhead: boolean) => void } | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
@@ -44,6 +44,17 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private interactInstance: ReturnType<typeof interact> | undefined;
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
+
+    constructor() {
+        // Resync the active segment when transcript segments arrive asynchronously
+        // (e.g. after onPlayerReady already ran against an empty array).
+        effect(() => {
+            const segments = this.transcriptSegments();
+            if (segments.length > 0 && this.youtubePlayer) {
+                this.updateCurrentSegment(this.youtubePlayer.getCurrentTime());
+            }
+        });
+    }
 
     ngAfterViewInit(): void {
         this.readinessHandle = setTimeout(() => {

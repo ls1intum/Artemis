@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.videosource.api.TumLiveApi;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
-class VideoSourceResolverServiceServiceTest {
+class VideoSourceResolverServiceTest {
 
     private final YouTubeUrlService youTubeUrlService = new YouTubeUrlService();
 

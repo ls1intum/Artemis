@@ -118,6 +118,30 @@ describe('YouTubePlayerComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith(25);
     });
 
+    it('resyncs segment index when transcriptSegments arrives after player is ready', async () => {
+        // Start with empty segments
+        fixture.componentRef.setInput('transcriptSegments', []);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // Player becomes ready at t=15
+        (component as any).youtubePlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        component.onPlayerReady({} as any);
+        expect(component['currentSegmentIndex']()).toBe(-1); // no segments yet
+
+        // Now segments arrive asynchronously
+        fixture.componentRef.setInput('transcriptSegments', [
+            { startTime: 0, endTime: 10, text: 'a' },
+            { startTime: 10, endTime: 20, text: 'b' },
+            { startTime: 20, endTime: 30, text: 'c' },
+        ]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // Effect should have resynced — player time 15 falls in segment index 1
+        expect(component['currentSegmentIndex']()).toBe(1);
+    });
+
     it('guards segment update before ready', () => {
         (component as any).youtubePlayer = null;
         expect(() => component.seekTo(5)).not.toThrow();
