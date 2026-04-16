@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -7,6 +7,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 @Component({
     selector: 'jhi-landing-spotlight',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, ArtemisTranslatePipe],
     styles: `
         :host {
@@ -67,8 +68,8 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         .stepper-nav {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            width: 160px;
+            justify-content: center;
+            gap: 8px;
         }
 
         .stepper-btn {
@@ -89,34 +90,41 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 
         .stepper-dots {
             display: flex;
-            gap: 4px;
             align-items: center;
-            padding: 8px;
         }
 
+        /* WCAG 2.5.8 (AA) requires ≥ 24×24 px target size. Visual dot stays 8×8 but the
+           clickable area is expanded to 28×28 via padding + content-box clipping. */
         .dot {
+            box-sizing: content-box;
             width: 8px;
             height: 8px;
+            padding: 10px;
+            background-clip: content-box;
             border-radius: 50%;
-            background: var(--gray-300);
-            transition: all 0.3s;
+            background-color: var(--gray-300);
+            transition:
+                background-color 0.3s,
+                width 0.3s;
             border: none;
-            padding: 0;
             cursor: pointer;
         }
 
         .dot.active {
             width: 20px;
             border-radius: 16px;
-            background: var(--primary);
+            background-color: var(--primary);
         }
 
         .spotlight-right {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 8px;
-            height: 100%;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            height: auto;
             overflow: hidden;
             transition: opacity 0.3s ease;
         }
@@ -129,7 +137,6 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             width: 100%;
             height: 100%;
             object-fit: contain;
-            min-height: 25rem;
             border: 0;
             box-shadow: none;
         }
@@ -191,12 +198,24 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                         [muted]="true"
                         playsinline
                         preload="metadata"
+                        disablepictureinpicture
+                        disableremoteplayback
+                        width="960"
+                        height="540"
                         [attr.poster]="currentStep().imageSrc"
+                        [attr.aria-label]="currentStep().titleKey | artemisTranslate"
                         (loadeddata)="onVideoLoaded($event)"
                         (ended)="onVideoEnded()"
                     ></video>
                 } @else {
-                    <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey | artemisTranslate" />
+                    <img
+                        class="spotlight-media"
+                        [src]="currentStep().imageSrc"
+                        [alt]="currentStep().titleKey | artemisTranslate"
+                        width="960"
+                        height="540"
+                        [attr.fetchpriority]="activeIndex() === 0 ? 'high' : null"
+                    />
                 }
             </div>
         </section>

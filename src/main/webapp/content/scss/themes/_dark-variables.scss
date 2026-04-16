@@ -25,6 +25,9 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+// On dark theme the primary is already on a dark surface; keep a slightly darker shade so that
+// the on-brand buttons remain crisp (contrast is driven mostly by lightness of --white here).
+$primary-dark: #2d6cae;
 $secondary: $gray-600;
 $success: $green;
 $info: $cyan;

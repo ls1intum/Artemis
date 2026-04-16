@@ -25,6 +25,9 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+// Darker primary tone used for on-brand buttons/tags that sit on white/light backgrounds and
+// need WCAG AA (≥ 4.5:1) contrast. 1f5c9a vs #fff ≈ 6.14:1.
+$primary-dark: #1f5c9a;
 $secondary: $gray-600;
 $success: $green;
 $info: $cyan;

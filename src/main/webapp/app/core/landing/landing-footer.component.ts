@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
 @Component({
     selector: 'jhi-landing-footer',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, ArtemisTranslatePipe, RouterLink],
     styles: `
         :host {
@@ -59,20 +60,29 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
         }
 
         .cta-btn {
-            background: var(--primary);
+            background: var(--primary-dark, var(--primary));
             color: var(--white);
             border: none;
             padding: 8px 16px;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             line-height: 1.6;
             white-space: nowrap;
-            transition: opacity 0.2s;
+            transition:
+                background-color 0.2s,
+                opacity 0.2s;
         }
 
         .cta-btn:hover {
-            opacity: 0.9;
+            background: var(--primary);
+            opacity: 0.95;
+        }
+
+        .cta-btn:focus-visible {
+            outline: 2px solid var(--white);
+            outline-offset: 2px;
         }
 
         .footer-links {
@@ -101,6 +111,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
         .footer-logo img {
             height: 30px;
             width: 32px;
+            object-fit: contain;
         }
 
         .footer-logo-text {
@@ -267,7 +278,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
             <div class="footer-links">
                 <div class="footer-logo-section">
                     <div class="footer-logo">
-                        <img src="public/images/logo.png" alt="Artemis Logo" />
+                        <img src="public/images/logo.svg" alt="Artemis Logo" width="32" height="30" loading="lazy" />
                         <span class="footer-logo-text">Artemis</span>
                     </div>
                     <p class="footer-description">{{ 'landing.footer.description' | artemisTranslate }}</p>

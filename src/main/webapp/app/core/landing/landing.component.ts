@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { LandingNavbarComponent } from 'app/core/landing/landing-navbar.component';
 import { LandingHeroComponent } from 'app/core/landing/landing-hero.component';
 import { LandingSpotlightComponent } from 'app/core/landing/landing-spotlight.component';
@@ -10,6 +10,7 @@ import { LandingFooterComponent } from 'app/core/landing/landing-footer.componen
 @Component({
     selector: 'jhi-landing',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         LandingNavbarComponent,
         LandingHeroComponent,

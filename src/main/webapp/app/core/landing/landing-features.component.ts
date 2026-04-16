@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FEATURE_CARDS, FeatureCard } from 'app/core/landing/landing-data';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -6,6 +6,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 @Component({
     selector: 'jhi-landing-features',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe],
     styles: `
         :host {
@@ -129,7 +130,15 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                             <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
                         <div class="card-assets">
-                            <img class="card-image" [src]="cardImageSrc(card)" [alt]="card.imageAltKey | artemisTranslate" loading="lazy" />
+                            <img
+                                class="card-image"
+                                [src]="cardImageSrc(card)"
+                                [alt]="card.imageAltKey | artemisTranslate"
+                                loading="lazy"
+                                decoding="async"
+                                width="840"
+                                height="420"
+                            />
                         </div>
                     </div>
                 }
