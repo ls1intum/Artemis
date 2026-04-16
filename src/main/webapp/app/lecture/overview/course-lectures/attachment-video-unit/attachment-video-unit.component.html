@@ -45,17 +45,18 @@
         }
     }
 
-    <div
-        #contentContainer
-        class="content-container"
-        [ngClass]="contentContainerClasses()"
-        [attr.role]="isFullscreen() ? 'dialog' : null"
-        [attr.aria-modal]="isFullscreen() ? 'true' : null"
-        [attr.aria-label]="fullscreenAriaLabel()"
-        [attr.tabindex]="isFullscreen() ? '0' : null"
-        (click)="$event.stopPropagation()"
+    <jhi-lecture-unit-fullscreen-layout
+        [isFullscreen]="isFullscreen()"
+        [isCollapsed]="isCollapsed()"
+        [showSidebar]="showIrisSidebar()"
+        [dialogAriaLabel]="fullscreenAriaLabel()"
+        [sidebarAriaLabel]="'artemisApp.lectureUnit.irisSidebarLabel' | artemisTranslate"
+        [splitSizes]="verticalSplitSizes()"
+        [minSplitSizes]="minVerticalSplitSizes"
+        (splitSizesChange)="onVerticalSplitSizesChange($event)"
+        (backdropClick)="closeFullscreen()"
     >
-        <div #mainContent class="main-content">
+        <div content-main class="main-content">
             @if (!!videoUrl()) {
                 @if (
                     (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
@@ -115,9 +116,9 @@
             }
         </div>
 
-        @if (showIrisSidebar()) {
-            <div #irisSidebar class="iris-sidebar" role="complementary" [attr.aria-label]="'artemisApp.lectureUnit.irisSidebarLabel' | artemisTranslate">
-                <jhi-lecture-chatbot [lectureId]="lectureId()!" />
+        <div content-sidebar class="sidebar-content">
+            @if (showIrisSidebar()) {
+                <jhi-lecture-chatbot [lectureId]="lectureId()" />
                 <button
                     class="iris-sidebar__close-button"
                     type="button"
@@ -127,11 +128,7 @@
                 >
                     <fa-icon [icon]="faXmark" />
                 </button>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    </jhi-lecture-unit-fullscreen-layout>
 </jhi-lecture-unit-card>
-
-@if (isFullscreen()) {
-    <div class="fullscreen-overlay" (click)="closeFullscreen()"></div>
-}

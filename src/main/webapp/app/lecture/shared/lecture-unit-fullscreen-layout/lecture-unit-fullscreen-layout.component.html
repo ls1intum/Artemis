@@ -1,0 +1,24 @@
+<div
+    #contentContainer
+    class="content-container"
+    [ngClass]="contentContainerClasses()"
+    [attr.role]="isFullscreen() ? 'dialog' : null"
+    [attr.aria-modal]="isFullscreen() ? 'true' : null"
+    [attr.aria-label]="dialogAriaLabel()"
+    [attr.tabindex]="isFullscreen() ? '0' : null"
+    (click)="$event.stopPropagation()"
+>
+    <div #mainContent class="main-content">
+        <ng-content select="[content-main]" />
+    </div>
+
+    @if (isFullscreen() && showSidebar()) {
+        <div #sidebar class="iris-sidebar" role="complementary" [attr.aria-label]="sidebarAriaLabel()">
+            <ng-content select="[content-sidebar]" />
+        </div>
+    }
+</div>
+
+@if (isFullscreen()) {
+    <div class="fullscreen-overlay" (click)="onBackdropClick()"></div>
+}

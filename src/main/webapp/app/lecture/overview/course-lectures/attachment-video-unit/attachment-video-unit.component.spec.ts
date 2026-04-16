@@ -640,24 +640,5 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(closeSpy).not.toHaveBeenCalled();
         });
-
-        it('setBackgroundInert: keeps sticky navbar interactive in fullscreen', () => {
-            const host = fixture.nativeElement as HTMLElement;
-            const wrapper = document.createElement('div');
-            const navbar = document.createElement('div');
-            navbar.className = 'sticky-top-navbar';
-            wrapper.append(navbar, host);
-            document.body.appendChild(wrapper);
-
-            try {
-                component['setBackgroundInert'](true);
-
-                expect(navbar.hasAttribute('inert')).toBe(false);
-                expect(navbar.hasAttribute('aria-hidden')).toBe(false);
-            } finally {
-                component['setBackgroundInert'](false);
-                wrapper.remove();
-            }
-        });
     });
 });

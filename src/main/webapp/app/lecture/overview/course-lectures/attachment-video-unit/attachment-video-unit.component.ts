@@ -61,6 +61,7 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 
 type SplitterConfig = { direction: 'horizontal' | 'vertical'; sizes: [number, number]; minSizes: [number, number]; cursor: string; onDragEnd: (sizes: number[]) => void };
 
@@ -78,6 +79,7 @@ type SplitterConfig = { direction: 'horizontal' | 'vertical'; sizes: [number, nu
         MessageModule,
         LectureChatbotComponent,
         FaIconComponent,
+        LectureUnitFullscreenLayoutComponent,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -101,10 +103,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
 
-    readonly contentContainer = viewChild<ElementRef>('contentContainer');
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
-    readonly mainContentElement = viewChild<ElementRef>('mainContent');
-    readonly irisSidebarElement = viewChild<ElementRef>('irisSidebar');
     readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
     readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
@@ -125,19 +124,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly defaultThreePaneVerticalSplitSizes: [number, number] = [66.67, 33.33];
     private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
     private readonly _horizontalSplitSizes = signal<[number, number]>(this.defaultSplitSizes); // [video, pdf]
-    private readonly minVerticalSplitSizes: [number, number] = [120, 120];
+    readonly minVerticalSplitSizes: [number, number] = [120, 120];
     private readonly minHorizontalSplitSizes: [number, number] = [80, 80];
-    private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
-    private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
 
-    private verticalSplitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
     private _previouslyFocusedElement: HTMLElement | null = null;
-    private _focusTrapHandler?: (event: KeyboardEvent) => void;
-    private _inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -160,19 +154,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
 
-    readonly hasDescription = computed(() => !!this.lectureUnit().description);
-
-    readonly hasAttachmentMetadata = computed(() => {
-        if (this.hasPdf()) {
-            return false;
-        }
-        const attachment = this.lectureUnit().attachment;
-        return !!(attachment?.uploadDate || attachment?.version || attachment?.link);
-    });
-
     readonly hasRenderableVideo = computed(() => !!this.videoUrl());
 
-    readonly hasFullscreenContent = computed(() => (this.hasRenderableVideo() || this.hasPdf()) && this.shouldShowIrisSidebarInFullscreen());
+    readonly hasFullscreenContent = computed(() => this.hasRenderableVideo() || this.hasPdf());
 
     readonly lectureId = computed(() => this.lectureUnit().lecture?.id);
 
@@ -183,15 +167,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly showIrisSidebar = computed(() => this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen());
 
-    readonly needsVerticalSplitter = computed(() => this.showIrisSidebar());
-
     readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf());
-
-    readonly contentContainerClasses = computed(() => ({
-        'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
-        'content-container--fullscreen': this.isFullscreen(),
-        'content-container--with-sidebar': this.isFullscreen() && this.showIrisSidebar(),
-    }));
 
     readonly fullscreenAriaLabel = computed(() => {
         if (!this.isFullscreen()) {
@@ -212,23 +188,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.hostElement.nativeElement.classList.toggle('dark-mode', this.themeService.currentTheme() === Theme.DARK);
         });
 
-        // Vertical splitter lifecycle (content | iris)
-        effect(() => {
-            const needs = this.needsVerticalSplitter();
-            const mainEl = this.mainContentElement()?.nativeElement;
-            const irisEl = this.irisSidebarElement()?.nativeElement;
-
-            untracked(() => {
-                this.destroyVerticalSplitter();
-
-                if (needs && mainEl && irisEl) {
-                    this.ngZone.runOutsideAngular(() => {
-                        this.initVerticalSplitter([mainEl, irisEl]);
-                    });
-                }
-            });
-        });
-
         // Horizontal splitter lifecycle (video | pdf)
         effect(() => {
             const needs = this.needsHorizontalSplitter();
@@ -242,23 +201,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this.ngZone.runOutsideAngular(() => {
                         this.initHorizontalSplitter([videoEl, pdfEl]);
                     });
-                }
-            });
-        });
-
-        // Keep lecture fullscreen above drawer overlays without touching global.scss.
-        // Also handle accessibility setup/cleanup.
-        effect(() => {
-            const fullscreen = this.isFullscreen();
-
-            untracked(() => {
-                if (fullscreen) {
-                    this.updateFullscreenTopOffset();
-                    this.setGlobalFullscreenState(true);
-                } else {
-                    this.clearFullscreenTopOffset();
-                    this.setGlobalFullscreenState(false);
-                    this.cleanupFullscreenAccessibility();
                 }
             });
         });
@@ -480,18 +422,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         });
     }
 
-    private initVerticalSplitter(elements: HTMLElement[]): void {
-        this.verticalSplitInstance = this.initSplitter(elements, {
-            direction: 'horizontal',
-            sizes: this._verticalSplitSizes(),
-            minSizes: this.minVerticalSplitSizes,
-            cursor: 'col-resize',
-            onDragEnd: (sizes) => {
-                this._verticalSplitSizes.set([sizes[0], sizes[1]]);
-            },
-        });
-    }
-
     private initHorizontalSplitter(elements: HTMLElement[]): void {
         this.horizontalSplitInstance = this.initSplitter(elements, {
             direction: 'vertical',
@@ -515,45 +445,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return gutter;
     }
 
-    private destroyVerticalSplitter(): void {
-        this.verticalSplitInstance?.destroy();
-        this.verticalSplitInstance = undefined;
-    }
-
     private destroyHorizontalSplitter(): void {
         this.horizontalSplitInstance?.destroy();
         this.horizontalSplitInstance = undefined;
     }
 
-    private updateFullscreenTopOffset(): void {
-        const topOffset = this.getNavbarHeight();
-        this.hostElement.nativeElement.style.setProperty('--lecture-combined-view-top', `${topOffset}px`);
-    }
-
-    private clearFullscreenTopOffset(): void {
-        this.hostElement.nativeElement.style.removeProperty('--lecture-combined-view-top');
-    }
-
-    private getNavbarHeight(): number {
-        const navbar = document.querySelector('nav.navbar.jh-navbar');
-        return navbar instanceof HTMLElement ? navbar.getBoundingClientRect().height : 0;
-    }
-
-    private setGlobalFullscreenState(isFullscreen: boolean): void {
-        document.body.classList.toggle(this.fullscreenBodyClass, isFullscreen);
-    }
-
     ngOnDestroy(): void {
-        const container = this.contentContainer()?.nativeElement;
-        if (container && this._focusTrapHandler) {
-            container.removeEventListener('keydown', this._focusTrapHandler);
-            this._focusTrapHandler = undefined;
-        }
-        this.destroyVerticalSplitter();
         this.destroyHorizontalSplitter();
-        this.clearFullscreenTopOffset();
-        this.setGlobalFullscreenState(false);
-        this.cleanupFullscreenAccessibility();
         this.cancelPdfLoad();
         this.revokePdfUrl();
     }
@@ -599,141 +497,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private activateFullscreen(): void {
         this.resetSplitSizesForFullscreen();
         this._isFullscreen.set(true);
-
-        // Move focus into fullscreen container after it's rendered
-        afterNextRender(
-            () => {
-                this.focusFullscreenContainer();
-            },
-            { injector: this.injector },
-        );
     }
 
-    /**
-     * Moves keyboard focus into the fullscreen container and enables background inerting.
-     */
-    private focusFullscreenContainer(): void {
-        const container = this.contentContainer()?.nativeElement;
-        if (!container) {
-            return;
-        }
-
-        this.setupFocusTrap(container);
-        this.setBackgroundInert(true);
-        container.focus();
-    }
-
-    /**
-     * Collects visible, enabled, and keyboard-focusable elements in the provided container.
-     */
-    private getFocusableElements(container: HTMLElement): HTMLElement[] {
-        return Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter(
-            (el) => el.offsetParent !== null && !el.hasAttribute('disabled') && el.tabIndex >= 0,
-        );
-    }
-
-    /**
-     * Installs a tab focus loop so keyboard navigation stays inside fullscreen content.
-     */
-    private setupFocusTrap(container: HTMLElement): void {
-        this._focusTrapHandler = (event: KeyboardEvent) => {
-            if (event.key !== 'Tab') {
-                return;
-            }
-
-            const elements = this.getFocusableElements(container);
-            if (elements.length === 0) {
-                return event.preventDefault();
-            }
-
-            const active = document.activeElement;
-            const isAtBoundary = event.shiftKey ? active === elements[0] || active === container : active === elements[elements.length - 1];
-
-            if (isAtBoundary) {
-                event.preventDefault();
-                (event.shiftKey ? elements[elements.length - 1] : elements[0]).focus();
-            }
-        };
-
-        // Listener is removed in cleanupFullscreenAccessibility() called from ngOnDestroy()
-        container.addEventListener('keydown', this._focusTrapHandler);
-    }
-
-    private shouldSkipBackgroundInert(element: HTMLElement): boolean {
-        return element.classList.contains('sticky-top-navbar') || element.matches('jhi-navbar') || !!element.querySelector('jhi-navbar');
-    }
-
-    /**
-     * Applies or restores inert/aria-hidden state for elements outside the fullscreen container.
-     */
-    private setBackgroundInert(inert: boolean): void {
-        if (inert) {
-            this.setBackgroundElementsInert();
-            return;
-        }
-
-        this.restoreBackgroundElementsState();
-    }
-
-    /**
-     * Walks up the DOM tree and marks sibling branches as inert to keep screen readers focused.
-     */
-    private setBackgroundElementsInert(): void {
-        let current: HTMLElement | null = this.hostElement.nativeElement;
-        while (current && current !== document.body) {
-            const parent = current.parentElement;
-            if (!parent) {
-                break;
-            }
-            this.markSiblingElementsAsInert(parent, current);
-            current = parent;
-        }
-    }
-
-    /**
-     * Marks siblings of the active branch as inert and stores previous attributes for restoration.
-     */
-    private markSiblingElementsAsInert(parent: HTMLElement, currentElement: HTMLElement): void {
-        Array.from(parent.children).forEach((sibling) => {
-            if (!(sibling instanceof HTMLElement) || sibling === currentElement || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
-                return;
-            }
-            this._inertElements.set(sibling, {
-                hadInert: sibling.hasAttribute('inert'),
-                previousAriaHidden: sibling.getAttribute('aria-hidden'),
-            });
-            sibling.setAttribute('inert', '');
-            sibling.setAttribute('aria-hidden', 'true');
-        });
-    }
-
-    /**
-     * Restores inert and aria-hidden attributes captured before entering fullscreen.
-     */
-    private restoreBackgroundElementsState(): void {
-        this._inertElements.forEach((state, element) => {
-            if (!state.hadInert) {
-                element.removeAttribute('inert');
-            }
-            if (state.previousAriaHidden === null) {
-                element.removeAttribute('aria-hidden');
-            } else {
-                element.setAttribute('aria-hidden', state.previousAriaHidden);
-            }
-        });
-        this._inertElements.clear();
-    }
-
-    /**
-     * Removes fullscreen-specific accessibility hooks (focus trap and inert background state).
-     */
-    private cleanupFullscreenAccessibility(): void {
-        const container = this.contentContainer()?.nativeElement;
-        if (container && this._focusTrapHandler) {
-            container.removeEventListener('keydown', this._focusTrapHandler);
-            this._focusTrapHandler = undefined;
-        }
-        this.setBackgroundInert(false);
+    protected onVerticalSplitSizesChange(sizes: [number, number]): void {
+        this._verticalSplitSizes.set(sizes);
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
@@ -787,16 +554,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         event.preventDefault();
         event.stopPropagation();
         this.closeFullscreen();
-    }
-
-    /**
-     * Keeps fullscreen top offset in sync with navbar height changes.
-     */
-    @HostListener('window:resize')
-    onResize(): void {
-        if (this.isFullscreen()) {
-            this.updateFullscreenTopOffset();
-        }
     }
 
     private cancelPdfLoad(): void {

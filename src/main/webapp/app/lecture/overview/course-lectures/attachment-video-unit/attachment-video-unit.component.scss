@@ -68,36 +68,10 @@ jhi-attachment-video-unit {
         pointer-events: none;
     }
 
-    .content-container--hidden {
-        display: none;
-    }
-
     .content-container--fullscreen {
-        position: fixed;
-        inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
-        z-index: 5002;
-        display: flex;
-        padding: 0.75rem;
-        box-sizing: border-box;
-        background-color: var(--lecture-combined-view-surface);
-        overflow: hidden;
-
         .video-player-container,
         .pdf-viewer-spacing {
             padding-block: 0;
-        }
-
-        > .main-content {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-
-            > * {
-                flex-shrink: 1;
-                min-height: 0;
-            }
         }
 
         .pdf-viewer-spacing,
@@ -129,67 +103,6 @@ jhi-attachment-video-unit {
             flex: 1;
         }
 
-        &.content-container--with-sidebar {
-            > .main-content {
-                flex: unset;
-                min-width: 120px;
-            }
-
-            > .iris-sidebar {
-                position: relative;
-                min-width: 120px;
-                display: flex;
-                flex-direction: column;
-                background-color: var(--lecture-combined-view-surface);
-                overflow: hidden;
-                padding-top: 2.5rem;
-            }
-        }
-
-        .iris-sidebar__close-button {
-            position: absolute;
-            top: 0.0625rem;
-            right: 0.125rem;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            border: none;
-            background-color: transparent;
-            color: var(--bs-body-color);
-            cursor: pointer;
-            transition: opacity 0.2s ease;
-            border-radius: 0.25rem;
-
-            &:hover,
-            &:active {
-                opacity: 0.8;
-                background-color: rgba(0, 0, 0, 0.05);
-            }
-
-            &:focus-visible {
-                outline: 2px solid var(--bs-primary);
-                outline-offset: -2px;
-            }
-
-            fa-icon {
-                font-size: 1.25rem;
-            }
-        }
-
-        .gutter.gutter-horizontal {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 12px;
-            cursor: col-resize;
-            background-color: transparent;
-            flex-shrink: 0;
-        }
-
         .gutter.gutter-vertical {
             display: flex;
             align-items: center;
@@ -200,33 +113,8 @@ jhi-attachment-video-unit {
             flex-shrink: 0;
         }
 
-        .gutter.gutter-horizontal::before,
         .gutter.gutter-vertical::before {
             display: none;
-        }
-
-        .split-gutter-handle {
-            display: flex;
-            gap: 1px;
-            pointer-events: none;
-
-            &::before,
-            &::after {
-                content: '';
-                display: block;
-                background: var(--bs-body-color);
-                border-radius: 1px;
-            }
-        }
-
-        .gutter-horizontal .split-gutter-handle {
-            flex-direction: row;
-
-            &::before,
-            &::after {
-                width: 2px;
-                height: 12px;
-            }
         }
 
         .gutter-vertical .split-gutter-handle {
@@ -243,34 +131,5 @@ jhi-attachment-video-unit {
             border: 1px solid var(--lecture-combined-view-border);
             border-radius: 0;
         }
-    }
-
-    .fullscreen-overlay {
-        position: fixed;
-        inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
-        z-index: 5001;
-        background-color: rgba(0, 0, 0, 0.35);
-    }
-}
-
-body.lecture-combined-view-fullscreen-active {
-    .breadcrumb-container,
-    jhi-footer {
-        display: none !important;
-    }
-
-    .mat-drawer-container {
-        transform: none !important;
-    }
-
-    .mat-drawer-content {
-        z-index: 4000 !important;
-        width: 100vw !important;
-        margin-left: 0 !important;
-        transform: none !important;
-    }
-
-    jhi-exercise-chatbot-button {
-        display: none;
     }
 }
