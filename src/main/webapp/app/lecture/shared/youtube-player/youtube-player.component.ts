@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import interact from 'interactjs';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
@@ -36,7 +36,6 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
 
-    private readonly destroyRef = inject(DestroyRef);
     private youtubePlayer: { getCurrentTime: () => number; seekTo: (s: number, allowSeekAhead: boolean) => void } | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
