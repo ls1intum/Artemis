@@ -143,12 +143,20 @@ describe('TranscriptViewerComponent', () => {
     });
 
     it('should observe transcript width changes', () => {
-        const observer = MockResizeObserver.instances[0];
-        expect(observer).toBeDefined();
+        const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+            callback(0);
+            return 1;
+        });
+        try {
+            const observer = MockResizeObserver.instances[0];
+            expect(observer).toBeDefined();
 
-        observer.callback([{ contentRect: { width: 360 } } as ResizeObserverEntry], observer as unknown as ResizeObserver);
+            observer.callback([{ contentRect: { width: 360 } } as ResizeObserverEntry], observer as unknown as ResizeObserver);
 
-        expect(component.transcriptColumnWidthPx()).toBe(360);
-        expect(component.isNarrowColumn()).toBe(true);
+            expect(component.transcriptColumnWidthPx()).toBe(360);
+            expect(component.isNarrowColumn()).toBe(true);
+        } finally {
+            requestAnimationFrameSpy.mockRestore();
+        }
     });
 });
