@@ -377,7 +377,7 @@ class LectureContentProcessingServiceTest {
             // Mock dispatch after completion
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testState.getIngestionJobToken()).isNull();
@@ -393,7 +393,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
@@ -407,7 +407,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
 
             // Should mark as FAILED with backoff scheduled for re-dispatch
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
@@ -425,7 +425,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
         }
@@ -436,7 +436,7 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken("new-job-token");
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true);
+            callbackService.handleIngestionComplete(testUnit.getId(), "old-job-token", true, null);
 
             verify(processingStateRepository, never()).save(any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
@@ -448,7 +448,7 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null);
 
             verify(processingStateRepository, never()).save(any());
         }
@@ -597,7 +597,7 @@ class LectureContentProcessingServiceTest {
 
             ZonedDateTime beforeCall = ZonedDateTime.now();
 
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
 
             // Then: Should mark as FAILED with backoff scheduled (2^2 = 4 minutes)
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
@@ -629,7 +629,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When: Ingestion fails
-            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null);
 
             // Then: WebSocket notification must include the transcription status (not null)
             ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);

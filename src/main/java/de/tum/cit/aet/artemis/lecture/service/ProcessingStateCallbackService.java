@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -220,8 +221,9 @@ public class ProcessingStateCallbackService {
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token from the callback
      * @param success       whether processing succeeded
+     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -253,9 +255,9 @@ public class ProcessingStateCallbackService {
             notifyProcessingStateChange(state, txStatus);
         }
         else {
-            log.warn("Processing failed for unit {}", lectureUnitId);
+            log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
             // handleProcessingFailure saves the state and sends WebSocket notification internally
-            handleProcessingFailure(state);
+            handleProcessingFailure(state, errorCode);
         }
 
         // Fill the freed slot with the next pending job
@@ -422,6 +424,20 @@ public class ProcessingStateCallbackService {
      * @param state the processing state that failed
      */
     void handleProcessingFailure(LectureUnitProcessingState state) {
+        handleProcessingFailure(state, null);
+    }
+
+    /**
+     * Handle processing failure with retry logic, forwarding an optional machine-readable error code.
+     * <p>
+     * Transitions to FAILED immediately so the UI reflects the error.
+     * If retries remain, schedules a backoff — the dispatcher will pick it up
+     * and transition back to TRANSCRIBING/INGESTING when re-dispatched.
+     *
+     * @param state     the processing state that failed
+     * @param errorCode machine-readable error code from Pyris (e.g. {@code YOUTUBE_PRIVATE}); may be {@code null}
+     */
+    void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
 
@@ -431,7 +447,7 @@ public class ProcessingStateCallbackService {
 
         if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
-            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed", errorCode);
             processingStateRepository.save(state);
             notifyProcessingStateChange(state, txStatus);
             return;
@@ -439,7 +455,7 @@ public class ProcessingStateCallbackService {
 
         // Transition to FAILED so the UI shows the error, but schedule a retry
         long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-        state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed", errorCode);
         state.scheduleRetry(backoffMinutes);
         processingStateRepository.save(state);
         notifyProcessingStateChange(state, txStatus);
