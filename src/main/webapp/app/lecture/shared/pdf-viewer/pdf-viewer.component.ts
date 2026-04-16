@@ -145,6 +145,9 @@ export class PdfViewerComponent {
         });
     }
 
+    /**
+     * Switches the embedded PDF viewer into fullscreen mode.
+     */
     openFullscreen(): void {
         if (!this.pdfUrl() || this.isFullscreen()) {
             return;
@@ -154,6 +157,9 @@ export class PdfViewerComponent {
         this.isFullscreenChange.emit(true);
     }
 
+    /**
+     * Leaves fullscreen mode and restores layering changes applied for drawer contexts.
+     */
     closeFullscreen(): void {
         if (!this.isFullscreen()) {
             return;
@@ -163,6 +169,9 @@ export class PdfViewerComponent {
         this.resetFullscreenLayering();
     }
 
+    /**
+     * Handles Escape key events coming from the fullscreen overlay.
+     */
     onFullscreenEscape(event: Event): void {
         if (!this.isFullscreen()) {
             return;
@@ -237,6 +246,9 @@ export class PdfViewerComponent {
         }
     }
 
+    /**
+     * Sends a load request to the iframe and includes all viewer context flags.
+     */
     private loadPdf(url: string, page: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         const languageKey = untracked(() => this.getCurrentLanguageKey());
@@ -256,6 +268,9 @@ export class PdfViewerComponent {
         return this.translateService.getCurrentLang() || 'en';
     }
 
+    /**
+     * Reloads the currently active PDF (for example after iframe re-initialization).
+     */
     private reloadCurrentPdf(): void {
         const pdfUrl = this.pdfUrl();
         if (!pdfUrl) {
@@ -266,6 +281,9 @@ export class PdfViewerComponent {
         this.loadPdf(pdfUrl, page);
     }
 
+    /**
+     * Sends a typed postMessage to the PDF iframe if its contentWindow is available.
+     */
     private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
         const iframe = this.pdfIframe()?.nativeElement;
         if (iframe?.contentWindow) {
@@ -273,6 +291,9 @@ export class PdfViewerComponent {
         }
     }
 
+    /**
+     * Raises the surrounding drawer content stacking context while the PDF is fullscreen.
+     */
     private applyFullscreenLayering(): void {
         const drawerContent = this.hostElementRef.nativeElement.closest('.mat-drawer-content') as HTMLElement | null;
         if (!drawerContent) {
@@ -284,6 +305,9 @@ export class PdfViewerComponent {
         drawerContent.style.zIndex = '4000';
     }
 
+    /**
+     * Restores drawer layering state captured before entering fullscreen.
+     */
     private resetFullscreenLayering(): void {
         if (!this.drawerContentElement) {
             return;

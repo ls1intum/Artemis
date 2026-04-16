@@ -22,13 +22,18 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
         `,
     ],
 })
+/**
+ * Lightweight lecture-specific wrapper around the shared Iris chatbot widget.
+ */
 export class LectureChatbotComponent {
     private readonly chatService = inject(IrisChatService);
     private readonly irisBaseChatbot = viewChild(IrisBaseChatbotComponent);
 
+    /** Lecture identifier used to scope chatbot requests to the current lecture context. */
     readonly lectureId = input<number>();
 
     constructor() {
+        // Keep chat service mode aligned with the currently displayed lecture.
         effect(() => {
             const lectureId = this.lectureId();
             if (lectureId !== undefined) {
@@ -37,6 +42,7 @@ export class LectureChatbotComponent {
         });
     }
 
+    /** Toggles the visibility of the chat history panel in the embedded base chatbot. */
     public toggleChatHistory(): void {
         const baseChatbot = this.irisBaseChatbot();
         if (baseChatbot) {

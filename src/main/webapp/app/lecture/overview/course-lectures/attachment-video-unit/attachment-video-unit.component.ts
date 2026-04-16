@@ -461,6 +461,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
+    /**
+     * Initializes a Split.js instance with shared defaults and stores size changes in signals.
+     */
     private initSplitter(elements: HTMLElement[], config: SplitterConfig): Split.Instance {
         return Split(elements, {
             sizes: config.sizes,
@@ -555,6 +558,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.revokePdfUrl();
     }
 
+    /**
+     * Opens the lecture unit in fullscreen.
+     * If the card is collapsed, it is expanded first so the fullscreen content can render.
+     */
     openFullscreen(): void {
         if (!this.hasFullscreenContent() || this.isFullscreen()) {
             return;
@@ -586,6 +593,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
+    /**
+     * Activates fullscreen state and moves focus into the fullscreen container.
+     */
     private activateFullscreen(): void {
         this.resetSplitSizesForFullscreen();
         this._isFullscreen.set(true);
@@ -599,6 +609,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         );
     }
 
+    /**
+     * Moves keyboard focus into the fullscreen container and enables background inerting.
+     */
     private focusFullscreenContainer(): void {
         const container = this.contentContainer()?.nativeElement;
         if (!container) {
@@ -610,12 +623,18 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         container.focus();
     }
 
+    /**
+     * Collects visible, enabled, and keyboard-focusable elements in the provided container.
+     */
     private getFocusableElements(container: HTMLElement): HTMLElement[] {
         return Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelector)).filter(
             (el) => el.offsetParent !== null && !el.hasAttribute('disabled') && el.tabIndex >= 0,
         );
     }
 
+    /**
+     * Installs a tab focus loop so keyboard navigation stays inside fullscreen content.
+     */
     private setupFocusTrap(container: HTMLElement): void {
         this._focusTrapHandler = (event: KeyboardEvent) => {
             if (event.key !== 'Tab') {
@@ -644,6 +663,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return element.classList.contains('sticky-top-navbar') || element.matches('jhi-navbar') || !!element.querySelector('jhi-navbar');
     }
 
+    /**
+     * Applies or restores inert/aria-hidden state for elements outside the fullscreen container.
+     */
     private setBackgroundInert(inert: boolean): void {
         if (inert) {
             this.setBackgroundElementsInert();
@@ -653,6 +675,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.restoreBackgroundElementsState();
     }
 
+    /**
+     * Walks up the DOM tree and marks sibling branches as inert to keep screen readers focused.
+     */
     private setBackgroundElementsInert(): void {
         let current: HTMLElement | null = this.hostElement.nativeElement;
         while (current && current !== document.body) {
@@ -665,6 +690,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
+    /**
+     * Marks siblings of the active branch as inert and stores previous attributes for restoration.
+     */
     private markSiblingElementsAsInert(parent: HTMLElement, currentElement: HTMLElement): void {
         Array.from(parent.children).forEach((sibling) => {
             if (!(sibling instanceof HTMLElement) || sibling === currentElement || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
@@ -679,6 +707,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         });
     }
 
+    /**
+     * Restores inert and aria-hidden attributes captured before entering fullscreen.
+     */
     private restoreBackgroundElementsState(): void {
         this._inertElements.forEach((state, element) => {
             if (!state.hadInert) {
@@ -693,6 +724,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this._inertElements.clear();
     }
 
+    /**
+     * Removes fullscreen-specific accessibility hooks (focus trap and inert background state).
+     */
     private cleanupFullscreenAccessibility(): void {
         const container = this.contentContainer()?.nativeElement;
         if (container && this._focusTrapHandler) {
@@ -709,6 +743,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return !!settings?.settings?.enabled && lecId !== undefined && !isTutorial;
     }
 
+    /**
+     * Resets split panes to deterministic defaults when entering fullscreen.
+     */
     private resetSplitSizesForFullscreen(): void {
         this._horizontalSplitSizes.set(this.defaultSplitSizes);
 
@@ -716,6 +753,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this._verticalSplitSizes.set(hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultSplitSizes);
     }
 
+    /**
+     * Closes fullscreen and restores focus to the element that was focused before opening.
+     */
     closeFullscreen(): void {
         if (!this.isFullscreen() || this.hasPdfFullscreen()) {
             return;
@@ -735,6 +775,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
+    /**
+     * Closes fullscreen on Escape unless the nested PDF viewer currently owns fullscreen.
+     */
     @HostListener('document:keydown.escape', ['$event'])
     onEscapePressed(event: Event): void {
         if (!this.isFullscreen() || event.defaultPrevented || this.hasPdfFullscreen()) {
@@ -746,6 +789,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.closeFullscreen();
     }
 
+    /**
+     * Keeps fullscreen top offset in sync with navbar height changes.
+     */
     @HostListener('window:resize')
     onResize(): void {
         if (this.isFullscreen()) {
@@ -772,6 +818,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
+    /**
+     * Tracks fullscreen state of the nested PDF viewer to avoid conflicting Escape handling.
+     */
     protected onPdfFullscreenChange(isFullscreen: boolean): void {
         this._hasPdfFullscreen.set(isFullscreen);
     }

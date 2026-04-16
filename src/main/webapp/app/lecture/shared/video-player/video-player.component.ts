@@ -198,7 +198,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Syncs the transcript column's max-height to match the video column's height.
-     * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
+     * Ensures the transcript is at least `minTranscriptHeightPx` pixels tall.
      */
     private syncTranscriptHeight(): void {
         const videoColumnEl = this.videoColumn()?.nativeElement;
@@ -229,6 +229,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         videoElement.play();
     }
 
+    /**
+     * Defers initial seeking until metadata is ready, then applies the target timestamp once.
+     */
     private queueInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
         const target = Math.max(0, seconds);
         if (videoElement.readyState >= 1) {
@@ -256,6 +259,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         videoElement.addEventListener('loadedmetadata', this.loadedmetadataHandler, { once: true });
     }
 
+    /**
+     * Applies an initial seek while clamping values to valid media duration boundaries.
+     */
     private applyInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
         const duration = videoElement.duration;
         if (Number.isFinite(duration) && seconds > duration) {
@@ -333,10 +339,14 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /** Returns the template video element if it is already available. */
     private getVideoElement(): HTMLVideoElement | undefined {
         return this.videoRef()?.nativeElement;
     }
 
+    /**
+     * Resizes the video column based on the drag position while preserving minimum widths.
+     */
     private applyVideoColumnResize(videoColumnEl: HTMLDivElement, wrapperEl: HTMLDivElement, clientX: number): void {
         const wrapperRect = wrapperEl.getBoundingClientRect();
         if (!wrapperRect.width) {

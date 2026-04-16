@@ -61,6 +61,7 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver?: ResizeObserver;
     private resizeAnimationFrameId?: number;
 
+    /** Observes transcript container width to support compact controls on narrow columns. */
     ngAfterViewInit(): void {
         const transcriptColumn = this.transcriptColumnRef()?.nativeElement;
         if (!transcriptColumn || typeof ResizeObserver === 'undefined') {
@@ -81,6 +82,7 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver.observe(transcriptColumn);
     }
 
+    /** Cleans up ResizeObserver and pending animation frame callbacks. */
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
         if (this.resizeAnimationFrameId !== undefined) {
@@ -129,6 +131,7 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
         this.navigateSearchResults(-1);
     }
 
+    /** Navigates search results with wrap-around behavior in both directions. */
     private navigateSearchResults(direction: 1 | -1): void {
         const total = this.searchResultsCount();
         if (total === 0) {

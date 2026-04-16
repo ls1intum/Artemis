@@ -45,7 +45,9 @@ export class LectureUnitComponent implements OnDestroy {
     readonly showOriginalVersionButton = input<boolean>(false);
     readonly onShowOriginalVersion = output<void>();
 
+    /** Controls visibility of the fullscreen action button in the lecture unit header. */
     readonly showFullscreenButton = input<boolean>(false);
+    /** Emitted when the fullscreen action button is activated. */
     readonly onFullscreen = output<void>();
 
     readonly onShowIsolated = output<void>();
@@ -110,7 +112,8 @@ export class LectureUnitComponent implements OnDestroy {
         this.onShowOriginalVersion.emit();
     }
 
-    handleFullscreen(event: Event) {
+    /** Handles fullscreen action clicks without collapsing/expanding the card. */
+    handleFullscreen(event: Event): void {
         event.stopPropagation();
         this.onFullscreen.emit();
     }
