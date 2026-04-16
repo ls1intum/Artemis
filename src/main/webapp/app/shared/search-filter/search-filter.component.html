@@ -12,7 +12,5 @@
         aria-label="Filter Search Field"
         aria-describedby="filter-search-field"
     />
-    @if (searchValue()) {
-        <p-inputicon class="pi pi-times pointer" (click)="resetSearchValue()" />
-    }
+    <p-inputicon class="pi pi-times pointer" [style.display]="searchValue() ? '' : 'none'" (click)="resetSearchValue()" />
 </p-iconfield>

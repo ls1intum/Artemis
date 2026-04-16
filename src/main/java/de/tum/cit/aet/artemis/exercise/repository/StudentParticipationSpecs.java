@@ -9,6 +9,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -129,8 +130,7 @@ public class StudentParticipationSpecs {
                     Join<Team, User> studentJoin = teamRoot.join(Team_.STUDENTS);
                     studentSub.select(cb.literal(1L));
                     studentSub.where(cb.equal(teamRoot.get(DomainObject_.ID), root.get(StudentParticipation_.TEAM).get(DomainObject_.ID)),
-                            cb.or(cb.like(cb.lower(studentJoin.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(studentJoin.get(User_.FIRST_NAME)), pattern, '\\'),
-                                    cb.like(cb.lower(studentJoin.get(User_.LAST_NAME)), pattern, '\\')));
+                            cb.or(cb.like(cb.lower(studentJoin.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(fullName(cb, studentJoin)), pattern, '\\')));
 
                     return cb.or(teamNameMatch, cb.exists(studentSub));
                 }).toList();
@@ -141,11 +141,18 @@ public class StudentParticipationSpecs {
             List<Predicate> tokenPredicates = tokens.stream().map(token -> {
                 String pattern = likePattern(token);
                 return cb.or(cb.like(cb.lower(root.get(StudentParticipation_.STUDENT).get(User_.LOGIN)), pattern, '\\'),
-                        cb.like(cb.lower(root.get(StudentParticipation_.STUDENT).get(User_.FIRST_NAME)), pattern, '\\'),
-                        cb.like(cb.lower(root.get(StudentParticipation_.STUDENT).get(User_.LAST_NAME)), pattern, '\\'));
+                        cb.like(cb.lower(fullName(cb, root.get(StudentParticipation_.STUDENT))), pattern, '\\'));
             }).toList();
             return cb.or(tokenPredicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * Builds a "{firstName} {lastName}" expression for matching full-name search terms.
+     * Coalesces null components to empty strings so the concatenation doesn't short-circuit to null.
+     */
+    private static Expression<String> fullName(CriteriaBuilder cb, Path<User> userPath) {
+        return cb.concat(cb.concat(cb.coalesce(userPath.get(User_.FIRST_NAME), ""), " "), cb.coalesce(userPath.get(User_.LAST_NAME), ""));
     }
 
     /**

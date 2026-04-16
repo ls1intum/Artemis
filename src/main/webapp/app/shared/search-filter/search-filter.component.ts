@@ -7,6 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-search-filter',
     templateUrl: './search-filter.component.html',
+    styleUrls: ['./search-filter.component.scss'],
     imports: [IconFieldModule, InputIconModule, InputTextModule, ArtemisTranslatePipe],
 })
 export class SearchFilterComponent {
