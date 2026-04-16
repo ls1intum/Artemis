@@ -366,6 +366,9 @@
                                             (ngModelChange)="toggleCompetencySelection(i)"
                                             [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                                             [inputId]="'competency-select-' + i"
+                                            [attr.aria-label]="
+                                                ('artemisApp.programmingExercise.instructorChecklist.competencies.selectCompetency' | artemisTranslate) + ' ' + comp.competencyTitle
+                                            "
                                             [attr.data-testid]="'competency-checkbox-' + i"
                                         />
                                         @if (comp.knowledgeAreaShortTitle) {
@@ -411,6 +414,9 @@
                                         [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                                         (click)="discardCompetency(i)"
                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.discardCompetency' | artemisTranslate"
+                                        [attr.aria-label]="
+                                            ('artemisApp.programmingExercise.instructorChecklist.competencies.discardCompetency' | artemisTranslate) + ' ' + comp.competencyTitle
+                                        "
                                         [attr.data-testid]="'discard-competency-' + i"
                                     >
                                         <fa-icon [icon]="faTrashCan" size="xs" />

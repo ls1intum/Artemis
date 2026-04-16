@@ -915,7 +915,8 @@
                     "discardSelected": "Ausgewählte verwerfen",
                     "discarded": "Kompetenz verworfen.",
                     "discardedMultiple": "Ausgewählte Kompetenzen verworfen.",
-                    "discardCompetency": "Diese Kompetenz verwerfen"
+                    "discardCompetency": "Diese Kompetenz verwerfen",
+                    "selectCompetency": "Kompetenz auswählen"
                 },
                 "difficulty": {
                     "title": "Schwierigkeitsbewertung",

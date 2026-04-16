@@ -713,6 +713,7 @@ export class ChecklistPanelComponent {
             .sort((a, b) => a - b)
             .map((i) => allInferred[i])
             .filter(Boolean);
+        if (selectedInferred.length === 0) return;
         this.applyCompetenciesFromList(selectedInferred);
     }
 

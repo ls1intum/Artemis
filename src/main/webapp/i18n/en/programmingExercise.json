@@ -915,7 +915,8 @@
                     "discardSelected": "Dismiss Selected",
                     "discarded": "Competency dismissed.",
                     "discardedMultiple": "Selected competencies dismissed.",
-                    "discardCompetency": "Dismiss this competency"
+                    "discardCompetency": "Dismiss this competency",
+                    "selectCompetency": "Select competency"
                 },
                 "difficulty": {
                     "title": "Difficulty Assessment",
