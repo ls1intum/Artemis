@@ -106,7 +106,9 @@
         <jhi-app>
             <div class="app-boot" aria-hidden="true">
                 <img class="app-boot__logo" src="/public/images/logo.svg" alt="" width="48" height="48" />
-                <div class="app-boot__spinner" role="status" aria-label="Loading Artemis"></div>
+                <!-- Spinner's ARIA role intentionally omitted: parent .app-boot is aria-hidden
+                     (boot overlay is transient, Angular replaces it on hydrate). -->
+                <div class="app-boot__spinner"></div>
             </div>
             <div id="loading-error" hidden>
                 <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
