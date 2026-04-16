@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionGenerationService;
 
 /**
@@ -54,6 +56,22 @@ public class HyperionQuizQuestionGenerationResource {
         log.debug("REST request to Hyperion generate quiz questions for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = quizQuestionGenerationService.generateQuizQuestions(course, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/refine-question : Refine an existing quiz question based on user instructions.
+     *
+     * @param courseId the id of the course
+     * @param request  the original question and user refinement instructions
+     * @return the refined question and an explanation of the changes
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-exercises/refine-question")
+    public ResponseEntity<QuizQuestionRefinementResponseDTO> refineQuizQuestion(@PathVariable long courseId, @Valid @RequestBody QuizQuestionRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine quiz question for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = quizQuestionGenerationService.refineQuizQuestion(course, request);
         return ResponseEntity.ok(result);
     }
 }

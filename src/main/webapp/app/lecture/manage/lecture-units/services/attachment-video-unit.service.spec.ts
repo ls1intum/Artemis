@@ -374,7 +374,7 @@ describe('AttachmentVideoUnitService', () => {
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist' && r.params.get('url') === pageUrl);
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/tumlive/playlist' && r.params.get('url') === pageUrl);
             expect(req.request.responseType).toBe('text');
             req.flush(playlistUrl);
 
@@ -390,7 +390,7 @@ describe('AttachmentVideoUnitService', () => {
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist');
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/tumlive/playlist');
             req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();
