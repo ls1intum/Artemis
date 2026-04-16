@@ -98,9 +98,9 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the saml2 profile is active
+     * Checks if the SAML2 profile is active
      *
-     * @return true if the saml2 profile is active, false otherwise
+     * @return true if the SAML2 profile is active, false otherwise
      */
     public boolean isSaml2Active() {
         return isProfileActive(Constants.PROFILE_SAML2);
