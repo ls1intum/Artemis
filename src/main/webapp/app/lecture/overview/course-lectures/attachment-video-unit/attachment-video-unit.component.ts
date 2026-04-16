@@ -76,6 +76,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // unit selected). Without this, one transient YouTube init failure sticks this
     // component instance on iframe fallback for its whole lifetime.
     constructor() {
+        super();
         effect(() => {
             const id = this.lectureUnit()?.id;
             // read id to create the dependency; then schedule reset
