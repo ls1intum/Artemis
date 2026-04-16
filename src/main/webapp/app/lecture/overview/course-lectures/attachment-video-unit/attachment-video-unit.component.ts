@@ -62,6 +62,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
     readonly youtubePlayerFailed = signal(false);
 
+    // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
+    // construct a privacy-enhanced embed URL from the video ID when available.
+    readonly iframeFallbackUrl = computed(() => {
+        const id = this.youtubeVideoId();
+        if (id) {
+            return `https://www.youtube-nocookie.com/embed/${id}`;
+        }
+        return this.rawVideoSource();
+    });
+
     // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
     // unit selected). Without this, one transient YouTube init failure sticks this
     // component instance on iframe fallback for its whole lifetime.
@@ -203,6 +213,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
+            this.youtubePlayerFailed.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();

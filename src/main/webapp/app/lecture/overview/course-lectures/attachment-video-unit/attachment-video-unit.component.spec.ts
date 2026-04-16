@@ -394,7 +394,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeTruthy();
         });
 
-        it('falls back to iframe when playerFailed fires', () => {
+        it('falls back to iframe with embed URL when playerFailed fires', () => {
             fixture.componentRef.setInput('initiallyExpanded', true);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
@@ -407,6 +407,35 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
             expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+            // iframeFallbackUrl should use privacy-enhanced embed URL, not the raw watch URL
+            expect(component.iframeFallbackUrl()).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+        });
+
+        it('resets youtubePlayerFailed when unit is collapsed and reopened', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            expect(component.youtubePlayerFailed()).toBe(true);
+
+            // Collapse the unit
+            component.toggleCollapse(true);
+            fixture.detectChanges();
+            expect(component.youtubePlayerFailed()).toBe(false);
+        });
+
+        it('uses raw video source URL for non-YouTube iframe fallback', () => {
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 5,
+                videoSource: 'https://vimeo.com/123456',
+            } as any);
+            fixture.detectChanges();
+            expect(component.iframeFallbackUrl()).toBe('https://vimeo.com/123456');
         });
 
         it('renders TUM Live player when playlistUrl present (regression guard)', async () => {
