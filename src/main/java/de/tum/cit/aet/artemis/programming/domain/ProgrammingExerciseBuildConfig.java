@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -232,8 +233,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     /**
      * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
      *
-     * @return the {@link BuildPlanPhasesDTO} object, or null if the configuration is null, empty, or in an invalid format
+     * @return the {@link BuildPlanPhasesDTO} object, or empty if the configuration is null, empty, or invalid
      */
+    @JsonIgnore
     public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
         if (buildPlanConfiguration == null) {
             return Optional.empty();

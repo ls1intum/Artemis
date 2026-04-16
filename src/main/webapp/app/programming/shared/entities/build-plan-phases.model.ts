@@ -46,7 +46,13 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     if (!isBuildPlanPhases(data)) {
         return undefined;
     }
-    return data as BuildPlanPhases;
+    return {
+        ...data,
+        phases: data.phases.map((phase: BuildPhase) => ({
+            ...phase,
+            resultPaths: phase.resultPaths ?? [],
+        })),
+    } as BuildPlanPhases;
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
@@ -62,16 +68,13 @@ function isBuildPhase(value: unknown): value is BuildPhase {
         return false;
     }
     const v = value as any;
-    return (
-        typeof v.name === 'string' &&
-        typeof v.script === 'string' &&
-        isBuildPhaseCondition(v.condition) &&
-        typeof v.forceRun === 'boolean' &&
-        Array.isArray(v.resultPaths) &&
-        v.resultPaths.every((p: unknown) => typeof p === 'string')
-    );
+    return typeof v.name === 'string' && typeof v.script === 'string' && isBuildPhaseCondition(v.condition) && typeof v.forceRun === 'boolean' && isResultPaths(v.resultPaths);
 }
 
 function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
     return typeof value === 'string' && value in BUILD_PHASE_CONDITION;
+}
+
+function isResultPaths(resultPaths: any) {
+    return resultPaths === undefined || (Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string'));
 }

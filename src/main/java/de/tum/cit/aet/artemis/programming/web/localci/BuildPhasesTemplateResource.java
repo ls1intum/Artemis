@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.localci;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.BuildPhasesTemplateSer
  * the different options (static analysis, sequential runs) as well as the default
  * image for the programming language and project type for the artemis instance.
  */
-@Profile("localci")
+@Profile(PROFILE_LOCALCI)
 @Lazy
 @RestController
 @RequestMapping("api/programming/phases/")

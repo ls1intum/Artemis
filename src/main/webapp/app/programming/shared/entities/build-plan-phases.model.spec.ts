@@ -82,4 +82,31 @@ describe('build-plan-phases.model', () => {
         expect(BUILD_PHASE_RESERVED_NAMES.has('main')).toBe(true);
         expect(BUILD_PHASE_RESERVED_NAMES.has('final_force_run_post_action')).toBe(true);
     });
+
+    it('defaults undefined resultPaths to an empty array', () => {
+        const parsed = parseBuildPlanPhases(
+            JSON.stringify({
+                phases: [
+                    {
+                        name: 'test',
+                        script: './gradlew test',
+                        condition: 'ALWAYS',
+                        forceRun: false,
+                        // resultPaths intentionally omitted
+                    },
+                ],
+            }),
+        );
+        expect(parsed).toEqual({
+            phases: [
+                {
+                    name: 'test',
+                    script: './gradlew test',
+                    condition: 'ALWAYS',
+                    forceRun: false,
+                    resultPaths: [],
+                },
+            ],
+        });
+    });
 });

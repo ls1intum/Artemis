@@ -123,7 +123,6 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // build-phases-template uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/manage/services/update-programming-exercise-dto.model.ts', // update dto model uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
@@ -160,7 +159,6 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
-        '<rootDir>/src/main/webapp/app/programming/manage/services/update-programming-exercise-dto.model.ts',
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs

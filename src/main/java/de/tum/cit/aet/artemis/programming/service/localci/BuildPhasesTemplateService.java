@@ -67,7 +67,7 @@ public class BuildPhasesTemplateService {
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
-     * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
+     * Templates are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
      */
     @PostConstruct
     public void cacheOnBoot() {

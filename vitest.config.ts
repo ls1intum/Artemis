@@ -106,7 +106,6 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
-                'src/main/webapp/app/programming/manage/services/update-programming-exercise-dto.model.ts', // include update DTO mapping for code coverage
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
