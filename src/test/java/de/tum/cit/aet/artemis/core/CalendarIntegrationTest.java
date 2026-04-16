@@ -124,11 +124,11 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     static final String FIXED_DATE_MONTH_STRING = YearMonth.from(FIXED_DATE).toString();
 
-    static final ZonedDateTime PAST_DATE = now(TEST_TIMEZONE).minusMonths(1).withDayOfMonth(15).withHour(12);
+    static final ZonedDateTime PAST_DATE = now(TEST_TIMEZONE).minusMonths(1).withDayOfMonth(15).withHour(12).truncatedTo(ChronoUnit.SECONDS);
 
     static final String PAST_DATE_MONTH_STRING = YearMonth.from(PAST_DATE).toString();
 
-    static final ZonedDateTime FUTURE_DATE = now(TEST_TIMEZONE).plusMonths(1).withDayOfMonth(15).withHour(12);
+    static final ZonedDateTime FUTURE_DATE = now(TEST_TIMEZONE).plusMonths(1).withDayOfMonth(15).withHour(12).truncatedTo(ChronoUnit.SECONDS);
 
     static final String FUTURE_DATE_MONTH_STRING = YearMonth.from(FUTURE_DATE).toString();
 
