@@ -71,7 +71,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
-import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 /**
  * REST controller for managing Lecture.
@@ -107,13 +107,13 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final VideoSourceResolver videoSourceResolver;
+    private final YouTubeUrlService youTubeUrlService;
 
     private final LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, VideoSourceResolver videoSourceResolver, LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository) {
+            SlideRepository slideRepository, YouTubeUrlService youTubeUrlService, LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -123,7 +123,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
-        this.videoSourceResolver = videoSourceResolver;
+        this.youTubeUrlService = youTubeUrlService;
         this.lectureUnitProcessingStateRepository = lectureUnitProcessingStateRepository;
     }
 
@@ -324,7 +324,7 @@ public class LectureResource {
         // Group slides by attachment video unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
-        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(l -> GetLecturesDTO.from(l, videoSourceResolver, errorCodeByUnitId))
+        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(l -> GetLecturesDTO.from(l, youTubeUrlService, errorCodeByUnitId))
                 .sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
 
         lectureDTOs.forEach(lectureDTO -> {
@@ -352,18 +352,18 @@ public class LectureResource {
         /**
          * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
          *
-         * @param lecture             The lecture to convert
-         * @param videoSourceResolver resolves video URLs to their source type and extracts the YouTube video ID when applicable
-         * @param errorCodeByUnitId   pre-loaded map of lecture unit ID → transcription error code (from processing state); use empty map if none
+         * @param lecture           The lecture to convert
+         * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
+         * @param errorCodeByUnitId pre-loaded map of lecture unit ID → transcription error code (from processing state); use empty map if none
          * @return The converted lecture DTO
          */
-        public static GetLecturesDTO from(Lecture lecture, VideoSourceResolver videoSourceResolver, Map<Long, String> errorCodeByUnitId) {
+        public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService, Map<Long, String> errorCodeByUnitId) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents)
-                    .map(unit -> AttachmentVideoUnitDTO.from(unit, videoSourceResolver, errorCodeByUnitId.get(unit.getId()))).toList();
+                    .map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService, errorCodeByUnitId.get(unit.getId()))).toList();
             return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                     attachmentDTOs, attachmentVideoUnitDTOs);
         }
@@ -391,18 +391,21 @@ public class LectureResource {
         }
 
         /**
-         * Converts an {@link AttachmentVideoUnit} to a DTO, resolving the video source URL and extracting the YouTube video ID if applicable.
+         * Converts an {@link AttachmentVideoUnit} to a DTO. YouTube video IDs are extracted via pure URL parsing (no network calls). TUM Live units will have
+         * {@code videoSourceType = null} from this endpoint, which is acceptable — the client resolves TUM Live playlist URLs on-demand via a separate endpoint.
          *
          * @param unit                   the attachment video unit to convert
-         * @param videoSourceResolver    resolves the raw video URL to its source type (TUM Live, YouTube, etc.) and populates the YouTube video ID when the type is YOUTUBE
+         * @param youTubeUrlService      pure URL parser for YouTube ID extraction; no network calls are made
          * @param transcriptionErrorCode machine-readable error code from the unit's processing state, or {@code null} if none
          * @return the populated DTO
          */
-        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, VideoSourceResolver videoSourceResolver, @Nullable String transcriptionErrorCode) {
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, YouTubeUrlService youTubeUrlService, @Nullable String transcriptionErrorCode) {
             var attachment = unit.getAttachment();
-            var resolved = videoSourceResolver.resolve(unit.getVideoSource());
+            Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(unit.getVideoSource());
+            VideoSourceType type = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+            String youtubeVideoId = ytId.orElse(null);
             return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), new ArrayList<>(), attachment != null ? AttachmentDTO.from(attachment) : null, unit.getReleaseDate(),
-                    "attachment", unit.getVideoSource(), resolved.type(), resolved.youtubeVideoId(), transcriptionErrorCode);
+                    "attachment", unit.getVideoSource(), type, youtubeVideoId, transcriptionErrorCode);
         }
     }
 

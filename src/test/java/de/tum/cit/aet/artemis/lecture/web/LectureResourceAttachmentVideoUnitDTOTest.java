@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.lecture.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,8 +12,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
-import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
-import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolver;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 class LectureResourceAttachmentVideoUnitDTOTest {
 
@@ -82,15 +79,14 @@ class LectureResourceAttachmentVideoUnitDTOTest {
 
     // --- factory method wiring tests ---
 
+    private static final YouTubeUrlService YOUTUBE_URL_SERVICE = new YouTubeUrlService();
+
     @Test
     void factoryPropagatesTranscriptionErrorCode() {
         var unit = new AttachmentVideoUnit();
         unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
-        var resolver = mock(VideoSourceResolver.class);
-        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ"));
-
-        var dto = AttachmentVideoUnitDTO.from(unit, resolver, "YOUTUBE_LIVE");
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, "YOUTUBE_LIVE");
 
         assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
     }
@@ -100,35 +96,39 @@ class LectureResourceAttachmentVideoUnitDTOTest {
         var unit = new AttachmentVideoUnit();
         unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
-        var resolver = mock(VideoSourceResolver.class);
-        when(resolver.resolve("https://youtu.be/dQw4w9WgXcQ")).thenReturn(new ResolvedVideo("https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ"));
-
-        var dto = AttachmentVideoUnitDTO.from(unit, resolver, null);
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
 
         assertThat(dto.transcriptionErrorCode()).isNull();
     }
 
+    @Test
+    void factoryYouTubeUrlProducesYouTubeTypeAndId() {
+        var unit = new AttachmentVideoUnit();
+        unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
+
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
+
+        assertThat(dto.videoSource()).isEqualTo("https://youtu.be/dQw4w9WgXcQ");
+        assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.YOUTUBE);
+        assertThat(dto.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
+    }
+
     /**
-     * Regression test: when the resolver returns a different (playlist) URL for a TUM Live watch URL,
-     * the DTO must expose the original watch URL, not the resolved playlist URL.
-     * This ensures the frontend can re-resolve the URL via the playlist endpoint, which only
-     * understands watch URLs (not playlist URLs).
+     * TUM Live URLs are not YouTube URLs, so the factory must leave videoSourceType null.
+     * The client resolves TUM Live playlist URLs on-demand via a separate endpoint.
+     * The raw videoSource URL must be exposed unchanged so the client can pass it to that endpoint.
      */
     @Test
-    void factoryExposesRawVideoSourceNotResolvedPlaylistUrl() {
+    void factoryTumLiveUrlProducesNullTypeAndExposesRawUrl() {
         String watchUrl = "https://live.rbg.tum.de/w/foo/123";
-        String playlistUrl = "https://live.rbg.tum.de/playlist/foo/123.m3u8";
 
         var unit = new AttachmentVideoUnit();
         unit.setVideoSource(watchUrl);
 
-        var resolver = mock(VideoSourceResolver.class);
-        when(resolver.resolve(watchUrl)).thenReturn(new ResolvedVideo(playlistUrl, VideoSourceType.TUM_LIVE, null));
-
-        var dto = AttachmentVideoUnitDTO.from(unit, resolver, null);
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
 
         assertThat(dto.videoSource()).isEqualTo(watchUrl);
-        assertThat(dto.videoSource()).isNotEqualTo(playlistUrl);
-        assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.TUM_LIVE);
+        assertThat(dto.videoSourceType()).isNull();
+        assertThat(dto.youtubeVideoId()).isNull();
     }
 }

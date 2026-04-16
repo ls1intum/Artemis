@@ -59,7 +59,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isLoading = signal<boolean>(false);
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
-    readonly videoSourceType = computed(() => this.lectureUnit()?.videoSourceType ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
     readonly youtubePlayerFailed = signal(false);
 
