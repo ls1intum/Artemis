@@ -523,6 +523,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     ngAfterViewInit(): void {
+        if (!this.monacoEditor) return;
         this.adjustEditorDimensions();
         this.monacoEditor.setWordWrap(true);
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown ?? '', 'custom-md');
@@ -745,6 +746,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Adjust the dimensions of the editor to fit the available space.
      */
     adjustEditorDimensions(): void {
+        if (!this.monacoEditor) return;
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
@@ -928,7 +930,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param preset The preset to apply.
      */
     applyOptionPreset(preset: MonacoEditorOptionPreset): void {
-        this.monacoEditor.applyOptionPreset(preset);
+        this.monacoEditor?.applyOptionPreset(preset);
     }
 
     /**
