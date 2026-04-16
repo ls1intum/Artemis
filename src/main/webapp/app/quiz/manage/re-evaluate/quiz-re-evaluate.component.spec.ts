@@ -144,6 +144,20 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.quizExercise).toEqual(comp.savedEntity);
     });
 
+    it('should clear invalid state after deleting and restoring the only question via resetAll', () => {
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        // Delete all questions so the quiz becomes invalid
+        const questions = [...comp.quizExercise.quizQuestions!];
+        questions.forEach((q) => comp.deleteQuestion(q));
+        expect(comp.quizExercise.quizQuestions).toHaveLength(0);
+        expect(comp.quizIsValid).toBe(false);
+        // Restore questions via resetAll
+        comp.resetAll();
+        expect(comp.quizExercise.quizQuestions!.length).toBeGreaterThan(0);
+        expect(comp.quizIsValid).toBe(true);
+    });
+
     it('should have pending changes', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
