@@ -23,7 +23,19 @@
                 "attachmentVersion": "Attachment version: "
             },
             "completedTooltip": "Click to mark this content as uncompleted",
-            "uncompletedTooltip": "Click to mark this content as completed"
+            "uncompletedTooltip": "Click to mark this content as completed",
+            "video": {
+                "transcription": {
+                    "error": {
+                        "private": "Transcript unavailable: this video is private.",
+                        "live": "Transcript unavailable: live streams cannot be transcribed.",
+                        "tooLong": "Transcript unavailable: this video exceeds the 6-hour limit.",
+                        "unavailable": "Transcript unavailable: this video is inaccessible (removed, region-blocked, or age-restricted).",
+                        "downloadFailed": "Transcript unavailable: download failed. The instructor can retry.",
+                        "generic": "Transcript unavailable: an error occurred during transcription."
+                    }
+                }
+            }
         },
         "textUnit": {
             "created": "New text content created",

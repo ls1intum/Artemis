@@ -43,7 +43,7 @@
         }
     }
 
-    @if (!!videoUrl()) {
+    @if (!!rawVideoSource() || !!youtubeVideoId()) {
         @if (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) {
             <hr />
         }
@@ -53,19 +53,33 @@
                     <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
                 </div>
             </div>
+        } @else if (transcriptionErrorMessage()) {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <iframe id="videoFrame" class="rounded" [src]="rawVideoSource() | safeResourceUrl" allow="fullscreen"></iframe>
+                </div>
+            </div>
+            <div class="transcription-error-banner">{{ transcriptionErrorMessage() }}</div>
         } @else if (playlistUrl() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+        } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+            <jhi-youtube-player
+                [videoId]="youtubeVideoId()!"
+                [transcriptSegments]="transcriptSegments()"
+                [initialTimestamp]="targetTimestamp()"
+                (playerFailed)="onYouTubePlayerFailed()"
+            />
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
-                    <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                    <iframe id="videoFrame" class="rounded" [src]="rawVideoSource() | safeResourceUrl" allow="fullscreen"></iframe>
                 </div>
             </div>
         }
     }
 
     @if (hasPdf()) {
-        @if (lectureUnit()?.description || !!videoUrl()) {
+        @if (lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) {
             <hr />
         }
         @if (pdfLoadError()) {

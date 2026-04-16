@@ -48,6 +48,7 @@ import urlParser from 'js-video-url-parser';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -64,6 +65,7 @@ describe('AttachmentVideoUnitComponent', () => {
     let fileService: FileService;
     let httpMock: HttpTestingController;
     let lectureTranscriptionService: LectureTranscriptionService;
+    let translateService: TranslateService;
 
     let component: AttachmentVideoUnitComponent;
     let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
@@ -90,7 +92,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
     beforeEach(async () => {
         mockLectureTranscriptionService = {
-            getTranscription: vi.fn(),
+            getTranscription: vi.fn(() => of(undefined)),
             getTranscriptionStatus: vi.fn(() => of(undefined)),
         };
 
@@ -107,6 +109,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 AttachmentVideoUnitService,
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
 
@@ -114,6 +117,7 @@ describe('AttachmentVideoUnitComponent', () => {
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
+        translateService = TestBed.inject(TranslateService);
 
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
@@ -408,6 +412,140 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.hasAttachment()).toBe(false);
         expect(component.getFileName()).toBe('');
+    });
+
+    describe('YouTube player branching (server metadata)', () => {
+        it('renders YouTube player when DTO declares videoSourceType YOUTUBE and youtubeVideoId is present', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeTruthy();
+        });
+
+        it('falls back to iframe when playerFailed fires', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+        });
+
+        it('renders TUM Live player when playlistUrl present (regression guard)', async () => {
+            const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
+            const mockTranscriptDTO: LectureTranscriptionDTO = {
+                lectureUnitId: 2,
+                language: 'en',
+                segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 1 }],
+            };
+            vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
+
+            // Set lectureUnit first, then expand (initiallyExpanded triggers toggleCollapse)
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 2,
+                videoSourceType: 'TUM_LIVE',
+                videoSource: src,
+            } as any);
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.detectChanges();
+
+            // Flush the HTTP request triggered by initiallyExpanded → toggleCollapse(false)
+            expectPlaylistRequest(src, playlist);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-video-player')).toBeTruthy();
+        });
+
+        it('renders iframe fallback for non-YouTube, non-TUM-Live source', async () => {
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 3,
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.detectChanges();
+
+            // initiallyExpanded triggers toggleCollapse → playlist request
+            expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+        });
+
+        it('maps each error code to the correct i18n key (not just generic text)', () => {
+            const byCode: Record<string, string> = {
+                YOUTUBE_PRIVATE: 'artemisApp.lectureUnit.video.transcription.error.private',
+                YOUTUBE_LIVE: 'artemisApp.lectureUnit.video.transcription.error.live',
+                YOUTUBE_TOO_LONG: 'artemisApp.lectureUnit.video.transcription.error.tooLong',
+                YOUTUBE_UNAVAILABLE: 'artemisApp.lectureUnit.video.transcription.error.unavailable',
+                YOUTUBE_DOWNLOAD_FAILED: 'artemisApp.lectureUnit.video.transcription.error.downloadFailed',
+                TRANSCRIPTION_FAILED: 'artemisApp.lectureUnit.video.transcription.error.generic',
+            };
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            const translateInstantSpy = vi.spyOn(translateService, 'instant');
+            for (const [code, expectedKey] of Object.entries(byCode)) {
+                translateInstantSpy.mockClear();
+                fixture.componentRef.setInput('lectureUnit', {
+                    id: 1,
+                    videoSourceType: 'YOUTUBE',
+                    youtubeVideoId: 'dQw4w9WgXcQ',
+                    videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+                    transcriptionErrorCode: code,
+                } as any);
+                fixture.detectChanges();
+                expect(translateInstantSpy).toHaveBeenCalledWith(expectedKey);
+                expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+            }
+        });
+
+        it('unknown error code falls back to the generic i18n key', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            const translateInstantSpy = vi.spyOn(translateService, 'instant');
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 2,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+                transcriptionErrorCode: 'NEW_CODE_FROM_PYRIS_REDEPLOY',
+            } as any);
+            fixture.detectChanges();
+            expect(translateInstantSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.video.transcription.error.generic');
+        });
+
+        it('youtubePlayerFailed resets when the lecture unit changes', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 10,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'aaa',
+                videoSource: 'https://youtu.be/aaa',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 11,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'bbb',
+                videoSource: 'https://youtu.be/bbb',
+            } as any);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeTruthy();
+        });
     });
 
     describe('PDF functionality', () => {

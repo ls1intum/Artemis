@@ -23,7 +23,19 @@
                 "attachmentVersion": "Dateiversion: "
             },
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
-            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren"
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
+            "video": {
+                "transcription": {
+                    "error": {
+                        "private": "Transkript nicht verfügbar: dieses Video ist privat.",
+                        "live": "Transkript nicht verfügbar: Livestreams können nicht transkribiert werden.",
+                        "tooLong": "Transkript nicht verfügbar: dieses Video überschreitet das 6-Stunden-Limit.",
+                        "unavailable": "Transkript nicht verfügbar: dieses Video ist nicht zugänglich (entfernt, regional gesperrt oder altersbeschränkt).",
+                        "downloadFailed": "Transkript nicht verfügbar: Download fehlgeschlagen. Der Dozent kann es erneut versuchen.",
+                        "generic": "Transkript nicht verfügbar: bei der Transkription ist ein Fehler aufgetreten."
+                    }
+                }
+            }
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",

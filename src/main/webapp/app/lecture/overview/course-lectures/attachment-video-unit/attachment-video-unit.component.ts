@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -6,9 +6,11 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { YouTubePlayerComponent } from 'app/lecture/shared/youtube-player/youtube-player.component';
 import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { TranslateService } from '@ngx-translate/core';
 import {
     faDownload,
     faFile,
@@ -37,7 +39,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, MessageModule],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, YouTubePlayerComponent, PdfViewerComponent, MessageModule],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -48,6 +50,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly translateService = inject(TranslateService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -55,6 +58,37 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
+    readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
+    readonly videoSourceType = computed(() => this.lectureUnit()?.videoSourceType ?? null);
+    readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
+    readonly youtubePlayerFailed = signal(false);
+
+    // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
+    // unit selected). Without this, one transient YouTube init failure sticks this
+    // component instance on iframe fallback for its whole lifetime.
+    private readonly _resetPlayerFailedOnUnitChange = effect(() => {
+        const id = this.lectureUnit()?.id;
+        // read id to create the dependency; then schedule reset
+        void id;
+        untracked(() => this.youtubePlayerFailed.set(false));
+    });
+
+    readonly transcriptionErrorMessage = computed(() => {
+        const code = this.lectureUnit()?.transcriptionErrorCode;
+        if (!code) return null;
+        const key =
+            (
+                {
+                    YOUTUBE_PRIVATE: 'artemisApp.lectureUnit.video.transcription.error.private',
+                    YOUTUBE_LIVE: 'artemisApp.lectureUnit.video.transcription.error.live',
+                    YOUTUBE_TOO_LONG: 'artemisApp.lectureUnit.video.transcription.error.tooLong',
+                    YOUTUBE_UNAVAILABLE: 'artemisApp.lectureUnit.video.transcription.error.unavailable',
+                    YOUTUBE_DOWNLOAD_FAILED: 'artemisApp.lectureUnit.video.transcription.error.downloadFailed',
+                } as Record<string, string>
+            )[code] ?? 'artemisApp.lectureUnit.video.transcription.error.generic';
+        return this.translateService.instant(key);
+    });
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -160,6 +194,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const src = this.lectureUnit().videoSource;
 
             if (!src) {
+                this.isLoading.set(false);
+                if (this.hasPdf()) {
+                    this.loadPdf();
+                }
+                return;
+            }
+
+            // For YouTube sources, fetch transcript directly (no playlist URL needed)
+            if (this.lectureUnit().youtubeVideoId) {
+                this.fetchTranscript();
                 this.isLoading.set(false);
                 if (this.hasPdf()) {
                     this.loadPdf();
@@ -337,6 +381,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
+    }
+
+    onYouTubePlayerFailed(): void {
+        this.youtubePlayerFailed.set(true);
     }
 
     hasAttachment(): boolean {
