@@ -23,15 +23,16 @@ vi.mock('interactjs', () => {
         } else if (eventName === 'resizemove') {
             resizeMoveCallback = callback;
         }
-        return { on: mockOn };
+        return { on: mockOn, unset: vi.fn() };
     });
 
     const mockResizable = vi.fn(() => ({
         on: mockOn,
+        unset: vi.fn(),
     }));
 
     const mockInteract = Object.assign(
-        vi.fn(() => ({ resizable: mockResizable })),
+        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
         {
             modifiers: {
                 restrictSize: vi.fn(() => ({})),

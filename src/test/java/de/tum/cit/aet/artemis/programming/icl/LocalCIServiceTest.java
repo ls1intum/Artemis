@@ -15,14 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -122,7 +121,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
                 exercise.getBuildConfig().hasSequentialTestRuns());
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-        String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
+        String expectedBuildConfig = JsonObjectMapper.get().writeValueAsString(windfile);
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
         assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
         // test that the method does not throw an exception when the exercise is null

@@ -184,11 +184,12 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
 
         // Create prerequisite
         await page.locator('a[href*="/prerequisite-management/create"]').click();
-        await page.getByRole('textbox', { name: 'Prerequisites' }).fill(prerequisiteData.title);
+        await page.getByRole('textbox', { name: 'Prerequisites', exact: true }).fill(prerequisiteData.title);
         await setMarkdownDescription(page, prerequisiteData.description);
 
         await selectDateInPicker(page, 'softDueDate', 1, 15);
         await selectTaxonomy(page, prerequisiteData.taxonomy);
+        await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled({ timeout: 10000 });
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // Verify creation - wait for the page to navigate back and load data
@@ -223,9 +224,9 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await row.locator('a[href*="/prerequisite-management/"][href$="/edit"]').click();
 
             // Wait for the edit form to load existing prerequisite data from the server
-            await expect(page.getByRole('textbox', { name: 'Prerequisites' })).toHaveValue(editPrereqData.title, { timeout: 15000 });
+            await expect(page.getByRole('textbox', { name: 'Prerequisites', exact: true })).toHaveValue(editPrereqData.title, { timeout: 15000 });
 
-            await page.getByRole('textbox', { name: 'Prerequisites' }).fill(updatedPrerequisiteData.title);
+            await page.getByRole('textbox', { name: 'Prerequisites', exact: true }).fill(updatedPrerequisiteData.title);
             await setMarkdownDescription(page, updatedPrerequisiteData.description);
 
             await selectDateInPicker(page, 'softDueDate', 2, 15);

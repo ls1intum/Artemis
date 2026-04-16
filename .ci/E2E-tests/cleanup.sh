@@ -23,5 +23,4 @@ docker volume ls
 # show docker and docker compose version
 echo "VERSIONS:"
 docker compose version || true
-docker-compose version || true
 docker version || true

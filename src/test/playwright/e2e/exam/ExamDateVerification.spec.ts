@@ -36,8 +36,10 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             exam = await examAPIRequests.createExam(examConfig);
             await login(studentOne);
             await page.goto(`/courses`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(examTitle)).not.toBeVisible();
             await page.goto(`/courses/${course.id}`);
+            await page.waitForLoadState('networkidle');
             await expect(page.getByText(examTitle)).not.toBeVisible();
         });
 
@@ -53,6 +55,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
+            await page.waitForLoadState('networkidle');
             await courseOverview.openExamsTab();
             await page.waitForURL(`**/exams/${exam.id}`);
         });
@@ -117,6 +120,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+            await page.waitForLoadState('networkidle');
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
@@ -126,7 +130,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             if (examEnd.isAfter(dayjs())) {
-                await page.waitForTimeout(examEnd.diff(dayjs()));
+                await page.waitForTimeout(examEnd.diff(dayjs()) + 2000);
             }
             await examParticipation.checkExamFinishedTitle(exam.title!);
             await examStartEnd.finishExam();

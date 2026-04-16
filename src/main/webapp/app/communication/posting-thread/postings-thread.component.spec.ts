@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { PostService } from 'app/communication/service/post.service';
@@ -17,9 +19,19 @@ import { getElement } from 'test/helpers/utils/general-test.utils';
 import { signal } from '@angular/core';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('PostingThreadComponent', () => {
-    let component: PostingThreadComponent;
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<PostingThreadComponent>;
 
     beforeEach(() => {
@@ -27,13 +39,19 @@ describe('PostingThreadComponent', () => {
         MockInstance(PostComponent, 'postFooterComponent', signal(undefined));
         MockInstance(PostComponent, 'reactionsBarComponent', signal({} as unknown as PostingReactionsBarComponent<Post>));
 
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
-            declarations: [
+            imports: [
                 PostingThreadComponent,
                 TranslatePipeMock,
                 MockComponent(PostComponent),
@@ -41,20 +59,21 @@ describe('PostingThreadComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingThreadComponent);
-                component = fixture.componentInstance;
-            });
+        });
+        TestBed.overrideComponent(PostingThreadComponent, {
+            remove: { imports: [PostComponent] },
+            add: { imports: [MockComponent(PostComponent)] },
+        });
+        fixture = TestBed.createComponent(PostingThreadComponent);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should contain a post', () => {
-        component.post = post;
+        fixture.componentRef.setInput('post', post);
+        fixture.componentRef.setInput('showAnswers', true);
 
         fixture.changeDetectorRef.detectChanges();
 

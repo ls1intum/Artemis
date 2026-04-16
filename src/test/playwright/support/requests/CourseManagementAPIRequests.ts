@@ -94,7 +94,7 @@ export class CourseManagementAPIRequests {
         };
 
         if (iconFileName) {
-            // @ts-ignore
+            // @ts-expect-error: dynamically adding file part to multipart form data
             multipart['file'] = {
                 name: iconFileName,
                 mimeType: 'application/octet-stream',

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260205132454" author="marlonnienaber">
+        <createIndex indexName="idx_tutorial_group_registration_tutorial_group_id_student_id"
+                     tableName="tutorial_group_registration">
+            <column name="tutorial_group_id"/>
+            <column name="student_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

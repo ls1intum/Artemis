@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { IconDefinition, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { Subject } from 'rxjs';
@@ -83,19 +82,4 @@ describe('ExerciseImportButtonComponent', () => {
             expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
         }
     });
-
-    it.each([
-        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.importLabel' },
-        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.importLabel' },
-        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.importLabel' },
-        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.importLabel' },
-    ])(
-        'should determine correct translation key and icon',
-        ({ exerciseType, expectedIcon, expectedTranslationLabel }: { exerciseType: ExerciseType; expectedIcon: IconDefinition; expectedTranslationLabel: string }) => {
-            fixture.componentRef.setInput('exerciseType', exerciseType);
-            component.ngOnInit();
-            expect(component.icon).toEqual(expectedIcon);
-            expect(component.translationLabel).toEqual(expectedTranslationLabel);
-        },
-    );
 });

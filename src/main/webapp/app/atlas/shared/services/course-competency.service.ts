@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import {
     CompetencyContributionCardDTO,
     CompetencyExerciseLink,
-    CompetencyJol,
     CompetencyProgress,
     CompetencyRelation,
     CompetencyRelationDTO,
@@ -36,17 +35,6 @@ type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 type CompetencyProgressResponseDTOType = HttpResponse<CompetencyProgressDTO>;
-
-type CompetencyJolResponseType = HttpResponse<{
-    current: CompetencyJol;
-    prior?: CompetencyJol;
-}>;
-type CompetencyJolMapResponseType = HttpResponse<{
-    [key: number]: {
-        current: CompetencyJol;
-        prior?: CompetencyJol;
-    };
-}>;
 
 @Injectable({
     providedIn: 'root',
@@ -210,43 +198,6 @@ export class CourseCompetencyService {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/course-competencies/relations/${competencyRelationId}`, {
             observe: 'response',
         });
-    }
-
-    /**
-     * Retrieves the judgement of learning (JoL) value for a specific competency in a course.
-     *
-     * @param courseId the id of the course for which the competency belongs
-     * @param competencyId the id of the competency for which to get the JoL value
-     * @return an Observable of HttpResponse containing the current (and prior) JoL value or null if not set
-     */
-    getJoL(courseId: number, competencyId: number): Observable<CompetencyJolResponseType> {
-        return this.httpClient
-            .get<{ current: CompetencyJol; prior?: CompetencyJol }>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/jol`, { observe: 'response' })
-            .pipe(map((res: CompetencyJolResponseType) => res));
-    }
-
-    /**
-     * Sets the judgment of learning for a competency.
-     *
-     * @param courseId The ID of the course.
-     * @param competencyId The ID of the competency.
-     * @param jolValue The judgment of learning value.
-     * @returns An Observable of the HTTP response.
-     */
-    setJudgementOfLearning(courseId: number, competencyId: number, jolValue: number): Observable<HttpResponse<void>> {
-        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/jol/${jolValue}`, null, { observe: 'response' });
-    }
-
-    /**
-     * Retrieves the judgement of learning (JoL) values for all competencies of a specified course.
-     *
-     * @param courseId the id of the course for which the JoL values should be fetched
-     * @return an Observable of HttpResponse containing a map from competency id to current (and prior) JoL value
-     */
-    getJoLAllForCourse(courseId: number): Observable<CompetencyJolMapResponseType> {
-        return this.httpClient
-            .get<{ [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>(`${this.resourceURL}/courses/${courseId}/course-competencies/jol`, { observe: 'response' })
-            .pipe(map((res: CompetencyJolMapResponseType) => res));
     }
 
     /**

@@ -393,6 +393,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for AtlasML functionality.
+     */
+    public static final String MODULE_FEATURE_ATLASML = "atlasml";
+
+    /**
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
@@ -438,11 +443,6 @@ public final class Constants {
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
 
     /**
-     * The name of the module feature used for nebula functionality.
-     */
-    public static final String MODULE_FEATURE_NEBULA = "nebula";
-
-    /**
      * The name of the module feature used for Sharing functionality.
      */
     public static final String MODULE_FEATURE_SHARING = "sharing";
@@ -456,6 +456,11 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable AtlasML functionality.
+     */
+    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.
@@ -516,11 +521,6 @@ public final class Constants {
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
-
-    /**
-     * The name of the property used to enable or disable nebula functionalities.
-     */
-    public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
 
     /**
      * The name of the property used to enable or disable LTI functionality.
@@ -590,6 +590,8 @@ public final class Constants {
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
 

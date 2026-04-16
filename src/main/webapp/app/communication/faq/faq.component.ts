@@ -27,8 +27,6 @@ import { CommonModule } from '@angular/common';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -46,7 +44,6 @@ import { FeatureActivationComponent } from 'app/shared/feature-activation/featur
         SortDirective,
         CommonModule,
         CourseTitleBarActionsDirective,
-        FeatureActivationComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -227,13 +224,5 @@ export class FaqComponent implements OnInit, OnDestroy {
                 },
             });
         }
-    }
-    enableFaq() {
-        this.faqService.enable(this.courseId).subscribe({
-            next: () => {
-                this.course.faqEnabled = true;
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
     }
 }

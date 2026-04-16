@@ -1,0 +1,116 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.iris-answer-panel {
+    border-left: 1px solid var(--bs-border-color);
+}
+
+.iris-answer-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    gap: 0.5rem;
+
+    // Suppress the logo's default drop-shadow — it looks too heavy at small sizes
+    :host ::ng-deep .iris-logo {
+        filter: none;
+    }
+}
+
+.iris-answer-title {
+    font-size: 0.875rem;
+    color: var(--bs-primary);
+}
+
+.iris-close-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    background: transparent;
+    border: none;
+    transition:
+        color 0.15s,
+        background 0.15s;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-body-color);
+        background: var(--bs-secondary-bg);
+    }
+}
+
+.iris-answer-content {
+    padding: 0.75rem;
+    min-height: 0; // Required: prevents flex-grow-1 from expanding beyond its container, allowing overflow-y-auto to scroll
+}
+
+.iris-answer-text {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--bs-body-color);
+    margin-bottom: 1rem;
+
+    // Tighten up paragraph spacing inside the rendered markdown
+    :host ::ng-deep p {
+        margin-bottom: 0.5rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.iris-error-msg {
+    font-size: 0.875rem;
+}
+
+.iris-sources-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.iris-source-card {
+    background: var(--module-bg);
+    border-radius: 0.375rem;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+
+    &:hover,
+    &:focus-visible,
+    &.is-selected {
+        border-color: var(--bs-primary) !important;
+        background: rgba(var(--bs-primary-rgb), 0.05);
+        text-decoration: none !important;
+    }
+}
+
+:host .iris-source-card:hover {
+    text-decoration: none !important;
+}
+
+.iris-source-title {
+    font-size: 0.8125rem;
+}
+
+.iris-source-meta {
+    font-size: 0.6875rem;
+    color: var(--bs-primary);
+    opacity: 0.75;
+}
+
+.iris-continue-link {
+    font-size: 0.8125rem;
+    color: var(--bs-primary);
+    background: none;
+    border: none;
+    padding: 0;
+    opacity: 0.5;
+    cursor: not-allowed;
+    font-weight: 500;
+}

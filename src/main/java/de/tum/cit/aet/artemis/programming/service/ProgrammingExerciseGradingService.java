@@ -147,6 +147,21 @@ public class ProgrammingExerciseGradingService {
      */
     @Nullable
     public Result processNewProgrammingExerciseResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody) {
+        return processNewProgrammingExerciseResult(participation, requestBody, true);
+    }
+
+    /**
+     * Uses the given requestBody to extract the relevant information from it.
+     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
+     * extracted from the feedbacks & the result is updated with the information from the test cases.
+     *
+     * @param participation the participation for which the build was finished
+     * @param requestBody   RequestBody containing the build result and its feedback items
+     * @param testsExpected whether test results are expected from this build (false for compile-only phases)
+     * @return result after compilation (can only be null in case an error occurs)
+     */
+    @Nullable
+    public Result processNewProgrammingExerciseResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
@@ -170,8 +185,13 @@ public class ProgrammingExerciseGradingService {
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
-            // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
-            final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            // Determine if the build failed based on whether tests were expected.
+            // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
+            // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
+            final boolean noTestFeedbacks = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            final Integer exitCode = buildResult.buildScriptExitCode();
+            final boolean scriptFailed = exitCode != null && exitCode != 0;
+            final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
             latestSubmission.setBuildFailed(buildFailed);
 
             if (buildResult.hasLogs()) {

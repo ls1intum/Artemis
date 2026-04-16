@@ -714,6 +714,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
 
+        // Wait for participant score updates to complete before deleting to avoid FK constraint violations
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(() -> participantScoreScheduleService.isIdle());
+
         // ...delete the quiz
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
 
@@ -742,7 +746,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
-        quizExerciseService.reEvaluate(dto, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
+        quizExerciseService.reEvaluate(dto, quizExercise, List.of());
         assertThat(quizSubmissionTestRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
 
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
@@ -785,7 +789,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
-        quizExerciseService.reEvaluate(dto, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
+        quizExerciseService.reEvaluate(dto, quizExercise, List.of());
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());

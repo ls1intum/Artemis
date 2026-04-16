@@ -17,6 +17,7 @@ runs:
       uses: actions/github-script@v8
       continue-on-error: true
       with:
+        result-encoding: string
         script: |
           const branch = '${{ github.event.workflow_run.head_branch }}';
           const { data: prs } = await github.rest.pulls.list({
@@ -37,6 +38,7 @@ runs:
       uses: actions/github-script@v8
       continue-on-error: true
       with:
+        result-encoding: string
         script: |
           const prNumber = Number('${{ steps.find-pr.outputs.result }}');
           const marker = '<!-- E2E Test Results -->';

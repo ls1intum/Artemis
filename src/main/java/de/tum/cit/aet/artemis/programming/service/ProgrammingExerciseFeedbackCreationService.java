@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -80,7 +81,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JsonObjectMapper.get();
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -192,7 +193,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Feedback objects representing the static code analysis findings
      */
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonObjectMapper.get();
         List<Feedback> feedbackList = new ArrayList<>();
         for (final StaticCodeAnalysisReportDTO report : reports) {
             StaticCodeAnalysisTool tool = report.tool();

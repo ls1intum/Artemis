@@ -1,7 +1,18 @@
-<jhi-loading-indicator-container [isLoading]="(isLoading | async) ?? false">
-    @if (tutorialGroup && course) {
+<div>
+    @let tutorialGroupToPass = tutorialGroup();
+    @let courseIdToPass = courseId();
+    @let isMessagingEnabledToPass = isMessagingEnabled();
+    @if (courseIdToPass && tutorialGroupToPass && isMessagingEnabledToPass !== undefined) {
         <div class="p-3 scrollable-content">
-            <jhi-course-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
+            <jhi-tutorial-group-detail
+                [tutorialGroup]="tutorialGroupToPass"
+                [courseId]="courseIdToPass"
+                [isMessagingEnabled]="isMessagingEnabledToPass"
+                [loggedInUserAccessLevel]="TutorialGroupDetailManagementAccessLevel.STUDENT"
+            />
         </div>
     }
-</jhi-loading-indicator-container>
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

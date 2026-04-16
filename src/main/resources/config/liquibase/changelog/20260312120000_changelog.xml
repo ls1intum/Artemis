@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add onboarding_done column to course table -->
+    <changeSet id="20260312120000-1" author="krusche">
+        <addColumn tableName="course">
+            <column name="onboarding_done" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Drop faq_enabled column from course table (FAQs are now always enabled) -->
+    <changeSet id="20260312120000-2" author="krusche">
+        <dropColumn tableName="course" columnName="faq_enabled"/>
+    </changeSet>
+
+</databaseChangeLog>

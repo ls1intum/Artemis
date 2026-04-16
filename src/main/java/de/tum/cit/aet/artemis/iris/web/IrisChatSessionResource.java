@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -93,7 +94,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
+    public ResponseEntity<IrisChatSessionResponseDTO> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
 
         if (irisSession == null) {
@@ -106,7 +107,7 @@ public class IrisChatSessionResource {
 
         if (enabled) {
             irisSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(irisSession.getMessages()));
-            return ResponseEntity.ok((IrisChatSession) irisSession);
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages((IrisChatSession) irisSession));
         }
         throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }

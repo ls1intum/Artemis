@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
@@ -10,7 +11,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPEND
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +37,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.web.client.RestTemplate;
 import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -51,13 +50,12 @@ import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
-import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
-import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
+import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -68,7 +66,8 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_AEOLUS })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.lti.enabled=true", "artemis.atlas.enabled=true",
+        "artemis.atlas.atlasml.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
@@ -120,18 +119,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatMemoryRepository chatMemoryRepository;
 
-    // Spy for lecture transcription tests to allow real method execution in service integration tests
-    @MockitoSpyBean
-    protected LectureTranscriptionService lectureTranscriptionService;
-
-    // Mock for TUM Live service used in Nebula transcription resource
+    // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
     protected TumLiveService tumLiveService;
-
-    // Mock RestTemplate for Nebula API calls
-    // Nebula is enabled in tests; we mock this bean to avoid real HTTP calls and control responses
-    @MockitoBean(name = "nebulaRestTemplate")
-    protected RestTemplate nebulaRestTemplate;
 
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
@@ -168,9 +158,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
-        }
-        if (lectureTranscriptionService != null) {
-            Mockito.reset(lectureTranscriptionService);
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);

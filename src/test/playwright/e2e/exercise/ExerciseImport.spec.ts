@@ -52,14 +52,13 @@ test.describe('Import exercises', () => {
             const exercise = await importResponse.json();
             await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
-            await courseOverview.openRunningExercise(exercise.id!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
             await textExerciseEditor.shouldShowNumberOfWords(0);
             await textExerciseEditor.shouldShowNumberOfCharacters(0);
             await textExerciseEditor.typeSubmission(exercise.id!, submissionText!);
             await textExerciseEditor.shouldShowNumberOfWords(16);
             await textExerciseEditor.shouldShowNumberOfCharacters(83);
-            const submissionResponse = await textExerciseEditor.submit();
+            const submissionResponse = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
             const submission: TextSubmission = await submissionResponse.json();
             expect(submission.text).toBe(submissionText);
             expect(submission.submitted).toBe(true);
@@ -84,7 +83,6 @@ test.describe('Import exercises', () => {
                 const exercise: QuizExercise = await importResponse.json();
                 await courseManagementExercises.startQuiz(exercise.id!);
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await courseOverview.startExercise(exercise.id!);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
                 const submitResponse = await quizExerciseMultipleChoice.submit();
@@ -102,7 +100,6 @@ test.describe('Import exercises', () => {
                 page,
                 courseManagementExercises,
                 quizExerciseCreation,
-                courseOverview,
                 quizExerciseShortAnswerQuiz,
                 exerciseResult,
                 navigationBar,
@@ -123,7 +120,6 @@ test.describe('Import exercises', () => {
                 const exercise: QuizExercise = await importResponse.json();
                 const questionId = exercise.quizQuestions![0].id!;
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await courseOverview.openRunningExercise(exercise.id!);
                 await quizExerciseParticipation.startIndividualQuizBatch();
                 await page.waitForSelector('.quiz-waiting-for-start-overlay', { state: 'hidden' });
                 await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, questionId, 'give');
@@ -167,11 +163,10 @@ test.describe('Import exercises', () => {
                 const exercise: ModelingExercise = await importResponse.json();
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await courseOverview.startExercise(exercise.id!);
-                await courseOverview.openRunningExercise(exercise.id!);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);
-                const submitResponse = await modelingExerciseEditor.submit();
+                const submitResponse = await courseOverview.submitExercise('api/modeling/exercises/*/modeling-submissions');
                 const submission: ModelingSubmission = await submitResponse.json();
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);

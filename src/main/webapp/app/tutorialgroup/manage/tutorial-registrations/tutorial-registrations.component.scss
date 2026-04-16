@@ -1,0 +1,19 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .search-field {
+            flex: 1;
+
+            .search-input {
+                width: 100%;
+            }
+        }
+    }
+}

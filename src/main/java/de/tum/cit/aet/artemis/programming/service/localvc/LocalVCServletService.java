@@ -622,7 +622,7 @@ public class LocalVCServletService {
         int separatorIndex = basicAuthCredentials.indexOf(":");
 
         if (separatorIndex == -1) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException("Missing colon separator in Basic auth credentials");
         }
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);

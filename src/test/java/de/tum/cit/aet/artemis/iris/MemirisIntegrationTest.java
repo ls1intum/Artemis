@@ -138,8 +138,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Build non-terminal and terminal stage lists
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
-        var executingDone = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE, null, false);
+        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
+        var executingDone = new PyrisStageDTO("Analyzing context", 30, DONE, null, false, null);
 
         // Send intermediate status with accessed memories only (no result yet) and non-terminal stages
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null,
@@ -198,7 +198,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         await().until(() -> jobIdRef.get() != null && stagesRef.get() != null);
 
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
+        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
 
         // First: send assistant result to create assistant message and set assistantMessageId on the job (keep job running with non-terminal stages)
         sendCourseStatus(jobIdRef.get(), "Initial Answer", List.of(preparingDone, executingInProgress), null, null, null);

@@ -29,7 +29,7 @@
         @if (exerciseSelected()) {
             <div
                 [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
-                class="content-width module-bg rounded-3"
+                class="content-width scrollable-content"
                 [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
             >
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
