@@ -12,6 +12,11 @@
                         <strong>Settings saved!</strong>
                     </div>
                 }
+                @if (isSaml2Active) {
+                    <div class="alert alert-info" jhiTranslate="settings.saml2SyncedInfo">
+                        Your name and email address are managed by your institution via SAML2 and cannot be changed here.
+                    </div>
+                }
                 @if (errorEmailExists()) {
                     <div class="alert alert-danger" jhiTranslate="settings.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</div>
                 }

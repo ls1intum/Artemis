@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -70,15 +71,18 @@ public class AccountResource {
 
     private final FileService fileService;
 
+    private final ProfileService profileService;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService,
-            FileService fileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
+            ProfileService profileService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
+        this.profileService = profileService;
     }
 
     /**
@@ -97,6 +101,12 @@ public class AccountResource {
         // Allow internal users to update their account even when registration is disabled
         if (accountService.isRegistrationDisabled() && !currentUser.isInternal()) {
             throw new AccessForbiddenException("Can't edit user information as user registration is disabled");
+        }
+
+        // When SAML2 is active, names and email are synced from the IdP — only langKey can be changed
+        if (profileService.isSaml2Active()) {
+            userService.updateUserLanguageKey(currentUser.getId(), userDTO.getLangKey());
+            return ResponseEntity.ok().build();
         }
 
         final String userLogin = currentUser.getLogin();
