@@ -902,12 +902,20 @@
                     "relatedTasks": "Zugehörige Aufgaben:",
                     "linked": "Verknüpft",
                     "applyCompetencies": "Kompetenzen anwenden",
+                    "applyAll": "Alle anwenden",
+                    "applySelected": "Ausgewählte anwenden",
                     "applyHint": "Verknüpft passende Kurskompetenzen und erstellt neue für nicht zugeordnete Lernziele.",
                     "syncSuccess": "Kompetenzen erfolgreich auf die Aufgabe angewendet.",
                     "allLinked": "Alle abgeleiteten Kompetenzen sind bereits verknüpft.",
                     "syncError": "Anwenden der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
                     "showDetails": "Details",
-                    "hideDetails": "Ausblenden"
+                    "hideDetails": "Ausblenden",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discarded": "Kompetenz verworfen.",
+                    "discardedMultiple": "Ausgewählte Kompetenzen verworfen.",
+                    "discardCompetency": "Diese Kompetenz verwerfen"
                 },
                 "difficulty": {
                     "title": "Schwierigkeitsbewertung",
@@ -937,7 +945,7 @@
                     "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
                 },
                 "actions": {
-                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "success": "Änderungen vorgeschlagen — bitte die aktualisierte Problemstellung oben überprüfen, bevor du speicherst.",
                     "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
                     "noChanges": "Keine Änderungen für diese Aktion nötig.",
                     "adaptTo": "Anpassen auf:",

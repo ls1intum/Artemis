@@ -127,6 +127,9 @@ export class ChecklistPanelComponent {
     // Quality issue multi-select state
     selectedIssueIndices = signal<Set<number>>(new Set());
 
+    // Competency multi-select state
+    selectedCompetencyIndices = signal<Set<number>>(new Set());
+
     // Stale tracking: sections that may be outdated after an AI action modified the problem statement
     staleSections = signal<Set<ChecklistSectionType>>(new Set());
     sectionLoading = signal<Set<ChecklistSectionType>>(new Set());
@@ -244,6 +247,7 @@ export class ChecklistPanelComponent {
                     // New analysis results invalidate previous linking state
                     this.linkedCompetencyTitles.set(new Set());
                     this.createdCompetencyTitles.set(new Set());
+                    this.selectedCompetencyIndices.set(new Set());
                     this.competencyLinksChange.emit([]);
                 },
                 error: () => {
@@ -399,7 +403,7 @@ export class ChecklistPanelComponent {
                         const newProblemStatement = res.updatedProblemStatement ?? this.latestProblemStatement() ?? this.problemStatement();
                         this.latestProblemStatement.set(newProblemStatement);
                         this.problemStatementDiffRequest.emit(newProblemStatement);
-                        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
+                        this.alertService.info('artemisApp.programmingExercise.instructorChecklist.actions.success');
                         onApplied?.();
                         // Mark other sections as stale instead of re-analyzing
                         this.markSectionsStale(staleMark);
@@ -466,6 +470,7 @@ export class ChecklistPanelComponent {
                     if (section === 'competencies') {
                         this.linkedCompetencyTitles.set(new Set());
                         this.createdCompetencyTitles.set(new Set());
+                        this.selectedCompetencyIndices.set(new Set());
                         this.competencyLinksChange.emit([]);
                     }
                     this.updateSet(this.staleSections, section, 'delete');
@@ -624,6 +629,93 @@ export class ChecklistPanelComponent {
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.quality.discardedMultiple');
     }
 
+    /**
+     * Toggles selection state of a competency at the given index.
+     */
+    toggleCompetencySelection(index: number) {
+        this.selectedCompetencyIndices.update((current) => {
+            const updated = new Set(current);
+            if (updated.has(index)) {
+                updated.delete(index);
+            } else {
+                updated.add(index);
+            }
+            return updated;
+        });
+    }
+
+    /**
+     * Returns whether a competency at the given index is selected.
+     */
+    isCompetencySelected(index: number): boolean {
+        return this.selectedCompetencyIndices().has(index);
+    }
+
+    /**
+     * Selects all competencies.
+     */
+    selectAllCompetencies() {
+        const count = this.analysisResult()?.inferredCompetencies?.length ?? 0;
+        this.selectedCompetencyIndices.set(new Set(Array.from({ length: count }, (_, i) => i)));
+    }
+
+    /**
+     * Deselects all competencies.
+     */
+    deselectAllCompetencies() {
+        this.selectedCompetencyIndices.set(new Set());
+    }
+
+    /**
+     * Whether all competencies are currently selected.
+     */
+    allCompetenciesSelected(): boolean {
+        const count = this.analysisResult()?.inferredCompetencies?.length ?? 0;
+        return count > 0 && this.selectedCompetencyIndices().size === count;
+    }
+
+    /**
+     * Discards a single inferred competency from the list without any server action.
+     */
+    discardCompetency(index: number) {
+        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
+        this.selectedCompetencyIndices.update((current) => {
+            const updated = new Set<number>();
+            for (const idx of current) {
+                if (idx < index) updated.add(idx);
+                else if (idx > index) updated.add(idx - 1);
+            }
+            return updated;
+        });
+        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discarded');
+    }
+
+    /**
+     * Discards all currently selected competencies from the list without any server action.
+     */
+    discardSelectedCompetencies() {
+        const selected = this.selectedCompetencyIndices();
+        if (selected.size === 0) return;
+
+        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
+        this.selectedCompetencyIndices.set(new Set());
+        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple');
+    }
+
+    /**
+     * Applies only the currently selected inferred competencies (link or create).
+     */
+    applySelectedCompetencies() {
+        const selected = this.selectedCompetencyIndices();
+        if (selected.size === 0) return;
+        const allInferred = this.analysisResult()?.inferredCompetencies ?? [];
+        const selectedInferred = [...selected]
+            .sort((a, b) => a - b)
+            .map((i) => allInferred[i])
+            .filter(Boolean);
+        this.applyCompetenciesFromList(selectedInferred);
+    }
+
     adaptDifficulty(targetDifficulty: DifficultyAssessment.SuggestedEnum) {
         const current = this.exercise()?.difficulty || 'unknown';
         const assessment = this.analysisResult()?.difficultyAssessment;
@@ -697,6 +789,14 @@ export class ChecklistPanelComponent {
     }
 
     /**
+     * Applies all inferred competencies (link or create).
+     */
+    applyCompetencies(): void {
+        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
+        this.applyCompetenciesFromList(inferred);
+    }
+
+    /**
      * Unified method: links inferred competencies to matching course competencies,
      * then creates new course competencies for any that couldn't be matched and links those too.
      *
@@ -704,11 +804,10 @@ export class ChecklistPanelComponent {
      *   1. Use AI-provided matchedCourseCompetencyId if available and still exists
      *   2. If unmatched, create a new course competency and link it
      */
-    applyCompetencies(): void {
+    private applyCompetenciesFromList(inferred: InferredCompetency[]): void {
         if (this.isSyncingCompetencies()) return;
 
         this.isSyncingCompetencies.set(true);
-        const inferred = this.analysisResult()?.inferredCompetencies ?? [];
         const exercise = this.exercise();
         const courseId = this.courseId();
 

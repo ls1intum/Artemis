@@ -293,12 +293,81 @@
             @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
                 <p class="competency-empty-state" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</p>
             } @else {
+                <div class="competency-toolbar">
+                    <div class="competency-toolbar-start">
+                        <p-checkbox
+                            [binary]="true"
+                            [ngModel]="allCompetenciesSelected()"
+                            (ngModelChange)="$event ? selectAllCompetencies() : deselectAllCompetencies()"
+                            [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
+                            inputId="select-all-competencies"
+                            data-testid="select-all-competencies"
+                        />
+                        <label for="select-all-competencies" class="competency-toolbar-label">
+                            {{
+                                (allCompetenciesSelected()
+                                    ? 'artemisApp.programmingExercise.instructorChecklist.competencies.deselectAll'
+                                    : 'artemisApp.programmingExercise.instructorChecklist.competencies.selectAll'
+                                ) | artemisTranslate
+                            }}
+                        </label>
+                    </div>
+                    <div class="competency-toolbar-end">
+                        @if (selectedCompetencyIndices().size > 0) {
+                            <button
+                                pButton
+                                severity="primary"
+                                size="small"
+                                [outlined]="true"
+                                [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
+                                (click)="applySelectedCompetencies()"
+                                data-testid="apply-selected-competencies-button"
+                            >
+                                <fa-icon [icon]="isSyncingCompetencies() ? faSpinner : faLink" [animation]="isSyncingCompetencies() ? 'spin' : undefined" size="xs" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applySelected">Apply Selected</span>
+                                <span>({{ selectedCompetencyIndices().size }})</span>
+                            </button>
+                            <button
+                                pButton
+                                severity="secondary"
+                                size="small"
+                                [outlined]="true"
+                                [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
+                                (click)="discardSelectedCompetencies()"
+                                data-testid="discard-selected-competencies-button"
+                            >
+                                <fa-icon [icon]="faTrashCan" size="xs" />
+                                <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.discardSelected">Dismiss Selected</span>
+                                <span>({{ selectedCompetencyIndices().size }})</span>
+                            </button>
+                        }
+                        <button
+                            pButton
+                            severity="primary"
+                            size="small"
+                            [outlined]="true"
+                            [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
+                            (click)="applyCompetencies()"
+                        >
+                            <fa-icon [icon]="isSyncingCompetencies() ? faSpinner : faLink" [animation]="isSyncingCompetencies() ? 'spin' : undefined" size="xs" />
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyAll">Apply All</span>
+                        </button>
+                    </div>
+                </div>
                 <div class="competency-list">
-                    @for (comp of result.inferredCompetencies; track $index) {
-                        <div class="competency-item">
+                    @for (comp of result.inferredCompetencies; track $index; let i = $index) {
+                        <div class="competency-item" [class.competency-selected]="isCompetencySelected(i)">
                             <div class="competency-header">
                                 <div class="competency-info">
                                     <div class="competency-tags">
+                                        <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="isCompetencySelected(i)"
+                                            (ngModelChange)="toggleCompetencySelection(i)"
+                                            [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
+                                            [inputId]="'competency-select-' + i"
+                                            [attr.data-testid]="'competency-checkbox-' + i"
+                                        />
                                         @if (comp.knowledgeAreaShortTitle) {
                                             <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
                                         }
@@ -318,21 +387,35 @@
                                         <p class="competency-rationale">{{ comp.whyThisMatches }}</p>
                                     }
                                 </div>
-                                <button
-                                    pButton
-                                    [text]="true"
-                                    severity="secondary"
-                                    size="small"
-                                    class="expand-details-btn"
-                                    (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
-                                >
-                                    <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" />
-                                    <span>{{
-                                        isCompetencyExpanded($index)
-                                            ? ('artemisApp.programmingExercise.instructorChecklist.competencies.hideDetails' | artemisTranslate)
-                                            : ('artemisApp.programmingExercise.instructorChecklist.competencies.showDetails' | artemisTranslate)
-                                    }}</span>
-                                </button>
+                                <div class="competency-actions">
+                                    <button
+                                        pButton
+                                        [text]="true"
+                                        severity="secondary"
+                                        size="small"
+                                        class="expand-details-btn"
+                                        (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
+                                    >
+                                        <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" />
+                                        <span>{{
+                                            isCompetencyExpanded($index)
+                                                ? ('artemisApp.programmingExercise.instructorChecklist.competencies.hideDetails' | artemisTranslate)
+                                                : ('artemisApp.programmingExercise.instructorChecklist.competencies.showDetails' | artemisTranslate)
+                                        }}</span>
+                                    </button>
+                                    <button
+                                        pButton
+                                        severity="secondary"
+                                        size="small"
+                                        [text]="true"
+                                        [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
+                                        (click)="discardCompetency(i)"
+                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.discardCompetency' | artemisTranslate"
+                                        [attr.data-testid]="'discard-competency-' + i"
+                                    >
+                                        <fa-icon [icon]="faTrashCan" size="xs" />
+                                    </button>
+                                </div>
                             </div>
                             @if (isCompetencyExpanded($index)) {
                                 <div class="evidence-section">
@@ -354,17 +437,6 @@
                     }
                 </div>
                 <div class="competency-actions-section">
-                    <button
-                        pButton
-                        severity="primary"
-                        size="small"
-                        [outlined]="true"
-                        [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
-                        (click)="applyCompetencies()"
-                    >
-                        <fa-icon [icon]="isSyncingCompetencies() ? faSpinner : faLink" [animation]="isSyncingCompetencies() ? 'spin' : undefined" size="xs" />
-                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyCompetencies">Apply Competencies</span>
-                    </button>
                     <small class="competency-apply-hint" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
                         Links matching course competencies and creates new ones for unmatched learning goals.
                     </small>

@@ -902,12 +902,20 @@
                     "relatedTasks": "Related tasks:",
                     "linked": "Linked",
                     "applyCompetencies": "Apply Competencies",
+                    "applyAll": "Apply All",
+                    "applySelected": "Apply Selected",
                     "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
                     "syncSuccess": "Competencies applied to the exercise successfully.",
                     "allLinked": "All inferred competencies are already linked.",
                     "syncError": "Failed to apply competencies. Please try again.",
                     "showDetails": "Details",
-                    "hideDetails": "Hide"
+                    "hideDetails": "Hide",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "discardSelected": "Dismiss Selected",
+                    "discarded": "Competency dismissed.",
+                    "discardedMultiple": "Selected competencies dismissed.",
+                    "discardCompetency": "Dismiss this competency"
                 },
                 "difficulty": {
                     "title": "Difficulty Assessment",
@@ -937,7 +945,7 @@
                     "radarChartLabel": "Quality scores radar chart"
                 },
                 "actions": {
-                    "success": "Problem statement updated successfully.",
+                    "success": "Changes proposed — please review the updated problem statement above before saving.",
                     "error": "Failed to apply the action. Please try again.",
                     "noChanges": "No changes were needed for this action.",
                     "adaptTo": "Adapt to:",

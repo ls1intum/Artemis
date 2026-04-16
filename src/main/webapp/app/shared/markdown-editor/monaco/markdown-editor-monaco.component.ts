@@ -20,6 +20,7 @@ import {
     output,
     signal,
     untracked,
+    viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -185,6 +186,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
+    readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     @Input()
@@ -720,7 +722,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const elementHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET);
+        const diffHeaderHeight = this.getElementClientHeight(this.diffHeader());
+        return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - diffHeaderHeight - BORDER_HEIGHT_OFFSET);
     }
 
     /**
