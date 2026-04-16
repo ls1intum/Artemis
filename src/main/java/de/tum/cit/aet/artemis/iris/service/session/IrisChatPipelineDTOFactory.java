@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecu
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
@@ -113,7 +114,8 @@ public class IrisChatPipelineDTOFactory {
         StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
 
         // Mode-specific fields (additive on top of base data)
-        Object exercise = null;
+        PyrisProgrammingExerciseDTO programmingExercise = null;
+        PyrisTextExerciseDTO textExercise = null;
         PyrisLectureDTO lectureDto = null;
         PyrisSubmissionDTO progSubmission = null;
         String textSubmission = null;
@@ -121,14 +123,14 @@ public class IrisChatPipelineDTOFactory {
         switch (chatMode) {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
-                exercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
+                programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
                 var actualSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(progExercise, user));
                 progSubmission = actualSubmission.map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
             }
             case TEXT_EXERCISE_CHAT -> {
-                var textExercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getEntityId());
-                exercise = PyrisTextExerciseDTO.of(textExercise);
-                var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), user.getLogin());
+                var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getEntityId());
+                textExercise = PyrisTextExerciseDTO.of(exercise);
+                var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
                 var latest = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
                 textSubmission = latest instanceof TextSubmission ts ? ts.getText() : null;
             }
@@ -152,7 +154,7 @@ public class IrisChatPipelineDTOFactory {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), new PyrisUserDTO(user), executionDto.initialStages(),
-                customInstructions, courseDto, exercise, lectureDto, null, progSubmission, textSubmission, metrics, null);
+                customInstructions, courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics, null);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
