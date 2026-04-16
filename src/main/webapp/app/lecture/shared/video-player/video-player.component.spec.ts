@@ -1,13 +1,3 @@
-/**
- * video-player.component.spec.ts
- * Tests for VideoPlayerComponent (HLS.js + transcript sync + resizer)
- *
- * - Mocks `hls.js` library
- * - Mocks `interactjs` library
- * - Minimal template with <video #videoRef>
- * - Covers init/no-init, timeupdate syncing + scrolling, seeking, resizer, and teardown
- */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -165,8 +155,21 @@ describe('VideoPlayerComponent', () => {
     }
 
     function getIndex(): number {
-        const val = component.currentSegmentIndex();
-        return val;
+        return component.currentSegmentIndex();
+    }
+
+    function mockWrapperRect(wrapperEl: HTMLElement, width = 1000, height = 500): void {
+        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            width,
+            top: 0,
+            right: width,
+            bottom: height,
+            height,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
     }
 
     it('does not initialize hls.js when no videoUrl is provided', async () => {
@@ -296,19 +299,7 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-
-            // Mock getBoundingClientRect for wrapper
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 500,
-                height: 500,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
+            mockWrapperRect(wrapperEl);
 
             // Get the move listener and call it
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
@@ -327,18 +318,7 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 500,
-                height: 500,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
+            mockWrapperRect(wrapperEl);
 
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             const moveListener = draggableConfig.listeners.move;
@@ -355,18 +335,7 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 500,
-                height: 500,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
+            mockWrapperRect(wrapperEl);
 
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             const moveListener = draggableConfig.listeners.move;
@@ -383,18 +352,7 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-
-            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-                left: 0,
-                width: 1000,
-                top: 0,
-                right: 1000,
-                bottom: 500,
-                height: 500,
-                x: 0,
-                y: 0,
-                toJSON: () => ({}),
-            } as DOMRect);
+            mockWrapperRect(wrapperEl);
 
             // First, simulate a drag to set custom width
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];

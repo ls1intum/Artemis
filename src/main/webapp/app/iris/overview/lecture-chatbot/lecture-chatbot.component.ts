@@ -39,9 +39,8 @@ export class LectureChatbotComponent {
 
     public toggleChatHistory(): void {
         const baseChatbot = this.irisBaseChatbot();
-        if (!baseChatbot) {
-            return;
+        if (baseChatbot) {
+            baseChatbot.setChatHistoryVisibility(!baseChatbot.isChatHistoryOpen());
         }
-        baseChatbot.setChatHistoryVisibility(!baseChatbot.isChatHistoryOpen());
     }
 }

@@ -72,24 +72,15 @@ jhi-attachment-video-unit {
         display: none;
     }
 
-    .content-container--embedded {
-        display: block;
-    }
-
     .content-container--fullscreen {
         position: fixed;
         inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
         z-index: 5002;
         display: flex;
-        gap: 0;
         padding: 0.75rem;
         box-sizing: border-box;
         background-color: var(--lecture-combined-view-surface);
-        border: 0;
-        border-radius: 0;
         overflow: hidden;
-        box-shadow: none;
-        flex-direction: row;
 
         .video-player-container,
         .pdf-viewer-spacing {
@@ -101,7 +92,6 @@ jhi-attachment-video-unit {
             min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 0;
             overflow: hidden;
 
             > * {
@@ -124,10 +114,7 @@ jhi-attachment-video-unit {
         }
 
         .video-container-wrapper {
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
-            background-color: var(--lecture-combined-view-bg);
 
             > jhi-video-player {
                 flex: 1;
@@ -254,7 +241,7 @@ jhi-attachment-video-unit {
 
         .video-container-wrapper--fullscreen {
             border: 1px solid var(--lecture-combined-view-border);
-            border-radius: var(--lecture-combined-view-radius);
+            border-radius: 0;
         }
     }
 
@@ -281,5 +268,9 @@ body.lecture-combined-view-fullscreen-active {
         width: 100vw !important;
         margin-left: 0 !important;
         transform: none !important;
+    }
+
+    jhi-exercise-chatbot-button {
+        display: none;
     }
 }

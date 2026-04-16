@@ -35,10 +35,10 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     readonly transcriptColumnWidthPx = signal<number>(0);
 
     /** Search query for filtering transcript segments */
-    searchQuery = signal<string>('');
+    readonly searchQuery = signal<string>('');
 
     /** Current search result index */
-    currentSearchIndex = signal<number>(0);
+    readonly currentSearchIndex = signal<number>(0);
 
     /** Icons for search UI */
     protected readonly faSearch = faSearch;
@@ -47,13 +47,13 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     protected readonly faTimes = faTimes;
 
     /** Filtered transcript segments based on search query */
-    filteredSegments = computed(() => this.computeFilteredSegments());
+    readonly filteredSegments = computed(() => this.computeFilteredSegments());
 
     /** Total number of search results */
-    searchResultsCount = computed(() => this.filteredSegments().length);
+    readonly searchResultsCount = computed(() => this.filteredSegments().length);
 
     /** Check if search is active */
-    isSearchActive = computed(() => this.searchQuery().length > 0);
+    readonly isSearchActive = computed(() => this.searchQuery().length > 0);
 
     /** Whether the transcript currently has little horizontal space */
     readonly isNarrowColumn = computed(() => this.transcriptColumnWidthPx() > 0 && this.transcriptColumnWidthPx() < 420);
@@ -94,11 +94,12 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
      * Returns all segments if no search query is active, otherwise returns only matching segments.
      */
     private computeFilteredSegments(): TranscriptSegment[] {
+        const segments = this.transcriptSegments();
         const query = this.searchQuery().toLowerCase().trim();
         if (!query) {
-            return this.transcriptSegments();
+            return segments;
         }
-        return this.transcriptSegments().filter((segment) => segment.text.toLowerCase().includes(query));
+        return segments.filter((segment) => segment.text.toLowerCase().includes(query));
     }
 
     /** Update search query and reset to first result */
@@ -120,26 +121,23 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
 
     /** Navigate to next search result */
     nextSearchResult(): void {
-        const total = this.searchResultsCount();
-        if (total === 0) {
-            return;
-        }
-
-        const nextIndex = (this.currentSearchIndex() + 1) % total;
-        this.currentSearchIndex.set(nextIndex);
-        this.scrollToSearchResult(nextIndex);
+        this.navigateSearchResults(1);
     }
 
     /** Navigate to previous search result */
     previousSearchResult(): void {
+        this.navigateSearchResults(-1);
+    }
+
+    private navigateSearchResults(direction: 1 | -1): void {
         const total = this.searchResultsCount();
         if (total === 0) {
             return;
         }
 
-        const prevIndex = (this.currentSearchIndex() - 1 + total) % total;
-        this.currentSearchIndex.set(prevIndex);
-        this.scrollToSearchResult(prevIndex);
+        const nextIndex = (this.currentSearchIndex() + direction + total) % total;
+        this.currentSearchIndex.set(nextIndex);
+        this.scrollToSearchResult(nextIndex);
     }
 
     /** Scroll to a specific search result */
@@ -155,24 +153,15 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
 
     /** Highlight search matches in segment text */
     highlightText(text: string): string {
-        // Escape HTML entities FIRST to prevent XSS attacks
         const escapedText = escapeString(text);
-
         const query = this.searchQuery().trim();
         if (!query) {
             return escapedText;
         }
 
-        // Escape the query as well to prevent XSS in search terms
         const escapedQuery = escapeString(query);
-
-        // Use escaped query for regex matching
         const regex = new RegExp(`(${this.escapeRegExp(escapedQuery)})`, 'gi');
-        const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
-
-        // Safe to return: all user content is escaped, only <mark> tags are intentional HTML
-        // Angular's [innerHTML] will preserve <mark> while keeping escaped HTML entities safe
-        return highlighted;
+        return escapedText.replace(regex, '<mark>$1</mark>');
     }
 
     /** Escape special regex characters */
@@ -214,12 +203,18 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
      * Uses container-scoped scrolling to avoid scrolling the full page.
      */
     private scrollToSegmentElement(segment: TranscriptSegment): void {
-        const el = document.getElementById(`segment-${segment.startTime}`);
         const container = this.transcriptListRef()?.nativeElement;
-        if (el && container) {
-            const centeredTop = el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2;
-            const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
-            container.scrollTo({ top, behavior: 'smooth' });
+        if (!container) {
+            return;
         }
+
+        const segmentElement = container.querySelector<HTMLElement>(`#segment-${segment.startTime}`);
+        if (!segmentElement) {
+            return;
+        }
+
+        const centeredTop = segmentElement.offsetTop - container.clientHeight / 2 + segmentElement.clientHeight / 2;
+        const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
+        container.scrollTo({ top, behavior: 'smooth' });
     }
 }

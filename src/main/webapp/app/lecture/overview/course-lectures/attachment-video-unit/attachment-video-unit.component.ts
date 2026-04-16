@@ -121,11 +121,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly hasPdfFullscreen = this._hasPdfFullscreen.asReadonly();
 
     // Split panel sizes (percentage values)
-    private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
-    private readonly _horizontalSplitSizes = signal<[number, number]>([50, 50]); // [video, pdf]
-    private readonly defaultTwoPaneSplitSizes: [number, number] = [50, 50];
+    private readonly defaultSplitSizes: [number, number] = [50, 50];
     private readonly defaultThreePaneVerticalSplitSizes: [number, number] = [66.67, 33.33];
-    private readonly defaultHorizontalSplitSizes: [number, number] = [50, 50];
+    private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
+    private readonly _horizontalSplitSizes = signal<[number, number]>(this.defaultSplitSizes); // [video, pdf]
     private readonly minVerticalSplitSizes: [number, number] = [120, 120];
     private readonly minHorizontalSplitSizes: [number, number] = [80, 80];
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
@@ -161,6 +160,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
 
+    readonly hasDescription = computed(() => !!this.lectureUnit().description);
+
+    readonly hasAttachmentMetadata = computed(() => {
+        if (this.hasPdf()) {
+            return false;
+        }
+        const attachment = this.lectureUnit().attachment;
+        return !!(attachment?.uploadDate || attachment?.version || attachment?.link);
+    });
+
     readonly hasRenderableVideo = computed(() => !!this.videoUrl());
 
     readonly hasFullscreenContent = computed(() => (this.hasRenderableVideo() || this.hasPdf()) && this.shouldShowIrisSidebarInFullscreen());
@@ -172,9 +181,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return card ? card.isCollapsed() : true;
     });
 
-    readonly showIrisSidebar = computed(() => {
-        return this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen();
-    });
+    readonly showIrisSidebar = computed(() => this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen());
 
     readonly needsVerticalSplitter = computed(() => this.showIrisSidebar());
 
@@ -182,7 +189,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly contentContainerClasses = computed(() => ({
         'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
-        'content-container--embedded': !this.isCollapsed() && !this.isFullscreen(),
         'content-container--fullscreen': this.isFullscreen(),
         'content-container--with-sidebar': this.isFullscreen() && this.showIrisSidebar(),
     }));
@@ -192,7 +198,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return undefined;
         }
         const unitName = this.lectureUnit().name ?? this.translateService.instant('artemisApp.lectureUnit.lectureUnit');
-        return `${this.translateService.instant('artemisApp.lectureUnit.fullscreenView', { title: unitName })}`;
+        return this.translateService.instant('artemisApp.lectureUnit.fullscreenView', { title: unitName });
     });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
@@ -203,12 +209,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         // Update dark-mode class based on theme
         effect(() => {
-            const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
-            if (isDarkMode) {
-                this.hostElement.nativeElement.classList.add('dark-mode');
-            } else {
-                this.hostElement.nativeElement.classList.remove('dark-mode');
-            }
+            this.hostElement.nativeElement.classList.toggle('dark-mode', this.themeService.currentTheme() === Theme.DARK);
         });
 
         // Vertical splitter lifecycle (content | iris)
@@ -293,12 +294,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
         const failedUrl = event.pdfUrl;
-        const activePdfUrl = this.pdfUrl();
-
-        if (!failedUrl || !activePdfUrl || failedUrl !== activePdfUrl) {
+        if (!this.matchesActivePdfUrl(failedUrl)) {
             return;
         }
 
+        const activePdfUrl = this.pdfUrl()!;
         if (activePdfUrl?.startsWith('blob:')) {
             this.revokePdfUrl();
             this.pdfUrl.set(undefined);
@@ -319,14 +319,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     protected onPdfPageRendered(event: { pdfUrl: string }): void {
-        const loadedUrl = event.pdfUrl;
-        const activePdfUrl = this.pdfUrl();
-
-        if (!loadedUrl || !activePdfUrl || loadedUrl !== activePdfUrl) {
+        if (!this.matchesActivePdfUrl(event.pdfUrl)) {
             return;
         }
 
         this.isPdfLoading.set(false);
+    }
+
+    private matchesActivePdfUrl(candidateUrl: string | undefined): boolean {
+        const activePdfUrl = this.pdfUrl();
+        return !!candidateUrl && !!activePdfUrl && candidateUrl === activePdfUrl;
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
@@ -382,18 +384,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private fetchTranscript(): void {
-        const id = this.lectureUnit().id!;
+        const id = this.lectureUnit().id;
+        if (id === undefined) {
+            this._transcriptSegments.set([]);
+            return;
+        }
 
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
-                map((dto) => {
-                    if (!dto || !dto.segments) {
-                        return [];
-                    }
-                    // Filter and map to ensure all required fields are present
-                    return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
-                }),
+                map((dto) => dto?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
@@ -405,6 +405,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this._transcriptSegments.set([]);
                 },
             });
+    }
+
+    private isValidTranscriptSegment(segment: Partial<TranscriptSegment> | undefined): segment is TranscriptSegment {
+        return !!segment && segment.startTime != null && segment.endTime != null && segment.text != null;
     }
 
     /** Loads PDF via direct URL for streaming and HTTP caching. Falls back to blob on error. */
@@ -537,6 +541,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     ngOnDestroy(): void {
+        const container = this.contentContainer()?.nativeElement;
+        if (container && this._focusTrapHandler) {
+            container.removeEventListener('keydown', this._focusTrapHandler);
+            this._focusTrapHandler = undefined;
+        }
         this.destroyVerticalSplitter();
         this.destroyHorizontalSplitter();
         this.clearFullscreenTopOffset();
@@ -637,38 +646,51 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private setBackgroundInert(inert: boolean): void {
         if (inert) {
-            let current: HTMLElement | null = this.hostElement.nativeElement;
-            while (current && current !== document.body) {
-                const parent = current.parentElement;
-                if (!parent) {
-                    break;
-                }
-                Array.from(parent.children).forEach((sibling) => {
-                    if (!(sibling instanceof HTMLElement) || sibling === current || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
-                        return;
-                    }
-                    this._inertElements.set(sibling, {
-                        hadInert: sibling.hasAttribute('inert'),
-                        previousAriaHidden: sibling.getAttribute('aria-hidden'),
-                    });
-                    sibling.setAttribute('inert', '');
-                    sibling.setAttribute('aria-hidden', 'true');
-                });
-                current = parent;
-            }
-        } else {
-            this._inertElements.forEach((state, el) => {
-                if (!state.hadInert) {
-                    el.removeAttribute('inert');
-                }
-                if (state.previousAriaHidden === null) {
-                    el.removeAttribute('aria-hidden');
-                } else {
-                    el.setAttribute('aria-hidden', state.previousAriaHidden);
-                }
-            });
-            this._inertElements.clear();
+            this.setBackgroundElementsInert();
+            return;
         }
+
+        this.restoreBackgroundElementsState();
+    }
+
+    private setBackgroundElementsInert(): void {
+        let current: HTMLElement | null = this.hostElement.nativeElement;
+        while (current && current !== document.body) {
+            const parent = current.parentElement;
+            if (!parent) {
+                break;
+            }
+            this.markSiblingElementsAsInert(parent, current);
+            current = parent;
+        }
+    }
+
+    private markSiblingElementsAsInert(parent: HTMLElement, currentElement: HTMLElement): void {
+        Array.from(parent.children).forEach((sibling) => {
+            if (!(sibling instanceof HTMLElement) || sibling === currentElement || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
+                return;
+            }
+            this._inertElements.set(sibling, {
+                hadInert: sibling.hasAttribute('inert'),
+                previousAriaHidden: sibling.getAttribute('aria-hidden'),
+            });
+            sibling.setAttribute('inert', '');
+            sibling.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    private restoreBackgroundElementsState(): void {
+        this._inertElements.forEach((state, element) => {
+            if (!state.hadInert) {
+                element.removeAttribute('inert');
+            }
+            if (state.previousAriaHidden === null) {
+                element.removeAttribute('aria-hidden');
+            } else {
+                element.setAttribute('aria-hidden', state.previousAriaHidden);
+            }
+        });
+        this._inertElements.clear();
     }
 
     private cleanupFullscreenAccessibility(): void {
@@ -688,10 +710,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private resetSplitSizesForFullscreen(): void {
-        this._horizontalSplitSizes.set(this.defaultHorizontalSplitSizes);
+        this._horizontalSplitSizes.set(this.defaultSplitSizes);
 
         const hasThreePaneLayout = this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf();
-        this._verticalSplitSizes.set(hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultTwoPaneSplitSizes);
+        this._verticalSplitSizes.set(hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultSplitSizes);
     }
 
     closeFullscreen(): void {
@@ -767,15 +789,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /** Downloads student version if available, otherwise instructor version. */
-    handleDownload() {
+    handleDownload(): void {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
-
-        const link = this.getAttachmentLink();
-
-        if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
-            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
-        }
+        this.downloadAttachment(this.getAttachmentLink());
     }
 
     private getAttachmentLink(): string | undefined {
@@ -787,15 +803,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return link ? addPublicFilePrefix(link) : undefined;
     }
 
-    handleOriginalVersion() {
+    handleOriginalVersion(): void {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+        const originalLink = this.lectureUnit().attachment?.link;
+        this.downloadAttachment(originalLink ? addPublicFilePrefix(originalLink) : undefined);
+    }
 
-        const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
-
-        if (link) {
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
-            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+    private downloadAttachment(link: string | undefined): void {
+        const attachmentName = this.lectureUnit().attachment?.name;
+        if (!link || !attachmentName) {
+            return;
         }
+        this.fileService.downloadFileByAttachmentName(link, attachmentName);
+        this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
     }
 
     hasAttachment(): boolean {

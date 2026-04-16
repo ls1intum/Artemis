@@ -65,7 +65,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver: ResizeObserver | undefined = undefined;
 
     /** Minimum height for the transcript column */
-    private readonly MIN_TRANSCRIPT_HEIGHT = 500;
+    private readonly minTranscriptHeightPx = 500;
+    private readonly minVideoColumnWidthPx = 300;
+    private readonly minTranscriptColumnWidthPx = 250;
 
     /** Animation frame ID for debouncing resize updates */
     private resizeAnimationFrameId?: number;
@@ -91,7 +93,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 return;
             }
 
-            const videoElement = this.videoRef()?.nativeElement;
+            const videoElement = this.getVideoElement();
             if (!videoElement) {
                 return;
             }
@@ -102,8 +104,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit(): void {
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
+        const videoElement = this.getVideoElement();
         const src = this.videoUrl();
 
         this.viewReady.set(true);
@@ -168,22 +169,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.interactInstance = interact(resizerEl).draggable({
             listeners: {
                 move: (event) => {
-                    const wrapperRect = wrapperEl.getBoundingClientRect();
-                    if (!wrapperRect.width) {
-                        return;
-                    }
-                    const minWidth = 300;
-                    const maxWidth = Math.max(minWidth, wrapperRect.width - 250); // Leave space for transcript
-
-                    // Calculate new width based on drag position
-                    const newWidth = event.clientX - wrapperRect.left;
-                    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-                    const flexBasisPercent = (clampedWidth / wrapperRect.width) * 100;
-
-                    // Use percentage-based basis so the layout naturally follows container resizes.
-                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
-                    videoColumnEl.style.width = '';
-                    // ResizeObserver will automatically sync transcript height
+                    this.applyVideoColumnResize(videoColumnEl, wrapperEl, event.clientX);
                 },
             },
             cursorChecker: () => 'col-resize',
@@ -228,15 +214,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
 
         const videoHeight = videoColumnEl.offsetHeight;
-        const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
+        const targetHeight = Math.max(videoHeight, this.minTranscriptHeightPx);
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
     /** Seek the video to the given time and resume playback. */
     seekTo(seconds: number): void {
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
-
+        const videoElement = this.getVideoElement();
         if (!videoElement) {
             return;
         }
@@ -305,8 +289,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Clean up on destroy. */
     ngOnDestroy(): void {
         // Remove event listener to prevent memory leaks
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
+        const videoElement = this.getVideoElement();
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
@@ -348,5 +331,25 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             window.cancelAnimationFrame(this.resizeAnimationFrameId);
             this.resizeAnimationFrameId = undefined;
         }
+    }
+
+    private getVideoElement(): HTMLVideoElement | undefined {
+        return this.videoRef()?.nativeElement;
+    }
+
+    private applyVideoColumnResize(videoColumnEl: HTMLDivElement, wrapperEl: HTMLDivElement, clientX: number): void {
+        const wrapperRect = wrapperEl.getBoundingClientRect();
+        if (!wrapperRect.width) {
+            return;
+        }
+
+        const maxWidth = Math.max(this.minVideoColumnWidthPx, wrapperRect.width - this.minTranscriptColumnWidthPx);
+        const newWidth = clientX - wrapperRect.left;
+        const clampedWidth = Math.max(this.minVideoColumnWidthPx, Math.min(maxWidth, newWidth));
+        const flexBasisPercent = (clampedWidth / wrapperRect.width) * 100;
+
+        // Use percentage-based basis so the layout naturally follows container resizes.
+        videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
+        videoColumnEl.style.width = '';
     }
 }
