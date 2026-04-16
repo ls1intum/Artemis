@@ -44,7 +44,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
-import urlParser from 'js-video-url-parser';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -207,38 +206,6 @@ describe('AttachmentVideoUnitComponent', () => {
         component.handleDownload();
 
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('videoUrl: handles allow-listed TUM Live URLs', () => {
-        const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-        expect(component.videoUrl()).toBe(src);
-    });
-
-    it('videoUrl: returns source when parser recognizes non-allowlisted URL', () => {
-        const src = 'https://example.com/some-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue({} as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        expect(component.videoUrl()).toBe(src);
-        parseSpy.mockRestore();
-    });
-
-    it('videoUrl: returns undefined when parser returns undefined and URL is not in allow list', () => {
-        const src = 'https://example.com/not-a-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue(undefined as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        // The URL is not in allow list and parser doesn't recognize it, so it should return undefined
-        expect(component.videoUrl()).toBeUndefined();
-        parseSpy.mockRestore();
     });
 
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript', async () => {

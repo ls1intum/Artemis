@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
-import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import { YouTubePlayerComponent } from 'app/lecture/shared/youtube-player/youtube-player.component';
@@ -74,6 +73,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         untracked(() => this.youtubePlayerFailed.set(false));
     });
 
+    // Uses TranslateService.instant() for efficiency; trade-off: if the user
+    // switches language mid-session, this value won't update until the lecture
+    // unit input changes. Acceptable for error banners on unit-level components.
     readonly transcriptionErrorMessage = computed(() => {
         const code = this.lectureUnit()?.transcriptionErrorCode;
         if (!code) return null;
@@ -110,37 +112,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
-
-    // TODO: This must use a server configuration to make it compatible with deployments other than TUM
-    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
-
-    /**
-     * Return the URL of the video source
-     */
-    readonly videoUrl = computed(() => this.computeVideoUrl());
-
-    /**
-     * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
-     */
-    private computeVideoUrl(): string | undefined {
-        const source = this.lectureUnit().videoSource;
-        if (!source) {
-            return undefined;
-        }
-        // Check if it matches the allow list (e.g., TUM Live URLs)
-        if (this.videoUrlAllowList.some((r) => r.test(source))) {
-            return source;
-        }
-        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
-        if (urlParser) {
-            const parsed = urlParser.parse(source);
-            if (parsed) {
-                return source;
-            }
-        }
-        return undefined;
-    }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
         const failedUrl = event.pdfUrl;
