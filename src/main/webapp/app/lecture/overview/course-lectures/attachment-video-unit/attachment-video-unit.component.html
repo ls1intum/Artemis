@@ -46,14 +46,23 @@
     }
 
     <jhi-lecture-unit-fullscreen-layout
-        [isFullscreen]="isFullscreen()"
         [isCollapsed]="isCollapsed()"
         [showSidebar]="showIrisSidebar()"
         [dialogAriaLabel]="fullscreenAriaLabel()"
-        [sidebarAriaLabel]="'artemisApp.lectureUnit.irisSidebarLabel' | artemisTranslate"
+        [sidebarAriaLabel]="irisSidebarAriaLabel()"
         [splitSizes]="verticalSplitSizes()"
         [minSplitSizes]="minVerticalSplitSizes"
+        [hasNestedFullscreen]="hasPdfFullscreen()"
+        [defaultVerticalSplitSizes]="computedVerticalDefaults()"
+        [defaultHorizontalSplitSizes]="defaultSplitSizes"
+        [hasHorizontalSplit]="needsHorizontalSplitter()"
+        [horizontalSplitSizes]="horizontalSplitSizes()"
+        [minHorizontalSplitSizes]="minHorizontalSplitSizes"
+        [horizontalSplitTopElement]="videoContainerElement()"
+        [horizontalSplitBottomElement]="pdfContainerElement()"
         (splitSizesChange)="onVerticalSplitSizesChange($event)"
+        (horizontalSplitSizesChange)="onHorizontalSplitSizesChange($event)"
+        (fullscreenChange)="onFullscreenChange($event)"
         (backdropClick)="closeFullscreen()"
     >
         <div content-main class="main-content">
@@ -122,8 +131,8 @@
                 <button
                     class="iris-sidebar__close-button"
                     type="button"
-                    [title]="'artemisApp.lectureUnit.closeFullscreen' | artemisTranslate"
-                    [attr.aria-label]="'artemisApp.lectureUnit.closeFullscreen' | artemisTranslate"
+                    jhiTranslate="artemisApp.lectureUnit.closeFullscreen"
+                    [attr.aria-label]="closeFullscreenAriaLabel()"
                     (click)="closeFullscreen()"
                 >
                     <fa-icon [icon]="faXmark" />

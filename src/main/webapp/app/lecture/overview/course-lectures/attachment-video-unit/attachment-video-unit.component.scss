@@ -103,30 +103,6 @@ jhi-attachment-video-unit {
             flex: 1;
         }
 
-        .gutter.gutter-vertical {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 12px;
-            cursor: row-resize;
-            background-color: transparent;
-            flex-shrink: 0;
-        }
-
-        .gutter.gutter-vertical::before {
-            display: none;
-        }
-
-        .gutter-vertical .split-gutter-handle {
-            flex-direction: column;
-
-            &::before,
-            &::after {
-                width: 12px;
-                height: 2px;
-            }
-        }
-
         .video-container-wrapper--fullscreen {
             border: 1px solid var(--lecture-combined-view-border);
             border-radius: 0;

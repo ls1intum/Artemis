@@ -100,6 +100,30 @@
         display: none;
     }
 
+    .gutter.gutter-vertical {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 12px;
+        cursor: row-resize;
+        background-color: transparent;
+        flex-shrink: 0;
+
+        &::before {
+            display: none;
+        }
+
+        .split-gutter-handle {
+            flex-direction: column;
+
+            &::before,
+            &::after {
+                width: 12px;
+                height: 2px;
+            }
+        }
+    }
+
     .split-gutter-handle {
         display: flex;
         gap: 1px;

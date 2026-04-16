@@ -12,6 +12,7 @@ import {
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -31,16 +32,29 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     private readonly injector = inject(Injector);
     private readonly ngZone = inject(NgZone);
 
-    readonly isFullscreen = input<boolean>(false);
     readonly isCollapsed = input<boolean>(true);
     readonly showSidebar = input<boolean>(false);
     readonly dialogAriaLabel = input<string | undefined>(undefined);
     readonly sidebarAriaLabel = input<string | undefined>(undefined);
     readonly splitSizes = input<[number, number]>([50, 50]);
     readonly minSplitSizes = input<[number, number]>([120, 120]);
+    readonly hasNestedFullscreen = input<boolean>(false);
+    readonly preventEscapeClose = input<boolean>(false);
+    readonly defaultVerticalSplitSizes = input<[number, number]>([50, 50]);
+    readonly defaultHorizontalSplitSizes = input<[number, number]>([50, 50]);
+    readonly hasHorizontalSplit = input<boolean>(false);
+    readonly horizontalSplitSizes = input<[number, number]>([50, 50]);
+    readonly minHorizontalSplitSizes = input<[number, number]>([80, 80]);
+    readonly horizontalSplitTopElement = input<ElementRef | undefined>(undefined);
+    readonly horizontalSplitBottomElement = input<ElementRef | undefined>(undefined);
 
     readonly backdropClick = output<void>();
     readonly splitSizesChange = output<[number, number]>();
+    readonly fullscreenChange = output<boolean>();
+    readonly horizontalSplitSizesChange = output<[number, number]>();
+
+    private readonly _isFullscreen = signal<boolean>(false);
+    readonly isFullscreen = this._isFullscreen.asReadonly();
 
     readonly contentContainer = viewChild<ElementRef<HTMLElement>>('contentContainer');
     readonly mainContentElement = viewChild<ElementRef<HTMLElement>>('mainContent');
@@ -53,13 +67,17 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }));
 
     private splitInstance?: Split.Instance;
+    private horizontalSplitInstance?: Split.Instance;
     private _focusTrapHandler?: (event: KeyboardEvent) => void;
+    private _focusTrapContainer?: HTMLElement;
     private _inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
+    private _previouslyFocusedElement: HTMLElement | null = null;
 
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
     private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     constructor() {
+        // Vertical splitter lifecycle (main content | sidebar)
         effect(() => {
             const needsSplitter = this.isFullscreen() && this.showSidebar();
             const mainEl = this.mainContentElement()?.nativeElement;
@@ -70,6 +88,22 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
                 if (needsSplitter && mainEl && sidebarEl) {
                     this.ngZone.runOutsideAngular(() => {
                         this.initSplitter([mainEl, sidebarEl]);
+                    });
+                }
+            });
+        });
+
+        // Horizontal splitter lifecycle (top | bottom)
+        effect(() => {
+            const needsSplitter = this.isFullscreen() && this.hasHorizontalSplit();
+            const topEl = this.horizontalSplitTopElement()?.nativeElement;
+            const bottomEl = this.horizontalSplitBottomElement()?.nativeElement;
+
+            untracked(() => {
+                this.destroyHorizontalSplitter();
+                if (needsSplitter && topEl && bottomEl) {
+                    this.ngZone.runOutsideAngular(() => {
+                        this.initHorizontalSplitter([topEl, bottomEl]);
                     });
                 }
             });
@@ -98,6 +132,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.destroySplitter();
+        this.destroyHorizontalSplitter();
         this.clearFullscreenTopOffset();
         this.setGlobalFullscreenState(false);
         this.cleanupFullscreenAccessibility();
@@ -108,6 +143,41 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         if (this.isFullscreen()) {
             this.updateFullscreenTopOffset();
         }
+    }
+
+    @HostListener('document:keydown.escape', ['$event'])
+    onEscapePressed(event: Event): void {
+        if (!this.isFullscreen() || event.defaultPrevented || this.preventEscapeClose() || this.hasNestedFullscreen()) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        this.close();
+    }
+
+    /**
+     * Opens fullscreen and captures the currently focused element for restoration on close.
+     */
+    open(): void {
+        if (this._isFullscreen()) {
+            return;
+        }
+        this._captureFocusedElement();
+        this.resetSplitSizesToDefaults();
+        this._isFullscreen.set(true);
+        this.fullscreenChange.emit(true);
+    }
+
+    /**
+     * Closes fullscreen and restores focus to the previously focused element.
+     */
+    close(): void {
+        if (!this._isFullscreen() || this.hasNestedFullscreen()) {
+            return;
+        }
+        this._isFullscreen.set(false);
+        this._restoreFocusedElement();
+        this.fullscreenChange.emit(false);
     }
 
     protected onBackdropClick(): void {
@@ -146,6 +216,53 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         this.splitInstance = undefined;
     }
 
+    private initHorizontalSplitter(elements: HTMLElement[]): void {
+        this.horizontalSplitInstance = Split(elements, {
+            sizes: this.horizontalSplitSizes(),
+            minSize: this.minHorizontalSplitSizes(),
+            gutterSize: 12,
+            cursor: 'row-resize',
+            direction: 'vertical',
+            onDragEnd: (sizes) => {
+                this.ngZone.run(() => {
+                    this.horizontalSplitSizesChange.emit([sizes[0], sizes[1]]);
+                });
+            },
+            gutter: (_index, direction) => this.createSplitGutter(direction),
+        });
+    }
+
+    private destroyHorizontalSplitter(): void {
+        this.horizontalSplitInstance?.destroy();
+        this.horizontalSplitInstance = undefined;
+    }
+
+    private resetSplitSizesToDefaults(): void {
+        this.splitSizesChange.emit(this.defaultVerticalSplitSizes());
+        this.horizontalSplitSizesChange.emit(this.defaultHorizontalSplitSizes());
+    }
+
+    private _captureFocusedElement(): void {
+        const activeEl = document.activeElement;
+        if (activeEl instanceof HTMLElement) {
+            this._previouslyFocusedElement = activeEl;
+        }
+    }
+
+    private _restoreFocusedElement(): void {
+        const elementToRestore = this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement) ? this._previouslyFocusedElement : undefined;
+        this._previouslyFocusedElement = null;
+
+        if (elementToRestore) {
+            afterNextRender(
+                () => {
+                    elementToRestore.focus();
+                },
+                { injector: this.injector },
+            );
+        }
+    }
+
     private updateFullscreenTopOffset(): void {
         const topOffset = this.getNavbarHeight();
         this.hostElement.nativeElement.style.setProperty('--lecture-combined-view-top', `${topOffset}px`);
@@ -182,6 +299,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private setupFocusTrap(container: HTMLElement): void {
+        // Clean up any existing handler first
+        this.cleanupFocusTrap();
+
+        this._focusTrapContainer = container;
         this._focusTrapHandler = (event: KeyboardEvent) => {
             if (event.key !== 'Tab') {
                 return;
@@ -202,7 +323,17 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
             }
         };
 
+        // Listener is removed in cleanupFocusTrap() which is called from ngOnDestroy()
+        // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
         container.addEventListener('keydown', this._focusTrapHandler);
+    }
+
+    private cleanupFocusTrap(): void {
+        if (this._focusTrapContainer && this._focusTrapHandler) {
+            this._focusTrapContainer.removeEventListener('keydown', this._focusTrapHandler);
+            this._focusTrapHandler = undefined;
+            this._focusTrapContainer = undefined;
+        }
     }
 
     private shouldSkipBackgroundInert(element: HTMLElement): boolean {
@@ -259,11 +390,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private cleanupFullscreenAccessibility(): void {
-        const container = this.contentContainer()?.nativeElement;
-        if (container && this._focusTrapHandler) {
-            container.removeEventListener('keydown', this._focusTrapHandler);
-            this._focusTrapHandler = undefined;
-        }
+        this.cleanupFocusTrap();
         this.setBackgroundInert(false);
     }
 }
