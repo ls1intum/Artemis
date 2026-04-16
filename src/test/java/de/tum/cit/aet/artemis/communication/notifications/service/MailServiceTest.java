@@ -117,7 +117,7 @@ class MailServiceTest {
      */
     @Test
     void testNoMailSendExceptionThrown() {
-        doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage[].class));
+        doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
         assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
     }
 }
