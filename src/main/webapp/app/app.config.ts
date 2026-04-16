@@ -1,7 +1,6 @@
 import './polyfills';
 import 'app/shared/util/array.extension';
 import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';

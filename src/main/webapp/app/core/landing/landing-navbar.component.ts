@@ -99,7 +99,7 @@ import { MenuItem } from 'primeng/api';
 
         /* Darker primary + bold text pushes contrast past WCAG AA (≥ 4.5:1) on the navy navbar. */
         .login-btn {
-            background: var(--primary-dark, var(--primary));
+            background-color: var(--primary-dark, var(--primary));
             color: var(--white);
             border: none;
             padding: 6px 16px;
@@ -114,7 +114,7 @@ import { MenuItem } from 'primeng/api';
         }
 
         .login-btn:hover {
-            background: var(--primary);
+            background-color: var(--primary);
             opacity: 0.95;
         }
 

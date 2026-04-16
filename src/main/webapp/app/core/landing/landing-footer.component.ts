@@ -60,7 +60,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
         }
 
         .cta-btn {
-            background: var(--primary-dark, var(--primary));
+            background-color: var(--primary-dark, var(--primary));
             color: var(--white);
             border: none;
             padding: 8px 16px;
@@ -76,7 +76,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
         }
 
         .cta-btn:hover {
-            background: var(--primary);
+            background-color: var(--primary);
             opacity: 0.95;
         }
 

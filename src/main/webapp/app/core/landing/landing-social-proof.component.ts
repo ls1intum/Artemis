@@ -41,7 +41,6 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             align-items: center;
             animation: marquee 30s linear infinite;
             width: max-content;
-            will-change: transform;
         }
 
         .marquee-track:hover {
@@ -91,7 +90,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             <p class="social-proof-title">{{ 'landing.socialProof.title' | artemisTranslate }}</p>
             <div class="marquee-container">
                 <div class="marquee-track" aria-label="Universities using Artemis">
-                    @for (logo of logos; track logo.name; let idx = $index) {
+                    @for (logo of logos; track logo.name) {
                         <img
                             class="logo-item"
                             [class.light-mode-black]="logo.isWhiteLogo"
