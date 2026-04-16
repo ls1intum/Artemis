@@ -20,7 +20,6 @@ import {
     output,
     signal,
     untracked,
-    viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -186,7 +185,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
-    readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
+    @ViewChild('diffHeader', { static: false }) diffHeader?: ElementRef<HTMLDivElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     @Input()
@@ -523,7 +522,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     ngAfterViewInit(): void {
-        if (!this.monacoEditor) return;
         this.adjustEditorDimensions();
         this.monacoEditor.setWordWrap(true);
         this.monacoEditor.changeModel('markdown-content.custom-md', this._markdown ?? '', 'custom-md');
@@ -723,7 +721,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         const elementHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        const diffHeaderHeight = this.getElementClientHeight(this.diffHeader());
+        const diffHeaderHeight = this.getElementClientHeight(this.diffHeader);
         return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - diffHeaderHeight - BORDER_HEIGHT_OFFSET);
     }
 
@@ -746,7 +744,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Adjust the dimensions of the editor to fit the available space.
      */
     adjustEditorDimensions(): void {
-        if (!this.monacoEditor) return;
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
@@ -930,7 +927,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param preset The preset to apply.
      */
     applyOptionPreset(preset: MonacoEditorOptionPreset): void {
-        this.monacoEditor?.applyOptionPreset(preset);
+        this.monacoEditor.applyOptionPreset(preset);
     }
 
     /**
