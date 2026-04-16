@@ -71,9 +71,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
             return;
         }
         this.interactInstance = interact(resizerEl).draggable({
-            axis: 'x',
             listeners: {
                 move: (event) => {
+                    // Constrain to horizontal axis — only use event.dx, ignore dy
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const currentWidth = videoColumnEl.getBoundingClientRect().width;
                     const newWidth = currentWidth + event.dx;

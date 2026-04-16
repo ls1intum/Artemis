@@ -75,12 +75,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
     // unit selected). Without this, one transient YouTube init failure sticks this
     // component instance on iframe fallback for its whole lifetime.
-    private readonly _resetPlayerFailedOnUnitChange = effect(() => {
-        const id = this.lectureUnit()?.id;
-        // read id to create the dependency; then schedule reset
-        void id;
-        untracked(() => this.youtubePlayerFailed.set(false));
-    });
+    constructor() {
+        effect(() => {
+            const id = this.lectureUnit()?.id;
+            // read id to create the dependency; then schedule reset
+            void id;
+            untracked(() => this.youtubePlayerFailed.set(false));
+        });
+    }
 
     // Uses TranslateService.instant() for efficiency; trade-off: if the user
     // switches language mid-session, this value won't update until the lecture
