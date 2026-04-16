@@ -60,6 +60,7 @@ import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lectu
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 type SplitterConfig = { direction: 'horizontal' | 'vertical'; sizes: [number, number]; minSizes: [number, number]; cursor: string; onDragEnd: (sizes: number[]) => void };
 
@@ -94,6 +95,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly ngZone = inject(NgZone);
     private readonly translateService = inject(TranslateService);
+    private readonly themeService = inject(ThemeService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -198,6 +200,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     constructor() {
         super();
+
+        // Update dark-mode class based on theme
+        effect(() => {
+            const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
+            if (isDarkMode) {
+                this.hostElement.nativeElement.classList.add('dark-mode');
+            } else {
+                this.hostElement.nativeElement.classList.remove('dark-mode');
+            }
+        });
 
         // Vertical splitter lifecycle (content | iris)
         effect(() => {

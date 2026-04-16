@@ -1,17 +1,33 @@
+@use 'src/main/webapp/content/scss/themes/default-variables' as light;
+@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
 /* Host element participates in parent flex layout */
 :host {
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
+    min-height: 0;
+    --transcript-bg: #{light.$gray-100};
+    --transcript-hover-bg: #{light.$gray-200};
+    --transcript-active-bg: #{light.$transcript-active-bg};
+    --transcript-active-text: #{light.$transcript-active-text};
+}
+
+:host-context([prime-ng-use-dark-theme='true']) {
+    --transcript-bg: #{dark.$gray-900};
+    --transcript-hover-bg: #{dark.$gray-800};
+    --transcript-active-bg: #{dark.$transcript-active-bg};
+    --transcript-active-text: #{dark.$transcript-active-text};
 }
 
 /* --- Transcript column: header stays fixed; only list scrolls --- */
 .transcript-column {
     width: 100%;
-    max-height: 500px;
-
+    height: 100%;
     overflow: hidden;
     padding-left: 0.5rem;
-
+    background-color: var(--transcript-bg);
+    color: var(--bs-body-color);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -39,21 +55,23 @@
 .search-icon {
     position: absolute;
     left: 0.75rem;
-    color: var(--gray-600);
+    color: var(--bs-secondary-color);
     pointer-events: none;
 }
 
 .search-input {
     width: 100%;
     padding: 0.5rem 2.5rem 0.5rem 2.5rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--bs-border-color);
     border-radius: 0.25rem;
+    background-color: var(--transcript-bg);
+    color: var(--bs-body-color);
     font-size: 0.9rem;
     transition: border-color 0.2s;
 
     &:focus {
         outline: none;
-        border-color: var(--primary);
+        border-color: var(--bs-primary);
         box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
     }
 }
@@ -63,7 +81,7 @@
     right: 0.5rem;
     background: none;
     border: none;
-    color: var(--gray-600);
+    color: var(--bs-secondary-color);
     cursor: pointer;
     padding: 0.25rem;
     display: flex;
@@ -72,11 +90,11 @@
     transition: color 0.2s;
 
     &:hover {
-        color: var(--gray-700);
+        color: var(--bs-body-color);
     }
 
     &:focus {
-        outline: 0.2rem solid var(--primary);
+        outline: 0.2rem solid var(--bs-primary);
         outline-offset: 0.2rem;
     }
 }
@@ -90,25 +108,25 @@
 }
 
 .search-results {
-    color: var(--gray-600);
+    color: var(--bs-secondary-color);
     min-width: 4rem;
 }
 
 .nav-button {
     background: none;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--bs-border-color);
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
-    color: var(--gray-700);
+    color: var(--bs-body-color);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
 
     &:hover:not(:disabled) {
-        background-color: var(--gray-100);
-        border-color: var(--gray-500);
+        background-color: var(--transcript-hover-bg);
+        border-color: var(--bs-border-color);
     }
 
     &:disabled {
@@ -117,7 +135,7 @@
     }
 
     &:focus {
-        outline: 0.2rem solid var(--primary);
+        outline: 0.2rem solid var(--bs-primary);
         outline-offset: 0.2rem;
     }
 }
@@ -152,7 +170,7 @@
 }
 
 .transcript-line:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--transcript-hover-bg);
 }
 
 .transcript-line.active {
@@ -181,22 +199,21 @@
 
 .no-results {
     text-align: center;
-    color: var(--gray-600);
+    color: var(--bs-secondary-color);
     font-style: italic;
     padding: 2rem 1rem;
 }
 
 :host-context(.content-container--fullscreen) .search-input {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 :host-context(.content-container--fullscreen) .search-nav {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
-/* Slightly larger typography improves readability in fullscreen split view. */
 :host-context(.content-container--fullscreen) .transcript-line {
-    font-size: 1rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     padding: 0.5rem 0.625rem;
 }

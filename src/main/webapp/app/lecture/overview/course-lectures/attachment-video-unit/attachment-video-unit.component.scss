@@ -1,7 +1,17 @@
+@use 'src/main/webapp/content/scss/themes/default-variables' as light;
+@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
+
 jhi-attachment-video-unit {
-    --lecture-combined-view-bg: var(--bs-gray-100, #f8f9fa);
-    --lecture-combined-view-border: var(--card-border-color);
+    --lecture-combined-view-bg: #{light.$gray-100};
+    --lecture-combined-view-surface: #{light.$card-bg};
+    --lecture-combined-view-border: #{light.$card-border-color};
     --lecture-combined-view-radius: 0.15rem;
+
+    &.dark-mode {
+        --lecture-combined-view-bg: #{dark.$gray-900};
+        --lecture-combined-view-surface: #{dark.$card-bg};
+        --lecture-combined-view-border: #{dark.$card-border-color};
+    }
 
     .video-player-container,
     .pdf-viewer-spacing {
@@ -28,6 +38,7 @@ jhi-attachment-video-unit {
         height: min(100cqh, calc(100cqw * 9 / 16));
         max-width: 100%;
         max-height: 100%;
+        background-color: var(--lecture-combined-view-bg);
         border: 1px solid var(--lecture-combined-view-border);
         border-radius: var(--lecture-combined-view-radius);
         overflow: hidden;
@@ -73,7 +84,7 @@ jhi-attachment-video-unit {
         gap: 0;
         padding: 0.75rem;
         box-sizing: border-box;
-        background-color: var(--card-bg);
+        background-color: var(--lecture-combined-view-surface);
         border: 0;
         border-radius: 0;
         overflow: hidden;
@@ -142,7 +153,7 @@ jhi-attachment-video-unit {
                 min-width: 120px;
                 display: flex;
                 flex-direction: column;
-                background-color: var(--card-bg);
+                background-color: var(--lecture-combined-view-surface);
                 overflow: hidden;
                 padding-top: 2.5rem;
             }
