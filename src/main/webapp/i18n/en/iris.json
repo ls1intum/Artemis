@@ -143,6 +143,8 @@
                     "learnStarter": "Help me understand the concept of ",
                     "quiz": "Quiz",
                     "quizTopicStarter": "Generate 5 multiple choice questions to quiz me on the topic of ",
+                    "quizLectureStarter": "Generate 5 multiple choice questions to quiz me on this lecture",
+                    "quizExerciseStarter": "Generate 5 multiple choice questions to quiz me on the concepts behind this exercise",
                     "tips": "Tips",
                     "tipsStarter": "Give me 3 tips to learn this course effectively"
                 },
@@ -155,7 +157,8 @@
                     },
                     "lecture": {
                         "keyPoints": "What are the key points I should know from this lecture?",
-                        "summarise": "Summarize what I should know"
+                        "summarise": "Summarize what I should know",
+                        "whereToStart": "I am stuck, where should I start?"
                     }
                 }
             },
