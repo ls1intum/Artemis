@@ -16,7 +16,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param stages    pipeline stage details
  * @param jobId     identifier of the Pyris job
  * @param errorCode optional machine-readable error code (e.g. {@code YOUTUBE_PRIVATE});
- *                      serialized as {@code error_code} on the wire
+ *                      serialized as {@code error_code} on the wire.
+ *                      Only consumed when the terminal stage is an error;
+ *                      ignored (treated as {@code null}) on successful completions
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, long jobId, @Nullable @JsonProperty("error_code") String errorCode) {
