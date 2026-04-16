@@ -128,13 +128,7 @@
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
                 <jhi-lecture-chatbot [lectureId]="lectureId()" />
-                <button
-                    class="iris-sidebar__close-button"
-                    type="button"
-                    jhiTranslate="artemisApp.lectureUnit.closeFullscreen"
-                    [attr.aria-label]="closeFullscreenAriaLabel()"
-                    (click)="closeFullscreen()"
-                >
+                <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
                     <fa-icon [icon]="faXmark" />
                 </button>
             }
