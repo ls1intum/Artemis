@@ -6,13 +6,9 @@
             [playerVars]="playerVars"
             (ready)="onPlayerReady($event)"
             (stateChange)="onStateChange($event)"
-            (error)="onPlayerError($event)">
-        </youtube-player>
+            (error)="onPlayerError($event)"
+        />
     </div>
     <div class="resizer-handle" #resizerHandle>⋮</div>
-    <jhi-transcript-viewer
-        [transcriptSegments]="transcriptSegments()"
-        [currentSegmentIndex]="currentSegmentIndex()"
-        (segmentClicked)="seekTo($event)">
-    </jhi-transcript-viewer>
+    <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

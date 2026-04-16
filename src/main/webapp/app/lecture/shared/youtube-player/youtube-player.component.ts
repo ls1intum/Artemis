@@ -101,7 +101,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.clearReadiness();
         // The @angular/youtube-player exposes the player via the component instance;
         // in tests we inject a stub directly into `youtubePlayer`. Production:
-        this.youtubePlayer = this.youtubePlayer ?? (event?.target ?? null);
+        this.youtubePlayer = this.youtubePlayer ?? event?.target ?? null;
         const initial = this.initialTimestamp();
         if (initial !== undefined && this.youtubePlayer) {
             this.youtubePlayer.seekTo(initial, true);
