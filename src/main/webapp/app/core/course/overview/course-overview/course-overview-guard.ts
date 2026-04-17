@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, forkJoin, from, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
@@ -37,7 +37,9 @@ export class CourseOverviewGuard implements CanActivate {
             return of(false);
         }
         // Resolving the current user is only needed for the dashboard fallback; other paths don't depend on it.
-        const user$: Observable<User | undefined> = path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()) : of(undefined);
+        // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to today's Iris-or-exercises behavior.
+        const user$: Observable<User | undefined> =
+            path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
         //we need to load the course from the server to check if the user has access to the requested route. The course in the cache might not be sufficient (e.g. misses exams or lectures)
         return forkJoin({
             courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),

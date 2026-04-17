@@ -286,5 +286,34 @@ describe('CourseOverviewGuard', () => {
 
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
         });
+
+        it('should not abort the guard stream when identity() rejects; treat unknown user as not opted out', async () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('network error'));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            let resultValue: boolean | undefined;
+            let errored = false;
+            await new Promise<void>((resolve) => {
+                guard.canActivate(route).subscribe({
+                    next: (value) => {
+                        resultValue = value;
+                    },
+                    error: () => {
+                        errored = true;
+                        resolve();
+                    },
+                    complete: () => resolve(),
+                });
+            });
+
+            expect(errored).toBe(false);
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
+        });
     });
 });
