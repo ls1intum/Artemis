@@ -49,7 +49,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private FeatureToggleService featureToggleService;
 
     @Autowired
-    private IrisChatSessionService irisCourseChatSessionService;
+    private IrisChatSessionService irisChatSessionService;
 
     @Autowired
     private IrisSessionRepository irisSessionRepository;
@@ -82,7 +82,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         userTestRepository.updateMemirisEnabled(user.getId(), true);
 
-        irisSession = irisCourseChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user);
+        irisSession = irisChatSessionService.createSession(course.getId(), IrisChatMode.COURSE_CHAT, course.getId(), user);
 
         pipelineDone = new AtomicBoolean(false);
     }
@@ -176,7 +176,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private void sendCourseStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/course-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
     }
 
