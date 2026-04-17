@@ -88,10 +88,14 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         PublicKeyCredentialUserEntity userEntity = mock(PublicKeyCredentialUserEntity.class);
         when(userEntity.getName()).thenReturn(username);
 
+        PasskeyCredential passkeyCredential = new PasskeyCredential();
+        passkeyCredential.setCredentialId(credentialId);
+        passkeyCredential.setSuperAdminApproved(false);
+
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
         when(userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
-        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.empty());
+        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
 
         // Execute
         var result = provider.authenticate(requestToken);
@@ -144,10 +148,14 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         String credentialId = "test-credential-id";
         String username = "nonexistent";
 
+        PasskeyCredential passkeyCredential = new PasskeyCredential();
+        passkeyCredential.setCredentialId(credentialId);
+
         PublicKeyCredentialUserEntity userEntity = mock(PublicKeyCredentialUserEntity.class);
         when(userEntity.getName()).thenReturn(username);
 
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
+        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
         when(userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)).thenReturn(Optional.empty());
 
@@ -166,10 +174,14 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         user.setActivated(false);
         user.setAuthorities(Set.of(new Authority(Role.STUDENT.getAuthority())));
 
+        PasskeyCredential passkeyCredential = new PasskeyCredential();
+        passkeyCredential.setCredentialId(credentialId);
+
         PublicKeyCredentialUserEntity userEntity = mock(PublicKeyCredentialUserEntity.class);
         when(userEntity.getName()).thenReturn(username);
 
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
+        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
         when(userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
 
@@ -182,7 +194,11 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         // Setup
         String credentialId = "test-credential-id";
 
+        PasskeyCredential passkeyCredential = new PasskeyCredential();
+        passkeyCredential.setCredentialId(credentialId);
+
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
+        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
         when(relyingPartyOperations.authenticate(any())).thenThrow(new RuntimeException("WebAuthn verification failed"));
 
         // Execute & Verify
