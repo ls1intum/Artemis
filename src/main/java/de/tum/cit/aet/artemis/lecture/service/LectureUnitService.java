@@ -152,7 +152,7 @@ public class LectureUnitService {
 
     /**
      * Deletes a lecture unit correctly in the database.
-     * Also cancels any ongoing content processing jobs (Nebula transcription, Pyris ingestion).
+     * Also cancels any ongoing content processing jobs (Pyris ingestion).
      * <p>
      * Note: The processing state is automatically deleted by database CASCADE DELETE
      * when the lecture unit is deleted.
