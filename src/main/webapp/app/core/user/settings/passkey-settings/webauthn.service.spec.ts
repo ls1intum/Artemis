@@ -206,6 +206,14 @@ describe('WebauthnService', () => {
             expect(console.error).toHaveBeenCalled();
         });
 
+        it('should rethrow NotAllowedError without showing alert when user cancels authenticator dialog', async () => {
+            const notAllowedError = new DOMException('User cancelled', 'NotAllowedError');
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(notAllowedError);
+
+            await expect(service.loginWithPasskey()).rejects.toThrow(DOMException);
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
         it('should handle generic error during login', async () => {
             const genericError = new Error('Network error');
             vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);

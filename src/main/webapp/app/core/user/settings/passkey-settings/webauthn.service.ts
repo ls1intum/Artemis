@@ -217,6 +217,11 @@ export class WebauthnService {
                 // Let the caller decide how to handle them.
                 throw error;
             }
+            if (this.isUserCancelledPasskeyError(error)) {
+                // User cancelled the authenticator dialog (e.g., closed the passkey prompt).
+                // No error alert needed — just re-throw so callers can handle it.
+                throw error;
+            }
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
             } else if (error.status === HttpStatusCode.Forbidden) {
