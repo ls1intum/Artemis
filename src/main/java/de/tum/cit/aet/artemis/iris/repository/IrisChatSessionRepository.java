@@ -151,6 +151,21 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     @Transactional // ok because of delete
     void deleteAllByCourseId(long courseId);
 
+    /**
+     * Deletes all chat sessions for a given entity (exercise or lecture) in a specific chat mode.
+     * <p>
+     * Scoping by {@code chatMode} is mandatory because {@code entityId} is not unique across modes:
+     * the same numeric id may point to an exercise for {@code *_EXERCISE_CHAT} and to an unrelated
+     * lecture for {@code LECTURE_CHAT}. Messages and their content are removed via cascade
+     * (CascadeType.ALL + orphanRemoval on {@code IrisSession.messages}).
+     *
+     * @param chatMode the chat mode (exercise or lecture)
+     * @param entityId the id of the underlying entity (exerciseId or lectureId)
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByChatModeAndEntityId(IrisChatMode chatMode, long entityId);
+
     // -------------------------------------------------------------------------
     // User-level queries (used by IrisChatSessionResource and IrisDataExportApi)
     // -------------------------------------------------------------------------

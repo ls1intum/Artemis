@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -82,10 +83,12 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final Optional<IrisChatSessionApi> irisChatSessionApi;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -96,6 +99,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.irisChatSessionApi = irisChatSessionApi;
     }
 
     /**
@@ -188,6 +192,10 @@ public class LectureService {
         channelService.deleteChannel(lectureChannel);
 
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
+
+        // Remove any Iris chat sessions referencing this lecture. Since the unified iris_session
+        // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
+        irisChatSessionApi.ifPresent(api -> api.deleteAllForLecture(lecture.getId()));
 
         lectureRepository.deleteById(lecture.getId());
     }
