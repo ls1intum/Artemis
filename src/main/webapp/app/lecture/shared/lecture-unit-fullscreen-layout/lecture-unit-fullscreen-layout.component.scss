@@ -86,6 +86,23 @@
         }
     }
 
+    .split-gutter-handle {
+        display: flex;
+        gap: 1px;
+        pointer-events: none;
+        flex-direction: row;
+
+        &::before,
+        &::after {
+            content: '';
+            display: block;
+            width: 2px;
+            height: 12px;
+            background: var(--bs-body-color);
+            border-radius: 1px;
+        }
+    }
+
     .gutter.gutter-horizontal {
         display: flex;
         align-items: center;
@@ -121,23 +138,6 @@
                 width: 12px;
                 height: 2px;
             }
-        }
-    }
-
-    .split-gutter-handle {
-        display: flex;
-        gap: 1px;
-        pointer-events: none;
-        flex-direction: row;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            width: 2px;
-            height: 12px;
-            background: var(--bs-body-color);
-            border-radius: 1px;
         }
     }
 }

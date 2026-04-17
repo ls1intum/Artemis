@@ -1,3 +1,13 @@
+/**
+ * video-player.component.spec.ts
+ * Tests for VideoPlayerComponent (HLS.js + transcript sync + resizer)
+ *
+ * - Mocks `hls.js` library
+ * - Mocks `interactjs` library
+ * - Minimal template with <video #videoRef>
+ * - Covers init/no-init, timeupdate syncing + scrolling, seeking, resizer, and teardown
+ */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
