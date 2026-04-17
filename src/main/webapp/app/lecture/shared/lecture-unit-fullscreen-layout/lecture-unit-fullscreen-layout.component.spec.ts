@@ -33,7 +33,7 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         const backdropClickSpy = vi.fn();
         component.backdropClick.subscribe(backdropClickSpy);
 
-        fixture.componentRef.setInput('isFullscreen', true);
+        component.open();
         fixture.detectChanges();
 
         const overlay = fixture.debugElement.query(By.css('.fullscreen-overlay'));
