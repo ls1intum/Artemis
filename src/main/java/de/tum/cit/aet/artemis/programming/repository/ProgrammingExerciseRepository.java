@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -1051,6 +1052,29 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.id = :programmingExerciseId
             """)
     ProgrammingExerciseNamesDTO findNames(@Param("programmingExerciseId") long programmingExerciseId);
+
+    /**
+     * Resolve the exercise and owning course metadata for Deimos manual exercise-scope runs.
+     * Supports both regular course exercises and exam exercises.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return projection containing exercise and course metadata
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO(
+                p.id,
+                p.title,
+                COALESCE(c.id, ec.id),
+                COALESCE(c.title, ec.title),
+                COALESCE(c.courseIcon, ec.courseIcon))
+            FROM ProgrammingExercise p
+              LEFT JOIN p.course c
+              LEFT JOIN p.exerciseGroup eg
+              LEFT JOIN eg.exam e
+              LEFT JOIN e.course ec
+            WHERE p.id = :exerciseId
+            """)
+    Optional<DeimosExerciseScopeInfoDTO> findDeimosExerciseScopeInfoById(@Param("exerciseId") long exerciseId);
 
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.

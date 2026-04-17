@@ -27,6 +27,7 @@ export enum FeatureToggle {
     AutonomousTutor = 'AutonomousTutor',
     GlobalSearch = 'GlobalSearch',
     ApollonQuizDragAndDrop = 'ApollonQuizDragAndDrop',
+    Deimos = 'Deimos',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

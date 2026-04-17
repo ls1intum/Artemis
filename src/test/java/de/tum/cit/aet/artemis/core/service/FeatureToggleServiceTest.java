@@ -41,7 +41,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.ApollonQuizDragAndDrop)).isFalse();
-
+        assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isTrue();
     }
 
     private void resetToDefaultState() {
@@ -52,6 +52,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.LearningPaths);
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
+        featureToggleService.enableFeature(Feature.Deimos);
+
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);

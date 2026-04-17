@@ -538,6 +538,11 @@ public final class Constants {
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
+     * The name of the property used to enable or disable the Deimos malicious participation analysis module.
+     */
+    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
+
+    /**
      * The name of the property used to define the directories for file uploads.
      */
     public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";

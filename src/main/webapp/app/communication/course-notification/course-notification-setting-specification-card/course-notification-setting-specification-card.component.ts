@@ -56,6 +56,12 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     exerciseTitle: 'Modeling 123',
                     unitName: 'Modeling 123',
                     groupTitle: 'Grp 123',
+                    scopeTitle: 'Exercise 123',
+                    analyzed: 50,
+                    maliciousCount: 3,
+                    benignCount: 47,
+                    failed: 0,
+                    maliciousSummary: ' M:3',
                 },
                 '/',
             );

@@ -198,6 +198,11 @@
                     "name": "Apollon Quiz Drag-and-Drop Import",
                     "description": "Allows instructors to add Apollon-based drag-and-drop quiz questions from the quiz editor.",
                     "disableWarning": "Instructors will not be able to create new Apollon-based drag-and-drop quiz questions from the quiz editor."
+                },
+                "Deimos": {
+                    "name": "Deimos Analysis",
+                    "description": "Enables manual and scheduled malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs and scheduled Deimos runs are skipped."
                 }
             }
         }

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,7 +42,7 @@ import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -51,6 +51,7 @@ import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from '
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -59,6 +60,8 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
@@ -80,6 +83,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
+        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -87,6 +91,8 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
+        ButtonComponent,
+        DeimosDateRangeModalComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -94,6 +100,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
+    private deimosService = inject(DeimosService);
+
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
@@ -108,12 +116,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private aeolusService = inject(AeolusService);
     private sharingService = inject(ProgrammingExerciseSharingService);
 
+    protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
+
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
     protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
@@ -743,6 +755,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     message: errorMessage,
                     disableTranslation: true,
                 });
+            },
+        });
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal().open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerExerciseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        const exerciseId = this.programmingExercise.id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerExerciseBatch(exerciseId, selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
             },
         });
     }

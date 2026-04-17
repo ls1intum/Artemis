@@ -198,6 +198,11 @@
                     "name": "Apollon-Quiz-Drag-and-Drop-Import",
                     "description": "Ermöglicht Lehrenden, im Quiz-Editor Apollon-basierte Drag-and-Drop-Fragen hinzuzufügen.",
                     "disableWarning": "Lehrende können im Quiz-Editor keine neuen Apollon-basierten Drag-and-Drop-Fragen erstellen."
+                },
+                "Deimos": {
+                    "name": "Deimos Analyse",
+                    "description": "Aktiviert manuelle und geplante Analysen von potenziell bösartigen Programmierteilnahmen.",
+                    "disableWarning": "Lehrende können keine Deimos-Analysen starten und geplante Deimos-Läufe werden übersprungen."
                 }
             }
         }

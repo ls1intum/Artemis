@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "deimos": {
+            "button": {
+                "courseTrigger": "Run Malicious Participation Analysis",
+                "exerciseTrigger": "Run Malicious Participation Analysis"
+            },
+            "modal": {
+                "title": {
+                    "course": "Run Malicious Participation Analysis for course",
+                    "exercise": "Run Malicious Participation Analysis for programming exercise"
+                },
+                "from": "From",
+                "to": "To",
+                "validation": {
+                    "required": "Please select both start and end date.",
+                    "order": "Start date must be before or equal to end date.",
+                    "window": "Selected date range exceeds the allowed window."
+                }
+            },
+            "trigger": {
+                "success": "Malicious Participation Analysis started. You will receive a completion notification.",
+                "error": "Could not start Malicious Participation Analysis. Please try again."
+            }
+        }
+    }
+}

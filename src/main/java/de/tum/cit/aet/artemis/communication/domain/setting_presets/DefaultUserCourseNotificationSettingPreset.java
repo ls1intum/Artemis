@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Duplicat
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.MaliciousParticipationAnalysisRunResultNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
@@ -72,6 +73,8 @@ public class DefaultUserCourseNotificationSettingPreset extends UserCourseNotifi
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)),
                 Map.entry(ProgrammingTestCasesChangedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)),
+                Map.entry(MaliciousParticipationAnalysisRunResultNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(PlagiarismCaseVerdictNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(TutorialGroupAssignedNotification.class,

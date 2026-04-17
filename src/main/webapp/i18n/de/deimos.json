@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "deimos": {
+            "button": {
+                "courseTrigger": "Malicious Participation Analysis starten",
+                "exerciseTrigger": "Malicious Participation Analysis starten"
+            },
+            "modal": {
+                "title": {
+                    "course": "Malicious Participation Analysis fuer den Kurs starten",
+                    "exercise": "Malicious Participation Analysis fuer die Programmieraufgabe starten"
+                },
+                "from": "Von",
+                "to": "Bis",
+                "validation": {
+                    "required": "Bitte waehle Start- und Enddatum aus.",
+                    "order": "Das Startdatum muss vor oder gleich dem Enddatum liegen.",
+                    "window": "Der ausgewaehlte Zeitraum ueberschreitet das erlaubte Fenster."
+                }
+            },
+            "trigger": {
+                "success": "Malicious Participation Analysis wurde gestartet. Du erhaeltst eine Abschlussbenachrichtigung.",
+                "error": "Die Malicious Participation Analysis konnte nicht gestartet werden. Bitte versuche es erneut."
+            }
+        }
+    }
+}

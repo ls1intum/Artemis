@@ -58,7 +58,7 @@
                         }
                         @if (programmingExercise.isAtLeastEditor && plagiarismCheckSupported) {
                             <jhi-feature-overlay [enabled]="plagiarismEnabled">
-                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
+                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" [routerLink]="['plagiarism']">
                                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism"></span>
                                 </a>
                             </jhi-feature-overlay>
@@ -91,6 +91,14 @@
                             @if (isExportToSharingEnabled) {
                                 <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise.id!" class="me-1" />
                             }
+                            <jhi-button
+                                class="me-1"
+                                [jhiFeatureToggleHide]="FeatureToggle.Deimos"
+                                [btnType]="ButtonType.SECONDARY"
+                                [btnSize]="ButtonSize.SMALL"
+                                [title]="'artemisApp.deimos.button.exerciseTrigger'"
+                                (onClick)="openDeimosBatchDialog()"
+                            />
                         }
                         @if (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor) {
                             <span class="me-1">
@@ -99,7 +107,7 @@
                                     type="button"
                                     (click)="generateStructureOracle()"
                                     class="btn btn-secondary btn-sm"
-                                    ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
+                                    [ngbTooltip]="'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate"
                                 >
                                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle"></span>
                                 </button>
@@ -169,6 +177,13 @@
                 @if (exerciseDetailSections) {
                     <jhi-detail-overview-list [sections]="exerciseDetailSections" />
                 }
+                <jhi-deimos-date-range-modal
+                    #deimosDateRangeModal
+                    [titleTranslationKey]="'artemisApp.deimos.modal.title.exercise'"
+                    [maxWindowDays]="31"
+                    [isSubmitting]="deimosSubmitting()"
+                    (confirmSelection)="triggerExerciseDeimosBatch($event)"
+                />
             </div>
         }
     </div>

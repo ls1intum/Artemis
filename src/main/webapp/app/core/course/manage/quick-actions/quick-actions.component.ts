@@ -1,4 +1,4 @@
-import { Component, inject, input, viewChild } from '@angular/core';
+import { Component, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -10,6 +10,12 @@ import { CourseMaterialImportDialogComponent } from 'app/core/course/manage/cour
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/shared/service/alert.service';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export enum CourseManagementSection {
     LECTURE = 'lectures',
@@ -18,6 +24,7 @@ export enum CourseManagementSection {
     COMPETENCY = 'competency-management',
     TUTORIAL_GROUP = 'tutorial-groups',
 }
+
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
@@ -55,41 +62,6 @@ export enum CourseManagementSection {
             .stat-value {
                 font-weight: 600;
                 font-size: 1.1rem;
-            }
-
-            .header-actions {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-            }
-
-            .header-action-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.5rem 0.875rem;
-                border: 1px solid var(--bs-border-color);
-                border-radius: 0.625rem;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-body-color);
-                font-weight: 500;
-                font-size: 0.85rem;
-                cursor: pointer;
-                text-decoration: none;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-
-                &:hover {
-                    background: var(--bs-tertiary-bg);
-                    border-color: var(--bs-secondary-border-subtle);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                }
-
-                fa-icon {
-                    color: var(--bs-secondary-color);
-                    font-size: 0.9rem;
-                }
             }
 
             .quick-actions-grid {
@@ -155,6 +127,9 @@ export enum CourseManagementSection {
             .quick-action-card--faqs {
                 --card-accent: #ec4899;
             }
+            .quick-action-card--deimos {
+                --card-accent: #64748b;
+            }
 
             .quick-action-icon {
                 width: 28px;
@@ -178,9 +153,20 @@ export enum CourseManagementSection {
             }
         `,
     ],
-    imports: [UserManagementDropdownComponent, TranslateDirective, RouterLink, NgTemplateOutlet, AddExercisePopoverComponent, CourseMaterialImportDialogComponent, FaIconComponent],
+    imports: [
+        UserManagementDropdownComponent,
+        TranslateDirective,
+        RouterLink,
+        NgTemplateOutlet,
+        AddExercisePopoverComponent,
+        CourseMaterialImportDialogComponent,
+        FaIconComponent,
+        DeimosDateRangeModalComponent,
+        FeatureToggleHideDirective,
+    ],
 })
 export class QuickActionsComponent {
+    protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCode = faCode;
     protected readonly faFileAlt = faFileAlt;
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
@@ -189,9 +175,13 @@ export class QuickActionsComponent {
     protected readonly faUsers = faUsers;
     protected readonly faFileImport = faFileImport;
     protected readonly CourseManagementSection = CourseManagementSection;
+
     course = input.required<Course>();
+
     private router = inject(Router);
     private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+    private deimosService = inject(DeimosService);
 
     lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
     atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
@@ -199,6 +189,8 @@ export class QuickActionsComponent {
     tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
 
     readonly importDialog = viewChild<CourseMaterialImportDialogComponent>('importDialog');
+    readonly deimosDateRangeModal = viewChild<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
 
     navigateToCourseManagementSection(section: CourseManagementSection) {
         const createPath = section === CourseManagementSection.COMPETENCY || section === CourseManagementSection.TUTORIAL_GROUP ? 'create' : 'new';
@@ -207,5 +199,28 @@ export class QuickActionsComponent {
 
     openImportDialog(): void {
         this.importDialog()?.open();
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal()?.open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerCourseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        const courseId = this.course().id;
+        if (!courseId) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerCourseBatch(courseId, selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
+            },
+        });
     }
 }
