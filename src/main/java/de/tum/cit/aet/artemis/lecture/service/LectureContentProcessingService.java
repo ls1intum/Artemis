@@ -146,7 +146,6 @@ public class LectureContentProcessingService {
             state.setIngestionJobToken(null);
             state.setRetryEligibleAt(null);
             state.setErrorKey(null);
-            state.setErrorCode(null);
             state.setLastUpdated(ZonedDateTime.now());
         }
 

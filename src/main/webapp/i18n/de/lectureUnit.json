@@ -23,19 +23,7 @@
                 "attachmentVersion": "Dateiversion: "
             },
             "completedTooltip": "Klicke hier, um diesen Inhalt als unerledigt zu markieren",
-            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren",
-            "video": {
-                "transcription": {
-                    "error": {
-                        "private": "Transkript nicht verfügbar: dieses Video ist privat.",
-                        "live": "Transkript nicht verfügbar: Livestreams können nicht transkribiert werden.",
-                        "tooLong": "Transkript nicht verfügbar: dieses Video überschreitet das 6-Stunden-Limit.",
-                        "unavailable": "Transkript nicht verfügbar: dieses Video ist nicht zugänglich (entfernt, regional gesperrt oder altersbeschränkt).",
-                        "downloadFailed": "Transkript nicht verfügbar: Download fehlgeschlagen. Der Dozent kann es erneut versuchen.",
-                        "generic": "Transkript nicht verfügbar: bei der Transkription ist ein Fehler aufgetreten."
-                    }
-                }
-            }
+            "uncompletedTooltip": "Klicke hier, um diesen Inhalt als erledigt zu markieren"
         },
         "textUnit": {
             "created": "Neuer Textinhalt erstellt",
@@ -113,10 +101,16 @@
                 "cancelled": "Verarbeitung wurde abgebrochen",
                 "error": {
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "processingFailed": "Verarbeitung fehlgeschlagen",
                     "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
                     "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
-                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen",
+                    "youtubePrivate": "Das Video ist privat und kann nicht transkribiert werden.",
+                    "youtubeLive": "Das Video ist ein Livestream und kann nicht transkribiert werden.",
+                    "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
+                    "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
+                    "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden."
                 }
             },
             "createAttachmentVideoUnits": {

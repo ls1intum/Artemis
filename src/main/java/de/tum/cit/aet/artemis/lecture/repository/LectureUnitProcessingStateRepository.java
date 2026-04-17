@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,16 +31,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * @return the processing state if it exists
      */
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
-
-    /**
-     * Batch-find processing states for a collection of lecture unit IDs.
-     * Used by the lectures-with-slides endpoint to avoid N+1 queries when building
-     * per-unit {@code transcriptionErrorCode} values.
-     *
-     * @param lectureUnitIds the IDs of the lecture units to look up
-     * @return all processing states whose lecture unit ID is in the given collection
-     */
-    List<LectureUnitProcessingState> findAllByLectureUnit_IdIn(Collection<Long> lectureUnitIds);
 
     /**
      * Find processing states that are stuck (no callback received recently).

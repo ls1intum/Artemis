@@ -9,7 +9,6 @@ import { YouTubePlayerComponent } from 'app/lecture/shared/youtube-player/youtub
 import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { TranslateService } from '@ngx-translate/core';
 import {
     faDownload,
     faFile,
@@ -49,7 +48,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
-    private readonly translateService = inject(TranslateService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -84,25 +82,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             untracked(() => this.youtubePlayerFailed.set(false));
         });
     }
-
-    // Uses TranslateService.instant() for efficiency; trade-off: if the user
-    // switches language mid-session, this value won't update until the lecture
-    // unit input changes. Acceptable for error banners on unit-level components.
-    readonly transcriptionErrorMessage = computed(() => {
-        const code = this.lectureUnit()?.transcriptionErrorCode;
-        if (!code) return null;
-        const key =
-            (
-                {
-                    YOUTUBE_PRIVATE: 'artemisApp.lectureUnit.video.transcription.error.private',
-                    YOUTUBE_LIVE: 'artemisApp.lectureUnit.video.transcription.error.live',
-                    YOUTUBE_TOO_LONG: 'artemisApp.lectureUnit.video.transcription.error.tooLong',
-                    YOUTUBE_UNAVAILABLE: 'artemisApp.lectureUnit.video.transcription.error.unavailable',
-                    YOUTUBE_DOWNLOAD_FAILED: 'artemisApp.lectureUnit.video.transcription.error.downloadFailed',
-                } as Record<string, string>
-            )[code] ?? 'artemisApp.lectureUnit.video.transcription.error.generic';
-        return this.translateService.instant(key);
-    });
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);

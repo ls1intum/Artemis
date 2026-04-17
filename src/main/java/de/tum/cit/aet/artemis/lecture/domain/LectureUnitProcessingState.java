@@ -10,8 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -71,19 +69,13 @@ public class LectureUnitProcessingState extends DomainObject {
 
     /**
      * Translation key for error message if processing failed.
-     * Use i18n keys like "artemisApp.processing.error.transcriptionFailed".
+     * Use i18n keys like "artemisApp.attachmentVideoUnit.processing.error.youtubePrivate".
+     * Populated by the state-write boundary after translating raw Pyris {@code error_code}
+     * values into specific, instructor-readable keys; falls back to a generic key when
+     * the code is absent or unknown.
      */
     @Column(name = "error_key", length = 255)
     private String errorKey;
-
-    /**
-     * Machine-readable error code for programmatic handling by the client.
-     * Examples: "YOUTUBE_LIVE", "YOUTUBE_TOO_LONG", "TRANSCRIPTION_FAILED".
-     * Cleared on phase transition; set alongside errorKey on failure.
-     */
-    @Column(name = "error_code", length = 64)
-    @Nullable
-    private String errorCode;
 
     /**
      * Current ingestion job token.
@@ -177,14 +169,6 @@ public class LectureUnitProcessingState extends DomainObject {
         this.errorKey = errorKey;
     }
 
-    public @Nullable String getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(@Nullable String errorCode) {
-        this.errorCode = errorCode;
-    }
-
     public String getIngestionJobToken() {
         return ingestionJobToken;
     }
@@ -243,7 +227,6 @@ public class LectureUnitProcessingState extends DomainObject {
         this.startedAt = ZonedDateTime.now();
         this.lastUpdated = ZonedDateTime.now();
         this.errorKey = null; // Clear error on phase transition
-        this.errorCode = null; // Clear error code on phase transition
         this.retryEligibleAt = null; // Clear retry scheduling on phase transition
     }
 
@@ -254,20 +237,8 @@ public class LectureUnitProcessingState extends DomainObject {
      * @param key the i18n key for the error message
      */
     public void markFailed(String key) {
-        markFailed(key, null);
-    }
-
-    /**
-     * Mark as failed with an error translation key and a machine-readable error code.
-     * Clears retry eligibility since we're in a terminal state.
-     *
-     * @param key       the i18n key for the error message
-     * @param errorCode machine-readable code for programmatic client handling (e.g. "YOUTUBE_LIVE"); may be null
-     */
-    public void markFailed(String key, @Nullable String errorCode) {
         this.phase = ProcessingPhase.FAILED;
         this.errorKey = key;
-        this.errorCode = errorCode;
         this.lastUpdated = ZonedDateTime.now();
         this.retryEligibleAt = null;
     }

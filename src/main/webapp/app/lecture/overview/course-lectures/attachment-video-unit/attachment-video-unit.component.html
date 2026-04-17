@@ -53,13 +53,6 @@
                     <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
                 </div>
             </div>
-        } @else if (transcriptionErrorMessage()) {
-            <div class="video-player-container">
-                <div class="ratio ratio-16x9">
-                    <iframe id="videoFrameError" class="rounded" [src]="iframeFallbackUrl() | safeResourceUrl" allow="fullscreen"></iframe>
-                </div>
-            </div>
-            <div class="transcription-error-banner">{{ transcriptionErrorMessage() }}</div>
         } @else if (playlistUrl() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
         } @else if (youtubeVideoId() && !youtubePlayerFailed()) {

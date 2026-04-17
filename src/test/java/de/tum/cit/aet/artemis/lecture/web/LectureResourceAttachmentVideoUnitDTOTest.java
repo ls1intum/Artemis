@@ -28,54 +28,48 @@ class LectureResourceAttachmentVideoUnitDTOTest {
 
     @Test
     void youTubeTypeRequiresYouTubeVideoId() {
-        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtube.com/watch?v=dQw4w9WgXcQ", VideoSourceType.YOUTUBE, null, null))
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtube.com/watch?v=dQw4w9WgXcQ", VideoSourceType.YOUTUBE, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void tumLiveTypeForbidsYouTubeVideoId() {
-        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/foo", VideoSourceType.TUM_LIVE, "dQw4w9WgXcQ", null))
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/foo", VideoSourceType.TUM_LIVE, "dQw4w9WgXcQ"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void nullTypeForbidsYouTubeVideoId() {
-        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/1", null, "dQw4w9WgXcQ", null))
+        assertThatThrownBy(() -> new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/1", null, "dQw4w9WgXcQ"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void validYouTubeDtoConstructs() {
-        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ", null);
+        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ");
         assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.YOUTUBE);
         assertThat(dto.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
     }
 
     @Test
     void validTumLiveDtoConstructsWithNullYouTubeVideoId() {
-        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/pl.m3u8", VideoSourceType.TUM_LIVE, null, null);
+        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://live.rbg.tum.de/pl.m3u8", VideoSourceType.TUM_LIVE, null);
         assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.TUM_LIVE);
         assertThat(dto.youtubeVideoId()).isNull();
     }
 
     @Test
     void nullTypeDtoWithNullVideoIdConstructs() {
-        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/123", null, null, null);
+        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://vimeo.com/123", null, null);
         assertThat(dto.videoSourceType()).isNull();
         assertThat(dto.youtubeVideoId()).isNull();
     }
 
     @Test
     void nullVideoSourceConstructs() {
-        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, null, null, null, null);
+        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, null, null, null);
         assertThat(dto.videoSource()).isNull();
         assertThat(dto.videoSourceType()).isNull();
-    }
-
-    @Test
-    void transcriptionErrorCodeIsExposed() {
-        var dto = new AttachmentVideoUnitDTO(ID, NAME, SLIDES, null, RELEASE, TYPE, "https://youtu.be/dQw4w9WgXcQ", VideoSourceType.YOUTUBE, "dQw4w9WgXcQ", "YOUTUBE_LIVE");
-        assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
     }
 
     // --- factory method wiring tests ---
@@ -83,31 +77,11 @@ class LectureResourceAttachmentVideoUnitDTOTest {
     private static final YouTubeUrlService YOUTUBE_URL_SERVICE = new YouTubeUrlService();
 
     @Test
-    void factoryPropagatesTranscriptionErrorCode() {
-        var unit = new AttachmentVideoUnit();
-        unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
-
-        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, "YOUTUBE_LIVE");
-
-        assertThat(dto.transcriptionErrorCode()).isEqualTo("YOUTUBE_LIVE");
-    }
-
-    @Test
-    void factoryWithNullErrorCodeProducesNullTranscriptionErrorCode() {
-        var unit = new AttachmentVideoUnit();
-        unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
-
-        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
-
-        assertThat(dto.transcriptionErrorCode()).isNull();
-    }
-
-    @Test
     void factoryYouTubeUrlProducesYouTubeTypeAndId() {
         var unit = new AttachmentVideoUnit();
         unit.setVideoSource("https://youtu.be/dQw4w9WgXcQ");
 
-        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE);
 
         assertThat(dto.videoSource()).isEqualTo("https://youtu.be/dQw4w9WgXcQ");
         assertThat(dto.videoSourceType()).isEqualTo(VideoSourceType.YOUTUBE);
@@ -126,7 +100,7 @@ class LectureResourceAttachmentVideoUnitDTOTest {
         var unit = new AttachmentVideoUnit();
         unit.setVideoSource(watchUrl);
 
-        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE, null);
+        var dto = AttachmentVideoUnitDTO.from(unit, YOUTUBE_URL_SERVICE);
 
         assertThat(dto.videoSource()).isEqualTo(watchUrl);
         assertThat(dto.videoSourceType()).isNull();

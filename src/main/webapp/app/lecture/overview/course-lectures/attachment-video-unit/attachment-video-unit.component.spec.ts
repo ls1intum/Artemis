@@ -64,7 +64,6 @@ describe('AttachmentVideoUnitComponent', () => {
     let fileService: FileService;
     let httpMock: HttpTestingController;
     let lectureTranscriptionService: LectureTranscriptionService;
-    let translateService: TranslateService;
 
     let component: AttachmentVideoUnitComponent;
     let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
@@ -116,7 +115,6 @@ describe('AttachmentVideoUnitComponent', () => {
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        translateService = TestBed.inject(TranslateService);
 
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
@@ -479,46 +477,6 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
-        });
-
-        it('maps each error code to the correct i18n key (not just generic text)', () => {
-            const byCode: Record<string, string> = {
-                YOUTUBE_PRIVATE: 'artemisApp.lectureUnit.video.transcription.error.private',
-                YOUTUBE_LIVE: 'artemisApp.lectureUnit.video.transcription.error.live',
-                YOUTUBE_TOO_LONG: 'artemisApp.lectureUnit.video.transcription.error.tooLong',
-                YOUTUBE_UNAVAILABLE: 'artemisApp.lectureUnit.video.transcription.error.unavailable',
-                YOUTUBE_DOWNLOAD_FAILED: 'artemisApp.lectureUnit.video.transcription.error.downloadFailed',
-                TRANSCRIPTION_FAILED: 'artemisApp.lectureUnit.video.transcription.error.generic',
-            };
-            fixture.componentRef.setInput('initiallyExpanded', true);
-            const translateInstantSpy = vi.spyOn(translateService, 'instant');
-            for (const [code, expectedKey] of Object.entries(byCode)) {
-                translateInstantSpy.mockClear();
-                fixture.componentRef.setInput('lectureUnit', {
-                    id: 1,
-                    videoSourceType: 'YOUTUBE',
-                    youtubeVideoId: 'dQw4w9WgXcQ',
-                    videoSource: 'https://youtu.be/dQw4w9WgXcQ',
-                    transcriptionErrorCode: code,
-                } as any);
-                fixture.detectChanges();
-                expect(translateInstantSpy).toHaveBeenCalledWith(expectedKey);
-                expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
-            }
-        });
-
-        it('unknown error code falls back to the generic i18n key', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
-            const translateInstantSpy = vi.spyOn(translateService, 'instant');
-            fixture.componentRef.setInput('lectureUnit', {
-                id: 2,
-                videoSourceType: 'YOUTUBE',
-                youtubeVideoId: 'dQw4w9WgXcQ',
-                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
-                transcriptionErrorCode: 'NEW_CODE_FROM_PYRIS_REDEPLOY',
-            } as any);
-            fixture.detectChanges();
-            expect(translateInstantSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.video.transcription.error.generic');
         });
 
         it('youtubePlayerFailed resets when the lecture unit changes', () => {

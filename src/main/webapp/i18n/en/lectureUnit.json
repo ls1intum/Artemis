@@ -23,19 +23,7 @@
                 "attachmentVersion": "Attachment version: "
             },
             "completedTooltip": "Click to mark this content as uncompleted",
-            "uncompletedTooltip": "Click to mark this content as completed",
-            "video": {
-                "transcription": {
-                    "error": {
-                        "private": "Transcript unavailable: this video is private.",
-                        "live": "Transcript unavailable: live streams cannot be transcribed.",
-                        "tooLong": "Transcript unavailable: this video exceeds the 6-hour limit.",
-                        "unavailable": "Transcript unavailable: this video is inaccessible (removed, region-blocked, or age-restricted).",
-                        "downloadFailed": "Transcript unavailable: download failed. The instructor can retry.",
-                        "generic": "Transcript unavailable: an error occurred during transcription."
-                    }
-                }
-            }
+            "uncompletedTooltip": "Click to mark this content as completed"
         },
         "textUnit": {
             "created": "New text content created",
@@ -113,10 +101,16 @@
                 "cancelled": "Processing was cancelled",
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
+                    "processingFailed": "Processing failed",
                     "transcriptionFailed": "Transcription generation failed after multiple attempts",
                     "ingestionFailed": "Content indexing failed after multiple attempts",
                     "noPlaylist": "Video playlist is no longer available",
-                    "timeout": "Processing timed out after multiple attempts"
+                    "timeout": "Processing timed out after multiple attempts",
+                    "youtubePrivate": "The video is private and cannot be transcribed.",
+                    "youtubeLive": "The video is a live stream and cannot be transcribed.",
+                    "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
+                    "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
+                    "youtubeDownloadFailed": "The video could not be downloaded for transcription."
                 }
             },
             "createAttachmentVideoUnits": {
