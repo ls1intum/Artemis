@@ -226,18 +226,21 @@ export class ExamStudentsComponent implements OnDestroy {
         return [
             {
                 label: 'artemisApp.studentExams.generateStudentExams',
+                tooltip: 'artemisApp.studentExams.generateStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading,
                 command: () => this.handleGenerateStudentExams(),
             },
             {
                 label: 'artemisApp.studentExams.generateMissingStudentExams',
+                tooltip: 'artemisApp.studentExams.generateMissingStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
                 command: () => this.generateMissingStudentExams(),
             },
             {
                 label: 'artemisApp.studentExams.startExercises',
+                tooltip: 'artemisApp.studentExams.startExercisesTooltip',
                 icon: 'pi pi-play',
                 disabled: isExamStarted || isLoading || exercisePreparationRunning,
                 command: () => this.startExercises(),

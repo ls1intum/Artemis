@@ -399,8 +399,11 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
+            "generateStudentExamsTooltip": "Generate individual exams for all currently registered students and overwrite existing individual exams",
             "generateMissingStudentExams": "Generate missing individual exams",
+            "generateMissingStudentExamsTooltip": "Generate individual exams only for registered students who do not have one yet",
             "startExercises": "Prepare exercise start",
+            "startExercisesTooltip": "Prepare exam exercises for all generated individual exams",
             "evaluateQuizExercises": "Evaluate quizzes",
             "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "searchForStudents": "Search for students by login or name (comma separated)",

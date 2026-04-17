@@ -399,8 +399,11 @@
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
+            "generateStudentExamsTooltip": "Individuelle Klausuren für alle aktuell angemeldeten Studierenden erstellen und bestehende individuelle Klausuren überschreiben",
             "generateMissingStudentExams": "Fehlende individuelle Klausuren erstellen",
+            "generateMissingStudentExamsTooltip": "Individuelle Klausuren nur für angemeldete Studierende ohne bestehende Klausur erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
+            "startExercisesTooltip": "Klausuraufgaben für alle generierten individuellen Klausuren vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
             "assessUnsubmittedStudentExams": "Nicht eingereichte Klausuren bewerten",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
