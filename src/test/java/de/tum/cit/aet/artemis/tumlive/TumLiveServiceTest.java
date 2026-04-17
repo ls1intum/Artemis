@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture;
+package de.tum.cit.aet.artemis.tumlive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,7 +18,7 @@ import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO.StreamDTO;
-import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
+import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
 
 @ExtendWith(MockitoExtension.class)
 class TumLiveServiceTest {
