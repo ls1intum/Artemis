@@ -81,13 +81,6 @@ export class SettingsComponent implements OnInit {
             }),
             langKey: new FormControl<string>('', { nonNullable: true }),
         });
-
-        // When SAML2 is active, names and email are managed by the IdP and must not be editable
-        if (this.isSaml2Active) {
-            this.settingsForm.controls.firstName.disable();
-            this.settingsForm.controls.lastName.disable();
-            this.settingsForm.controls.email.disable();
-        }
     }
 
     /**

@@ -31,7 +31,7 @@
                                 name="firstName"
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
-                                [disabled]="!isInternalUser()"
+                                [disabled]="!isInternalUser() || isSaml2Active"
                             />
                             @if (settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)) {
                                 <div>
@@ -56,7 +56,7 @@
                                 name="lastName"
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
-                                [disabled]="!isInternalUser()"
+                                [disabled]="!isInternalUser() || isSaml2Active"
                             />
                             @if (settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)) {
                                 <div>
@@ -83,11 +83,11 @@
                             <input
                                 type="email"
                                 class="form-control"
-                                [disabled]="!isInternalUser()"
                                 id="email"
                                 name="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
+                                [disabled]="!isInternalUser() || isSaml2Active"
                             />
                             @if (settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)) {
                                 <div>
