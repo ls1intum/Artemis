@@ -58,13 +58,6 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the student exams page.
-     */
-    async openStudentExams(examId: number) {
-        await this.page.locator(`#student-exams-${examId}`).click();
-    }
-
-    /**
      * Opens the exam assessment dashboard
      * @param courseID the id of the course
      * @param examID the id of the exam
