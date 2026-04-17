@@ -1,18 +1,26 @@
 package de.tum.cit.aet.artemis.shared;
 
+import java.util.List;
+
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -26,11 +34,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
  * By performing dummy deserializations at startup, we ensure the deserializer cache is
  * properly populated before any tests run, eliminating the race condition.
  * <p>
- * We focus on key "root" entities that:
+ * We initialize entity types at two levels:
  * <ul>
- * <li>Have complex bidirectional relationships with {@code @JsonIgnoreProperties}</li>
- * <li>Are commonly returned in REST responses with nested data</li>
- * <li>Contain many nested entity types (initializing them also initializes their children)</li>
+ * <li>Standalone types: forces full BeanDeserializer resolution for each entity independently</li>
+ * <li>Nested structures: ensures contextual deserializers (from {@code @JsonIgnoreProperties},
+ * {@code @JsonIncludeProperties}) are also cached</li>
+ * <li>Collection types: ensures List/Set deserializers for common REST response types are cached</li>
  * </ul>
  */
 @TestConfiguration
@@ -48,22 +57,60 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
-        // Initialize Organization with nested User and Course
+        // Phase 1: Initialize standalone entity types to populate the base deserializer cache.
+        // This ensures each entity's BeanDeserializer (and all its property deserializers)
+        // are fully resolved before any concurrent test access.
+        initializeType(User.class);
+        initializeType(PlagiarismCase.class);
+        initializeType(TutorialGroupRegistration.class);
+        initializeType(Reaction.class);
+        initializeType(AnswerPost.class);
+
+        // Phase 2: Initialize complex root entities with nested relationships.
+        // This also warms up contextual deserializers created by @JsonIgnoreProperties
+        // and @JsonIncludeProperties annotations on relationship fields.
         initializeOrganization();
-
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
         initializeCourse();
-
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
         initializeExam();
-
-        // Initialize Post with nested Reaction -> User (different @JsonIncludeProperties variant)
         initializePost();
-
-        // Initialize TutorialGroup with nested TutorialGroupRegistration -> User
         initializeTutorialGroup();
 
+        // Phase 3: Initialize collection types commonly returned by REST endpoints.
+        // Tests often deserialize List<Entity> from HTTP responses; the collection
+        // deserializer and its element deserializer must both be cached.
+        initializeCollectionType(Post.class);
+        initializeCollectionType(TutorialGroup.class);
+        initializeCollectionType(Organization.class);
+
         log.debug("Successfully initialized Jackson deserializers");
+    }
+
+    /**
+     * Initialize the deserializer for a single entity type by deserializing an empty JSON object.
+     * This forces Jackson to create, resolve, and cache the BeanDeserializer and all its
+     * property deserializers (including nested types).
+     */
+    private void initializeType(Class<?> type) {
+        try {
+            objectMapper.readValue("{}", type);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize {} deserializer: {}", type.getSimpleName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Initialize the deserializer for a List collection of the given element type.
+     * This ensures the CollectionDeserializer and its element BeanDeserializer are cached.
+     */
+    private void initializeCollectionType(Class<?> elementType) {
+        try {
+            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+            objectMapper.readValue("[]", listType);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize List<{}> deserializer: {}", elementType.getSimpleName(), e.getMessage());
+        }
     }
 
     private void initializeOrganization() {
@@ -85,7 +132,6 @@ public class JacksonDeserializerInitializationConfig {
                             "langKey": "en",
                             "internal": true,
                             "memirisEnabled": true,
-                            "selectedLLMUsage": "CLOUD_AI",
                             "bot": false
                         }],
                         "courses": [{
