@@ -786,6 +786,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         const question = new MultipleChoiceQuestion();
         question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
         question.text = generatedQuestion.questionText;
+        question.hint = generatedQuestion.hint;
+        question.explanation = generatedQuestion.explanation;
         question.points = 1;
         question.randomizeOrder = true;
         question.scoringType = ScoringType.ALL_OR_NOTHING;
@@ -794,6 +796,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             const answerOption = new AnswerOption();
             answerOption.text = generatedOption.text;
             answerOption.isCorrect = generatedOption.correct;
+            answerOption.hint = generatedOption.hint;
+            answerOption.explanation = generatedOption.explanation;
             answerOption.question = question;
             return answerOption;
         });
