@@ -626,7 +626,7 @@
                 },
                 "addDialog": {
                     "title": "Add students",
-                    "description": "Search for course students by login or name. Already registered students are marked and cannot be registered again.",
+                    "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
                     "searchPlaceholder": "Search students",
                     "loadingStudents": "Loading students...",
                     "noUnregisteredStudents": "No unregistered students found.",

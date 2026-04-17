@@ -626,7 +626,7 @@
                 },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
-                    "description": "Suche nach Kursteilnehmenden per Login oder Namen. Bereits angemeldete Studierende sind markiert und können nicht erneut angemeldet werden.",
+                    "description": "Suche nach Kursteilnehmenden per Name, Matrikelnummer, Login oder E-Mail. Bereits angemeldete Studierende sind markiert und können nicht erneut angemeldet werden.",
                     "searchPlaceholder": "Studierende suchen",
                     "loadingStudents": "Studierende werden geladen...",
                     "noUnregisteredStudents": "Keine nicht angemeldeten Studierenden gefunden.",

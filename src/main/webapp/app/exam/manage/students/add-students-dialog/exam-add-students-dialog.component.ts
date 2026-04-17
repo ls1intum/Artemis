@@ -13,12 +13,13 @@ import { Dialog } from 'primeng/dialog';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
 
 @Component({
     selector: 'jhi-exam-add-students-dialog',
     standalone: true,
     templateUrl: './exam-add-students-dialog.component.html',
-    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, ButtonDirective, TranslateDirective, ArtemisTranslatePipe],
+    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, TableModule, ButtonDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExamAddStudentsDialogComponent {
     private readonly courseManagementService = inject(CourseManagementService);
@@ -134,7 +135,9 @@ export class ExamAddStudentsDialogComponent {
     private matchesSearch(student: User, searchTerm: string): boolean {
         const login = student.login?.toLowerCase() ?? '';
         const name = student.name?.toLowerCase() ?? '';
-        return login.includes(searchTerm) || name.includes(searchTerm);
+        const visibleRegistrationNumber = student.visibleRegistrationNumber?.toLowerCase() ?? '';
+        const email = student.email?.toLowerCase() ?? '';
+        return login.includes(searchTerm) || name.includes(searchTerm) || visibleRegistrationNumber.includes(searchTerm) || email.includes(searchTerm);
     }
 
     private copyAndAdd<T>(set: Set<T>, element: T): Set<T> {
