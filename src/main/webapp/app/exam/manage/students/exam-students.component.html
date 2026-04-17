@@ -279,15 +279,17 @@
                 </td>
                 <td>
                     @if (examUser.progress === 'submitted' && examUser.submissionDate) {
-                        <span>{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</span>
+                        <p-tag severity="success"
+                            >{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</p-tag
+                        >
                     } @else if (examUser.progress === 'submitted') {
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted"></span>
+                        <p-tag severity="success" jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted" />
                     } @else if (examUser.progress === 'started') {
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted"></span>
+                        <p-tag severity="info" jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted" />
                     } @else if (examUser.progress === 'notStarted') {
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted"></span>
+                        <p-tag severity="warn" jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted" />
                     } @else {
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing"></span>
+                        <p-tag severity="danger" jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing" />
                     }
                 </td>
                 <td>
