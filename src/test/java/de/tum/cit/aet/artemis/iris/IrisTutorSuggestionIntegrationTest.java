@@ -315,6 +315,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         // Check if the messages where saved
         var messages = irisMessageRepository.findAllBySessionId(irisSession.id());
         assertThat(messages).hasSize(2);
+        messages.sort(java.util.Comparator.comparingLong(IrisMessage::getId));
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test suggestion");
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.ARTIFACT);
         assertThat(messages.get(1).getContent().getFirst().toString()).contains("Test result");
