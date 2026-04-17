@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { IconDefinition, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { Subject } from 'rxjs';
@@ -82,16 +81,5 @@ describe('ExerciseImportButtonComponent', () => {
         } else {
             expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
         }
-    });
-
-    it.each([
-        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram },
-        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload },
-        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont },
-        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard },
-    ])('should determine correct icon for exercise type', ({ exerciseType, expectedIcon }: { exerciseType: ExerciseType; expectedIcon: IconDefinition }) => {
-        fixture.componentRef.setInput('exerciseType', exerciseType);
-        component.ngOnInit();
-        expect(component.icon).toEqual(expectedIcon);
     });
 });

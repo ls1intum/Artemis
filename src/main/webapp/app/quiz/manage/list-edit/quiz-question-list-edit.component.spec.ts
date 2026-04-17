@@ -100,7 +100,7 @@ describe('QuizQuestionListEditComponent', () => {
         const question1 = new ShortAnswerQuestion();
         fixture.componentRef.setInput('quizQuestions', [question0, question1]);
         const onQuestionDeletedEmit = vi.spyOn(component.onQuestionDeleted, 'emit');
-        component.handleQuestionDeleted(0);
+        component.handleQuestionDeleted(question0);
         expect(onQuestionDeletedEmit).toHaveBeenCalledOnce();
         expect(component.quizQuestions()).toHaveLength(1);
         expect(component.quizQuestions()[0]).toEqual(question1);
