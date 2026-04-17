@@ -629,7 +629,7 @@
                     "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
                     "searchPlaceholder": "Search students",
                     "loadingStudents": "Loading students...",
-                    "noUnregisteredStudents": "No unregistered students found.",
+                    "noUnregisteredStudents": "No students found.",
                     "registering": "Registering",
                     "registered": "Registered",
                     "register": "Register",
