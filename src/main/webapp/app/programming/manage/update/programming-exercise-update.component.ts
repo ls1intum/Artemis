@@ -23,6 +23,7 @@ import {
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
     MAX_PENALTY_PATTERN,
+    MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
     PACKAGE_NAME_PATTERN_FOR_DART,
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
@@ -117,6 +118,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
     protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
     protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
+    private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
@@ -685,7 +687,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-                valid: true,
+                valid: !this.isProblemStatementTooLong(),
                 empty: !this.programmingExercise.problemStatement,
             },
             {
@@ -1248,6 +1250,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseOnlineIdeSelection(validationErrorReasons);
         this.validateExercisePoints(validationErrorReasons);
         this.validateExerciseBonusPoints(validationErrorReasons);
+        this.validateProblemStatementLength(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
         this.validateExerciseSubmissionLimit(validationErrorReasons);
         this.validateTimeout(validationErrorReasons);
@@ -1388,6 +1391,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
                 translateValues: {},
+            });
+        }
+    }
+
+    private validateProblemStatementLength(validationErrorReasons: ValidationReason[]): void {
+        const problemStatementLength = this.programmingExercise.problemStatement?.length ?? 0;
+
+        if (problemStatementLength > this.maxProblemStatementLength) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: this.maxProblemStatementLength },
             });
         }
     }
@@ -1641,5 +1655,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private updateFormSectionOnIsValidPlagiarismChange() {
         this.exercisePlagiarismComponent()?.isFormValid(); // registers signal and triggers effect
         this.calculateFormStatusSections();
+    }
+
+    isProblemStatementTooLong(): boolean {
+        return (this.programmingExercise.problemStatement?.length ?? 0) > this.maxProblemStatementLength;
     }
 }

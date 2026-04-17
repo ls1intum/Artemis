@@ -27,6 +27,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/shared/constants/input.constants';
 
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
@@ -96,6 +97,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     protected readonly templateLoaded = this.aiOps.templateLoaded;
     protected readonly isAiApplying = this.aiOps.isAiApplying;
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
+    readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
 
     // Icons
     facArtemisIntelligence = facArtemisIntelligence;
@@ -217,5 +219,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             }
             this.problemStatementChange.emit(problemStatement);
         }
+    }
+
+    problemStatementLength(): number {
+        return this.programmingExercise()?.problemStatement?.length ?? 0;
+    }
+
+    isProblemStatementTooLong(): boolean {
+        return this.problemStatementLength() > this.maxProblemStatementLength;
     }
 }

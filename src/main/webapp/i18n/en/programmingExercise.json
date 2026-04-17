@@ -296,6 +296,7 @@
                 "refinementError": "Failed to refine problem statement. Please try again.",
                 "cannotRefineEmpty": "Cannot refine an empty problem statement. Please add some content first.",
                 "problemStatementTooLong": "The problem statement is too long to refine. Please reduce the content and try again.",
+                "tooLong": "Problem statement must not exceed {{max}} characters.",
                 "reviewChanges": "Review AI Suggestions",
                 "reviewChangesDescription": "The AI suggested the changes shown below. Lines highlighted in green will be added; lines highlighted in red will be removed.",
                 "revertAll": "Discard All",
