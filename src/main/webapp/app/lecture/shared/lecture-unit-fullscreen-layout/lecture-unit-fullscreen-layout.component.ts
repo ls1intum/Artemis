@@ -19,6 +19,20 @@ import {
 import { CommonModule } from '@angular/common';
 import Split from 'split.js';
 
+type SplitSizes = [number, number];
+
+interface SplitConfig {
+    sizes: SplitSizes;
+    minSizes: SplitSizes;
+    defaultSizes: SplitSizes;
+}
+
+interface HorizontalSplitConfig extends SplitConfig {
+    enabled: boolean;
+    topElement?: ElementRef;
+    bottomElement?: ElementRef;
+}
+
 @Component({
     selector: 'jhi-lecture-unit-fullscreen-layout',
     standalone: true,
@@ -36,22 +50,26 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     readonly showSidebar = input<boolean>(false);
     readonly dialogAriaLabel = input<string | undefined>(undefined);
     readonly sidebarAriaLabel = input<string | undefined>(undefined);
-    readonly splitSizes = input<[number, number]>([50, 50]);
-    readonly minSplitSizes = input<[number, number]>([120, 120]);
     readonly hasNestedFullscreen = input<boolean>(false);
     readonly preventEscapeClose = input<boolean>(false);
-    readonly defaultVerticalSplitSizes = input<[number, number]>([50, 50]);
-    readonly defaultHorizontalSplitSizes = input<[number, number]>([50, 50]);
-    readonly hasHorizontalSplit = input<boolean>(false);
-    readonly horizontalSplitSizes = input<[number, number]>([50, 50]);
-    readonly minHorizontalSplitSizes = input<[number, number]>([80, 80]);
-    readonly horizontalSplitTopElement = input<ElementRef | undefined>(undefined);
-    readonly horizontalSplitBottomElement = input<ElementRef | undefined>(undefined);
+
+    readonly verticalSplit = input<SplitConfig>({
+        sizes: [50, 50],
+        minSizes: [120, 120],
+        defaultSizes: [50, 50],
+    });
+
+    readonly horizontalSplit = input<HorizontalSplitConfig>({
+        enabled: false,
+        sizes: [50, 50],
+        minSizes: [80, 80],
+        defaultSizes: [50, 50],
+    });
 
     readonly backdropClick = output<void>();
-    readonly splitSizesChange = output<[number, number]>();
+    readonly splitSizesChange = output<SplitSizes>();
     readonly fullscreenChange = output<boolean>();
-    readonly horizontalSplitSizesChange = output<[number, number]>();
+    readonly horizontalSplitSizesChange = output<SplitSizes>();
 
     private readonly _isFullscreen = signal<boolean>(false);
     readonly isFullscreen = this._isFullscreen.asReadonly();
@@ -95,9 +113,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
         // Horizontal splitter lifecycle (top | bottom)
         effect(() => {
-            const needsSplitter = this.isFullscreen() && this.hasHorizontalSplit();
-            const topEl = this.horizontalSplitTopElement()?.nativeElement;
-            const bottomEl = this.horizontalSplitBottomElement()?.nativeElement;
+            const hSplit = this.horizontalSplit();
+            const needsSplitter = this.isFullscreen() && hSplit.enabled;
+            const topEl = hSplit.topElement?.nativeElement;
+            const bottomEl = hSplit.bottomElement?.nativeElement;
 
             untracked(() => {
                 this.destroyHorizontalSplitter();
@@ -185,9 +204,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private initSplitter(elements: HTMLElement[]): void {
+        const config = this.verticalSplit();
         this.splitInstance = Split(elements, {
-            sizes: this.splitSizes(),
-            minSize: this.minSplitSizes(),
+            sizes: config.sizes,
+            minSize: config.minSizes,
             gutterSize: 12,
             cursor: 'col-resize',
             direction: 'horizontal',
@@ -217,9 +237,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private initHorizontalSplitter(elements: HTMLElement[]): void {
+        const config = this.horizontalSplit();
         this.horizontalSplitInstance = Split(elements, {
-            sizes: this.horizontalSplitSizes(),
-            minSize: this.minHorizontalSplitSizes(),
+            sizes: config.sizes,
+            minSize: config.minSizes,
             gutterSize: 12,
             cursor: 'row-resize',
             direction: 'vertical',
@@ -238,8 +259,8 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private resetSplitSizesToDefaults(): void {
-        this.splitSizesChange.emit(this.defaultVerticalSplitSizes());
-        this.horizontalSplitSizesChange.emit(this.defaultHorizontalSplitSizes());
+        this.splitSizesChange.emit(this.verticalSplit().defaultSizes);
+        this.horizontalSplitSizesChange.emit(this.horizontalSplit().defaultSizes);
     }
 
     private _captureFocusedElement(): void {

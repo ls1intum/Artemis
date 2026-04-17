@@ -84,7 +84,7 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(splitSizesChangeSpy).toHaveBeenCalledWith([60, 40]);
     });
 
-    it('calls initHorizontalSplitter when hasHorizontalSplit is true', async () => {
+    it('calls initHorizontalSplitter when horizontal split is enabled', async () => {
         const topEl = document.createElement('div');
         const bottomEl = document.createElement('div');
         const initHorizontalSplitterSpy = vi.spyOn(component as any, 'initHorizontalSplitter');
@@ -93,9 +93,14 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         document.body.appendChild(bottomEl);
 
         try {
-            fixture.componentRef.setInput('hasHorizontalSplit', true);
-            fixture.componentRef.setInput('horizontalSplitTopElement', { nativeElement: topEl });
-            fixture.componentRef.setInput('horizontalSplitBottomElement', { nativeElement: bottomEl });
+            fixture.componentRef.setInput('horizontalSplit', {
+                enabled: true,
+                sizes: [50, 50],
+                minSizes: [80, 80],
+                defaultSizes: [50, 50],
+                topElement: { nativeElement: topEl },
+                bottomElement: { nativeElement: bottomEl },
+            });
 
             component.open();
             await fixture.whenStable();

@@ -155,21 +155,8 @@ describe('VideoPlayerComponent', () => {
     }
 
     function getIndex(): number {
-        return component.currentSegmentIndex();
-    }
-
-    function mockWrapperRect(wrapperEl: HTMLElement, width = 1000, height = 500): void {
-        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-            left: 0,
-            width,
-            top: 0,
-            right: width,
-            bottom: height,
-            height,
-            x: 0,
-            y: 0,
-            toJSON: () => ({}),
-        } as DOMRect);
+        const val = component.currentSegmentIndex();
+        return val;
     }
 
     it('does not initialize hls.js when no videoUrl is provided', async () => {
@@ -299,7 +286,19 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-            mockWrapperRect(wrapperEl);
+
+            // Mock getBoundingClientRect for wrapper
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
 
             // Get the move listener and call it
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
@@ -308,8 +307,9 @@ describe('VideoPlayerComponent', () => {
             // Simulate drag to position 600px from left
             moveListener({ clientX: 600 });
 
-            expect(videoColumnEl.style.flex).toBe('0 0 60%');
-            expect(videoColumnEl.style.width).toBe('');
+            // Browser normalizes 'none' to '0 0 auto'
+            expect(videoColumnEl.style.flex).toBe('0 0 auto');
+            expect(videoColumnEl.style.width).toBe('600px');
         });
 
         it('clamps video column width to minimum', async () => {
@@ -318,7 +318,18 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-            mockWrapperRect(wrapperEl);
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
 
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             const moveListener = draggableConfig.listeners.move;
@@ -326,7 +337,7 @@ describe('VideoPlayerComponent', () => {
             // Try to drag below minimum (300px)
             moveListener({ clientX: 100 });
 
-            expect(videoColumnEl.style.flex).toBe('0 0 30%');
+            expect(videoColumnEl.style.width).toBe('300px');
         });
 
         it('clamps video column width to maximum', async () => {
@@ -335,7 +346,18 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-            mockWrapperRect(wrapperEl);
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
 
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             const moveListener = draggableConfig.listeners.move;
@@ -343,7 +365,7 @@ describe('VideoPlayerComponent', () => {
             // Try to drag beyond maximum (1000 - 250 = 750px)
             moveListener({ clientX: 900 });
 
-            expect(videoColumnEl.style.flex).toBe('0 0 75%');
+            expect(videoColumnEl.style.width).toBe('750px');
         });
 
         it('resets video column styles on window resize', async () => {
@@ -352,14 +374,26 @@ describe('VideoPlayerComponent', () => {
 
             const videoColumnEl = component.videoColumn()!.nativeElement;
             const wrapperEl = component.videoWrapper()!.nativeElement;
-            mockWrapperRect(wrapperEl);
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 1000,
+                top: 0,
+                right: 1000,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
 
             // First, simulate a drag to set custom width
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             draggableConfig.listeners.move({ clientX: 500 });
 
-            expect(videoColumnEl.style.flex).toBe('0 0 50%');
-            expect(videoColumnEl.style.width).toBe('');
+            // Browser normalizes 'none' to '0 0 auto'
+            expect(videoColumnEl.style.flex).toBe('0 0 auto');
+            expect(videoColumnEl.style.width).toBe('500px');
 
             // Trigger window resize
             window.dispatchEvent(new Event('resize'));
@@ -525,52 +559,6 @@ describe('VideoPlayerComponent', () => {
             const setSignalSpy = vi.spyOn(component.currentSegmentIndex, 'set');
             component.updateCurrentSegment(10.5);
             expect(setSignalSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Layout helpers', () => {
-        it('initializeResizer exits early when required elements are missing', () => {
-            vi.spyOn(component, 'videoColumn').mockReturnValue(undefined);
-            vi.spyOn(component, 'videoWrapper').mockReturnValue(undefined);
-            vi.spyOn(component, 'resizerHandle').mockReturnValue(undefined);
-
-            (component as any).initializeResizer();
-
-            expect(getMockInteract()).not.toHaveBeenCalled();
-        });
-
-        it('syncTranscriptHeight applies at least minimum height', () => {
-            const videoColumnEl = document.createElement('div');
-            const wrapperEl = document.createElement('div');
-            const transcriptColumnEl = document.createElement('div');
-            transcriptColumnEl.className = 'transcript-column';
-            wrapperEl.appendChild(transcriptColumnEl);
-
-            Object.defineProperty(videoColumnEl, 'offsetHeight', { value: 200, configurable: true });
-            vi.spyOn(component, 'videoColumn').mockReturnValue({ nativeElement: videoColumnEl } as any);
-            vi.spyOn(component, 'videoWrapper').mockReturnValue({ nativeElement: wrapperEl } as any);
-
-            (component as any).syncTranscriptHeight();
-
-            expect(transcriptColumnEl.style.maxHeight).toBe('500px');
-        });
-    });
-
-    describe('Initial seek helpers', () => {
-        it('ngOnDestroy removes loadedmetadata listener and clears pending seek', async () => {
-            setInputs('https://cdn.example.com/m.m3u8', []);
-            await render();
-
-            const handler = vi.fn();
-            (component as any).loadedmetadataHandler = handler;
-            (component as any).pendingInitialSeek = 12;
-            const removeSpy = vi.spyOn(videoElement, 'removeEventListener');
-
-            component.ngOnDestroy();
-
-            expect(removeSpy).toHaveBeenCalledWith('loadedmetadata', handler);
-            expect((component as any).loadedmetadataHandler).toBeUndefined();
-            expect((component as any).pendingInitialSeek).toBeUndefined();
         });
     });
 });

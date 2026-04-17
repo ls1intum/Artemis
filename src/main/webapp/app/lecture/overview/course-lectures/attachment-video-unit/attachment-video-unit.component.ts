@@ -43,6 +43,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 
+type SplitSizes = [number, number];
+
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
@@ -94,12 +96,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isFullscreen = this._isFullscreen.asReadonly();
 
     // Split panel sizes (percentage values)
-    readonly defaultSplitSizes: [number, number] = [50, 50];
-    readonly defaultThreePaneVerticalSplitSizes: [number, number] = [66.67, 33.33];
-    private readonly _verticalSplitSizes = signal<[number, number]>([85, 15]); // [content, iris]
-    private readonly _horizontalSplitSizes = signal<[number, number]>(this.defaultSplitSizes); // [video, pdf]
-    readonly minVerticalSplitSizes: [number, number] = [120, 120];
-    readonly minHorizontalSplitSizes: [number, number] = [80, 80];
+    readonly defaultSplitSizes: SplitSizes = [50, 50];
+    readonly defaultThreePaneVerticalSplitSizes: SplitSizes = [66.67, 33.33];
+    private readonly _verticalSplitSizes = signal<SplitSizes>([85, 15]); // [content, iris]
+    private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultSplitSizes); // [video, pdf]
+    readonly minVerticalSplitSizes: SplitSizes = [120, 120];
+    readonly minHorizontalSplitSizes: SplitSizes = [80, 80];
 
     readonly verticalSplitSizes = this._verticalSplitSizes.asReadonly();
     readonly horizontalSplitSizes = this._horizontalSplitSizes.asReadonly();
@@ -138,12 +140,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly showIrisSidebar = computed(() => this.isFullscreen() && this.shouldShowIrisSidebarInFullscreen());
 
-    readonly needsHorizontalSplitter = computed(() => this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf());
+    readonly verticalSplitConfig = computed(() => ({
+        sizes: this.verticalSplitSizes(),
+        minSizes: this.minVerticalSplitSizes,
+        defaultSizes: this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf() ? this.defaultThreePaneVerticalSplitSizes : this.defaultSplitSizes,
+    }));
 
-    readonly computedVerticalDefaults = computed(() => {
-        const hasThreePaneLayout = this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf();
-        return hasThreePaneLayout ? this.defaultThreePaneVerticalSplitSizes : this.defaultSplitSizes;
-    });
+    readonly horizontalSplitConfig = computed(() => ({
+        enabled: this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf(),
+        sizes: this.horizontalSplitSizes(),
+        minSizes: this.minHorizontalSplitSizes,
+        defaultSizes: this.defaultSplitSizes,
+        topElement: this.videoContainerElement(),
+        bottomElement: this.pdfContainerElement(),
+    }));
 
     readonly fullscreenAriaLabel = computed(() => {
         if (!this.isFullscreen()) {
@@ -396,11 +406,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    protected onVerticalSplitSizesChange(sizes: [number, number]): void {
+    protected onVerticalSplitSizesChange(sizes: SplitSizes): void {
         this._verticalSplitSizes.set(sizes);
     }
 
-    protected onHorizontalSplitSizesChange(sizes: [number, number]): void {
+    protected onHorizontalSplitSizesChange(sizes: SplitSizes): void {
         this._horizontalSplitSizes.set(sizes);
     }
 

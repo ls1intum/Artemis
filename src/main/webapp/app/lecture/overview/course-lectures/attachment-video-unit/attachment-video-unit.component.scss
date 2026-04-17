@@ -12,100 +12,100 @@ jhi-attachment-video-unit {
         --lecture-combined-view-surface: #{dark.$card-bg};
         --lecture-combined-view-border: #{dark.$card-border-color};
     }
+}
 
+.video-player-container,
+.pdf-viewer-spacing {
+    padding-block: 20px;
+}
+
+.video-player-container--fullscreen {
+    padding-block: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: var(--lecture-combined-view-bg);
+    border: 1px solid var(--lecture-combined-view-border);
+    border-radius: var(--lecture-combined-view-radius);
+    overflow: hidden;
+    container-type: size;
+}
+
+.video-iframe-wrapper--fullscreen {
+    aspect-ratio: 16 / 9;
+    width: min(100cqw, calc(100cqh * 16 / 9));
+    height: min(100cqh, calc(100cqw * 9 / 16));
+    max-width: 100%;
+    max-height: 100%;
+    background-color: var(--lecture-combined-view-bg);
+    border: 1px solid var(--lecture-combined-view-border);
+    border-radius: var(--lecture-combined-view-radius);
+    overflow: hidden;
+}
+
+.video-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+.pdf-viewer-spacing {
+    position: relative;
+}
+
+.pdf-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+jhi-pdf-viewer.pdf-viewer-loading {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.content-container--fullscreen {
     .video-player-container,
     .pdf-viewer-spacing {
-        padding-block: 20px;
-    }
-
-    .video-player-container--fullscreen {
         padding-block: 0;
+    }
+
+    .pdf-viewer-spacing,
+    .video-player-container,
+    .video-container-wrapper {
+        min-height: 0;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
+        flex-direction: column;
         background-color: var(--lecture-combined-view-bg);
-        border: 1px solid var(--lecture-combined-view-border);
-        border-radius: var(--lecture-combined-view-radius);
+
+        jhi-pdf-viewer {
+            height: 100%;
+        }
+    }
+
+    .video-container-wrapper {
         overflow: hidden;
-        container-type: size;
-    }
 
-    .video-iframe-wrapper--fullscreen {
-        aspect-ratio: 16 / 9;
-        width: min(100cqw, calc(100cqh * 16 / 9));
-        height: min(100cqh, calc(100cqw * 9 / 16));
-        max-width: 100%;
-        max-height: 100%;
-        background-color: var(--lecture-combined-view-bg);
-        border: 1px solid var(--lecture-combined-view-border);
-        border-radius: var(--lecture-combined-view-radius);
-        overflow: hidden;
-    }
-
-    .video-iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
-    }
-
-    .pdf-viewer-spacing {
-        position: relative;
-    }
-
-    .pdf-loading-spinner {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
-    }
-
-    jhi-pdf-viewer.pdf-viewer-loading {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .content-container--fullscreen {
-        .video-player-container,
-        .pdf-viewer-spacing {
-            padding-block: 0;
-        }
-
-        .pdf-viewer-spacing,
-        .video-player-container,
-        .video-container-wrapper {
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--lecture-combined-view-bg);
-
-            jhi-pdf-viewer {
-                height: 100%;
-            }
-        }
-
-        .video-container-wrapper {
-            overflow: hidden;
-
-            > jhi-video-player {
-                flex: 1;
-                min-width: 0;
-                min-height: 0;
-            }
-        }
-
-        .pdf-viewer-spacing:only-child,
-        .video-player-container:only-child,
-        .video-container-wrapper:only-child {
+        > jhi-video-player {
             flex: 1;
+            min-width: 0;
+            min-height: 0;
         }
+    }
 
-        .video-container-wrapper--fullscreen {
-            border: 1px solid var(--lecture-combined-view-border);
-            border-radius: 0;
-        }
+    .pdf-viewer-spacing:only-child,
+    .video-player-container:only-child,
+    .video-container-wrapper:only-child {
+        flex: 1;
+    }
+
+    .video-container-wrapper--fullscreen {
+        border: 1px solid var(--lecture-combined-view-border);
+        border-radius: 0;
     }
 }

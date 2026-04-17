@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,7 +15,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
     templateUrl: './transcript-viewer.component.html',
     styleUrls: ['./transcript-viewer.component.scss'],
 })
-export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
+export class TranscriptViewerComponent {
     /** Transcript segments to display */
     transcriptSegments = input<TranscriptSegment[]>([]);
 
@@ -25,20 +25,14 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     /** Event emitted when user clicks on a transcript segment */
     segmentClicked = output<number>();
 
-    /** Reference to the root transcript container */
-    private transcriptColumnRef = viewChild<ElementRef<HTMLElement>>('transcriptColumn');
-
     /** Reference to the scrollable transcript list container */
     private transcriptListRef = viewChild<ElementRef<HTMLElement>>('transcriptList');
 
-    /** Current transcript column width in pixels */
-    readonly transcriptColumnWidthPx = signal<number>(0);
-
     /** Search query for filtering transcript segments */
-    readonly searchQuery = signal<string>('');
+    searchQuery = signal<string>('');
 
     /** Current search result index */
-    readonly currentSearchIndex = signal<number>(0);
+    currentSearchIndex = signal<number>(0);
 
     /** Icons for search UI */
     protected readonly faSearch = faSearch;
@@ -47,61 +41,24 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
     protected readonly faTimes = faTimes;
 
     /** Filtered transcript segments based on search query */
-    readonly filteredSegments = computed(() => this.computeFilteredSegments());
+    filteredSegments = computed(() => this.computeFilteredSegments());
 
     /** Total number of search results */
-    readonly searchResultsCount = computed(() => this.filteredSegments().length);
+    searchResultsCount = computed(() => this.filteredSegments().length);
 
     /** Check if search is active */
-    readonly isSearchActive = computed(() => this.searchQuery().length > 0);
-
-    /** Whether the transcript currently has little horizontal space */
-    readonly isNarrowColumn = computed(() => this.transcriptColumnWidthPx() > 0 && this.transcriptColumnWidthPx() < 420);
-
-    private resizeObserver?: ResizeObserver;
-    private resizeAnimationFrameId?: number;
-
-    /** Observes transcript container width to support compact controls on narrow columns. */
-    ngAfterViewInit(): void {
-        const transcriptColumn = this.transcriptColumnRef()?.nativeElement;
-        if (!transcriptColumn || typeof ResizeObserver === 'undefined') {
-            return;
-        }
-
-        this.transcriptColumnWidthPx.set(transcriptColumn.getBoundingClientRect().width);
-        this.resizeObserver = new ResizeObserver((entries) => {
-            if (this.resizeAnimationFrameId !== undefined) {
-                window.cancelAnimationFrame(this.resizeAnimationFrameId);
-            }
-            this.resizeAnimationFrameId = window.requestAnimationFrame(() => {
-                const width = entries[0]?.contentRect.width ?? transcriptColumn.getBoundingClientRect().width;
-                this.transcriptColumnWidthPx.set(width);
-                this.resizeAnimationFrameId = undefined;
-            });
-        });
-        this.resizeObserver.observe(transcriptColumn);
-    }
-
-    /** Cleans up ResizeObserver and pending animation frame callbacks. */
-    ngOnDestroy(): void {
-        this.resizeObserver?.disconnect();
-        if (this.resizeAnimationFrameId !== undefined) {
-            window.cancelAnimationFrame(this.resizeAnimationFrameId);
-            this.resizeAnimationFrameId = undefined;
-        }
-    }
+    isSearchActive = computed(() => this.searchQuery().length > 0);
 
     /**
      * Computes the filtered transcript segments based on the current search query.
      * Returns all segments if no search query is active, otherwise returns only matching segments.
      */
     private computeFilteredSegments(): TranscriptSegment[] {
-        const segments = this.transcriptSegments();
         const query = this.searchQuery().toLowerCase().trim();
         if (!query) {
-            return segments;
+            return this.transcriptSegments();
         }
-        return segments.filter((segment) => segment.text.toLowerCase().includes(query));
+        return this.transcriptSegments().filter((segment) => segment.text.toLowerCase().includes(query));
     }
 
     /** Update search query and reset to first result */
@@ -123,24 +80,26 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
 
     /** Navigate to next search result */
     nextSearchResult(): void {
-        this.navigateSearchResults(1);
-    }
-
-    /** Navigate to previous search result */
-    previousSearchResult(): void {
-        this.navigateSearchResults(-1);
-    }
-
-    /** Navigates search results with wrap-around behavior in both directions. */
-    private navigateSearchResults(direction: 1 | -1): void {
         const total = this.searchResultsCount();
         if (total === 0) {
             return;
         }
 
-        const nextIndex = (this.currentSearchIndex() + direction + total) % total;
+        const nextIndex = (this.currentSearchIndex() + 1) % total;
         this.currentSearchIndex.set(nextIndex);
         this.scrollToSearchResult(nextIndex);
+    }
+
+    /** Navigate to previous search result */
+    previousSearchResult(): void {
+        const total = this.searchResultsCount();
+        if (total === 0) {
+            return;
+        }
+
+        const prevIndex = (this.currentSearchIndex() - 1 + total) % total;
+        this.currentSearchIndex.set(prevIndex);
+        this.scrollToSearchResult(prevIndex);
     }
 
     /** Scroll to a specific search result */
@@ -156,15 +115,24 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
 
     /** Highlight search matches in segment text */
     highlightText(text: string): string {
+        // Escape HTML entities FIRST to prevent XSS attacks
         const escapedText = escapeString(text);
+
         const query = this.searchQuery().trim();
         if (!query) {
             return escapedText;
         }
 
+        // Escape the query as well to prevent XSS in search terms
         const escapedQuery = escapeString(query);
+
+        // Use escaped query for regex matching
         const regex = new RegExp(`(${this.escapeRegExp(escapedQuery)})`, 'gi');
-        return escapedText.replace(regex, '<mark>$1</mark>');
+        const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
+
+        // Safe to return: all user content is escaped, only <mark> tags are intentional HTML
+        // Angular's [innerHTML] will preserve <mark> while keeping escaped HTML entities safe
+        return highlighted;
     }
 
     /** Escape special regex characters */
@@ -206,18 +174,12 @@ export class TranscriptViewerComponent implements AfterViewInit, OnDestroy {
      * Uses container-scoped scrolling to avoid scrolling the full page.
      */
     private scrollToSegmentElement(segment: TranscriptSegment): void {
+        const el = document.getElementById(`segment-${segment.startTime}`);
         const container = this.transcriptListRef()?.nativeElement;
-        if (!container) {
-            return;
+        if (el && container) {
+            const centeredTop = el.offsetTop - container.clientHeight / 2 + el.clientHeight / 2;
+            const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
+            container.scrollTo({ top, behavior: 'smooth' });
         }
-
-        const segmentElement = container.querySelector<HTMLElement>(`#segment-${segment.startTime}`);
-        if (!segmentElement) {
-            return;
-        }
-
-        const centeredTop = segmentElement.offsetTop - container.clientHeight / 2 + segmentElement.clientHeight / 2;
-        const top = Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight));
-        container.scrollTo({ top, behavior: 'smooth' });
     }
 }
