@@ -102,3 +102,11 @@ export class UserNameAndLoginDTO {
     public name?: string;
     public login?: string;
 }
+
+/**
+ * A DTO representing a user which contains only the ID and login
+ */
+export class UserIdAndLoginDTO {
+    public id?: number;
+    public login?: string;
+}
