@@ -4,7 +4,6 @@
         <p-button size="small" severity="secondary" [routerLink]="['/course-management', course()?.id, 'quiz-exercises', 'export']">
             <fa-icon [icon]="faFileExport" />
             <span jhiTranslate="artemisApp.exercise.exportAction"></span>
-            <fa-icon [icon]="faCheckDouble" />
         </p-button>
     }
     <jhi-exercise-create-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
