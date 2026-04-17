@@ -5,16 +5,18 @@
             <span class="text-body-secondary">({{ exam().title }})</span>
         </h3>
 
-        <div class="d-flex flex-column gap-1 align-items-end ms-auto">
+        <div class="d-flex flex-column flex-shrink-0 gap-1 align-items-end ms-auto">
             @if (hasRegisteredUsers()) {
                 @if (!isLoading()) {
                     <jhi-student-exam-status [isTestExam]="isTestExam()" [hasStudentsWithoutExam]="hasStudentsWithoutExam()" />
                 }
                 @let exPrepStatus = exercisePreparationStatus();
                 @if (exPrepStatus) {
-                    <div class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
-                        <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label"></div>
-                        <div class="flex-grow-1 flex-basis-10 position-relative pe-3 text-white">
+                    <div class="d-flex flex-wrap align-items-center gap-1">
+                        <div
+                            class="flex-grow-1 flex-basis-10 position-relative pe-3 text-white"
+                            [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate"
+                        >
                             <div class="position-absolute w-100 h-100 top-0">
                                 <ngb-progressbar
                                     [value]="exPrepStatus.finished!"

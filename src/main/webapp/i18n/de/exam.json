@@ -462,7 +462,7 @@
                 "unsubmit": "Abgabe entfernen"
             },
             "exercisePreparationProgress": {
-                "label": "Aufgabenvorbereitungsfortschritt:",
+                "label": "Aufgabenvorbereitungsfortschritt",
                 "failed": "fehlgeschlagen",
                 "remaining": "verbleibend",
                 "finished": "Fertig",

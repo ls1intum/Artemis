@@ -462,7 +462,7 @@
                 "unsubmit": "Unsubmit"
             },
             "exercisePreparationProgress": {
-                "label": "Exercise preparation progress:",
+                "label": "Exercise preparation progress",
                 "failed": "failed",
                 "remaining": "remaining",
                 "finished": "Finished",
