@@ -106,7 +106,7 @@ public class AccountResource {
         // When SAML2 is active, names and email are synced from the IdP — only langKey can be changed
         if (profileService.isSaml2Active()) {
             currentUser.setLangKey(userDTO.getLangKey());
-            userRepository.save(currentUser);
+            userService.saveUser(currentUser);
             return ResponseEntity.ok().build();
         }
 
