@@ -852,25 +852,33 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             user.setActivated(false);
             userTestRepository.save(user);
 
-            // Step 3: Get authentication options (as anonymous)
-            MockHttpServletResponse authOptionsResponse = request
-                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).with(anonymous())).andExpect(status().isOk()).andReturn()
-                    .getResponse();
+            try {
+                // Step 3: Get authentication options (as anonymous)
+                MockHttpServletResponse authOptionsResponse = request
+                        .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).with(anonymous())).andExpect(status().isOk()).andReturn()
+                        .getResponse();
 
-            Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
-            });
-            String authChallenge = (String) authOptions.get("challenge");
-            Cookie challengeCookie = authOptionsResponse.getCookie("webauthn-challenge");
-            assertThat(challengeCookie).as("webauthn-challenge cookie should be set").isNotNull();
+                Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
+                });
+                String authChallenge = (String) authOptions.get("challenge");
+                Cookie challengeCookie = authOptionsResponse.getCookie("webauthn-challenge");
+                assertThat(challengeCookie).as("webauthn-challenge cookie should be set").isNotNull();
 
-            // Step 4: Create authentication response
-            String userHandle = webAuthnClientSimulator.encodeUserHandle(user.getId());
-            VirtualAuthenticator authenticatorWithIncrementedCount = authenticator.withIncrementedCount();
-            AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId, userHandle);
+                // Step 4: Create authentication response
+                String userHandle = webAuthnClientSimulator.encodeUserHandle(user.getId());
+                VirtualAuthenticator authenticatorWithIncrementedCount = authenticator.withIncrementedCount();
+                AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(authenticatorWithIncrementedCount, authChallenge, origin, rpId,
+                        userHandle);
 
-            // Step 5: Authentication should fail with 403 because the user is deactivated
-            request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).cookie(challengeCookie)
-                    .with(anonymous())).andExpect(status().isForbidden());
+                // Step 5: Authentication should fail with 403 because the user is deactivated
+                request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse))
+                        .cookie(challengeCookie).with(anonymous())).andExpect(status().isForbidden());
+            }
+            finally {
+                // Restore user activation to avoid polluting other tests
+                user.setActivated(true);
+                userTestRepository.save(user);
+            }
         }
     }
 }
