@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -69,6 +70,19 @@ public class JacksonDeserializerInitializationConfig {
         initializeTutorialGroup();
         initializePost();
 
+        // Initialize collection type deserializers (List<T>, Set<T>) — these use different
+        // cache entries than single-object deserializers and are commonly used by
+        // RequestUtilService.getList() / getSet() in integration tests.
+        for (Class<?> type : typesToInitialize) {
+            forceCollectionDeserializerCreation(type);
+        }
+
+        // Initialize List deserialization with nested objects — this warms up the
+        // contextualized deserializers (created by @JsonIgnoreProperties) that are
+        // different from the single-object deserializers cached above.
+        initializeTutorialGroupList();
+        initializeOrganizationList();
+
         log.info("Successfully initialized Jackson deserializers for {} types", typesToInitialize.size());
     }
 
@@ -87,6 +101,28 @@ public class JacksonDeserializerInitializationConfig {
             // Expected for types that require specific fields; the important thing
             // is that the deserializer was created and cached during the attempt
             log.debug("Pre-initialization attempt for {} (expected): {}", type.getSimpleName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Forces Jackson to create and cache collection deserializers (List and Set) for the given element type.
+     * Integration tests frequently deserialize responses as List<T> or Set<T> via RequestUtilService,
+     * which uses a different deserializer cache entry than single-object deserialization.
+     */
+    private void forceCollectionDeserializerCreation(Class<?> elementType) {
+        try {
+            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+            objectMapper.readValue("[]", listType);
+        }
+        catch (Exception e) {
+            log.debug("Pre-initialization of List<{}> (expected): {}", elementType.getSimpleName(), e.getMessage());
+        }
+        try {
+            JavaType setType = objectMapper.getTypeFactory().constructCollectionType(java.util.Set.class, elementType);
+            objectMapper.readValue("[]", setType);
+        }
+        catch (Exception e) {
+            log.debug("Pre-initialization of Set<{}> (expected): {}", elementType.getSimpleName(), e.getMessage());
         }
     }
 
@@ -229,6 +265,73 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Initializes List<TutorialGroup> deserialization with nested registrations and students.
+     * This matches the exact deserialization path used by RequestUtilService.getList() in
+     * TutorialGroupIntegrationTest, including contextualized deserializers created by
+     * {@code @JsonIgnoreProperties} annotations on the relationship fields.
+     */
+    private void initializeTutorialGroupList() {
+        try {
+            String sampleJson = """
+                    [{
+                        "id": 1,
+                        "title": "Test Group",
+                        "capacity": 10,
+                        "isOnline": false,
+                        "teachingAssistant": {
+                            "id": 1,
+                            "login": "tutor1"
+                        },
+                        "registrations": [{
+                            "id": 1,
+                            "student": {
+                                "id": 2,
+                                "login": "student1",
+                                "firstName": "Test",
+                                "lastName": "Student"
+                            }
+                        }]
+                    }]
+                    """;
+            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, TutorialGroup.class);
+            objectMapper.readValue(sampleJson, listType);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize List<TutorialGroup> deserializer: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Initializes List<Organization> deserialization with nested users.
+     * This matches the deserialization path used by Organization integration tests.
+     */
+    private void initializeOrganizationList() {
+        try {
+            String sampleJson = """
+                    [{
+                        "id": 1,
+                        "name": "Test Organization",
+                        "shortName": "TO",
+                        "emailPattern": ".*@test.com",
+                        "users": [{
+                            "id": 1,
+                            "login": "testuser",
+                            "firstName": "Test",
+                            "lastName": "User",
+                            "email": "test@test.com",
+                            "activated": true
+                        }]
+                    }]
+                    """;
+            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, Organization.class);
+            objectMapper.readValue(sampleJson, listType);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize List<Organization> deserializer: {}", e.getMessage());
         }
     }
 }
