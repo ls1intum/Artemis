@@ -1,0 +1,17 @@
+diff --git a/node_modules/js-video-url-parser/lib/util.js b/node_modules/js-video-url-parser/lib/util.js
+index c471af7..212f985 100644
+--- a/node_modules/js-video-url-parser/lib/util.js
++++ b/node_modules/js-video-url-parser/lib/util.js
+@@ -94,10 +94,10 @@ exports.getTime = function getTime(timeString) {
+   if (typeof timeString === 'undefined') {
+     return 0;
+   }
+-  if (timeString.match(/^(\d+[smhdw]?)+$/)) {
++  if (timeString.match(/^\d+(?:[smhdw]\d+)*[smhdw]?$/)) {
+     return getLetterTime(timeString);
+   }
+-  if (timeString.match(/^(\d+:?)+$/)) {
++  if (timeString.match(/^\d+(?::\d+)*:?$/)) {
+     return getColonTime(timeString);
+   }
+   return 0;
