@@ -54,6 +54,7 @@ import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/i
 import { AlertService } from 'app/shared/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
 
 // Must match the constants in the component
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
@@ -1445,6 +1446,100 @@ describe('IrisBaseChatbotComponent', () => {
             const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
             expect(trigger).toBeNull();
         });
+
+        const freshCourseSession: IrisSessionDTO = {
+            id: 30,
+            title: undefined,
+            creationDate: new Date('2025-10-06T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 7,
+            entityName: '',
+        };
+        const pastCourseSession: IrisSessionDTO = {
+            id: 31,
+            title: 'Earlier course chat',
+            creationDate: new Date('2025-10-05T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 7,
+            entityName: 'Course 7',
+        };
+
+        it.each(['widget', 'embedded'] as const)('should not render session title trigger after switching to course context without past course sessions (%s layout)', (layout) => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', layout);
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it.each(['widget', 'embedded'] as const)(
+            'should render session title trigger after switching to course context when a past course session exists (%s layout)',
+            (layout) => {
+                vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession, pastCourseSession]));
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
+                vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.componentRef.setInput('layout', layout);
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+                expect(trigger).not.toBeNull();
+            },
+        );
+
+        it('should return an empty activeSuggestionChips list when currentChatMode is undefined', () => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(undefined as unknown as ChatServiceMode));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect((component as any).activeSuggestionChips()).toEqual([]);
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            expect(chips).toHaveLength(0);
+        });
+
+        it.each(['widget', 'embedded'] as const)('should render session title trigger when current session has messages even without past sessions (%s layout)', (layout) => {
+            const userMessage = {
+                sender: IrisSender.USER,
+                id: 99,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: 'hi' } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisUserMessage;
+
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(7));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', layout);
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.hasCurrentSessionContent()).toBe(true);
+            expect(component.hasSessionSwitcher()).toBe(true);
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
     });
 
     describe('onDeleteSession', () => {
@@ -1764,6 +1859,7 @@ describe('IrisBaseChatbotComponent', () => {
         beforeEach(() => {
             statusMock.getActiveStatus.mockReturnValue(of({}));
             statusMock.currentRatelimitInfo.mockReturnValue(of({}));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -1888,7 +1984,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should render all three chips in fixed order: learn, quiz, tips', () => {
             fixture.detectChanges();
-            const chipKeys = (component as any).suggestionChips.map((c: any) => c.translationKey);
+            const chipKeys = COURSE_SUGGESTION_CHIPS.map((chip) => chip.translationKey);
             expect(chipKeys).toEqual(['artemisApp.iris.chat.suggestions.learn', 'artemisApp.iris.chat.suggestions.quiz', 'artemisApp.iris.chat.suggestions.tips']);
         });
 
@@ -1899,6 +1995,38 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             const overlay = fixture.nativeElement.querySelector('.chip-preview-overlay');
             expect(overlay).toBeNull();
+        });
+
+        const recreateFixtureForMode = (mode: ChatServiceMode) => {
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(mode));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        };
+
+        it('should call applyChipText with lecture-specific quiz starter when Quiz chip is clicked in lecture mode', () => {
+            recreateFixtureForMode(ChatServiceMode.LECTURE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter');
+        });
+
+        it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in programming exercise mode', () => {
+            recreateFixtureForMode(ChatServiceMode.PROGRAMMING_EXERCISE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+        });
+
+        it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in text exercise mode', () => {
+            recreateFixtureForMode(ChatServiceMode.TEXT_EXERCISE);
+            const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
+            const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+            chips[1].click();
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
         });
     });
 
@@ -1949,7 +2077,14 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(labels).toContain(component.currentPlaceholder());
             });
 
-            it('should hide suggestion chips on exercise screen', () => {
+            it('should show exercise suggestion chips on empty exercise screen in client layout', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(3);
+            });
+
+            it('should hide suggestion chips on exercise screen in widget layout', () => {
+                fixture.componentRef.setInput('layout', 'widget');
+                fixture.detectChanges();
                 const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
                 expect(chips).toHaveLength(0);
             });
@@ -1986,6 +2121,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             it('should cycle placeholder after interval', () => {
                 vi.useFakeTimers();
+
+                // Rotating placeholder only runs in widget/embedded layouts
+                fixture.componentRef.setInput('layout', 'widget');
+                fixture.detectChanges();
 
                 // Trigger cycling by simulating blur with empty input
                 component.onTextareaFocus();
@@ -2059,7 +2198,14 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(labels).toContain('artemisApp.iris.chat.placeholders.lecture.keyPoints');
             });
 
-            it('should hide suggestion chips on lecture screen', () => {
+            it('should show lecture suggestion chips on empty lecture screen in client layout', () => {
+                const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
+                expect(chips).toHaveLength(3);
+            });
+
+            it('should hide suggestion chips on lecture screen in widget layout', () => {
+                fixture.componentRef.setInput('layout', 'widget');
+                fixture.detectChanges();
                 const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
                 expect(chips).toHaveLength(0);
             });
@@ -2085,6 +2231,15 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         describe('course mode (no cycling)', () => {
+            beforeEach(() => {
+                vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.COURSE));
+                vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+            });
+
             it('should not be in exercise or lecture mode', () => {
                 expect(component.isExerciseOrLectureMode()).toBeFalsy();
             });

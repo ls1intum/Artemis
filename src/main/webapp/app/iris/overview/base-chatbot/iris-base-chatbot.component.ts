@@ -1,15 +1,12 @@
 import {
     faArrowDown,
-    faBrain,
     faCheck,
     faChevronDown,
     faCircleInfo,
     faCircleNotch,
-    faCompass,
     faCompress,
     faCopy,
     faExpand,
-    faGraduationCap,
     faLink,
     faMagnifyingGlass,
     faPaperPlane,
@@ -91,6 +88,7 @@ import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/i
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
+import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 // Session history time bucket boundaries (in days ago)
@@ -236,7 +234,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return active?.chatMessage;
     });
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
-    readonly hasSessionSwitcher = computed(() => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader());
+    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0);
+    readonly hasSessionSwitcher = computed(
+        () => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader() && (this.hasCurrentSessionContent() || this.hasPastSessions()),
+    );
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
         const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
@@ -309,11 +310,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    protected readonly suggestionChips = [
-        { icon: faGraduationCap, translationKey: 'artemisApp.iris.chat.suggestions.learn', starterKey: 'artemisApp.iris.chat.suggestions.learnStarter' },
-        { icon: faBrain, translationKey: 'artemisApp.iris.chat.suggestions.quiz', starterKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' },
-        { icon: faCompass, translationKey: 'artemisApp.iris.chat.suggestions.tips', starterKey: 'artemisApp.iris.chat.suggestions.tipsStarter' },
-    ] as const;
+    protected readonly activeSuggestionChips = createActiveSuggestionChips(this.currentChatMode);
 
     readonly chipPreviewText = signal('');
     private readonly isChipTextApplied = signal(false);
@@ -422,7 +419,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return labels[this.placeholderIndex() % labels.length];
     });
 
-    readonly shouldUseRotatingPlaceholder = computed(() => this.isExerciseOrLectureMode() && !this.messages().length && !this.isEmbeddedChat());
+    readonly shouldUseRotatingPlaceholder = computed(() => this.isExerciseOrLectureMode() && !this.messages().length && this.layout() !== 'client');
 
     readonly ghostText = computed(() => {
         const input = this.newMessageTextContent();

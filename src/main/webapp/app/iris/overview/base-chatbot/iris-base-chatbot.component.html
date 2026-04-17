@@ -437,9 +437,9 @@
                             </div>
                         </div>
                     </div>
-                    @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && !isExerciseOrLectureMode()) {
+                    @if (!messages()?.length && !isEmbeddedChat() && layout() === 'client' && activeSuggestionChips().length > 0) {
                         <div class="prompt-suggestion-chips" data-onboarding-target="suggestion-chips">
-                            @for (chip of suggestionChips; track chip.translationKey) {
+                            @for (chip of activeSuggestionChips(); track chip.translationKey) {
                                 <button
                                     type="button"
                                     class="prompt-suggestion-chip"
