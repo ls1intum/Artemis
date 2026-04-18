@@ -96,6 +96,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private lastMode: MonacoEditorMode = 'normal';
     renderSideBySide = input<boolean>(true);
     diffChanged = output<{ ready: boolean; lineChange: LineChange }>();
+    /** Emits the pixel width of the original (left) pane whenever the diff editor sash is dragged. */
+    diffSashMoved = output<number>();
 
     /*
      * Disposable listeners, subscriptions, and timeouts.
@@ -110,6 +112,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private customBackspaceCommandId: string | undefined;
 
     private diffUpdateListener?: Disposable;
+    private diffLayoutListener?: Disposable;
 
     /*
      * Injected services and elements.
@@ -280,6 +283,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener?.dispose();
         this.focusEditorTextListener?.dispose();
         this.diffUpdateListener?.dispose();
+        this.diffLayoutListener?.dispose();
 
         // Dispose selection change listeners
         for (const listenerEntry of this.selectionChangeListeners) {
@@ -347,6 +351,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // from firing synchronously during _diffEditor.dispose() and accessing a disposed editor.
         this.diffUpdateListener?.dispose();
         this.diffUpdateListener = undefined;
+        this.diffLayoutListener?.dispose();
+        this.diffLayoutListener = undefined;
         this.diffListenersAttached = false;
 
         if (this._diffEditor) {
@@ -411,6 +417,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 const lineChange = convertMonacoLineChanges(monacoLineChanges);
                 this.ngZone.run(() => {
                     this.diffChanged.emit({ ready: true, lineChange });
+                });
+            });
+
+            this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
+                this.ngZone.run(() => {
+                    this.diffSashMoved.emit(info.width);
                 });
             });
         });

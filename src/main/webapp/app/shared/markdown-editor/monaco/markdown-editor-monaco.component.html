@@ -21,7 +21,7 @@
                             @if (renderSideBySide()) {
                                 <!-- Split-view column headers so users know which side is which -->
                                 <div #diffHeader class="diff-pane-headers">
-                                    <div class="diff-pane-header">
+                                    <div class="diff-pane-header" [style.width.px]="diffOriginalPaneWidth">
                                         <p-tag severity="danger" [value]="diffOriginalLabel()" />
                                     </div>
                                     <div class="diff-pane-header diff-pane-header--right">
@@ -48,6 +48,7 @@
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (diffChanged)="onDiffChanged($event)"
+                            (diffSashMoved)="onDiffSashMoved($event)"
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />

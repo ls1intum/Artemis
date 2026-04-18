@@ -357,6 +357,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     });
     /** Reactive translated hint text for the unified diff view (updates on language change). */
     protected readonly diffUnifiedHint = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.unifiedHint'), { initialValue: '' });
+    /** Pixel width of the original (left) pane in the diff editor, used to align header labels with the sash. */
+    protected diffOriginalPaneWidth: number | undefined;
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -789,6 +791,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     onDiffChanged(event: { ready: boolean; lineChange: LineChange }): void {
         this.diffLineChange.emit(event);
+    }
+
+    onDiffSashMoved(originalWidth: number): void {
+        this.diffOriginalPaneWidth = originalWidth;
     }
 
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
