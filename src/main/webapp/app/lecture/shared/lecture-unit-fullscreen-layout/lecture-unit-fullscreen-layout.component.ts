@@ -71,8 +71,8 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     readonly fullscreenChange = output<boolean>();
     readonly horizontalSplitSizesChange = output<SplitSizes>();
 
-    private readonly _isFullscreen = signal<boolean>(false);
-    readonly isFullscreen = this._isFullscreen.asReadonly();
+    private readonly fullscreenState = signal<boolean>(false);
+    readonly isFullscreen = this.fullscreenState.asReadonly();
 
     readonly contentContainer = viewChild<ElementRef<HTMLElement>>('contentContainer');
     readonly mainContentElement = viewChild<ElementRef<HTMLElement>>('mainContent');
@@ -86,10 +86,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
     private splitInstance?: Split.Instance;
     private horizontalSplitInstance?: Split.Instance;
-    private _focusTrapHandler?: (event: KeyboardEvent) => void;
-    private _focusTrapContainer?: HTMLElement;
-    private _inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
-    private _previouslyFocusedElement: HTMLElement | null = null;
+    private focusTrapHandler?: (event: KeyboardEvent) => void;
+    private focusTrapContainer?: HTMLElement;
+    private inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
+    private previouslyFocusedElement: HTMLElement | undefined;
 
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
     private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -178,12 +178,12 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
      * Opens fullscreen and captures the currently focused element for restoration on close.
      */
     open(): void {
-        if (this._isFullscreen()) {
+        if (this.fullscreenState()) {
             return;
         }
-        this._captureFocusedElement();
+        this.captureFocusedElement();
         this.resetSplitSizesToDefaults();
-        this._isFullscreen.set(true);
+        this.fullscreenState.set(true);
         this.fullscreenChange.emit(true);
     }
 
@@ -191,11 +191,11 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
      * Closes fullscreen and restores focus to the previously focused element.
      */
     close(): void {
-        if (!this._isFullscreen() || this.hasNestedFullscreen()) {
+        if (!this.fullscreenState() || this.hasNestedFullscreen()) {
             return;
         }
-        this._isFullscreen.set(false);
-        this._restoreFocusedElement();
+        this.fullscreenState.set(false);
+        this.restoreFocusedElement();
         this.fullscreenChange.emit(false);
     }
 
@@ -260,19 +260,21 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
     private resetSplitSizesToDefaults(): void {
         this.splitSizesChange.emit(this.verticalSplit().defaultSizes);
-        this.horizontalSplitSizesChange.emit(this.horizontalSplit().defaultSizes);
-    }
-
-    private _captureFocusedElement(): void {
-        const activeEl = document.activeElement;
-        if (activeEl instanceof HTMLElement) {
-            this._previouslyFocusedElement = activeEl;
+        if (this.horizontalSplit().enabled) {
+            this.horizontalSplitSizesChange.emit(this.horizontalSplit().defaultSizes);
         }
     }
 
-    private _restoreFocusedElement(): void {
-        const elementToRestore = this._previouslyFocusedElement && document.contains(this._previouslyFocusedElement) ? this._previouslyFocusedElement : undefined;
-        this._previouslyFocusedElement = null;
+    private captureFocusedElement(): void {
+        const activeEl = document.activeElement;
+        if (activeEl instanceof HTMLElement) {
+            this.previouslyFocusedElement = activeEl;
+        }
+    }
+
+    private restoreFocusedElement(): void {
+        const elementToRestore = this.previouslyFocusedElement && document.contains(this.previouslyFocusedElement) ? this.previouslyFocusedElement : undefined;
+        this.previouslyFocusedElement = undefined;
 
         if (elementToRestore) {
             afterNextRender(
@@ -323,8 +325,8 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         // Clean up any existing handler first
         this.cleanupFocusTrap();
 
-        this._focusTrapContainer = container;
-        this._focusTrapHandler = (event: KeyboardEvent) => {
+        this.focusTrapContainer = container;
+        this.focusTrapHandler = (event: KeyboardEvent) => {
             if (event.key !== 'Tab') {
                 return;
             }
@@ -346,14 +348,14 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
         // Listener is removed in cleanupFocusTrap() which is called from ngOnDestroy()
         // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
-        container.addEventListener('keydown', this._focusTrapHandler);
+        container.addEventListener('keydown', this.focusTrapHandler);
     }
 
     private cleanupFocusTrap(): void {
-        if (this._focusTrapContainer && this._focusTrapHandler) {
-            this._focusTrapContainer.removeEventListener('keydown', this._focusTrapHandler);
-            this._focusTrapHandler = undefined;
-            this._focusTrapContainer = undefined;
+        if (this.focusTrapContainer && this.focusTrapHandler) {
+            this.focusTrapContainer.removeEventListener('keydown', this.focusTrapHandler);
+            this.focusTrapHandler = undefined;
+            this.focusTrapContainer = undefined;
         }
     }
 
@@ -384,10 +386,10 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
 
     private markSiblingElementsAsInert(parent: HTMLElement, currentElement: HTMLElement): void {
         Array.from(parent.children).forEach((sibling) => {
-            if (!(sibling instanceof HTMLElement) || sibling === currentElement || this._inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
+            if (!(sibling instanceof HTMLElement) || sibling === currentElement || this.inertElements.has(sibling) || this.shouldSkipBackgroundInert(sibling)) {
                 return;
             }
-            this._inertElements.set(sibling, {
+            this.inertElements.set(sibling, {
                 hadInert: sibling.hasAttribute('inert'),
                 previousAriaHidden: sibling.getAttribute('aria-hidden'),
             });
@@ -397,7 +399,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private restoreBackgroundElementsState(): void {
-        this._inertElements.forEach((state, element) => {
+        this.inertElements.forEach((state, element) => {
             if (!state.hadInert) {
                 element.removeAttribute('inert');
             }
@@ -407,7 +409,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
                 element.setAttribute('aria-hidden', state.previousAriaHidden);
             }
         });
-        this._inertElements.clear();
+        this.inertElements.clear();
     }
 
     private cleanupFullscreenAccessibility(): void {

@@ -67,6 +67,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
+    /** Stores the custom video column ratio when user adjusts the splitter. (undefined = use default flex layout) */
+    private readonly customVideoRatio = signal<number | undefined>(undefined);
+
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
@@ -173,20 +176,26 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     const newWidth = event.clientX - wrapperRect.left;
                     const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
-                    // Set video column width and disable flex
-                    videoColumnEl.style.flex = 'none';
-                    videoColumnEl.style.width = `${clampedWidth}px`;
+                    // Calculate percentage for flex-basis (allows natural scaling on resize)
+                    const flexBasisPercent = (clampedWidth / wrapperRect.width) * 100;
+
+                    // Store that user has customized the split
+                    this.customVideoRatio.set(flexBasisPercent / 100);
+
+                    // Use percentage-based flex-basis so layout naturally follows container resizes
+                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
+                    videoColumnEl.style.width = '';
                     // ResizeObserver will automatically sync transcript height
                 },
             },
             cursorChecker: () => 'col-resize',
         });
 
-        // Reset to default flex layout on window resize to prevent overflow
+        // On window resize, sync transcript height (percentage-based flex scales automatically)
         this.resizeHandler = () => {
-            videoColumnEl.style.flex = '';
-            videoColumnEl.style.width = '';
-            // ResizeObserver will automatically sync transcript height
+            if (wrapperEl && videoColumnEl) {
+                this.syncTranscriptHeight();
+            }
         };
         window.addEventListener('resize', this.resizeHandler);
 
@@ -195,6 +204,19 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.syncTranscriptHeight();
         });
         this.resizeObserver.observe(videoColumnEl);
+    }
+
+    /**
+     * Resets the video/transcript split ratio to default layout.
+     * Can be triggered by double-clicking the resizer handle.
+     */
+    resetSplitRatio(): void {
+        this.customVideoRatio.set(undefined);
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        if (videoColumnEl) {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+        }
     }
 
     /**
@@ -329,5 +351,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.resizeObserver.disconnect();
             this.resizeObserver = undefined;
         }
+
+        // Reset custom ratio signal
+        this.customVideoRatio.set(undefined);
     }
 }

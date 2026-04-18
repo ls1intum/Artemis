@@ -5,12 +5,14 @@ jhi-attachment-video-unit {
     --lecture-combined-view-bg: #{light.$gray-100};
     --lecture-combined-view-surface: #{light.$card-bg};
     --lecture-combined-view-border: #{light.$card-border-color};
+    --lecture-combined-view-hover: #{light.$gray-200};
     --lecture-combined-view-radius: 0.15rem;
 
     &.dark-mode {
         --lecture-combined-view-bg: #{dark.$gray-900};
         --lecture-combined-view-surface: #{dark.$card-bg};
         --lecture-combined-view-border: #{dark.$card-border-color};
+        --lecture-combined-view-hover: #{dark.$gray-700};
     }
 }
 

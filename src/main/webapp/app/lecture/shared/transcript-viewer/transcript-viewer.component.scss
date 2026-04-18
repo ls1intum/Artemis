@@ -1,41 +1,23 @@
-@use 'src/main/webapp/content/scss/themes/default-variables' as light;
-@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
-
+/* Host element participates in parent flex layout */
 :host {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
     min-height: 0;
-
-    --transcript-bg: #{light.$gray-100};
-    --transcript-hover-bg: #{light.$gray-200};
-    --transcript-active-bg: #{light.$transcript-active-bg};
-    --transcript-active-text: #{light.$transcript-active-text};
-    --transcript-surface-bg: transparent;
 }
 
-:host-context([prime-ng-use-dark-theme='true']) {
-    --transcript-bg: #{dark.$gray-900};
-    --transcript-hover-bg: #{dark.$gray-800};
-    --transcript-active-bg: #{dark.$transcript-active-bg};
-    --transcript-active-text: #{dark.$transcript-active-text};
-}
-
+/* --- Transcript column: header stays fixed; only list scrolls --- */
 .transcript-column {
     width: 100%;
     height: 100%;
     overflow: hidden;
     padding-left: 0.5rem;
-    background-color: var(--transcript-surface-bg);
+    background-color: transparent;
     color: var(--bs-body-color);
     display: flex;
     flex-direction: column;
     min-height: 0;
-}
-
-:host-context(.content-container--fullscreen) {
-    --transcript-surface-bg: var(--transcript-bg);
 }
 
 .transcript-header {
@@ -43,6 +25,7 @@
     padding-bottom: 0.5rem;
 }
 
+/* Search Container */
 .search-container {
     display: flex;
     flex-direction: column;
@@ -58,23 +41,23 @@
 .search-icon {
     position: absolute;
     left: 0.75rem;
-    color: var(--bs-secondary-color);
+    color: var(--gray-600);
     pointer-events: none;
 }
 
 .search-input {
     width: 100%;
     padding: 0.5rem 2.5rem;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.25rem;
-    background-color: var(--transcript-surface-bg);
+    background-color: transparent;
     color: var(--bs-body-color);
     font-size: 0.9rem;
     transition: border-color 0.2s;
 
     &:focus {
         outline: none;
-        border-color: var(--bs-primary);
+        border-color: var(--primary);
         box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
     }
 }
@@ -84,7 +67,7 @@
     right: 0.5rem;
     background: none;
     border: none;
-    color: var(--bs-secondary-color);
+    color: var(--gray-600);
     cursor: pointer;
     padding: 0.25rem;
     display: flex;
@@ -93,11 +76,11 @@
     transition: color 0.2s;
 
     &:hover {
-        color: var(--bs-body-color);
+        color: var(--gray-700);
     }
 
     &:focus {
-        outline: 0.2rem solid var(--bs-primary);
+        outline: 0.2rem solid var(--primary);
         outline-offset: 0.2rem;
     }
 }
@@ -111,25 +94,25 @@
 }
 
 .search-results {
-    color: var(--bs-secondary-color);
+    color: var(--gray-600);
     min-width: 4rem;
 }
 
 .nav-button {
     background: none;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
-    color: var(--bs-body-color);
+    color: var(--gray-700);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
 
     &:hover:not(:disabled) {
-        background-color: var(--transcript-hover-bg);
-        border-color: var(--bs-border-color);
+        background-color: var(--gray-100);
+        border-color: var(--gray-500);
     }
 
     &:disabled {
@@ -138,7 +121,7 @@
     }
 
     &:focus {
-        outline: 0.2rem solid var(--bs-primary);
+        outline: 0.2rem solid var(--primary);
         outline-offset: 0.2rem;
     }
 }
@@ -174,7 +157,7 @@
 }
 
 .transcript-line:hover {
-    background-color: var(--transcript-hover-bg);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .transcript-line.active {
@@ -185,13 +168,13 @@
 
 .transcript-line.search-result {
     background-color: rgba(var(--bs-primary-rgb), 0.15);
-    border-left: 3px solid var(--bs-primary);
+    border-left: 3px solid var(--primary);
     padding-left: calc(0.5rem - 3px);
 }
 
 .no-results {
     text-align: center;
-    color: var(--bs-secondary-color);
+    color: var(--gray-600);
     font-style: italic;
     padding: 2rem 1rem;
 }

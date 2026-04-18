@@ -97,8 +97,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     // Split panel sizes (percentage values)
     readonly defaultSplitSizes: SplitSizes = [50, 50];
+    readonly defaultTwoPaneVerticalSplitSizes: SplitSizes = [85, 15];
     readonly defaultThreePaneVerticalSplitSizes: SplitSizes = [66.67, 33.33];
-    private readonly _verticalSplitSizes = signal<SplitSizes>([85, 15]); // [content, iris]
+    private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultTwoPaneVerticalSplitSizes); // [content, iris]
     private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultSplitSizes); // [video, pdf]
     readonly minVerticalSplitSizes: SplitSizes = [120, 120];
     readonly minHorizontalSplitSizes: SplitSizes = [80, 80];
@@ -143,7 +144,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly verticalSplitConfig = computed(() => ({
         sizes: this.verticalSplitSizes(),
         minSizes: this.minVerticalSplitSizes,
-        defaultSizes: this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf() ? this.defaultThreePaneVerticalSplitSizes : this.defaultSplitSizes,
+        defaultSizes:
+            this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf()
+                ? this.defaultThreePaneVerticalSplitSizes
+                : this.defaultTwoPaneVerticalSplitSizes,
     }));
 
     readonly horizontalSplitConfig = computed(() => ({
