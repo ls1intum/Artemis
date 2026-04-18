@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, ViewEncapsulation, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnDestroy, ViewEncapsulation, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
@@ -64,6 +64,10 @@ interface ExamUserWithExamData extends ExamUser {
     studentExamId?: number;
 }
 
+interface MenuCommandEvent {
+    originalEvent?: Event;
+}
+
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
@@ -118,6 +122,8 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
+    readonly individualExamsStatusPopover = viewChild.required<Popover>('individualExamsStatusPopover');
+    readonly individualExamsStatusButton = viewChild<ElementRef<HTMLButtonElement>>('individualExamsStatusButton');
 
     private routeData = toSignal(this.route.data, {
         initialValue: { exam: undefined as Exam | undefined },
@@ -235,21 +241,29 @@ export class ExamStudentsComponent implements OnDestroy {
                 tooltip: 'artemisApp.studentExams.generateStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading,
-                command: () => this.handleGenerateStudentExams(),
+                command: (event: MenuCommandEvent) => {
+                    this.handleGenerateStudentExams(event.originalEvent);
+                },
             },
             {
                 label: 'artemisApp.studentExams.generateMissingStudentExams',
                 tooltip: 'artemisApp.studentExams.generateMissingStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
-                command: () => this.generateMissingStudentExams(),
+                command: (event: MenuCommandEvent) => {
+                    this.generateMissingStudentExams();
+                    this.openIndividualExamsStatusPopover(event.originalEvent);
+                },
             },
             {
                 label: 'artemisApp.studentExams.startExercises',
                 tooltip: 'artemisApp.studentExams.startExercisesTooltip',
                 icon: 'pi pi-play',
                 disabled: isExamStarted || isLoading || exercisePreparationRunning,
-                command: () => this.startExercises(),
+                command: (event: MenuCommandEvent) => {
+                    this.startExercises();
+                    this.openIndividualExamsStatusPopover(event.originalEvent);
+                },
             },
         ];
     });
@@ -333,6 +347,15 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
+    }
+
+    private openIndividualExamsStatusPopover(event?: Event) {
+        const popover = this.individualExamsStatusPopover();
+        const target = this.individualExamsStatusButton()?.nativeElement;
+        if (!target || popover.overlayVisible || !event) {
+            return;
+        }
+        popover.show(event, target);
     }
 
     reloadExamWithRegisteredUsers() {
@@ -442,16 +465,18 @@ export class ExamStudentsComponent implements OnDestroy {
      * Generate all student exams for the exam on the server and handle the result.
      * Asks for confirmation if some exams already exist.
      */
-    handleGenerateStudentExams() {
+    handleGenerateStudentExams(event: Event | undefined) {
         if (this.studentExams().length) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
             modalRef.result.then(() => {
                 this.generateStudentExams();
+                this.openIndividualExamsStatusPopover(event);
             });
         } else {
             this.generateStudentExams();
+            this.openIndividualExamsStatusPopover(event);
         }
     }
 
