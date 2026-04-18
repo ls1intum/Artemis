@@ -48,6 +48,7 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { SortEvent } from 'primeng/api';
 import { Tag } from 'primeng/tag';
+import { Popover } from 'primeng/popover';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -92,6 +93,7 @@ interface ExamUserWithExamData extends ExamUser {
         StudentExamWorkingTimeComponent,
         TestExamWorkingTimeComponent,
         Tag,
+        Popover,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
