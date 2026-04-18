@@ -279,7 +279,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).doesNotContain("katex");
+        // Unrelated mentions of the word "katex" in source comments are fine; only the stylesheet/script
+        // loads are what this test is about.
+        assertThat(result.html()).doesNotContain("katex.min.css").doesNotContain("katex.min.js").doesNotContain("katex-formula");
     }
 
     @Test
@@ -410,6 +412,20 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         var body = new ProblemStatementRenderRequestDTO("# Hi", null, null, "en", true, false, null);
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
         assertThat(result.html()).contains("artemis-problem-statement--dark");
+    }
+
+    // --- Interactive script shape ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmitInteractiveScriptWithExpectedStructure() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, true, null);
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        // Verify the rewritten interactive.js is what actually shipped. These identifiers are the
+        // contract between the server (class names, ids) and the rewrite — a regression in the JS
+        // that renames any of them will surface here.
+        assertThat(result.interactiveScript()).isNotNull().contains("artemis-feedback-modal").contains("artemis-modal").contains("artemis-modal-backdrop").contains("aria-modal")
+                .contains("artemis-problem-statement--dark").contains("WeakMap").doesNotContain("setStyles").doesNotContain("isDarkBackground");
     }
 
     // --- Renderer version stability ---

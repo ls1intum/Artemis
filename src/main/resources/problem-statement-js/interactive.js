@@ -1,440 +1,403 @@
+/**
+ * Interactive feedback modal for the server-rendered problem statement.
+ *
+ * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement
+ * container on the page. Click (or Enter/Space) on a task opens a modal showing the
+ * associated test feedback; the modal is appended to document.body so it is not clipped
+ * by host-page overflow / transform stacking contexts, and carries a dark class when its
+ * owning container is dark so CSS variables alone handle theming.
+ *
+ * Assumptions:
+ * - katex / KaTeX is irrelevant here; feedback is plain text.
+ * - The server escapes every attribute (names, messages) before it reaches this file;
+ *   this file never assigns to innerHTML.
+ * - __i18n is optionally injected as a literal object before this IIFE runs; fallbacks
+ *   in English are used if a key is missing.
+ */
 (function () {
     'use strict';
 
-    var MODAL_ID = 'artemis-feedback-modal';
-    var BACKDROP_ID = 'artemis-feedback-backdrop';
-    var INIT_ATTR = 'data-artemis-interactive';
-    var i18n = (typeof __i18n !== 'undefined') ? __i18n : {};
+    const MODAL_ID = 'artemis-feedback-modal';
+    const BACKDROP_ID = 'artemis-feedback-backdrop';
+    const INIT_ATTR = 'data-artemis-interactive';
+    const DARK_CONTAINER_CLASS = 'artemis-problem-statement--dark';
+    const FOCUSABLE_SELECTOR = [
+        'a[href]',
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+    ].join(',');
 
-    var ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">'
-        + '<circle cx="8" cy="8" r="7.5" fill="#28a745"/>'
-        + '<path d="M5 8l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    var ICON_FAIL = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">'
-        + '<circle cx="8" cy="8" r="7.5" fill="#dc3545"/>'
-        + '<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    const i18n = typeof __i18n !== 'undefined' ? __i18n : {};
+    const t = (key, fallback) => (i18n && typeof i18n[key] === 'string' && i18n[key]) || fallback;
 
-    // Read CSS variable from the problem statement container (not :root, to avoid leaking into host page)
-    function cssVar(name, fallback) {
-        var el = document.querySelector('.artemis-problem-statement') || document.documentElement;
-        var val = getComputedStyle(el).getPropertyValue(name).trim();
-        return val || fallback;
-    }
+    /** Parsed feedback kept off the DOM so the HTML stays auditable and the JSON is parsed once. */
+    const feedbackByTask = new WeakMap();
+
+    /** Maps the open modal back to the task that opened it, so focus can be restored on close. */
+    let currentOpener = null;
+    let previouslyFocused = null;
 
     function init() {
-        var tasks = document.querySelectorAll('.artemis-task[data-feedback]');
-        for (var i = 0; i < tasks.length; i++) {
-            if (tasks[i].hasAttribute(INIT_ATTR)) {
+        const tasks = document.querySelectorAll('.artemis-task[data-feedback]');
+        for (const task of tasks) {
+            if (task.hasAttribute(INIT_ATTR)) {
                 continue;
             }
-            var raw = tasks[i].getAttribute('data-feedback');
+            const raw = task.getAttribute('data-feedback');
             if (!raw || raw === '[]') {
                 continue;
             }
-            var feedback;
+            let feedback;
             try {
                 feedback = JSON.parse(raw);
-            }
-            catch (e) {
+            } catch (e) {
                 continue;
             }
             if (!Array.isArray(feedback) || feedback.length === 0) {
                 continue;
             }
-            tasks[i].setAttribute(INIT_ATTR, 'true');
-            tasks[i].setAttribute('tabindex', '0');
-            tasks[i].setAttribute('role', 'button');
-            tasks[i].setAttribute('aria-haspopup', 'dialog');
-            tasks[i].addEventListener('click', openModal);
-            tasks[i].addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openModal.call(this, e);
+            feedbackByTask.set(task, feedback);
+            task.setAttribute(INIT_ATTR, 'true');
+            task.setAttribute('tabindex', '0');
+            task.setAttribute('role', 'button');
+            task.setAttribute('aria-haspopup', 'dialog');
+            task.addEventListener('click', onTaskActivate);
+            task.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onTaskActivate.call(task, event);
                 }
             });
         }
     }
 
-    function getResultSummary() {
-        var container = document.querySelector('.artemis-problem-statement[data-result]');
-        if (!container) {
+    function onTaskActivate(event) {
+        const task = event && event.currentTarget ? event.currentTarget : this;
+        openModal(task);
+    }
+
+    /** Finds the problem-statement container the task belongs to. Falls back to document.body. */
+    function containerOf(task) {
+        return task.closest('.artemis-problem-statement') || document.body;
+    }
+
+    function resultSummaryOf(container) {
+        const host = container && container.classList && container.classList.contains('artemis-problem-statement') ? container : null;
+        if (!host) {
+            return null;
+        }
+        const raw = host.getAttribute('data-result');
+        if (!raw) {
             return null;
         }
         try {
-            return JSON.parse(container.getAttribute('data-result'));
-        }
-        catch (e) {
+            return JSON.parse(raw);
+        } catch (e) {
             return null;
         }
     }
 
-    function openModal(e) {
+    function el(tag, { cls, text, attrs, children, parent } = {}) {
+        const node = document.createElement(tag);
+        if (cls) {
+            node.className = cls;
+        }
+        if (text != null) {
+            node.textContent = text;
+        }
+        if (attrs) {
+            for (const [k, v] of Object.entries(attrs)) {
+                node.setAttribute(k, v);
+            }
+        }
+        if (children) {
+            for (const c of children) {
+                if (c) {
+                    node.appendChild(c);
+                }
+            }
+        }
+        if (parent) {
+            parent.appendChild(node);
+        }
+        return node;
+    }
+
+    function openModal(task) {
         closeModal();
-        var raw = this.getAttribute('data-feedback');
-        if (!raw) {
-            return;
-        }
-        var feedback;
-        try {
-            feedback = JSON.parse(raw);
-        }
-        catch (err) {
-            return;
-        }
-        if (!Array.isArray(feedback) || feedback.length === 0) {
+
+        const feedback = feedbackByTask.get(task);
+        if (!feedback || feedback.length === 0) {
             return;
         }
 
-        var taskName = this.getAttribute('data-task-name') || '';
-        var result = getResultSummary();
+        const taskName = task.getAttribute('data-task-name') || '';
+        const container = containerOf(task);
+        const result = resultSummaryOf(container);
+        const isDark = container && container.classList && container.classList.contains(DARK_CONTAINER_CLASS);
 
-        // Theme colors from CSS variables
-        var bodyBg = cssVar('--body-bg', '#fff');
-        var bodyColor = cssVar('--body-color', '#212529');
-        var borderColor = cssVar('--border-color', '#dee2e6');
-        var secondaryColor = cssVar('--secondary', '#6c757d');
-        var successColor = cssVar('--success', '#28a745');
-        var dangerColor = cssVar('--danger', '#dc3545');
+        const passed = feedback.filter((item) => item.passed);
+        const failed = feedback.filter((item) => !item.passed);
 
-        // Detect dark mode: if body background is dark, adjust feedback colors
-        var isDark = isDarkBackground(bodyBg);
-        var passedGroupBg = isDark ? 'rgba(40,167,69,0.15)' : '#d4edda';
-        var passedGroupColor = isDark ? '#81c784' : '#155724';
-        var failedGroupBg = isDark ? 'rgba(220,53,69,0.15)' : '#f8d7da';
-        var failedGroupColor = isDark ? '#e57373' : '#721c24';
-        var passedItemBg = isDark ? 'rgba(40,167,69,0.08)' : '#f0faf2';
-        var passedItemBorder = isDark ? 'rgba(40,167,69,0.25)' : '#c3e6cb';
-        var failedItemBg = isDark ? 'rgba(220,53,69,0.08)' : '#fef2f2';
-        var failedItemBorder = isDark ? 'rgba(220,53,69,0.25)' : '#f5c6cb';
-        var subtleBg = isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa';
-        var subtleBorder = isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef';
-        var barTrackBg = isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef';
+        const backdrop = buildBackdrop(isDark);
+        const { modal, body } = buildModalShell(taskName, isDark);
 
-        // Separate into passed / failed
-        var passed = [];
-        var failed = [];
-        for (var i = 0; i < feedback.length; i++) {
-            if (feedback[i].passed) {
-                passed.push(feedback[i]);
-            }
-            else {
-                failed.push(feedback[i]);
-            }
+        const scoreSection = buildScoreSection(result);
+        if (scoreSection) {
+            body.appendChild(scoreSection);
+            body.appendChild(el('hr', { cls: 'artemis-modal__divider' }));
         }
 
-        // Backdrop
-        var backdrop = document.createElement('div');
-        backdrop.id = BACKDROP_ID;
-        setStyles(backdrop, {
-            position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-            background: 'rgba(0,0,0,0.5)', zIndex: '10000'
-        });
-        backdrop.addEventListener('click', closeModal);
-
-        // Modal
-        var modal = document.createElement('div');
-        modal.id = MODAL_ID;
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-label', (i18n.feedbackTitle || 'Feedback for task:') + ' ' + taskName);
-        setStyles(modal, {
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            zIndex: '10001', background: bodyBg, color: bodyColor, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif', borderRadius: '8px', width: '90%',
-            maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
-            boxShadow: '0 8px 32px rgba(0,0,0,.25)', overflow: 'hidden'
-        });
-
-        // Header
-        var header = document.createElement('div');
-        setStyles(header, {
-            background: '#353d47', color: '#fff', padding: '16px 20px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            flexShrink: '0'
-        });
-        var title = document.createElement('h3');
-        title.textContent = (i18n.feedbackTitle || 'Feedback for task:') + ' ' + taskName;
-        setStyles(title, { margin: '0', fontSize: '16px', fontWeight: '600' });
-        header.appendChild(title);
-        var closeBtn = document.createElement('button');
-        closeBtn.textContent = '\u2715';
-        closeBtn.setAttribute('aria-label', i18n.close || 'Close');
-        setStyles(closeBtn, {
-            background: 'none', border: 'none', color: '#fff', fontSize: '20px',
-            cursor: 'pointer', padding: '0 0 0 12px', lineHeight: '1'
-        });
-        closeBtn.addEventListener('click', closeModal);
-        header.appendChild(closeBtn);
-        modal.appendChild(header);
-
-        // Body (scrollable)
-        var body = document.createElement('div');
-        setStyles(body, { padding: '20px', overflowY: 'auto', flex: '1' });
-
-        // Score section
-        if (result && result.score != null) {
-            var scoreDiv = document.createElement('div');
-            setStyles(scoreDiv, { marginBottom: '16px' });
-            var scoreText = (i18n.score || 'Score:') + ' ' + Math.round(result.score * 10) / 10 + '%';
-            if (result.maxPoints) {
-                var points = Math.round(result.score * result.maxPoints / 100 * 10) / 10;
-                scoreText += ' \u00B7 ' + points + ' ' + (i18n.of || 'of') + ' ' + result.maxPoints + ' ' + (i18n.points || 'points');
-            }
-            var scoreH4 = document.createElement('h4');
-            scoreH4.textContent = scoreText;
-            setStyles(scoreH4, { margin: '0 0 4px', fontSize: '15px', fontWeight: '600' });
-            scoreDiv.appendChild(scoreH4);
-
-            // Submission info
-            var metaParts = [];
-            if (result.submissionDate) {
-                metaParts.push((i18n.submitted || 'Submitted') + ' ' + formatDate(result.submissionDate));
-            }
-            if (result.commitHash) {
-                metaParts.push((i18n.commit || 'Commit') + ' ' + result.commitHash.substring(0, 8));
-            }
-            if (metaParts.length > 0) {
-                var metaP = document.createElement('p');
-                metaP.textContent = metaParts.join(' \u00B7 ');
-                setStyles(metaP, { margin: '0', fontSize: '13px', color: secondaryColor });
-                scoreDiv.appendChild(metaP);
-            }
-            body.appendChild(scoreDiv);
-
-            var hr = document.createElement('hr');
-            setStyles(hr, { border: 'none', borderTop: '1px solid ' + borderColor, margin: '0 0 16px' });
-            body.appendChild(hr);
+        const scoreBar = buildScoreBar(result);
+        if (scoreBar) {
+            body.appendChild(scoreBar);
         }
 
-        // Score bar
-        if (result && result.score != null && result.maxPoints) {
-            var barContainer = document.createElement('div');
-            setStyles(barContainer, {
-                height: '8px', background: barTrackBg, borderRadius: '4px',
-                overflow: 'hidden', marginBottom: '16px'
-            });
-            var barFill = document.createElement('div');
-            var pct = Math.min(100, Math.max(0, result.score));
-            setStyles(barFill, {
-                height: '100%', width: pct + '%', borderRadius: '4px',
-                background: pct >= 50 ? successColor : dangerColor
-            });
-            barContainer.appendChild(barFill);
-            body.appendChild(barContainer);
-        }
-
-        // Feedback groups
         if (failed.length > 0) {
-            body.appendChild(buildGroup(i18n.failedTests || 'Failed Tests', failed, false, failedGroupBg, failedGroupColor, failedItemBg, failedItemBorder, subtleBg, subtleBorder, bodyColor));
+            body.appendChild(buildFeedbackGroup(t('failedTests', 'Failed Tests'), failed, 'failed'));
         }
         if (passed.length > 0) {
-            body.appendChild(buildGroup(i18n.passedTests || 'Passed Tests', passed, true, passedGroupBg, passedGroupColor, passedItemBg, passedItemBorder, subtleBg, subtleBorder, bodyColor));
+            body.appendChild(buildFeedbackGroup(t('passedTests', 'Passed Tests'), passed, 'passed'));
         }
 
-        modal.appendChild(body);
-
-        // Footer
-        var footer = document.createElement('div');
-        setStyles(footer, {
-            padding: '12px 20px', borderTop: '1px solid ' + borderColor,
-            display: 'flex', justifyContent: 'flex-end', flexShrink: '0'
-        });
-        var footerBtn = document.createElement('button');
-        footerBtn.textContent = i18n.close || 'Close';
-        setStyles(footerBtn, {
-            padding: '6px 20px', border: '1px solid ' + secondaryColor, borderRadius: '4px',
-            background: bodyBg, cursor: 'pointer', fontSize: '14px', color: bodyColor
-        });
-        footerBtn.addEventListener('click', closeModal);
-        footer.appendChild(footerBtn);
-        modal.appendChild(footer);
+        previouslyFocused = document.activeElement;
+        currentOpener = task;
 
         document.body.appendChild(backdrop);
         document.body.appendChild(modal);
-        document.addEventListener('keydown', onEscape);
+        document.addEventListener('keydown', onKeydown, true);
 
-        // Focus the close button for keyboard accessibility
-        closeBtn.focus();
+        const firstFocusable = modal.querySelector(FOCUSABLE_SELECTOR);
+        if (firstFocusable) {
+            firstFocusable.focus();
+        }
     }
 
-    function buildGroup(label, items, isPassed, groupBg, groupColor, itemBg, itemBorder, subtleBg, subtleBorder, textColor) {
-        var wrapper = document.createElement('div');
-        setStyles(wrapper, { marginBottom: '12px' });
-
-        // Group header
-        var groupHeader = document.createElement('div');
-        setStyles(groupHeader, {
-            padding: '10px 14px', borderRadius: '4px', cursor: 'pointer',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            userSelect: 'none',
-            background: groupBg,
-            color: groupColor
+    function buildBackdrop(isDark) {
+        const backdrop = el('div', {
+            cls: isDark ? 'artemis-modal-backdrop artemis-modal-backdrop--dark' : 'artemis-modal-backdrop',
+            attrs: { id: BACKDROP_ID },
         });
-        var headerLeft = document.createElement('div');
-        var arrow = document.createElement('span');
-        arrow.textContent = '\u25BC ';
-        setStyles(arrow, { fontSize: '11px', marginRight: '6px' });
-        headerLeft.appendChild(arrow);
-        var headerText = document.createElement('strong');
-        headerText.textContent = label + ' (' + items.length + ')';
-        headerLeft.appendChild(headerText);
-        groupHeader.appendChild(headerLeft);
+        backdrop.addEventListener('click', closeModal);
+        return backdrop;
+    }
 
-        // Total credits for group
-        var totalCredits = 0;
-        var hasCredits = false;
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].credits != null) {
-                totalCredits += items[i].credits;
-                hasCredits = true;
-            }
+    function buildModalShell(taskName, isDark) {
+        const titleId = MODAL_ID + '-title';
+        const modal = el('div', {
+            cls: isDark ? 'artemis-modal artemis-modal--dark' : 'artemis-modal',
+            attrs: {
+                id: MODAL_ID,
+                role: 'dialog',
+                'aria-modal': 'true',
+                'aria-labelledby': titleId,
+            },
+        });
+
+        const header = el('div', { cls: 'artemis-modal__header', parent: modal });
+        el('h3', {
+            cls: 'artemis-modal__title',
+            text: `${t('feedbackTitle', 'Feedback for task:')} ${taskName}`,
+            attrs: { id: titleId },
+            parent: header,
+        });
+        const closeBtn = el('button', {
+            cls: 'artemis-modal__close',
+            text: '\u2715',
+            attrs: { type: 'button', 'aria-label': t('close', 'Close') },
+            parent: header,
+        });
+        closeBtn.addEventListener('click', closeModal);
+
+        const body = el('div', { cls: 'artemis-modal__body', parent: modal });
+
+        const footer = el('div', { cls: 'artemis-modal__footer', parent: modal });
+        const footerBtn = el('button', {
+            cls: 'artemis-modal__button',
+            text: t('close', 'Close'),
+            attrs: { type: 'button' },
+            parent: footer,
+        });
+        footerBtn.addEventListener('click', closeModal);
+
+        return { modal, body };
+    }
+
+    function buildScoreSection(result) {
+        if (!result || result.score == null) {
+            return null;
         }
+        const section = el('div', { cls: 'artemis-modal__score' });
+        let scoreText = `${t('score', 'Score:')} ${roundTo(result.score, 1)}%`;
+        if (result.maxPoints) {
+            const points = roundTo((result.score * result.maxPoints) / 100, 1);
+            scoreText += ` \u00B7 ${points} ${t('of', 'of')} ${result.maxPoints} ${t('points', 'points')}`;
+        }
+        el('h4', { cls: 'artemis-modal__score-title', text: scoreText, parent: section });
+
+        const metaParts = [];
+        if (result.submissionDate) {
+            metaParts.push(`${t('submitted', 'Submitted')} ${formatDate(result.submissionDate)}`);
+        }
+        if (result.commitHash) {
+            metaParts.push(`${t('commit', 'Commit')} ${String(result.commitHash).substring(0, 8)}`);
+        }
+        if (metaParts.length > 0) {
+            el('p', {
+                cls: 'artemis-modal__score-meta',
+                text: metaParts.join(' \u00B7 '),
+                parent: section,
+            });
+        }
+        return section;
+    }
+
+    function buildScoreBar(result) {
+        if (!result || result.score == null || !result.maxPoints) {
+            return null;
+        }
+        const track = el('div', { cls: 'artemis-score-bar' });
+        const pct = Math.min(100, Math.max(0, result.score));
+        const fillClass = pct >= 50 ? 'artemis-score-bar__fill artemis-score-bar__fill--pass' : 'artemis-score-bar__fill artemis-score-bar__fill--fail';
+        const fill = el('div', { cls: fillClass, parent: track });
+        fill.style.width = `${pct}%`;
+        return track;
+    }
+
+    function buildFeedbackGroup(label, items, kind) {
+        const wrapper = el('div', { cls: `artemis-feedback-group artemis-feedback-group--${kind}` });
+
+        const body = el('div', { cls: 'artemis-feedback-group__body' });
+
+        const header = el('button', {
+            cls: 'artemis-feedback-group__header',
+            attrs: { type: 'button', 'aria-expanded': 'true' },
+        });
+        const arrow = el('span', { cls: 'artemis-feedback-group__arrow', text: '\u25BC' });
+        const labelStrong = el('strong', { text: `${label} (${items.length})` });
+        el('div', { children: [arrow, labelStrong], parent: header });
+
+        const totalCredits = items.reduce((sum, item) => (item.credits != null ? sum + item.credits : sum), 0);
+        const hasCredits = items.some((item) => item.credits != null);
         if (hasCredits) {
-            var creditsSpan = document.createElement('strong');
-            creditsSpan.textContent = (totalCredits >= 0 ? '+' : '') + roundTo(totalCredits, 1) + 'P';
-            groupHeader.appendChild(creditsSpan);
+            el('strong', {
+                text: `${totalCredits >= 0 ? '+' : ''}${roundTo(totalCredits, 1)}P`,
+                parent: header,
+            });
         }
 
-        wrapper.appendChild(groupHeader);
-
-        // Group body (items)
-        var groupBody = document.createElement('div');
-        setStyles(groupBody, { padding: '0 8px' });
-
-        for (var j = 0; j < items.length; j++) {
-            groupBody.appendChild(buildFeedbackItem(items[j], isPassed, itemBg, itemBorder, subtleBg, subtleBorder, textColor));
-        }
-
-        wrapper.appendChild(groupBody);
-
-        // Toggle collapse
-        var expanded = true;
-        groupHeader.addEventListener('click', function () {
-            expanded = !expanded;
-            groupBody.style.display = expanded ? 'block' : 'none';
-            arrow.textContent = expanded ? '\u25BC ' : '\u25B6 ';
+        header.addEventListener('click', () => {
+            const expanded = header.getAttribute('aria-expanded') !== 'false';
+            const next = !expanded;
+            header.setAttribute('aria-expanded', String(next));
+            body.style.display = next ? 'block' : 'none';
+            arrow.textContent = next ? '\u25BC' : '\u25B6';
         });
 
+        wrapper.appendChild(header);
+
+        for (const item of items) {
+            body.appendChild(buildFeedbackItem(item, kind));
+        }
+        wrapper.appendChild(body);
         return wrapper;
     }
 
-    function buildFeedbackItem(item, isPassed, itemBg, itemBorder, subtleBg, subtleBorder, textColor) {
-        var itemDiv = document.createElement('div');
-        setStyles(itemDiv, {
-            padding: '10px 12px', margin: '6px 0', borderRadius: '4px',
-            border: '1px solid ' + itemBorder,
-            background: itemBg
-        });
+    function buildFeedbackItem(item, kind) {
+        const itemDiv = el('div', { cls: `artemis-feedback-item artemis-feedback-item--${kind}` });
 
-        // Header row: icon + name + credits
-        var headerRow = document.createElement('div');
-        setStyles(headerRow, {
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-        });
+        const headerRow = el('div', { cls: 'artemis-feedback-item__header', parent: itemDiv });
 
-        var nameSpan = document.createElement('div');
-        var icon = document.createElement('span');
-        icon.innerHTML = isPassed ? ICON_CHECK : ICON_FAIL;
-        setStyles(icon, { marginRight: '6px', display: 'inline-flex', alignItems: 'center' });
-        nameSpan.appendChild(icon);
-        var nameText = document.createElement('strong');
-        nameText.textContent = item.name;
-        setStyles(nameText, { fontSize: '14px', color: textColor });
-        nameSpan.appendChild(nameText);
-        headerRow.appendChild(nameSpan);
+        const iconClass = kind === 'passed' ? 'fa artemis-icon-success' : 'fa artemis-icon-fail';
+        const nameWrap = el('div', { cls: 'artemis-feedback-item__name' });
+        el('i', { cls: iconClass, attrs: { 'aria-hidden': 'true' }, parent: nameWrap });
+        el('strong', { cls: 'artemis-feedback-item__name-text', text: item.name || '', parent: nameWrap });
+        headerRow.appendChild(nameWrap);
 
         if (item.credits != null) {
-            var creditsBadge = document.createElement('span');
-            creditsBadge.textContent = (item.credits >= 0 ? '+' : '') + roundTo(item.credits, 1) + 'P';
-            setStyles(creditsBadge, { fontWeight: '700', fontSize: '13px', flexShrink: '0' });
-            headerRow.appendChild(creditsBadge);
+            el('span', {
+                cls: 'artemis-feedback-item__credits',
+                text: `${item.credits >= 0 ? '+' : ''}${roundTo(item.credits, 1)}P`,
+                parent: headerRow,
+            });
         }
 
-        itemDiv.appendChild(headerRow);
-
-        // Detail message (always visible)
         if (item.message) {
-            var msgContent = document.createElement('pre');
-            msgContent.textContent = item.message;
-            setStyles(msgContent, {
-                fontSize: '12px', color: textColor,
-                background: subtleBg, border: '1px solid ' + subtleBorder, borderRadius: '4px',
-                padding: '8px', margin: '6px 0 0', whiteSpace: 'pre-wrap',
-                overflowWrap: 'break-word', maxHeight: '200px', overflowY: 'auto'
+            el('pre', {
+                cls: 'artemis-feedback-item__message',
+                text: item.message,
+                parent: itemDiv,
             });
-            itemDiv.appendChild(msgContent);
         }
 
         return itemDiv;
     }
 
     function closeModal() {
-        var modal = document.getElementById(MODAL_ID);
+        const modal = document.getElementById(MODAL_ID);
         if (modal) {
             modal.parentNode.removeChild(modal);
         }
-        var backdrop = document.getElementById(BACKDROP_ID);
+        const backdrop = document.getElementById(BACKDROP_ID);
         if (backdrop) {
             backdrop.parentNode.removeChild(backdrop);
         }
-        document.removeEventListener('keydown', onEscape);
+        document.removeEventListener('keydown', onKeydown, true);
+        if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+            previouslyFocused.focus();
+        }
+        previouslyFocused = null;
+        currentOpener = null;
     }
 
-    function onEscape(e) {
-        if (e.key === 'Escape') {
+    function onKeydown(event) {
+        const modal = document.getElementById(MODAL_ID);
+        if (!modal) {
+            return;
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
             closeModal();
+            return;
         }
-    }
-
-    function isDarkBackground(bgColor) {
-        var r, g, b;
-        // Try rgb(r, g, b) or rgba(r, g, b, a)
-        var rgbMatch = bgColor.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-        if (rgbMatch) {
-            r = parseInt(rgbMatch[1], 10);
-            g = parseInt(rgbMatch[2], 10);
-            b = parseInt(rgbMatch[3], 10);
-        } else {
-            // Try hex
-            var hex = bgColor.replace('#', '');
-            if (hex.length === 3) {
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-            }
-            if (hex.length !== 6) {
-                return false;
-            }
-            r = parseInt(hex.substring(0, 2), 16);
-            g = parseInt(hex.substring(2, 4), 16);
-            b = parseInt(hex.substring(4, 6), 16);
+        if (event.key !== 'Tab') {
+            return;
         }
-        var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance < 0.5;
+        const focusables = Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR));
+        if (focusables.length === 0) {
+            return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
     }
 
     function formatDate(isoString) {
         try {
-            var d = new Date(isoString);
+            const d = new Date(isoString);
             return d.toLocaleString();
-        }
-        catch (e) {
+        } catch (e) {
             return isoString;
         }
     }
 
     function roundTo(val, decimals) {
-        var factor = Math.pow(10, decimals);
+        const factor = Math.pow(10, decimals);
         return Math.round(val * factor) / factor;
-    }
-
-    function setStyles(el, styles) {
-        for (var prop in styles) {
-            if (styles.hasOwnProperty(prop)) {
-                el.style[prop] = styles[prop];
-            }
-        }
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
-    }
-    else {
+    } else {
         init();
     }
 })();

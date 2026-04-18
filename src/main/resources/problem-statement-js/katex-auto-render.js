@@ -1,4 +1,12 @@
-(function() {
+/**
+ * Client-side KaTeX auto-renderer for the server-rendered problem statement.
+ *
+ * The server emits <span class="katex-formula" data-formula="..." data-display-mode="..."> placeholders
+ * instead of rendered math. This script runs after katex.min.js, walks those placeholders, and replaces
+ * each with the rendered math. If KaTeX throws on a formula, the raw LaTeX source is shown as text
+ * rather than failing loudly.
+ */
+(function () {
     'use strict';
     var formulas = document.querySelectorAll('.katex-formula');
     for (var i = 0; i < formulas.length; i++) {
