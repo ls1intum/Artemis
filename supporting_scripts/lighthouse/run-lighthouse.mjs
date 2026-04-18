@@ -14,7 +14,7 @@
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
-import { extname, join, resolve } from 'node:path';
+import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -135,26 +135,58 @@ function handleApiMock(urlPath, res) {
     return false;
 }
 
+const resolvedStaticRoot = resolve(staticRoot);
+const indexHtmlPath = join(resolvedStaticRoot, 'index.html');
+
+/**
+ * Resolves a request path safely against the static root. Returns the canonical file path
+ * if it lives inside the root, or `null` if the request would escape the jail, contains
+ * illegal bytes, or matches a directory (SPA fallback handled by the caller).
+ */
+function resolveSafeFilePath(urlPath) {
+    if (urlPath.includes('\0')) {
+        return null;
+    }
+    const normalized = normalize(urlPath);
+    // Reject any residual parent-directory segment after normalization — this happens
+    // when the URL traverses above the static root (e.g. `/../../etc/passwd`).
+    if (normalized.startsWith('..') || normalized.includes(`${sep}..${sep}`)) {
+        return null;
+    }
+    const candidate = resolve(resolvedStaticRoot, '.' + (normalized.startsWith('/') ? normalized : '/' + normalized));
+    if (candidate !== resolvedStaticRoot && !candidate.startsWith(resolvedStaticRoot + sep)) {
+        return null;
+    }
+    return candidate;
+}
+
 function startStaticServer() {
     return new Promise((resolvePromise, rejectPromise) => {
         const server = createServer((req, res) => {
-            const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+            const rawPath = (req.url || '/').split('?')[0];
+            let urlPath;
+            try {
+                urlPath = decodeURIComponent(rawPath);
+            } catch {
+                // Lighthouse sometimes synthesizes URLs with malformed percent-encoding during
+                // audits; keep the server alive so the run completes.
+                res.writeHead(400).end();
+                return;
+            }
 
             if (handleApiMock(urlPath, res)) {
                 return;
             }
 
-            let filePath = join(staticRoot, urlPath);
-
-            // SPA fallback: serve index.html for any path without a file extension
-            const hasExtension = extname(urlPath) !== '';
-            if (!hasExtension || !existsSync(filePath) || !statSync(filePath).isFile()) {
-                filePath = join(staticRoot, 'index.html');
-            }
-            if (!filePath.startsWith(staticRoot)) {
+            const safePath = resolveSafeFilePath(urlPath);
+            if (safePath === null) {
                 res.writeHead(403).end();
                 return;
             }
+
+            // SPA fallback: serve index.html for any path without a file extension
+            const hasExtension = extname(urlPath) !== '';
+            const filePath = hasExtension && existsSync(safePath) && statSync(safePath).isFile() ? safePath : indexHtmlPath;
 
             const ext = extname(filePath).toLowerCase();
             // index.html must not be cached so Lighthouse sees the current build; fingerprinted

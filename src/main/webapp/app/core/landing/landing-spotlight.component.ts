@@ -257,6 +257,7 @@ export class LandingSpotlightComponent implements OnInit {
     private autoAdvanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private fadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private videoHydrationTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private videoHydrationIdleCallbackId: number | undefined;
 
     constructor() {
         afterNextRender(() => this.hydrateVideosWhenIdle());
@@ -268,6 +269,11 @@ export class LandingSpotlightComponent implements OnInit {
             this.clearAutoAdvanceTimeout();
             clearTimeout(this.fadeTimeoutId);
             clearTimeout(this.videoHydrationTimeoutId);
+            if (this.videoHydrationIdleCallbackId !== undefined) {
+                const cancel = (globalThis as { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback;
+                cancel?.(this.videoHydrationIdleCallbackId);
+                this.videoHydrationIdleCallbackId = undefined;
+            }
         });
     }
 
@@ -343,7 +349,13 @@ export class LandingSpotlightComponent implements OnInit {
         const enable = () => this.videosEnabled.set(true);
         const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
         if (typeof ric === 'function') {
-            ric(enable, { timeout: LandingSpotlightComponent.videoHydrationDelayMs });
+            this.videoHydrationIdleCallbackId = ric(
+                () => {
+                    this.videoHydrationIdleCallbackId = undefined;
+                    enable();
+                },
+                { timeout: LandingSpotlightComponent.videoHydrationDelayMs },
+            );
             return;
         }
         this.videoHydrationTimeoutId = setTimeout(enable, LandingSpotlightComponent.videoHydrationDelayMs);

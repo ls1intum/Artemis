@@ -99,6 +99,40 @@ describe('SplitTranslateLoader', () => {
         httpMock.expectNone((r) => r.url.startsWith('i18n/en.json') && !r.url.includes('landing'));
     });
 
+    it('treats hash-fragment navigations on the landing route as same-route', async () => {
+        window.history.replaceState(null, '', '/');
+
+        const translationPromise = firstValueFrom(loader.getTranslation('en'));
+        httpMock.expectOne((r) => r.url.startsWith('i18n/en-landing.json')).flush({});
+        await translationPromise;
+
+        // A hash-only navigation like /#features (e.g. anchor links in the spotlight) must NOT
+        // trigger the full bundle fetch — we'd defeat the landing split otherwise.
+        routerEvents.next(new NavigationEnd(1, '/#features', '/#features'));
+        httpMock.expectNone((r) => r.url.startsWith('i18n/en.json') && !r.url.includes('landing'));
+
+        // The idle timer still fires eventually and flushes the full bundle
+        vi.advanceTimersByTime(2000);
+        httpMock.expectOne((r) => r.url.startsWith('i18n/en.json') && !r.url.includes('landing')).flush({});
+    });
+
+    it('re-queues the upgrade after a failed full-bundle fetch so a retry can run', async () => {
+        window.history.replaceState(null, '', '/');
+
+        const translationPromise = firstValueFrom(loader.getTranslation('en'));
+        httpMock.expectOne((r) => r.url.startsWith('i18n/en-landing.json')).flush({});
+        await translationPromise;
+
+        vi.advanceTimersByTime(2000);
+        const failingReq = httpMock.expectOne((r) => r.url.startsWith('i18n/en.json') && !r.url.includes('landing'));
+        failingReq.error(new ProgressEvent('Network error'));
+
+        // A subsequent NavigationEnd to a non-landing route must kick off a retry
+        routerEvents.next(new NavigationEnd(1, '/', '/courses'));
+        httpMock.expectOne((r) => r.url.startsWith('i18n/en.json') && !r.url.includes('landing')).flush({ ok: true });
+        expect(translateServiceMock.setTranslation).toHaveBeenCalledWith('en', { ok: true }, false);
+    });
+
     it('ignores same-route router events while on the landing page', async () => {
         window.history.replaceState(null, '', '/');
 

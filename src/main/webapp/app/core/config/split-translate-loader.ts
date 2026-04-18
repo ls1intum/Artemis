@@ -86,7 +86,9 @@ export class SplitTranslateLoader implements TranslateLoader {
         }
         this.routerSubscribed = true;
         router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe((event) => {
-            const target = event.urlAfterRedirects.split('?')[0];
+            // Strip BOTH query and hash fragments so anchor navigations on `/` (e.g. `/#features`)
+            // stay on the landing route and don't prematurely trigger the full-bundle fetch.
+            const target = event.urlAfterRedirects.split(/[?#]/, 1)[0];
             if (target === '/' || target === '') {
                 return;
             }
@@ -122,8 +124,10 @@ export class SplitTranslateLoader implements TranslateLoader {
             },
             error: () => {
                 this.inFlightUpgrades.delete(lang);
-                // Allow a retry on the next navigation / idle tick if the upgrade fetch failed.
                 this.fullyLoadedLangs.delete(lang);
+                // Re-queue so the next NavigationEnd (or the next getTranslation call for
+                // this language) can actually retry the upgrade.
+                this.pendingUpgrades.add(lang);
             },
         });
     }
