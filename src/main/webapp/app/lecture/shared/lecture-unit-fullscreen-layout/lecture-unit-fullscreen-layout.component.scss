@@ -142,13 +142,6 @@
     }
 }
 
-.fullscreen-overlay {
-    position: fixed;
-    inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
-    z-index: 5001;
-    background-color: rgba(0, 0, 0, 0.35);
-}
-
 body.lecture-combined-view-fullscreen-active {
     .breadcrumb-container,
     jhi-footer {

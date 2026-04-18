@@ -96,11 +96,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isFullscreen = this._isFullscreen.asReadonly();
 
     // Split panel sizes (percentage values)
-    readonly defaultSplitSizes: SplitSizes = [50, 50];
-    readonly defaultTwoPaneVerticalSplitSizes: SplitSizes = [85, 15];
-    readonly defaultThreePaneVerticalSplitSizes: SplitSizes = [66.67, 33.33];
-    private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultTwoPaneVerticalSplitSizes); // [content, iris]
-    private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultSplitSizes); // [video, pdf]
+    readonly defaultVerticalSplitSizes: SplitSizes = [66.67, 33.33]; // [content, iris]
+    readonly defaultHorizontalSplitSizes: SplitSizes = [50, 50]; // [video, pdf]
+    private readonly _verticalSplitSizes = signal<SplitSizes>(this.defaultVerticalSplitSizes);
+    private readonly _horizontalSplitSizes = signal<SplitSizes>(this.defaultHorizontalSplitSizes);
     readonly minVerticalSplitSizes: SplitSizes = [120, 120];
     readonly minHorizontalSplitSizes: SplitSizes = [80, 80];
 
@@ -130,7 +129,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly hasRenderableVideo = computed(() => !!this.videoUrl());
 
-    readonly hasFullscreenContent = computed(() => this.hasRenderableVideo() || this.hasPdf());
+    readonly hasFullscreenContent = computed(() => (this.hasRenderableVideo() || this.hasPdf()) && this.shouldShowIrisSidebarInFullscreen());
 
     readonly lectureId = computed(() => this.lectureUnit().lecture?.id);
 
@@ -144,17 +143,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly verticalSplitConfig = computed(() => ({
         sizes: this.verticalSplitSizes(),
         minSizes: this.minVerticalSplitSizes,
-        defaultSizes:
-            this.shouldShowIrisSidebarInFullscreen() && this.hasRenderableVideo() && this.hasPdf()
-                ? this.defaultThreePaneVerticalSplitSizes
-                : this.defaultTwoPaneVerticalSplitSizes,
+        defaultSizes: this.defaultVerticalSplitSizes,
     }));
 
     readonly horizontalSplitConfig = computed(() => ({
         enabled: this.isFullscreen() && this.hasRenderableVideo() && this.hasPdf(),
         sizes: this.horizontalSplitSizes(),
         minSizes: this.minHorizontalSplitSizes,
-        defaultSizes: this.defaultSplitSizes,
+        defaultSizes: this.defaultHorizontalSplitSizes,
         topElement: this.videoContainerElement(),
         bottomElement: this.pdfContainerElement(),
     }));

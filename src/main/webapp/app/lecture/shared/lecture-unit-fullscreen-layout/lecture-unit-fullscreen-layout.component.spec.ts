@@ -29,19 +29,6 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('emits backdropClick when overlay is clicked in fullscreen mode', () => {
-        const backdropClickSpy = vi.fn();
-        component.backdropClick.subscribe(backdropClickSpy);
-
-        component.open();
-        fixture.detectChanges();
-
-        const overlay = fixture.debugElement.query(By.css('.fullscreen-overlay'));
-        overlay.nativeElement.click();
-
-        expect(backdropClickSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('setBackgroundInert keeps sticky navbar interactive in fullscreen', () => {
         const host = fixture.nativeElement as HTMLElement;
         const wrapper = document.createElement('div');

@@ -66,7 +66,6 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         defaultSizes: [50, 50],
     });
 
-    readonly backdropClick = output<void>();
     readonly splitSizesChange = output<SplitSizes>();
     readonly fullscreenChange = output<boolean>();
     readonly horizontalSplitSizesChange = output<SplitSizes>();
@@ -197,10 +196,6 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         this.fullscreenState.set(false);
         this.restoreFocusedElement();
         this.fullscreenChange.emit(false);
-    }
-
-    protected onBackdropClick(): void {
-        this.backdropClick.emit();
     }
 
     private initSplitter(elements: HTMLElement[]): void {
