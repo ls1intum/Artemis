@@ -75,7 +75,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         comp.enableResize = true;
         fixture.detectChanges();
-        const wrapperTop = comp.wrapper.nativeElement.getBoundingClientRect().top;
+        const wrapperTop = comp.wrapper().nativeElement.getBoundingClientRect().top;
         const minPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop - 10000 });
         expect(minPoint.y).toBe(wrapperTop + comp.resizableMinHeight);
         const maxPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop + 10000 });
@@ -101,7 +101,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should layout and focus the editor when the edit tab is shown', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
-        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        const focusSpy = jest.spyOn(comp.monacoEditor()!, 'focus');
         comp.onNavChanged({
             nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
             activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
@@ -115,7 +115,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should not layout or focus the editor when a non-edit tab is shown', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
-        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        const focusSpy = jest.spyOn(comp.monacoEditor()!, 'focus');
         comp.onNavChanged({
             nextId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
             activeId: MarkdownEditorMonacoComponent.TAB_EDIT,
@@ -160,7 +160,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should expose review comment manager callbacks for problem statement context', () => {
         fixture.detectChanges();
-        (comp.monacoEditor as any).getEditor = jest.fn().mockReturnValue({
+        (comp.monacoEditor()! as any).getEditor = jest.fn().mockReturnValue({
             onDidScrollChange: jest.fn().mockReturnValue({ dispose: jest.fn() }),
         });
 
@@ -345,7 +345,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should open the color selector', () => {
         fixture.detectChanges();
-        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
+        const openColorSelectorSpy = jest.spyOn(comp.colorSelector()!, 'openColorSelector');
         const event = new MouseEvent('click');
         comp.openColorSelector(event);
         expect(openColorSelectorSpy).toHaveBeenCalledExactlyOnceWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
@@ -368,7 +368,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
-        expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
+        expect(fullscreenAction.element).toBe(comp.fullElement().nativeElement);
     });
 
     it('should pass the wrapper element to the fullscreen action when height is managed internally', () => {
@@ -377,7 +377,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
-        expect(fullscreenAction.element).toBe(comp.wrapper.nativeElement);
+        expect(fullscreenAction.element).toBe(comp.wrapper().nativeElement);
     });
 
     it('should compute height 0 for a missing element', () => {
@@ -429,21 +429,21 @@ describe('MarkdownEditorMonacoComponent', () => {
         const dragElemHeight = 20;
         fixture.detectChanges();
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(dragElemHeight);
-        jest.spyOn(comp.wrapper.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
+        jest.spyOn(comp.wrapper().nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
         comp.onResizeMoved(cdkDragMove);
         expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
     it('should use the correct options to enable text field mode', () => {
         fixture.detectChanges();
-        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
         comp.enableTextFieldMode();
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     });
 
     it('should apply option presets to the editor', () => {
         fixture.detectChanges();
-        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
         const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
@@ -570,7 +570,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             endColumn: 10,
         };
 
-        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(mockSelection as any);
+        jest.spyOn(comp.monacoEditor()!, 'getSelection').mockReturnValue(mockSelection as any);
 
         const result = comp.getSelection();
 
@@ -585,7 +585,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should return undefined from getSelection when no selection', () => {
         fixture.detectChanges();
 
-        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(undefined);
+        jest.spyOn(comp.monacoEditor()!, 'getSelection').mockReturnValue(undefined);
 
         const result = comp.getSelection();
 
@@ -595,7 +595,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should return undefined from getSelection when monacoEditor is undefined', () => {
         fixture.detectChanges();
 
-        (comp as any).monacoEditor = undefined;
+        (comp as any).monacoEditor = () => undefined;
 
         const result = comp.getSelection();
 

@@ -520,7 +520,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             getText: vi.fn().mockReturnValue('Question text [-option 1]'),
         };
         const mockQuestionEditor = {
-            monacoEditor: mockMonacoEditor,
+            monacoEditor: () => mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
         // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals

@@ -425,7 +425,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
 
         // split text before first option tag
         const questionText = this.questionEditor()
-            .monacoEditor.getText()
+            .monacoEditor()!
+            .getText()
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
@@ -438,7 +439,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
-        this.parseMarkdown(this.questionEditor().monacoEditor.getText());
+        this.parseMarkdown(this.questionEditor().monacoEditor()!.getText());
 
         this.questionUpdated.emit();
     }

@@ -165,10 +165,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // Set up mock for markdownEditorMonaco using the mock-monaco-editor helper
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         // Trigger ngAfterViewInit manually since the ViewChild is now set
@@ -232,10 +232,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -264,10 +264,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -290,10 +290,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -441,7 +441,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
         const setAnnotationsStub = jest.fn();
         // The component is mocked, so we need to set the monacoEditor property to a mock object.
-        comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
+        comp.markdownEditorMonaco = { monacoEditor: () => ({ setAnnotations: setAnnotationsStub }) } as unknown as MarkdownEditorMonacoComponent;
 
         const analysis = new Map();
         analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
@@ -649,9 +649,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should get current content from editor', () => {
         const mockGetText = jest.fn().mockReturnValue('editor content');
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getText: mockGetText,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         const content = comp.getCurrentContent();
@@ -669,7 +669,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should return undefined when monacoEditor is not available for getCurrentContent', () => {
-        comp.markdownEditorMonaco = {} as unknown as MarkdownEditorMonacoComponent;
+        comp.markdownEditorMonaco = { monacoEditor: () => undefined } as unknown as MarkdownEditorMonacoComponent;
 
         const content = comp.getCurrentContent();
 
@@ -722,10 +722,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             jest.spyOn(mockEditorInstance, 'getModel').mockReturnValue(mockModel);
 
             comp.markdownEditorMonaco = {
-                monacoEditor: {
+                monacoEditor: () => ({
                     getModel: () => mockModel,
                     getEditor: () => mockEditorInstance,
-                },
+                }),
             } as unknown as MarkdownEditorMonacoComponent;
 
             return { mockModel, setValueSpy, setEOLSpy };
