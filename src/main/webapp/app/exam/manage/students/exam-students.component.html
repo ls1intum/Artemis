@@ -12,21 +12,18 @@
                 }
                 @let exPrepStatus = exercisePreparationStatus();
                 @if (exPrepStatus) {
-                    <div class="d-flex flex-wrap align-items-center gap-1">
-                        <div
-                            class="flex-grow-1 flex-basis-10 position-relative pe-3 text-white"
-                            [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate"
-                        >
-                            <div class="position-absolute w-100 h-100 top-0">
+                    <div>
+                        <div class="flex-grow-1 position-relative text-white" [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate">
+                            <div class="position-absolute w-100">
                                 <ngb-progressbar
                                     [value]="exPrepStatus.finished!"
                                     [max]="exPrepStatus.overall ? exPrepStatus.overall - exPrepStatus.failed! : 0"
                                     [animated]="true"
-                                    [height]="'2em'"
+                                    height="2em"
                                     type="success"
                                 />
                             </div>
-                            <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
+                            <div class="d-flex justify-content-center gap-1 position-relative mx-2">
                                 @let exPrepPercentage = exercisePreparationPercentage();
                                 <span
                                     >{{ exPrepPercentage }}% {{ exPrepStatus.finished }} / {{ exPrepStatus.overall }}
