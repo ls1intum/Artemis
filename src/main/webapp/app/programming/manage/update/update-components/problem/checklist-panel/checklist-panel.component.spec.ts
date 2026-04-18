@@ -1019,8 +1019,9 @@ describe('ChecklistPanelComponent', () => {
             });
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
 
-            const createdSorting = Object.assign(new Competency(), { id: 99, title: 'Sorting', taxonomy: CompetencyTaxonomy.UNDERSTAND });
-            vi.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse({ body: createdSorting })) as any);
+            const createSpy = vi.spyOn(competencyService, 'create').mockImplementation((comp: Competency) => {
+                return of(new HttpResponse({ body: Object.assign(new Competency(), { ...comp, id: 99 }) })) as any;
+            });
 
             const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
 
@@ -1031,6 +1032,16 @@ describe('ChecklistPanelComponent', () => {
             await new Promise<void>((resolve) => setTimeout(resolve));
 
             expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
+
+            // Verify create was called exactly once, for Sorting only (Loops matched an existing course competency)
+            expect(createSpy).toHaveBeenCalledOnce();
+            const createdPayload = createSpy.mock.calls[0][0] as Competency;
+            expect(createdPayload.title).toBe('Sorting');
+            expect(createdPayload.taxonomy).toBe(CompetencyTaxonomy.UNDERSTAND);
+            // Recursion was not selected, so no create call for it
+            const allCreatedTitles = createSpy.mock.calls.map((call: [Competency, number]) => call[0].title);
+            expect(allCreatedTitles).not.toContain('Recursion');
+
             expect(emitSpy).toHaveBeenCalled();
             const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
             const titles = emittedLinks.map((l) => l.competency?.title).sort();
