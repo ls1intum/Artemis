@@ -101,6 +101,12 @@ gitProperties {
     }
 }
 
+// Override Spring Boot BOM versions to patched releases addressing known CVEs
+// thymeleaf 3.1.4.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q
+// tomcat 11.0.21: GHSA-h9fx-5mv3-gmh6, GHSA-6q54-28g2-vpgm, GHSA-55j7-cm8x-wvmh
+ext["thymeleaf.version"] = "3.1.4.RELEASE"
+ext["tomcat.version"] = "11.0.21"
+
 configurations {
     mockitoAgent
 }
@@ -430,9 +436,11 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
-    // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.83"
+    // required by sshd-git; 1.84 fixes GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.84"
+    // pulled transitively by sshd-git; pin to patched version
+    implementation "org.bouncycastle:bcpg-jdk18on:1.84"
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
