@@ -16,11 +16,25 @@
     --secondary: #999;
     --info: #58a6ff;
 
-    color: #e0e0e0;
+    background: var(--body-bg, #1e1e1e);
+    color: var(--body-color, #e0e0e0);
 }
 
 .artemis-problem-statement--dark :not(pre) > code {
     background: #2d2d2d;
+}
+
+/* Body styling for standalone SSR output. The server only emits this class on the
+ * <body> when darkMode is true AND it returns a full HTML document, so it never
+ * fires when consumers embed our CSS in their own page alongside fragments. CSS
+ * variables make the colors and padding overridable by consumers who want to
+ * customize the standalone look (e.g. set --artemis-ssr-body-padding: 0 to
+ * disable the default gutter). */
+body.artemis-ssr-body--dark {
+    background: var(--body-bg, #1e1e1e);
+    color: var(--body-color, #e0e0e0);
+    margin: 0;
+    padding: var(--artemis-ssr-body-padding, 16px);
 }
 
 /* Modal dark theme — modal lives at document.body, so variables are re-declared here. */
