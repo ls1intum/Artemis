@@ -4,13 +4,13 @@
             @if (item.icon) {
                 <i [class]="item.icon + ' me-1'"></i>
             }
-            <span class="p-menu-item-label">{{ item.label | artemisTranslate }}</span>
+            <span class="p-menu-item-label" [jhiTranslate]="item.label"></span>
         </span>
     </ng-template>
 </p-menu>
 
-<button pButton [disabled]="disabled()" [class]="buttonClass()" (click)="toggleMenu($event)">
+<button pButton [disabled]="disabled()" [class]="buttonClass()" (click)="toggleMenu($event)" [title]="label() | artemisTranslate">
     <i [class]="buttonIconClass() + ' me-1'"></i>
-    {{ label() | artemisTranslate }}
-    <i class="pi pi-chevron-down ms-1 fs-6"></i>
+    <span class="d-none d-sm-inline" [jhiTranslate]="label()"></span>
+    <i class="pi pi-chevron-down fs-6"></i>
 </button>

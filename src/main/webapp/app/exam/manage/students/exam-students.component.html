@@ -1,11 +1,11 @@
 <div class="d-flex flex-column gap-2" style="min-height: 0">
-    <div class="d-flex gap-3">
-        <h3>
+    <div class="d-flex gap-2 flex-column flex-md-row">
+        <h3 class="mb-0">
             <span jhiTranslate="artemisApp.examManagement.students"></span>
             <span class="text-body-secondary">({{ exam().title }})</span>
         </h3>
 
-        <div class="d-flex flex-column flex-shrink-0 gap-1 align-items-start ms-auto">
+        <div class="d-flex flex-column flex-shrink-0 gap-1 align-items-start ms-md-auto">
             @if (hasRegisteredUsers()) {
                 <button
                     #individualExamsStatusButton
@@ -113,9 +113,10 @@
         [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
         showCurrentPageReport
         class="border border-1 rounded-4 overflow-hidden flex-grow-1"
+        style="min-height: 27rem"
     >
         <ng-template #caption>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
                 <jhi-exam-students-menu-button
                     [model]="manageStudentsMenuActions()"
                     label="artemisApp.examManagement.examStudents.menu.manageStudents"

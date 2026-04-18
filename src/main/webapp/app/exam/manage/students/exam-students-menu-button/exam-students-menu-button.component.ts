@@ -3,12 +3,13 @@ import { MenuItem } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
 import { Menu } from 'primeng/menu';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-students-menu-button',
     standalone: true,
     templateUrl: './exam-students-menu-button.component.html',
-    imports: [Menu, ButtonDirective, ArtemisTranslatePipe],
+    imports: [Menu, ButtonDirective, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ExamStudentsMenuButtonComponent {
     readonly model = input.required<MenuItem[]>();

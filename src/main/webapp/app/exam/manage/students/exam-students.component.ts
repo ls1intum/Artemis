@@ -594,12 +594,18 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     private setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
+        if (!newStatus || newStatus.overall === undefined) {
+            this.exercisePreparationStatus.set(undefined);
+            this.exercisePreparationEta.set(undefined);
+            this.exercisePreparationRunning.set(false);
+            return;
+        }
         this.exercisePreparationStatus.set(newStatus);
-        const processedExams = (newStatus?.finished ?? 0) + (newStatus?.failed ?? 0);
-        const exPrepRunning = !!(newStatus && processedExams < newStatus.overall!);
+        const processedExams = (newStatus.finished ?? 0) + (newStatus.failed ?? 0);
+        const exPrepRunning = newStatus && processedExams < newStatus.overall;
         this.exercisePreparationRunning.set(exPrepRunning);
-        this.exercisePreparationPercentage.set(newStatus ? (newStatus.overall! ? Math.round((processedExams / newStatus.overall!) * 100) : 100) : 0);
-        const remainingExams = newStatus!.overall! - processedExams;
+        this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
+        const remainingExams = newStatus.overall - processedExams;
         if (exPrepRunning && processedExams) {
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
