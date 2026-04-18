@@ -6,14 +6,14 @@
     (onHide)="closeDialog()"
     [style]="{ width: '50rem', maxWidth: '95vw' }"
     [draggable]="false"
-    contentStyleClass="d-flex flex-column overflow-hidden"
     appendTo="body"
+    contentStyleClass="py-0"
 >
     <ng-template pTemplate="header">
         <h4 class="m-0" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.title"></h4>
     </ng-template>
 
-    <div class="d-flex flex-column gap-3 overflow-hidden">
+    <div class="d-flex flex-column gap-3">
         <p class="m-0 text-body-secondary" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.description"></p>
 
         <p-iconfield>
@@ -28,7 +28,7 @@
             />
         </p-iconfield>
 
-        <div class="border rounded-2 overflow-hidden" style="height: 24rem">
+        <div>
             @if (isLoading()) {
                 <div class="d-flex align-items-center justify-content-center p-4 text-body-secondary">
                     <i class="pi pi-spin pi-spinner me-2"></i>
@@ -40,7 +40,17 @@
                     jhiTranslate="artemisApp.examManagement.examStudents.addDialog.noUnregisteredStudents"
                 ></div>
             } @else {
-                <p-table [value]="userSearchResults()" [scrollable]="true" scrollHeight="flex" [paginator]="true" [rows]="10" size="small" class="border-0">
+                <p-table
+                    [value]="userSearchResults()"
+                    [scrollable]="true"
+                    scrollHeight="18rem"
+                    [paginator]="true"
+                    [rows]="10"
+                    size="small"
+                    [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
+                    showCurrentPageReport
+                    class="border border-1 rounded-4 overflow-hidden flex-grow-1"
+                >
                     <ng-template pTemplate="body" let-student>
                         <tr>
                             <td style="min-width: 10rem">
@@ -95,6 +105,8 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <button pButton type="button" class="p-button-secondary" (click)="closeDialog()" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.close"></button>
+        <div class="pt-3">
+            <button pButton type="button" class="p-button-secondary" (click)="closeDialog()" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.close"></button>
+        </div>
     </ng-template>
 </p-dialog>
