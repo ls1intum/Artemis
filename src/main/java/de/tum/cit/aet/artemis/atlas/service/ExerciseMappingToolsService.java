@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
@@ -167,11 +168,13 @@ public class ExerciseMappingToolsService {
 
     private final AtlasAgentSessionCacheService sessionCacheService;
 
+    private final ContentExtractionService contentExtractionService;
+
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService) {
+            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService, ContentExtractionService contentExtractionService) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
@@ -180,6 +183,7 @@ public class ExerciseMappingToolsService {
         this.userRepository = userRepository;
         this.atlasMLApi = atlasMLApi;
         this.sessionCacheService = sessionCacheService;
+        this.contentExtractionService = contentExtractionService;
     }
 
     /**
@@ -245,9 +249,19 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            // Fetch AtlasML suggestions using the exercise description (same logic as the exercise edit lightbulb).
+            // Extract learning-relevant content without flavor text stripping (too slow for synchronous UI).
+            // Falls back to raw problem statement for unsupported exercise types.
+            String description;
+            try {
+                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
+                description = extracted.extractedLearningText().isBlank() ? exercise.getTitle() : extracted.extractedLearningText();
+            }
+            catch (IllegalArgumentException e) {
+                description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
+            }
+
+            // Fetch AtlasML suggestions using the (cleaned) exercise description.
             // Returns null when AtlasML is unavailable — in that case fall back to the LLM's own suggested flags.
-            String description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
             Set<Long> suggestedIds = fetchSuggestedCompetencyIds(courseId, description);
             boolean useAtlasML = suggestedIds != null;
 

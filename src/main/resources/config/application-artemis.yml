@@ -97,6 +97,9 @@ artemis:
   atlas:
     chat-model: gpt-5.4-mini
     temperature: 0.8
+    flavor-strip-model: gpt-5.4-mini # Azure deployment name of a small/fast model used to strip narrative scaffolding from exercise text before downstream LLM processing. Set to an empty string to disable stripping (raw passthrough).
+    flavor-strip-reasoning-effort: medium # Reasoning effort passed via AzureOpenAiChatOptions.reasoningEffort (e.g. low|medium|high). Leave blank to omit the parameter. "medium" is the v3 default — the multi-step constraint checks (keep_verbatim list + heading rule + metacognitive gate) require multi-step reasoning that "low" effort skips.
+    flavor-strip-temperature: 1.0 # Temperature for the flavor-strip LLM call. Some models (e.g. gpt-5 family) only accept the default value of 1.
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance
