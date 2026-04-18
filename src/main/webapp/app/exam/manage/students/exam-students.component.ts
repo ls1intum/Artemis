@@ -49,6 +49,7 @@ import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-working
 import { SortEvent } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Popover } from 'primeng/popover';
+import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -111,6 +112,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
+    private examChecklistService = inject(ExamChecklistService);
 
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
@@ -159,10 +161,12 @@ export class ExamStudentsComponent implements OnDestroy {
     });
     readonly hasRegisteredUsers = computed(() => this.allRegisteredUsers().length != 0);
 
-    readonly hasStudentsWithoutExam = computed(() => {
+    readonly isMissingIndividualExams = computed(() => {
         const registeredStudents = this.exam().examUsers?.length ?? 0;
         return registeredStudents > 0 && this.studentExams().length < registeredStudents;
     });
+    readonly isAllExercisesPrepared = signal(false);
+    readonly examPreparationsComplete = computed(() => !this.isMissingIndividualExams() && this.isAllExercisesPrepared());
 
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
@@ -222,7 +226,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentExamsMenuActions = computed<MenuItem[]>(() => {
         const isExamStarted = this.hasExamStarted();
         const isLoading = this.isLoading();
-        const hasStudentsWithoutExam = this.hasStudentsWithoutExam();
+        const hasStudentsWithoutExam = this.isMissingIndividualExams();
         const exercisePreparationRunning = this.exercisePreparationRunning();
 
         return [
@@ -353,12 +357,21 @@ export class ExamStudentsComponent implements OnDestroy {
 
         if (!exam.id) {
             this.studentExams.set([]);
+            this.isAllExercisesPrepared.set(false);
             this.isLoading.set(false);
             return;
         }
 
-        const courseId = this.courseId();
+        if (exam.course?.id) {
+            this.examChecklistService.getExamStatistics(exam).subscribe({
+                next: (examChecklist) => this.isAllExercisesPrepared.set(!!examChecklist.allExamExercisesAllStudentsPrepared),
+                error: () => this.isAllExercisesPrepared.set(false),
+            });
+        } else {
+            this.isAllExercisesPrepared.set(false);
+        }
 
+        const courseId = this.courseId();
         this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe((res) => this.setExercisePreparationStatus(res.body ?? undefined));
 
         this.studentExamService.findAllForExam(courseId, exam.id).subscribe((res) => {
@@ -551,9 +564,8 @@ export class ExamStudentsComponent implements OnDestroy {
         const exPrepRunning = !!(newStatus && processedExams < newStatus.overall!);
         this.exercisePreparationRunning.set(exPrepRunning);
         this.exercisePreparationPercentage.set(newStatus ? (newStatus.overall! ? Math.round((processedExams / newStatus.overall!) * 100) : 100) : 0);
+        const remainingExams = newStatus!.overall! - processedExams;
         if (exPrepRunning && processedExams) {
-            const remainingExams = newStatus!.overall! - processedExams;
-
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
 
@@ -564,6 +576,7 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
         } else {
             this.exercisePreparationEta.set(undefined);
+            this.isAllExercisesPrepared.set(remainingExams === 0);
         }
     }
 

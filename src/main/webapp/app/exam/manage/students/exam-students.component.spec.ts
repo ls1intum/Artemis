@@ -31,6 +31,7 @@ import { MockProvider } from 'ng-mocks';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -108,6 +109,17 @@ describe('ExamStudentsComponent', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(StudentExamService, {
                     findAllForExam: () => of(new HttpResponse({ body: studentExams })),
+                }),
+                MockProvider(ExamChecklistService, {
+                    getExamStatistics: (_exam: Exam) =>
+                        of({
+                            numberOfExamsSubmitted: 0,
+                            numberOfExamsStarted: 0,
+                            numberOfTotalParticipationsForAssessment: 0,
+                            existsUnassessedQuizzes: false,
+                            existsUnsubmittedExercises: false,
+                            allExamExercisesAllStudentsPrepared: false,
+                        }),
                 }),
                 MockProvider(AlertService),
                 provideHttpClientTesting(),
