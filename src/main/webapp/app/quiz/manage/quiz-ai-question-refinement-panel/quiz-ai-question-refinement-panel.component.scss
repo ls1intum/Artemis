@@ -41,22 +41,6 @@
     margin-bottom: 0.45rem;
 }
 
-.quiz-ai-refinement-panel .refinement-explanation-close {
-    background: none;
-    border: none;
-    color: var(--text-color-secondary);
-    cursor: pointer;
-    display: flex;
-    font-size: 0.8rem;
-    line-height: 1;
-    margin-left: auto;
-    padding: 0;
-
-    &:hover {
-        color: var(--text-color);
-    }
-}
-
 .quiz-ai-refinement-panel .refinement-explanation-icon {
     color: var(--bs-primary);
     font-size: 0.85rem;

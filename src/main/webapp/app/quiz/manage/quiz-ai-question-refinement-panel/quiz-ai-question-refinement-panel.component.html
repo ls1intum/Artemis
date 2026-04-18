@@ -1,18 +1,10 @@
-@if (hyperionEnabled && (isOpen() || refinementExplanation() !== undefined || externalReasoning()) && !isRefinementPanelCollapsed()) {
+@if (hyperionEnabled && (isOpen() || externalReasoning() !== undefined) && !isRefinementPanelCollapsed()) {
     <div class="quiz-ai-refinement-panel">
-        @if ((refinementExplanation() ?? externalReasoning()) && (refinementExplanation() ?? externalReasoning()) !== dismissedReasoningContent()) {
+        @if (refinementExplanation() !== undefined || externalReasoning() !== undefined) {
             <div class="refinement-explanation-card">
                 <div class="refinement-explanation-card-header">
                     <fa-icon [icon]="faWandMagicSparkles" class="refinement-explanation-icon" />
                     <span class="refinement-explanation-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>
-                    <button
-                        class="refinement-explanation-close"
-                        (click)="dismissedReasoningContent.set(refinementExplanation() ?? externalReasoning())"
-                        type="button"
-                        aria-label="Dismiss"
-                    >
-                        <fa-icon [icon]="faXmark" />
-                    </button>
                 </div>
                 <p class="refinement-explanation-text">{{ refinementExplanation() ?? externalReasoning() }}</p>
             </div>
@@ -27,7 +19,7 @@
                     [ngModel]="refinePrompt()"
                     (ngModelChange)="refinePrompt.set($any($event))"
                     [disabled]="isRefining()"
-                    (keydown.enter)="$event.preventDefault(); submitRefinement()"
+                    (keydown.enter)="onEnterKey($event)"
                 ></textarea>
                 <button pButton type="button" class="refinement-submit-button" [disabled]="!refinePrompt().trim() || isRefining()" (click)="submitRefinement()">
                     @if (isRefining()) {

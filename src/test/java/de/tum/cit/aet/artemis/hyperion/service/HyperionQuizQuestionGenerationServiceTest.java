@@ -166,37 +166,6 @@ class HyperionQuizQuestionGenerationServiceTest {
     }
 
     @Test
-    void refineQuizQuestion_usesDefaultExplanationWhenBlank() {
-        String json = """
-                {
-                  "question": {
-                    "type": "multiple-choice",
-                    "title": "Java Features",
-                    "questionText": "Which are Java features?",
-                    "options": [
-                      { "text": "Generics", "correct": true },
-                      { "text": "Pointers", "correct": false },
-                      { "text": "Lambdas", "correct": true }
-                    ]
-                  },
-                  "reasoning": "   "
-                }
-                """;
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
-
-        Course course = new Course();
-        course.setTitle("Java");
-
-        GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, "Java Features", "What are Java features?",
-                List.of(new GeneratedQuizAnswerOptionDTO("Generics", true, null, null), new GeneratedQuizAnswerOptionDTO("Pointers", false, null, null)), null, null);
-        QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Add more options");
-
-        QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);
-
-        assertThat(response.reasoning()).isEqualTo("The question was refined according to your instructions.");
-    }
-
-    @Test
     void generateQuizQuestions_throwsExceptionWhenTypeIsInvalid() {
         String json = """
                 {

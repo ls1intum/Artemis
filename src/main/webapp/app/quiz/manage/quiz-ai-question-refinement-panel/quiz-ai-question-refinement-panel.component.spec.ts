@@ -108,6 +108,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
     });
 
     it('should call service and emit refined question on success', () => {
+        vi.useFakeTimers();
         setupWithHyperionEnabled(true);
 
         const refinedQuestion = new MultipleChoiceQuestion();
@@ -119,6 +120,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         component.refinePrompt.set('make it harder');
         runInInjectionContext(envInjector, () => component.submitRefinement());
+        vi.advanceTimersByTime(200);
         fixture.detectChanges();
 
         expect(component.refinementExplanation()).toBeDefined();
@@ -126,18 +128,24 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         expect(component.isRefining()).toBe(false);
         expect(emittedValues).toHaveLength(1);
         expect(emittedValues[0]).toBe(refinedQuestion);
+
+        vi.useRealTimers();
     });
 
     it('should show error alert on service failure', () => {
+        vi.useFakeTimers();
         setupWithHyperionEnabled(true);
         vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(throwError(() => new Error('AI error')));
         const alertSpy = vi.spyOn(alertService, 'error');
 
         component.refinePrompt.set('make it harder');
         runInInjectionContext(envInjector, () => component.submitRefinement());
+        vi.advanceTimersByTime(200);
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
         expect(component.isRefining()).toBe(false);
+
+        vi.useRealTimers();
     });
 
     it('should reset state when ai refinement panel was closed', async () => {
@@ -156,6 +164,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
     });
 
     it('should show explanation card after successful refinement', () => {
+        vi.useFakeTimers();
         setupWithHyperionEnabled(true);
 
         const refinedQuestion = new MultipleChoiceQuestion();
@@ -164,11 +173,14 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         component.refinePrompt.set('improve');
         runInInjectionContext(envInjector, () => component.submitRefinement());
+        vi.advanceTimersByTime(200);
         fixture.detectChanges();
 
         const explanationCard = fixture.debugElement.query(By.css('.refinement-explanation-card'));
         expect(explanationCard).not.toBeNull();
         const explanationText = fixture.debugElement.query(By.css('.refinement-explanation-text'));
         expect(explanationText.nativeElement.textContent).toContain(reasoning);
+
+        vi.useRealTimers();
     });
 });
