@@ -384,12 +384,13 @@ public class HyperionCodeGenerationExecutionService {
             throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
+        String buildEnvironmentContext = repositoryStructureService.getBuildEnvironmentContext(repository);
         String lastBuildLogs = null;
 
         for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
             executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
-                    lastBuildLogs, consistencyIssues, executionProgress);
+                    lastBuildLogs, buildEnvironmentContext, consistencyIssues, executionProgress);
             if (attemptResult != null) {
                 executionProgress.buildResultOutcome = attemptResult.buildResultOutcome();
                 executionProgress.result = executionProgress.buildResultOutcome.result();
@@ -408,9 +409,9 @@ public class HyperionCodeGenerationExecutionService {
 
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
-            String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
+            String buildEnvironmentContext, String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
+        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         if (generatedFiles == null || generatedFiles.isEmpty()) {
             return null;
         }

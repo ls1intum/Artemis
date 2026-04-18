@@ -75,7 +75,8 @@ const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.Low]: 2,
 };
 
-const SUPPORTED_CODE_GENERATION_REPOSITORIES = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS] as const;
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const SUPPORTED_CODE_GENERATION_REPOSITORIES = [RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS] as const;
 const CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS = 1000;
 const CODE_GENERATION_SLOT_RELEASE_MAX_POLLS = 120;
 const CODE_GENERATION_FILE_PULL_DEBOUNCE_MS = 250;
@@ -227,6 +228,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
     selectedIssue: ConsistencyIssueNavigationIssue | undefined = undefined;
+    private shouldAutoStartCodeGenerationAllRepositories = window.history.state?.[AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE] === true;
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -442,10 +444,27 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     protected override applyDomainChange(domainType: any, domainValue: any) {
         super.applyDomainChange(domainType, domainValue);
+        this.maybeAutoStartCodeGenerationFromNavigation();
         if (!this.hasCustomCodeGenerationSelection && !this.isGeneratingCode()) {
             this.syncCodeGenerationSelectionWithSelectedRepository();
         }
         this.restoreCodeGenerationState();
+    }
+
+    private maybeAutoStartCodeGenerationFromNavigation(): void {
+        if (!this.shouldAutoStartCodeGenerationAllRepositories || !this.exercise?.id || this.isGeneratingCode()) {
+            return;
+        }
+
+        this.shouldAutoStartCodeGenerationAllRepositories = false;
+        window.history.replaceState(
+            {
+                ...window.history.state,
+                [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: false,
+            },
+            '',
+        );
+        this.startCodeGeneration([...SUPPORTED_CODE_GENERATION_REPOSITORIES]);
     }
 
     /**
