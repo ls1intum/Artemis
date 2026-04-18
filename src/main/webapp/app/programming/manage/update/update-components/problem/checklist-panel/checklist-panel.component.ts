@@ -687,6 +687,14 @@ export class ChecklistPanelComponent {
             }
             return updated;
         });
+        this.expandedCompetencies.update((current) => {
+            const updated = new Set<number>();
+            for (const idx of current) {
+                if (idx < index) updated.add(idx);
+                else if (idx > index) updated.add(idx - 1);
+            }
+            return updated;
+        });
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discarded');
     }
 
@@ -699,6 +707,7 @@ export class ChecklistPanelComponent {
 
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedCompetencyIndices.set(new Set());
+        this.expandedCompetencies.set(new Set());
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple');
     }
 

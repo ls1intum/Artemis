@@ -972,6 +972,24 @@ describe('ChecklistPanelComponent', () => {
             expect(component.selectedCompetencyIndices()).toEqual(new Set([0, 1]));
         });
 
+        it('should reindex expanded competencies after discarding a competency', () => {
+            component.expandedCompetencies.set(new Set([0, 2]));
+
+            component.discardCompetency(1);
+
+            // Index 0 stays, index 2 becomes 1 (shifted down)
+            expect(component.expandedCompetencies()).toEqual(new Set([0, 1]));
+        });
+
+        it('should clear expanded competencies when discarding all selected', () => {
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+            component.expandedCompetencies.set(new Set([0, 1]));
+
+            component.discardSelectedCompetencies();
+
+            expect(component.expandedCompetencies().size).toBe(0);
+        });
+
         it('should discard all selected competencies and clear selection', () => {
             const successSpy = vi.spyOn(alertService, 'success');
             component.selectedCompetencyIndices.set(new Set([0, 2]));
