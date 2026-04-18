@@ -67,9 +67,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
-    /** Stores the custom video column ratio when user adjusts the splitter. (undefined = use default flex layout) */
-    private readonly customVideoRatio = signal<number | undefined>(undefined);
-
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
@@ -179,9 +176,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     // Calculate percentage for flex-basis (allows natural scaling on resize)
                     const flexBasisPercent = (clampedWidth / wrapperRect.width) * 100;
 
-                    // Store that user has customized the split
-                    this.customVideoRatio.set(flexBasisPercent / 100);
-
                     // Use percentage-based flex-basis so layout naturally follows container resizes
                     videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
                     videoColumnEl.style.width = '';
@@ -211,7 +205,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Can be triggered by double-clicking the resizer handle.
      */
     resetSplitRatio(): void {
-        this.customVideoRatio.set(undefined);
         const videoColumnEl = this.videoColumn()?.nativeElement;
         if (videoColumnEl) {
             videoColumnEl.style.flex = '';
@@ -351,8 +344,5 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.resizeObserver.disconnect();
             this.resizeObserver = undefined;
         }
-
-        // Reset custom ratio signal
-        this.customVideoRatio.set(undefined);
     }
 }

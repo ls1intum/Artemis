@@ -16,59 +16,61 @@ jhi-attachment-video-unit {
     }
 }
 
-.video-player-container,
-.pdf-viewer-spacing {
-    padding-block: 20px;
-}
+jhi-attachment-video-unit {
+    .video-player-container,
+    .pdf-viewer-spacing {
+        padding-block: 20px;
+    }
 
-.video-player-container--fullscreen {
-    padding-block: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background-color: var(--lecture-combined-view-bg);
-    border: 1px solid var(--lecture-combined-view-border);
-    border-radius: var(--lecture-combined-view-radius);
-    overflow: hidden;
-    container-type: size;
-}
+    .video-player-container--fullscreen {
+        padding-block: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background-color: var(--lecture-combined-view-bg);
+        border: 1px solid var(--lecture-combined-view-border);
+        border-radius: var(--lecture-combined-view-radius);
+        overflow: hidden;
+        container-type: size;
+    }
 
-.video-iframe-wrapper--fullscreen {
-    aspect-ratio: 16 / 9;
-    width: min(100cqw, calc(100cqh * 16 / 9));
-    height: min(100cqh, calc(100cqw * 9 / 16));
-    max-width: 100%;
-    max-height: 100%;
-    background-color: var(--lecture-combined-view-bg);
-    border: 1px solid var(--lecture-combined-view-border);
-    border-radius: var(--lecture-combined-view-radius);
-    overflow: hidden;
-}
+    .video-iframe-wrapper--fullscreen {
+        aspect-ratio: 16 / 9;
+        width: min(100cqw, calc(100cqh * 16 / 9));
+        height: min(100cqh, calc(100cqw * 9 / 16));
+        max-width: 100%;
+        max-height: 100%;
+        background-color: var(--lecture-combined-view-bg);
+        border: 1px solid var(--lecture-combined-view-border);
+        border-radius: var(--lecture-combined-view-radius);
+        overflow: hidden;
+    }
 
-.video-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-}
+    .video-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
 
-.pdf-viewer-spacing {
-    position: relative;
-}
+    .pdf-viewer-spacing {
+        position: relative;
+    }
 
-.pdf-loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-}
+    .pdf-loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+    }
 
-jhi-pdf-viewer.pdf-viewer-loading {
-    opacity: 0;
-    pointer-events: none;
+    jhi-pdf-viewer.pdf-viewer-loading {
+        opacity: 0;
+        pointer-events: none;
+    }
 }
 
 .content-container--fullscreen {
