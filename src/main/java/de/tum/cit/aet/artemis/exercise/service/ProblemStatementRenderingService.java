@@ -8,13 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,13 +22,6 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Comment;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.DocumentType;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.XmlDeclaration;
 import org.jsoup.safety.Safelist;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -51,6 +42,25 @@ import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
+/**
+ * Stateless renderer for problem-statement markdown.
+ * <p>
+ * The client sends markdown plus optional test feedback, and this service returns a self-contained HTML
+ * document ready for embedding. The pipeline, in order, is:
+ * <ol>
+ * <li>Mask fenced and inline code blocks so downstream passes do not process their contents.</li>
+ * <li>Extract PlantUML diagrams, render them server-side via {@link PlantUmlService}, sanitize the SVG,
+ * and replace each diagram with an opaque placeholder.</li>
+ * <li>Apply math compatibility rewrites and extract math formulas to placeholders.</li>
+ * <li>Expand {@code [task]} syntax into HTML task spans with feedback data.</li>
+ * <li>Strip remaining {@code <testid>} wrappers from prose (code blocks are still masked, so code
+ * examples keep theirs).</li>
+ * <li>Restore masked code blocks; then restore math-formula placeholders.</li>
+ * <li>Render CommonMark and re-inject the sanitized SVGs.</li>
+ * <li>Wrap everything in a full HTML document, include KaTeX / embedded CSS / interactive JS as needed,
+ * and compute a content hash.</li>
+ * </ol>
+ */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
@@ -70,84 +80,28 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String DARK_MODE_CSS = loadClasspathResource("problem-statement-css/dark-mode.css");
 
-    // Elements that are never safe in SVG — defense-in-depth against compromised PlantUML output
-    private static final Set<String> SVG_DENIED_ELEMENTS = Set.of("script", "foreignobject", "use", "image");
-
-    // Presentation attributes that can contain url(...) references — only local fragment refs (#id) are allowed
-    private static final Set<String> SVG_URL_BEARING_ATTRIBUTES = Set.of("fill", "stroke", "filter", "clip-path", "mask", "marker-start", "marker-mid", "marker-end");
-
-    // Pattern matching url(...) references — used to check if attribute values or CSS contain external URLs
-    private static final Pattern URL_REFERENCE_PATTERN = Pattern.compile("url\\s*\\(", Pattern.CASE_INSENSITIVE);
-
-    // Pattern matching only local fragment refs: url(#id) — these are safe
-    private static final Pattern LOCAL_URL_REF_PATTERN = Pattern.compile("^\\s*url\\s*\\(\\s*#[^)]+\\)\\s*$", Pattern.CASE_INSENSITIVE);
-
-    // Dangerous CSS patterns: external url(), expression(), @import, -moz-binding
-    private static final Pattern DANGEROUS_CSS_PATTERN = Pattern.compile("expression\\s*\\(|@import|(-moz-binding)", Pattern.CASE_INSENSITIVE);
-
     private static final @Nullable String KATEX_AUTO_RENDER_JS = loadClasspathResource("problem-statement-js/katex-auto-render.js");
-
-    /** Matches a line where $$...$$ appears with other text before or after (inline formula convention). */
-    private static final Pattern INLINE_FORMULA_LINE = Pattern.compile(".+\\$\\$[^$]+\\$\\$|\\$\\$[^$]+\\$\\$.+");
-
-    /** Display math: $$...$$ on its own line (after formula compatibility transform). */
-    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$((?:[^$]|\\$(?!\\$))+)\\$\\$$", Pattern.MULTILINE);
-
-    /** Inline math: $...$, but not inside other $ signs. Uses [^$\n]+ instead of .+? to prevent ReDoS via O(N^2) backtracking. */
-    private static final Pattern INLINE_MATH_PATTERN = Pattern.compile("(?<!\\$)\\$(?!\\$)([^$\n]+)\\$(?!\\$)");
-
-    private static final String MATH_PLACEHOLDER_PREFIX = "\u0000MATH_";
-
-    private static final String MATH_PLACEHOLDER_SUFFIX = "\u0000";
 
     private static final String CODE_BLOCK_PLACEHOLDER_PREFIX = "\u0000CODE_BLOCK_";
 
     private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
 
-    /** Fenced code blocks (```...```) and inline code (`...`). */
+    /** Fenced code blocks ({@code ```...```}) and inline code ({@code `...`}). */
     private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[\\s\\S]*?```|`[^`\n]+`");
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
     /**
-     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}
-     * where test identifiers are typically {@code <testid>123</testid>} values resolved from the exercise's test cases.
-     * The test list supports optional parenthesized suffixes for each identifier.
+     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)} where test identifiers
+     * are typically {@code <testid>123</testid>} values. Each identifier may carry one level of
+     * parenthesized suffix (e.g. {@code testClass(Vehicle)}).
      * <p>
      * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
-     * <p>
-     * Example: {@code [task][Implement Sorting](<testid>1</testid>,<testid>2</testid>)}
      */
     private static final Pattern TASK_PATTERN = Pattern
             .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
-
-    /**
-     * Captures a single test identifier inside {@code testsColor(...)}.
-     * Matches test names like {@code testClass[Vehicle]} or {@code testMoveCar(IOTester)},
-     * allowing one level of parenthesized suffix.
-     * Aligned with the Angular client regex: {@code /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g}
-     */
-    private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
-
-    /**
-     * PlantUML color tag: {@code <color:testsColor(testName)>text</color>}.
-     * Group 1: test identifier, Group 2: inner text to be colored.
-     */
-    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");
-
-    /**
-     * PlantUML arrow/element coloring: {@code #testsColor(testName)}.
-     * Group 1: test identifier.
-     */
-    private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(" + TESTS_COLOR_INNER + "\\)");
-
-    /**
-     * PlantUML text coloring: {@code #text:testsColor(testName)}.
-     * Group 1: test identifier.
-     */
-    private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
@@ -179,16 +133,15 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Stateless rendering: client provides all data, server returns self-contained HTML with interactive JS.
-     * Zero database access. Uses CommonMark with inline PlantUML SVGs.
+     * Renders the given markdown into a self-contained HTML document.
      *
      * @param markdown      the raw problem statement markdown
-     * @param testResults   client-provided test results, or null
-     * @param resultSummary client-provided result summary (score, commit hash, etc.), or null
-     * @param locale        the locale for i18n of user-visible text
-     * @param darkMode      if true, PlantUML diagrams use the Artemis dark theme
-     * @param includeJs     if true, includes vanilla JS for task feedback modal
-     * @param includeCss    if true, prepends embedded CSS to the HTML output
+     * @param testResults   client-provided test results keyed by test id, or {@code null}
+     * @param resultSummary client-provided submission summary, or {@code null}
+     * @param locale        the locale for user-visible text (task stats, modal labels)
+     * @param darkMode      if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
+     * @param includeJs     if {@code true}, the interactive feedback modal JS is included
+     * @param includeCss    if {@code true}, embedded CSS and KaTeX CSS are included
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
@@ -198,74 +151,67 @@ public class ProblemStatementRenderingService {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
         }
 
-        String processedMarkdown = markdown;
-
-        // Mask code blocks to prevent task/PlantUML extraction inside them
+        // 1. Mask code blocks so downstream passes skip over them.
         List<String> codeBlocks = new ArrayList<>();
-        processedMarkdown = maskCodeBlocks(processedMarkdown, codeBlocks);
+        String processed = maskCodeBlocks(markdown, codeBlocks);
 
-        // Extract PlantUML diagrams (max 10)
+        // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark.
         List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults, darkMode);
+        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode);
 
-        // Apply formula compatibility ($$inline$$ with surrounding text → $inline$)
-        processedMarkdown = applyFormulaCompatibility(processedMarkdown);
+        // 3. Normalize math notation, then extract formulas (still while code blocks are masked).
+        processed = MathFormulaExtractor.applyCompatibility(processed);
+        List<MathFormulaExtractor.Formula> mathFormulas = new ArrayList<>();
+        processed = MathFormulaExtractor.extract(processed, mathFormulas);
 
-        // Extract LaTeX formulas to protect them from CommonMark parsing
-        List<MathFormula> mathFormulas = new ArrayList<>();
-        processedMarkdown = extractMathFormulas(processedMarkdown, mathFormulas);
+        // 4. Expand tasks.
+        processed = extractTasks(processed, testResults, locale);
 
-        // Extract tasks
-        processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
+        // 5. Strip leftover <testid>N</testid> wrappers in prose/PlantUML placeholders. Code blocks are
+        // still masked, so their contents stay untouched and display as written.
+        processed = TESTID_PATTERN.matcher(processed).replaceAll("$1");
 
-        // Restore masked code blocks and LaTeX formula placeholders before CommonMark
-        processedMarkdown = restoreCodeBlocks(processedMarkdown, codeBlocks);
-        processedMarkdown = restoreMathFormulas(processedMarkdown, mathFormulas);
+        // 6. Restore masked content.
+        processed = restoreCodeBlocks(processed, codeBlocks);
+        processed = MathFormulaExtractor.restore(processed, mathFormulas);
 
-        // CommonMark → HTML
-        String html = renderWithCommonMark(processedMarkdown);
+        // 7. CommonMark → sanitized HTML.
+        String html = renderWithCommonMark(processed);
 
-        // Inject SVGs (after sanitization since jsoup can't handle SVG)
+        // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
         for (int i = 0; i < inlineSvgs.size(); i++) {
             html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
 
-        // Wrap in container div with result summary
+        String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
         String resultAttr = buildResultAttribute(resultSummary);
-        html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
+        html = "<div class=\"" + containerClass + "\"" + resultAttr + ">" + html + "</div>";
 
-        // Strip testid tags
-        html = html.replace("<testid>", "").replace("</testid>", "");
-
-        // Prepend embedded CSS (+ dark mode overrides if needed) and KaTeX stylesheet
         if (includeCss) {
-            String css = "";
+            StringBuilder css = new StringBuilder();
             if (!mathFormulas.isEmpty()) {
-                css += "<link rel=\"stylesheet\" href=\"" + serverUrl + KATEX_BASE_PATH + "/katex.min.css\">";
+                css.append("<link rel=\"stylesheet\" href=\"").append(HtmlEscaper.escapeAttribute(serverUrl)).append(KATEX_BASE_PATH).append("/katex.min.css\">");
             }
             if (EMBEDDED_CSS != null) {
-                css += "<style>" + EMBEDDED_CSS + "</style>";
+                css.append("<style>").append(EMBEDDED_CSS).append("</style>");
             }
             if (darkMode && DARK_MODE_CSS != null) {
-                css += "<style>" + DARK_MODE_CSS + "</style>";
+                css.append("<style>").append(DARK_MODE_CSS).append("</style>");
             }
             html = css + html;
         }
 
-        // Append KaTeX script tags if formulas were found
         if (!mathFormulas.isEmpty()) {
-            html += "<script src=\"" + serverUrl + KATEX_BASE_PATH + "/katex.min.js\"></script>";
+            html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
                 html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
             }
         }
 
-        // Content hash (covers HTML + JS)
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
-        // Wrap in full HTML document
-        String document = "<!DOCTYPE html><html lang=\"" + locale.toLanguageTag() + "\"><head><meta charset=\"UTF-8\">"
+        String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body>" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";
 
@@ -273,9 +219,6 @@ public class ProblemStatementRenderingService {
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
-        // Build name-based lookup map once for all diagrams
-        Map<String, TestFeedbackInputDTO> testResultsByName = buildTestResultsByName(testResults);
-
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -288,15 +231,18 @@ public class ProblemStatementRenderingService {
 
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
-            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults, testResultsByName);
+            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults);
+            // Strip <testid> wrappers inside PlantUML — the layout engine does not understand them.
+            resolvedSource = PlantUmlTaskColorResolver.stripTestIdWrappers(resolvedSource);
 
-            String inlineSvg = null;
+            String inlineSvg;
             try {
-                String rawSvg = plantUmlService.generateSvg(cleanedSource, darkMode);
+                String rawSvg = plantUmlService.generateSvg(resolvedSource, darkMode);
                 rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
                 rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
                 rawSvg = rawSvg.replace("background:#FFFFFF;", "");
-                inlineSvg = sanitizeSvg(rawSvg);
+                String sanitized = SvgSanitizer.sanitize(rawSvg);
+                inlineSvg = sanitized != null ? sanitized : "<div class=\"alert alert-danger\">Failed to render diagram</div>";
             }
             catch (Exception e) {
                 log.error("Failed to generate inline SVG for diagram {} in stateless render", diagramId, e);
@@ -312,168 +258,6 @@ public class ProblemStatementRenderingService {
         }
         matcher.appendTail(sb);
         return sb.toString();
-    }
-
-    /**
-     * Defense-in-depth SVG sanitizer using jsoup's XML parser and a DOM-based deny list.
-     * Removes dangerous elements, event handler attributes, unsafe href/URL references,
-     * and dangerous CSS patterns. Preserves legitimate PlantUML SVG output.
-     * <p>
-     * Package-private for unit testing in {@code SvgSanitizerTest}.
-     */
-    static String sanitizeSvg(String svg) {
-        Document doc = Jsoup.parse(svg, "", org.jsoup.parser.Parser.xmlParser());
-        removeNonElementNodes(doc);
-        sanitizeElements(doc);
-        return doc.html();
-    }
-
-    private static void removeNonElementNodes(Node parent) {
-        for (Node child : new ArrayList<>(parent.childNodes())) {
-            if (child instanceof XmlDeclaration || child instanceof DocumentType || child instanceof Comment) {
-                child.remove();
-            }
-        }
-    }
-
-    private static void sanitizeElements(Element parent) {
-        for (Element child : new ArrayList<>(parent.children())) {
-            String tag = child.tagName().toLowerCase(Locale.ROOT);
-
-            // Remove denied elements entirely
-            if (SVG_DENIED_ELEMENTS.contains(tag)) {
-                log.warn("SVG sanitizer removed disallowed element: <{}>", tag);
-                child.remove();
-                continue;
-            }
-
-            // Remove event handler attributes (on*)
-            for (Attribute attr : new ArrayList<>(child.attributes().asList())) {
-                String attrKey = attr.getKey().toLowerCase(Locale.ROOT);
-
-                if (attrKey.startsWith("on")) {
-                    child.removeAttr(attr.getKey());
-                    continue;
-                }
-
-                // Sanitize href / xlink:href
-                if ("href".equals(attrKey) || "xlink:href".equals(attrKey)) {
-                    String value = attr.getValue().strip().toLowerCase(Locale.ROOT);
-                    if (value.startsWith("javascript:") || value.startsWith("data:")) {
-                        child.removeAttr(attr.getKey());
-                    }
-                    else if (!"a".equals(tag) && !value.startsWith("#")) {
-                        // On non-<a> elements, only allow local fragment refs
-                        child.removeAttr(attr.getKey());
-                    }
-                    continue;
-                }
-
-                // Check URL-bearing presentation attributes
-                if (SVG_URL_BEARING_ATTRIBUTES.contains(attrKey)) {
-                    String value = attr.getValue();
-                    if (URL_REFERENCE_PATTERN.matcher(value).find() && !LOCAL_URL_REF_PATTERN.matcher(value).matches()) {
-                        child.removeAttr(attr.getKey());
-                    }
-                    continue;
-                }
-
-                // Sanitize inline style attributes
-                if ("style".equals(attrKey)) {
-                    String value = attr.getValue();
-                    if (DANGEROUS_CSS_PATTERN.matcher(value).find() || containsExternalUrlReference(value)) {
-                        child.removeAttr(attr.getKey());
-                    }
-                }
-            }
-
-            // Sanitize <style> element text content
-            // In XML parser mode, <style> content is stored as text nodes (not DataNodes),
-            // so we use html() to get the raw content rather than data()
-            if ("style".equals(tag)) {
-                String cssContent = child.html();
-                if (DANGEROUS_CSS_PATTERN.matcher(cssContent).find() || containsExternalUrlReference(cssContent)) {
-                    // Replace with empty style rather than removing (PlantUML themes rely on style elements)
-                    child.html("");
-                    log.warn("SVG sanitizer cleared dangerous CSS content from <style> element");
-                }
-            }
-
-            // Recurse into children
-            sanitizeElements(child);
-        }
-    }
-
-    /**
-     * Checks if CSS text contains url(...) references that are not local fragment refs.
-     */
-    private static boolean containsExternalUrlReference(String css) {
-        Matcher urlMatcher = URL_REFERENCE_PATTERN.matcher(css);
-        while (urlMatcher.find()) {
-            // Extract the url(...) value starting from this match position
-            int start = urlMatcher.start();
-            int parenOpen = css.indexOf('(', start);
-            int parenClose = css.indexOf(')', parenOpen);
-            if (parenClose > parenOpen) {
-                String urlValue = css.substring(parenOpen + 1, parenClose).strip();
-                // Strip quotes
-                if ((urlValue.startsWith("'") && urlValue.endsWith("'")) || (urlValue.startsWith("\"") && urlValue.endsWith("\""))) {
-                    urlValue = urlValue.substring(1, urlValue.length() - 1).strip();
-                }
-                // Only local fragment refs (#id) are safe
-                if (!urlValue.startsWith("#")) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static Map<String, TestFeedbackInputDTO> buildTestResultsByName(@Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        if (testResults == null) {
-            return Map.of();
-        }
-        Map<String, TestFeedbackInputDTO> byName = new HashMap<>();
-        for (TestFeedbackInputDTO detail : testResults.values()) {
-            byName.put(detail.testName(), detail);
-        }
-        return byName;
-    }
-
-    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> byName) {
-
-        // <color:testsColor(...)>text</color>
-        String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
-            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
-        });
-        // #text:testsColor(...) — must be checked before #testsColor(...) to avoid partial match
-        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#text:" + color);
-        });
-        // #testsColor(...)
-        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveTestColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#" + color);
-        });
-        return resolved;
-    }
-
-    private static String resolveTestColor(String testRef, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> testResultsByName) {
-        if (testResults == null) {
-            return "grey";
-        }
-        // Try <testid>ID</testid> format
-        Matcher idMatcher = TESTID_PATTERN.matcher(testRef);
-        if (idMatcher.matches()) {
-            long testId = Long.parseLong(idMatcher.group(1));
-            TestFeedbackInputDTO detail = testResults.get(testId);
-            return detail == null ? "grey" : detail.passed() ? "green" : "red";
-        }
-        // Fall back to name-based lookup
-        TestFeedbackInputDTO detail = testResultsByName.get(testRef);
-        return detail == null ? "grey" : detail.passed() ? "green" : "red";
     }
 
     private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
@@ -512,7 +296,7 @@ public class ProblemStatementRenderingService {
         String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
 
         StringBuilder html = new StringBuilder();
-        html.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"")
+        html.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(HtmlEscaper.escapeAttribute(taskName)).append("\" data-test-ids=\"")
                 .append(testIdsStr).append("\"").append(statusAttr);
 
         if (testResults != null) {
@@ -524,10 +308,10 @@ public class ProblemStatementRenderingService {
             String iconClass = "success".equals(testStatus) ? "fa-check-circle artemis-icon-success" : "fa-times-circle artemis-icon-fail";
             html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
         }
-        html.append(escapeHtml(taskName));
+        html.append(HtmlEscaper.escapeText(taskName));
         if (testResults != null && !testIds.isEmpty()) {
             String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, total }, locale);
-            html.append(" <span class=\"artemis-task-stats\">").append(escapeHtml(statsText)).append("</span>");
+            html.append(" <span class=\"artemis-task-stats\">").append(HtmlEscaper.escapeText(statsText)).append("</span>");
         }
         html.append("</span><br>");
         return html.toString();
@@ -551,7 +335,7 @@ public class ProblemStatementRenderingService {
             }
         }
         try {
-            return escapeHtmlAttribute(objectMapper.writeValueAsString(feedbackList));
+            return HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(feedbackList));
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize feedback JSON", e);
@@ -564,7 +348,7 @@ public class ProblemStatementRenderingService {
             return "";
         }
         try {
-            return " data-result=\"" + escapeHtmlAttribute(objectMapper.writeValueAsString(resultSummary)) + "\"";
+            return " data-result=\"" + HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(resultSummary)) + "\"";
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize result summary JSON", e);
@@ -610,73 +394,14 @@ public class ProblemStatementRenderingService {
         return success;
     }
 
-    private record MathFormula(String latex, boolean displayMode) {
-    }
-
-    /**
-     * Ports the Angular FormulaCompatibilityPlugin: if a line contains $$...$$ with surrounding text,
-     * convert all $$ to $ on that line (making it inline math). Also normalizes \\begin/\\end to \begin/\end.
-     */
-    private static String applyFormulaCompatibility(String markdown) {
-        String[] lines = markdown.split("\n", -1);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            if (INLINE_FORMULA_LINE.matcher(line).find()) {
-                line = line.replace("$$", "$");
-            }
-            if (line.contains("\\\\begin") || line.contains("\\\\end")) {
-                line = line.replace("\\\\begin", "\\begin").replace("\\\\end", "\\end");
-            }
-            if (i > 0) {
-                sb.append("\n");
-            }
-            sb.append(line);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Extracts LaTeX formulas from markdown and replaces them with placeholders.
-     * Display math ($$...$$) is extracted first, then inline math ($...$).
-     */
-    private static String extractMathFormulas(String markdown, List<MathFormula> formulas) {
-        // Extract display math first
-        String result = DISPLAY_MATH_PATTERN.matcher(markdown).replaceAll(match -> {
-            int index = formulas.size();
-            formulas.add(new MathFormula(match.group(1).trim(), true));
-            return Matcher.quoteReplacement(MATH_PLACEHOLDER_PREFIX + index + MATH_PLACEHOLDER_SUFFIX);
-        });
-        // Then extract inline math
-        result = INLINE_MATH_PATTERN.matcher(result).replaceAll(match -> {
-            int index = formulas.size();
-            formulas.add(new MathFormula(match.group(1), false));
-            return Matcher.quoteReplacement(MATH_PLACEHOLDER_PREFIX + index + MATH_PLACEHOLDER_SUFFIX);
-        });
-        return result;
-    }
-
-    /**
-     * Restores math formula placeholders as KaTeX-renderable span elements.
-     */
-    private static String restoreMathFormulas(String html, List<MathFormula> formulas) {
-        String result = html;
-        for (int i = 0; i < formulas.size(); i++) {
-            MathFormula formula = formulas.get(i);
-            String span = "<span class=\"katex-formula\" data-formula=\"" + escapeHtmlAttribute(formula.latex()) + "\" data-display-mode=\"" + formula.displayMode() + "\"></span>";
-            result = result.replace(MATH_PLACEHOLDER_PREFIX + i + MATH_PLACEHOLDER_SUFFIX, span);
-        }
-        return result;
-    }
-
     private String renderWithCommonMark(String markdown) {
         String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
     /**
-     * Replace fenced code blocks and inline code with placeholders so that
-     * task/PlantUML extraction does not process content inside them.
+     * Replaces fenced code blocks and inline code with opaque placeholders so downstream passes
+     * (PlantUML, math, tasks, testid stripping) skip their contents.
      */
     private static String maskCodeBlocks(String markdown, List<String> codeBlocks) {
         Matcher matcher = CODE_BLOCK_PATTERN.matcher(markdown);
@@ -709,20 +434,6 @@ public class ProblemStatementRenderingService {
         return safelist;
     }
 
-    private static String escapeHtmlAttribute(String value) {
-        return value.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    private static String escapeHtml(String value) {
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    /**
-     * Computes a SHA-256 hash of the given input string.
-     *
-     * @param input the string to hash
-     * @return the hex-encoded SHA-256 hash
-     */
     private static String computeHash(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -757,7 +468,14 @@ public class ProblemStatementRenderingService {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
-            log.error("Could not load classpath resource: {}", path);
+            String consequence = switch (path) {
+                case "problem-statement-js/interactive.js" -> "interactive feedback modal will not be injected";
+                case "problem-statement-js/katex-auto-render.js" -> "client-side KaTeX auto-rendering will not run; formulas will appear as empty placeholders";
+                case "problem-statement-css/embedded.css" -> "embedded styling is missing; rendered output will inherit the consumer's CSS only";
+                case "problem-statement-css/dark-mode.css" -> "dark mode overrides are unavailable; dark-mode requests will fall back to light styling";
+                default -> "asset not loaded";
+            };
+            log.error("Could not load classpath resource {} — consequence: {}", path, consequence, e);
             return null;
         }
     }

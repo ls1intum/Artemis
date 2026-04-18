@@ -12,16 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
@@ -53,7 +57,8 @@ public class ProblemStatementRenderingResource {
     @PostMapping(value = "problem-statement/render", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RenderedProblemStatementDTO> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) {
+    @LimitRequestsPerMinute(type = RateLimitType.PROBLEM_STATEMENT_RENDERING)
+    public ResponseEntity<?> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequestDTO renderRequest) {
 
         log.debug("REST request to render problem statement (stateless)");
 
@@ -62,7 +67,10 @@ public class ProblemStatementRenderingResource {
             testResults = new HashMap<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
-                    return ResponseEntity.badRequest().build();
+                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT,
+                            "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
+                    problem.setTitle("Duplicate test id");
+                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
                 }
                 testResults.put(input.testId(), input);
             }

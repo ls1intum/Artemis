@@ -74,4 +74,22 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(rpm).isEqualTo(RateLimitType.AUTHENTICATION.getDefaultRpm()); // 30
     }
+
+    @Test
+    void testGetEffectiveRpm_ProblemStatementRendering_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(42);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.PROBLEM_STATEMENT_RENDERING);
+
+        assertThat(rpm).isEqualTo(42);
+    }
+
+    @Test
+    void testGetEffectiveRpm_ProblemStatementRendering_WithNullValue_ShouldReturnDefault() {
+        when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.PROBLEM_STATEMENT_RENDERING);
+
+        assertThat(rpm).isEqualTo(RateLimitType.PROBLEM_STATEMENT_RENDERING.getDefaultRpm()); // 30
+    }
 }

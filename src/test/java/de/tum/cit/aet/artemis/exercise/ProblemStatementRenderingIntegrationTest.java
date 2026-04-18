@@ -64,7 +64,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).isNullOrEmpty();
+        assertThat(result.html()).isEmpty();
     }
 
     // --- XSS / Sanitization ---
@@ -304,11 +304,14 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldRejectDuplicateTestIds() throws Exception {
+    void shouldRejectDuplicateTestIdsWithProblemDetail() throws Exception {
         var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0), new TestFeedbackInputDTO(1L, "testB", false, null, 0.0));
         var body = new ProblemStatementRenderRequestDTO("[task][T](<testid>1</testid>)", testResults, null, "en", false, true, null);
 
-        request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.BAD_REQUEST);
+        // Body is not asserted because the shared test helper returns null for non-2xx responses.
+        // The behavior under test here is that the status is 422 (i.e. validation-stage errors map to
+        // Unprocessable Content rather than Bad Request), which MockMvc enforces via the expected status.
+        request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     // --- PlantUML diagram limit ---
@@ -352,6 +355,61 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         assertThat(result.html()).doesNotContain("<style>");
         assertThat(result.html()).doesNotContain("<link rel=\"stylesheet\"");
+    }
+
+    // --- Authentication ---
+
+    @Test
+    void shouldRejectUnauthenticated() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hello", null, null, "en", false, true, null);
+        request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.UNAUTHORIZED);
+    }
+
+    // --- Markdown validation ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectNullByteInMarkdown() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("hello\u0000world", null, null, "en", false, true, null);
+        request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldAcceptMarkdownAtSizeLimit() throws Exception {
+        String markdown = "a".repeat(100_000);
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, null);
+        request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectMarkdownOverSizeLimit() throws Exception {
+        String markdown = "a".repeat(100_001);
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, null);
+        request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // --- testid preservation inside code blocks ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldPreserveTestidInsideCodeBlock() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("`<testid>42</testid>`", null, null, "en", false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<code>").contains("&lt;testid&gt;42&lt;/testid&gt;");
+    }
+
+    // --- Dark mode container marker ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldAddDarkModeClassOnContainer() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hi", null, null, "en", true, false, null);
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        assertThat(result.html()).contains("artemis-problem-statement--dark");
     }
 
     // --- Renderer version stability ---
