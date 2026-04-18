@@ -172,7 +172,6 @@ spring:
         client:
           connect-timeout: 30s
           read-timeout: 5m
-          response-timeout: 5m
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI
