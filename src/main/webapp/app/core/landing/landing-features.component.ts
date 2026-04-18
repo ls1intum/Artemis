@@ -136,8 +136,8 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                                 [alt]="card.imageAltKey | artemisTranslate"
                                 loading="lazy"
                                 decoding="async"
-                                width="840"
-                                height="420"
+                                width="567"
+                                height="284"
                             />
                         </div>
                     </div>
