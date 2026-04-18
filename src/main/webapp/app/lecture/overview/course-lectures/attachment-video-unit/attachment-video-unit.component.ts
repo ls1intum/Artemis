@@ -404,7 +404,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // Auto-expand if collapsed
         if (card && card.isCollapsed()) {
             card.toggleCollapse();
-            afterNextRender(() => layout.open(), { injector: this.injector });
+            afterNextRender(
+                () => {
+                    // Re-check state before opening to prevent desync if user closed/re-toggled
+                    if (layout && this.hasFullscreenContent() && card && !card.isCollapsed()) {
+                        layout.open();
+                    }
+                },
+                { injector: this.injector },
+            );
         } else {
             layout.open();
         }

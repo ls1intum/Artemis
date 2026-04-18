@@ -218,7 +218,8 @@
                 "nextResult": "Next result",
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "resetSplitRatio": "Reset split layout"
             },
             "pdfViewer": {
                 "title": "PDF Viewer",

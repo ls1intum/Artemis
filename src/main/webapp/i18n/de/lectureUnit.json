@@ -218,7 +218,8 @@
                 "nextResult": "Nächstes Ergebnis",
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
-                "loading": "Lädt..."
+                "loading": "Lädt...",
+                "resetSplitRatio": "Aufteilung zurücksetzen"
             },
             "pdfViewer": {
                 "title": "PDF-Betrachter",
