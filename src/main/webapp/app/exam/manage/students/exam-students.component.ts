@@ -349,13 +349,23 @@ export class ExamStudentsComponent implements OnDestroy {
         this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
-    private openIndividualExamsStatusPopover(event?: Event) {
-        const popover = this.individualExamsStatusPopover();
-        const target = this.individualExamsStatusButton()?.nativeElement;
-        if (!target || popover.overlayVisible || !event) {
+    private openIndividualExamsStatusPopover(event?: Event, defer = false) {
+        const showPopover = () => {
+            const popover = this.individualExamsStatusPopover();
+            const target = this.individualExamsStatusButton()?.nativeElement;
+            if (!popover || !target || popover.overlayVisible) {
+                return;
+            }
+
+            popover.show(event ?? new MouseEvent('click'), target);
+        };
+
+        if (defer) {
+            setTimeout(showPopover, 0);
             return;
         }
-        popover.show(event, target);
+
+        showPopover();
     }
 
     reloadExamWithRegisteredUsers() {
@@ -471,12 +481,12 @@ export class ExamStudentsComponent implements OnDestroy {
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
             modalRef.result.then(() => {
+                this.openIndividualExamsStatusPopover(undefined, true);
                 this.generateStudentExams();
-                this.openIndividualExamsStatusPopover(event);
             });
         } else {
-            this.generateStudentExams();
             this.openIndividualExamsStatusPopover(event);
+            this.generateStudentExams();
         }
     }
 
