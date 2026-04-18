@@ -5,9 +5,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -100,11 +102,12 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
     @Test
     void getBuildEnvironmentContext_withRelevantFiles_returnsFormattedContext() throws IOException {
-        Files.writeString(tempDir.resolve("pom.xml"), "<project>JUnit Jupiter</project>");
+        FileUtils.writeStringToFile(tempDir.resolve("pom.xml").toFile(), "<project>JUnit Jupiter</project>", StandardCharsets.UTF_8);
         Files.createDirectories(tempDir.resolve("module"));
-        Files.writeString(tempDir.resolve("module/build.gradle"), "dependencies { testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' }");
+        FileUtils.writeStringToFile(tempDir.resolve("module/build.gradle").toFile(), "dependencies { testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' }",
+                StandardCharsets.UTF_8);
         Files.createDirectories(tempDir.resolve("target"));
-        Files.writeString(tempDir.resolve("target/ignored.gradle"), "ignored");
+        FileUtils.writeStringToFile(tempDir.resolve("target/ignored.gradle").toFile(), "ignored", StandardCharsets.UTF_8);
 
         Repository repository = mock(Repository.class);
         when(repository.getLocalPath()).thenReturn(tempDir);
