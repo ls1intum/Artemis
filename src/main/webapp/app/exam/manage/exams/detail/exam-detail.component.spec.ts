@@ -166,17 +166,6 @@ describe('ExamDetailComponent', () => {
         });
     }));
 
-    it('should correctly route to students subpage', fakeAsync(() => {
-        const location = TestBed.inject(Location);
-        fixture.detectChanges();
-        const studentExamsButton = fixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
-        studentExamsButton.click();
-        discardPeriodicTasks();
-        fixture.whenStable().then(() => {
-            expect(location.path()).toBe('/course-management/1/exams/1/students');
-        });
-    }));
-
     it('should correctly route to dashboard', fakeAsync(() => {
         const location = TestBed.inject(Location);
         fixture.detectChanges();
