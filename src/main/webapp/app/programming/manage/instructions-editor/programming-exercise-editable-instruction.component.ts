@@ -368,7 +368,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-        this.markdownEditorMonaco?.monacoEditor()?.setAnnotations(lineWarnings as Annotation[]);
+        this.markdownEditorMonaco?.monacoEditor?.()?.setAnnotations(lineWarnings as Annotation[]);
     };
 
     /**
@@ -379,7 +379,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @returns The current editor content, or undefined if editor is not available.
      */
     getCurrentContent(): string | undefined {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor();
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
         if (!monacoEditor) {
             return undefined;
         }
@@ -393,7 +393,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param text The text to set in the editor.
      */
     setText(text: string): void {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor();
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
         if (!monacoEditor) {
             return;
         }
@@ -409,7 +409,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.markdownEditorMonaco?.monacoEditor()?.revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.markdownEditorMonaco?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     clearReviewCommentDrafts(): void {
@@ -497,7 +497,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     revertAll(): void {
         this.markdownEditorMonaco?.revertAll();
-        const currentContent = this.markdownEditorMonaco?.monacoEditor()?.getText();
+        const currentContent = this.markdownEditorMonaco?.monacoEditor?.()?.getText();
         if (currentContent !== undefined) {
             this.updateProblemStatement(currentContent);
         }
@@ -518,11 +518,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
-        if (!this.markdownEditorMonaco?.monacoEditor()) {
+        if (!this.markdownEditorMonaco?.monacoEditor?.()) {
             return;
         }
-        const model = this.markdownEditorMonaco.monacoEditor()!.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor()!.getEditor();
+        const model = this.markdownEditorMonaco.monacoEditor?.()!.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor?.()!.getEditor();
         if (!model || !editorInstance) {
             return;
         }
