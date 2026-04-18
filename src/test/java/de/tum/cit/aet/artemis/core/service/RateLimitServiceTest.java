@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -98,6 +100,29 @@ class RateLimitServiceTest {
 
         assertThatThrownBy(() -> rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT))
                 .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @Test
+    void testEnforcePerMinute_TwoTypesWithSameRpm_ShouldUseSeparateBuckets() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        // Both types yield the same RPM; without the fix they would share a bucket.
+        when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(30);
+        when(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).thenReturn(30);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(true);
+
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+        rateLimitService.enforcePerMinute(clientId, RateLimitType.ACCOUNT_MANAGEMENT);
+        rateLimitService.enforcePerMinute(clientId, RateLimitType.AUTHENTICATION);
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(proxyManager, times(2)).getProxy(keyCaptor.capture(), any());
+        assertThat(keyCaptor.getAllValues()).hasSize(2);
+        assertThat(keyCaptor.getAllValues().get(0)).isNotEqualTo(keyCaptor.getAllValues().get(1));
+        assertThat(keyCaptor.getAllValues().get(0)).contains(RateLimitType.ACCOUNT_MANAGEMENT.name());
+        assertThat(keyCaptor.getAllValues().get(1)).contains(RateLimitType.AUTHENTICATION.name());
     }
 
     @Test

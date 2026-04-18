@@ -65,7 +65,7 @@ public class RateLimitService {
             return;
         }
 
-        Bucket bucket = getOrCreatePerMinuteBucket(clientId, configurationService.getEffectiveRpm(rpmType));
+        Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType));
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
@@ -76,9 +76,10 @@ public class RateLimitService {
         log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
     }
 
-    private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, int rpm) {
+    private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
-        return proxyManager.getProxy("rpm=" + rpm + "#" + clientId, () -> cfg);
+        // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.
+        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + clientId, () -> cfg);
     }
 
     /**
