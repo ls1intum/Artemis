@@ -130,7 +130,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
-    let router: MockRouter;
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
@@ -293,7 +292,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         alertService = TestBed.inject(AlertService);
         codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as unknown as jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
         ws = TestBed.inject(HyperionWebsocketService) as unknown as jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
-        router = TestBed.inject(Router) as unknown as MockRouter;
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService);
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
