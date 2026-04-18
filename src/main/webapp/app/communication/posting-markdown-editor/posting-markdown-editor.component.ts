@@ -133,7 +133,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     ngAfterViewInit(): void {
         this.markdownEditor().enableTextFieldMode();
 
-        const editor = this.markdownEditor().monacoEditor();
+        const editor = this.markdownEditor().monacoEditor?.();
         if (editor) {
             editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
                 const position = editor.getPosition();
