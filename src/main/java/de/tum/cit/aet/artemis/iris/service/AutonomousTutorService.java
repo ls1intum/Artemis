@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.IrisResponseNeedsReviewNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -39,6 +42,19 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
  * Service that handles the autonomous tutor pipeline status updates.
  * When Pyris sends a response, this service creates an answer post as the Iris bot user,
  * broadcasts it via WebSocket, and sends notifications to thread participants.
+ *
+ * <p>
+ * Artemis gates Iris responses solely on the confidence score supplied by Pyris:
+ * <ul>
+ * <li>confidence &ge; {@link #AUTO_VERIFY_CONFIDENCE_THRESHOLD}: the answer is published
+ * immediately (verified = true) and broadcast to every participant.</li>
+ * <li>{@link #REVIEW_MIN_CONFIDENCE_THRESHOLD} &le; confidence &lt;
+ * {@link #AUTO_VERIFY_CONFIDENCE_THRESHOLD}: the answer is stored as unverified.
+ * Only tutors/editors/instructors see it (via REST and WebSocket) and receive a
+ * review notification; students only see it after a tutor approves it.</li>
+ * <li>confidence &lt; {@link #REVIEW_MIN_CONFIDENCE_THRESHOLD} or missing: the response
+ * is discarded.</li>
+ * </ul>
  */
 @Service
 @Lazy
@@ -48,6 +64,12 @@ public class AutonomousTutorService {
     private static final Logger log = LoggerFactory.getLogger(AutonomousTutorService.class);
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+
+    /** Iris replies at or above this confidence are auto-verified and visible to students. */
+    public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.95;
+
+    /** Iris replies below this confidence are never posted (a tutor cannot rescue something Pyris itself is very unsure about). */
+    public static final double REVIEW_MIN_CONFIDENCE_THRESHOLD = 0.80;
 
     private final IrisBotUserService irisBotUserService;
 
@@ -79,9 +101,10 @@ public class AutonomousTutorService {
     }
 
     /**
-     * Handles the status update from the autonomous tutor pipeline.
-     * If the result is available and should be posted directly, creates an answer post
-     * as the Iris bot user, sends WebSocket broadcasts, and notifies thread participants.
+     * Handles the status update from the autonomous tutor pipeline. Artemis decides whether to
+     * publish, hold for review, or discard the response based solely on the confidence score:
+     * {@code >= 0.95} auto-publishes, {@code [0.80, 0.95)} stores the reply as unverified for tutor
+     * review, {@code < 0.80} or missing confidence is discarded.
      *
      * @param job          the autonomous tutor job containing post and course IDs
      * @param statusUpdate the status update from Pyris containing the generated response
@@ -91,8 +114,17 @@ public class AutonomousTutorService {
             log.debug("AutonomousTutor feature is disabled, skipping status update for job {}", job.jobId());
             return;
         }
-        if (statusUpdate.result() == null || !statusUpdate.shouldPostDirectly()) {
-            log.debug("Skipping autonomous tutor post: result={}, shouldPostDirectly={}", statusUpdate.result() != null ? "present" : "null", statusUpdate.shouldPostDirectly());
+        if (statusUpdate.result() == null) {
+            log.debug("Skipping autonomous tutor post for job {}: no result in status update", job.jobId());
+            return;
+        }
+        Double confidence = statusUpdate.confidence();
+        if (confidence == null) {
+            log.warn("Discarding autonomous tutor response for job {}: no confidence score supplied by Pyris", job.jobId());
+            return;
+        }
+        if (confidence < REVIEW_MIN_CONFIDENCE_THRESHOLD) {
+            log.debug("Discarding autonomous tutor response for job {}: confidence {} below review threshold {}", job.jobId(), confidence, REVIEW_MIN_CONFIDENCE_THRESHOLD);
             return;
         }
 
@@ -107,11 +139,22 @@ public class AutonomousTutorService {
 
         ensureBotIsParticipant(botUser, conversation);
 
-        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost);
-        sendNotifications(answerPost, originalPost, conversation, course, botUser);
-        broadcastAnswer(answerPost, originalPost, conversation, course.getId());
+        boolean isVerified = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD;
 
-        log.info("Autonomous tutor posted answer {} to post {} in course {}", answerPost.getId(), job.postId(), job.courseId());
+        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence, isVerified);
+        Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
+
+        if (isVerified) {
+            sendNewAnswerNotifications(answerPost, originalPost, conversation, course, botUser, recipientSummaries);
+            broadcastAnswer(answerPost, originalPost, conversation, course.getId(), recipientSummaries, true);
+        }
+        else {
+            sendReviewNotifications(answerPost, originalPost, conversation, course, recipientSummaries);
+            broadcastAnswer(answerPost, originalPost, conversation, course.getId(), recipientSummaries, false);
+        }
+
+        log.info("Autonomous tutor posted answer {} (verified={}, confidence={}) to post {} in course {}", answerPost.getId(), isVerified, confidence, job.postId(),
+                job.courseId());
     }
 
     private void ensureBotIsParticipant(User botUser, Conversation conversation) {
@@ -123,25 +166,29 @@ public class AutonomousTutorService {
         }
     }
 
-    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost) {
+    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost, Double confidence, boolean isVerified) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(content);
         answerPost.setAuthor(botUser);
         answerPost.setPost(originalPost);
         answerPost.setResolvesPost(false);
+        answerPost.setConfidenceScore(confidence);
+        answerPost.setVerified(isVerified);
+        if (isVerified) {
+            // auto-verified answers are implicitly approved by the system, there is no human reviewer
+            answerPost.setVerifiedAt(ZonedDateTime.now());
+        }
         AnswerPost savedAnswer = answerPostRepository.save(answerPost);
         savedAnswer.setAuthorRole(UserRole.USER);
         savedAnswer.setIsSaved(false);
         return savedAnswer;
     }
 
-    private void sendNotifications(AnswerPost answerPost, Post originalPost, Conversation conversation, Course course, User botUser) {
+    private void sendNewAnswerNotifications(AnswerPost answerPost, Post originalPost, Conversation conversation, Course course, User botUser,
+            Set<ConversationNotificationRecipientSummary> recipientSummaries) {
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(originalPost.getId());
         usersInvolved.add(originalPost.getAuthor());
 
-        Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
-
-        // Filter to users who replied or authored the post, are conversation participants, not muted, not hidden, and not the bot
         var filteredUsers = usersInvolved.stream().filter(user -> recipientSummaries.stream().anyMatch(recipient -> recipient.userId() == user.getId()
                 && !Objects.equals(user.getId(), botUser.getId()) && !recipient.isConversationHidden() && !recipient.isConversationMuted()))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -155,6 +202,33 @@ public class AutonomousTutorService {
         }
     }
 
+    private void sendReviewNotifications(AnswerPost answerPost, Post originalPost, Conversation conversation, Course course,
+            Set<ConversationNotificationRecipientSummary> recipientSummaries) {
+        List<User> tutors = recipientSummaries.stream().filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse).map(this::toUserReference)
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (tutors.isEmpty()) {
+            log.debug("No tutors available to review unverified Iris answer {} in course {}", answerPost.getId(), course.getId());
+            return;
+        }
+        var notification = new IrisResponseNeedsReviewNotification(course.getId(), course.getTitle(), course.getCourseIcon(), originalPost.getContent(),
+                originalPost.getCreationDate().toString(), originalPost.getAuthor().getName(), originalPost.getId(), answerPost.getContent(),
+                answerPost.getCreationDate().toString(), answerPost.getId(), answerPost.getConfidenceScore(), conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()),
+                conversation.getId());
+        courseNotificationService.sendCourseNotification(notification, tutors);
+    }
+
+    private User toUserReference(ConversationNotificationRecipientSummary summary) {
+        // CourseNotificationService only needs the user id for delivery; a light reference avoids extra DB reads
+        User user = new User();
+        user.setId(summary.userId());
+        user.setLogin(summary.userLogin());
+        user.setFirstName(summary.firstName());
+        user.setLastName(summary.lastName());
+        user.setLangKey(summary.userLangKey());
+        user.setEmail(summary.userEmail());
+        return user;
+    }
+
     private Set<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation, Course course) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
@@ -166,7 +240,8 @@ public class AutonomousTutorService {
                 .collect(Collectors.toSet());
     }
 
-    private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId) {
+    private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId,
+            Set<ConversationNotificationRecipientSummary> recipientSummaries, boolean broadcastToStudents) {
         // Assemble the parent post with the new answer
         Post broadcastPost = originalPost;
         broadcastPost.removeAnswerPost(answerPost);
@@ -179,14 +254,15 @@ public class AutonomousTutorService {
         broadcastPost.getAnswers().forEach(answer -> answer.setPost(new Post(answer.getPost().getId())));
 
         PostDTO postDTO = new PostDTO(broadcastPost, MetisCrudAction.UPDATE);
-        String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
 
-        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+        if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
             websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+            return;
         }
-        else {
-            var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId());
-            participants.forEach(participant -> websocketMessagingService.sendMessage("/topic/user/" + participant.getUser().getId() + "/notifications/conversations", postDTO));
-        }
+
+        // For private channels OR unverified Iris replies: send per-user, optionally skipping students
+        recipientSummaries.stream().filter(recipient -> broadcastToStudents || recipient.isAtLeastTutorInCourse())
+                .forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", postDTO));
     }
 }
