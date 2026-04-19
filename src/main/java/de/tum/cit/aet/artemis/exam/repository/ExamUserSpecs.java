@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -34,6 +36,12 @@ public final class ExamUserSpecs {
     private ExamUserSpecs() {
     }
 
+    /** Returns a specification that matches all records without adding any predicate. */
+    @NonNull
+    private static Specification<ExamUser> noOp() {
+        return (root, query, builder) -> builder.conjunction();
+    }
+
     /** LIKE-escape for user input. Escapes backslash, percent, and underscore so they are treated literally. */
     private static String escapeForLike(String term) {
         return term.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
@@ -49,26 +57,27 @@ public final class ExamUserSpecs {
 
     /**
      * Case-insensitive search across {@code user.login} and the concatenated full name ({@code firstName + ' ' + lastName}).
-     * Comma-separated terms are split and ANDed: every token must match at least one field (login OR full name).
-     * Returns a no-op predicate when the search term is blank.
+     * Comma-separated terms are split and ORed: a match on any token is sufficient.
+     * Returns a no-op predicate when the search term is blank or contains only blank tokens.
      */
     @NonNull
     public static Specification<ExamUser> searchByUserFields(@Nullable String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
-            return (root, query, builder) -> null;
+            return noOp();
         }
-        String[] tokens = searchTerm.split(",");
+        List<String> tokens = Arrays.stream(searchTerm.split(",")).map(String::trim).filter(t -> !t.isBlank()).toList();
+        if (tokens.isEmpty()) {
+            return noOp();
+        }
         return (root, query, builder) -> {
-            From<ExamUser, User> userJoin = root.join(ExamUser_.USER);
-            Expression<String> login = builder.lower(userJoin.get(User_.LOGIN));
+            Join<ExamUser, User> userJoin = root.join(ExamUser_.USER, JoinType.LEFT);
             Expression<String> fullName = builder
                     .lower(builder.concat(builder.concat(builder.coalesce(userJoin.get(User_.FIRST_NAME), ""), " "), builder.coalesce(userJoin.get(User_.LAST_NAME), "")));
-            var predicates = new Predicate[tokens.length];
-            for (int i = 0; i < tokens.length; i++) {
-                String pattern = "%" + escapeForLike(tokens[i]) + "%";
-                predicates[i] = builder.or(builder.like(login, pattern, '\\'), builder.like(fullName, pattern, '\\'));
-            }
-            return builder.and(predicates);
+            List<Predicate> tokenPredicates = tokens.stream().map(token -> {
+                String pattern = "%" + escapeForLike(token) + "%";
+                return builder.or(builder.like(builder.lower(userJoin.get(User_.LOGIN)), pattern, '\\'), builder.like(fullName, pattern, '\\'));
+            }).toList();
+            return builder.or(tokenPredicates.toArray(new Predicate[0]));
         };
     }
 
