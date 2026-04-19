@@ -15,8 +15,8 @@
         border-left-color: var(--bs-danger);
     }
 
-    &.alert-warning {
-        border-left-color: var(--bs-warning);
+    &.alert-secondary {
+        border-left-color: var(--bs-secondary);
     }
 
     &.alert-info {
@@ -83,8 +83,8 @@
     color: var(--bs-danger);
 }
 
-.unified-feedback.alert-warning .unified-feedback-icon {
-    color: var(--bs-warning);
+.unified-feedback.alert-secondary .unified-feedback-icon {
+    color: var(--bs-secondary);
 }
 
 .unified-feedback.alert-info .unified-feedback-icon {
@@ -105,8 +105,8 @@
     color: var(--bs-danger);
 }
 
-.unified-feedback.alert-warning .unified-feedback-title {
-    color: var(--bs-warning);
+.unified-feedback.alert-secondary .unified-feedback-title {
+    color: var(--bs-secondary);
 }
 
 .unified-feedback.alert-info .unified-feedback-title {
@@ -155,8 +155,8 @@
     color: var(--bs-danger);
 }
 
-.unified-feedback.alert-warning .unified-feedback-points {
-    color: var(--bs-warning);
+.unified-feedback.alert-secondary .unified-feedback-points {
+    color: var(--bs-secondary);
 }
 
 .unified-feedback.alert-info .unified-feedback-points {
