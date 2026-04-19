@@ -84,7 +84,7 @@ public class GlobalSearchResource {
      * @param types    optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel}
      *                     or {@code all}; default {@code all})
      * @param courseId optional course id to scope the search to a single course
-     * @param limit    maximum number of results (default 10, max 100)
+     * @param limit    maximum number of results (default 10, max 25)
      * @return status 200 with a list of unified search results; empty list if the user has no access
      *         or all requested types are invalid
      */
@@ -100,7 +100,7 @@ public class GlobalSearchResource {
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
             @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel) or 'all'; default 'all'") String types,
             @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
-            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–100, default 10)") int limit) {
+            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit) {
         log.debug("REST request for global search with query: '{}', types: {}, courseId: {}, limit: {}", query, types, courseId, limit);
 
         Set<String> requestedTypes = parseTypes(types);
@@ -108,7 +108,7 @@ public class GlobalSearchResource {
             return ResponseEntity.badRequest().build();
         }
 
-        int effectiveLimit = Math.min(Math.max(limit, 1), 100);
+        int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
