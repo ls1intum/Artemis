@@ -39,6 +39,7 @@ export class QuizAiQuestionRefinementPanelComponent {
     courseId = input.required<number>();
     isOpen = input(false);
     isRefinementPanelCollapsed = input(false);
+    /** Reasoning text provided by the parent after a global bulk refinement; shown in place of the per-question reasoning. */
     externalReasoning = input<string | undefined>(undefined);
 
     questionRefined = output<MultipleChoiceQuestion>();

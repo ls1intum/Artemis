@@ -340,6 +340,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
     }
 
+    /**
+     * Returns true when the global refinement FAB should be shown:
+     * Hyperion must be active, the quiz must be editable
+     * and contain at least one multiple-choice question.
+     */
     get hasMcQuestionsForRefinement(): boolean {
         return (
             this.hyperionEnabled &&
@@ -350,6 +355,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         );
     }
 
+    /** Cancels any running global refinement request and hides the refinement FAB. */
     closeRefinementFab(): void {
         this.globalRefinementSubscription?.unsubscribe();
         this.globalRefinementSubscription = undefined;
@@ -358,6 +364,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isRefinementFabOpen.set(false);
     }
 
+    /**
+     * Submits the global refinement prompt to Hyperion for all multiple-choice questions in the quiz.
+     * On success, applies refined content to each question via the list-edit child component.
+     */
     submitGlobalRefinement(): void {
         const prompt = this.globalRefinementPrompt().trim();
         const mcQuestions = (this.quizExercise?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
