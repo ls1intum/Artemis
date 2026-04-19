@@ -263,7 +263,7 @@ describe('IrisOnboardingModalComponent', () => {
             const config = component.tooltipConfig();
             expect(config).toBeTruthy();
             expect(config!.currentStep).toBe(1);
-            expect(config!.arrowDirection).toBe('down-left');
+            expect(config!.arrowDirection).toBe('right');
             expect(config!.titleTranslationKey).toBe('artemisApp.iris.onboarding.step1.title');
 
             vi.useRealTimers();

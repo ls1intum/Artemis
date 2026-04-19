@@ -17,7 +17,7 @@ const ONBOARDING_TARGETS = {
     infoIcon: '[data-onboarding-target="info-icon"]',
 } as const;
 
-type ArrowDirection = 'up' | 'down' | 'down-left' | 'left';
+type ArrowDirection = 'up' | 'down' | 'down-left' | 'left' | 'right';
 
 type TooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -221,6 +221,16 @@ export class IrisOnboardingModalComponent {
                 };
                 break;
             }
+            case 'right': {
+                // Tooltip to the left of target, arrow pointing right from the tooltip's right edge.
+                const preferredTop = spotlight.top + spotlight.height / 2 - tooltipHeight / 2;
+                const preferredLeft = spotlight.left - tooltipWidth - gap;
+                tooltipPos = {
+                    top: Math.max(viewportPadding, Math.min(preferredTop, window.innerHeight - tooltipHeight - viewportPadding)),
+                    left: Math.max(viewportPadding, preferredLeft),
+                };
+                break;
+            }
         }
 
         const coachMarkPos = {
@@ -246,7 +256,7 @@ export class IrisOnboardingModalComponent {
             case 1:
                 return {
                     selector: ONBOARDING_TARGETS.contextSelector,
-                    arrowDirection: 'down-left',
+                    arrowDirection: 'right',
                     titleKey: 'artemisApp.iris.onboarding.step1.title',
                     descriptionKey: 'artemisApp.iris.onboarding.step1.description',
                 };

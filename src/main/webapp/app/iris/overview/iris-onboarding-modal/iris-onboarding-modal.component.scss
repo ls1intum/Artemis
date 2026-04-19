@@ -401,6 +401,35 @@
             border-right: 8px solid var(--onboarding-modal-surface);
         }
     }
+
+    // Arrow pointing right — tooltip is to the left of the target
+    &.tooltip-arrow-right {
+        transform-origin: right center;
+
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            right: -9px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            right: -8px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid var(--onboarding-modal-surface);
+        }
+    }
 }
 
 @keyframes onboarding-tooltip-enter {
