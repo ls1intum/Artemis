@@ -378,6 +378,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     submitGlobalRefinement(): void {
         const prompt = this.globalRefinementPrompt().trim();
+        this.quizQuestionListEditComponent().parseAllQuestions();
         const mcQuestions = (this.quizExercise?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
         if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
             return;

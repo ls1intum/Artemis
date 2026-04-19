@@ -63,6 +63,11 @@
     color: var(--text-color);
 }
 
+.quiz-ai-refinement-panel button.refinement-explanation-dismiss:focus-visible {
+    box-shadow: 0 0 0 2px var(--bs-primary);
+    outline: none;
+}
+
 .quiz-ai-refinement-panel .refinement-explanation-icon {
     color: var(--bs-primary);
     font-size: 0.85rem;
