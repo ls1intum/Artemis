@@ -61,6 +61,7 @@
         "markdown-it": "14.1.1",
         "markdown-it-github-alerts": "1.0.1",
         "markdown-it-highlightjs": "4.3.0",
+        "mermaid": "11.14.0",
         "monaco-editor": "0.55.1",
         "ngx-extended-pdf-viewer": "25.6.4",
         "ngx-infinite-scroll": "21.0.0",

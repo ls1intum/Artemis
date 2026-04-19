@@ -26,6 +26,9 @@
                         "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
                     }
                 }
+            },
+            "mermaid": {
+                "errorWhileRendering": "Auf dieser Seite konnte ein Mermaid-Diagramm nicht gerendert werden."
             }
         }
     }

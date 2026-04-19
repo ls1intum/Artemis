@@ -26,6 +26,9 @@
                         "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
                     }
                 }
+            },
+            "mermaid": {
+                "errorWhileRendering": "A mermaid diagram could not be rendered on this page."
             }
         }
     }

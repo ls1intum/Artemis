@@ -9,7 +9,7 @@
                 @if (exercise()?.exerciseGroup) {
                     <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.problemStatement"></h3>
                 }
-                <p [innerHTML]="exercise()!.problemStatement! | htmlForMarkdown"></p>
+                <div [innerHTML]="exercise()!.problemStatement! | htmlForMarkdown" jhiMermaid></div>
             </div>
         </div>
     }

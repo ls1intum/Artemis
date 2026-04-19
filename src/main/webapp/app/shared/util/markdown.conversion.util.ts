@@ -1,4 +1,5 @@
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
+import { MarkdownItMermaidPlugin } from 'app/shared/markdown-editor/extensions/MermaidRenderPlugin';
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';
@@ -30,6 +31,19 @@ class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
 const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
 
 const turndownService = new TurndownService();
+
+/**
+ * Additional rule to implement mermaid code blocks. Mermaid code blocks are initialized using ```mermaid syntax.
+ * Adds a filter for divs with class mermaid generated when parsing mermaid code blocks.
+ */
+turndownService.addRule('mermaid', {
+    filter: function (node) {
+        return node.nodeName === 'DIV' && node.className === 'mermaid';
+    },
+    replacement: function (content, node) {
+        return '\n```mermaid\n' + node.textContent + '\n```\n';
+    },
+});
 
 /**
  * Cache for MarkdownIt instances to avoid expensive re-initialization on every render.
@@ -70,7 +84,8 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
             .use(MarkdownItGitHubAlerts)
             .use(MarkdownitTagClass, {
                 table: 'table',
-            });
+            })
+            .use(MarkdownItMermaidPlugin);
 
         defaultMarkdownItCache = { lineBreaks, instance: markdownIt };
         return markdownIt;
@@ -103,7 +118,8 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
         // Add custom html classes to be allowed it markdown
         .use(MarkdownitTagClass, {
             table: 'table',
-        });
+        })
+        .use(MarkdownItMermaidPlugin);
 
     return markdownIt;
 }
@@ -141,12 +157,21 @@ export function htmlForMarkdown(
     }
 
     const purifyParameters = {} as Config;
-    // Prevents sanitizer from deleting <testid>id</testid>
-    purifyParameters['ADD_TAGS'] = ['testid'];
+    // Prevents sanitizer from deleting <testid>id</testid> and mermaid code blocks
+    purifyParameters['ADD_TAGS'] = ['testid', 'class'];
+    purifyParameters['ADD_ATTR'] = ['class'];
+
+    // make sure that divs with classes are allowed, used for mermaid code blocks
     if (allowedHtmlTags) {
+        if (!allowedHtmlTags.includes('div')) {
+            allowedHtmlTags.push('div');
+        }
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
+        if (!allowedHtmlAttributes.includes('class')) {
+            allowedHtmlAttributes.push('class');
+        }
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
     return DOMPurify.sanitize(markdownRender, purifyParameters) as string;

@@ -11,12 +11,13 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { MermaidRenderDirective } from 'app/shared/markdown-editor/extensions/mermaid-render.directive';
 
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
-    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe, NgClass],
+    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe, NgClass, MermaidRenderDirective],
 })
 export class ProblemStatementComponent implements OnInit {
     private route = inject(ActivatedRoute);
