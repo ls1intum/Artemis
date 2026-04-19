@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
@@ -43,6 +44,9 @@ class LtiDynamicRegistrationServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ProfileService profileService;
+
     private LtiDynamicRegistrationService ltiDynamicRegistrationService;
 
     private String openIdConfigurationUrl;
@@ -59,7 +63,7 @@ class LtiDynamicRegistrationServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, restTemplate);
+        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, restTemplate, profileService);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         Course course = new Course();
@@ -79,7 +83,7 @@ class LtiDynamicRegistrationServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, restTemplate);
+        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, restTemplate, profileService);
     }
 
     @Test
@@ -149,7 +153,8 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
-    void performDynamicRegistrationAllowsLocalhostHttp() {
+    void performDynamicRegistrationAllowsLocalhostHttpInDevProfile() {
+        when(profileService.isDevActive()).thenReturn(true);
         String localhostOpenIdConfigurationUrl = "http://localhost:8086/.well-known/openid-configuration";
         Lti13PlatformConfiguration localhostPlatformConfiguration = new Lti13PlatformConfiguration(null, "http://localhost:8086/token", "http://localhost:8086/auth",
                 "http://localhost:8086/jwks", "http://localhost:8086/register");
@@ -166,6 +171,20 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
+    void badRequestWhenLocalhostUrlOutsideDevProfile() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://localhost:8086/.well-known/openid-configuration", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
+    void badRequestWhenLocalhostHttpsUrlOutsideDevProfile() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("https://localhost/.well-known/openid-configuration", registrationToken))
+                .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));
+    }
+
+    @Test
     void badRequestWhenUrlIsNotHttps() {
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("http://example.com/config", registrationToken))
@@ -173,7 +192,8 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
-    void badRequestWhenLocalhostUrlUsesUnsupportedScheme() {
+    void badRequestWhenLocalhostUrlUsesUnsupportedSchemeInDevProfile() {
+        when(profileService.isDevActive()).thenReturn(true);
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration("ftp://localhost/config", registrationToken))
                 .satisfies(ex -> assertThat(ex.getErrorKey()).isEqualTo("invalidUrl"));

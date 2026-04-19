@@ -20,6 +20,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
@@ -40,8 +41,11 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
  * <p>
  * Every URL used for outbound HTTP requests — both the initial configuration URL provided by the caller
  * and all endpoint URLs returned by the platform — is validated via {@link #validateExternalUrl(String)}
- * before use. This ensures the server only connects to legitimate, publicly routable HTTPS hosts,
- * while still allowing localhost-based HTTP endpoints for local development.
+ * before use. This ensures the server only connects to legitimate, publicly routable HTTPS hosts.
+ * As an exception, when the {@code dev} Spring profile is active, localhost-based HTTP endpoints are
+ * accepted to support local development setups (e.g., a Moodle container reachable via {@code http://localhost}).
+ * This exception is never enabled outside the {@code dev} profile, so production deployments continue to
+ * reject loopback and other internal addresses.
  */
 @Lazy
 @Service
@@ -59,10 +63,14 @@ public class LtiDynamicRegistrationService {
 
     private final RestTemplate restTemplate;
 
-    public LtiDynamicRegistrationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
+    private final ProfileService profileService;
+
+    public LtiDynamicRegistrationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate,
+            ProfileService profileService) {
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.restTemplate = restTemplate;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -123,20 +131,22 @@ public class LtiDynamicRegistrationService {
      * Enforces the following rules:
      * <ul>
      * <li>The value must be parseable as a valid {@link URI}.</li>
-     * <li>For non-local hosts, only the {@code https} scheme is permitted.</li>
-     * <li>For {@code localhost} and {@code *.localhost} development hosts, only {@code http} and {@code https} are permitted.</li>
      * <li>The URI must contain a non-null host.</li>
-     * <li>For non-local hosts, <strong>all</strong> IP addresses the host resolves to (via {@link InetAddress#getAllByName})
+     * <li>Only the {@code https} scheme is permitted, with one exception: when the {@code dev} profile is active and
+     * the host is {@code localhost} or {@code *.localhost}, both {@code http} and {@code https} are permitted.</li>
+     * <li><strong>All</strong> IP addresses the host resolves to (via {@link InetAddress#getAllByName})
      * must be public — none may be loopback, site-local, link-local, multicast, or otherwise
      * reserved (see {@link #isPrivateOrReservedAddress}).</li>
-     * <li>Localhost development hosts are explicitly exempt from the public-IP resolution check.</li>
+     * <li>The {@code dev}-profile-only localhost branch is explicitly exempt from the public-IP resolution check
+     * to enable local development against containers bound to loopback. Outside the {@code dev} profile, localhost
+     * URLs fall through to the IP resolution check and are rejected as loopback addresses.</li>
      * </ul>
      *
      * This method returns normally when the URL is accepted and throws an exception otherwise.
      *
      * @param url the URL string to validate
      * @throws BadRequestAlertException if the URL is malformed, uses a disallowed scheme, has no host,
-     *                                      resolves to non-public addresses for a non-local host, or cannot be resolved
+     *                                      resolves to non-public addresses, or cannot be resolved
      */
     private void validateExternalUrl(String url) {
         URI uri;
@@ -155,11 +165,15 @@ public class LtiDynamicRegistrationService {
 
         String scheme = uri.getScheme();
 
-        if (!isLocalDevelopmentHost(host) && !"https".equalsIgnoreCase(scheme)) {
+        // The localhost exemption only applies in the dev profile; in any other environment we treat localhost
+        // exactly like any other host so the loopback check below rejects it (preventing SSRF to internal services).
+        boolean localDevExemptionApplies = profileService.isDevActive() && isLocalDevelopmentHost(host);
+
+        if (!localDevExemptionApplies && !"https".equalsIgnoreCase(scheme)) {
             throw new BadRequestAlertException("Only HTTPS URLs are allowed for LTI configuration", "LTI", "invalidUrl");
         }
 
-        if (isLocalDevelopmentHost(host)) {
+        if (localDevExemptionApplies) {
             if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
                 throw new BadRequestAlertException("Only HTTP(S) URLs are allowed for localhost development hosts", "LTI", "invalidUrl");
             }
