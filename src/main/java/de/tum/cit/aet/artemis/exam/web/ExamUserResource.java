@@ -5,10 +5,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -29,8 +36,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -167,6 +176,25 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
         String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
         return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/exam-students/paged : Paginated, filterable, and sortable list of registered students
+     * for the exam-students management view. Projects a merged ExamUser + StudentExam row per registration.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @param search   search term and pagination / sorting info; whitelisted sort columns only
+     * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get paged exam-students for exam: {}", examId);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+        Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

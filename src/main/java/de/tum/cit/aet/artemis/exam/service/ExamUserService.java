@@ -4,9 +4,12 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -20,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -40,11 +46,13 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 
 /**
  * Service Implementation for managing Exam Users.
@@ -68,13 +76,16 @@ public class ExamUserService {
 
     private final ExamRoomService examRoomService;
 
+    private final StudentExamRepository studentExamRepository;
+
     public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository,
-            ExamRoomService examRoomService) {
+            ExamRoomService examRoomService, StudentExamRepository studentExamRepository) {
         this.examUserRepository = examUserRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examRoomRepository = examRoomRepository;
         this.examRoomService = examRoomService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -275,5 +286,74 @@ public class ExamUserService {
 
         return studentsInExam.stream()
                 .map(examUser -> new ExportExamUserDTO(examUser, roomNumbersToHumanReadable.getOrDefault(examUser.getPlannedRoom(), examUser.getPlannedRoom()))).toList();
+    }
+
+    /**
+     * Returns a page of {@link ExamStudentDTO} for the given exam.
+     * Pagination and sorting are applied on a lightweight ID query first, then the current page's
+     * {@link ExamUser} entities and their {@link ExamStudentDTO.StudentExamSummary} data are fetched in two
+     * targeted queries — one per entity type, both scoped to the current page only.
+     *
+     * @param examId the exam to query
+     * @param search search term, page index, page size, sort column, and sort direction
+     * @return a page of {@link ExamStudentDTO} in the requested order
+     */
+    public Page<ExamStudentDTO> findExamStudentsForExamPaged(long examId, SearchTermPageableSearchDTO<String> search) {
+        Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), idPage.getPageable(), idPage.getTotalElements());
+        }
+
+        List<ExamUser> examUsers = examUserRepository.findByIdsWithUser(ids);
+        Map<Long, ExamUser> examUserById = examUsers.stream().collect(Collectors.toMap(ExamUser::getId, Function.identity()));
+
+        List<Long> userIds = examUsers.stream().map(eu -> eu.getUser() != null ? eu.getUser().getId() : null).filter(Objects::nonNull).toList();
+        Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId = studentExamRepository.findSummaryByExamIdAndUserIds(examId, userIds).stream()
+                .collect(Collectors.toMap(ExamStudentDTO.StudentExamSummary::userId, Function.identity(), (a, b) -> a));
+
+        List<ExamStudentDTO> dtos = ids.stream().map(examUserById::get).filter(Objects::nonNull).map(eu -> mapToExamStudentDTO(eu, summaryByUserId)).toList();
+
+        return new PageImpl<>(dtos, idPage.getPageable(), idPage.getTotalElements());
+    }
+
+    private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId) {
+        User user = eu.getUser();
+        Long userId = user != null ? user.getId() : null;
+        String login = user != null ? user.getLogin() : null;
+        String email = user != null ? user.getEmail() : null;
+        String registrationNumber = user != null ? user.getRegistrationNumber() : null;
+        String firstName = user != null && user.getFirstName() != null ? user.getFirstName() : "";
+        String lastName = user != null && user.getLastName() != null ? user.getLastName() : "";
+        String name = (firstName + " " + lastName).trim();
+
+        ExamStudentDTO.StudentExamSummary se = userId != null ? summaryByUserId.get(userId) : null;
+
+        Long studentExamId = se != null ? se.studentExamId() : null;
+        Integer workingTime = se != null ? se.workingTime() : null;
+        Boolean started = se != null ? se.started() : null;
+        Boolean submitted = se != null ? se.submitted() : null;
+        ZonedDateTime startedDate = se != null ? se.startedDate() : null;
+        ZonedDateTime submissionDate = se != null ? se.submissionDate() : null;
+        long examSessionCount = se != null ? se.examSessionCount() : 0L;
+        boolean didAttend = Boolean.TRUE.equals(started);
+
+        String progress;
+        if (se == null) {
+            progress = ExamStudentDTO.PROGRESS_EXAM_MISSING;
+        }
+        else if (Boolean.TRUE.equals(submitted)) {
+            progress = ExamStudentDTO.PROGRESS_SUBMITTED;
+        }
+        else if (Boolean.TRUE.equals(started)) {
+            progress = ExamStudentDTO.PROGRESS_STARTED;
+        }
+        else {
+            progress = ExamStudentDTO.PROGRESS_NOT_STARTED;
+        }
+
+        return new ExamStudentDTO(eu.getId(), userId, login, name, email, registrationNumber, eu.getStudentImagePath(), eu.getPlannedRoom(), eu.getActualRoom(),
+                eu.getPlannedSeat(), eu.getActualSeat(), eu.getDidCheckImage(), eu.getDidCheckName(), eu.getDidCheckLogin(), eu.getDidCheckRegistrationNumber(),
+                eu.getSigningImagePath(), didAttend, studentExamId, workingTime, started, submitted, startedDate, submissionDate, examSessionCount, progress);
     }
 }
