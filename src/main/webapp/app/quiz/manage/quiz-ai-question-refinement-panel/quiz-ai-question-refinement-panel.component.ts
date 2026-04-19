@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { faCircleNotch, faPaperPlane, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPaperPlane, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,6 +33,7 @@ export class QuizAiQuestionRefinementPanelComponent {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
+    protected readonly faCloseMark = faXmark;
     readonly hyperionEnabled: boolean = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     question = input.required<QuizQuestion>();
@@ -43,6 +44,8 @@ export class QuizAiQuestionRefinementPanelComponent {
     externalReasoning = input<string | undefined>(undefined);
 
     questionRefined = output<MultipleChoiceQuestion>();
+    /** Emitted when the user dismisses an externally-provided reasoning card. */
+    reasoningDismissed = output();
 
     refinePrompt = signal('');
     isRefining = signal(false);
@@ -67,6 +70,15 @@ export class QuizAiQuestionRefinementPanelComponent {
                 this.isRefining.set(false);
             }
         });
+    }
+
+    /** Clears the local reasoning or notifies the parent to remove the external reasoning for this question. */
+    dismissReasoning(): void {
+        if (this.refinementExplanation() !== undefined) {
+            this.refinementExplanation.set(undefined);
+        } else {
+            this.reasoningDismissed.emit();
+        }
     }
 
     onEnterKey(event: Event): void {

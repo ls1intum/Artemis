@@ -168,6 +168,13 @@ export class QuizQuestionListEditComponent {
         this.onQuestionDeleted.emit(quizQuestion);
     }
 
+    /** Removes the stored reasoning for a single question after the user dismisses its card. */
+    clearReasoning(quizQuestion: QuizQuestion): void {
+        const updated = new Map(this.bulkRefinementReasonings());
+        updated.delete(quizQuestion);
+        this.bulkRefinementReasonings.set(updated);
+    }
+
     /**
      * Toggle showExistingQuestions flag and add the newly added quiz questions to the quizQuestions list.
      * Then, emit onQuestionAdded.

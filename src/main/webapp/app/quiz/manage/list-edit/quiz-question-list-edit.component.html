@@ -28,6 +28,7 @@
                             [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
                             [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
                             (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
+                            (reasoningDismissed)="clearReasoning(quizQuestion)"
                         />
                     }
                 }

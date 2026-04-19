@@ -5,6 +5,9 @@
                 <div class="refinement-explanation-card-header">
                     <fa-icon [icon]="faWandMagicSparkles" class="refinement-explanation-icon" />
                     <span class="refinement-explanation-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>
+                    <button type="button" class="refinement-explanation-dismiss" (click)="dismissReasoning()">
+                        <fa-icon [icon]="faCloseMark" />
+                    </button>
                 </div>
                 <p class="refinement-explanation-text">{{ refinementExplanation() ?? externalReasoning() }}</p>
             </div>
