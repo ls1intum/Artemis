@@ -10,6 +10,7 @@ import mermaid from 'mermaid';
 export class MermaidRenderDirective implements AfterViewInit, OnInit, OnDestroy {
     private el = inject(ElementRef<HTMLElement>);
     private observer: MutationObserver | null = null;
+    private intersectionObserver: IntersectionObserver | null = null;
     private alertService: AlertService = inject(AlertService);
     private translateService: TranslateService = inject(TranslateService);
 
@@ -38,6 +39,9 @@ export class MermaidRenderDirective implements AfterViewInit, OnInit, OnDestroy 
         if (this.observer) {
             this.observer.disconnect();
         }
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
     }
 
     /**
@@ -56,6 +60,16 @@ export class MermaidRenderDirective implements AfterViewInit, OnInit, OnDestroy 
             childList: true,
             subtree: true,
         });
+
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    this.renderMermaidGraphs();
+                }
+            });
+        });
+
+        this.intersectionObserver.observe(this.el.nativeElement);
     }
 
     /**
@@ -63,6 +77,11 @@ export class MermaidRenderDirective implements AfterViewInit, OnInit, OnDestroy 
      */
     private async renderMermaidGraphs(): Promise<void> {
         const container = this.el.nativeElement;
+
+        if (container.offsetWidth === 0) {
+            return;
+        }
+
         const rawMermaidBlocks = Array.from(container.querySelectorAll('pre code.language-mermaid')) as HTMLElement[];
 
         rawMermaidBlocks.forEach((block) => {
