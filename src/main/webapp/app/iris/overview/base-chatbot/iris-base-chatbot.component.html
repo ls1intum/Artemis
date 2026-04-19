@@ -444,7 +444,7 @@
                                     type="button"
                                     class="prompt-suggestion-chip"
                                     [disabled]="isInputDisabled()"
-                                    (click)="applyChipText(chip.starterKey)"
+                                    (click)="applyChipText(chip.starterKey, chip.translationKey)"
                                     (mouseenter)="onChipMouseEnter(chip.starterKey)"
                                     (mouseleave)="onChipMouseLeave()"
                                 >

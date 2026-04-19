@@ -973,9 +973,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.onSend();
     }
 
-    applyChipText(translationKey: string): void {
+    applyChipText(starterKey: string, translationKey?: string): void {
         if (this.isInputDisabled()) return;
-        const text = this.translateService.instant(translationKey);
+        const text = this.translateService.instant(starterKey);
         this.chipPreviewText.set('');
         this.isChipTextApplied.set(true);
         this.newMessageTextContent.set(text);
@@ -987,8 +987,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             this.adjustTextareaRows();
         });
-        if (this.onboardingService.currentStep() === 2) {
-            this.onboardingService.onboardingEvent$.next({ type: 'chipClicked', chipKey: translationKey });
+        if (this.onboardingService.currentStep() === 2 && translationKey) {
+            this.onboardingService.onboardingEvent$.next({ type: 'chipClicked', translationKey });
         }
     }
 

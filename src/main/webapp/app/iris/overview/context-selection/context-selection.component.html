@@ -27,7 +27,7 @@
         </div>
     </ng-template>
     <ng-template #item let-option>
-        <div class="flex items-center gap-2" (click)="contextChanged.emit()">
+        <div class="flex items-center gap-2">
             <fa-icon [icon]="option.faIcon" />
             <span>{{ option.label }}</span>
         </div>

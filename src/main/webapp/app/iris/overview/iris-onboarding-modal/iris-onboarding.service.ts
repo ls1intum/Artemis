@@ -1,12 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
 export type OnboardingResult = { action: 'finish' };
 
-export type OnboardingEvent = { type: 'contextChanged' } | { type: 'chipClicked'; chipKey: string } | { type: 'aboutIrisOpened' };
+export type OnboardingEvent = { type: 'contextChanged' } | { type: 'chipClicked'; translationKey: string } | { type: 'aboutIrisOpened' };
 
 const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
@@ -16,6 +17,7 @@ const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 export class IrisOnboardingService {
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
+    private chatHttpService = inject(IrisChatHttpService);
     private dialogRef: DynamicDialogRef | undefined;
     private pendingResult: Promise<OnboardingResult | undefined> | undefined;
 
@@ -89,7 +91,23 @@ export class IrisOnboardingService {
             return undefined;
         }
 
+        // Server-side gate: skip onboarding for students who have already used Iris in any
+        // course. Fail-closed on error so a transient 500 never re-shows the tour to a
+        // returning student. Runs last so earlier cheap gates can short-circuit the request.
+        if (await this.hasExistingIrisSessions()) {
+            return undefined;
+        }
+
         return this.openOnboardingModal();
+    }
+
+    private async hasExistingIrisSessions(): Promise<boolean> {
+        try {
+            const counts = await firstValueFrom(this.chatHttpService.getSessionAndMessageCount());
+            return (counts?.sessions ?? 0) > 0;
+        } catch {
+            return true;
+        }
     }
 
     /**

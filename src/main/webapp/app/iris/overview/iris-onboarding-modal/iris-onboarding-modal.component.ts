@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -76,7 +76,7 @@ export class IrisOnboardingModalComponent {
                     if (this.step() === 1) this.next();
                     break;
                 case 'chipClicked':
-                    if (this.step() === 2 && event.chipKey === 'artemisApp.iris.chat.suggestions.quizTopicStarter') {
+                    if (this.step() === 2 && event.translationKey === 'artemisApp.iris.chat.suggestions.quiz') {
                         this.next();
                     }
                     break;
@@ -264,6 +264,10 @@ export class IrisOnboardingModalComponent {
                     titleKey: 'artemisApp.iris.onboarding.step3.title',
                     descriptionKey: 'artemisApp.iris.onboarding.step3.description',
                 };
+            default: {
+                const exhaustive: never = step;
+                throw new Error(`Unhandled onboarding step: ${exhaustive}`);
+            }
         }
     }
 
@@ -285,29 +289,28 @@ export class IrisOnboardingModalComponent {
 
     private schedulePositionCalculation(step: 1 | 2 | 3): void {
         if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-            window.requestAnimationFrame(() => this.resolveStepPosition(step, this.isStepPositionReady, () => this.calculateTooltipPosition(step), 20, 200));
+            window.requestAnimationFrame(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200));
             return;
         }
-        this.safeTimeout(() => this.resolveStepPosition(step, this.isStepPositionReady, () => this.calculateTooltipPosition(step), 20, 200), 0);
+        this.safeTimeout(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200), 0);
     }
 
-    private resolveStepPosition(expectedStep: number, readinessSignal: WritableSignal<boolean>, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {
+    private resolveStepPosition(expectedStep: 1 | 2 | 3, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {
         if (this.step() !== expectedStep) {
             return;
         }
 
         if (calculatePosition()) {
-            readinessSignal.set(true);
+            this.isStepPositionReady.set(true);
             return;
         }
 
         if (retries > 0) {
-            this.safeTimeout(() => this.resolveStepPosition(expectedStep, readinessSignal, calculatePosition, retries - 1, retryDelayMs), retryDelayMs);
+            this.safeTimeout(() => this.resolveStepPosition(expectedStep, calculatePosition, retries - 1, retryDelayMs), retryDelayMs);
             return;
         }
 
         // Avoid trapping onboarding on a hidden step when target elements are not available.
-        // Target element not found after all retries; fall back to default position.
-        readinessSignal.set(true);
+        this.isStepPositionReady.set(true);
     }
 }

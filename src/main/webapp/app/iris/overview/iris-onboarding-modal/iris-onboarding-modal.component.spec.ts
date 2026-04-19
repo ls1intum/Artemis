@@ -362,17 +362,19 @@ describe('IrisOnboardingModalComponent', () => {
             expect(nextSpy).not.toHaveBeenCalled();
         });
 
-        it('should advance from step 2 on quiz chip click', () => {
+        it('should advance from step 2 on quiz chip click regardless of context', () => {
+            // All three contexts (course, lecture, exercise) emit the same shared
+            // translationKey 'artemisApp.iris.chat.suggestions.quiz' for the Quiz chip.
             component.step.set(2);
             const nextSpy = vi.spyOn(component, 'next');
-            onboardingEventSubject.next({ type: 'chipClicked', chipKey: 'artemisApp.iris.chat.suggestions.quizTopicStarter' });
+            onboardingEventSubject.next({ type: 'chipClicked', translationKey: 'artemisApp.iris.chat.suggestions.quiz' });
             expect(nextSpy).toHaveBeenCalledOnce();
         });
 
         it('should not advance from step 2 on non-quiz chip click', () => {
             component.step.set(2);
             const nextSpy = vi.spyOn(component, 'next');
-            onboardingEventSubject.next({ type: 'chipClicked', chipKey: 'artemisApp.iris.chat.suggestions.learnStarter' });
+            onboardingEventSubject.next({ type: 'chipClicked', translationKey: 'artemisApp.iris.chat.suggestions.learn' });
             expect(nextSpy).not.toHaveBeenCalled();
         });
 

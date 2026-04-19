@@ -1921,7 +1921,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[0].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter', 'artemisApp.iris.chat.suggestions.learn');
         });
 
         it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
@@ -1929,7 +1929,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
@@ -1937,7 +1937,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[2].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter', 'artemisApp.iris.chat.suggestions.tips');
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
@@ -2010,7 +2010,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in programming exercise mode', () => {
@@ -2018,7 +2018,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in text exercise mode', () => {
@@ -2026,7 +2026,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
     });
 

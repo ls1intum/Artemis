@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 
 describe('IrisOnboardingService', () => {
@@ -11,6 +12,7 @@ describe('IrisOnboardingService', () => {
 
     let service: IrisOnboardingService;
     let dialogService: DialogService;
+    let chatHttpService: IrisChatHttpService;
     let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
     const MOCK_USER_ID = 42;
@@ -45,11 +47,18 @@ describe('IrisOnboardingService', () => {
                 IrisOnboardingService,
                 { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AccountService, useValue: { userIdentity: () => ({ id: MOCK_USER_ID }) } },
+                {
+                    provide: IrisChatHttpService,
+                    useValue: {
+                        getSessionAndMessageCount: vi.fn().mockReturnValue(of({ sessions: 0, messages: 0 })),
+                    },
+                },
             ],
         });
 
         service = TestBed.inject(IrisOnboardingService);
         dialogService = TestBed.inject(DialogService);
+        chatHttpService = TestBed.inject(IrisChatHttpService);
         localStorage.removeItem(STORAGE_KEY);
     });
 
@@ -191,6 +200,9 @@ describe('IrisOnboardingService', () => {
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
             const resultPromise = service.showOnboardingIfNeeded(true);
+            // Allow the async session-count gate to resolve before the dialog is opened.
+            await Promise.resolve();
+            await Promise.resolve();
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             const result = await resultPromise;
@@ -213,6 +225,49 @@ describe('IrisOnboardingService', () => {
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
+        });
+
+        it('should skip opening when the user already has Iris sessions', async () => {
+            vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 3, messages: 10 }));
+
+            const result = await service.showOnboardingIfNeeded(true);
+
+            expect(result).toBeUndefined();
+            expect(dialogService.open).not.toHaveBeenCalled();
+        });
+
+        it('should open the modal when the user has zero Iris sessions', async () => {
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
+
+            const resultPromise = service.showOnboardingIfNeeded(true);
+            // Allow the async session-count gate to resolve before the dialog is opened.
+            await Promise.resolve();
+            await Promise.resolve();
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            const result = await resultPromise;
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(result).toEqual({ action: 'finish' });
+        });
+
+        it('should skip opening when the session-count request fails (fail-closed)', async () => {
+            vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(throwError(() => new Error('network')));
+
+            const result = await service.showOnboardingIfNeeded(true);
+
+            expect(result).toBeUndefined();
+            expect(dialogService.open).not.toHaveBeenCalled();
+        });
+
+        it('should not call the session-count endpoint when an earlier gate already fails', async () => {
+            service.markOnboardingCompleted();
+
+            await service.showOnboardingIfNeeded(true);
+
+            expect(chatHttpService.getSessionAndMessageCount).not.toHaveBeenCalled();
         });
     });
 });
