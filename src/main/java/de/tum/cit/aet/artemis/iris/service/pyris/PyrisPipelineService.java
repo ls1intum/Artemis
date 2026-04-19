@@ -254,6 +254,7 @@ public class PyrisPipelineService {
      *
      * @param courseId  the id of the course
      * @param studentId the id of the student
+     * @return the course with exercises, lectures, and student participations loaded
      */
     public Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
         Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesPrerequisitesAndExams(courseId);
