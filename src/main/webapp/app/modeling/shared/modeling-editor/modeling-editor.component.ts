@@ -12,13 +12,14 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
+import { MermaidRenderDirective } from 'app/shared/markdown-editor/extensions/mermaid-render.directive';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, MermaidRenderDirective],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;

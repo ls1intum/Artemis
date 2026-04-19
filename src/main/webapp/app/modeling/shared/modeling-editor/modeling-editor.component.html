@@ -115,7 +115,7 @@
     @if (withExplanation()) {
         @if (readOnly()) {
             <h4 jhiTranslate="artemisApp.modelingSubmission.explanationText"></h4>
-            <p class="markdown-preview" [innerHTML]="explanation() | htmlForMarkdown"></p>
+            <div class="markdown-preview" [innerHTML]="explanation() | htmlForMarkdown" jhiMermaid></div>
         } @else {
             <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
         }

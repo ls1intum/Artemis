@@ -19,6 +19,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/p
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { MermaidRenderDirective } from 'app/shared/markdown-editor/extensions/mermaid-render.directive';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -64,6 +65,7 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
+        MermaidRenderDirective,
     ],
 })
 export class DetailOverviewListComponent implements OnInit {
