@@ -46,13 +46,13 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
- * Factory responsible for building {@link PyrisChatPipelineExecutionDTO} instances for Iris chat pipelines.
+ * Service responsible for building {@link PyrisChatPipelineExecutionDTO} instances for Iris chat pipelines.
  * Encapsulates all data-loading logic required to populate the execution DTO based on the active chat mode.
  */
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
-public class IrisChatPipelineDTOFactory {
+public class IrisChatPipelineDTOService {
 
     private final UserRepository userRepository;
 
@@ -74,7 +74,7 @@ public class IrisChatPipelineDTOFactory {
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    public IrisChatPipelineDTOFactory(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public IrisChatPipelineDTOService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Optional<LearningMetricsApi> learningMetricsApi, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
@@ -150,11 +150,11 @@ public class IrisChatPipelineDTOFactory {
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
             }
-            default -> throw new IllegalArgumentException("IrisChatPipelineDTOFactory does not support chat mode " + chatMode);
+            default -> throw new IllegalArgumentException("IrisChatPipelineDTOService does not support chat mode " + chatMode);
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), new PyrisUserDTO(user), executionDto.initialStages(),
-                customInstructions, courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics, null);
+                customInstructions, courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

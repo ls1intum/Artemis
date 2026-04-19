@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -42,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -298,7 +303,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             case LECTURE_CHAT -> "student2";
             case TEXT_EXERCISE_CHAT -> "student3";
             case PROGRAMMING_EXERCISE_CHAT -> "tutor1";
-            case TUTOR_SUGGESTION -> throw new IllegalArgumentException("TUTOR_SUGGESTION is not a chat-session mode");
+            default -> throw new IllegalArgumentException(mode + " is not a chat-session mode");
         };
         userUtilService.changeUser(TEST_PREFIX + ownerLogin);
 
@@ -493,8 +498,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             });
 
             IrisMessage source = new IrisMessage();
-            source.addContent(
-                    new IrisJsonMessageContent(com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
+            source.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
             IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of());
 
@@ -916,7 +920,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         // -- helpers for this nested class -----------------------------------
 
-        private List<de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent> sendAndGetLlmResponseContent(String pyrisResult) throws Exception {
+        private List<IrisMessageContent> sendAndGetLlmResponseContent(String pyrisResult) throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
@@ -948,7 +952,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
         }
 
-        private com.fasterxml.jackson.databind.JsonNode readJsonContent(IrisChatSession session, IrisMessage message) {
+        private JsonNode readJsonContent(IrisChatSession session, IrisMessage message) {
             var reloaded = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
             var updatedMessage = reloaded.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
             return ((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow()).getJsonNode();
@@ -980,12 +984,12 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             case LECTURE_CHAT -> IrisChatSessionFactory.createLectureSessionForUser(lecture, user);
             case TEXT_EXERCISE_CHAT -> IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user);
             case PROGRAMMING_EXERCISE_CHAT -> IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user);
-            case TUTOR_SUGGESTION -> throw new IllegalArgumentException("TUTOR_SUGGESTION is not a regular chat mode");
+            default -> throw new IllegalArgumentException(mode + "is not a regular chat mode");
         };
         return irisChatSessionRepository.save(session);
     }
 
-    private void mockChatResponse(java.util.function.Consumer<PyrisChatPipelineExecutionDTO> consumer) {
+    private void mockChatResponse(Consumer<PyrisChatPipelineExecutionDTO> consumer) {
         // All four chat modes hit the same /chat/run Pyris endpoint, so a single mock variant suffices.
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(consumer);
     }

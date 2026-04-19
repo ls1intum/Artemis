@@ -31,11 +31,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
 @ExtendWith(MockitoExtension.class)
 class IrisRateLimitServiceTest {
@@ -49,15 +46,6 @@ class IrisRateLimitServiceTest {
 
     @Mock
     private IrisSettingsService irisSettingsService;
-
-    @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Mock
-    private TextRepositoryApi textRepositoryApi;
-
-    @Mock
-    private LectureRepositoryApi lectureRepositoryApi;
 
     @Mock
     private PostTestRepository postRepository;
@@ -110,7 +98,6 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
 
-        when(programmingExerciseRepository.findById(exercise.getId())).thenReturn(Optional.of(exercise));
         when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
@@ -148,7 +135,6 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(textExercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
 
-        when(textRepositoryApi.findByIdElseThrow(textExercise.getId())).thenReturn(textExercise);
         when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
@@ -170,7 +156,6 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(lecture, user);
 
-        when(lectureRepositoryApi.findByIdElseThrow(lecture.getId())).thenReturn(lecture);
         when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);

@@ -12,7 +12,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
@@ -53,7 +52,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get(exerciseChatUrl(), HttpStatus.FORBIDDEN, IrisSession.class);
+        request.post(exerciseChatCurrentUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -89,5 +88,10 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     private String exerciseChatUrl() {
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
         return "/api/iris/chat/" + courseId + "/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
+    }
+
+    private String exerciseChatCurrentUrl() {
+        long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        return "/api/iris/chat/" + courseId + "/sessions/current?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 }

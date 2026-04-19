@@ -97,7 +97,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final MessageSource messageSource;
 
-    private final IrisChatPipelineDTOFactory irisChatPipelineDTOFactory;
+    private final IrisChatPipelineDTOService irisChatPipelineDTOService;
 
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
@@ -105,7 +105,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            IrisCitationService irisCitationService, MessageSource messageSource, IrisChatPipelineDTOFactory irisChatPipelineDTOFactory) {
+            IrisCitationService irisCitationService, MessageSource messageSource, IrisChatPipelineDTOService irisChatPipelineDTOService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
@@ -120,7 +120,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.courseRepository = courseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
-        this.irisChatPipelineDTOFactory = irisChatPipelineDTOFactory;
+        this.irisChatPipelineDTOService = irisChatPipelineDTOService;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -164,7 +164,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, executionDto -> irisChatPipelineDTOFactory
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, executionDto -> irisChatPipelineDTOService
                 .buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles));
     }
 
