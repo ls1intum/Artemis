@@ -113,7 +113,7 @@ export class IrisOnboardingService {
     private async hasExistingIrisSessions(): Promise<boolean> {
         try {
             const counts = await firstValueFrom(this.chatHttpService.getSessionAndMessageCount());
-            return (counts?.sessions ?? 0) > 0;
+            return (counts?.sessions ?? 0) > 0 || (counts?.messages ?? 0) > 0;
         } catch {
             return true;
         }
