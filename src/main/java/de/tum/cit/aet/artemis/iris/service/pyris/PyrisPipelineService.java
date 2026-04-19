@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +33,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
@@ -275,78 +272,5 @@ public class PyrisPipelineService {
         });
 
         return course;
-    }
-
-    /**
-     * Generate an PyrisEventDTO from an object type by invoking the 'of' method of the DTO class.
-     * The 'of' method must be a static method that accepts the object type as argument and returns a subclass of PyrisEventDTO.
-     * <p>
-     * This method is used to generate DTOs from object types that are not known at compile time.
-     * It is used to generate DTOs from Pyris event objects that are passed to the chat pipeline.
-     * The DTO classes must have a static 'of' method that accepts the object type as argument.
-     * The return type of the 'of' method must be a subclass of PyrisEventDTO.
-     * </p>
-     *
-     * @param dtoClass the class of the DTO that should be generated
-     * @param object   the object to generate the DTO from
-     * @param <T>      the type of the object
-     * @param <U>      the type of the DTO
-     * @return PyrisEventDTO<U> the generated DTO
-     */
-    public <T, U> PyrisEventDTO<U> generateEventPayloadFromObjectType(Class<U> dtoClass, T object) {
-
-        if (object == null) {
-            return null;
-        }
-        // Get the 'of' method from the DTO class
-        Method ofMethod = getOfMethod(dtoClass, object);
-
-        // Invoke the 'of' method with the object as argument
-        try {
-            Object result = ofMethod.invoke(null, object);
-            return new PyrisEventDTO<>(dtoClass.cast(result), object.getClass().getSimpleName());
-        }
-        catch (IllegalArgumentException e) {
-            throw new UnsupportedOperationException("The 'of' method's parameter type doesn't match the provided object", e);
-        }
-        catch (IllegalAccessException e) {
-            throw new UnsupportedOperationException("The 'of' method is not accessible", e);
-        }
-        catch (InvocationTargetException e) {
-            throw new UnsupportedOperationException("The 'of' method threw an exception", e.getCause());
-        }
-        catch (ClassCastException e) {
-            throw new UnsupportedOperationException("The 'of' method's return type is not compatible with " + dtoClass.getSimpleName(), e);
-        }
-    }
-
-    /**
-     * Get the 'of' method from the DTO class that accepts the object type as argument.
-     *
-     * @param dtoClass the class of the DTO
-     * @param object   the object to generate the DTO from
-     * @param <T>      the type of the object
-     * @param <U>      the type of the DTO
-     * @return Method the 'of' method
-     */
-    public static <T, U> Method getOfMethod(Class<U> dtoClass, T object) {
-        Method ofMethod = null;
-        Class<?> currentClass = object.getClass();
-
-        // Traverse up the class hierarchy
-        while (currentClass != null && ofMethod == null) {
-            for (Method method : dtoClass.getMethods()) {
-                if (method.getName().equals("of") && method.getParameterCount() == 1 && method.getParameters()[0].getType().isAssignableFrom(currentClass)) {
-                    ofMethod = method;
-                    break;
-                }
-            }
-            currentClass = currentClass.getSuperclass();
-        }
-
-        if (ofMethod == null) {
-            throw new UnsupportedOperationException("Failed to find suitable 'of' method in " + dtoClass.getSimpleName() + " for " + object.getClass().getSimpleName());
-        }
-        return ofMethod;
     }
 }

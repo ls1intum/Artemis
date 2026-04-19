@@ -22,5 +22,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 public record PyrisChatPipelineExecutionDTO(IrisChatMode chatMode, List<PyrisMessageDTO> chatHistory, PyrisPipelineExecutionSettingsDTO settings, @Nullable String sessionTitle,
         PyrisUserDTO user, List<PyrisStageDTO> initialStages, @Nullable String customInstructions, PyrisCourseDTO course, @Nullable PyrisProgrammingExerciseDTO programmingExercise,
         @Nullable PyrisTextExerciseDTO textExercise, @Nullable PyrisLectureDTO lecture, @Nullable Long lectureUnitId, @Nullable PyrisSubmissionDTO programmingExerciseSubmission,
-        @Nullable String textExerciseSubmission, @Nullable StudentMetricsDTO metrics, @Nullable PyrisEventDTO<?> eventPayload) {
+        @Nullable String textExerciseSubmission, @Nullable StudentMetricsDTO metrics) {
 }
