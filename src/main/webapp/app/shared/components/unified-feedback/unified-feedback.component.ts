@@ -43,12 +43,12 @@ export class UnifiedFeedbackComponent {
         },
         needs_revision: {
             icon: faRedo,
-            alertClass: 'alert-warning',
+            alertClass: 'alert-danger',
             defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.needsRevision'),
         },
         not_attempted: {
             icon: faTimes,
-            alertClass: 'alert-danger',
+            alertClass: 'alert-secondary',
             defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.notAttempted'),
         },
     };
