@@ -8,7 +8,9 @@
     height: 8px;
     border-radius: 16px;
     background: var(--bs-secondary-bg);
-    transition: all 0.3s ease;
+    transition:
+        width 0.3s ease,
+        background-color 0.3s ease;
 
     &.active {
         width: 20px;

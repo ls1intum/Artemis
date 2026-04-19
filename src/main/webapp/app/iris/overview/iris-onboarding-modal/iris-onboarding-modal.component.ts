@@ -109,6 +109,8 @@ export class IrisOnboardingModalComponent {
     }
 
     private setStep(newStep: number): void {
+        this.isStepPositionReady.set(false);
+        this.tooltipConfig.set(undefined);
         this.step.set(newStep);
         this.onboardingService.currentStep.set(newStep);
     }
@@ -120,7 +122,6 @@ export class IrisOnboardingModalComponent {
         const nextStep = this.step() + 1;
         if (nextStep < this.totalSteps) {
             this.setStep(nextStep);
-            this.isStepPositionReady.set(false);
             this.schedulePositionCalculation(nextStep as 1 | 2 | 3);
         } else {
             this.finish();
@@ -131,7 +132,6 @@ export class IrisOnboardingModalComponent {
      * Starts the tour from step 1 (skips welcome).
      */
     onStartTour(): void {
-        this.isStepPositionReady.set(false);
         this.setStep(1);
         this.schedulePositionCalculation(1);
     }
@@ -320,7 +320,8 @@ export class IrisOnboardingModalComponent {
             return;
         }
 
-        // Avoid trapping onboarding on a hidden step when target elements are not available.
-        this.isStepPositionReady.set(true);
+        // Target never appeared; leave the modal in a safe state without surfacing an error.
+        this.tooltipConfig.set(undefined);
+        this.isStepPositionReady.set(false);
     }
 }

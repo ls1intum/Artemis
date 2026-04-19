@@ -665,7 +665,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
 
-        const shouldShowOnboarding = this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active();
+        const shouldShowOnboarding = this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
         void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
     }
 

@@ -75,17 +75,14 @@
                 [class.tooltip-arrow-right]="config.arrowDirection === 'right'"
                 [style.top.px]="config.tooltipPosition.top"
                 [style.left.px]="config.tooltipPosition.left"
-                role="dialog"
-                aria-modal="true"
+                role="region"
                 [attr.aria-labelledby]="'onboarding-tooltip-title-' + config.currentStep"
                 [attr.aria-describedby]="'onboarding-tooltip-desc-' + config.currentStep"
-                cdkTrapFocus
-                [cdkTrapFocusAutoCapture]="true"
                 aria-live="polite"
             >
                 <div class="tooltip-header">
                     <p class="tooltip-header-text" [id]="'onboarding-tooltip-title-' + config.currentStep" [jhiTranslate]="config.titleTranslationKey"></p>
-                    <button type="button" class="tooltip-close-button" (click)="next()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
+                    <button type="button" class="tooltip-close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>

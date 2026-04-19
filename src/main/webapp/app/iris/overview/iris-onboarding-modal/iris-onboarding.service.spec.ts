@@ -197,12 +197,11 @@ describe('IrisOnboardingService', () => {
 
         it('should delegate to openOnboardingModal', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
             const resultPromise = service.showOnboardingIfNeeded(true);
-            // Allow the async session-count gate to resolve before the dialog is opened.
-            await Promise.resolve();
-            await Promise.resolve();
+            // Wait until the async session-count gate resolves and the dialog is opened.
+            await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             const result = await resultPromise;

@@ -115,11 +115,10 @@ describe('IrisOnboardingModalComponent', () => {
             expect(finishSpy).toHaveBeenCalledOnce();
         });
 
-        it('should not advance beyond totalSteps - 1', () => {
+        it('should advance from step 2 to step 3', () => {
             component.step.set(2);
             component.next();
             expect(component.step()).toBe(3);
-            // next() on step 3 calls finish, not step 4
         });
     });
 
@@ -227,8 +226,8 @@ describe('IrisOnboardingModalComponent', () => {
             await detectChanges();
 
             const tooltip = fixture.nativeElement.querySelector('.onboarding-tooltip');
-            expect(tooltip.getAttribute('role')).toBe('dialog');
-            expect(tooltip.getAttribute('aria-modal')).toBe('true');
+            expect(tooltip.getAttribute('role')).toBe('region');
+            expect(tooltip.hasAttribute('aria-modal')).toBe(false);
             expect(tooltip.getAttribute('aria-labelledby')).toBe('onboarding-tooltip-title-2');
             expect(tooltip.getAttribute('aria-describedby')).toBe('onboarding-tooltip-desc-2');
         });
@@ -293,7 +292,7 @@ describe('IrisOnboardingModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should retry and fall back when target element is not found', () => {
+        it('should retry and leave the modal in a safe state when target element is not found', () => {
             vi.useFakeTimers();
             let rafCallback: FrameRequestCallback | undefined;
             vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
@@ -308,7 +307,8 @@ describe('IrisOnboardingModalComponent', () => {
             rafCallback!(0);
             vi.advanceTimersByTime(20 * 200);
 
-            expect(component.isStepPositionReady()).toBe(true);
+            expect(component.isStepPositionReady()).toBe(false);
+            expect(component.tooltipConfig()).toBeUndefined();
 
             vi.useRealTimers();
         });
@@ -341,7 +341,9 @@ describe('IrisOnboardingModalComponent', () => {
         });
 
         it('should remove body attribute on destroy', () => {
-            document.body.setAttribute('data-onboarding-active-step', '1');
+            component.onStartTour();
+            fixture.detectChanges();
+            expect(document.body.getAttribute('data-onboarding-active-step')).toBe('1');
             fixture.destroy();
             expect(document.body.hasAttribute('data-onboarding-active-step')).toBe(false);
         });
