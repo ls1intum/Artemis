@@ -1,47 +1,16 @@
 import { ApollonEditor, ApollonNode, DiagramNodeType, SVG, UMLModel } from '@tumaet/apollon';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { convertRenderedSVGToPNG } from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
+import { convertRenderedSVGToPNG, trimRenderedSVGToContent } from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/shared/util/utils';
+import { getQuizRelevantElementIds } from 'app/modeling/shared/apollon-model.util';
 
-/**
- * Helper to get interactive element selections from a model (supports both v3 and v4 formats).
- * v3 format: model.interactive.elements and model.interactive.relationships (Record<id, boolean>)
- * v4 format: model.nodes (ApollonNode[]) and model.edges (ApollonEdge[]) - arrays with id property
- *
- * In v4, there is no "interactive" concept - all elements are included by default.
- * The caller should use exclude/include options in exportModelAsSvg to filter.
- */
 function getInteractiveElements(model: UMLModel): string[] {
-    const modelAny = model as any;
-
-    // Check for v3 format first (interactive.elements/relationships)
-    if (modelAny.interactive) {
-        const elements = modelAny.interactive.elements ?? {};
-        const relationships = modelAny.interactive.relationships ?? {};
-        return [
-            ...Object.entries(elements)
-                .filter(([, include]) => include)
-                .map(([id]) => id),
-            ...Object.entries(relationships)
-                .filter(([, include]) => include)
-                .map(([id]) => id),
-        ];
-    }
-
-    // v4 format: nodes and edges are ARRAYS with id property (NOT Records!)
-    // In v4, we return all element IDs since there's no interactive selection concept
-    if (Array.isArray(modelAny.nodes)) {
-        const nodeIds = modelAny.nodes.map((n: { id: string }) => n.id);
-        const edgeIds = (modelAny.edges ?? []).map((e: { id: string }) => e.id);
-        return [...nodeIds, ...edgeIds];
-    }
-
-    return [];
+    return getQuizRelevantElementIds(model);
 }
 
 /**
@@ -83,14 +52,11 @@ export const MAX_SIZE_UNIT = 200;
 export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
     const interactiveElements = getInteractiveElements(model);
     const elements = getModelElements(model);
-    // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
-        exclude: interactiveElements,
+        svgMode: 'compat',
     });
-    const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
     const files = new Map<string, Blob>();
-    files.set('diagram-background.png', diagramBackground);
 
     const dragItems = new Map<string, DragItem>();
     const dropLocations = new Map<string, DropLocation>();
@@ -105,6 +71,9 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
         dragItems.set(element.id, dragItem!);
         dropLocations.set(element.id, dropLocation!);
     }
+
+    const diagramBackground = await createBlankedDiagramBackground(renderedDiagram, [...dropLocations.values()]);
+    files.set('diagram-background.png', diagramBackground);
 
     // Create all possible correct mappings between drag items and drop locations
     const correctMappings = createCorrectMappings(dragItems, dropLocations, model);
@@ -178,18 +147,14 @@ export async function generateDragAndDropItemForNode(
     svgSize: { width: number; height: number },
     files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
-    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
+    const renderedElement: SVG = trimRenderedSVGToContent(await ApollonEditor.exportModelAsSvg(model, { include: [element.id], svgMode: 'compat', margin: 0 }));
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageName = `element-${element.id}.png`;
     files.set(imageName, image);
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageName;
 
-    // In Apollon v4, exportModelAsSvg ignores include/exclude and computes the clip from all nodes,
-    // so renderedElement.clip equals the full diagram clip for every element. Use the node's actual
-    // model position instead to get correct relative drop location coordinates.
-    const elementLocation = element.position ? { x: element.position.x, y: element.position.y, width: element.width, height: element.height } : renderedElement.clip;
-    const dropLocation = computeDropLocation(elementLocation, svgSize);
+    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
@@ -216,6 +181,60 @@ export function computeDropLocation(
     dropLocation.width = round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT, 2);
     dropLocation.height = round((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT, 2);
     return dropLocation;
+}
+
+async function createBlankedDiagramBackground(renderedDiagram: SVG, dropLocations: DropLocation[]): Promise<Blob> {
+    const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
+    const imageUrl = URL.createObjectURL(diagramBackground);
+
+    try {
+        const image = await loadImage(imageUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to create background canvas context');
+        }
+
+        context.drawImage(image, 0, 0);
+        context.fillStyle = 'white';
+
+        for (const dropLocation of dropLocations) {
+            context.fillRect(
+                (dropLocation.posX! / MAX_SIZE_UNIT) * canvas.width,
+                (dropLocation.posY! / MAX_SIZE_UNIT) * canvas.height,
+                (dropLocation.width! / MAX_SIZE_UNIT) * canvas.width,
+                (dropLocation.height! / MAX_SIZE_UNIT) * canvas.height,
+            );
+        }
+
+        return await canvasToBlob(canvas);
+    } finally {
+        URL.revokeObjectURL(imageUrl);
+    }
+}
+
+function loadImage(source: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = (error) => reject(error);
+        image.src = source;
+    });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(blob);
+                return;
+            }
+            reject(new Error('Failed to convert background canvas to PNG'));
+        }, 'image/png');
+    });
 }
 
 /**
