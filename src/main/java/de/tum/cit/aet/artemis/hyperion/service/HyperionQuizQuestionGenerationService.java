@@ -178,7 +178,7 @@ public class HyperionQuizQuestionGenerationService {
     @Observed(name = "hyperion.quiz.refine-all", contextualName = "bulk quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public QuizQuestionBulkRefinementResponseDTO refineAllQuizQuestions(Course course, QuizQuestionBulkRefinementRequestDTO request) {
         log.debug("Bulk-refining {} quiz questions for course [{}]", request.questions().size(), course.getId());
-        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().stream()
+        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream()
                 .map(question -> refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()))).toList();
         return new QuizQuestionBulkRefinementResponseDTO(refinements);
     }

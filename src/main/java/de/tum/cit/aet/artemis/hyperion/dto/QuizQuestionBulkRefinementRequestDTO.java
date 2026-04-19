@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to refine multiple quiz questions at once using a single user prompt")
-public record QuizQuestionBulkRefinementRequestDTO(
-        @NotNull @Valid @Size(min = 1, max = 100) @Schema(description = "The quiz questions to refine") List<GeneratedQuizQuestionDTO> questions,
-        @NotBlank @Size(min = 1, max = 2000) @Schema(description = "User instructions describing how all questions should be changed") String refinementPrompt) {
+public record QuizQuestionBulkRefinementRequestDTO(@NotNull @Valid @Size(max = 50) @Schema(description = "The quiz questions to refine") List<GeneratedQuizQuestionDTO> questions,
+        @NotBlank @Size(max = 2000) @Schema(description = "User instructions describing how all questions should be changed") String refinementPrompt) {
 }

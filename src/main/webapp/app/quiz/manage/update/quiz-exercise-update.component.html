@@ -268,7 +268,13 @@
         @if (hasMcQuestionsForRefinement) {
             <div class="global-refinement-fab-container">
                 @if (!isRefinementFabOpen()) {
-                    <button pButton type="button" class="global-refinement-fab" (click)="isRefinementFabOpen.set(true)">
+                    <button
+                        pButton
+                        type="button"
+                        class="global-refinement-fab"
+                        (click)="isRefinementFabOpen.set(true)"
+                        [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalRefineFabLabel' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faWandMagicSparkles" />
                     </button>
                 } @else {
@@ -290,7 +296,7 @@
                             [ngModel]="globalRefinementPrompt()"
                             (ngModelChange)="globalRefinementPrompt.set($any($event))"
                             [disabled]="isGlobalRefining()"
-                            (keydown.enter)="$event.preventDefault(); submitGlobalRefinement()"
+                            (keydown.enter)="onGlobalRefinementEnterKey($event)"
                         ></textarea>
                         <button
                             pButton

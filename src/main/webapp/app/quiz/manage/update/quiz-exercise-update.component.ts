@@ -355,6 +355,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         );
     }
 
+    /** Submits the global refinement on Enter, but allows Shift+Enter to insert a newline. */
+    onGlobalRefinementEnterKey(event: Event): void {
+        if (!(event as KeyboardEvent).shiftKey) {
+            event.preventDefault();
+            this.submitGlobalRefinement();
+        }
+    }
+
     /** Cancels any running global refinement request and hides the refinement FAB. */
     closeRefinementFab(): void {
         this.globalRefinementSubscription?.unsubscribe();

@@ -60,7 +60,9 @@
                 "refinement": {
                     "promptPlaceholder": "Describe how to refine this question...",
                     "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
+                    "globalRefineFabLabel": "Refine all questions with AI",
                     "changesLabel": "Changes made",
+                    "defaultReasoning": "The question was refined based on your instructions.",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."
                     }
