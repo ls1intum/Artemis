@@ -28,7 +28,7 @@ public class HermesHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
+    @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String hermesUrl;
 
     public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {

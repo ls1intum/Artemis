@@ -10,7 +10,7 @@ import Callout from "../../src/components/Callout/Callout";
 
 # Artemis Intelligence
 
-Artemis Intelligence is the collection of AI-assisted capabilities layered on top of Artemis. It blends in-process modules (Hyperion, Atlas, Communication) with external EduTelligence services (Iris, Athena, Nebula, AtlasML) and a forthcoming AI gateway (Logos) that will unify routing, metering, and privacy controls.
+Artemis Intelligence is the collection of AI-assisted capabilities layered on top of Artemis. It blends in-process modules (Hyperion, Atlas, Communication) with external EduTelligence services (Iris, Athena, AtlasML) and a forthcoming AI gateway (Logos) that will unify routing, metering, and privacy controls.
 
 ![Artemis Intelligence subsystem map](/img/artemis-intelligence.svg)
 
@@ -25,7 +25,6 @@ Artemis Intelligence is the collection of AI-assisted capabilities layered on to
 | Communication | Artemis server, orchestrates FAQ rewrite/consistency pipeline | **Live** — orchestration in Artemis; execution still hits Pyris; target is to migrate it to Spring AI |
 | Iris (Pyris) | EduTelligence intelligent tutoring service (Python/FastAPI) | **Live** — production service powering tutor chat; runs in edutelligence/iris (aka Pyris) |
 | Athena | EduTelligence feedback service (Python/FastAPI) | **Live** — production service powering AI feedback generation |
-| Nebula | EduTelligence transcription service (Python/FastAPI) | **Live for transcription** — Artemis |
 | AtlasML | EduTelligence competency graph | **Available service; not yet connected from Artemis** — Atlas Java module has REST client and feature flag but awaits activation/config |
 | Logos | AI gateway for routing, metering, privacy tiers | **Implemented (edutelligence/logos) but not integrated with Artemis yet** |
 
@@ -58,7 +57,6 @@ spring:
 
 - **Iris (Chat Service)** — primary chat orchestrator, handles retrieval-augmented prompts and session memory.
 - **Athena (Feedback Service)** — generates exercise feedback.
-- **Nebula (Transcription Service)** — speech-to-text; used for lecture media pipelines.
 - **AtlasML (Competency Service)** — suggests and manages competency graphs. Use `atlas.atlasml.base-url` to point Artemis to the deployed AtlasML instance.
 
 When these services are reachable, Artemis calls them via the AI Service interfaces shown in the diagram. Add the EduTelligence health endpoints to monitoring so failures short-circuit rather than degrade user flows.
@@ -82,6 +80,5 @@ When these services are reachable, Artemis calls them via the AI Service interfa
 - Suite overview and service setup: [EduTelligence README](https://github.com/ls1intum/edutelligence#readme)
 - Iris/Pyris service setup: [edutelligence/iris](https://github.com/ls1intum/edutelligence/tree/main/iris)
 - Athena service setup: [edutelligence/athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
-- Nebula services: [edutelligence/nebula](https://github.com/ls1intum/edutelligence/tree/main/nebula)
 - Logos gateway: [edutelligence/logos](https://github.com/ls1intum/edutelligence/tree/main/logos)
 
