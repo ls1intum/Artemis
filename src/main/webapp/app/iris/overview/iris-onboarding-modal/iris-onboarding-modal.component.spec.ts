@@ -86,6 +86,7 @@ describe('IrisOnboardingModalComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 

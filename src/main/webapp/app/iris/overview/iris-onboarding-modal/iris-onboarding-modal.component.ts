@@ -51,6 +51,8 @@ export class IrisOnboardingModalComponent {
 
     // Timer cleanup
     private readonly pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+    private readonly pendingRafs = new Set<number>();
+    private isDestroyed = false;
 
     // Step management: 0 = welcome, 1-3 = tooltips
     readonly step = signal(0);
@@ -63,10 +65,15 @@ export class IrisOnboardingModalComponent {
 
     constructor() {
         this.destroyRef.onDestroy(() => {
+            this.isDestroyed = true;
             for (const timer of this.pendingTimers) {
                 clearTimeout(timer);
             }
             this.pendingTimers.clear();
+            for (const rafId of this.pendingRafs) {
+                window.cancelAnimationFrame(rafId);
+            }
+            this.pendingRafs.clear();
             document.body.removeAttribute('data-onboarding-active-step');
         });
 
@@ -97,11 +104,31 @@ export class IrisOnboardingModalComponent {
     }
 
     private safeTimeout(callback: () => void, delay?: number): void {
+        if (this.isDestroyed) {
+            return;
+        }
         const timer = setTimeout(() => {
             this.pendingTimers.delete(timer);
+            if (this.isDestroyed) {
+                return;
+            }
             callback();
         }, delay);
         this.pendingTimers.add(timer);
+    }
+
+    private safeRequestAnimationFrame(callback: FrameRequestCallback): void {
+        if (this.isDestroyed) {
+            return;
+        }
+        const rafId = window.requestAnimationFrame((time) => {
+            this.pendingRafs.delete(rafId);
+            if (this.isDestroyed) {
+                return;
+            }
+            callback(time);
+        });
+        this.pendingRafs.add(rafId);
     }
 
     onEscapeKey(): void {
@@ -284,29 +311,32 @@ export class IrisOnboardingModalComponent {
     /**
      * Finds the first visible element matching the selector.
      * Multiple elements may match (e.g., info icon in collapsed vs expanded sidebar),
-     * so we pick the one that is actually rendered on screen.
+     * so we pick the one that is actually rendered on screen. Returns undefined if
+     * none are visible — callers must handle that and keep the step hidden.
      */
-    private findVisibleElement(selector: string): Element | undefined {
+    private findVisibleElement(selector: string): HTMLElement | undefined {
         const elements = document.querySelectorAll(selector);
         for (const el of Array.from(elements)) {
             if (el instanceof HTMLElement && el.offsetParent !== null) {
                 return el;
             }
         }
-        // Fall back to first match if none pass the visibility check
-        return elements[0] ?? undefined;
+        return undefined;
     }
 
     private schedulePositionCalculation(step: 1 | 2 | 3): void {
+        if (this.isDestroyed) {
+            return;
+        }
         if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-            window.requestAnimationFrame(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200));
+            this.safeRequestAnimationFrame(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200));
             return;
         }
         this.safeTimeout(() => this.resolveStepPosition(step, () => this.calculateTooltipPosition(step), 20, 200), 0);
     }
 
     private resolveStepPosition(expectedStep: 1 | 2 | 3, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {
-        if (this.step() !== expectedStep) {
+        if (this.isDestroyed || this.step() !== expectedStep) {
             return;
         }
 

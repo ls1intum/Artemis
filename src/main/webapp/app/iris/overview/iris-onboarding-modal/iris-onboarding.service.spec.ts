@@ -189,7 +189,7 @@ describe('IrisOnboardingService', () => {
     describe('showOnboardingIfNeeded', () => {
         it('should return undefined and not open modal on non-desktop viewport', async () => {
             setDesktopViewport(false);
-            const result = await service.showOnboardingIfNeeded(true);
+            const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(dialogService.open).not.toHaveBeenCalled();
             expect(result).toBeUndefined();
@@ -199,7 +199,7 @@ describe('IrisOnboardingService', () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
             const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
 
-            const resultPromise = service.showOnboardingIfNeeded(true);
+            const resultPromise = service.showOnboardingIfNeeded(() => true);
             // Wait until the async session-count gate resolves and the dialog is opened.
             await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
             closeSubject.next({ action: 'finish' });
@@ -213,14 +213,14 @@ describe('IrisOnboardingService', () => {
         it('should return undefined and skip opening when onboarding has been completed', async () => {
             service.markOnboardingCompleted();
 
-            const result = await service.showOnboardingIfNeeded(true);
+            const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
         });
 
         it('should return undefined and skip opening when not in empty state', async () => {
-            const result = await service.showOnboardingIfNeeded(false);
+            const result = await service.showOnboardingIfNeeded(() => false);
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
@@ -229,7 +229,7 @@ describe('IrisOnboardingService', () => {
         it('should skip opening when the user already has Iris sessions', async () => {
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 3, messages: 10 }));
 
-            const result = await service.showOnboardingIfNeeded(true);
+            const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
@@ -240,7 +240,7 @@ describe('IrisOnboardingService', () => {
             vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
 
-            const resultPromise = service.showOnboardingIfNeeded(true);
+            const resultPromise = service.showOnboardingIfNeeded(() => true);
             // Allow the async session-count gate to resolve before the dialog is opened.
             await Promise.resolve();
             await Promise.resolve();
@@ -255,7 +255,7 @@ describe('IrisOnboardingService', () => {
         it('should skip opening when the session-count request fails (fail-closed)', async () => {
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(throwError(() => new Error('network')));
 
-            const result = await service.showOnboardingIfNeeded(true);
+            const result = await service.showOnboardingIfNeeded(() => true);
 
             expect(result).toBeUndefined();
             expect(dialogService.open).not.toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe('IrisOnboardingService', () => {
         it('should not call the session-count endpoint when an earlier gate already fails', async () => {
             service.markOnboardingCompleted();
 
-            await service.showOnboardingIfNeeded(true);
+            await service.showOnboardingIfNeeded(() => true);
 
             expect(chatHttpService.getSessionAndMessageCount).not.toHaveBeenCalled();
         });

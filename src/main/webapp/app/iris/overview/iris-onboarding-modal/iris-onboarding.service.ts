@@ -72,9 +72,12 @@ export class IrisOnboardingService {
 
     /**
      * Opens the onboarding modal if the user hasn't completed it yet.
+     * @param isEmptyState callback evaluated synchronously each time the empty-state must be
+     *     checked; re-invoked after the async server gate so a chat that became non-empty
+     *     in the meantime no longer triggers the tour.
      * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async showOnboardingIfNeeded(isEmptyState: boolean): Promise<OnboardingResult | undefined> {
+    async showOnboardingIfNeeded(isEmptyState: () => boolean): Promise<OnboardingResult | undefined> {
         if (!this.accountService.userIdentity()?.id) {
             return undefined;
         }
@@ -87,7 +90,7 @@ export class IrisOnboardingService {
             return undefined;
         }
 
-        if (!isEmptyState) {
+        if (!isEmptyState()) {
             return undefined;
         }
 
@@ -95,6 +98,12 @@ export class IrisOnboardingService {
         // course. Fail-closed on error so a transient 500 never re-shows the tour to a
         // returning student. Runs last so earlier cheap gates can short-circuit the request.
         if (await this.hasExistingIrisSessions()) {
+            return undefined;
+        }
+
+        // Re-check after the async gate: chat may have received a message while we were
+        // waiting on the server, in which case opening the tour now would be jarring.
+        if (!isEmptyState()) {
             return undefined;
         }
 
@@ -130,13 +139,18 @@ export class IrisOnboardingService {
 
         this.currentStep.set(0);
 
-        this.dialogRef = this.dialogService.open(IrisOnboardingModalComponent, {
-            modal: false,
-            closable: false,
-            showHeader: false,
-            styleClass: 'iris-onboarding-dialog',
-            maskStyleClass: 'iris-onboarding-mask',
-        });
+        this.dialogRef =
+            this.dialogService.open(IrisOnboardingModalComponent, {
+                modal: false,
+                closable: false,
+                showHeader: false,
+                styleClass: 'iris-onboarding-dialog',
+                maskStyleClass: 'iris-onboarding-mask',
+            }) ?? undefined;
+
+        if (!this.dialogRef) {
+            return undefined;
+        }
 
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
