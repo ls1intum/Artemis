@@ -567,15 +567,6 @@ export class ExamStudentsComponent implements OnDestroy {
         return value as ExamUserWithExamData | undefined;
     }
 
-    viewStudentExam(examUser: ExamUserWithExamData) {
-        const examId = this.exam().id;
-        if (!examId || !examUser.studentExamId) {
-            return;
-        }
-
-        this.router.navigate(['/course-management', this.courseId(), 'exams', examId, 'student-exams', examUser.studentExamId]);
-    }
-
     private generateStudentExams() {
         const examId = this.exam().id;
         if (!examId) {

@@ -352,16 +352,20 @@
                         >
                             <fa-icon [icon]="faChair" />
                         </button>
-                        <button
+                        <a
                             pButton
                             size="small"
                             severity="primary"
+                            style="text-decoration: none !important"
                             [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
-                            (click)="viewStudentExam(examUser)"
-                            [disabled]="!examUser.studentExamId"
+                            [routerLink]="
+                                exam().id && examUser.studentExamId ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId] : null
+                            "
+                            [class.p-disabled]="!exam().id || !examUser.studentExamId"
+                            (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
                         >
                             <i class="pi pi-eye"></i>
-                        </button>
+                        </a>
                         <button
                             pButton
                             jhiDeleteButton
