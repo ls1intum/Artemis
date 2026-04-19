@@ -305,12 +305,12 @@ public class CourseDeletionService {
             completedWeight += aiDataWeight;
             stepsCompleted++;
 
-            // Clean up all Weaviate rows for the course (exercises, lectures, etc.)
+            // Step 15: Clean up all Weaviate rows for the course (exercises, lectures, etc.)
             if (searchableItemWeaviateService != null) {
                 searchableItemWeaviateService.deleteAllForCourseAsync(courseId);
             }
 
-            // Step 15: Delete the course itself
+            // Step 16: Delete the course itself
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             courseRepository.deleteById(courseId);
