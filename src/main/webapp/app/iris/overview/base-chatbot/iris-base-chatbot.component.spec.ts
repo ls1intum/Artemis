@@ -1437,7 +1437,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 30,
             title: undefined,
             creationDate: new Date('2025-10-06T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 7,
             entityName: '',
         };
@@ -1445,7 +1445,7 @@ describe('IrisBaseChatbotComponent', () => {
             id: 31,
             title: 'Earlier course chat',
             creationDate: new Date('2025-10-05T10:00:00.000Z'),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 7,
             entityName: 'Course 7',
         };
