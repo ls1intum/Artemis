@@ -31,6 +31,7 @@ public class AthenaAuthorizationInterceptor implements ClientHttpRequestIntercep
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().set(HttpHeaders.AUTHORIZATION, secret);
         request.getHeaders().set("X-Server-URL", artemisServerUrl);
+        request.getHeaders().set("X-Repository-Authorization-Secret", secret);
         return execution.execute(request, body);
     }
 }
