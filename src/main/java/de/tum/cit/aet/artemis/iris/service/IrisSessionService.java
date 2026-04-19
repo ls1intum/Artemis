@@ -120,6 +120,27 @@ public class IrisSessionService {
      * @throws BadRequestException If the session type is invalid
      */
     public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
+        requestMessageFromIris(session, uncommittedFiles, null, null);
+    }
+
+    /**
+     * Sends a request to Iris to get a message for the given session with optional lecture context.
+     * This overload is used for lecture chat sessions where the user's viewing context (PDF page, video timestamp) is relevant.
+     *
+     * @param session          The session to get a message for
+     * @param uncommittedFiles The uncommitted files from the client
+     * @param pdfPage          Optional current PDF page number
+     * @param videoTimestamp   Optional current video timestamp in seconds
+     * @param <S>              The type of the session
+     * @throws BadRequestException If the session type is invalid
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, Integer pdfPage, Double videoTimestamp) {
+        // Store context on lecture session if applicable
+        if (session instanceof IrisLectureChatSession lectureChatSession) {
+            lectureChatSession.setCurrentPdfPage(pdfPage);
+            lectureChatSession.setCurrentVideoTimestamp(videoTimestamp);
+        }
+
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             if (!uncommittedFiles.isEmpty() && session instanceof IrisProgrammingExerciseChatSession programmingSession) {

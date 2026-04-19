@@ -120,7 +120,7 @@ public class IrisMessageResource {
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles, requestDTO.pdfPage(), requestDTO.videoTimestamp());
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));

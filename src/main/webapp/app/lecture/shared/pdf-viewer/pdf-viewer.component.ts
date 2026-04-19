@@ -65,7 +65,8 @@ export class PdfViewerComponent {
     private readonly injector = inject(Injector);
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
     private readonly languageChange = toSignal(this.translateService.onLangChange);
-    private readonly currentPage = signal(1);
+    private readonly currentPageState = signal(1);
+    readonly currentPage = this.currentPageState.asReadonly();
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
 
@@ -215,7 +216,7 @@ export class PdfViewerComponent {
         }
 
         if (type === 'pageChange' && typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
-            this.currentPage.set(data.page);
+            this.currentPageState.set(data.page);
             return;
         }
 
@@ -250,7 +251,7 @@ export class PdfViewerComponent {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         const languageKey = untracked(() => this.getCurrentLanguageKey());
         this.isLoading.set(true);
-        this.currentPage.set(page);
+        this.currentPageState.set(page);
 
         this.postMessageToIframe('loadPDF', {
             url,

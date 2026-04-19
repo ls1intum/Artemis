@@ -94,7 +94,8 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
+        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture, chatSession.getCurrentPdfPage(),
+                chatSession.getCurrentVideoTimestamp());
     }
 
     /**

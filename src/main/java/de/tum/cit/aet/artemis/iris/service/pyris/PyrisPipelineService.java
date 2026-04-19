@@ -163,12 +163,15 @@ public class PyrisPipelineService {
      * It provides specific data for the lecture chat pipeline, including:
      * - The lecture content
      *
-     * @param variant            the variant of the pipeline
-     * @param customInstructions the custom instructions for the pipeline
-     * @param session            the chat session
-     * @param lecture            the lecture the session belongs to
+     * @param variant               the variant of the pipeline
+     * @param customInstructions    the custom instructions for the pipeline
+     * @param session               the chat session
+     * @param lecture               the lecture the session belongs to
+     * @param currentPdfPage        optional current PDF page number for context
+     * @param currentVideoTimestamp optional current video timestamp in seconds for context
      */
-    public void executeLectureChatPipeline(String variant, String customInstructions, IrisLectureChatSession session, Lecture lecture) {
+    public void executeLectureChatPipeline(String variant, String customInstructions, IrisLectureChatSession session, Lecture lecture, Integer currentPdfPage,
+            Double currentVideoTimestamp) {
         Course course = lecture.getCourse();
         if (course == null) {
             throw new IllegalStateException("Lecture " + lecture.getId() + " does not belong to a course");
@@ -201,7 +204,7 @@ public class PyrisPipelineService {
                         lectureUnits);
                 return new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), lectureDto, session.getTitle(),
                         pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(user), executionDto.settings(), executionDto.initialStages(),
-                        customInstructions);
+                        customInstructions, currentPdfPage, currentVideoTimestamp);
             },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
         // @formatter:on

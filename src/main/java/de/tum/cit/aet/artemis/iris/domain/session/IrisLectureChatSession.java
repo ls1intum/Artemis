@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.domain.session;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,6 +18,12 @@ public class IrisLectureChatSession extends IrisChatSession {
     @JsonIgnore
     private long lectureId;
 
+    @Transient
+    private Integer currentPdfPage;
+
+    @Transient
+    private Double currentVideoTimestamp;
+
     public IrisLectureChatSession() {
     }
 
@@ -31,6 +38,22 @@ public class IrisLectureChatSession extends IrisChatSession {
 
     public void setLectureId(long lectureId) {
         this.lectureId = lectureId;
+    }
+
+    public Integer getCurrentPdfPage() {
+        return currentPdfPage;
+    }
+
+    public void setCurrentPdfPage(Integer currentPdfPage) {
+        this.currentPdfPage = currentPdfPage;
+    }
+
+    public Double getCurrentVideoTimestamp() {
+        return currentVideoTimestamp;
+    }
+
+    public void setCurrentVideoTimestamp(Double currentVideoTimestamp) {
+        this.currentVideoTimestamp = currentVideoTimestamp;
     }
 
     @Override

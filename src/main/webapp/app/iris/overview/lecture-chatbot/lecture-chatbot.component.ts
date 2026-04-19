@@ -8,7 +8,13 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         @if (lectureId()) {
-            <jhi-iris-base-chatbot [showDeclineButton]="false" [isChatHistoryAvailable]="false" [layout]="'widget'" />
+            <jhi-iris-base-chatbot
+                [showDeclineButton]="false"
+                [isChatHistoryAvailable]="false"
+                [layout]="'widget'"
+                [currentPdfPage]="currentPdfPage()"
+                [currentVideoTimestamp]="currentVideoTimestamp()"
+            />
         }
     `,
     styles: [
@@ -31,6 +37,10 @@ export class LectureChatbotComponent {
 
     /** Lecture identifier used to scope chatbot requests to the current lecture context. */
     readonly lectureId = input<number>();
+    /** Current PDF page number for context in lecture chat messages. */
+    readonly currentPdfPage = input<number | undefined>(undefined);
+    /** Current video timestamp in seconds for context in lecture chat messages. */
+    readonly currentVideoTimestamp = input<number | undefined>(undefined);
 
     constructor() {
         // Keep chat service mode aligned with the currently displayed lecture.

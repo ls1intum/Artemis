@@ -192,8 +192,10 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      * @param message to be created
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
+     * @param pdfPage optional current PDF page number for lecture context
+     * @param videoTimestamp optional current video timestamp in seconds for lecture context
      */
-    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}): Observable<undefined> {
+    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, pdfPage?: number, videoTimestamp?: number): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
@@ -201,7 +203,12 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
+        // Validate and sanitize context values
+        const validPdfPage = pdfPage !== undefined && Number.isInteger(pdfPage) && pdfPage > 0 ? pdfPage : undefined;
+
+        const validVideoTimestamp = videoTimestamp !== undefined && Number.isFinite(videoTimestamp) && videoTimestamp >= 0 ? videoTimestamp : undefined;
+
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, validPdfPage, validVideoTimestamp);
 
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {

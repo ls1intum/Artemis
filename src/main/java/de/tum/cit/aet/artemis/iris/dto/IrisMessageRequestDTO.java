@@ -9,14 +9,17 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO for sending messages to Iris with optional uncommitted file changes.
+ * DTO for sending messages to Iris with optional uncommitted file changes and lecture context.
  *
  * @param content               the message content
  * @param messageDifferentiator used to differentiate messages
  * @param uncommittedFiles      optional map of uncommitted file changes (path to content), defaults to empty map if null
+ * @param pdfPage               optional current PDF page number (for lecture chat context)
+ * @param videoTimestamp        optional current video timestamp in seconds (for lecture chat context)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles) {
+public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
+        @Nullable Integer pdfPage, @Nullable Double videoTimestamp) {
 
     /**
      * Compact constructor that normalizes null uncommittedFiles to an empty map.

@@ -119,7 +119,7 @@
 
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
-                <jhi-lecture-chatbot [lectureId]="lectureId()" />
+                <jhi-lecture-chatbot [lectureId]="lectureId()" [currentPdfPage]="currentPdfPage()" [currentVideoTimestamp]="currentVideoTimestamp()" />
                 <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
                     <fa-icon [icon]="faXmark" />
                 </button>

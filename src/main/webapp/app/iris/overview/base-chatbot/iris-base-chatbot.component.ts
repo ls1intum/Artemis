@@ -322,6 +322,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
+    readonly currentPdfPage = input<number | undefined>(undefined);
+    readonly currentVideoTimestamp = input<number | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -710,8 +712,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
+
+            // Capture context at send time
+            const pdfPage = this.currentPdfPage();
+            const videoTimestamp = this.currentVideoTimestamp();
+
             this.chatService
-                .sendMessage(content)
+                .sendMessage(content, {}, pdfPage, videoTimestamp)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe(() => {
                     this.isLoading.set(false);
