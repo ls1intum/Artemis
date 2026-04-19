@@ -1,0 +1,61 @@
+.quiz-ai-refinement-panel {
+    padding: 0 24px 24px;
+}
+
+.quiz-ai-refinement-panel .refinement-input-row {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.6rem;
+}
+
+.quiz-ai-refinement-panel .refinement-textarea {
+    flex: 1;
+    font-size: var(--bs-body-font-size);
+    height: 2.75rem;
+    padding-bottom: calc((2.75rem - 1.5em) / 2);
+    padding-top: calc((2.75rem - 1.5em) / 2);
+    resize: none;
+}
+
+.quiz-ai-refinement-panel button.refinement-submit-button {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    height: 2.75rem;
+    justify-content: center;
+    width: 2.75rem;
+}
+
+.quiz-ai-refinement-panel .refinement-explanation-card {
+    background: var(--surface-card);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--p-form-field-border-radius);
+    margin-bottom: 0.75rem;
+    padding: 0.85rem 1rem;
+}
+
+.quiz-ai-refinement-panel .refinement-explanation-card-header {
+    align-items: center;
+    display: flex;
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
+}
+
+.quiz-ai-refinement-panel .refinement-explanation-icon {
+    color: var(--bs-primary);
+    font-size: 0.85rem;
+}
+
+.quiz-ai-refinement-panel .refinement-explanation-label {
+    color: var(--bs-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+.quiz-ai-refinement-panel .refinement-explanation-text {
+    color: var(--text-color);
+    font-size: var(--bs-body-font-size);
+    margin: 0;
+}
