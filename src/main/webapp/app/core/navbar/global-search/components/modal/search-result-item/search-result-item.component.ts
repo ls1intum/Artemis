@@ -28,6 +28,18 @@ export class SearchResultItemComponent {
 
     resultClick = output<GlobalSearchResult>();
 
+    protected courseName = computed(() => this.result().metadata?.['courseName']);
+    protected dueDate = computed(() => this.result().metadata?.['dueDate']);
+    protected startDate = computed(() => this.result().metadata?.['startDate']);
+    protected points = computed(() => this.result().metadata?.['points']);
+    protected difficulty = computed(() => this.result().metadata?.['difficulty']);
+
+    protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty()));
+    protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));
+    protected showStartDateOnly = computed(() => !!(this.startDate() && !this.dueDate()));
+    protected showDatePointsSeparator = computed(() => !!(this.points() && (this.dueDate() || this.startDate())));
+    protected showDifficultySeparator = computed(() => !!(this.difficulty() && (this.dueDate() || this.startDate() || this.points())));
+
     protected formattedDueDate = computed(() => this.formatMetadataDate('dueDate'));
 
     protected formattedStartDate = computed(() => this.formatMetadataDate('startDate'));
