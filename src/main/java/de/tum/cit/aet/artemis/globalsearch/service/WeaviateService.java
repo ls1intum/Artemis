@@ -57,13 +57,16 @@ public class WeaviateService {
     private final boolean isOpenApiDocsGeneration;
 
     /**
-     * The {@code @Lazy} on {@code client} makes Spring inject a proxy instead of eagerly
-     * creating the {@link WeaviateClient} bean (whose constructor opens a network connection).
-     * During OpenAPI docs generation ({@code artemis.openapi-docs-generation=true}) the
-     * {@link #initializeCollections()} method returns early, so the proxy is never resolved
-     * and no Weaviate instance needs to be running.
+     * The {@code WeaviateClient} bean is created lazily because the enclosing
+     * {@link WeaviateClientConfiguration} and this service are both {@code @Lazy}.
+     * <p>
+     * Note: {@code @Lazy} must <b>not</b> be placed on the {@code client} parameter
+     * itself, because the Weaviate Java client exposes {@code collections} as a
+     * <b>public field</b>. A CGLIB lazy-proxy only intercepts method calls — direct
+     * field access bypasses the proxy and returns {@code null}, which causes a
+     * {@link NullPointerException} in {@link #ensureCollectionExists}.
      */
-    public WeaviateService(@Lazy WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
+    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
         this.client = client;
         this.properties = properties;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
