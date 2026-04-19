@@ -136,12 +136,12 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const editorOptions = {
             mode: ApollonMode.Modelling,
             view: ApollonView.Modelling,
-            enableQuizMode: true,
             readonly: false,
             model: initialModel,
             type: diagram?.diagramType,
             locale: this.translateService.getCurrentLang() as Locale,
-        } as ConstructorParameters<typeof ApollonEditor>[1] & { enableQuizMode: boolean };
+            availableViews: [ApollonView.Modelling, ApollonView.Highlight],
+        } as ConstructorParameters<typeof ApollonEditor>[1];
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
