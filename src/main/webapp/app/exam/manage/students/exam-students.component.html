@@ -12,11 +12,13 @@
                     pButton
                     (click)="individualExamsStatusPopover.toggle($event)"
                     size="small"
-                    [severity]="examPreparationsComplete() ? 'success' : 'warn'"
+                    [severity]="isTestExam() ? 'info' : examPreparationsComplete() ? 'success' : 'warn'"
                     outlined
                 >
                     <div class="d-flex gap-2 align-items-center">
-                        @if (examPreparationsComplete()) {
+                        @if (isTestExam()) {
+                            <i class="pi pi-info-circle"></i>
+                        } @else if (examPreparationsComplete()) {
                             <i class="pi pi-check"></i>
                         } @else {
                             <i class="pi pi-exclamation-triangle"></i>

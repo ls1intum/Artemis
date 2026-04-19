@@ -152,6 +152,9 @@ export class ExamStudentsComponent implements OnDestroy {
 
         return exam.examUsers.map((examUser) => {
             const studentExam = examUser.user?.id ? studentExamsByUserId.get(examUser.user.id) : undefined;
+            if (studentExam) {
+                studentExam.exam = exam;
+            }
             const progress: ExamProgress = studentExam?.submitted ? 'submitted' : studentExam?.started ? 'started' : studentExam ? 'notStarted' : 'examMissing';
 
             return Object.assign({}, examUser, {

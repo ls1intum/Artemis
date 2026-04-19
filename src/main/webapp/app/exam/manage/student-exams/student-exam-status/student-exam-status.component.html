@@ -1,16 +1,16 @@
-@if (isTestExam()) {
-    <p-tag class="d-flex gap-2 align-items-center" severity="info">
+<p-tag
+    class="d-flex gap-2 align-items-center"
+    [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
+    [title]="hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : null"
+>
+    @if (isTestExam()) {
         <i class="pi pi-info-circle"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
-    </p-tag>
-} @else if (hasStudentsWithoutExam()) {
-    <p-tag class="d-flex gap-2 align-items-center" [title]="'artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate" severity="warn">
+    } @else if (hasStudentsWithoutExam()) {
         <i class="pi pi-exclamation-triangle"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
-    </p-tag>
-} @else {
-    <p-tag class="d-flex gap-2 align-items-center" severity="success">
+    } @else {
         <i class="pi pi-check"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
-    </p-tag>
-}
+    }
+</p-tag>
