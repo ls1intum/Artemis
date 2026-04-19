@@ -18,7 +18,6 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -35,7 +34,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         ArtemisTranslatePipe,
         FeedbackContentPipe,
         QuotePipe,
-        UnifiedFeedbackComponent,
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
