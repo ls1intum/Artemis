@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -353,6 +354,17 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         localRepo.resetLocalRepo();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProblemStatement_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        String tooLongProblemStatement = "a".repeat(20001);
+
+        request.patchWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement", tooLongProblemStatement, String.class,
+                HttpStatus.BAD_REQUEST, MediaType.TEXT_PLAIN);
+    }
+
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
         String templateRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
@@ -364,5 +376,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+    }
+
+    private void addInstructorToCourse() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
     }
 }

@@ -103,6 +103,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 20000;
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
@@ -175,6 +177,7 @@ public class ProgrammingExerciseCreationUpdateService {
         if (programmingExercise.getBuildConfig() == null) {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
+        validateProblemStatementLength(programmingExercise.getProblemStatement());
         if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);
         }
@@ -316,7 +319,7 @@ public class ProgrammingExerciseCreationUpdateService {
             @Nullable String originalProblemStatement) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
-
+        validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
@@ -406,7 +409,7 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
-
+        validateProblemStatementLength(problemStatement);
         String oldProblemStatement = programmingExercise.getProblemStatement();
         // Trim the problem statement and convert whitespace-only strings to null
         String trimmedProblemStatement = problemStatement != null ? problemStatement.trim() : null;
@@ -495,6 +498,12 @@ public class ProgrammingExerciseCreationUpdateService {
                     return false;
                 }
             }
+        }
+    }
+
+    private void validateProblemStatementLength(@Nullable String problemStatement) {
+        if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("The problem statement must not exceed 20000 characters", "ProgrammingExercise", "problemStatementTooLong");
         }
     }
 }
