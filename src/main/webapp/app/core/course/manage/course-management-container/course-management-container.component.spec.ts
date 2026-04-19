@@ -347,6 +347,7 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.tutorialGroupEnabled = true;
         const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
@@ -365,6 +366,22 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
     });
+    it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
+        component.course.set({
+            ...course1,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            tutorialGroupsConfiguration: {},
+        });
+        component.lectureEnabled = true;
+        component.atlasEnabled = true;
+        // tutorialGroupEnabled defaults to false (module feature disabled)
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeUndefined();
+    });
+
     it('should not include sidebar items for disabled features for non-instructors', async () => {
         const courseWithDisabledFeatures = {
             ...course1,

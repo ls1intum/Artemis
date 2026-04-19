@@ -397,7 +397,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private addTutorialGroupsItem(currentCourse: Course, isInstructor = false) {
         const tutorialGroupsItem: SidebarItem[] = [];
-        if (currentCourse.tutorialGroupsConfiguration || isInstructor) {
+        if (this.tutorialGroupEnabled && (currentCourse.tutorialGroupsConfiguration || isInstructor)) {
             tutorialGroupsItem.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
         return tutorialGroupsItem;
