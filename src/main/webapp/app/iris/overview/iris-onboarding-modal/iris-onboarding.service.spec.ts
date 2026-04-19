@@ -237,19 +237,27 @@ describe('IrisOnboardingService', () => {
 
         it('should open the modal when the user has zero Iris sessions', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
-            // Allow the async session-count gate to resolve before the dialog is opened.
-            await Promise.resolve();
-            await Promise.resolve();
+            // Wait until the async session-count gate resolves and the dialog is opened.
+            await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();
             const result = await resultPromise;
 
             expect(dialogService.open).toHaveBeenCalledOnce();
             expect(result).toEqual({ action: 'finish' });
+        });
+
+        it('should skip opening when the user has zero sessions but nonzero messages', async () => {
+            vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 1 }));
+
+            const result = await service.showOnboardingIfNeeded(() => true);
+
+            expect(result).toBeUndefined();
+            expect(dialogService.open).not.toHaveBeenCalled();
         });
 
         it('should skip opening when the session-count request fails (fail-closed)', async () => {
