@@ -1,5 +1,5 @@
 import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,6 +14,10 @@ export interface ColumnDef<T> {
     sort?: boolean;
     filter?: boolean;
     filterType?: string;
+    /** Pin this column so it stays visible while the table scrolls horizontally. Requires `scrollable: true` in the table options. */
+    frozen?: boolean;
+    /** Which side the frozen column sticks to. Only used when `frozen` is true. Default: 'left'. */
+    alignFrozen?: 'left' | 'right';
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
     templateRef?: TemplateRef<{ $implicit: CellRendererParams<T> }>;
     cellRenderer?: Type<unknown>;
@@ -57,6 +61,10 @@ export interface TableConfig {
     scrollable: boolean;
     /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
     scrollHeight: string | undefined;
+    /** Freeze the implicit row-actions column to the right edge. Requires `scrollable: true`. Default: false. */
+    rowActionsFrozen: boolean;
+    /** Alignment of the table actions column. Default: 'right'. */
+    tableActionsAlignment: 'left' | 'right' | undefined;
 }
 
 /**
@@ -81,6 +89,8 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
     scrollable: false,
     scrollHeight: undefined,
+    rowActionsFrozen: false,
+    tableActionsAlignment: 'right',
 };
 
 @Component({
@@ -89,6 +99,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TableViewComponent<T> {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
@@ -112,6 +123,7 @@ export class TableViewComponent<T> {
     onRowSelect = output<T | T[] | undefined>();
 
     dt = viewChild.required<Table>('dt');
+    private searchFilter = viewChild(SearchFilterComponent);
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -140,6 +152,8 @@ export class TableViewComponent<T> {
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
+            rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
+            tableActionsAlignment: opts.tableActionsAlignment ?? DEFAULT_TABLE_CONFIG.tableActionsAlignment,
         };
         return tableConfig;
     });
@@ -195,5 +209,12 @@ export class TableViewComponent<T> {
     pageChange(event: TablePageEvent): void {
         this.currentPageSizeOverride.set(event.rows);
         this.currentFirst.set(event.first);
+    }
+
+    /** Resets search, pagination, and page-size override, then fires a fresh lazy load. */
+    reset(): void {
+        this.currentFirst.set(0);
+        this.currentPageSizeOverride.set(undefined);
+        this.searchFilter()?.resetSearchValue();
     }
 }
