@@ -34,7 +34,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -158,7 +158,7 @@ describe('FileUploadSubmissionComponent', () => {
                     imports: [
                         HeaderParticipationPageComponent,
                         ResizeableContainerComponent,
-                        UnifiedFeedbackComponent,
+                        AdditionalFeedbackComponent,
                         RatingComponent,
                         ComplaintsStudentViewComponent,
                         ButtonComponent,
@@ -171,7 +171,7 @@ describe('FileUploadSubmissionComponent', () => {
                     imports: [
                         MockComponent(HeaderParticipationPageComponent),
                         MockComponent(ResizeableContainerComponent),
-                        MockComponent(UnifiedFeedbackComponent),
+                        MockComponent(AdditionalFeedbackComponent),
                         MockComponent(RatingComponent),
                         MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ButtonComponent),
