@@ -16,7 +16,7 @@
     --secondary: #999;
     --info: #58a6ff;
 
-    background: var(--body-bg, #1e1e1e);
+    /* Intentionally no background; the host owns the backdrop. Standalone docs get one via body.artemis-ssr-body--dark. */
     color: var(--body-color, #e0e0e0);
 }
 
