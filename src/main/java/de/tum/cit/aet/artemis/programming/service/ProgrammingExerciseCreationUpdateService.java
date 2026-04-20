@@ -103,7 +103,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 20000;
+    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
