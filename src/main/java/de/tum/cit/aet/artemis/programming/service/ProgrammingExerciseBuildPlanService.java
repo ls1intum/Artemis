@@ -100,23 +100,10 @@ public class ProgrammingExerciseBuildPlanService {
 
         var buildConfig = programmingExercise.getBuildConfig();
 
-        Optional<BuildPlanPhasesDTO> existingPlan = buildConfig.getBuildPlanPhases();
-        List<BuildPhaseDTO> phases = existingPlan.map(BuildPlanPhasesDTO::phases).orElse(null);
-        String dockerImage = existingPlan.map(BuildPlanPhasesDTO::dockerImage).orElse(null);
-
-        boolean planComplete = phases != null && dockerImage != null;
-        if (planComplete) {
-            return;
-        }
-
         // augment with default template or values
         if (buildPhasesTemplateService.isPresent()) {
-            if (phases == null) {
-                phases = buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise);
-            }
-            if (dockerImage == null) {
-                dockerImage = buildPhasesTemplateService.orElseThrow().getDefaultDockerImageFor(programmingExercise);
-            }
+            final List<BuildPhaseDTO> phases = buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise);
+            final String dockerImage = buildPhasesTemplateService.orElseThrow().getDefaultDockerImageFor(programmingExercise);
 
             final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
             buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());

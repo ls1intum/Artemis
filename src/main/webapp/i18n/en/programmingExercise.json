@@ -817,7 +817,6 @@
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "customizeBuildPlanTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
-            "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
             "commitInfo": {

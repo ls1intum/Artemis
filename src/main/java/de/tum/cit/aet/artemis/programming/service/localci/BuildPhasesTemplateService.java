@@ -19,7 +19,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
@@ -99,11 +98,7 @@ public class BuildPhasesTemplateService {
      * @throws IOException If there is an error reading the YAML content
      */
     private static List<BuildPhaseDTO> readBuildPhases(String yaml) throws IOException {
-        SimpleModule module = new SimpleModule();
-        yamlMapper.registerModule(module);
-
         CollectionType listOfBuildPhaseDTOType = yamlMapper.getTypeFactory().constructCollectionType(List.class, BuildPhaseDTO.class);
-
         return yamlMapper.readValue(yaml, listOfBuildPhaseDTOType);
     }
 

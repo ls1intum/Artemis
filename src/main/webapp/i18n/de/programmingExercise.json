@@ -816,8 +816,7 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "customizeBuildPlanTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
-            "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
+            "customizeBuildPlanTooltip": "Aktiviere diese Option, um das Docker-Image und das Build-Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker-Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
             "commitInfo": {
