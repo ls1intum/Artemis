@@ -382,6 +382,11 @@ public class TutorialGroup extends DomainObject {
         this.setRegistrations(null);
         this.setTeachingAssistant(null);
         this.setCourse(null);
+        this.setNumberOfRegisteredUsers(null);
+        this.setTeachingAssistantName(null);
+        this.setTeachingAssistantId(null);
+        this.setTeachingAssistantImageUrl(null);
+        this.setCourseTitle(null);
     }
 
     /**
