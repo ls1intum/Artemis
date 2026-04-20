@@ -1586,7 +1586,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     it('should mark the problem section as invalid when problem statement exceeds max length', () => {
         comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-        comp.programmingExercise.problemStatement = 'a'.repeat(20001);
+        comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
 
         comp.calculateFormStatusSections();
 
