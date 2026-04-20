@@ -164,7 +164,8 @@ export class AthenaService {
 
                     if (referenceId) {
                         feedback.type = FeedbackType.AUTOMATIC;
-                        feedback.text = suggestion.description;
+                        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}${suggestion.title}`;
+                        feedback.detailText = suggestion.description;
                         feedback.reference = suggestion.reference;
                         feedback.referenceId = referenceId;
                         feedback.referenceType = referenceType;

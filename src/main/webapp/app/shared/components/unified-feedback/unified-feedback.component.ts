@@ -3,7 +3,12 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+} from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -105,9 +110,24 @@ export class UnifiedFeedbackComponent {
         return this.feedbackTypeConfigs[this.inferredType()].alertClass;
     });
 
+    private stripFeedbackSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
+    }
+
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
-            return feedback.text;
+            if (feedback.text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+                return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
+            }
+            if (Feedback.isFeedbackSuggestion(feedback)) {
+                return this.stripFeedbackSuggestionPrefix(feedback.text);
+            }
+            return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
         }
 
         if (this.assessmentsNames() && feedback.referenceId) {
