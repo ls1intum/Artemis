@@ -56,5 +56,5 @@ export const PACKAGE_NAME_PATTERN_FOR_GO =
 // Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
 export const PACKAGE_NAME_PATTERN_FOR_DART =
     '^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)[a-z_][a-z0-9_]*$';
-/** Maximum programming exercise problem statement character length: 20.000 **/
-export const MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH = 20 * 1000;
+/** Maximum programming exercise problem statement character length: 100.000 **/
+export const MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH = 100 * 1000;
