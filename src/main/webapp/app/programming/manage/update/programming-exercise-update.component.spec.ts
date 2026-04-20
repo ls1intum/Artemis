@@ -96,7 +96,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
-                MockProvider(ExerciseEditorSyncService),
+                { provide: ExerciseEditorSyncService, useValue: { reconnected$: of(), connect: jest.fn(), disconnect: jest.fn() } },
                 MockProvider(ExerciseMetadataSyncService),
                 {
                     provide: ProblemStatementSyncService,
