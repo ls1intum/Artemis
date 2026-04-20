@@ -52,33 +52,37 @@
                     class="border border-1 rounded-4 overflow-hidden flex-grow-1 h-100"
                     style="height: 100%; min-height: 0"
                 >
+                    <ng-template #header>
+                        <tr>
+                            <th style="min-width: 12rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.studentDetails"></span>
+                            </th>
+                            <th style="min-width: 8rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.matriculationNumber"></span>
+                            </th>
+                            <th pFrozenColumn style="min-width: 7rem">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.actions"></span>
+                            </th>
+                        </tr>
+                    </ng-template>
                     <ng-template pTemplate="body" let-student>
                         <tr>
-                            <td style="min-width: 10rem">
+                            <td style="min-width: 12rem">
                                 <div class="d-flex flex-column gap-1">
                                     <div class="d-flex align-items-center gap-1">
                                         <i class="pi pi-id-card text-body-secondary"></i>
                                         <span class="fw-semibold text-truncate">{{ student.name || '-' }}</span>
                                     </div>
                                     <div class="d-flex align-items-center gap-1">
-                                        <i class="pi pi-hashtag text-body-secondary"></i>
-                                        <span class="text-body-secondary text-truncate">{{ student.visibleRegistrationNumber || '-' }}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td style="min-width: 14rem">
-                                <div class="d-flex flex-column gap-1">
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="pi pi-sign-in text-body-secondary"></i>
+                                        <i class="pi pi-user text-body-secondary"></i>
                                         <span class="text-body-secondary text-truncate">{{ student.login || '-' }}</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="pi pi-envelope text-body-secondary"></i>
-                                        <span class="text-body-secondary text-truncate">{{ student.email || '-' }}</span>
-                                    </div>
                                 </div>
                             </td>
-                            <td alignFrozen="right" pFrozenColumn style="min-width: 8rem" class="text-end">
+                            <td style="min-width: 8rem">
+                                <span>{{ student.visibleRegistrationNumber || '-' }}</span>
+                            </td>
+                            <td alignFrozen="right" pFrozenColumn style="min-width: 7rem">
                                 <button
                                     pButton
                                     type="button"
