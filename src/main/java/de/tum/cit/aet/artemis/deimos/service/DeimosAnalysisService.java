@@ -3,10 +3,6 @@ package de.tum.cit.aet.artemis.deimos.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +11,6 @@ import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -52,9 +47,6 @@ public class DeimosAnalysisService {
 
     private static final String USER_PROMPT_PATH = "prompts/deimos/analyze_submission_user.st";
 
-    @Value("${artemis.deimos.debug.dump-prompts-dir:}")
-    private String dumpPromptsDir;
-
     public DeimosAnalysisService(ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
             DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, RepositoryService repositoryService, GitService gitService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -82,7 +74,6 @@ public class DeimosAnalysisService {
                 }
 
                 DeimosLlmRequest request = buildPrompt(participationId, programmingParticipation);
-                dumpPromptIfEnabled(runId, request);
                 DeimosLlmResponse response = deimosLlmClient.analyze(request);
                 analyzedParticipations.add(new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, response.malicious(), response.rationale()));
 
@@ -109,22 +100,6 @@ public class DeimosAnalysisService {
         String systemPrompt = deimosPromptTemplateService.render(SYSTEM_PROMPT_PATH, Map.of());
         String userPrompt = deimosPromptTemplateService.render(USER_PROMPT_PATH, Map.of("participationId", String.valueOf(participationId), "commitHistory", commitHistory));
         return new DeimosLlmRequest(participationId, systemPrompt, userPrompt);
-    }
-
-    private void dumpPromptIfEnabled(String runId, DeimosLlmRequest request) {
-        if (dumpPromptsDir == null || dumpPromptsDir.isBlank()) {
-            return;
-        }
-        try {
-            Path dir = Path.of(dumpPromptsDir, runId);
-            Files.createDirectories(dir);
-            String filename = "participation_" + request.participationId() + ".txt";
-            String content = "=== SYSTEM PROMPT ===\n" + request.systemPrompt() + "\n\n=== USER PROMPT ===\n" + request.userPrompt() + "\n";
-            Files.writeString(dir.resolve(filename), content, StandardCharsets.UTF_8);
-        }
-        catch (IOException ex) {
-            log.warn("Failed to dump Deimos prompt for participation {}", request.participationId(), ex);
-        }
     }
 
     private String buildParticipationCommitHistory(long participationId, ProgrammingExerciseParticipation participation) {
