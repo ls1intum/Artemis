@@ -94,10 +94,13 @@ export class IrisOnboardingService {
             return undefined;
         }
 
-        // Server-side gate: skip onboarding for students who have already used Iris in any
-        // course. Fail-closed on error so a transient 500 never re-shows the tour to a
-        // returning student. Runs last so earlier cheap gates can short-circuit the request.
-        if (await this.hasExistingIrisSessions()) {
+        // Server-side gate: skip onboarding for students who have already exchanged messages
+        // with Iris in any course. We gate on message count rather than session count because
+        // opening the chat auto-creates an empty session server-side, which would otherwise
+        // suppress the tour for the very new users it targets. Fail-closed on error so a
+        // transient 500 never re-shows the tour to a returning student. Runs last so earlier
+        // cheap gates can short-circuit the request.
+        if (await this.hasExistingIrisMessages()) {
             return undefined;
         }
 
@@ -110,10 +113,10 @@ export class IrisOnboardingService {
         return this.openOnboardingModal();
     }
 
-    private async hasExistingIrisSessions(): Promise<boolean> {
+    private async hasExistingIrisMessages(): Promise<boolean> {
         try {
             const counts = await firstValueFrom(this.chatHttpService.getSessionAndMessageCount());
-            return (counts?.sessions ?? 0) > 0 || (counts?.messages ?? 0) > 0;
+            return (counts?.messages ?? 0) > 0;
         } catch {
             return true;
         }

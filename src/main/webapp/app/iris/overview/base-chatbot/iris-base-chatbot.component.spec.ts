@@ -162,8 +162,8 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
     });
 
-    it('should trigger onboarding flow after view init', () => {
-        component.ngAfterViewInit();
+    it('should trigger onboarding flow once gating signals are satisfied', () => {
+        // The effect runs during change detection, which already ran in beforeEach.
         expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
     });
 

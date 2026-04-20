@@ -226,7 +226,7 @@ describe('IrisOnboardingService', () => {
             expect(dialogService.open).not.toHaveBeenCalled();
         });
 
-        it('should skip opening when the user already has Iris sessions', async () => {
+        it('should skip opening when the user already has Iris messages', async () => {
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 3, messages: 10 }));
 
             const result = await service.showOnboardingIfNeeded(() => true);
@@ -235,13 +235,30 @@ describe('IrisOnboardingService', () => {
             expect(dialogService.open).not.toHaveBeenCalled();
         });
 
-        it('should open the modal when the user has zero Iris sessions', async () => {
+        it('should open the modal when the user has zero Iris messages', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
             const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
             // Wait until the async session-count gate resolves and the dialog is opened.
+            await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
+            closeSubject.next({ action: 'finish' });
+            closeSubject.complete();
+            const result = await resultPromise;
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(result).toEqual({ action: 'finish' });
+        });
+
+        it('should open the modal for a brand-new user whose chat has auto-created an empty session', async () => {
+            // Regression guard: opening the chat auto-creates an empty session server-side,
+            // so new users land here with sessions=1, messages=0. The tour must still open.
+            const closeSubject = new Subject<OnboardingResult | undefined>();
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 1, messages: 0 }));
+
+            const resultPromise = service.showOnboardingIfNeeded(() => true);
             await vi.waitFor(() => expect(openSpy).toHaveBeenCalled());
             closeSubject.next({ action: 'finish' });
             closeSubject.complete();

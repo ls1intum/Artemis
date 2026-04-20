@@ -302,6 +302,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
+    // Ensures the onboarding tour is offered at most once per mount even though
+    // the triggering effect re-evaluates each time its gating signals change.
+    private onboardingTriggerRequested = false;
     readonly animatingMessageIds = signal(new Set<number>());
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
@@ -651,6 +654,23 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             untracked(() => this.interpolatedLabels.set(labels));
         });
+
+        // Kick off the onboarding tour the moment all gating signals agree it's appropriate.
+        // Brand-new users mount this component with isAIEnabled() === false (they have not
+        // picked an LLM yet). A one-shot call from ngAfterViewInit would evaluate too early
+        // and skip the tour forever. This effect re-fires after acceptPermission() flips
+        // userAccepted, then guards against re-entry with onboardingTriggerRequested.
+        effect(() => {
+            const ready = this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+            if (!ready || this.onboardingTriggerRequested) {
+                return;
+            }
+            this.onboardingTriggerRequested = true;
+            untracked(() => {
+                const shouldShowOnboarding = () => this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+                void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
+            });
+        });
     }
 
     /**
@@ -664,9 +684,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-
-        const shouldShowOnboarding = () => this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
-        void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
     }
 
     onContextChangedDuringOnboarding(): void {
