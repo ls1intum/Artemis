@@ -24,6 +24,7 @@
         "@angular/platform-browser-dynamic": "21.2.9",
         "@angular/router": "21.2.9",
         "@angular/service-worker": "21.2.9",
+        "@angular/youtube-player": "21.2.7",
         "@ctrl/ngx-emoji-mart": "9.3.0",
         "@danielmoncada/angular-datetime-picker": "21.0.0",
         "@fingerprintjs/fingerprintjs": "5.2.0",

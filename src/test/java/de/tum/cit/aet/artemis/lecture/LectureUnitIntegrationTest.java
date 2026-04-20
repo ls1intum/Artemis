@@ -329,7 +329,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
         processingState.setPhase(ProcessingPhase.FAILED);
         processingState.setRetryCount(3);
-        processingState.setErrorKey("artemisApp.processing.error.transcriptionFailed");
+        processingState.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
         lectureUnitProcessingStateRepository.save(processingState);
 
         // Call the retry processing endpoint - it should succeed (return 200)
@@ -451,7 +451,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
         processingState.setPhase(ProcessingPhase.FAILED);
         processingState.setRetryCount(3);
-        processingState.setErrorKey("artemisApp.processing.error.transcriptionFailed");
+        processingState.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
         lectureUnitProcessingStateRepository.save(processingState);
 
         // Call the bulk endpoint
@@ -464,7 +464,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
         assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.FAILED);
         assertThat(status.retryCount()).isEqualTo(3);
-        assertThat(status.processingErrorKey()).isEqualTo("artemisApp.processing.error.transcriptionFailed");
+        assertThat(status.processingErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeLive");
     }
 
     @Test
