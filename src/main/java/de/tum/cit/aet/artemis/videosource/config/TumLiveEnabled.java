@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tumlive.config;
+package de.tum.cit.aet.artemis.videosource.config;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
