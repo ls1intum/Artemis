@@ -1013,6 +1013,72 @@ describe('ChecklistPanelComponent', () => {
             expect(successSpy).not.toHaveBeenCalled();
         });
 
+        it('should unlink a linked competency when it is discarded individually', () => {
+            // Set up: Loops (index 0) is already linked via matchedCourseCompetencyId=1
+            const loopsLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 1, title: 'Loops' }),
+                fixture.componentRef.instance.exercise(),
+                HIGH_COMPETENCY_LINK_WEIGHT,
+            );
+            fixture.componentRef.setInput('competencyLinks', [loopsLink]);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.discardCompetency(0);
+
+            expect(emitSpy).toHaveBeenCalledWith([]);
+        });
+
+        it('should not emit competencyLinksChange when discarding an unlinked competency', () => {
+            // Recursion (index 1) has no matchedCourseCompetencyId and no matching link
+            fixture.componentRef.setInput('competencyLinks', []);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            component.discardCompetency(1);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should unlink linked competencies when discarding multiple selected', () => {
+            // Loops (index 0) is linked via id, Sorting (index 2) is linked via title
+            const loopsLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 1, title: 'Loops' }),
+                fixture.componentRef.instance.exercise(),
+                HIGH_COMPETENCY_LINK_WEIGHT,
+            );
+            const sortingLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 5, title: 'Sorting' }),
+                fixture.componentRef.instance.exercise(),
+                LOW_COMPETENCY_LINK_WEIGHT,
+            );
+            const recursionLink = new CompetencyExerciseLink(
+                Object.assign(new Competency(), { id: 9, title: 'Recursion' }),
+                fixture.componentRef.instance.exercise(),
+                MEDIUM_COMPETENCY_LINK_WEIGHT,
+            );
+            fixture.componentRef.setInput('competencyLinks', [loopsLink, sortingLink, recursionLink]);
+            const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
+
+            // Discard Loops (0) and Sorting (2), keep Recursion (1)
+            component.selectedCompetencyIndices.set(new Set([0, 2]));
+            component.discardSelectedCompetencies();
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
+            expect(emittedLinks).toHaveLength(1);
+            expect(emittedLinks[0].competency?.title).toBe('Recursion');
+        });
+
+        it('should update linkedCompetencyTitles when a linked competency is discarded', () => {
+            fixture.componentRef.setInput('competencyLinks', [
+                new CompetencyExerciseLink(Object.assign(new Competency(), { id: 1, title: 'Loops' }), fixture.componentRef.instance.exercise(), HIGH_COMPETENCY_LINK_WEIGHT),
+            ]);
+            component.linkedCompetencyTitles.set(new Set(['loops']));
+
+            component.discardCompetency(0);
+
+            expect(component.linkedCompetencyTitles().has('loops')).toBeFalsy();
+        });
+
         it('should apply only selected competencies', async () => {
             const mockCourseCompetency: CourseCompetency = Object.assign(new Competency(), {
                 id: 1,

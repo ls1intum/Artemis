@@ -103,6 +103,8 @@ export class ChecklistPanelComponent {
     exercise = input.required<ProgrammingExercise>();
     courseId = input.required<number>();
     problemStatement = input.required<string>();
+    /** Current declared difficulty of the exercise, passed as a primitive so the panel reacts even when the exercise object is mutated in-place. */
+    declaredDifficulty = input<string | undefined>(undefined);
     /** Authoritative list of competency links for this exercise, kept in sync by the parent. */
     competencyLinks = input<CompetencyExerciseLink[]>([]);
 
@@ -142,6 +144,13 @@ export class ChecklistPanelComponent {
      */
     private readonly effectiveProblemStatement = computed(() => this.latestProblemStatement() ?? this.problemStatement());
 
+    /**
+     * Locally tracked declared difficulty. Initialized from exercise().difficulty and updated
+     * immediately when the instructor adapts difficulty via the checklist panel, without waiting
+     * for the exercise input reference to change.
+     */
+    localDeclaredDifficulty = signal<string | undefined>(undefined);
+
     constructor() {
         /**
          * Clear latestProblemStatement once the input signal catches up to the
@@ -153,6 +162,17 @@ export class ChecklistPanelComponent {
             if (latest !== undefined && inputPS === latest) {
                 untracked(() => this.latestProblemStatement.set(undefined));
             }
+        });
+
+        /**
+         * Sync localDeclaredDifficulty from the dedicated declaredDifficulty input whenever
+         * it changes. Because it is a primitive string, Angular always updates the signal by
+         * value — even when the exercise object is mutated in-place.
+         * Fallback to exercise().difficulty to handle the initial render.
+         */
+        effect(() => {
+            const difficulty = this.declaredDifficulty() ?? this.exercise().difficulty;
+            untracked(() => this.localDeclaredDifficulty.set(difficulty));
         });
 
         /**
@@ -176,13 +196,13 @@ export class ChecklistPanelComponent {
     });
 
     /**
-     * Dynamically computes the difficulty delta from the current declared difficulty and the AI-suggested
-     * difficulty, so the "vs. Declared" display reacts immediately when the instructor changes the exercise
-     * difficulty without requiring a new analysis.
+     * Dynamically computes the difficulty delta from the locally tracked declared difficulty
+     * and the AI-suggested difficulty. Reacts immediately when the instructor adapts difficulty
+     * via the checklist panel or when the exercise input changes reference.
      */
     readonly effectiveDelta = computed((): DifficultyAssessment.DeltaEnum => {
         const suggested = this.analysisResult()?.difficultyAssessment?.suggested;
-        const declared = this.exercise().difficulty;
+        const declared = this.localDeclaredDifficulty();
         const RANKS: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
         const s = suggested !== undefined ? RANKS[suggested] : undefined;
         const d = declared !== undefined ? RANKS[declared] : undefined;
@@ -678,6 +698,10 @@ export class ChecklistPanelComponent {
      * Discards a single inferred competency from the list without any server action.
      */
     discardCompetency(index: number) {
+        const toDiscard = this.analysisResult()?.inferredCompetencies?.[index];
+        if (toDiscard) {
+            this.unlinkDiscardedCompetencies([toDiscard]);
+        }
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
         this.selectedCompetencyIndices.update((current) => {
             const updated = new Set<number>();
@@ -705,6 +729,9 @@ export class ChecklistPanelComponent {
         const selected = this.selectedCompetencyIndices();
         if (selected.size === 0) return;
 
+        const allInferred = this.analysisResult()?.inferredCompetencies ?? [];
+        const toDiscard = allInferred.filter((_, i) => selected.has(i));
+        this.unlinkDiscardedCompetencies(toDiscard);
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedCompetencyIndices.set(new Set());
         // Reindex expanded competencies: remove discarded, shift down indices above removed ones
@@ -768,6 +795,7 @@ export class ChecklistPanelComponent {
                         }),
                     }),
                 );
+                this.localDeclaredDifficulty.set(targetDifficulty);
                 this.difficultyChange.emit(targetDifficulty);
             },
         );
@@ -953,6 +981,50 @@ export class ChecklistPanelComponent {
         }
 
         return { allLinks, newlyLinked, toCreate, toCreateInferred, linkedIds };
+    }
+
+    /**
+     * Removes exercise competency links for the given discarded inferred competencies and
+     * emits the updated link list. Also cleans up tracking sets.
+     */
+    private unlinkDiscardedCompetencies(discarded: InferredCompetency[]): void {
+        if (discarded.length === 0) return;
+
+        // Collect the IDs and titles of course competencies that should be unlinked
+        const idsToRemove = new Set<number>();
+        const titlesToRemove = new Set<string>();
+        for (const comp of discarded) {
+            const matchId = comp.matchedCourseCompetencyId;
+            if (matchId != null && matchId > 0) {
+                idsToRemove.add(matchId);
+            }
+            const title = (comp.competencyTitle ?? '').toLowerCase().trim();
+            if (title) {
+                titlesToRemove.add(title);
+            }
+        }
+
+        // Filter out those links from the current authoritative list
+        const updatedLinks = this.competencyLinks().filter((link) => {
+            const linkId = link.competency?.id;
+            if (linkId != null && idsToRemove.has(linkId)) return false;
+            const linkTitle = (link.competency?.title ?? '').toLowerCase().trim();
+            return !titlesToRemove.has(linkTitle);
+        });
+
+        if (updatedLinks.length !== this.competencyLinks().length) {
+            this.competencyLinksChange.emit(updatedLinks);
+            this.linkedCompetencyTitles.update((current) => {
+                const updated = new Set(current);
+                for (const t of titlesToRemove) updated.delete(t);
+                return updated;
+            });
+            this.createdCompetencyTitles.update((current) => {
+                const updated = new Set(current);
+                for (const t of titlesToRemove) updated.delete(t);
+                return updated;
+            });
+        }
     }
 
     /**

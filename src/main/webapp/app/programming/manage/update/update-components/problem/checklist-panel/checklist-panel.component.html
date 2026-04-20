@@ -486,23 +486,22 @@
                     </div>
                     <div>
                         <span class="difficulty-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
+                        @if (localDeclaredDifficulty()) {
+                            <p-tag [value]="localDeclaredDifficulty()!" [severity]="getDifficultySeverity(localDeclaredDifficulty())" />
+                        }
                         <fa-icon [icon]="getDeltaIcon(effectiveDelta())" [ngClass]="getDeltaClass(effectiveDelta())" />
                         <span [ngClass]="getDeltaClass(effectiveDelta())">{{ getDeltaLabel(effectiveDelta()) }}</span>
                     </div>
                 </div>
                 <div class="difficulty-counts">
-                    @if (result.difficultyAssessment.taskCount !== null) {
-                        <p-tag severity="secondary">
-                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
-                            {{ result.difficultyAssessment.taskCount }}
-                        </p-tag>
-                    }
-                    @if (result.difficultyAssessment.testCount !== null) {
-                        <p-tag severity="secondary">
-                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
-                            {{ result.difficultyAssessment.testCount }}
-                        </p-tag>
-                    }
+                    <p-tag severity="secondary">
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
+                        {{ localTaskTestCounts().tasks }}
+                    </p-tag>
+                    <p-tag severity="secondary">
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
+                        {{ localTaskTestCounts().tests }}
+                    </p-tag>
                 </div>
                 <p class="difficulty-reasoning">{{ result.difficultyAssessment.reasoning }}</p>
                 <div class="difficulty-adapt">
@@ -514,10 +513,10 @@
                             size="small"
                             class="difficulty-chip"
                             [ngClass]="{
-                                'difficulty-chip--current': exercise()?.difficulty === level,
-                                'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
+                                'difficulty-chip--current': localDeclaredDifficulty() === level,
+                                'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && localDeclaredDifficulty() !== level,
                             }"
-                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || exercise()?.difficulty === level"
+                            [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || localDeclaredDifficulty() === level"
                             (click)="adaptDifficulty(level)"
                         >
                             @if (isActionLoading('adapt-' + level)) {
@@ -525,7 +524,7 @@
                             } @else {
                                 {{ 'artemisApp.exercise.' + level.toLowerCase() | artemisTranslate }}
                             }
-                            @if (exercise()?.difficulty === level) {
+                            @if (localDeclaredDifficulty() === level) {
                                 <small jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.current">(current)</small>
                             }
                         </button>
