@@ -52,6 +52,10 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
                 if (activePost) {
                     this.post = activePost;
                     this.createdAnswerPost = this.createEmptyAnswerPost();
+                    // After the DOM renders the new post, pin the current pixel width
+                    // so that removing or replacing content (e.g. rejecting / editing an
+                    // Iris reply) never changes the sidebar width mid-session.
+                    setTimeout(() => this.lockWidth(), 0);
                 }
             });
         });
@@ -90,19 +94,42 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
      * Also ensures that the tooltip is closed to prevent UI clutter.
      */
     toggleExpand(): void {
-        if (this.threadContainer()) {
-            this.threadContainer()!.nativeElement.style.width = '';
+        const el = this.threadContainer()?.nativeElement;
+        if (el) {
+            el.style.width = '';
         }
         this.isExpanded = !this.isExpanded;
         this.expandTooltip()?.close();
+        if (!this.isExpanded) {
+            setTimeout(() => this.lockWidth(), 0);
+        }
     }
 
     /**
      * Emits the close post thread and resets the open post variable
      */
     closeThread() {
+        const el = this.threadContainer()?.nativeElement;
+        if (el) {
+            el.style.width = '';
+        }
         this.closePostThread.emit();
         this.conversationSelectionState.setOpenPostId(undefined);
+    }
+
+    private lockWidth(): void {
+        const el = this.threadContainer()?.nativeElement;
+        if (!el || el.style.width) {
+            // Already pinned by a previous lock or a user drag — nothing to do.
+            return;
+        }
+        const w = el.getBoundingClientRect().width;
+        if (w > 0) {
+            // Set an explicit pixel width exactly as interact.js does after a manual resize.
+            // This stops flex from shrinking the sidebar when thread content changes
+            // (e.g. an Iris reply is rejected or switched into edit mode).
+            el.style.width = w + 'px';
+        }
     }
 
     private interactable: ReturnType<typeof interact> | undefined;

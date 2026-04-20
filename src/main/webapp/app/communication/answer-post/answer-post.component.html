@@ -24,6 +24,7 @@
                 [isCommunicationPage]="isCommunicationPage()"
                 [lastReadDate]="lastReadDate()"
                 [isDeleted]="isDeleted"
+                [isUnverifiedIris]="isUnverifiedIris"
                 (onUserNameClicked)="onUserNameClicked()"
             />
         </div>
@@ -31,18 +32,65 @@
     @if (!createAnswerPostModal.isInputOpen) {
         <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown">
-                <jhi-posting-content
-                    [content]="posting()?.content"
-                    [isEdited]="!!posting()?.updatedDate"
-                    [author]="posting()?.author"
-                    [posting]="posting()"
-                    [isReply]="true"
-                    [isDeleted]="isDeleted"
-                    [deleteTimerInSeconds]="deleteTimerInSeconds"
-                    (onUndoDeleteEvent)="onDeleteEvent(false)"
-                    (userReferenceClicked)="onUserReferenceClicked($event)"
-                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                />
+                @if (isUnverifiedIris && mayVerify && isEditingIrisReply) {
+                    <div class="iris-edit-area mt-1">
+                        <textarea class="form-control mb-2" rows="4" [(ngModel)]="editedIrisContent" [disabled]="isVerifying"></textarea>
+                        <div class="d-flex gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-success"
+                                (click)="approveAnswer(editedIrisContent)"
+                                [disabled]="isVerifying || !editedIrisContent.trim()"
+                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.saveAndApprove"
+                            ></button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                (click)="cancelEditAnswer()"
+                                [disabled]="isVerifying"
+                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.cancelEdit"
+                            ></button>
+                        </div>
+                    </div>
+                } @else {
+                    <jhi-posting-content
+                        [content]="posting()?.content"
+                        [isEdited]="!!posting()?.updatedDate"
+                        [author]="posting()?.author"
+                        [posting]="posting()"
+                        [isReply]="true"
+                        [isDeleted]="isDeleted"
+                        [deleteTimerInSeconds]="deleteTimerInSeconds"
+                        (onUndoDeleteEvent)="onDeleteEvent(false)"
+                        (userReferenceClicked)="onUserReferenceClicked($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
+                    @if (isUnverifiedIris && mayVerify) {
+                        <div class="iris-verify-actions mt-1 d-flex gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-success"
+                                (click)="approveAnswer()"
+                                [disabled]="isVerifying"
+                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.approve"
+                            ></button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                (click)="editAnswer()"
+                                [disabled]="isVerifying"
+                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.edit"
+                            ></button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                (click)="rejectAnswer()"
+                                [disabled]="isVerifying"
+                                jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.reject"
+                            ></button>
+                        </div>
+                    }
+                }
                 <div class="post-content-padding hover-actions">
                     <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode()"

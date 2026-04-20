@@ -60,6 +60,19 @@
                                 />
                                 <label for="filterToAnsweredOrReacted" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToAnsweredOrReacted"></label>
                             </div>
+                            @if (isAtLeastTutor) {
+                                <div class="col-auto p-0 ps-2">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        formControlName="filterToUnverifiedIris"
+                                        name="filterToUnverifiedIris"
+                                        id="filterToUnverifiedIris"
+                                        (change)="onSelectContext()"
+                                    />
+                                    <label for="filterToUnverifiedIris" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToUnverifiedIris"></label>
+                                </div>
+                            }
                         </div>
                         <!-- sort dropdown -->
                         <div class="d-flex">

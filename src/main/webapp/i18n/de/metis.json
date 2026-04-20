@@ -89,6 +89,7 @@
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
+                "filterToUnverifiedIris": "Iris zu prüfen",
                 "courseFilterExplanation": "{{ title }} (Alle Beiträge)",
                 "filterOptGroups": {
                     "general": "Allgemein",
@@ -166,7 +167,15 @@
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
                 "deleted": "Antwort erfolgreich gelöscht",
-                "deleteAnswer": "Antwort löschen"
+                "deleteAnswer": "Antwort löschen",
+                "unverifiedIris": {
+                    "badge": "Wartet auf Tutorprüfung",
+                    "approve": "Freigeben",
+                    "edit": "Bearbeiten",
+                    "reject": "Ablehnen",
+                    "saveAndApprove": "Speichern & Freigeben",
+                    "cancelEdit": "Abbrechen"
+                }
             },
             "userRoles": {
                 "instructor": "Instruktor",
