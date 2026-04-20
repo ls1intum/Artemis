@@ -359,7 +359,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateProblemStatement_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
         addInstructorToCourse();
 
-        String tooLongProblemStatement = "a".repeat(20001);
+        String tooLongProblemStatement = "a".repeat(100_001);
 
         request.patchWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement", tooLongProblemStatement, String.class,
                 HttpStatus.BAD_REQUEST, MediaType.TEXT_PLAIN);
