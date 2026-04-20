@@ -124,7 +124,7 @@ public class IrisChatSessionResource {
             throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var session = irisChatSessionService.createSession(courseId, mode, entityId, user);
-        var uriString = "/api/iris/sessions/" + session.getId();
+        var uriString = "/api/iris/chat/" + courseId + "/session/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 

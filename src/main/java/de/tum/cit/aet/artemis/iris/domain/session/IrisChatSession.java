@@ -40,6 +40,9 @@ public class IrisChatSession extends IrisSession {
     }
 
     public IrisChatSession(Exercise exercise, User user, IrisChatMode chatMode) {
+        if (chatMode != IrisChatMode.PROGRAMMING_EXERCISE_CHAT && chatMode != IrisChatMode.TEXT_EXERCISE_CHAT) {
+            throw new IllegalArgumentException("Exercise-based IrisChatSession requires an exercise chat mode (PROGRAMMING_EXERCISE_CHAT or TEXT_EXERCISE_CHAT), got: " + chatMode);
+        }
         setUserId(user.getId());
         this.entityId = exercise.getId();
         this.courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();

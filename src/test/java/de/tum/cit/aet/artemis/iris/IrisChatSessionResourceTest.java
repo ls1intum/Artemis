@@ -283,8 +283,9 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
         URI location = request.post(createUrl(mode, entityId), null, HttpStatus.CREATED, MediaType.APPLICATION_JSON, true, null);
 
         assertThat(location).isNotNull();
-        assertThat(location.getPath()).matches("/api/iris/sessions/\\d+");
-        long createdId = Long.parseLong(location.getPath().substring("/api/iris/sessions/".length()));
+        String path = location.getPath();
+        assertThat(path).matches("/api/iris/chat/" + course.getId() + "/session/\\d+");
+        long createdId = Long.parseLong(path.substring(path.lastIndexOf('/') + 1));
         IrisChatSession persisted = irisChatSessionRepository.findById(createdId).orElseThrow();
         assertThat(persisted.getMode()).isEqualTo(mode);
     }

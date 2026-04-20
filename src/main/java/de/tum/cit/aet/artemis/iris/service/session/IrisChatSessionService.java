@@ -51,10 +51,12 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Unified service for all Iris chat sessions (programming exercise, text exercise, course, lecture).
@@ -279,13 +281,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
-        try {
-            CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings),
-                    Optional.of(submission), Map.of()));
-        }
-        catch (Exception e) {
-            log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
-        }
+        CompletableFuture.runAsync(
+                () -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission), Map.of()))
+                .exceptionally(e -> {
+                    log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
+                    return null;
+                });
     }
 
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
@@ -312,13 +313,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var user = studentParticipation.getStudent().orElseThrow();
                 var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
                 rateLimitService.checkRateLimitElseThrow(session, user);
-                try {
-                    CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
-                            Optional.of(latestSubmission), Map.of()));
-                }
-                catch (Exception e) {
-                    log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
-                }
+                CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
+                        Optional.of(latestSubmission), Map.of())).exceptionally(e -> {
+                            log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
+                            return null;
+                        });
             }
         }
         else {
@@ -368,10 +367,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         return switch (mode) {
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(entityId);
+                validateExerciseMatchesCourseAndMode(exercise, courseId, mode);
                 yield findOrCreateExerciseSession(exercise, user, mode);
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
+                validateLectureBelongsToCourse(lecture, courseId);
                 yield findOrCreateLectureSession(lecture, user);
             }
             case COURSE_CHAT -> findOrCreateCourseSession(course, user);
@@ -396,15 +397,38 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         return switch (mode) {
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
                 var exercise = exerciseRepository.findByIdElseThrow(entityId);
+                validateExerciseMatchesCourseAndMode(exercise, courseId, mode);
                 yield createExerciseSessionInternal(exercise, user, mode);
             }
             case LECTURE_CHAT -> {
                 var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(entityId);
+                validateLectureBelongsToCourse(lecture, courseId);
                 yield createLectureSessionInternal(lecture, user);
             }
             case COURSE_CHAT -> createCourseSessionInternal(course, user);
             default -> throw new IllegalStateException("IrisChatSessionService.createSession does not handle chat mode " + mode);
         };
+    }
+
+    private void validateExerciseMatchesCourseAndMode(Exercise exercise, long courseId, IrisChatMode mode) {
+        var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (exerciseCourse == null || !Objects.equals(exerciseCourse.getId(), courseId)) {
+            throw new ConflictException("Exercise does not belong to the specified course", "Iris", "irisExerciseCourseMismatch");
+        }
+        boolean isProgramming = exercise instanceof ProgrammingExercise;
+        boolean isText = exercise instanceof TextExercise;
+        if (mode == IrisChatMode.PROGRAMMING_EXERCISE_CHAT && !isProgramming) {
+            throw new ConflictException("Exercise type does not match PROGRAMMING_EXERCISE_CHAT mode", "Iris", "irisExerciseModeMismatch");
+        }
+        if (mode == IrisChatMode.TEXT_EXERCISE_CHAT && !isText) {
+            throw new ConflictException("Exercise type does not match TEXT_EXERCISE_CHAT mode", "Iris", "irisExerciseModeMismatch");
+        }
+    }
+
+    private void validateLectureBelongsToCourse(Lecture lecture, long courseId) {
+        if (lecture.getCourse() == null || !Objects.equals(lecture.getCourse().getId(), courseId)) {
+            throw new ConflictException("Lecture does not belong to the specified course", "Iris", "irisLectureCourseMismatch");
+        }
     }
 
     // -------------------------------------------------------------------------
