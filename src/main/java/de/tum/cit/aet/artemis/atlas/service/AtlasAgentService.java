@@ -108,8 +108,8 @@ public class AtlasAgentService {
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManagerService executionPlanStateManagerService,
+            @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${artemis.atlas.chat-model:gpt-4o}") String deploymentName,
+            @Value("${artemis.atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
