@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tumlive.service;
+package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,7 +16,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
-import de.tum.cit.aet.artemis.tumlive.config.TumLiveEnabled;
+import de.tum.cit.aet.artemis.videosource.config.TumLiveEnabled;
 
 @Service
 @Lazy

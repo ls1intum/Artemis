@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 @Component({
@@ -21,6 +21,7 @@ export class LectureUnitComponent implements OnDestroy {
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
 
     private router = inject(Router);
+    private route = inject(ActivatedRoute, { optional: true });
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
     private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -64,7 +65,7 @@ export class LectureUnitComponent implements OnDestroy {
                         this.onCollapse.emit(false);
                     }
 
-                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
+                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS, true);
                 }
                 if (!shouldAutoExpand) {
                     this.autoExpanded = false;
@@ -106,10 +107,35 @@ export class LectureUnitComponent implements OnDestroy {
         this.onShowOriginalVersion.emit();
     }
 
-    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0): void {
+    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0, useDeeplinkTarget = false): void {
         afterNextRender(
             () => {
-                const doScroll = () => this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block });
+                const doScroll = () => {
+                    const queryParams = useDeeplinkTarget ? this.route?.snapshot.queryParams : undefined;
+                    const timestamp = queryParams?.['timestamp'];
+                    const page = queryParams?.['page'];
+
+                    // Scroll to video player if timestamp is provided (deeplinking)
+                    if (timestamp !== undefined) {
+                        const videoPlayer = this.elementRef.nativeElement.querySelector('jhi-video-player');
+                        if (videoPlayer) {
+                            videoPlayer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            return;
+                        }
+                    }
+
+                    // Scroll to PDF viewer if page is provided (deeplinking)
+                    if (page !== undefined) {
+                        const pdfViewer = this.elementRef.nativeElement.querySelector('jhi-pdf-viewer');
+                        if (pdfViewer) {
+                            pdfViewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            return;
+                        }
+                    }
+
+                    // Default: scroll to unit card
+                    this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block });
+                };
                 if (delayMs > 0) {
                     this.scrollTimeoutId = setTimeout(doScroll, delayMs);
                 } else {
