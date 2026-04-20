@@ -80,6 +80,14 @@ export class AttachmentVideoUnitsComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
+
+
+        //const errorMessage = history.state?.error;
+
+        //if (errorMessage) {
+          //  this.alertService.error("ERRRRROOOOOO");
+        //}
+
         this.keyphrases = '';
         this.removedSlidesNumbers = [];
         this.isLoading = true;
@@ -171,7 +179,9 @@ export class AttachmentVideoUnitsComponent implements OnInit {
                     this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
+                    this.alertService.error('Only PDF files are supported for lecture processing.');
+                    this.isLoading = false;
+                    this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString(), 'edit']);
                 },
             });
         }

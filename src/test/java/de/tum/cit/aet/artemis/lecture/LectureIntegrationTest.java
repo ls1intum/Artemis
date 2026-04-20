@@ -55,6 +55,9 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    @Autowired //coloquei isto
+    private org.springframework.test.web.servlet.MockMvc mockMvc;
+
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
     @Autowired
@@ -589,4 +592,5 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lecture.id()).isEqualTo(lecture2.getId());
         assertThat(lecture.isTutorialLecture()).isTrue();
     }
+
 }
