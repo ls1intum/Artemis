@@ -426,7 +426,7 @@ public class ProblemStatementRenderingService {
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-        safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url", "data-result");
+        safelist.addAttributes("div", "class", "data-diagram-id", "data-result");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");

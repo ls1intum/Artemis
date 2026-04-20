@@ -14,7 +14,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProblemStatementRenderRequestDTO(@NotNull @Size(max = 100_000) @Pattern(regexp = "^[^\u0000]*$", message = "markdown must not contain null bytes") String markdown,
         @Nullable @Size(max = 100) List<@NotNull @Valid TestFeedbackInputDTO> testResults, @Nullable @Valid ResultSummaryInputDTO resultSummary,
-        @Nullable @Size(max = 10) String locale, boolean darkMode, boolean includeJs, @Nullable Boolean includeCss) {
+        @Nullable @Size(max = 10) String locale, boolean darkMode, @Nullable Boolean includeJs, @Nullable Boolean includeCss) {
+
+    /** Whether to include the interactive feedback modal JS in the response. Defaults to true if not specified. */
+    public boolean shouldIncludeJs() {
+        return includeJs == null || includeJs;
+    }
 
     /** Whether to include embedded CSS in the response. Defaults to true if not specified. */
     public boolean shouldIncludeCss() {
