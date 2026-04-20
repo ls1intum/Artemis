@@ -243,7 +243,7 @@ class CourseNotificationEmailServiceTest {
             @SuppressWarnings("unchecked")
             Map<String, Object> renderedParameters = (Map<String, Object>) capturedContext.getVariable("parameters");
             String renderedContent = (String) renderedParameters.get("postMarkdownContent");
-            assertThat(renderedContent).contains("<p>", "line1", "<br>", "line2", "</p>");
+            assertThat(renderedContent).isEqualToIgnoringWhitespace("<p>line1<br>line2</p>");
         });
     }
 
