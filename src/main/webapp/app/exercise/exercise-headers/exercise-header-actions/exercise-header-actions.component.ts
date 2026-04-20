@@ -43,14 +43,19 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import {
+    ATHENA_FEEDBACK_REQUEST_LIMIT,
+    RequestFeedbackButtonComponent,
+    countSuccessfulAthenaFeedbackRequests,
+} from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
@@ -107,6 +112,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
+    private readonly exerciseService = inject(ExerciseService);
     private readonly profileService = inject(ProfileService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
@@ -503,7 +509,26 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        this.submitPopoverRef()?.open();
+        const exerciseId = this.exercise().id;
+        if (!exerciseId) {
+            this.submitPopoverRef()?.open();
+            return;
+        }
+        this.exerciseService.getExerciseDetails(exerciseId).subscribe({
+            next: (response: HttpResponse<ExerciseDetailsType>) => {
+                const participations = response.body?.exercise.studentParticipations ?? [];
+                const practice = this.participationService.getSpecificStudentParticipation(participations, true);
+                const graded = this.participationService.getSpecificStudentParticipation(participations, false);
+                const participation = practice ?? graded;
+                if (countSuccessfulAthenaFeedbackRequests(participation) >= ATHENA_FEEDBACK_REQUEST_LIMIT) {
+                    return;
+                }
+                this.submitPopoverRef()?.open();
+            },
+            error: () => {
+                this.submitPopoverRef()?.open();
+            },
+        });
     }
 
     @HostListener('document:click', ['$event'])

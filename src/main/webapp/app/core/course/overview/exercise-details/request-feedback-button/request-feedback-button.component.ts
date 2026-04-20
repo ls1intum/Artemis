@@ -26,6 +26,16 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
+// remark: this will be defined by the instructor and fetched
+export const ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
+
+export function countSuccessfulAthenaFeedbackRequests(participation?: StudentParticipation): number {
+    return (
+        getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true)
+            .length ?? 0
+    );
+}
+
 @Component({
     selector: 'jhi-request-feedback-button',
     imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
@@ -53,7 +63,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     participation?: StudentParticipation;
     hasUserAcceptedLLMUsage: boolean;
     currentFeedbackRequestCount = 0;
-    feedbackRequestLimit = 10; // remark: this will be defined by the instructor and fetched
+    readonly feedbackRequestLimit = ATHENA_FEEDBACK_REQUEST_LIMIT;
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -146,11 +156,18 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     async requestAIFeedback(): Promise<void> {
+        if (this.isFeedbackLimitReached()) {
+            return;
+        }
         if (!this.hasUserAcceptedLLMUsage) {
             await this.showLLMSelectionModal();
             return;
         }
         this.requestFeedback();
+    }
+
+    isFeedbackLimitReached(): boolean {
+        return this.currentFeedbackRequestCount >= this.feedbackRequestLimit;
     }
 
     private subscribeToResultUpdates() {
