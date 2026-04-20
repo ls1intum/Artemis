@@ -217,6 +217,20 @@ public class SecurityConfiguration {
     }
 
     /**
+     * Content Security Policy directives applied to every HTTP response.
+     *
+     * <p>
+     * Kept as a package-private constant so that unit tests can assert the exact policy without spinning up a full Spring Boot context.
+     * </p>
+     *
+     * <p>
+     * NOTE: Additional origins required by the YouTube IFrame API (e.g. {@code s.ytimg.com}) should be verified during manual testing (Task 18) and added here if
+     * the browser blocks them.
+     * </p>
+     */
+    static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:";
+
+    /**
      * Configures the {@link SecurityFilterChain} for the application, specifying security settings for HTTP requests.
      * <p>
      * This method uses a fluent API to configure {@link HttpSecurity} by:
@@ -253,14 +267,7 @@ public class SecurityConfiguration {
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(
-                        // Allow scripts only from the same origin.
-                        // 'unsafe-inline' and 'unsafe-eval' are necessary for Angular/Zone.js, but do NOT allow loading arbitrary external script files.
-                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-                        // Allow Web Workers to be created from your own origin ('self') AND from blob: URLs. Required because RxStomp creates its ticker
-                        // worker dynamically using a Blob -> blob: URL. Does NOT weaken main-page script loading.
-                        "worker-src 'self' blob:"
-                    )
+                    .policyDirectives(CSP_POLICY_DIRECTIVES)
                 )
                 // Prevents the website from being framed, avoiding clickjacking attacks.
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
