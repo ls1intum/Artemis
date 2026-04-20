@@ -1423,7 +1423,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
 
         it('should add validation error when problem statement exceeds max length', () => {
-            comp.programmingExercise.problemStatement = 'a'.repeat(20001);
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
 
             const reasons = comp.getInvalidReasons();
 
