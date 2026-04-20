@@ -981,13 +981,15 @@ describe('ChecklistPanelComponent', () => {
             expect(component.expandedCompetencies()).toEqual(new Set([0, 1]));
         });
 
-        it('should clear expanded competencies when discarding all selected', () => {
+        it('should reindex expanded competencies when discarding selected (non-discarded surviving items stay expanded)', () => {
+            // Select indices 0 and 2 for discard; index 1 is expanded but not discarded
             component.selectedCompetencyIndices.set(new Set([0, 2]));
             component.expandedCompetencies.set(new Set([0, 1]));
 
             component.discardSelectedCompetencies();
 
-            expect(component.expandedCompetencies().size).toBe(0);
+            // Index 0 and 2 are removed; original index 1 shifts to index 0 and stays expanded
+            expect(component.expandedCompetencies()).toEqual(new Set([0]));
         });
 
         it('should discard all selected competencies and clear selection', () => {
