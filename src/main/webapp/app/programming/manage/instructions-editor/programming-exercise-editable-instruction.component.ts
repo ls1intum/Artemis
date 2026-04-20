@@ -521,8 +521,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.markdownEditorMonaco?.monacoEditor?.()) {
             return;
         }
-        const model = this.markdownEditorMonaco.monacoEditor?.()!.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor?.()!.getEditor();
+        const model = this.markdownEditorMonaco.monacoEditor()!.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor()!.getEditor();
         if (!model || !editorInstance) {
             return;
         }
