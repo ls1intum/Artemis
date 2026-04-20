@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { Observable, filter, firstValueFrom, of, throwError } from 'rxjs';
+import { Observable, Subject, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -55,6 +55,7 @@ describe('IrisChatService', () => {
     };
     const userMock = {
         acceptExternalLLMUsage: vi.fn(),
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     };
 
     const waitForSessionId = () => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value !== undefined)));
@@ -557,6 +558,56 @@ describe('IrisChatService', () => {
             const courseId = service.getCourseId();
 
             expect(courseId).toBeUndefined();
+        });
+    });
+
+    describe('updateLLMUsageConsent', () => {
+        beforeEach(() => {
+            userMock.updateLLMSelectionDecision.mockReset();
+            userMock.updateLLMSelectionDecision.mockReturnValue(of(new HttpResponse<void>()));
+        });
+
+        it('should emit llmOptedOut$ once after NO_AI is persisted successfully', () => {
+            let emissions = 0;
+            service.llmOptedOut$.subscribe(() => emissions++);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(emissions).toBe(1);
+        });
+
+        it('should not emit llmOptedOut$ when NO_AI persistence fails', () => {
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            let emissions = 0;
+            service.llmOptedOut$.subscribe(() => emissions++);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(emissions).toBe(0);
+        });
+
+        it('should not emit llmOptedOut$ when the user accepts cloud AI', () => {
+            let emissions = 0;
+            service.llmOptedOut$.subscribe(() => emissions++);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(emissions).toBe(0);
+        });
+
+        it('should cancel an in-flight NO_AI request when a second NO_AI call starts, emitting only once', () => {
+            const inFlight = new Subject<HttpResponse<void>>();
+            userMock.updateLLMSelectionDecision.mockReturnValueOnce(inFlight.asObservable()).mockReturnValueOnce(of(new HttpResponse<void>()));
+            let emissions = 0;
+            service.llmOptedOut$.subscribe(() => emissions++);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+            // The first request completes after the second was started; its subscription must have been cancelled.
+            inFlight.next(new HttpResponse<void>());
+            inFlight.complete();
+
+            expect(emissions).toBe(1);
         });
     });
 });

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -86,6 +86,9 @@ export class IrisChatService implements OnDestroy {
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
+
+    private llmOptedOutSubject = new Subject<void>();
+    public llmOptedOut$ = this.llmOptedOutSubject.asObservable();
 
     hasJustAcceptedLLMUsage = false;
 
@@ -281,9 +284,10 @@ export class IrisChatService implements OnDestroy {
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
-            this.userService.updateLLMSelectionDecision(accepted).subscribe({
+            this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
                 next: () => {
                     this.accountService.setUserLLMSelectionDecision(accepted);
+                    this.llmOptedOutSubject.next();
                     this.close();
                 },
                 error: () => {
