@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Duplicat
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.IrisResponseNeedsReviewNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
@@ -84,6 +85,8 @@ public class IgnoreUserCourseNotificationSettingPreset extends UserCourseNotific
                 Map.entry(DeregisteredFromTutorialGroupNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
                 Map.entry(TutorialGroupDeletedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(IrisResponseNeedsReviewNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
     }
 }

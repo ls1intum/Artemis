@@ -32,9 +32,11 @@
 
         <div class="course-notification-overview-category-wrap pb-1">
             @for (category of courseCategories; track category) {
-                <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
-                    <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
-                </div>
+                @if (isCategoryVisible(category)) {
+                    <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
+                        <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
+                    </div>
+                }
             }
         </div>
 

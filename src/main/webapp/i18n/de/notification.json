@@ -198,6 +198,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Neue Thread Antwort"
             },
+            "irisResponseNeedsReviewNotification": {
+                "title": "Iris-Antwort prüfen",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Iris-Antwort prüfen"
+            },
             "newMentionNotification": {
                 "title": "Du wurdest markiert",
                 "content": "{{postMarkdownContent}}",
@@ -340,7 +345,8 @@
             },
             "category": {
                 "general": "Allgemein",
-                "communication": "Kommunikation"
+                "communication": "Kommunikation",
+                "iris_review": "Iris-Prüfung"
             },
             "setting": {
                 "headline": "Benachrichtigungen"

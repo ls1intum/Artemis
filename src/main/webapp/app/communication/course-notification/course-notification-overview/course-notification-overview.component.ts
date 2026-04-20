@@ -8,6 +8,8 @@ import { CourseNotificationCategory } from 'app/communication/shared/entities/co
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -31,6 +33,8 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
+    private accountService = inject(AccountService);
+    private courseStorageService = inject(CourseStorageService);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -60,6 +64,18 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     constructor() {
         this.courseCategories = Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category)));
+    }
+
+    /**
+     * Whether the IRIS_REVIEW tab should be shown. Hidden for students because they have nothing to
+     * review. The decision is made when ngOnInit runs (the courseId input is required, so it is set).
+     */
+    protected isCategoryVisible(categoryString: string): boolean {
+        if (categoryString !== 'IRIS_REVIEW') {
+            return true;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId());
+        return !!course && this.accountService.isAtLeastTutorInCourse(course);
     }
 
     ngAfterViewInit(): void {
