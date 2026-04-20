@@ -1,13 +1,20 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
@@ -20,6 +27,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     private static final String TEST_PREFIX = "psrendering";
 
     private static final String POST_URL = "/api/exercise/problem-statement/render";
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -357,6 +367,19 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         assertThat(result.html()).doesNotContain("<style>");
         assertThat(result.html()).doesNotContain("<link rel=\"stylesheet\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDefaultIncludeFlagsToTrueWhenOmittedInJson() throws Exception {
+        // Deliberately omit includeJs and includeCss so Jackson deserializes them as null.
+        String rawBody = "{\"markdown\":\"# Hello\",\"locale\":\"en\",\"darkMode\":false}";
+
+        var mvcResult = request.performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(rawBody)).andExpect(status().isOk()).andReturn();
+        var result = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), RenderedProblemStatementDTO.class);
+
+        assertThat(result.interactiveScript()).isNotNull();
+        assertThat(result.html()).contains("<style>");
     }
 
     // --- Authentication ---
