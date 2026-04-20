@@ -15,12 +15,19 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
@@ -32,6 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -46,15 +54,23 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
- * Service responsible for building {@link PyrisChatPipelineExecutionDTO} instances for Iris chat pipelines.
- * Encapsulates all data-loading logic required to populate the execution DTO based on the active chat mode.
+ * Orchestrates execution of Iris chat pipelines. Reloads the full session state with messages,
+ * validates Iris settings and exercise context, builds the mode-specific
+ * {@link PyrisChatPipelineExecutionDTO}, and forwards execution to Pyris via
+ * {@link PyrisPipelineService}.
  */
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
-public class IrisChatPipelineDTOService {
+public class IrisChatPipelineExecutionService {
 
     private final UserRepository userRepository;
+
+    private final IrisSessionRepository irisSessionRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final ExerciseRepository exerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -70,15 +86,21 @@ public class IrisChatPipelineDTOService {
 
     private final Optional<LearningMetricsApi> learningMetricsApi;
 
+    private final IrisSettingsService irisSettingsService;
+
     private final PyrisDTOService pyrisDTOService;
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    public IrisChatPipelineDTOService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public IrisChatPipelineExecutionService(UserRepository userRepository, IrisSessionRepository irisSessionRepository, CourseRepository courseRepository,
+            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Optional<LearningMetricsApi> learningMetricsApi, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
+            Optional<LearningMetricsApi> learningMetricsApi, IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
         this.userRepository = userRepository;
+        this.irisSessionRepository = irisSessionRepository;
+        this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -86,24 +108,53 @@ public class IrisChatPipelineDTOService {
         this.textRepositoryApi = textRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.learningMetricsApi = learningMetricsApi;
+        this.irisSettingsService = irisSettingsService;
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
     }
 
     /**
+     * Executes the Iris chat pipeline for the given session.
+     * Reloads the session with messages, validates settings and exam context, then hands off to Pyris.
+     *
+     * @param session          the chat session whose id is used to reload the full session state
+     * @param event            optional event type triggering the pipeline (e.g. build failure)
+     * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
+     * @param latestSubmission optional programming submission already resolved by the caller
+     * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
+     */
+    public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
+            Map<String, String> uncommittedFiles) {
+        IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        if (loadedSession == null) {
+            throw new EntityNotFoundException("IrisSession", session.getId());
+        }
+        if (!(loadedSession instanceof IrisChatSession chatSession)) {
+            throw new IllegalStateException("Expected IrisChatSession for session id " + session.getId() + " but got " + loadedSession.getClass().getSimpleName());
+        }
+        var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
+        var actualSettings = settings.orElseGet(() -> irisSettingsService.getSettingsForCourse(course));
+        if (!actualSettings.enabled()) {
+            throw new ConflictException("Iris is not enabled", "Iris", "irisDisabled");
+        }
+
+        // Validate exam exercises
+        if (chatSession.getMode() == IrisChatMode.PROGRAMMING_EXERCISE_CHAT || chatSession.getMode() == IrisChatMode.TEXT_EXERCISE_CHAT) {
+            var exercise = exerciseRepository.findByIdElseThrow(chatSession.getEntityId());
+            if (exercise.isExamExercise()) {
+                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+            }
+        }
+
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event,
+                executionDto -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles));
+    }
+
+    /**
      * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
      * Loads mode-specific data (exercise, lecture, submission) on top of the shared course and metrics base.
-     *
-     * @param chatMode           the chat mode determining which context data to load
-     * @param session            the active chat session
-     * @param executionDto       the pipeline execution DTO received from Pyris
-     * @param customInstructions optional custom instructions to include in the pipeline
-     * @param course             the course the session belongs to
-     * @param latestSubmission   the latest programming submission, if already resolved by the caller
-     * @param uncommittedFiles   uncommitted file changes provided by the client
-     * @return the fully populated {@link PyrisChatPipelineExecutionDTO}
      */
-    public PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
+    private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
@@ -150,7 +201,7 @@ public class IrisChatPipelineDTOService {
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
             }
-            default -> throw new IllegalArgumentException("IrisChatPipelineDTOService does not support chat mode " + chatMode);
+            default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), new PyrisUserDTO(user), executionDto.initialStages(),

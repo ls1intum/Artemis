@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -37,8 +36,6 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -46,7 +43,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -82,13 +78,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final AuthorizationCheckService authCheckService;
 
-    private final IrisSessionRepository irisSessionRepository;
-
     private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final IrisRateLimitService rateLimitService;
-
-    private final PyrisPipelineService pyrisPipelineService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -100,30 +92,28 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final MessageSource messageSource;
 
-    private final IrisChatPipelineDTOService irisChatPipelineDTOService;
+    private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository,
-            SubmissionRepository submissionRepository, CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            IrisCitationService irisCitationService, MessageSource messageSource, IrisChatPipelineDTOService irisChatPipelineDTOService) {
+            IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
+            CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
+            IrisChatPipelineExecutionService chatPipelineExecutionService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
-        this.irisSessionRepository = irisSessionRepository;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.rateLimitService = rateLimitService;
-        this.pyrisPipelineService = pyrisPipelineService;
         this.exerciseRepository = exerciseRepository;
         this.submissionRepository = submissionRepository;
         this.courseRepository = courseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
-        this.irisChatPipelineDTOService = irisChatPipelineDTOService;
+        this.chatPipelineExecutionService = chatPipelineExecutionService;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -136,7 +126,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     @Override
     public void requestAndHandleResponse(IrisChatSession session) {
-        doRequestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
     }
 
     /**
@@ -147,34 +137,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param uncommittedFiles The uncommitted files from the client
      */
     public void requestAndHandleResponseWithUncommittedChanges(IrisChatSession session, Map<String, String> uncommittedFiles) {
-        doRequestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
-    }
-
-    private void doRequestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
-            Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
-        IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        if (loadedSession == null) {
-            throw new EntityNotFoundException("IrisSession", session.getId());
-        }
-        if (!(loadedSession instanceof IrisChatSession chatSession)) {
-            throw new IllegalStateException("Expected IrisChatSession for session id " + session.getId() + " but got " + loadedSession.getClass().getSimpleName());
-        }
-        var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
-        var actualSettings = settings.orElseGet(() -> irisSettingsService.getSettingsForCourse(course));
-        if (!actualSettings.enabled()) {
-            throw new ConflictException("Iris is not enabled", "Iris", "irisDisabled");
-        }
-
-        // Validate exam exercises
-        if (chatSession.getMode() == IrisChatMode.PROGRAMMING_EXERCISE_CHAT || chatSession.getMode() == IrisChatMode.TEXT_EXERCISE_CHAT) {
-            var exercise = exerciseRepository.findByIdElseThrow(chatSession.getEntityId());
-            if (exercise.isExamExercise()) {
-                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-            }
-        }
-
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, executionDto -> irisChatPipelineDTOService
-                .buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles));
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
     }
 
     // -------------------------------------------------------------------------
@@ -288,9 +251,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
-        CompletableFuture.runAsync(
-                () -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission), Map.of()))
-                .exceptionally(e -> {
+        CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings),
+                Optional.of(submission), Map.of())).exceptionally(e -> {
                     log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
                     return null;
                 });
@@ -320,8 +282,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var user = studentParticipation.getStudent().orElseThrow();
                 var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
                 rateLimitService.checkRateLimitElseThrow(session, user);
-                CompletableFuture.runAsync(() -> doRequestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
-                        Optional.of(latestSubmission), Map.of())).exceptionally(e -> {
+                CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
+                        Optional.of(settings), Optional.of(latestSubmission), Map.of())).exceptionally(e -> {
                             log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
                             return null;
                         });
