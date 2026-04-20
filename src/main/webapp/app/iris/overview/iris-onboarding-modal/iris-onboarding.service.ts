@@ -155,8 +155,8 @@ export class IrisOnboardingService {
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
             this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
                 this.currentStep.set(0);
-                this.markOnboardingCompleted();
                 if (result) {
+                    this.markOnboardingCompleted();
                     resolve({ action: 'finish' });
                 } else {
                     // Modal was dismissed (e.g., clicked X button)
