@@ -7,6 +7,8 @@ export class AttachmentVideoUnit extends LectureUnit {
     public attachment?: Attachment;
     public slides?: Slide[];
     public videoSource?: string;
+    public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
+    public youtubeVideoId?: string | null;
     public transcriptionProperties?: LectureTranscriptionDTO;
 
     constructor() {
