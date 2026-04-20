@@ -119,24 +119,6 @@
         >
             <ng-template #caption>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <jhi-exam-students-menu-button
-                        [model]="manageStudentsMenuActions()"
-                        label="artemisApp.examManagement.examStudents.menu.manageStudents"
-                        buttonIconClass="pi pi-user-edit"
-                        [disabled]="isTestExam()"
-                    />
-                    <jhi-exam-students-menu-button
-                        [model]="examLogisticsMenuActions()"
-                        label="artemisApp.examManagement.examStudents.menu.examLogistics"
-                        buttonIconClass="pi pi-th-large"
-                        [disabled]="isTestExam()"
-                    />
-                    <jhi-exam-students-menu-button
-                        [model]="studentExamsMenuActions()"
-                        label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
-                        buttonIconClass="pi pi-file-edit"
-                        [disabled]="isTestExam()"
-                    />
                     <p-icon-field class="flex-grow-1">
                         <p-inputicon class="pi pi-search" />
                         <input
@@ -148,6 +130,27 @@
                             class="w-100"
                         />
                     </p-icon-field>
+                    <jhi-exam-students-menu-button
+                        [model]="manageStudentsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.manageStudents"
+                        buttonIconClass="pi pi-user-edit"
+                        [disabled]="isTestExam()"
+                        severity="secondary"
+                    />
+                    <jhi-exam-students-menu-button
+                        [model]="examLogisticsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.examLogistics"
+                        buttonIconClass="pi pi-th-large"
+                        [disabled]="isTestExam()"
+                        severity="secondary"
+                    />
+                    <jhi-exam-students-menu-button
+                        [model]="studentExamsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
+                        buttonIconClass="pi pi-file-edit"
+                        [disabled]="isTestExam()"
+                        severity="secondary"
+                    />
                 </div>
             </ng-template>
             <ng-template #header>
@@ -345,7 +348,8 @@
                             <button
                                 pButton
                                 size="small"
-                                severity="primary"
+                                severity="secondary"
+                                outlined
                                 [title]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
                                 (click)="reseatingDialog.openDialog(examUser)"
                                 [disabled]="isTestExam()"
@@ -355,11 +359,14 @@
                             <a
                                 pButton
                                 size="small"
-                                severity="primary"
+                                severity="secondary"
+                                outlined
                                 style="text-decoration: none !important"
                                 [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
                                 [routerLink]="
-                                    exam().id && examUser.studentExamId ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId] : null
+                                    exam().id && examUser.studentExamId
+                                        ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId]
+                                        : undefined
                                 "
                                 [class.p-disabled]="!exam().id || !examUser.studentExamId"
                                 (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
@@ -370,6 +377,7 @@
                                 pButton
                                 jhiDeleteButton
                                 severity="danger"
+                                outlined
                                 size="small"
                                 [title]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
                                 [disabled]="isTestExam()"

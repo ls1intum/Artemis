@@ -1,6 +1,6 @@
 import { Component, input, viewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { ButtonDirective } from 'primeng/button';
+import { ButtonDirective, ButtonSeverity } from 'primeng/button';
 import { Menu } from 'primeng/menu';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,6 +17,7 @@ export class ExamStudentsMenuButtonComponent {
     readonly buttonIconClass = input.required<string>();
     readonly disabled = input(false);
     readonly buttonClass = input('');
+    readonly severity = input<ButtonSeverity>('primary');
 
     readonly menu = viewChild<Menu>('menu');
 
