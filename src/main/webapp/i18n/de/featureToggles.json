@@ -97,10 +97,6 @@
                     "name": "Übungsgruppen",
                     "description": "Aktiviert die Übungsgruppenverwaltung zur Organisation von Studierenden und Tutor:innen."
                 },
-                "nebula": {
-                    "name": "Nebula (Videoverarbeitung)",
-                    "description": "Aktiviert die Verarbeitung und Transkription von Vorlesungsvideos für KI-gestütztes Inhaltsverständnis."
-                },
                 "theia": {
                     "name": "Theia (Online-IDE)",
                     "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
@@ -176,8 +172,8 @@
                 },
                 "LectureContentProcessing": {
                     "name": "Videotranskription",
-                    "description": "Nutzt Nebula, um automatisch Transkriptionen aus Vorlesungsvideos zu generieren und diese an Pyris/Iris zu senden, sodass KI-Assistenten Fragen zu Vorlesungsinhalten beantworten und genauere, inhaltsbezogene Antworten geben können.",
-                    "disableWarning": "Vorlesungsvideos werden nicht von Nebula transkribiert und Iris kann in seinen Antworten nicht auf Vorlesungsinhalte Bezug nehmen."
+                    "description": "Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion.",
+                    "disableWarning": "Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."
                 },
                 "RateLimit": {
                     "name": "API-Rate-Limiting",
