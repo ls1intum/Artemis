@@ -393,7 +393,7 @@ pre {
 
 :host:not(.layout-embedded) .chat-layout {
     border: 1px solid var(--border-color);
-    border-radius: $iris-border-radius-sm;
+    border-radius: 0.15rem;
 }
 
 .chat-container {

@@ -110,6 +110,6 @@ jhi-attachment-video-unit {
 
     .video-container-wrapper--fullscreen {
         border: 1px solid var(--lecture-combined-view-border);
-        border-radius: 0;
+        border-radius: var(--lecture-combined-view-radius);
     }
 }
