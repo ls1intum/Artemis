@@ -9,6 +9,8 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
@@ -218,6 +220,30 @@ public class MessageSpecs {
                 return criteriaBuilder.and(noResolvingAnswer, notAnnouncementChannel);
             }
         });
+    }
+
+    /**
+     * Specification to fetch Posts that have at least one AnswerPost authored by the Iris bot user which is
+     * not yet verified. Used by the tutor "messages to verify" dashboard.
+     *
+     * @param unverifiedIrisOnly whether the filter is active
+     * @param irisBotLogin       login of the Iris bot user (used to identify bot-authored answers)
+     * @return specification used to chain DB operations
+     */
+    @NonNull
+    public static Specification<Post> getUnverifiedIrisAnswersSpecification(boolean unverifiedIrisOnly, String irisBotLogin) {
+        return (root, query, criteriaBuilder) -> {
+            if (!unverifiedIrisOnly) {
+                return criteriaBuilder.conjunction();
+            }
+            // Use EXISTS subquery to avoid row-multiplication when a post has multiple answers
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<AnswerPost> answerRoot = subquery.from(AnswerPost.class);
+            subquery.select(answerRoot.get(AnswerPost_.ID));
+            subquery.where(criteriaBuilder.equal(answerRoot.get(AnswerPost_.POST), root), criteriaBuilder.isFalse(answerRoot.get(AnswerPost_.VERIFIED)),
+                    criteriaBuilder.equal(answerRoot.get(AnswerPost_.AUTHOR).get(User_.LOGIN), irisBotLogin));
+            return criteriaBuilder.exists(subquery);
+        };
     }
 
     /**

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Adds confidence + verification metadata to answer_post so that low-confidence Iris
+    replies can be held back from students until a tutor reviews and approves them.
+
+    Semantics:
+      - confidence_score: nullable, only set for Iris-generated replies
+      - verified:         true by default (covers every existing reply, all human
+                          replies and high-confidence Iris replies). Iris replies
+                          with 0.80 <= confidence < 0.95 are inserted with verified=false.
+      - verified_by_id / verified_at: populated when a tutor approves a reply.
+    -->
+    <changeSet id="20260419120000-1-add-verification-columns-to-answer-post" author="youssefeltoukhi">
+        <addColumn tableName="answer_post">
+            <column name="confidence_score" type="double"/>
+            <column name="verified" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verified_by_id" type="bigint"/>
+            <column name="verified_at" type="datetime"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="verified_by_id"
+                                 baseTableName="answer_post"
+                                 constraintName="fk_answer_post_verified_by"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"
+                                 onDelete="SET NULL"
+                                 onUpdate="RESTRICT"/>
+        <createIndex indexName="idx_answer_post_verified" tableName="answer_post">
+            <column name="verified"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
