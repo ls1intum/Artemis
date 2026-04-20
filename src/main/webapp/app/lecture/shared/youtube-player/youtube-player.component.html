@@ -3,6 +3,7 @@
         <youtube-player
             [videoId]="videoId()"
             [disableCookies]="true"
+            [disablePlaceholder]="true"
             [playerVars]="playerVars"
             (ready)="onPlayerReady($event)"
             (stateChange)="onStateChange($event)"

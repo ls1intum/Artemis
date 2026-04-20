@@ -60,4 +60,17 @@ youtube-player {
     border-radius: 0.5rem;
     box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
     background: #000;
+
+    // The YouTube IFrame API injects the <iframe> with fixed pixel width/height
+    // attributes (defaulting to 640x390). It lives outside our emulated-scope
+    // attribute, so we must pierce encapsulation to make it fill the host.
+    ::ng-deep iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        border: 0;
+        border-radius: inherit;
+    }
 }
