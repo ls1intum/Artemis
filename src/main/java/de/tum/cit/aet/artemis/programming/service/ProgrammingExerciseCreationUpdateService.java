@@ -317,9 +317,9 @@ public class ProgrammingExerciseCreationUpdateService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
             @Nullable String originalProblemStatement) throws JsonProcessingException {
+        validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
-        validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
@@ -503,7 +503,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private void validateProblemStatementLength(@Nullable String problemStatement) {
         if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-            throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise", "problemStatementTooLong");
+            throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
+                    "problemStatementTooLong");
         }
     }
 }
