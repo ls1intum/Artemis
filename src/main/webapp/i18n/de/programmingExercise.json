@@ -269,6 +269,33 @@
             "solutionResult": "Ergebnis der Musterlösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
+            "atlasOrchestrator": {
+                "button": "Kompetenzen vorschlagen (Atlas)",
+                "error": "Atlas-Orchestrator-Durchlauf fehlgeschlagen. Bitte versuche es später erneut.",
+                "inProgress": "Für diesen Kurs läuft bereits ein Atlas-Orchestrator-Durchlauf. Bitte warte, bis dieser abgeschlossen ist.",
+                "resultDialog": {
+                    "title": "Ergebnis des Atlas-Orchestrators",
+                    "empty": "Der Orchestrator hat keine Änderungen an diesem Kurs vorgenommen.",
+                    "columns": {
+                        "action": "Aktion",
+                        "competency": "Kompetenz",
+                        "detail": "Details",
+                        "reason": "Begründung"
+                    },
+                    "types": {
+                        "CREATE": "Erstellen",
+                        "EDIT": "Bearbeiten",
+                        "ASSIGN": "Zuweisen",
+                        "UNASSIGN": "Entfernen",
+                        "DELETE": "Löschen"
+                    },
+                    "weightBands": {
+                        "primary": "primär",
+                        "partial": "teilweise",
+                        "incidental": "beiläufig"
+                    }
+                }
+            },
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",

@@ -269,6 +269,33 @@
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
+            "atlasOrchestrator": {
+                "button": "Suggest competencies (Atlas)",
+                "error": "Atlas orchestrator run failed. Please try again later.",
+                "inProgress": "Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.",
+                "resultDialog": {
+                    "title": "Atlas orchestrator result",
+                    "empty": "The orchestrator did not make any changes to this course.",
+                    "columns": {
+                        "action": "Action",
+                        "competency": "Competency",
+                        "detail": "Detail",
+                        "reason": "Reason"
+                    },
+                    "types": {
+                        "CREATE": "Create",
+                        "EDIT": "Edit",
+                        "ASSIGN": "Assign",
+                        "UNASSIGN": "Unassign",
+                        "DELETE": "Delete"
+                    },
+                    "weightBands": {
+                        "primary": "primary",
+                        "partial": "partial",
+                        "incidental": "incidental"
+                    }
+                }
+            },
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "repositoryFilesError": "Repository files could not be retrieved.",

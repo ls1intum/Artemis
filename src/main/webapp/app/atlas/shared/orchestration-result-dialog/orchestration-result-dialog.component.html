@@ -1,0 +1,65 @@
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [dismissableMask]="true"
+    [style]="{ width: '840px', maxWidth: '95vw' }"
+    header="{{ 'artemisApp.programmingExercise.atlasOrchestrator.resultDialog.title' | artemisTranslate }}"
+>
+    @if (summaryMessage()) {
+        <p class="mb-3">{{ summaryMessage() }}</p>
+    }
+
+    @if (hasActions()) {
+        <p-table [value]="appliedActions()" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="360px">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.action"></th>
+                    <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.competency"></th>
+                    <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.detail"></th>
+                    <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.reason"></th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-action>
+                <tr>
+                    <td>
+                        <p-tag
+                            [severity]="actionSeverity(action.type)"
+                            [value]="'artemisApp.programmingExercise.atlasOrchestrator.resultDialog.types.' + action.type | artemisTranslate"
+                        />
+                    </td>
+                    <td>
+                        @if (action.competencyTitle) {
+                            {{ action.competencyTitle }}
+                        }
+                        @if (action.competencyId) {
+                            <span class="text-body-secondary ms-1">#{{ action.competencyId }}</span>
+                        }
+                        @if (weightBandKey(action.weight); as band) {
+                            <p-tag
+                                severity="secondary"
+                                class="ms-2"
+                                [value]="
+                                    ('artemisApp.programmingExercise.atlasOrchestrator.resultDialog.weightBands.' + band | artemisTranslate) + ' · ' + action.weight.toFixed(1)
+                                "
+                            />
+                        }
+                    </td>
+                    <td>{{ action.detail }}</td>
+                    <td>
+                        @if (action.justification) {
+                            <span class="text-body-secondary">{{ action.justification }}</span>
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    } @else {
+        <p class="text-body-secondary mb-0" jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.empty"></p>
+    }
+
+    <ng-template pTemplate="footer">
+        <p-button (onClick)="close()" [label]="'entity.action.close' | artemisTranslate" severity="secondary" />
+    </ng-template>
+</p-dialog>

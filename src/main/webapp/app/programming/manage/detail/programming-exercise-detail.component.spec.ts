@@ -16,6 +16,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { AppliedActionType, CompetencyOrchestrationApiService, CompetencyOrchestrationStatus } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -432,6 +433,51 @@ describe('ProgrammingExerciseDetailComponent', () => {
             message: 'success',
             disableTranslation: true,
         });
+    });
+
+    it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Success,
+            message: 'Assigned this exercise to Recursion.',
+            appliedActions: [
+                {
+                    type: AppliedActionType.Assign,
+                    competencyId: 42,
+                    competencyTitle: 'Recursion',
+                    exerciseId: 123,
+                    detail: 'Linked exercise to Recursion (weight 1.00).',
+                },
+            ],
+        });
+        comp.programmingExercise = mockProgrammingExercise;
+        await comp.triggerAtlasOrchestrator();
+        expect(comp['orchestrationDialogVisible']()).toBeTrue();
+        expect(comp['orchestrationDialogMessage']()).toBe('Assigned this exercise to Recursion.');
+        expect(comp['orchestrationDialogActions']()).toHaveLength(1);
+        expect(comp['orchestrationDialogActions']()[0].type).toBe(AppliedActionType.Assign);
+    });
+
+    it('should error when Atlas orchestrator returns FAILED', async () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Failed,
+            message: 'model not configured',
+        });
+        comp.programmingExercise = mockProgrammingExercise;
+        await comp.triggerAtlasOrchestrator();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.atlasOrchestrator.error');
+        expect(comp['orchestrationDialogVisible']()).toBeFalse();
+    });
+
+    it('should error when Atlas orchestrator request throws', async () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
+        comp.programmingExercise = mockProgrammingExercise;
+        await comp.triggerAtlasOrchestrator();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.atlasOrchestrator.error');
     });
 
     it('should error on generate structure oracle', () => {

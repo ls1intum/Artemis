@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,6 +65,8 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AppliedActionDTO, CompetencyOrchestrationApiService, CompetencyOrchestrationStatus } from 'app/atlas/shared/services/competency-orchestration-api.service';
+import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -87,6 +89,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
+        OrchestrationResultDialogComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -107,6 +110,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private aeolusService = inject(AeolusService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
+
+    protected readonly orchestrationDialogVisible = signal(false);
+    protected readonly orchestrationDialogMessage = signal('');
+    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -197,7 +205,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
-
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
@@ -773,6 +780,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+    }
+
+    async triggerAtlasOrchestrator() {
+        const exerciseId = this.programmingExercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        try {
+            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
+            if (result.status === CompetencyOrchestrationStatus.Success) {
+                this.orchestrationDialogMessage.set(result.message?.trim() ?? '');
+                this.orchestrationDialogActions.set(result.appliedActions ?? []);
+                this.orchestrationDialogVisible.set(true);
+            } else if (result.status === CompetencyOrchestrationStatus.InProgress) {
+                this.alertService.warning('artemisApp.programmingExercise.atlasOrchestrator.inProgress');
+            } else {
+                this.alertService.error('artemisApp.programmingExercise.atlasOrchestrator.error');
+            }
+        } catch {
+            this.alertService.error('artemisApp.programmingExercise.atlasOrchestrator.error');
+        }
     }
 
     /**
