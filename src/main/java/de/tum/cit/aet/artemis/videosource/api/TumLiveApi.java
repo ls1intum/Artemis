@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tumlive.api;
+package de.tum.cit.aet.artemis.videosource.api;
 
 import java.util.Optional;
 
@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
-import de.tum.cit.aet.artemis.tumlive.config.TumLiveEnabled;
-import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
+import de.tum.cit.aet.artemis.videosource.config.TumLiveEnabled;
+import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
  * API for TUM Live operations.
