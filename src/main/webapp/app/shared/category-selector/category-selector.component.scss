@@ -10,23 +10,24 @@ jhi-category-selector {
             display: none !important;
         }
 
-        /* Add Bootstrap-like border to the flex container */
         .mat-mdc-form-field-flex {
-            border: 1px solid var(--bs-border-color);
-            border-radius: var(--bs-border-radius);
+            background: var(--p-form-field-background, var(--bs-body-bg));
+            border: 1px solid var(--p-form-field-border-color, var(--bs-border-color));
+            border-radius: var(--p-form-field-border-radius, var(--bs-border-radius));
+            transition: border-color 0.2s;
 
             &:hover {
-                border-color: var(--bs-secondary-color);
+                border-color: var(--p-form-field-hover-border-color, var(--bs-secondary-color));
             }
         }
 
         &.mat-focused .mat-mdc-form-field-flex {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+            border-color: var(--p-form-field-focus-border-color, var(--bs-primary));
+            box-shadow: var(--p-form-field-focus-ring-shadow, 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25));
         }
 
         .mat-mdc-form-field-infix {
-            padding: 0.25rem 0.75rem !important;
+            padding: 0.45rem 0.75rem !important;
             min-height: 0 !important;
         }
 

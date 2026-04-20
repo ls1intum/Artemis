@@ -1,24 +1,180 @@
 @import '../../../../content/scss/artemis-mixins';
 
-.title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
+.duration-input {
+    width: 5.5rem;
 
-    & > span {
-        margin-bottom: 10px;
-    }
-
-    .badge.max-score {
-        background: var(--quiz-exercise-detail-max-score-background);
-        color: var(--quiz-exercise-detail-max-score-color);
+    .p-inputnumber-input {
+        width: 100%;
     }
 }
 
-.btn-block {
+jhi-quiz-question-list-edit {
     display: block;
-    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.section-card--settings {
+    --section-color: var(--blue);
+    --section-bg-start: color-mix(in srgb, var(--blue) 6%, transparent);
+}
+
+.subsection-divider {
+    border-top: 1px solid var(--bs-border-color);
+    margin: 1.75rem 0 1.25rem;
+}
+
+.subsection-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+
+.subsection-header-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--bs-white);
+    background: var(--subsection-color, var(--bs-secondary));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.subsection-header-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.subsection-header--general {
+    --subsection-color: var(--blue);
+}
+
+.subsection-header--schedule {
+    --subsection-color: var(--warning);
+}
+
+.subsection-header--competencies {
+    --subsection-color: var(--success);
+}
+
+.save-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.5rem;
+    border: 1px solid;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &--saved {
+        border-color: var(--success);
+        color: var(--success);
+        background: color-mix(in srgb, var(--success) 6%, transparent);
+    }
+
+    &--pending {
+        border-color: var(--bs-border-color);
+        color: var(--bs-secondary-color);
+        background: transparent;
+    }
+
+    &--invalid {
+        border-color: var(--bs-danger);
+        color: var(--bs-danger);
+        background: rgba(var(--bs-danger-rgb), 0.06);
+        cursor: pointer;
+    }
+
+    &--warning {
+        border-color: var(--bs-warning);
+        color: var(--bs-warning);
+        background: rgba(var(--bs-warning-rgb), 0.06);
+        cursor: pointer;
+    }
+}
+
+.section-card--save {
+    overflow: visible;
+    --section-bg-start: transparent;
+}
+
+.edit-quiz .section-card--save .section-header {
+    border-bottom: none;
+}
+
+.section-card--save .section-header-text {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quiz-save-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.footer-notification-input {
+    max-width: 320px;
+    font-size: 0.85rem;
+    height: 2rem;
+    padding: 0.25rem 0.6rem;
+}
+
+.footer-save-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--success);
+    color: white;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        box-shadow 0.2s;
+
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--success) 80%, black);
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+}
+
+.section-header-action.danger {
+    border-color: var(--bs-danger);
+    color: var(--bs-danger);
+
+    &:hover {
+        background: var(--bs-danger);
+        color: var(--bs-white);
+    }
+}
+
+.quiz-max-score-badge {
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+
+    .max-score {
+        background: var(--quiz-exercise-detail-max-score-background);
+        color: var(--quiz-exercise-detail-max-score-color);
+        border-radius: 0.35rem;
+        font-size: 0.8rem;
+        padding: 0.2em 0.45em;
+    }
 }
 
 .global-refinement-fab-container {
@@ -36,10 +192,17 @@
 }
 
 button.global-refinement-fab.p-button {
+    background: var(--blue);
     border-radius: 50%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    color: white !important;
     height: 3rem;
     width: 3rem;
+
+    &:hover {
+        background: color-mix(in srgb, var(--blue) 80%, black);
+        border-color: color-mix(in srgb, var(--blue) 80%, black);
+    }
 }
 
 .global-refinement-fab-expanded {
@@ -60,6 +223,16 @@ button.global-refinement-fab-action-button.p-button {
     flex-shrink: 0;
     height: 2.75rem;
     width: 2.75rem;
+}
+
+button.global-refinement-fab-action-button.p-button:not(.global-refinement-fab-close-button) {
+    background: var(--blue);
+    color: white !important;
+
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--blue) 80%, black);
+        border-color: color-mix(in srgb, var(--blue) 80%, black);
+    }
 }
 
 button.global-refinement-fab-close-button.p-button {

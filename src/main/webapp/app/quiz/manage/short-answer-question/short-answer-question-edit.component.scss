@@ -30,37 +30,23 @@
         }
     }
 
-    .match-percentage-container {
+    .sa-checkbox-group {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 60%;
-        border: 1px solid var(--sa-question-container-input-border);
+        flex-direction: column;
+        gap: 0.35rem;
+    }
 
-        .slider-container {
-            display: flex;
-            justify-content: center;
-            width: 45%;
-
-            .slider-with-label {
-                width: 80%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-width: 50px;
-
-                input[type='range'] {
-                    cursor: pointer;
-                    margin: auto;
-                    width: 70%;
-                }
-
-                p {
-                    margin: 0 10px;
-                    min-width: 40px;
-                }
-            }
+    .sa-slider-group {
+        input[type='range'] {
+            cursor: pointer;
+            width: 5rem;
         }
+    }
+
+    .sa-slider-value {
+        min-width: 3rem;
+        text-align: right;
+        font-size: 0.9rem;
     }
 
     .question-card-header {
@@ -86,44 +72,6 @@
 
         .question-collapse {
             width: 3.25rem;
-        }
-    }
-
-    .card-body {
-        .question-options-reevaluation {
-            .form-group {
-                display: flex;
-                align-items: center;
-                margin: 0 5px 15px;
-            }
-
-            .form-control:disabled {
-                background-color: var(--gray-200);
-            }
-
-            .form-group > * {
-                margin: 0 4px;
-            }
-
-            .form-check {
-                display: block;
-                align-items: center;
-                padding-left: 0;
-            }
-        }
-
-        .invalid-button {
-            width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .delete-button {
-            cursor: pointer;
-        }
-
-        .delete-button:hover {
-            color: var(--red);
         }
     }
 }

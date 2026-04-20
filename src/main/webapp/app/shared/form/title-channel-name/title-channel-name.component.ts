@@ -5,12 +5,13 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
     viewProviders: [{ provide: ControlContainer, useExisting: NgForm }],
-    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent, InputTextModule],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     title = model<string | undefined>(undefined);

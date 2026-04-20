@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faListUl, faPlus, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -15,7 +15,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
 import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
 
@@ -31,7 +30,6 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
         DragAndDropQuestionEditComponent,
         ShortAnswerQuestionEditComponent,
         FaIconComponent,
-        NgClass,
         QuizQuestionListEditExistingComponent,
         QuizAiQuestionRefinementPanelComponent,
         FeatureToggleHideDirective,
@@ -48,6 +46,7 @@ export class QuizQuestionListEditComponent {
     onQuestionAdded = output<QuizQuestion>();
     onQuestionUpdated = output<void>();
     onQuestionDeleted = output<QuizQuestion>();
+    onAiGenerateRequested = output<void>();
 
     readonly editMultipleChoiceQuestionComponents = viewChildren<MultipleChoiceQuestionEditComponent>('editMultipleChoice');
 
@@ -61,6 +60,9 @@ export class QuizQuestionListEditComponent {
     readonly ApollonQuizDragAndDrop = FeatureToggle.ApollonQuizDragAndDrop;
 
     readonly faPlus = faPlus;
+    readonly faListUl = faListUl;
+    readonly faFileImport = faFileImport;
+    readonly faWandMagicSparkles = faWandMagicSparkles;
 
     /** Questions whose AI refinement panel is currently open. */
     openRefinementQuestions = signal(new Set<QuizQuestion>());

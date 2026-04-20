@@ -1,108 +1,115 @@
 <div class="edit-quiz">
-    <div class="row text-start">
-        <h4>
-            <span jhiTranslate="artemisApp.quizExercise.questions"></span>
-        </h4>
-    </div>
-    <div class="row mt-1">
-        @for (quizQuestion of quizQuestions(); track quizQuestion; let i = $index) {
-            <div class="question card">
-                @if (quizQuestion.type === MULTIPLE_CHOICE) {
-                    <div>
-                        <jhi-multiple-choice-question-edit
-                            #editMultipleChoice
-                            [question]="quizQuestion"
-                            [questionIndex]="i + 1"
-                            [hyperionEnabled]="hyperionEnabled()"
-                            (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
-                            (refineRequested)="toggleRefinement(quizQuestion)"
-                            (collapseChanged)="handleCollapseChanged(quizQuestion, $event)"
-                        />
-                    </div>
-                    @if (hyperionEnabled()) {
-                        <jhi-quiz-ai-question-refinement-panel
-                            [question]="quizQuestion"
-                            [courseId]="courseId()"
-                            [isOpen]="openRefinementQuestions().has(quizQuestion)"
-                            [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
-                            [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
-                            (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
-                            (reasoningDismissed)="clearReasoning(quizQuestion)"
-                        />
+    <div class="section-card section-card--questions">
+        <div class="section-header">
+            <div class="section-header-icon">
+                <fa-icon [icon]="faListUl" />
+            </div>
+            <div class="section-header-text">
+                <h4 jhiTranslate="artemisApp.quizExercise.questions"></h4>
+                <p jhiTranslate="artemisApp.quizExercise.questionsDescription"></p>
+            </div>
+            @if (!disabled() && hyperionEnabled()) {
+                <button class="section-header-action" (click)="onAiGenerateRequested.emit()">
+                    <fa-icon [icon]="faWandMagicSparkles" class="me-1" />
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button"></span>
+                </button>
+            }
+        </div>
+        <div class="section-body">
+            @for (quizQuestion of quizQuestions(); track quizQuestion; let i = $index) {
+                <div class="question">
+                    @if (quizQuestion.type === MULTIPLE_CHOICE) {
+                        <div>
+                            <jhi-multiple-choice-question-edit
+                                #editMultipleChoice
+                                [question]="quizQuestion"
+                                [questionIndex]="i + 1"
+                                [hyperionEnabled]="hyperionEnabled()"
+                                (questionUpdated)="handleQuestionUpdated()"
+                                (questionDeleted)="handleQuestionDeleted(quizQuestion)"
+                                (refineRequested)="toggleRefinement(quizQuestion)"
+                                (collapseChanged)="handleCollapseChanged(quizQuestion, $event)"
+                            />
+                        </div>
+                        @if (hyperionEnabled()) {
+                            <jhi-quiz-ai-question-refinement-panel
+                                [question]="quizQuestion"
+                                [courseId]="courseId()"
+                                [isOpen]="openRefinementQuestions().has(quizQuestion)"
+                                [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
+                                [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
+                                (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
+                                (reasoningDismissed)="clearReasoning(quizQuestion)"
+                            />
+                        }
                     }
-                }
-                @if (quizQuestion.type === DRAG_AND_DROP) {
-                    <div>
-                        <jhi-drag-and-drop-question-edit
-                            #editDragAndDrop
-                            [question]="quizQuestion"
-                            [questionIndex]="i + 1"
-                            [filePool]="fileMap"
-                            (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
-                            (addNewFile)="handleFileAdded($event)"
-                            (removeFile)="handleFileRemoved($event)"
-                        />
-                    </div>
-                }
-                @if (quizQuestion.type === SHORT_ANSWER) {
-                    <div>
-                        <jhi-short-answer-question-edit
-                            #editShortAnswer
-                            [question]="quizQuestion"
-                            [questionIndex]="i + 1"
-                            (questionUpdated)="handleQuestionUpdated()"
-                            (questionDeleted)="handleQuestionDeleted(quizQuestion)"
-                        />
-                    </div>
-                }
-            </div>
-        }
+                    @if (quizQuestion.type === DRAG_AND_DROP) {
+                        <div>
+                            <jhi-drag-and-drop-question-edit
+                                #editDragAndDrop
+                                [question]="quizQuestion"
+                                [questionIndex]="i + 1"
+                                [filePool]="fileMap"
+                                (questionUpdated)="handleQuestionUpdated()"
+                                (questionDeleted)="handleQuestionDeleted(quizQuestion)"
+                                (addNewFile)="handleFileAdded($event)"
+                                (removeFile)="handleFileRemoved($event)"
+                            />
+                        </div>
+                    }
+                    @if (quizQuestion.type === SHORT_ANSWER) {
+                        <div>
+                            <jhi-short-answer-question-edit
+                                #editShortAnswer
+                                [question]="quizQuestion"
+                                [questionIndex]="i + 1"
+                                (questionUpdated)="handleQuestionUpdated()"
+                                (questionDeleted)="handleQuestionDeleted(quizQuestion)"
+                            />
+                        </div>
+                    }
+                </div>
+            }
+            @if (!disabled()) {
+                <div class="add-question-actions">
+                    <button id="quiz-add-mc-question" class="add-question-btn" (click)="addMultipleChoiceQuestion()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
+                    </button>
+                    <button id="quiz-add-dnd-question" class="add-question-btn" (click)="addDragAndDropQuestion()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
+                    </button>
+                    <button
+                        id="quiz-import-apollon-dnd-question"
+                        class="add-question-btn"
+                        [jhiFeatureToggleHide]="ApollonQuizDragAndDrop"
+                        (click)="importApollonDragAndDropQuestion()"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
+                    </button>
+                    <button id="quiz-add-short-answer-question" class="add-question-btn" (click)="addShortAnswerQuestion()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
+                    </button>
+                    <button class="add-question-btn" (click)="showHideExistingQuestions()" [class.active]="showExistingQuestions">
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
+                    </button>
+                </div>
+            }
+            @if (!disabled()) {
+                <div class="mt-2 mb-3">
+                    <jhi-quiz-question-list-edit-existing
+                        [show]="showExistingQuestions"
+                        [courseId]="courseId()"
+                        [filePool]="fileMap"
+                        (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
+                        (onFilesAdded)="handleFilesAdded($event)"
+                    />
+                </div>
+            }
+        </div>
     </div>
-    @if (!disabled()) {
-        <div class="row mt-2">
-            <div class="col-12 col-sm-6 col-xl mb-1">
-                <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-xl mb-1">
-                <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-xl mb-1" [jhiFeatureToggleHide]="ApollonQuizDragAndDrop">
-                <button id="quiz-import-apollon-dnd-question" class="btn btn-block btn-success" (click)="importApollonDragAndDropQuestion()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizExercise.addApollonDragAndDropQuestion"></span>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-xl mb-1">
-                <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
-                </button>
-            </div>
-            <div class="col-12 col-sm-6 col-xl mb-1">
-                <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
-                </button>
-            </div>
-        </div>
-    }
-    @if (!disabled()) {
-        <div class="row mt-2 mb-5">
-            <jhi-quiz-question-list-edit-existing
-                [show]="showExistingQuestions"
-                [courseId]="courseId()"
-                [filePool]="fileMap"
-                (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
-                (onFilesAdded)="handleFilesAdded($event)"
-            />
-        </div>
-    }
 </div>

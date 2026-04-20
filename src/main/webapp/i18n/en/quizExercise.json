@@ -134,6 +134,11 @@
             "options": "Options",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",
+            "includedInOverallScoreCourseLabelShort": "Course Score Calculation",
+            "includedInOverallScoreExamLabelShort": "Exam Score Calculation",
+            "includedInScoreYes": "Include this exercise",
+            "includedInScoreBonus": "Include as bonus points",
+            "includedInScoreNo": "Do not include",
             "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
@@ -148,6 +153,16 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Questions",
+            "questionsDescription": "Add and manage questions for this quiz exercise.",
+            "sections": {
+                "settings": {
+                    "title": "Quiz Settings",
+                    "description": "Configure general settings."
+                },
+                "general": "General",
+                "schedule": "Schedule & Mode",
+                "competencies": "Competencies"
+            },
             "noQuestionsFoundCourse": "No questions in Course found",
             "noQuestionsFoundExam": "No questions in Exam found",
             "noMatchingQuestionsFound": "No questions in the Course match the selected criteria",

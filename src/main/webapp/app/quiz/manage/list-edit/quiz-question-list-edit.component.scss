@@ -1,55 +1,214 @@
-.btn-block {
-    display: block;
-    width: 100%;
-}
-
 .edit-quiz {
+    .section-card {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: var(--overview-card-bg, var(--brighter-body-bg));
+    }
+
+    .section-card--questions {
+        --section-color: var(--purple);
+        --section-bg-start: color-mix(in srgb, var(--section-color) 6%, transparent);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: linear-gradient(135deg, var(--section-bg-start, rgba(var(--bs-primary-rgb), 0.04)) 0%, transparent 100%);
+    }
+
+    .section-header-icon {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--bs-white);
+        background: var(--section-color, var(--bs-primary));
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-header-text {
+        flex: 1;
+
+        h4 {
+            margin: 0 0 0.15rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--bs-secondary-color);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+    }
+
+    .section-header-action {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.85rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background: var(--overview-card-nested-bg, var(--bs-body-bg));
+        color: var(--bs-body-color);
+        font-weight: 500;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+
+        &:hover,
+        &.active {
+            background: color-mix(in srgb, var(--overview-card-nested-bg, var(--bs-body-bg)) 75%, white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    .section-body {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .add-question-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding-top: 1rem;
+
+        .add-question-btn {
+            flex: 1;
+        }
+    }
+
+    .add-question-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background: transparent;
+        color: var(--bs-secondary-color);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover,
+        &.active {
+            border-color: var(--section-color, var(--bs-primary));
+            color: var(--section-color, var(--bs-primary));
+            background: var(--section-bg-start, rgba(var(--bs-primary-rgb), 0.04));
+        }
+    }
+
     .question {
         width: 100%;
         box-sizing: border-box;
-        border: 1px solid var(--quiz-edit-question-border);
-        margin-bottom: 18px;
-        background: var(--quiz-edit-question-background);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        background: var(--bs-body-bg);
 
         &:first-of-type {
-            margin-top: 18px;
+            margin-top: 1rem;
         }
 
         /** css style for child components start **/
         .question-card-header {
-            padding: 15px 5px 5px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.85rem;
+            background: var(--overview-card-nested-bg, var(--bs-tertiary-bg));
+            border-bottom: 1px solid var(--bs-border-color);
+            flex-wrap: wrap;
         }
 
         .question-collapse {
-            margin-top: -15px;
-            width: 3.25rem;
+            flex-shrink: 0;
+            width: 2rem;
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--bs-secondary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                color: var(--bs-body-color);
+            }
         }
 
-        .question-title,
-        .question-score {
+        .question-title {
             flex: 1;
+            min-width: 8rem;
 
-            input.form-control {
+            input {
                 width: 100%;
+            }
+        }
+
+        .question-score {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+
+            .score-input {
+                width: 5rem;
+            }
+        }
+
+        .question-type {
+            flex-shrink: 0;
+        }
+
+        .question-type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.55rem;
+            border-radius: 0.4rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: white;
+
+            &--mc {
+                background: var(--blue);
+            }
+
+            &--dnd {
+                background: var(--warning);
+            }
+
+            &--sa {
+                background: var(--success);
             }
         }
 
         .question-card-header-inputs {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 0.75rem;
 
             @media (max-width: 699px) {
                 flex: 100%;
             }
-
-            .question-score {
-                flex: 1;
-            }
-        }
-
-        .question-type {
-            margin-bottom: 15px;
         }
 
         .mc-question,
@@ -66,7 +225,98 @@
         .preview-mc-question,
         .preview-dnd-question,
         .preview-sa-question {
-            padding: 20px;
+            padding: 1.25rem;
+            background: var(--overview-card-bg, var(--bs-tertiary-bg));
+        }
+
+        .question-card-body {
+            .question-options-reevaluation {
+                .form-group {
+                    display: flex;
+                    align-items: center;
+                    margin: 0 5px 15px;
+                }
+
+                .form-control:disabled {
+                    background-color: var(--gray-200);
+                }
+
+                .form-group > * {
+                    margin: 0 4px;
+                }
+
+                .form-check {
+                    display: block;
+                    align-items: center;
+                    padding-left: 0;
+                }
+            }
+
+            .invalid-button {
+                width: 100%;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+        }
+
+        .question-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.75rem;
+            height: 2.75rem;
+            padding: 0;
+            font-size: 1.35rem;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            background: transparent;
+            color: var(--bs-body-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+
+            fa-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            &:hover {
+                background: var(--bs-tertiary-bg);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+
+            &.question-action-btn--delete:hover {
+                background: rgba(var(--bs-danger-rgb), 0.15);
+                border-color: var(--bs-danger);
+                color: var(--bs-danger);
+            }
+
+            &.question-action-btn--refine:hover {
+                background: color-mix(in srgb, var(--blue) 15%, transparent);
+                border-color: var(--blue);
+                color: var(--blue);
+            }
+        }
+
+        .question-action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .question-card-body .question-options:not(.row) {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+
+            .form-group {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                margin: 0;
+            }
         }
 
         .delete-button,
@@ -78,11 +328,11 @@
         }
 
         .delete-button:hover {
-            color: red;
+            color: var(--bs-danger);
         }
 
         .duplicate-button:hover {
-            color: #0f6ab4;
+            color: var(--primary);
         }
 
         .markupEditorArea {
@@ -160,30 +410,5 @@
 
     .existing-question-table {
         padding-top: 10px;
-    }
-}
-
-.edit-quiz-footer {
-    position: sticky;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    border-top: 1px solid var(--border-color);
-    background: var(--edit-quiz-footer-background);
-    padding-top: 10px;
-
-    // offset the padding above the footer
-    margin-top: -3rem;
-
-    .container {
-        height: 100%;
-
-        .edit-quiz-footer-content {
-            flex-wrap: wrap;
-
-            .form-group {
-                margin-bottom: -0.25rem;
-            }
-        }
     }
 }

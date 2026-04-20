@@ -1,6 +1,6 @@
 <div class="edit-sa-question">
     @if (!reEvaluationInProgress()) {
-        <div class="question-options card-header question-card-header">
+        <div class="question-options question-card-header">
             <button
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
@@ -9,30 +9,34 @@
             >
                 <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
             </button>
-            <div class="form-group question-title">
+            <div class="question-title">
                 <input
                     id="short-answer-question-title"
-                    class="form-control"
+                    pInputText
                     [(ngModel)]="shortAnswerQuestion.title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate }}"
                 />
             </div>
             <div class="question-card-header-inputs">
-                <div class="form-group question-score">
+                <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <input
-                        class="form-control"
-                        title="score"
-                        type="number"
-                        min="0"
-                        [max]="MAX_POINTS"
+                    <p-inputnumber
+                        inputId="score"
+                        styleClass="score-input"
                         [(ngModel)]="shortAnswerQuestion.points"
                         (ngModelChange)="questionUpdated.emit()"
+                        [min]="0"
+                        [max]="MAX_POINTS"
                     />
                 </div>
+                <div class="question-action-buttons">
+                    <button type="button" class="question-action-btn question-action-btn--delete" aria-label="Delete question" (click)="deleteQuestion()">
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
                 <div class="question-type">
-                    <h3 class="mb-0"><span class="badge bg-success align-text-top">SA</span></h3>
+                    <span class="question-type-badge question-type-badge--sa">SA</span>
                 </div>
             </div>
         </div>
@@ -54,7 +58,7 @@
                     <div class="input-group row">
                         <div class="col-10 col-lg-11">
                             <input
-                                class="form-control"
+                                pInputText
                                 [(ngModel)]="shortAnswerQuestion.title"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -77,7 +81,7 @@
                 </div>
                 <div class="col-3 col-lg-1 mt-lg-3">
                     <div class="question-type">
-                        <h3 class="mb-0"><span class="badge bg-success align-text-top" style="width: 60px">SA</span></h3>
+                        <span class="question-type-badge question-type-badge--sa">SA</span>
                     </div>
                 </div>
                 <div class="col-9 col-lg-2 text-end mt-lg-3">
@@ -112,74 +116,53 @@
             </div>
         </div>
     }
-    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
         @if (!reEvaluationInProgress()) {
             <div class="question-options">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                        <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
-                        <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
-                        <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
-                    </select>
+                    <p-select [options]="scoringTypeOptions()" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" appendTo="body" />
                     <jhi-quiz-scoring-info-modal />
                 </div>
-                <div class="form-group match-percentage-container">
+                <div class="form-group sa-slider-group">
                     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
-                    <div class="slider-container">
-                        <div class="slider-with-label">
-                            <input
-                                type="range"
-                                name="similarity-slider"
-                                min="50"
-                                max="100"
-                                step="1"
-                                value="85"
-                                id="{{ 'matchPercentageSlider' + questionIndex() }}"
-                                [(ngModel)]="shortAnswerQuestion.similarityValue"
-                                (ngModelChange)="questionUpdated.emit()"
-                            />
-                            <p>{{ shortAnswerQuestion.similarityValue }} %</p>
-                        </div>
-                    </div>
+                    <input
+                        type="range"
+                        name="similarity-slider"
+                        min="50"
+                        max="100"
+                        step="1"
+                        value="85"
+                        id="{{ 'matchPercentageSlider' + questionIndex() }}"
+                        [(ngModel)]="shortAnswerQuestion.similarityValue"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                    <span class="sa-slider-value">{{ shortAnswerQuestion.similarityValue }} %</span>
                     <jhi-match-percentage-info-modal />
-                    <div class="form-group form-check custom-control custom-checkbox">
+                </div>
+                <div class="sa-checkbox-group">
+                    <div class="form-group">
                         <input
                             #inputElement
                             type="checkbox"
                             id="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
-                            class="form-check-input custom-control-input"
+                            class="form-check-input"
                             [checked]="shortAnswerQuestion.similarityValue === 100"
                             (change)="toggleExactMatchCheckbox(inputElement.checked)"
                         />
-                        <label
-                            class="form-check-label custom-control-label"
-                            for="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
-                            jhiTranslate="artemisApp.quizExercise.matchPercentage.title"
-                        ></label>
+                        <label for="{{ 'cbMatchAnswersExactly' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchPercentage.title"></label>
                     </div>
-                    <div class="form-group form-check custom-control custom-checkbox">
+                    <div class="form-group">
                         <input
                             type="checkbox"
                             id="{{ 'cbMatchLetterCase' + questionIndex() }}"
-                            class="form-check-input custom-control-input"
+                            class="form-check-input"
                             [(ngModel)]="shortAnswerQuestion.matchLetterCase"
                             (ngModelChange)="questionUpdated.emit()"
                         />
-                        <label
-                            class="form-check-label custom-control-label"
-                            for="{{ 'cbMatchLetterCase' + questionIndex() }}"
-                            jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"
-                        ></label>
+                        <label for="{{ 'cbMatchLetterCase' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></label>
                     </div>
                 </div>
-                @if (!reEvaluationInProgress()) {
-                    <div class="form-group">
-                        <div class="delete-button" (click)="deleteQuestion()">
-                            <fa-icon [icon]="faTrash" size="2x" />
-                        </div>
-                    </div>
-                }
             </div>
         }
         @if (reEvaluationInProgress()) {
@@ -249,36 +232,27 @@
                         </div>
                     </div>
                     <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
-                        <div class="form-check custom-control custom-checkbox">
+                        <div class="flex align-items-center gap-2">
                             <input
                                 #inputElement
                                 type="checkbox"
                                 id="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
-                                class="custom-control-input"
+                                class="form-check-input"
                                 [checked]="shortAnswerQuestion.similarityValue === 100"
                                 (change)="toggleExactMatchCheckbox(inputElement.checked)"
                             />
-                            <label
-                                class="form-check-label custom-control-label"
-                                for="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
-                                jhiTranslate="artemisApp.quizExercise.matchPercentage.title"
-                            ></label>
+                            <label for="{{ 'cbMatchAnswersExactly' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchPercentage.title"></label>
                         </div>
                     </div>
                     <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input
-                                type="checkbox"
-                                id="{{ 'cbMatchLetterCase' + questionIndex() }}"
-                                class="custom-control-input"
+                        <div class="flex align-items-center gap-2">
+                            <p-checkbox
+                                inputId="{{ 'cbMatchLetterCase' + questionIndex() }}"
                                 [(ngModel)]="shortAnswerQuestion.matchLetterCase"
-                                (ngModelChange)="questionUpdated.emit()"
+                                [binary]="true"
+                                (onChange)="questionUpdated.emit()"
                             />
-                            <label
-                                class="form-check-label custom-control-label"
-                                for="{{ 'cbMatchLetterCase' + questionIndex() }}"
-                                jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"
-                            ></label>
+                            <label for="{{ 'cbMatchLetterCase' + questionIndex() }}" jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></label>
                         </div>
                     </div>
                 </div>

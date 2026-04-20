@@ -32,7 +32,7 @@
                 </div>
             </div>
         } @else {
-            <div class="competency-selector p-2" id="competency-selector">
+            <div class="competency-selector p-inputtext p-2" id="competency-selector">
                 @for (competencyLink of competencyLinks; track competencyLink) {
                     @if (competencyLink && competencyLink.competency && competencyLink.competency.id) {
                         <div class="mb-1">

@@ -1,6 +1,6 @@
 <div class="edit-mc-question">
     @if (!reEvaluationInProgress()) {
-        <div class="question-options card-header question-card-header" [hidden]="showPreview()">
+        <div class="question-options question-card-header" [hidden]="showPreview()">
             <button
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
@@ -9,31 +9,39 @@
             >
                 <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
             </button>
-            <div class="form-group question-title">
+            <div class="question-title">
                 <input
                     id="mc-question-title"
-                    class="form-control"
+                    pInputText
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
             </div>
             <div class="question-card-header-inputs">
-                <div class="form-group question-score">
+                <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <input
-                        id="score"
-                        class="form-control"
-                        title="score"
-                        type="number"
-                        min="0"
-                        [max]="MAX_POINTS"
+                    <p-inputnumber
+                        inputId="score"
+                        styleClass="score-input"
                         [(ngModel)]="question().points!"
                         (ngModelChange)="questionUpdated.emit()"
+                        [min]="0"
+                        [max]="MAX_POINTS"
                     />
                 </div>
+                <div class="question-action-buttons">
+                    @if (hyperionEnabled()) {
+                        <button type="button" class="question-action-btn question-action-btn--refine" aria-label="Refine question" (click)="refineAndExpand()">
+                            <fa-icon [icon]="faWandMagicSparkles" />
+                        </button>
+                    }
+                    <button type="button" class="question-action-btn question-action-btn--delete" aria-label="Delete question" (click)="deleteQuestion()">
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
                 <div class="question-type">
-                    <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>
+                    <span class="question-type-badge question-type-badge--mc">MC</span>
                 </div>
             </div>
         </div>
@@ -54,7 +62,7 @@
                     <div class="input-group row">
                         <div class="col-10 col-lg-11">
                             <input
-                                class="form-control"
+                                pInputText
                                 [(ngModel)]="question().title"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
@@ -77,7 +85,7 @@
                 </div>
                 <div class="col-3 col-lg-1 mt-lg-3">
                     <div class="question-type">
-                        <h3 class="mb-0"><span class="badge bg-info align-text-top" style="width: 60px">MC</span></h3>
+                        <span class="question-type-badge question-type-badge--mc">MC</span>
                     </div>
                 </div>
                 <div class="col-9 col-lg-2 text-end mt-lg-3">
@@ -113,22 +121,18 @@
         </div>
     }
 
-    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
         <div [ngClass]="reEvaluationInProgress() ? 'question-options row' : 'question-options'" [hidden]="showPreview()">
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-4' : ''">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <select
-                        class="form-select"
+                    <p-select
+                        [options]="scoringTypeOptions()"
                         [(ngModel)]="question().scoringType"
                         (ngModelChange)="questionUpdated.emit()"
                         [disabled]="question().singleChoice ?? false"
-                        title="scoring type"
-                    >
-                        <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
-                        <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
-                        <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
-                    </select>
+                        appendTo="body"
+                    />
                     @if (!reEvaluationInProgress()) {
                         <jhi-quiz-scoring-info-modal />
                     }
@@ -144,36 +148,27 @@
             }
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-3' : ''">
                 <div class="form-group">
-                    <div class="form-check custom-control custom-checkbox">
-                        <input
-                            type="checkbox"
-                            id="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
+                    <div class="flex align-items-center gap-2">
+                        <p-checkbox
+                            inputId="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
                             [(ngModel)]="question().randomizeOrder"
-                            class="form-check-input custom-control-input"
+                            [binary]="true"
+                            (onChange)="questionUpdated.emit()"
                         />
-                        <label
-                            class="form-check-label custom-control-label"
-                            for="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
-                            jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
-                        ></label>
+                        <label for="{{ 'cbRandomizeOrderMC' + questionIndex() }}" jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"></label>
                     </div>
                 </div>
             </div>
             @if (!reEvaluationInProgress()) {
                 <div class="form-group">
-                    <div class="form-check custom-control custom-checkbox">
-                        <input
-                            type="checkbox"
-                            id="{{ 'cbSingleChoiceMC' + questionIndex() }}"
+                    <div class="flex align-items-center gap-2">
+                        <p-checkbox
+                            inputId="{{ 'cbSingleChoiceMC' + questionIndex() }}"
                             [(ngModel)]="question().singleChoice"
-                            (ngModelChange)="onSingleChoiceChanged(); questionUpdated.emit()"
-                            class="form-check-input custom-control-input"
+                            [binary]="true"
+                            (onChange)="onSingleChoiceChanged(); questionUpdated.emit()"
                         />
-                        <label
-                            class="form-check-label custom-control-label"
-                            for="{{ 'cbSingleChoiceMC' + questionIndex() }}"
-                            jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"
-                        ></label>
+                        <label for="{{ 'cbSingleChoiceMC' + questionIndex() }}" jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"></label>
                         <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate" />
                     </div>
                 </div>
@@ -199,17 +194,6 @@
                             <fa-icon [icon]="faTrash" size="2x" />
                         </div>
                     </div>
-                </div>
-            } @else {
-                <div class="form-group question-action-buttons">
-                    @if (hyperionEnabled()) {
-                        <button type="button" class="refine-button" aria-label="Refine question" (click)="refineRequested.emit()">
-                            <fa-icon [icon]="faWandMagicSparkles" size="2x" />
-                        </button>
-                    }
-                    <button type="button" class="delete-button" aria-label="Delete question" (click)="deleteQuestion()">
-                        <fa-icon [icon]="faTrash" size="2x" />
-                    </button>
                 </div>
             }
         </div>
