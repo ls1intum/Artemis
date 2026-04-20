@@ -313,7 +313,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
         // Create request DTO without uncommitted files
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
-        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of(), null, null);
 
         var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
@@ -340,7 +340,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
         // Create request DTO with uncommitted files
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
-        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles);
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles, null, null);
 
         var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
@@ -362,7 +362,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
         // Create request DTO with JSON content
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
-        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of(), null, null);
 
         var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
