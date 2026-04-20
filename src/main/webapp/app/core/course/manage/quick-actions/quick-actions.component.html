@@ -96,25 +96,10 @@
             <span class="quick-action-label" jhiTranslate="entity.action.addFaq"></span>
         </button>
     }
-    @if (course()?.isAtLeastInstructor) {
-        <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="quick-action-card quick-action-card--deimos" (click)="openDeimosBatchDialog()">
-            <div class="quick-action-icon">
-                <fa-icon [icon]="faFileImport" />
-            </div>
-            <span class="quick-action-label" jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
-        </button>
-    }
 </div>
 
 <jhi-add-exercise-popover [course]="course()" #addExercisePopover="addExercisePopover" />
 <jhi-course-material-import-dialog #importDialog [targetCourseId]="course()?.id!" />
-<jhi-deimos-date-range-modal
-    #deimosDateRangeModal
-    [titleTranslationKey]="'artemisApp.deimos.modal.title.course'"
-    [maxWindowDays]="31"
-    [isSubmitting]="deimosSubmitting()"
-    (confirmSelection)="triggerCourseDeimosBatch($event)"
-/>
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
     <div class="stat-item">

@@ -92,14 +92,18 @@ async function createTutorialGroupsConfiguration(client, courseId) {
 }
 
 async function createTutorialGroup(client, courseId, config) {
+    if (!config.tutor?.id) {
+        throw new Error(`Cannot create tutorial group "${config.title}": missing tutor id`);
+    }
+
     const tutorialGroup = {
         title: config.title,
+        tutorId: config.tutor.id,
         campus: config.campus,
         language: config.language,
         capacity: config.capacity,
         isOnline: config.isOnline,
         additionalInformation: config.additionalInformation,
-        teachingAssistant: config.tutor ? { login: config.tutor.login } : null,
     };
 
     const response = await client.post(`/api/tutorialgroup/courses/${courseId}/tutorial-groups`, tutorialGroup);
@@ -142,17 +146,29 @@ async function createTutorialGroupSessions(client, courseId, tutorialGroupId, co
 async function distributeStudentsToGroups(client, courseId, students, groups) {
     if (students.length === 0 || groups.length === 0) return;
 
+    const registrationsByGroupId = new Map();
+
     // Distribute students evenly among groups
     for (let i = 0; i < students.length; i++) {
         const student = students[i];
         const group = groups[i % groups.length];
+        const registrations = registrationsByGroupId.get(group.id) || [];
+        registrations.push(student.login);
+        registrationsByGroupId.set(group.id, registrations);
+    }
+
+    for (const group of groups) {
+        const registrations = registrationsByGroupId.get(group.id) || [];
+        if (registrations.length === 0) {
+            continue;
+        }
 
         try {
-            await client.post(`/api/tutorialgroup/courses/${courseId}/tutorial-groups/${group.id}/register/${student.login}`);
+            await client.post(`/api/tutorialgroup/courses/${courseId}/tutorial-groups/${group.id}/batch-register`, registrations);
         } catch (error) {
-            // Student might already be registered
+            // Students might already be registered
             if (error.response?.status !== 400) {
-                console.log(`      Note: Could not register ${student.login} to ${group.title}`);
+                console.log(`      Note: Could not register students to ${group.title}`);
             }
         }
     }

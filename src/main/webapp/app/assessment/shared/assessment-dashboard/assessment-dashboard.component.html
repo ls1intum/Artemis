@@ -38,6 +38,11 @@
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>
                         </jhi-feature-overlay>
+
+                        <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
+                            <fa-icon [icon]="faShieldAlt" />
+                            <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                        </button>
                     }
                 </div>
             }
@@ -280,3 +285,10 @@
         </div>
     </div>
 }
+<jhi-deimos-date-range-modal
+    #deimosDateRangeModal
+    [titleTranslationKey]="'artemisApp.deimos.modal.title.course'"
+    [maxWindowDays]="31"
+    [isSubmitting]="deimosSubmitting()"
+    (confirmSelection)="triggerCourseDeimosBatch($event)"
+/>
