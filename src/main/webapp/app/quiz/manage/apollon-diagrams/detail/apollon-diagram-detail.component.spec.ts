@@ -24,6 +24,61 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
+function setupCanvasAndImageMocks() {
+    const mockContext = {
+        drawImage: vi.fn(),
+        fillStyle: '',
+        fillRect: vi.fn(),
+    };
+
+    const mockCanvas = {
+        getContext: vi.fn().mockReturnValue(mockContext),
+        toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
+        width: 0,
+        height: 0,
+    } as unknown as HTMLCanvasElement;
+
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        if (tagName === 'canvas') {
+            return mockCanvas;
+        }
+        return originalCreateElement(tagName);
+    });
+
+    const originalImage = globalThis.Image;
+    class MockImage {
+        width = 100;
+        height = 100;
+        private _src = '';
+        onload: (() => void) | null = null;
+        onerror: ((error: Event | string) => void) | null = null;
+
+        get src() {
+            return this._src;
+        }
+
+        set src(value: string) {
+            this._src = value;
+            setTimeout(() => this.onload?.(), 0);
+        }
+    }
+
+    vi.stubGlobal('Image', MockImage as any);
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    return {
+        cleanup: () => {
+            createElementSpy.mockRestore();
+            createObjectURLSpy.mockRestore();
+            revokeObjectURLSpy.mockRestore();
+            vi.unstubAllGlobals();
+            globalThis.Image = originalImage;
+        },
+    };
+}
+
 /**
  * RUTHLESS TEST SUITE: ApollonDiagramDetailComponent
  *
@@ -45,6 +100,7 @@ describe('ApollonDiagramDetail Component', () => {
     let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
     let alertService: AlertService;
+    let cleanupCanvasAndImageMocks: (() => void) | undefined;
 
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
@@ -59,9 +115,6 @@ describe('ApollonDiagramDetail Component', () => {
             close: vi.fn(),
         }),
     };
-
-    globalThis.URL.createObjectURL = vi.fn(() => 'blob:test-url');
-    globalThis.URL.revokeObjectURL = vi.fn();
 
     beforeEach(async () => {
         const route = {
@@ -112,9 +165,12 @@ describe('ApollonDiagramDetail Component', () => {
             clip: { x: 0, y: 0, width: 100, height: 100 },
         });
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob(['PNG']));
+        cleanupCanvasAndImageMocks = setupCanvasAndImageMocks().cleanup;
     });
 
     afterEach(() => {
+        cleanupCanvasAndImageMocks?.();
+        cleanupCanvasAndImageMocks = undefined;
         vi.restoreAllMocks();
         vi.useRealTimers();
     });
@@ -201,7 +257,7 @@ describe('ApollonDiagramDetail Component', () => {
                     ...testClassDiagramV3,
                     interactive: {
                         elements: {},
-                        relationships: { 'rel-1': true },
+                        relationships: { '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd': true },
                     },
                 } as unknown as UMLModel;
 

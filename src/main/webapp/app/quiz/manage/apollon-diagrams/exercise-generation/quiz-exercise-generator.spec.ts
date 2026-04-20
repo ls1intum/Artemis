@@ -18,6 +18,61 @@ import * as testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/cl
 import * as testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 
+function setupCanvasAndImageMocks() {
+    const mockContext = {
+        drawImage: vi.fn(),
+        fillStyle: '',
+        fillRect: vi.fn(),
+    };
+
+    const mockCanvas = {
+        getContext: vi.fn().mockReturnValue(mockContext),
+        toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
+        width: 0,
+        height: 0,
+    } as unknown as HTMLCanvasElement;
+
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        if (tagName === 'canvas') {
+            return mockCanvas;
+        }
+        return originalCreateElement(tagName);
+    });
+
+    const originalImage = globalThis.Image;
+    class MockImage {
+        width = 100;
+        height = 100;
+        private _src = '';
+        onload: (() => void) | null = null;
+        onerror: ((error: Event | string) => void) | null = null;
+
+        get src() {
+            return this._src;
+        }
+
+        set src(value: string) {
+            this._src = value;
+            setTimeout(() => this.onload?.(), 0);
+        }
+    }
+
+    vi.stubGlobal('Image', MockImage as any);
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    return {
+        cleanup: () => {
+            createElementSpy.mockRestore();
+            createObjectURLSpy.mockRestore();
+            revokeObjectURLSpy.mockRestore();
+            vi.unstubAllGlobals();
+            globalThis.Image = originalImage;
+        },
+    };
+}
+
 /**
  * RUTHLESS TEST SUITE: Quiz Exercise Generator
  *
@@ -31,6 +86,7 @@ describe('QuizExercise Generator', () => {
     setupTestBed({ zoneless: true });
 
     const course: Course = { id: 123 } as Course;
+    let cleanupCanvasAndImageMocks: (() => void) | undefined;
 
     // Type-safe mock for ApollonEditor.exportModelAsSvg
     const mockExportModelAsSvg = vi.fn().mockResolvedValue({
@@ -53,9 +109,12 @@ describe('QuizExercise Generator', () => {
         // Mock static method with proper cleanup
         vi.spyOn(ApollonEditor, 'exportModelAsSvg').mockImplementation(mockExportModelAsSvg);
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob(['PNG'], { type: 'image/png' }));
+        cleanupCanvasAndImageMocks = setupCanvasAndImageMocks().cleanup;
     });
 
     afterEach(() => {
+        cleanupCanvasAndImageMocks?.();
+        cleanupCanvasAndImageMocks = undefined;
         vi.restoreAllMocks();
     });
 
@@ -92,13 +151,8 @@ describe('QuizExercise Generator', () => {
         it('should generate background image excluding interactive elements', async () => {
             await generateDragAndDropQuizExercise(course, 'Background Test', v3Model);
 
-            // Verify exportModelAsSvg was called with exclude option containing interactive element IDs
-            expect(mockExportModelAsSvg).toHaveBeenCalledWith(
-                v3Model,
-                expect.objectContaining({
-                    exclude: expect.arrayContaining(['b390a813-dad9-4d6d-b3cd-732ce99d0a23', '6f572312-066b-4678-9c03-5032f3ba9be9', '2f67120e-b491-4222-beb1-79e87c2cf54d']),
-                }),
-            );
+            // The new renderer exports the full model and blanks the interactive regions afterward.
+            expect(mockExportModelAsSvg).toHaveBeenCalledWith(v3Model, expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
         });
 
         it('should handle v3 model with empty interactive elements', async () => {
@@ -189,12 +243,11 @@ describe('QuizExercise Generator', () => {
         it('should use node IDs from v4 array elements', async () => {
             await generateDragAndDropQuizExercise(course, 'ID Test', v4Model);
 
-            // exportModelAsSvg should be called with include option for each element
-            // First call is background (exclude), subsequent calls are for individual elements (include)
+            // exportModelAsSvg should be called once for the background and then once per generated drag item.
             const calls = mockExportModelAsSvg.mock.calls;
 
-            // Background call should exclude all element IDs
-            expect(calls[0][1]).toHaveProperty('exclude');
+            // Background call should export the full diagram in compat mode.
+            expect(calls[0][1]).toEqual(expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
 
             // Individual element calls should include specific IDs
             const includeCallIds = calls

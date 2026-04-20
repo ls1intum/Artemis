@@ -119,14 +119,18 @@ export function getModelElementIds(model: UMLModel | ApollonModelData | undefine
     return new Set([...nodeIds, ...edgeIds]);
 }
 
-export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelData | undefined): string[] {
+export function hasExplicitInteractiveConfig(model: UMLModel | ApollonModelData | undefined): boolean {
+    return !!(model as ApollonModelData | undefined)?.interactive;
+}
+
+export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelData | undefined): string[] | undefined {
     if (!model) {
-        return [];
+        return undefined;
     }
 
     const interactive = (model as ApollonModelData).interactive;
     if (!interactive) {
-        return [];
+        return undefined;
     }
 
     const validIds = getModelElementIds(model);
@@ -141,9 +145,12 @@ export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelD
 }
 
 export function getQuizRelevantElementIds(model: UMLModel | ApollonModelData | undefined): string[] {
-    const explicitInteractiveIds = getExplicitInteractiveElementIds(model);
-    if (explicitInteractiveIds.length > 0) {
-        return explicitInteractiveIds;
+    if (!model) {
+        return [];
+    }
+
+    if (hasExplicitInteractiveConfig(model)) {
+        return getExplicitInteractiveElementIds(model) ?? [];
     }
 
     return [...getModelElementIds(model)];
