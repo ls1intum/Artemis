@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
 import { ExerciseVersionMarkdownDiffComponent } from 'app/exercise/version-history/shared/exercise-version-markdown-diff.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -101,7 +101,7 @@ describe('ExerciseVersionSharedSnapshotMetadataComponent', () => {
         fixture.componentRef.setInput('viewMode', 'changes');
         fixture.detectChanges();
 
-        expect(component.hasVisibleContent()).toBeFalse();
+        expect(component.hasVisibleContent()).toBe(false);
         expect(fixture.nativeElement.textContent.trim()).toBe('');
     });
 });
