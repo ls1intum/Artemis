@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyMappingToolsService;
 import de.tum.cit.aet.artemis.atlas.service.ExerciseMappingToolsService;
+import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolsService;
 
 @Lazy
 @Configuration
@@ -72,5 +73,12 @@ public class AtlasAgentToolConfig {
     @Qualifier("exerciseMapperToolCallbackProvider")
     public ToolCallbackProvider exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
+    }
+
+    @Bean
+    @Lazy
+    @Qualifier("orchestratorToolCallbackProvider")
+    public ToolCallbackProvider orchestratorToolCallbackProvider(OrchestratorToolsService orchestratorToolsService) {
+        return MethodToolCallbackProvider.builder().toolObjects(orchestratorToolsService).build();
     }
 }
