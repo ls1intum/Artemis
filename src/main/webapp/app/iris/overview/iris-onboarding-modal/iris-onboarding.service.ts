@@ -160,6 +160,7 @@ export class IrisOnboardingService {
                     resolve({ action: 'finish' });
                 } else {
                     // Modal was dismissed (e.g., clicked X button)
+                    this.markOnboardingCompleted();
                     resolve(undefined);
                 }
             });
