@@ -1,5 +1,13 @@
 /* Base problem-statement styling (light theme defaults). Variables are overridden in dark-mode.css. */
 
+/* Standalone SSR body layout. Identical in light and dark so padding/margin
+ * do not flip between modes. Consumers can override --artemis-ssr-body-padding
+ * to customize the gutter. Dark-mode.css adds a body background on top. */
+body.artemis-ssr-body {
+    margin: 0;
+    padding: var(--artemis-ssr-body-padding, 16px);
+}
+
 .artemis-problem-statement {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     line-height: 1.5;

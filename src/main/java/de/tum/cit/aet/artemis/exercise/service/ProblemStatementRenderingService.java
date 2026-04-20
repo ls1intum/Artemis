@@ -211,7 +211,7 @@ public class ProblemStatementRenderingService {
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
-        String bodyClass = darkMode ? " class=\"artemis-ssr-body--dark\"" : "";
+        String bodyClass = " class=\"artemis-ssr-body" + (darkMode ? " artemis-ssr-body--dark" : "") + "\"";
         String document = "<!DOCTYPE html><html lang=\"" + HtmlEscaper.escapeAttribute(locale.toLanguageTag()) + "\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body" + bodyClass + ">" + html
                 + (interactiveScript != null ? "<script>" + interactiveScript + "</script>" : "") + "</body></html>";

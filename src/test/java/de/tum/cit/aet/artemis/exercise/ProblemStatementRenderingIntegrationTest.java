@@ -437,6 +437,31 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("artemis-problem-statement--dark");
     }
 
+    // --- Body layout symmetry between light and dark ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderSymmetricBodyLayoutAcrossLightAndDarkMode() throws Exception {
+        var lightReq = new ProblemStatementRenderRequestDTO("# Hi", null, null, "en", false, true, null);
+        var darkReq = new ProblemStatementRenderRequestDTO("# Hi", null, null, "en", true, true, null);
+
+        RenderedProblemStatementDTO lightResult = request.postWithResponseBody(POST_URL, lightReq, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO darkResult = request.postWithResponseBody(POST_URL, darkReq, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // Both modes emit the shared base class; only dark adds the --dark modifier.
+        assertThat(lightResult.html()).contains("<body class=\"artemis-ssr-body\">").doesNotContain("artemis-ssr-body--dark");
+        assertThat(darkResult.html()).contains("<body class=\"artemis-ssr-body artemis-ssr-body--dark\">");
+
+        // The shared layout rule lives in embedded.css and fires in both modes. This locks the
+        // invariant "light and dark differ in colors only, never in body layout".
+        assertThat(lightResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
+        assertThat(darkResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
+
+        // Dark-mode CSS keeps a body rule for the backdrop color, but the old layout properties
+        // have moved to the base rule in embedded.css.
+        assertThat(darkResult.html()).contains("body.artemis-ssr-body--dark {").contains("background: var(--body-bg, #1e1e1e);");
+    }
+
     // --- Interactive script shape ---
 
     @Test
