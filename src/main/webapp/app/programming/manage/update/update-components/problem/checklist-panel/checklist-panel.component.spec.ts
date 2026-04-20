@@ -842,6 +842,7 @@ describe('ChecklistPanelComponent', () => {
             hardExercise.id = 123;
             hardExercise.difficulty = DifficultyLevel.HARD;
             fixture.componentRef.setInput('exercise', hardExercise);
+            fixture.detectChanges(); // flush the localDeclaredDifficulty effect
             component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
             expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Lower);
         });
@@ -859,6 +860,7 @@ describe('ChecklistPanelComponent', () => {
             mediumExercise.id = 123;
             mediumExercise.difficulty = DifficultyLevel.MEDIUM;
             fixture.componentRef.setInput('exercise', mediumExercise);
+            fixture.detectChanges(); // flush the localDeclaredDifficulty effect
             // Now declared = MEDIUM = suggested → MATCH
             expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
         });

@@ -994,20 +994,26 @@ export class ChecklistPanelComponent {
     private unlinkDiscardedCompetencies(discarded: InferredCompetency[]): void {
         if (discarded.length === 0) return;
 
-        // Collect the IDs and titles of course competencies that should be unlinked
+        // Collect IDs and titles for unlink logic.
+        // - idsToRemove: precise — always used to remove a matching link by ID.
+        // - titlesForLinkFilter: only used to remove a link by title when no ID is available
+        //   (avoids false-positive removal of a different competency that shares the same title).
+        // - allTitles: always used to clean the title-indexed tracking sets.
         const idsToRemove = new Set<number>();
-        const titlesToRemove = new Set<string>();
+        const titlesForLinkFilter = new Set<string>();
+        const allTitles = new Set<string>();
         for (const comp of discarded) {
             const matchId = comp.matchedCourseCompetencyId;
+            const title = (comp.competencyTitle ?? '').toLowerCase().trim();
             if (matchId != null && matchId > 0) {
                 idsToRemove.add(matchId);
-            } else {
-                // Only fall back to title matching when there is no precise ID — otherwise a
-                // different competency that happens to share the same title could be unlinked.
-                const title = (comp.competencyTitle ?? '').toLowerCase().trim();
-                if (title) {
-                    titlesToRemove.add(title);
-                }
+            } else if (title) {
+                // Only fall back to title matching for links when there is no precise ID —
+                // otherwise a different competency sharing the same title could be unlinked.
+                titlesForLinkFilter.add(title);
+            }
+            if (title) {
+                allTitles.add(title);
             }
         }
 
@@ -1016,19 +1022,19 @@ export class ChecklistPanelComponent {
             const linkId = link.competency?.id;
             if (linkId != null && idsToRemove.has(linkId)) return false;
             const linkTitle = (link.competency?.title ?? '').toLowerCase().trim();
-            return !titlesToRemove.has(linkTitle);
+            return !titlesForLinkFilter.has(linkTitle);
         });
 
         if (updatedLinks.length !== this.competencyLinks().length) {
             this.competencyLinksChange.emit(updatedLinks);
             this.linkedCompetencyTitles.update((current) => {
                 const updated = new Set(current);
-                for (const t of titlesToRemove) updated.delete(t);
+                for (const t of allTitles) updated.delete(t);
                 return updated;
             });
             this.createdCompetencyTitles.update((current) => {
                 const updated = new Set(current);
-                for (const t of titlesToRemove) updated.delete(t);
+                for (const t of allTitles) updated.delete(t);
                 return updated;
             });
         }
