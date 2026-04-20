@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -63,10 +65,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Replaces IrisExerciseChatSessionService, IrisTextExerciseChatSessionService,
  * IrisCourseChatSessionService, and IrisLectureChatSessionService.
  * <p>
- * Dispatches to the appropriate pipeline based on which context fields are set on the session:
- * - exerciseId != null → exercise chat (programming or text, determined by repository lookup)
- * - lectureId != null → lecture chat
- * - else → course chat
+ * Dispatches to the appropriate behavior based on the {@link IrisChatMode} persisted on the session:
+ * {@code PROGRAMMING_EXERCISE_CHAT}, {@code TEXT_EXERCISE_CHAT}, {@code LECTURE_CHAT}, {@code COURSE_CHAT}.
+ * The session's {@code entityId} is interpreted relative to the mode (exercise, lecture, or course id).
  */
 @Lazy
 @Service
@@ -151,7 +152,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private void doRequestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
             Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        if (loadedSession == null) {
+            throw new EntityNotFoundException("IrisSession", session.getId());
+        }
+        if (!(loadedSession instanceof IrisChatSession chatSession)) {
+            throw new IllegalStateException("Expected IrisChatSession for session id " + session.getId() + " but got " + loadedSession.getClass().getSimpleName());
+        }
         var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
         var actualSettings = settings.orElseGet(() -> irisSettingsService.getSettingsForCourse(course));
         if (!actualSettings.enabled()) {

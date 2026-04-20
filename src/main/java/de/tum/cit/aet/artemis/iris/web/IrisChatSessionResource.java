@@ -97,7 +97,7 @@ public class IrisChatSessionResource {
      *
      * @param courseId the course ID (required for authorization)
      * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId the exercise or lecture ID; omit for COURSE_CHAT
+     * @param entityId the exercise, lecture or course ID
      * @return the current or newly created session
      */
     @PostMapping("{courseId}/sessions/current")
