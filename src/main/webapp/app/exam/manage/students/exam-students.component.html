@@ -1,4 +1,4 @@
-<div class="d-flex flex-column gap-2" style="min-height: 0">
+<div class="d-flex flex-column gap-2 h-100">
     <div class="d-flex gap-2 flex-column flex-md-row">
         <h3 class="mb-0">
             <span jhiTranslate="artemisApp.examManagement.students"></span>
@@ -100,299 +100,300 @@
         </div>
     </div>
 
-    <p-table
-        #dt
-        [value]="allRegisteredUsers()"
-        [rows]="10"
-        [rowsPerPageOptions]="[10, 20, 50, 100, 200, 500, 1000]"
-        paginator
-        [customSort]="true"
-        (sortFunction)="onCustomSort($event)"
-        [globalFilterFields]="filterFields"
-        rowHover
-        [scrollable]="true"
-        scrollHeight="flex"
-        [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
-        showCurrentPageReport
-        class="border border-1 rounded-4 overflow-hidden flex-grow-1"
-        style="min-height: 27rem"
-    >
-        <ng-template #caption>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <jhi-exam-students-menu-button
-                    [model]="manageStudentsMenuActions()"
-                    label="artemisApp.examManagement.examStudents.menu.manageStudents"
-                    buttonIconClass="pi pi-user-edit"
-                    [disabled]="isTestExam()"
-                />
-                <jhi-exam-students-menu-button
-                    [model]="examLogisticsMenuActions()"
-                    label="artemisApp.examManagement.examStudents.menu.examLogistics"
-                    buttonIconClass="pi pi-th-large"
-                    [disabled]="isTestExam()"
-                />
-                <jhi-exam-students-menu-button
-                    [model]="studentExamsMenuActions()"
-                    label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
-                    buttonIconClass="pi pi-file-edit"
-                    [disabled]="isTestExam()"
-                />
-                <p-icon-field class="flex-grow-1">
-                    <p-inputicon class="pi pi-search" />
-                    <input
-                        #globalFilterInput
-                        pInputText
-                        type="text"
-                        (input)="dt.filterGlobal(globalFilterInput.value, 'contains')"
-                        [placeholder]="'artemisApp.examManagement.examStudents.table.searchPlaceholder' | artemisTranslate"
-                        class="w-100"
+    <div class="d-flex flex-column flex-grow-1" style="min-height: 27rem">
+        <p-table
+            #dt
+            [value]="allRegisteredUsers()"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 50, 100, 200, 500, 1000]"
+            paginator
+            [customSort]="true"
+            (sortFunction)="onCustomSort($event)"
+            [globalFilterFields]="filterFields"
+            rowHover
+            [scrollable]="true"
+            scrollHeight="flex"
+            [currentPageReportTemplate]="'artemisApp.examManagement.examStudents.table.currentPageReport' | artemisTranslate"
+            showCurrentPageReport
+            class="border border-1 rounded-4 overflow-hidden flex-grow-1 h-100"
+        >
+            <ng-template #caption>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <jhi-exam-students-menu-button
+                        [model]="manageStudentsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.manageStudents"
+                        buttonIconClass="pi pi-user-edit"
+                        [disabled]="isTestExam()"
                     />
-                </p-icon-field>
-            </div>
-        </ng-template>
-        <ng-template #header>
-            <tr>
-                <th style="min-width: 3rem"></th>
-                <th pSortableColumn="studentDetails" style="min-width: 6rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="d-flex gap-1">
-                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.studentDetails"></span>
-                        </div>
-                        <p-sortIcon field="studentDetails" />
-                    </div>
-                </th>
-                <th pSortableColumn="matriculationNumber" style="min-width: 6rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.matriculationNumber"></span>
-                        <p-sortIcon field="matriculationNumber" />
-                    </div>
-                </th>
-                <th pSortableColumn="room" style="min-width: 2rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.room"></span>
-                        <p-sortIcon field="room" />
-                    </div>
-                </th>
-                <th pSortableColumn="seat" style="min-width: 3rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.seat"></span>
-                        <p-sortIcon field="seat" />
-                    </div>
-                </th>
-                @if (hasExamEnded()) {
-                    <th pSortableColumn="attendanceStatus" style="min-width: 2rem">
+                    <jhi-exam-students-menu-button
+                        [model]="examLogisticsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.examLogistics"
+                        buttonIconClass="pi pi-th-large"
+                        [disabled]="isTestExam()"
+                    />
+                    <jhi-exam-students-menu-button
+                        [model]="studentExamsMenuActions()"
+                        label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
+                        buttonIconClass="pi pi-file-edit"
+                        [disabled]="isTestExam()"
+                    />
+                    <p-icon-field class="flex-grow-1">
+                        <p-inputicon class="pi pi-search" />
+                        <input
+                            #globalFilterInput
+                            pInputText
+                            type="text"
+                            (input)="dt.filterGlobal(globalFilterInput.value, 'contains')"
+                            [placeholder]="'artemisApp.examManagement.examStudents.table.searchPlaceholder' | artemisTranslate"
+                            class="w-100"
+                        />
+                    </p-icon-field>
+                </div>
+            </ng-template>
+            <ng-template #header>
+                <tr>
+                    <th style="min-width: 3rem"></th>
+                    <th pSortableColumn="studentDetails" style="min-width: 6rem">
                         <div class="d-flex align-items-center gap-2">
-                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.status"></span>
-                            <p-sortIcon field="attendanceStatus" />
+                            <div class="d-flex gap-1">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.studentDetails"></span>
+                            </div>
+                            <p-sortIcon field="studentDetails" />
                         </div>
                     </th>
-                }
-                <th pSortableColumn="workingTime" style="min-width: 4rem">
-                    <div class="d-flex align-items-center gap-2">
-                        @if (isTestExam()) {
-                            <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>
-                        } @else {
-                            <span jhiTranslate="artemisApp.studentExams.workingTime"></span>
-                        }
-                        <p-sortIcon field="workingTime" />
-                    </div>
-                </th>
-                <th pSortableColumn="progress" style="min-width: 8rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.progress"></span>
-                        <p-sortIcon field="progress" />
-                    </div>
-                </th>
-                <th pSortableColumn="sessions" style="min-width: 4rem">
-                    <div class="d-flex align-items-center gap-2">
-                        <span jhiTranslate="artemisApp.examManagement.examStudents.table.sessions"></span>
-                        <p-sortIcon field="sessions" />
-                    </div>
-                </th>
-                <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
-                    <span class="d-flex align-items-center gap-2" jhiTranslate="artemisApp.examManagement.examStudents.table.actions"></span>
-                </th>
-            </tr>
-        </ng-template>
-        <ng-template #body let-student>
-            @let examUser = asExamUserWithExamData(student)!;
-            <tr>
-                <td>
-                    <img
-                        style="max-width: 60px"
-                        [id]="examUser.id"
-                        class="img-fluid"
-                        [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : missingImage"
-                    />
-                </td>
-                <td>
-                    <ng-template #studentDetailsTemplate>
-                        <div class="d-flex flex-column">
-                            <div class="d-flex align-items-center gap-1 mb-1">
-                                <i class="pi pi-id-card"></i>
-                                <span>{{ examUser.user?.name }}</span>
+                    <th pSortableColumn="matriculationNumber" style="min-width: 6rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.matriculationNumber"></span>
+                            <p-sortIcon field="matriculationNumber" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="room" style="min-width: 2rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.room"></span>
+                            <p-sortIcon field="room" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="seat" style="min-width: 3rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.seat"></span>
+                            <p-sortIcon field="seat" />
+                        </div>
+                    </th>
+                    @if (hasExamEnded()) {
+                        <th pSortableColumn="attendanceStatus" style="min-width: 2rem">
+                            <div class="d-flex align-items-center gap-2">
+                                <span jhiTranslate="artemisApp.examManagement.examStudents.table.status"></span>
+                                <p-sortIcon field="attendanceStatus" />
                             </div>
-                            <div class="d-flex align-items-center gap-1 text-secondary">
-                                <i class="pi pi-sign-in"></i>
-                                <span>{{ examUser.user?.login }}</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-1 text-secondary">
-                                <i class="pi pi-envelope"></i>
-                                <span>{{ examUser.user?.email }}</span>
-                            </div>
-                        </div>
-                    </ng-template>
-                    @if (isAdmin()) {
-                        <a
-                            class="d-block text-reset text-decoration-none cursor-pointer link-underline link-underline-opacity-0 link-underline-opacity-75-hover"
-                            [routerLink]="['/admin/user-management', examUser.user?.login]"
-                        >
-                            <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
-                        </a>
-                    } @else {
-                        <div>
-                            <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
-                        </div>
+                        </th>
                     }
-                </td>
-                <td>
-                    @if (examUser.user?.visibleRegistrationNumber) {
-                        <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
-                    } @else {
-                        <span>-</span>
-                    }
-                </td>
-                <td>
-                    @if (examUser.actualRoom) {
-                        <div>
-                            <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</del>
-                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
+                    <th pSortableColumn="workingTime" style="min-width: 4rem">
+                        <div class="d-flex align-items-center gap-2">
+                            @if (isTestExam()) {
+                                <span jhiTranslate="artemisApp.studentExams.usedWorkingTime"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.studentExams.workingTime"></span>
+                            }
+                            <p-sortIcon field="workingTime" />
                         </div>
-                    } @else if (examUser.plannedRoom) {
-                        <div>
-                            <span title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</span>
+                    </th>
+                    <th pSortableColumn="progress" style="min-width: 8rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.progress"></span>
+                            <p-sortIcon field="progress" />
                         </div>
-                    } @else {
-                        <div>
-                            <span>-</span>
+                    </th>
+                    <th pSortableColumn="sessions" style="min-width: 4rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <span jhiTranslate="artemisApp.examManagement.examStudents.table.sessions"></span>
+                            <p-sortIcon field="sessions" />
                         </div>
-                    }
-                </td>
-                <td>
-                    @if (examUser.actualSeat) {
-                        <div>
-                            <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</del>
-                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
-                        </div>
-                    } @else if (examUser.plannedSeat) {
-                        <div>
-                            <span title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</span>
-                        </div>
-                    } @else {
-                        <div>
-                            <span>-</span>
-                        </div>
-                    }
-                </td>
-                @if (hasExamEnded()) {
+                    </th>
+                    <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
+                        <span class="d-flex align-items-center gap-2" jhiTranslate="artemisApp.examManagement.examStudents.table.actions"></span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-student>
+                @let examUser = asExamUserWithExamData(student)!;
+                <tr>
                     <td>
-                        @if (attendanceCheckFailed(examUser)) {
-                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
-                                <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+                        <img
+                            style="max-width: 60px"
+                            [id]="examUser.id"
+                            class="img-fluid"
+                            [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : missingImage"
+                        />
+                    </td>
+                    <td>
+                        <ng-template #studentDetailsTemplate>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <i class="pi pi-id-card"></i>
+                                    <span>{{ examUser.user?.name }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 text-secondary">
+                                    <i class="pi pi-sign-in"></i>
+                                    <span>{{ examUser.user?.login }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 text-secondary">
+                                    <i class="pi pi-envelope"></i>
+                                    <span>{{ examUser.user?.email }}</span>
+                                </div>
                             </div>
-                        } @else if (attendanceCheckPassed(examUser)) {
-                            <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
-                                <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
-                            </div>
-                        } @else if (didAttendExam(examUser)) {
-                            <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
-                                <fa-icon [icon]="faUserTimes" class="fa-2x" />
+                        </ng-template>
+                        @if (isAdmin()) {
+                            <a
+                                class="d-block text-reset text-decoration-none cursor-pointer link-underline link-underline-opacity-0 link-underline-opacity-75-hover"
+                                [routerLink]="['/admin/user-management', examUser.user?.login]"
+                            >
+                                <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
+                            </a>
+                        } @else {
+                            <div>
+                                <ng-container [ngTemplateOutlet]="studentDetailsTemplate" />
                             </div>
                         }
                     </td>
-                }
-                <td>
-                    @if (examUser.studentExam) {
-                        @if (isTestExam()) {
-                            <jhi-test-exam-working-time [studentExam]="examUser.studentExam" />
+                    <td>
+                        @if (examUser.user?.visibleRegistrationNumber) {
+                            <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
                         } @else {
-                            <jhi-student-exam-working-time [studentExam]="examUser.studentExam" />
+                            <span>-</span>
                         }
-                    } @else {
-                        <span>-</span>
+                    </td>
+                    <td>
+                        @if (examUser.actualRoom) {
+                            <div>
+                                <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</del>
+                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
+                            </div>
+                        } @else if (examUser.plannedRoom) {
+                            <div>
+                                <span title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</span>
+                            </div>
+                        } @else {
+                            <div>
+                                <span>-</span>
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        @if (examUser.actualSeat) {
+                            <div>
+                                <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</del>
+                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
+                            </div>
+                        } @else if (examUser.plannedSeat) {
+                            <div>
+                                <span title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</span>
+                            </div>
+                        } @else {
+                            <div>
+                                <span>-</span>
+                            </div>
+                        }
+                    </td>
+                    @if (hasExamEnded()) {
+                        <td>
+                            @if (attendanceCheckFailed(examUser)) {
+                                <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
+                                    <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+                                </div>
+                            } @else if (attendanceCheckPassed(examUser)) {
+                                <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
+                                    <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
+                                </div>
+                            } @else if (didAttendExam(examUser)) {
+                                <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
+                                    <fa-icon [icon]="faUserTimes" class="fa-2x" />
+                                </div>
+                            }
+                        </td>
                     }
-                </td>
-                <td>
-                    @if (examUser.progress === 'submitted' && examUser.submissionDate) {
-                        <p-tag severity="success"
-                            >{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</p-tag
-                        >
-                    } @else if (examUser.progress === 'submitted') {
-                        <p-tag severity="success" jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted" />
-                    } @else if (examUser.progress === 'started') {
-                        <p-tag severity="info" jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted" />
-                    } @else if (examUser.progress === 'notStarted') {
-                        <p-tag severity="warn" jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted" />
-                    } @else {
-                        <p-tag severity="danger" jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing" />
-                    }
-                </td>
-                <td>
-                    <span>{{ examUser.numberOfExamSessions }}</span>
-                </td>
-                <td alignFrozen="right" pFrozenColumn>
-                    <div class="d-flex gap-1">
-                        <button
-                            pButton
-                            size="small"
-                            severity="primary"
-                            [title]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
-                            (click)="reseatingDialog.openDialog(examUser)"
-                            [disabled]="isTestExam()"
-                        >
-                            <fa-icon [icon]="faChair" />
-                        </button>
-                        <a
-                            pButton
-                            size="small"
-                            severity="primary"
-                            style="text-decoration: none !important"
-                            [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
-                            [routerLink]="
-                                exam().id && examUser.studentExamId ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId] : null
-                            "
-                            [class.p-disabled]="!exam().id || !examUser.studentExamId"
-                            (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
-                        >
-                            <i class="pi pi-eye"></i>
-                        </a>
-                        <button
-                            pButton
-                            jhiDeleteButton
-                            severity="danger"
-                            size="small"
-                            [title]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
-                            [disabled]="isTestExam()"
-                            [renderButtonStyle]="false"
-                            [renderButtonText]="false"
-                            [actionType]="ActionType.Remove"
-                            [entityTitle]="examUser.user?.login || ''"
-                            deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
-                            deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
-                            (delete)="removeFromExam(examUser, $event)"
-                            [additionalChecks]="{
-                                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-                            }"
-                            [dialogError]="dialogError$"
-                            [requireConfirmationOnlyForAdditionalChecks]="true"
-                        >
-                            <i class="pi pi-user-minus"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+                    <td>
+                        @if (examUser.studentExam) {
+                            @if (isTestExam()) {
+                                <jhi-test-exam-working-time [studentExam]="examUser.studentExam" />
+                            } @else {
+                                <jhi-student-exam-working-time [studentExam]="examUser.studentExam" />
+                            }
+                        } @else {
+                            <span>-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (examUser.progress === 'submitted' && examUser.submissionDate) {
+                            <p-tag severity="success"
+                                >{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</p-tag
+                            >
+                        } @else if (examUser.progress === 'submitted') {
+                            <p-tag severity="success" jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted" />
+                        } @else if (examUser.progress === 'started') {
+                            <p-tag severity="info" jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted" />
+                        } @else if (examUser.progress === 'notStarted') {
+                            <p-tag severity="warn" jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted" />
+                        } @else {
+                            <p-tag severity="danger" jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing" />
+                        }
+                    </td>
+                    <td>
+                        <span>{{ examUser.numberOfExamSessions }}</span>
+                    </td>
+                    <td alignFrozen="right" pFrozenColumn>
+                        <div class="d-flex gap-1">
+                            <button
+                                pButton
+                                size="small"
+                                severity="primary"
+                                [title]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+                                (click)="reseatingDialog.openDialog(examUser)"
+                                [disabled]="isTestExam()"
+                            >
+                                <fa-icon [icon]="faChair" />
+                            </button>
+                            <a
+                                pButton
+                                size="small"
+                                severity="primary"
+                                style="text-decoration: none !important"
+                                [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
+                                [routerLink]="
+                                    exam().id && examUser.studentExamId ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId] : null
+                                "
+                                [class.p-disabled]="!exam().id || !examUser.studentExamId"
+                                (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
+                            >
+                                <i class="pi pi-eye"></i>
+                            </a>
+                            <button
+                                pButton
+                                jhiDeleteButton
+                                severity="danger"
+                                size="small"
+                                [title]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
+                                [disabled]="isTestExam()"
+                                [renderButtonStyle]="false"
+                                [renderButtonText]="false"
+                                [actionType]="ActionType.Remove"
+                                [entityTitle]="examUser.user?.login || ''"
+                                deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+                                deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
+                                (delete)="removeFromExam(examUser, $event)"
+                                [additionalChecks]="{
+                                    deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
+                                }"
+                                [dialogError]="dialogError$"
+                                [requireConfirmationOnlyForAdditionalChecks]="true"
+                            >
+                                <i class="pi pi-user-minus"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 </div>
 
 <jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" />

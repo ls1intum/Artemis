@@ -71,7 +71,6 @@ interface MenuCommandEvent {
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
-    styleUrls: ['./exam-students.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
