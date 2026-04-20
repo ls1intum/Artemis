@@ -99,7 +99,7 @@ public class HyperionChecklistService {
     private static final String CHECKLIST_ACTION_PIPELINE_ID = "HYPERION_CHECKLIST_ACTION";
 
     /** Matches a JSON object wrapped in a markdown code block (```json ... ``` or ``` ... ```). */
-    private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
+    private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```", Pattern.DOTALL);
 
     private final ObjectMapper objectMapper;
 

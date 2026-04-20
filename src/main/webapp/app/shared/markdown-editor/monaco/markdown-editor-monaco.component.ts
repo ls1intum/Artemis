@@ -793,7 +793,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.diffLineChange.emit(event);
     }
 
-    onDiffSashMoved(originalWidth: number): void {
+    onDiffOriginalPaneLayoutChanged(originalWidth: number): void {
         this.diffOriginalPaneWidth = originalWidth;
     }
 

@@ -96,8 +96,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private lastMode: MonacoEditorMode = 'normal';
     renderSideBySide = input<boolean>(true);
     diffChanged = output<{ ready: boolean; lineChange: LineChange }>();
-    /** Emits the pixel width of the original (left) pane whenever the diff editor sash is dragged. */
-    diffSashMoved = output<number>();
+    /** Emits the pixel width of the original (left) pane whenever the diff editor layout changes. */
+    diffOriginalPaneLayoutChanged = output<number>();
 
     /*
      * Disposable listeners, subscriptions, and timeouts.
@@ -422,7 +422,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
             this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
                 this.ngZone.run(() => {
-                    this.diffSashMoved.emit(info.width);
+                    this.diffOriginalPaneLayoutChanged.emit(info.width);
                 });
             });
         });

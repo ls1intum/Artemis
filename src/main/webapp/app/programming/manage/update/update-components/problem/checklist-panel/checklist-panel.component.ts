@@ -669,10 +669,10 @@ export class ChecklistPanelComponent {
     /**
      * Whether all competencies are currently selected.
      */
-    allCompetenciesSelected(): boolean {
+    allCompetenciesSelected = computed(() => {
         const count = this.analysisResult()?.inferredCompetencies?.length ?? 0;
         return count > 0 && this.selectedCompetencyIndices().size === count;
-    }
+    });
 
     /**
      * Discards a single inferred competency from the list without any server action.
@@ -707,7 +707,17 @@ export class ChecklistPanelComponent {
 
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedCompetencyIndices.set(new Set());
-        this.expandedCompetencies.set(new Set());
+        // Reindex expanded competencies: remove discarded, shift down indices above removed ones
+        this.expandedCompetencies.update((current) => {
+            const sortedRemoved = [...selected].sort((a, b) => a - b);
+            const updated = new Set<number>();
+            for (const idx of current) {
+                if (selected.has(idx)) continue;
+                const shift = sortedRemoved.filter((r) => r < idx).length;
+                updated.add(idx - shift);
+            }
+            return updated;
+        });
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple');
     }
 
@@ -723,6 +733,7 @@ export class ChecklistPanelComponent {
             .map((i) => allInferred[i])
             .filter(Boolean);
         if (selectedInferred.length === 0) return;
+        this.selectedCompetencyIndices.set(new Set());
         this.applyCompetenciesFromList(selectedInferred);
     }
 
