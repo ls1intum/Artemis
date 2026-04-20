@@ -596,7 +596,7 @@ export class ExamStudentsComponent implements OnDestroy {
         }
         this.exercisePreparationStatus.set(newStatus);
         const processedExams = (newStatus.finished ?? 0) + (newStatus.failed ?? 0);
-        const exPrepRunning = newStatus && processedExams < newStatus.overall;
+        const exPrepRunning = processedExams < newStatus.overall;
         this.exercisePreparationRunning.set(exPrepRunning);
         this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
         const remainingExams = newStatus.overall - processedExams;
