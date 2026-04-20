@@ -745,7 +745,11 @@ export class ChecklistPanelComponent {
             }
             return updated;
         });
-        this.alertService.success('artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple');
+        this.alertService.success(
+            selected.size === 1
+                ? 'artemisApp.programmingExercise.instructorChecklist.competencies.discarded'
+                : 'artemisApp.programmingExercise.instructorChecklist.competencies.discardedMultiple',
+        );
     }
 
     /**
@@ -997,10 +1001,13 @@ export class ChecklistPanelComponent {
             const matchId = comp.matchedCourseCompetencyId;
             if (matchId != null && matchId > 0) {
                 idsToRemove.add(matchId);
-            }
-            const title = (comp.competencyTitle ?? '').toLowerCase().trim();
-            if (title) {
-                titlesToRemove.add(title);
+            } else {
+                // Only fall back to title matching when there is no precise ID — otherwise a
+                // different competency that happens to share the same title could be unlinked.
+                const title = (comp.competencyTitle ?? '').toLowerCase().trim();
+                if (title) {
+                    titlesToRemove.add(title);
+                }
             }
         }
 

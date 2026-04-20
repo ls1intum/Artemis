@@ -348,6 +348,7 @@
                             [outlined]="true"
                             [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
                             (click)="applyCompetencies()"
+                            data-testid="apply-all-competencies-button"
                         >
                             <fa-icon [icon]="isSyncingCompetencies() ? faSpinner : faLink" [animation]="isSyncingCompetencies() ? 'spin' : undefined" size="xs" />
                             <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyAll">Apply All</span>
