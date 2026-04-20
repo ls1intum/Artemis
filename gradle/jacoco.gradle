@@ -24,8 +24,8 @@ ext {
         "programming"   :          ["INSTRUCTION": 0.819, "CLASS": 28],
         "quiz"          :          ["INSTRUCTION": 0.865, "CLASS":  3],
         "text"          :          ["INSTRUCTION": 0.942, "CLASS":  1],
-        "tumlive"       :          ["INSTRUCTION": 0.800, "CLASS":  0],
         "tutorialgroup" :          ["INSTRUCTION": 0.917, "CLASS":  1],
+        "videosource"   :          ["INSTRUCTION": 0.800, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
