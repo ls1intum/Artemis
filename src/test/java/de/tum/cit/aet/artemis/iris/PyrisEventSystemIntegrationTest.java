@@ -142,6 +142,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         submission.setBuildFailed(buildFailed);
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);
+        // Ensure deterministic ordering in findAllWithResultsByParticipationIdOrderBySubmissionDateAsc
+        submission.setSubmissionDate(ZonedDateTime.now());
         submission = submissionRepository.saveAndFlush(submission);
 
         Result result = ParticipationFactory.generateResult(true, score);
