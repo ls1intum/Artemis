@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.7.4"
+version = "8.7.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -43,7 +43,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.3.0"
+    gradleVersion = "9.4.1"
 }
 
 node {
@@ -215,7 +215,7 @@ dependencies {
     implementation "de.jplag:typescript:${jplag_version}"
 
     // Align all Spring AI modules to the same version
-    implementation platform("org.springframework.ai:spring-ai-bom:1.1.2")
+    implementation platform("org.springframework.ai:spring-ai-bom:1.1.3")
     // Azure OpenAI (prod, or when you want Azure)
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
@@ -298,7 +298,7 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.33.4"
+    implementation "com.google.protobuf:protobuf-java:4.34.1"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -356,16 +356,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-security"
-    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-web:3.5.13"
     implementation "org.springframework.boot:spring-boot-starter-tomcat"
     implementation "org.springframework.boot:spring-boot-starter-websocket"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:3.5.13"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.8"
-    implementation "org.springframework.data:spring-data-ldap:3.5.8"
-    implementation "org.springframework.ldap:spring-ldap-core:3.3.5"
+    implementation "org.springframework.data:spring-data-jpa:3.5.10"
+    implementation "org.springframework.data:spring-data-ldap:3.5.10"
+    implementation "org.springframework.ldap:spring-ldap-core:3.3.6"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
@@ -416,9 +416,9 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:78.2"
+    implementation "com.ibm.icu:icu4j-charset:78.3"
     // Required by exam session service
-    implementation "com.github.seancfoley:ipaddress:5.5.1"
+    implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.12"
@@ -442,7 +442,7 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.46.0"
     // needed for OpenAPI generation
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -457,7 +457,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
-    implementation "org.mnode.ical4j:ical4j:4.2.3"
+    implementation "org.mnode.ical4j:ical4j:4.2.4"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -485,9 +485,9 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.3.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
+    testImplementation "org.gradle:gradle-tooling-api:9.4.1"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
@@ -556,13 +556,15 @@ def isNonStable = { String version ->
     return !stableKeyword && !(version ==~ regex)
 }
 
-tasks.named("dependencyUpdates").configure {
-    rejectVersionIf {
-        isNonStable(it.candidate.version)
-    }
+def getMajorVersion = { String version ->
+    version.tokenize('.')[0]
+}
 
+tasks.named("dependencyUpdates").configure {
+    def rawSkipMajor = System.getProperty("skipMajorUpdates")
+    def skipMajor = rawSkipMajor != null && (rawSkipMajor.isBlank() || rawSkipMajor.toBoolean())
     rejectVersionIf {
-        isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
+        isNonStable(it.candidate.version) || (skipMajor && getMajorVersion(it.candidate.version) != getMajorVersion(it.currentVersion))
     }
 }
 
@@ -578,7 +580,8 @@ tasks.named("dependencyUpdates").configure {
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
-// 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
+// 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release -x webapp
+// 6a) Find only minor/patch dependency updates:     ./gradlew dependencyUpdates -Drevision=release -DskipMajorUpdates -x webapp
 // 7) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
 // 8) Detects uses of legacy code:                  ./gradlew modernizer -x webapp
 // 9) Check for vulnerabilities in dependencies     ./gradlew dependencyCheckAnalyze -x webapp
