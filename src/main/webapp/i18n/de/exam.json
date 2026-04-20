@@ -612,19 +612,19 @@
                     "progressNotStarted": "Nicht gestartet",
                     "progressExamMissing": "Klausur fehlt",
                     "viewExam": "Klausur anzeigen",
-                    "remove": "Entfernen"
+                    "remove": "Deregistrieren"
                 },
                 "menu": {
-                    "manageStudents": "Studierende verwalten",
+                    "manageStudents": "Studierende registrieren",
                     "examLogistics": "Klausurlogistik",
                     "manageStudentExams": "Individuelle Klausuren verwalten",
-                    "addStudents": "Studierende hinzufügen",
-                    "importUsers": "Nutzer importieren",
-                    "exportUsers": "Nutzer exportieren",
+                    "addStudents": "Hinzufügen",
+                    "importUsers": "Importieren aus CSV",
+                    "exportUsers": "Exportieren als CSV",
                     "registerCourseStudents": "Alle Studierenden des Kurses anmelden",
-                    "removeAllStudents": "Alle Studierenden entfernen",
+                    "removeAllStudents": "Alle Studierenden abmelden",
                     "uploadImages": "Bilder hochladen",
-                    "distribute": "Verteilen",
+                    "distribute": "Studierende verteilen",
                     "verifyAttendance": "Anwesenheit prüfen"
                 },
                 "addDialog": {

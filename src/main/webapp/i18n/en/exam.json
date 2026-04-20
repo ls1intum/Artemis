@@ -612,19 +612,19 @@
                     "progressNotStarted": "Not started",
                     "progressExamMissing": "Exam missing",
                     "viewExam": "View exam",
-                    "remove": "Remove"
+                    "remove": "Deregister"
                 },
                 "menu": {
-                    "manageStudents": "Manage students",
+                    "manageStudents": "Register students",
                     "examLogistics": "Exam logistics",
-                    "manageStudentExams": "Manage student exams",
-                    "addStudents": "Add students",
-                    "importUsers": "Import users",
-                    "exportUsers": "Export users",
+                    "manageStudentExams": "Manage individual exams",
+                    "addStudents": "Add",
+                    "importUsers": "Import from CSV",
+                    "exportUsers": "Export to CSV",
                     "registerCourseStudents": "Register course students",
-                    "removeAllStudents": "Remove all students",
+                    "removeAllStudents": "Deregister all students",
                     "uploadImages": "Upload images",
-                    "distribute": "Distribute",
+                    "distribute": "Distribute students",
                     "verifyAttendance": "Verify attendance"
                 },
                 "addDialog": {

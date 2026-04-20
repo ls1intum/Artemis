@@ -50,6 +50,7 @@ import { SortEvent } from 'primeng/api';
 import { Tag } from 'primeng/tag';
 import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { Tooltip } from 'primeng/tooltip';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -98,6 +99,7 @@ interface MenuCommandEvent {
         TestExamWorkingTimeComponent,
         Tag,
         Popover,
+        Tooltip,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {

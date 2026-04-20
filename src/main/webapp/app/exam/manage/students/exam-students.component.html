@@ -141,14 +141,14 @@
                         [model]="examLogisticsMenuActions()"
                         label="artemisApp.examManagement.examStudents.menu.examLogistics"
                         buttonIconClass="pi pi-th-large"
-                        [disabled]="isTestExam()"
+                        [disabled]="isTestExam() || !hasRegisteredUsers()"
                         severity="secondary"
                     />
                     <jhi-exam-students-menu-button
                         [model]="studentExamsMenuActions()"
                         label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
                         buttonIconClass="pi pi-file-edit"
-                        [disabled]="isTestExam()"
+                        [disabled]="isTestExam() || hasExamStarted() || !hasRegisteredUsers()"
                         severity="secondary"
                     />
                 </div>
@@ -350,36 +350,40 @@
                                 size="small"
                                 severity="secondary"
                                 outlined
-                                [title]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+                                [pTooltip]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+                                tooltipPosition="top"
                                 (click)="reseatingDialog.openDialog(examUser)"
                                 [disabled]="isTestExam()"
                             >
                                 <fa-icon [icon]="faChair" />
                             </button>
-                            <a
-                                pButton
-                                size="small"
-                                severity="secondary"
-                                outlined
-                                style="text-decoration: none !important"
-                                [title]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate"
-                                [routerLink]="
-                                    exam().id && examUser.studentExamId
-                                        ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId]
-                                        : undefined
-                                "
-                                [class.p-disabled]="!exam().id || !examUser.studentExamId"
-                                (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
-                            >
-                                <i class="pi pi-eye"></i>
-                            </a>
+                            <div [pTooltip]="'artemisApp.examManagement.examStudents.table.viewExam' | artemisTranslate" tooltipPosition="top" class="d-flex">
+                                <a
+                                    pButton
+                                    size="small"
+                                    severity="secondary"
+                                    outlined
+                                    style="text-decoration: none !important"
+                                    [routerLink]="
+                                        exam().id && examUser.studentExamId
+                                            ? ['/course-management', courseId(), 'exams', exam().id, 'student-exams', examUser.studentExamId]
+                                            : undefined
+                                    "
+                                    [class.p-disabled]="!exam().id || !examUser.studentExamId"
+                                    (click)="(!exam().id || !examUser.studentExamId) && $event.preventDefault()"
+                                    class="flex-grow-0"
+                                >
+                                    <i class="pi pi-eye"></i>
+                                </a>
+                            </div>
                             <button
                                 pButton
                                 jhiDeleteButton
                                 severity="danger"
                                 outlined
                                 size="small"
-                                [title]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
+                                [pTooltip]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
+                                tooltipPosition="top"
                                 [disabled]="isTestExam()"
                                 [renderButtonStyle]="false"
                                 [renderButtonText]="false"
