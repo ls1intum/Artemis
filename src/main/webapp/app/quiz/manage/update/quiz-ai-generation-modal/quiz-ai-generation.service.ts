@@ -2,9 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
+import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
+import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -20,6 +21,14 @@ export class QuizAiGenerationService {
             .pipe(map((response) => response.questions.map((question, index) => this.toGeneratedQuestion(question, index))));
     }
 
+    /**
+     * Sends a single multiple-choice question to Hyperion for AI-driven refinement.
+     *
+     * @param courseId the id of the course the quiz belongs to
+     * @param question the multiple-choice question to refine
+     * @param refinementPrompt user instructions describing how the question should change
+     * @returns an observable that emits the refined question and the AI reasoning string
+     */
     refineMultipleChoiceQuestion(
         courseId: number,
         question: MultipleChoiceQuestion,
@@ -47,6 +56,46 @@ export class QuizAiGenerationService {
                 refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
                 reasoning: response.reasoning,
             })),
+        );
+    }
+
+    /**
+     * Sends all provided multiple-choice questions to Hyperion for bulk AI-driven refinement using one shared prompt.
+     * Results are returned in the same order as the input questions.
+     *
+     * @param courseId the id of the course the quiz belongs to
+     * @param questions the multiple-choice questions to refine
+     * @param refinementPrompt user instructions describing how all questions should change
+     * @returns an observable that emits one refined question + reasoning pair per input question, in the same order
+     */
+    refineAllMultipleChoiceQuestions(
+        courseId: number,
+        questions: MultipleChoiceQuestion[],
+        refinementPrompt: string,
+    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }[]> {
+        const request: QuizQuestionBulkRefinementRequest = {
+            questions: questions.map((q) => ({
+                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
+                title: q.title?.trim() || 'Untitled Question',
+                questionText: q.text ?? '',
+                hint: q.hint ?? undefined,
+                explanation: q.explanation ?? undefined,
+                options: (q.answerOptions ?? []).map((opt) => ({
+                    text: opt.text ?? '',
+                    correct: !!opt.isCorrect,
+                    hint: opt.hint ?? undefined,
+                    explanation: opt.explanation ?? undefined,
+                })),
+            })),
+            refinementPrompt,
+        };
+        return this.hyperionQuizQuestionGenerationApiService.refineAllQuizQuestions(courseId, request).pipe(
+            map((response) =>
+                response.refinements.map((refinement, index) => ({
+                    refinedQuestion: this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index)),
+                    reasoning: refinement.reasoning,
+                })),
+            ),
         );
     }
 

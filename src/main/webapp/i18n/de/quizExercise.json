@@ -54,12 +54,15 @@
                 },
                 "errors": {
                     "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
-                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut."
+                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut."
                 },
                 "refinement": {
                     "promptPlaceholder": "Beschreibe, wie die Frage verfeinert werden soll...",
+                    "globalPlaceholder": "Alle Multiple-Choice Fragen in diesem Quiz präzisieren...",
+                    "globalRefineFabLabel": "Alle Fragen mit KI verfeinern",
                     "changesLabel": "Vorgenommene Änderungen",
-                    "defaultReasoning": "Die Frage wurde entsprechend Ihren Anweisungen verfeinert.",
+                    "defaultReasoning": "Die Frage wurde basierend auf deinen Anweisungen verfeinert.",
                     "errors": {
                         "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
                     }
