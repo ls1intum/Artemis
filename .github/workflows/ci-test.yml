@@ -1,0 +1,287 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        required: true
+        type: string
+      run_all_tests:
+        required: true
+        type: boolean
+      is_pr:
+        required: true
+        type: boolean
+
+concurrency:
+  group: test-${{ inputs.is_pr && format('pr-{0}', github.event.pull_request.number) || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  server-tests:
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 80
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: |
+            17
+            ${{ env.java }}
+          cache: 'gradle'
+      - name: Java Tests (module-affected)
+        if: ${{ !inputs.run_all_tests }}
+        run: |
+          set -o pipefail
+
+          DEFAULT_BRANCH="${{ inputs.base_branch }}"
+          git fetch origin "$DEFAULT_BRANCH"
+
+          chmod +x ./supporting_scripts/get_changed_modules.sh
+          CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+
+          if [ -n "${CHANGED_MODULES}" ]; then
+            IFS=,
+            TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+
+            echo "Executing tests for modules: $CHANGED_MODULES"
+            ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS" 2>&1 | tee tests.log
+            exit 0
+          fi
+
+          echo "Executing all tests"
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+      - name: Java Tests (All)
+        if: ${{ inputs.run_all_tests }}
+        run: |
+          set -o pipefail
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: JUnit Test Results
+          path: build/test-results/test/*.xml
+      - name: Print failed tests
+        if: failure()
+        run: |
+          FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+          if [ -n "$FAILED_TESTS" ]; then
+            echo "$FAILED_TESTS"
+            exit 1
+          else
+            echo "No failed tests."
+          fi
+      - name: JaCoCo Coverage Verification
+        id: jacoco-verification
+        if: ${{ inputs.run_all_tests }}
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./gradlew --console=plain jacocoTestCoverageVerification -x test -x webapp 2>&1 | tee jacoco-verification.log
+      - name: Print JaCoCo coverage violations
+        if: steps.jacoco-verification.outcome == 'failure'
+        run: |
+          VIOLATIONS=$(grep "Rule violated for bundle" jacoco-verification.log || true)
+          if [ -n "$VIOLATIONS" ]; then
+            MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' jacoco-verification.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+            echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
+            echo ""
+            echo "$VIOLATIONS"
+            echo ""
+            if [ -n "$MODULES" ]; then
+              echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+            else
+              echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+            fi
+          fi
+      - name: Diagnostic info
+        if: success() || failure()
+        run: |
+          echo "=== Docker containers ==="
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+          echo ""
+          echo "=== Memory ==="
+          free -h || true
+          echo ""
+          echo "=== Disk usage ==="
+          df -h /tmp || true
+          echo ""
+          echo "=== PostgreSQL connection errors in test log ==="
+          grep -c "PSQLException\|SQLSTATE(08006)\|Connection.*broken\|I/O error occurred while sending" tests.log || echo "0 connection errors found"
+          echo ""
+          echo "=== Unique PostgreSQL errors ==="
+          grep "PSQLException\|SQLSTATE(08006)" tests.log | sort -u | head -10 || echo "No PostgreSQL errors"
+      - name: "Codacy: Report coverage"
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
+        if: inputs.is_pr && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
+      - name: Annotate Server Test Results
+        uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
+        if: inputs.is_pr && always() && github.event.pull_request.user.login != 'dependabot[bot]'
+        with:
+          access-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/test-results/test/*.xml
+          numFailures: 99
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: Server Tests (PostgreSQL)
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+      - name: Number of Server Starts
+        if: success() || failure()
+        run: bash supporting_scripts/extract_number_of_server_starts.sh
+      - name: Upload Server Test Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Coverage Report Server Tests
+          path: build/reports/jacoco/aggregated/html
+      - name: Append Per-Module Coverage to Job Summary
+        if: success() || failure()
+        run: |
+          AGGREGATED_REPORT_FILE=./module_coverage_report.md
+          python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
+          cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
+
+  server-style:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Java Code Style
+        run: ./gradlew spotlessCheck
+      - name: Java Documentation
+        run: ./gradlew checkstyleMain -x webapp
+        if: success() || failure()
+      - name: Java Architecture Tests
+        run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
+        if: success() || failure()
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: Java Architecture Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
+  client-tests:
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: remove project-wide node options set in .npmrc just for this test
+        run: rm .npmrc || true
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm install
+      - name: Compile TypeScript Test Files With Typechecking
+        run: npm run compile:tests
+      - name: TypeScript Test Without Typechecking
+        run: npm run test:ci
+      - name: Upload Client Test Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Coverage Report Client Tests
+          path: build/test-results/lcov-report/
+      - name: Upload Vitest Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Vitest Coverage Report
+          path: build/test-results/vitest/coverage/
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Client JUnit Test Results
+          path: junit.xml
+      - name: Upload Vitest JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Vitest JUnit Test Results
+          path: build/test-results/vitest/junit.xml
+
+  client-tests-selected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm install
+      - name: Compile TypeScript Test Files With Typechecking
+        run: npm run compile:tests
+      - name: TypeScript Test (Selection) Without Typechecking
+        run: npm run test-diff:ci
+
+  client-style:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm install
+      - name: TypeScript Formatting
+        run: npm run prettier:check
+      - name: TypeScript Code Style
+        run: npm run lint
+        if: success() || failure()
+      - name: Install Playwright Dependencies
+        run: npm ci
+        working-directory: src/test/playwright
+        if: success() || failure()
+      - name: Playwright Code Style
+        run: npm run lint
+        working-directory: src/test/playwright
+        if: success() || failure()
+
+  client-compilation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm install
+      - name: Compile TypeScript Files With Typechecking
+        run: npm run compile

@@ -30,6 +30,10 @@ on:
     types:
       - created
 
+concurrency:
+  group: android-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   e2e-tests:
     name: Android E2E Tests

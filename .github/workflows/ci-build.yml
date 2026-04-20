@@ -1,0 +1,106 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      ref_name:
+        required: true
+        type: string
+      commit_sha:
+        required: true
+        type: string
+      docker_ref:
+        required: true
+        type: string
+      is_pr:
+        required: true
+        type: boolean
+      release_tag:
+        required: false
+        default: ''
+        type: string
+      is_release:
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: build-${{ inputs.is_pr && format('pr-{0}', github.event.pull_request.number) || github.ref || inputs.commit_sha }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  node: 24
+  java: 25
+  GIT_COMMIT: ${{ inputs.commit_sha }}
+  GIT_BRANCH: ${{ inputs.ref_name }}
+
+jobs:
+  build:
+    name: Build .war artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - name: Install npm dependencies
+        run: npm install
+      - name: Build Angular Client
+        run: npm run clean-www && npm run prebuild && npx ng build --configuration production --optimization=false
+      - name: Build .war
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Artemis.war
+          path: build/libs/Artemis-*.war
+      - name: Upload Release Artifact
+        if: inputs.is_release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp "build/libs/Artemis-${{ inputs.release_tag }}.war" Artemis.war
+          gh release upload "${{ inputs.release_tag }}" Artemis.war --clobber
+
+  docker:
+    name: Build and Push Docker Image
+    if: ${{ !inputs.is_pr || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
+    with:
+      ref: ${{ inputs.docker_ref }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      tags: |
+        type=ref,event=tag
+
+  save-docker-tag:
+    name: Save Docker Image Tag
+    needs: docker
+    if: ${{ !inputs.is_pr || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save Docker Tag to File
+        run: |
+          echo "${{ needs.docker.outputs.image_tag }}" > docker-tag.txt
+          echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
+
+      - name: Upload Docker Tag as Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: docker-tag
+          path: docker-tag.txt

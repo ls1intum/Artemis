@@ -1,0 +1,151 @@
+name: Push Develop CI
+
+on:
+  push:
+    branches: [develop]
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - '.husky/**'
+      - '.coderabbit.yaml'
+      - '.editorconfig'
+      - '.gitattributes'
+      - 'artemis-server-cli'
+      - 'supporting_scripts/**'
+      - 'CITATION.cff'
+      - 'proxy.conf.mjs'
+
+concurrency:
+  group: push-develop
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    outputs:
+      has_java: ${{ steps.filter.outputs.has_java }}
+      has_docs: ${{ steps.filter.outputs.has_docs }}
+      has_i18n: ${{ steps.filter.outputs.has_i18n }}
+      has_aeolus: ${{ steps.filter.outputs.has_aeolus }}
+      has_gradle: ${{ steps.filter.outputs.has_gradle }}
+      build_relevant: ${{ steps.filter.outputs.build_relevant }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          BASE_SHA="${{ github.event.before }}"
+          HEAD_SHA="${{ github.sha }}"
+
+          if git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
+            CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          elif git rev-parse --verify "${HEAD_SHA}^" >/dev/null 2>&1; then
+            echo "Base SHA $BASE_SHA is unavailable. Falling back to the first parent of $HEAD_SHA."
+            CHANGED_FILES="$(git diff --name-only "${HEAD_SHA}^" "$HEAD_SHA")"
+          else
+            echo "No comparable base commit available. Marking the build as relevant."
+            CHANGED_FILES="__FORCE_BUILD__"
+          fi
+
+          has_match() {
+            local pattern="$1"
+            if echo "$CHANGED_FILES" | rg -q "$pattern"; then
+              echo true
+            else
+              echo false
+            fi
+          }
+
+          echo "has_java=$(has_match '^src/main/java/')" >> "$GITHUB_OUTPUT"
+          echo "has_docs=$(has_match '^documentation/')" >> "$GITHUB_OUTPUT"
+          echo "has_i18n=$(has_match '^src/main/webapp/i18n/')" >> "$GITHUB_OUTPUT"
+          echo "has_aeolus=$(has_match '^src/main/resources/templates/aeolus/')" >> "$GITHUB_OUTPUT"
+          echo "has_gradle=$(has_match '(^|/)gradle/|^gradlew$|^gradlew\\.bat$|^build\\.gradle$|^settings\\.gradle$')" >> "$GITHUB_OUTPUT"
+
+          if echo "$CHANGED_FILES" | rg -q '^(src/main/|src/test/|docker/|gradle/|build\.gradle|settings\.gradle|package\.json|package-lock\.json|tsconfig|angular\.json|vite|playwright|webpack|\.github/workflows/|__FORCE_BUILD__)'; then
+            echo "build_relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  gradle-wrapper:
+    name: Gradle Wrapper Validation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_gradle == 'true'
+    uses: ./.github/workflows/ci-gradle-wrapper.yml
+
+  build:
+    name: Build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      ref_name: ${{ github.ref_name }}
+      commit_sha: ${{ github.sha }}
+      docker_ref: ${{ github.ref_name }}
+      is_pr: false
+
+  test:
+    name: Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-test.yml
+    secrets: inherit
+    with:
+      base_branch: develop
+      run_all_tests: true
+      is_pr: false
+
+  java-analysis:
+    name: Java Analysis
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_java == 'true'
+    uses: ./.github/workflows/ci-java-analysis.yml
+    with:
+      base_branch: develop
+
+  docs:
+    name: Build Documentation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_docs == 'true'
+    uses: ./.github/workflows/ci-docs.yml
+
+  translation:
+    name: Check if German and English translations are consistent
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_i18n == 'true'
+    uses: ./.github/workflows/ci-translation.yml
+
+  aeolus:
+    name: Check if windfiles and scripts match
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_aeolus == 'true'
+    uses: ./.github/workflows/ci-aeolus.yml
+
+  e2e:
+    name: E2E Tests
+    needs: [detect-changes, build, test]
+    if: needs.detect-changes.outputs.build_relevant == 'true' && needs.build.result == 'success' && needs.test.result == 'success'
+    uses: ./.github/workflows/ci-e2e.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    with:
+      branch_name: ${{ github.ref_name }}
+      commit_sha: ${{ github.sha }}
+      base_branch: develop
+      is_pr: false

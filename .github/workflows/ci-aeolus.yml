@@ -1,0 +1,15 @@
+name: Check if windfiles and scripts match
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    name: Check if windfiles and scripts match
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check if windfiles and scripts match
+        run: bash supporting_scripts/generate-aeolus-scripts.sh check

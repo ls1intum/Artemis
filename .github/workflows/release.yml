@@ -1,0 +1,33 @@
+name: Release CI
+
+on:
+  release:
+    types: [created]
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/ci-build.yml
+    permissions:
+      contents: write
+      packages: write
+    with:
+      ref_name: ${{ github.ref_name }}
+      commit_sha: ${{ github.sha }}
+      docker_ref: ${{ github.ref_name }}
+      is_pr: false
+      release_tag: ${{ github.event.release.tag_name }}
+      is_release: true
+
+  test:
+    name: Test
+    uses: ./.github/workflows/ci-test.yml
+    secrets: inherit
+    with:
+      base_branch: ${{ github.event.repository.default_branch }}
+      run_all_tests: true
+      is_pr: false

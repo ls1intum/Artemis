@@ -27,6 +27,10 @@ on:
   schedule:
     - cron: '0 16 * * 0'
 
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
 # Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
   CI: true

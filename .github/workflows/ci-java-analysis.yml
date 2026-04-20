@@ -1,25 +1,141 @@
-name: Check Bean Instantiations on Startup and with deferred eager Initialization
+name: Java Analysis
 
 on:
-  push:
-    branches: [ develop ]
-    paths:
-      - src/main/java/**
-  pull_request:
-    paths:
-      - src/main/java/**
+  workflow_call:
+    inputs:
+      base_branch:
+        required: true
+        type: string
+
+concurrency:
+  group: java-analysis-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  bean-instantiation-check:
+  code-quality-analysis:
+    name: Java Code Quality Analysis
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Check LOC and number of class dependencies
+        run: |
+          max_large_classes=16
+          max_complex_beans=15
+
+          python supporting_scripts/analyze_java_files.py \
+            --max-large-classes $max_large_classes \
+            --max-complex-beans $max_complex_beans \
+            --event-type "${{ github.event_name }}" \
+            --base-branch "${{ inputs.base_branch }}"
+
+  query-quality-check:
+    name: Query Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Query quality check
+        run: |
+          output=$(python supporting_scripts/find_slow_queries.py)
+
+          echo "$output"
+          echo ""
+
+          entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
+          query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
+          total_violations=$((entitygraph_violations + query_violations))
+
+          max_entitygraph_violations=11
+          max_query_violations=25
+          max_total_violations=$((max_entitygraph_violations + max_query_violations))
+
+          echo "=========================================="
+          echo "QUERY QUALITY ANALYSIS SUMMARY"
+          echo "=========================================="
+          echo "EntityGraph violations found: $entitygraph_violations (max allowed: $max_entitygraph_violations)"
+          echo "Query violations found: $query_violations (max allowed: $max_query_violations)"
+          echo "Total violations found: $total_violations (max allowed: $max_total_violations)"
+          echo ""
+
+          violation_detected=false
+
+          if [ "$entitygraph_violations" -gt "$max_entitygraph_violations" ]; then
+            echo "❌ Too many EntityGraph violations: $entitygraph_violations > $max_entitygraph_violations"
+            violation_detected=true
+          else
+            echo "✅ EntityGraph violations within threshold: $entitygraph_violations <= $max_entitygraph_violations"
+          fi
+
+          if [ "$query_violations" -gt "$max_query_violations" ]; then
+            echo "❌ Too many Query violations: $query_violations > $max_query_violations"
+            violation_detected=true
+          else
+            echo "✅ Query violations within threshold: $query_violations <= $max_query_violations"
+          fi
+
+          if [ "$total_violations" -gt "$max_total_violations" ]; then
+            echo "❌ Too many total violations: $total_violations > $max_total_violations"
+            violation_detected=true
+          else
+            echo "✅ Total violations within threshold: $total_violations <= $max_total_violations"
+          fi
+
+          echo "=========================================="
+
+          if [ "$violation_detected" = "true" ]; then
+            echo "::error::Query Quality check failed"
+
+            if [ "$entitygraph_violations" -gt "0" ]; then
+              echo ""
+              echo "VIOLATING ENTITY GRAPHS ($entitygraph_violations violations):"
+              echo "-----------------------------------------------------------"
+              echo "$output" | sed -n '/\[EntityGraph\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|@EntityGraph)'
+            fi
+
+            if [ "$query_violations" -gt "0" ]; then
+              echo ""
+              echo "VIOLATING QUERIES ($query_violations violations):"
+              echo "-------------------------------------------------"
+              echo "$output" | sed -n '/\[@Query\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|JOIN FETCH)'
+            fi
+
+            echo ""
+            echo "=========================================="
+            echo "HOW TO FIX THESE PERFORMANCE ISSUES"
+            echo "=========================================="
+            echo "Fetch only the data you actually need. Typical fixes are:"
+            echo "- add pagination for large result sets"
+            echo "- switch to projections when only a subset of fields is needed"
+            echo "- split one over-fetching query into multiple focused queries"
+            echo "- remove unnecessary JOIN FETCH clauses or EntityGraph paths"
+            echo "- create dedicated repository methods for list vs detail views"
+            exit 1
+          fi
+
+  bean-instantiation-check:
+    name: Check Bean Instantiations on Startup and with deferred eager Initialization
+    runs-on: ubuntu-latest
     env:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
       MAX_INSTANTIATED_BEANS: 139
       MIN_DEFERRED_CHAIN_LENGTH: 1
-
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -30,7 +146,6 @@ jobs:
           set -Eeuo pipefail
 
           echo "Validating that thresholds in BeanInstantiationTracer match GitHub Action values..."
-
           echo "GitHub Action thresholds:"
           echo "  MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH = $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
           echo "  MAX_DEFERRED_CHAIN_LENGTH = $MAX_DEFERRED_CHAIN_LENGTH"
@@ -42,7 +157,6 @@ jobs:
 
           if [[ ! -f "$JAVA_FILE" ]]; then
             echo "❌ BeanInstantiationTracer.java not found at expected location: $JAVA_FILE"
-            echo "Searching for the file..."
             find . -name "BeanInstantiationTracer.java" -type f || echo "File not found anywhere"
             exit 1
           fi
@@ -58,7 +172,6 @@ jobs:
 
           if [[ -z "${JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH:-}" || -z "${JAVA_MAX_DEFERRED_CHAIN_LENGTH:-}" ]]; then
             echo "❌ Failed to extract threshold values from Java file"
-            echo "Java file contents around threshold definitions:"
             grep -A2 -B2 -E "(STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD|DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD)" "$JAVA_FILE" || echo "Threshold constants not found"
             exit 1
           fi
@@ -80,10 +193,7 @@ jobs:
           fi
 
           if [[ "$THRESHOLD_MISMATCH" == true ]]; then
-            echo ""
-            echo "🔧 Please update either the Java constants or GitHub Action variables to match:"
-            echo "   - Java file: $JAVA_FILE"
-            echo "   - GitHub Action env variables at the job level"
+            echo "🔧 Please update either the Java constants or GitHub Action variables to match"
             exit 1
           fi
 
@@ -131,10 +241,7 @@ jobs:
           RUNNING_MESSAGE="'Artemis' is running!"
           STARTUP_TIMEOUT_ATTEMPTS=60
           STARTUP_RETRY_INTERVAL=2
-          STARTUP_TOTAL_TIMEOUT=$((STARTUP_TIMEOUT_ATTEMPTS * STARTUP_RETRY_INTERVAL))
           LOG_FILE="app.log"
-
-          echo "Waiting up to ${STARTUP_TOTAL_TIMEOUT}s for $RUNNING_MESSAGE to appear in $LOG_FILE..."
 
           isAppRunning=false
           for i in $(seq 1 "$STARTUP_TIMEOUT_ATTEMPTS"); do
@@ -143,7 +250,6 @@ jobs:
               echo "✅ Found $RUNNING_MESSAGE in $LOG_FILE after $i attempts"
               break
             fi
-            echo "  attempt $i/$STARTUP_TIMEOUT_ATTEMPTS: not found yet"
             sleep "$STARTUP_RETRY_INTERVAL"
           done
 
@@ -157,7 +263,6 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          # Use a safe, single-quoted regex and a simple search prefix
           STARTUP_LOG_PATTERN='Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain length: ([0-9]+)\)'
           STARTUP_SEARCH='Bean instantiation graph exported to startupBeans\.dot'
           LOG_FILE="app.log"
@@ -179,8 +284,7 @@ jobs:
 
           echo "• Number of instantiated beans = $INSTANTIATED_BEANS"
           echo "• Longest dependency chain length = $LONGEST_CHAIN_LENGTH"
-
-          echo "Validating against thresholds: MIN_INSTANTIATED_BEANS=$MIN_INSTANTIATED_BEANS (expected ≥ $MIN_INSTANTIATED_BEANS), MAX_INSTANTIATED_BEANS=$MAX_INSTANTIATED_BEANS (expected ≤ $MAX_INSTANTIATED_BEANS), MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH (expected ≤ $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH)"
+          echo "Validating against thresholds: MIN_INSTANTIATED_BEANS=$MIN_INSTANTIATED_BEANS, MAX_INSTANTIATED_BEANS=$MAX_INSTANTIATED_BEANS, MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
 
           STARTUP_VALIDATION_FAILED=false
 
@@ -200,11 +304,10 @@ jobs:
           fi
 
           if [[ "$STARTUP_VALIDATION_FAILED" == false ]]; then
-            echo "✅ Final values → Beans: $INSTANTIATED_BEANS; Longest dependency chain length: $LONGEST_CHAIN_LENGTH"
+            echo "✅ Final values -> Beans: $INSTANTIATED_BEANS; Longest dependency chain length: $LONGEST_CHAIN_LENGTH"
             echo "✅ Startup bean instantiation metrics within expected ranges"
           fi
 
-          # Export variables for next step
           {
             echo "LONGEST_CHAIN_LENGTH=$LONGEST_CHAIN_LENGTH"
             echo "STARTUP_VALIDATION_FAILED=$STARTUP_VALIDATION_FAILED"
@@ -220,7 +323,7 @@ jobs:
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
             echo "❌ Startup dependency chain length $LONGEST_CHAIN_LENGTH > $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
-            (grep -E "$STARTUP_DEEP_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
+            grep -E "$STARTUP_DEEP_CHAIN_PATTERN" "$LOG_FILE" || true
             echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
             echo "You can find a visualization of the bean instantiation graph in the artifacts of this job in startupBeans.dot"
             echo "You can visualize the file on http://webgraphviz.com/"
@@ -240,24 +343,19 @@ jobs:
           DEFERRED_BEAN_SEARCH='Maximum dependency chain length during deferred eager init'
           DEFERRED_TIMEOUT_ATTEMPTS=10
           DEFERRED_RETRY_INTERVAL=12
-          DEFERRED_TOTAL_TIMEOUT=$((DEFERRED_TIMEOUT_ATTEMPTS * DEFERRED_RETRY_INTERVAL))
           LOG_FILE="app.log"
-
-          echo "Waiting for deferred eager bean initialization to complete..."
 
           DEFERRED_LINE=""
           for i in $(seq 1 "$DEFERRED_TIMEOUT_ATTEMPTS"); do
             DEFERRED_LINE=$(grep -E "$DEFERRED_BEAN_SEARCH" "$LOG_FILE" 2>/dev/null || true)
             if [[ -n "$DEFERRED_LINE" ]]; then
-              echo "✅ Found deferred eager bean initialization log after $i attempts"
               break
             fi
-            echo "  attempt $i/$DEFERRED_TIMEOUT_ATTEMPTS: deferred eager bean initialization not completed yet"
             sleep "$DEFERRED_RETRY_INTERVAL"
           done
 
           if [[ -z "$DEFERRED_LINE" ]]; then
-            echo "❌ No deferred eager bean chain length line found after ${DEFERRED_TOTAL_TIMEOUT}s"
+            echo "❌ No deferred eager bean chain length line found"
             cat "$LOG_FILE"
             exit 1
           fi
@@ -269,25 +367,23 @@ jobs:
             exit 1
           fi
 
-          echo "• Maximum dependency chain length during deferred eager bean initialization = $DEFERRED_CHAIN_LENGTH"
-          echo "Validating against thresholds: MIN_DEFERRED_CHAIN_LENGTH=$MIN_DEFERRED_CHAIN_LENGTH (expected ≥ $MIN_DEFERRED_CHAIN_LENGTH), MAX_DEFERRED_CHAIN_LENGTH=$MAX_DEFERRED_CHAIN_LENGTH (expected ≤ $MAX_DEFERRED_CHAIN_LENGTH)"
+          echo "• Maximum deferred eager bean dependency chain length = $DEFERRED_CHAIN_LENGTH"
+          echo "Validating against thresholds: MIN_DEFERRED_CHAIN_LENGTH=$MIN_DEFERRED_CHAIN_LENGTH, MAX_DEFERRED_CHAIN_LENGTH=$MAX_DEFERRED_CHAIN_LENGTH"
 
           DEFERRED_VALIDATION_FAILED=false
 
           if (( DEFERRED_CHAIN_LENGTH < MIN_DEFERRED_CHAIN_LENGTH )); then
-            echo "❌ Deferred chain length $DEFERRED_CHAIN_LENGTH < $MIN_DEFERRED_CHAIN_LENGTH. Something seems to be wrong, as usually some deferred beans are instantiated."
-            echo "Was the deferred eager bean initialization removed? If so, you have to adapt this Github Action."
+            echo "❌ Deferred eager bean chain length $DEFERRED_CHAIN_LENGTH < $MIN_DEFERRED_CHAIN_LENGTH. This is suspicious because deferred eager initialization should have happened."
             DEFERRED_VALIDATION_FAILED=true
           fi
 
           if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
-            echo "❌ Deferred chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
+            echo "❌ Deferred eager bean chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             DEFERRED_VALIDATION_FAILED=true
           fi
 
           if [[ "$DEFERRED_VALIDATION_FAILED" == false ]]; then
-            echo "✅ Deferred eager bean chain length: $DEFERRED_CHAIN_LENGTH"
-            echo "✅ Deferred eager bean dependency chain length within expected ranges"
+            echo "✅ Deferred eager bean chain length within expected ranges"
           fi
 
           {
@@ -302,14 +398,12 @@ jobs:
           DEFERRED_LONG_CHAIN_PATTERN='Deferred long bean instantiation chain'
           LOG_FILE="app.log"
 
-          echo "Checking for deferred dependency chains exceeding threshold..."
-
           if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
             echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
-            (grep -E "$DEFERRED_LONG_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
+            grep -E "$DEFERRED_LONG_CHAIN_PATTERN" "$LOG_FILE" || true
             echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
-            echo "You can find a visualization of the bean instantiation graph in in the artifacts of this job in deferredEagerBeanInstantiationViolations.dot."
+            echo "You can find a visualization of the deferred eager bean instantiation graph in the artifacts of this job in deferredEagerBeanInstantiationViolations.dot"
             echo "You can visualize the file on http://webgraphviz.com/"
           else
             echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_CHAIN_LENGTH"

@@ -25,7 +25,9 @@ concurrency: ${{ github.event.inputs.environment_name }}
 env:
   CI: true
   # Keep filename in sync with the workflow responsible for automatic builds on PRs
-  PR_AUTO_BUILD_FILE_NAME: "build.yml"
+  PR_AUTO_BUILD_FILE_NAME: "pr.yml"
+  DEVELOP_AUTO_BUILD_FILE_NAME: "push-develop.yml"
+  MAIN_AUTO_BUILD_FILE_NAME: "push-main.yml"
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 # ------------------------------------------------------------------------------
@@ -65,6 +67,7 @@ jobs:
       head_sha: ${{ steps.get_pr.outputs.head_sha }}
       tag: ${{ steps.get_pr.outputs.tag }}
       is_main_or_develop: ${{ steps.get_pr.outputs.is_main_or_develop }}
+      branch_workflow_name: ${{ steps.get_pr.outputs.branch_workflow_name }}
     steps:
       - name: Check if a PR exists for the branch
         id: get_pr
@@ -89,6 +92,7 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
             echo "tag=pr-$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "branch_workflow_name=${{ env.PR_AUTO_BUILD_FILE_NAME }}" >> $GITHUB_OUTPUT
           else
             echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
             echo "pr_number=" >> $GITHUB_OUTPUT
@@ -107,9 +111,15 @@ jobs:
             if [[ "$BRANCH_NAME" == "develop" || "$BRANCH_NAME" == "main" ]]; then
               IS_MAIN_OR_DEVELOP=true
               echo "tag=$BRANCH_NAME" >> $GITHUB_OUTPUT
+              if [[ "$BRANCH_NAME" == "develop" ]]; then
+                echo "branch_workflow_name=${{ env.DEVELOP_AUTO_BUILD_FILE_NAME }}" >> $GITHUB_OUTPUT
+              else
+                echo "branch_workflow_name=${{ env.MAIN_AUTO_BUILD_FILE_NAME }}" >> $GITHUB_OUTPUT
+              fi
             else
               # Set tag as branch-SHA
               echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
+              echo "branch_workflow_name=" >> $GITHUB_OUTPUT
             fi
           fi
           echo "is_main_or_develop=$IS_MAIN_OR_DEVELOP" >> $GITHUB_OUTPUT
@@ -137,7 +147,7 @@ jobs:
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ needs.determine-build-context.outputs.branch_workflow_name }}/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
@@ -157,7 +167,7 @@ jobs:
         id: check_main_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/${{ needs.determine-build-context.outputs.branch_workflow_name }}/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
