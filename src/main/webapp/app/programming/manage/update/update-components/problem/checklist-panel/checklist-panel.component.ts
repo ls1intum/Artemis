@@ -699,9 +699,8 @@ export class ChecklistPanelComponent {
      */
     discardCompetency(index: number) {
         const toDiscard = this.analysisResult()?.inferredCompetencies?.[index];
-        if (toDiscard) {
-            this.unlinkDiscardedCompetencies([toDiscard]);
-        }
+        if (!toDiscard) return;
+        this.unlinkDiscardedCompetencies([toDiscard]);
         this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
         this.selectedCompetencyIndices.update((current) => {
             const updated = new Set<number>();
