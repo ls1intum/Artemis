@@ -53,7 +53,7 @@
                     <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
                 </div>
             </div>
-        } @else if (playlistUrl() && hasTranscript()) {
+        } @else if (playlistUrl()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
         } @else {
             <div class="video-player-container">

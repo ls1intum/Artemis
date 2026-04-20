@@ -13,6 +13,7 @@ export interface LectureUnitInfo {
     name: string;
     link: string;
     pageNumber: number;
+    startTime?: number;
 }
 
 export interface LectureSearchResult {

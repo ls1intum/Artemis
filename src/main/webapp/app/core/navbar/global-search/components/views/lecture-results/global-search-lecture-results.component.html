@@ -46,7 +46,8 @@
                 class="lecture-result-card border p-3 text-decoration-none d-block"
                 role="listitem"
                 [class.is-selected]="selectedIndex() === $index + (irisEnabled && !irisOpen() ? 1 : 0)"
-                [routerLink]="result.lectureUnit.link"
+                [routerLink]="['/courses', result.course.id, 'lectures', result.lecture.id]"
+                [queryParams]="{ unit: result.lectureUnit.id, page: result.lectureUnit.pageNumber, timestamp: result.lectureUnit.startTime }"
             >
                 <div class="d-flex align-items-start gap-2 mb-2">
                     <div class="lecture-card-icon-box d-flex align-items-center justify-content-center flex-shrink-0">
