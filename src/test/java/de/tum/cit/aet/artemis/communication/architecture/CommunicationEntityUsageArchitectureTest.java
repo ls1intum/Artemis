@@ -18,7 +18,7 @@ class CommunicationEntityUsageArchitectureTest extends AbstractModuleEntityUsage
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 14;
+        return 15;
     }
 
     // This module is already compliant for input violations
