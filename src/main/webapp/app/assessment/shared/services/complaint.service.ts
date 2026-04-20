@@ -286,6 +286,21 @@ export class ComplaintService implements IComplaintService {
                 } as User;
             }
 
+            if (dto.result.feedbacks) {
+                result.feedbacks = dto.result.feedbacks.map((feedbackDTO) => ({
+                    id: feedbackDTO.id,
+                    text: feedbackDTO.text,
+                    detailText: feedbackDTO.detailText,
+                    hasLongFeedbackText: feedbackDTO.hasLongFeedbackText,
+                    reference: feedbackDTO.reference,
+                    credits: feedbackDTO.credits,
+                    positive: feedbackDTO.positive,
+                    type: feedbackDTO.type,
+                    visibility: feedbackDTO.visibility,
+                    testCase: feedbackDTO.testCaseName ? { testName: feedbackDTO.testCaseName } : undefined,
+                })) as any;
+            }
+
             if (dto.result.submission) {
                 const submission = {
                     id: dto.result.submission.id,
