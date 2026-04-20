@@ -4,6 +4,7 @@
             "deleted": "Content deleted",
             "retryProcessing": "Retry processing",
             "processingRetryStarted": "Processing retry started",
+            "pdfOnlyError": "Only PDF files are supported.",
             "home": {
                 "title": "Lecture Content"
             },

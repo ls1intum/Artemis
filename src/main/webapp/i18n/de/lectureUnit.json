@@ -4,6 +4,7 @@
             "deleted": "Inhalt gelöscht",
             "retryProcessing": "Verarbeitung wiederholen",
             "processingRetryStarted": "Verarbeitungswiederholung gestartet",
+            "pdfOnlyError": "Nur PDF-Dateien werden unterstützt.",
             "home": {
                 "title": "Vorlesungsinhalte"
             },
