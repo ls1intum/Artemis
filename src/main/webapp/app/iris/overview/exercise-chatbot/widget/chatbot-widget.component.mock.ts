@@ -10,6 +10,7 @@ import { Component, input, output } from '@angular/core';
 })
 export class MockIrisBaseChatbotComponent {
     readonly layout = input<'client' | 'widget'>('client');
+    readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>();
     readonly isChatGptWrapper = input<boolean>();

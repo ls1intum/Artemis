@@ -8,7 +8,7 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         @if (lectureId()) {
-            <jhi-iris-base-chatbot [showDeclineButton]="false" [isChatHistoryAvailable]="false" [layout]="'widget'" />
+            <jhi-iris-base-chatbot [showDeclineButton]="false" [isChatHistoryAvailable]="false" [layout]="'widget'" [aboutIrisDialogTransport]="'dynamic'" />
         }
     `,
     styles: [
