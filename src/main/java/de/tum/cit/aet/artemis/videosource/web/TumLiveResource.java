@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tumlive.web;
+package de.tum.cit.aet.artemis.videosource.web;
 
 import java.net.URI;
 import java.util.Optional;
@@ -16,15 +16,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.tumlive.config.TumLiveEnabled;
-import de.tum.cit.aet.artemis.tumlive.service.TumLiveService;
+import de.tum.cit.aet.artemis.videosource.config.TumLiveEnabled;
+import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
  * REST controller for managing TUM Live lecture transcriptions and related utilities.
  */
 @Lazy
 @RestController
-@RequestMapping("api/tumlive/")
+@RequestMapping("api/videosource/")
 @Conditional(TumLiveEnabled.class)
 public class TumLiveResource {
 
