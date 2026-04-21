@@ -30,14 +30,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.reference()).toBeUndefined();
     });
 
-    it('should infer not_attempted type by default when points = 0', () => {
-        expect(component.inferredType()).toBe('not_attempted');
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
-        expect(component.inferredAlertClass()).toBe('alert-danger');
+    it('should infer needs_revision type by default when points = 0', () => {
+        expect(component.inferredType()).toBe('needs_revision');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.inferredAlertClass()).toBe('alert-secondary');
     });
 
-    it('should return correct alert classes for each type', () => {
-        expect(component.inferredAlertClass()).toBe('alert-danger'); // default for not_attempted
+    it('should return correct alert class for default needs_revision type', () => {
+        expect(component.inferredAlertClass()).toBe('alert-secondary');
     });
 
     it('should infer correct type when points > 0', () => {
@@ -47,11 +47,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-success');
     });
 
-    it('should infer needs_revision type when points < 0', () => {
+    it('should infer non_compliant type when points < 0', () => {
         fixture.componentRef.setInput('points', -1);
         fixture.detectChanges();
-        expect(component.inferredType()).toBe('needs_revision');
-        expect(component.inferredAlertClass()).toBe('alert-warning');
+        expect(component.inferredType()).toBe('non_compliant');
+        expect(component.inferredAlertClass()).toBe('alert-danger');
     });
 
     it('should prefer explicit type over inferred from points', () => {
@@ -68,11 +68,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('Explicit Title');
     });
 
-    it('should infer title from feedback.text if available', () => {
+    it('should fall back to default title when feedback.text is plain text (not a suggestion)', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', { text: 'Feedback Text' } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('Feedback Text');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
     it('should infer title from assessmentsNames when feedback has referenceId and mapping exists', () => {
@@ -90,7 +90,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('assessmentsNames', undefined as any);
         fixture.componentRef.setInput('points', 0);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
         fixture.componentRef.setInput('points', 2);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.correct');
@@ -143,7 +143,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { referenceId: 999 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
     it('should return undefined inferredReference when no mapping and no feedback.reference', () => {
@@ -156,13 +156,26 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-reference-text')).toBeNull();
     });
 
-    it('should expose alert-warning for needs_revision', () => {
+    it('should expose alert-secondary for needs_revision', () => {
         fixture.componentRef.setInput('type', 'needs_revision');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('needs_revision');
-        expect(component.inferredAlertClass()).toBe('alert-warning');
-        // verify class applied on host via template binding
+        expect(component.inferredAlertClass()).toBe('alert-secondary');
         const root = fixture.nativeElement.querySelector('.unified-feedback');
-        expect(root.classList.contains('alert-warning')).toBeTruthy();
+        expect(root.classList.contains('alert-secondary')).toBeTruthy();
+    });
+
+    it('should expose alert-secondary for not_attempted', () => {
+        fixture.componentRef.setInput('type', 'not_attempted');
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('not_attempted');
+        expect(component.inferredAlertClass()).toBe('alert-secondary');
+    });
+
+    it('should expose alert-danger for non_compliant', () => {
+        fixture.componentRef.setInput('type', 'non_compliant');
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('non_compliant');
+        expect(component.inferredAlertClass()).toBe('alert-danger');
     });
 });
