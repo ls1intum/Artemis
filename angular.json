@@ -34,7 +34,6 @@
                   "hoist-non-react-statics",
                   "interactjs",
                   "is-mobile",
-                  "js-video-url-parser",
                   "jszip",
                   "localforage",
                   "markdown-it-highlightjs",
