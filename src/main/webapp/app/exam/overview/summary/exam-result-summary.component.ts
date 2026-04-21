@@ -1,5 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -19,20 +18,10 @@ import { getLatestResultOfStudentParticipation } from 'app/exercise/participatio
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint, faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
-import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
-import { Subscription, filter, skip } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -54,6 +43,7 @@ import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exerc
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -99,23 +89,16 @@ type StateBeforeResetting = {
         ProgrammingExamSummaryComponent,
         ArtemisTranslatePipe,
         TestRunRibbonComponent,
+        ExamRequestAiFeedbackButtonComponent,
     ],
 })
-export class ExamResultSummaryComponent implements OnInit, OnDestroy {
+export class ExamResultSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private serverDateService = inject(ArtemisServerDateService);
     private themeService = inject(ThemeService);
     private examParticipationService = inject(ExamParticipationService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
-    private userService = inject(UserService);
-    private localStorageService = inject(LocalStorageService);
-    private llmModalService = inject(LLMSelectionModalService);
-    private participationWebsocketService = inject(ParticipationWebsocketService);
-
-    private static readonly FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_requested_';
 
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
@@ -133,30 +116,6 @@ export class ExamResultSummaryComponent implements OnInit, OnDestroy {
     faEye = faEye;
     faEyeSlash = faEyeSlash;
     faArrowUp = faArrowUp;
-    faRobot = faRobot;
-    faSpinner = faSpinner;
-
-    athenaEnabled = false;
-    isRequestingFeedback = false;
-    feedbackRequested = false;
-    hasUserAcceptedLLMUsage = false;
-
-    athenaFeedbackUsed = 0;
-    athenaFeedbackLimit = 0;
-
-    get hasAnyAthenaResultForCurrentAttempt(): boolean {
-        return (this.studentExam?.exercises ?? []).some((exercise) => {
-            if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
-                return false;
-            }
-            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
-            return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-        });
-    }
-
-    private feedbackSubscription?: Subscription;
-    private athenaResultSubscriptions: Subscription[] = [];
-    private currentAttemptCounted = false;
 
     /**
      * Current student's exam.
@@ -255,114 +214,10 @@ export class ExamResultSummaryComponent implements OnInit, OnDestroy {
 
         this.exerciseInfos = this.getExerciseInfos();
 
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.feedbackRequested = this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false;
-        this.setUserAcceptedLLMUsage();
-        this.loadAthenaFeedbackUsage();
-
         this.setExamWithOnlyIdAndStudentReviewPeriod();
 
         this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
         this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
-    }
-
-    ngOnDestroy(): void {
-        this.feedbackSubscription?.unsubscribe();
-        this.athenaResultSubscriptions.forEach((subscription) => subscription.unsubscribe());
-    }
-
-    private setUserAcceptedLLMUsage(): void {
-        const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
-    }
-
-    async requestAIFeedback(): Promise<void> {
-        if (!this.hasUserAcceptedLLMUsage) {
-            await this.showLLMSelectionModal();
-            return;
-        }
-        this.triggerFeedbackRequest();
-    }
-
-    private async showLLMSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
-        if (choice === LLMSelectionDecision.CLOUD_AI) {
-            this.feedbackSubscription = this.userService.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe(() => {
-                this.hasUserAcceptedLLMUsage = true;
-                this.accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
-                this.triggerFeedbackRequest();
-            });
-        } else if (choice !== LLM_MODAL_DISMISSED) {
-            this.feedbackSubscription = this.userService.updateLLMSelectionDecision(choice as LLMSelectionDecision).subscribe(() => {
-                this.accountService.setUserLLMSelectionDecision(choice as LLMSelectionDecision);
-            });
-        }
-    }
-
-    private triggerFeedbackRequest(): void {
-        this.isRequestingFeedback = true;
-        this.feedbackSubscription = this.examParticipationService.requestAthenaFeedback(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!).subscribe({
-            next: () => {
-                this.feedbackRequested = true;
-                this.isRequestingFeedback = false;
-                this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
-                this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
-            },
-            error: (error: HttpErrorResponse) => {
-                this.isRequestingFeedback = false;
-                this.alertService.error(`artemisApp.exercise.${error.error?.errorKey}`);
-            },
-        });
-    }
-
-    private loadAthenaFeedbackUsage(): void {
-        if (!this.isTestExam || !this.athenaEnabled || !this.studentExam?.submitted || this.testExamConduction) {
-            return;
-        }
-        this.examParticipationService.getAthenaFeedbackUsage(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!).subscribe({
-            next: (usage) => {
-                this.athenaFeedbackUsed = usage.used;
-                this.athenaFeedbackLimit = usage.limit;
-                // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
-                this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
-                this.subscribeToAthenaResultsForCurrentAttempt();
-            },
-        });
-    }
-
-    private subscribeToAthenaResultsForCurrentAttempt(): void {
-        this.athenaResultSubscriptions.forEach((subscription) => subscription.unsubscribe());
-        this.athenaResultSubscriptions = [];
-        for (const exercise of this.studentExam?.exercises ?? []) {
-            if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
-                continue;
-            }
-            const participationId = exercise.studentParticipations?.[0]?.id;
-            if (!participationId) {
-                continue;
-            }
-            const subscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(participationId, true)
-                .pipe(
-                    skip(1),
-                    filter((result): result is Result => !!result),
-                    filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
-                )
-                .subscribe((result) => this.handleAthenaResult(result));
-            this.athenaResultSubscriptions.push(subscription);
-        }
-    }
-
-    private handleAthenaResult(result: Result): void {
-        if (!result.completionDate || !result.successful || this.currentAttemptCounted) {
-            return;
-        }
-        this.athenaFeedbackUsed += 1;
-        this.currentAttemptCounted = true;
-    }
-
-    private getFeedbackRequestedStorageKey(): string {
-        return `${ExamResultSummaryComponent.FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX}${this.studentExam.id}`;
     }
 
     get resultsArePublished(): boolean | any {

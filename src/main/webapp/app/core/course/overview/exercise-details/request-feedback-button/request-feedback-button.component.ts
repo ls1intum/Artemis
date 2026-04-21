@@ -26,8 +26,8 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
-// remark: this will be defined by the instructor and fetched
-export const ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
+// Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
+export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
 
 export function countSuccessfulAthenaFeedbackRequests(participation?: StudentParticipation): number {
     return (
@@ -63,7 +63,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     participation?: StudentParticipation;
     hasUserAcceptedLLMUsage: boolean;
     currentFeedbackRequestCount = 0;
-    readonly feedbackRequestLimit = ATHENA_FEEDBACK_REQUEST_LIMIT;
+    readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);

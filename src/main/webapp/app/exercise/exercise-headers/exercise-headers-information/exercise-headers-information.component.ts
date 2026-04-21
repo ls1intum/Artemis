@@ -24,7 +24,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
@@ -64,7 +64,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() sortedHistoryResults: Result[] = [];
     @Input() isPractice: boolean = false;
     @Input() athenaEnabled: boolean = false;
-    @Input() feedbackRequestLimit: number = ATHENA_FEEDBACK_REQUEST_LIMIT;
+    @Input() feedbackRequestLimit: number = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;

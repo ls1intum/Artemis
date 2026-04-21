@@ -13,7 +13,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import {
-    ATHENA_FEEDBACK_REQUEST_LIMIT,
+    DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
     countSuccessfulAthenaFeedbackRequests,
 } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
@@ -711,8 +711,8 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(requestSpy).not.toHaveBeenCalled();
         });
 
-        it('ATHENA_FEEDBACK_REQUEST_LIMIT should match the component default', () => {
-            expect(component.feedbackRequestLimit).toBe(ATHENA_FEEDBACK_REQUEST_LIMIT);
+        it('DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT should match the component default', () => {
+            expect(component.feedbackRequestLimit).toBe(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
         });
     });
 
