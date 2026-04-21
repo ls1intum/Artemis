@@ -1,11 +1,11 @@
-import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
-import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { YouTubePlayerComponent } from 'app/lecture/shared/youtube-player/youtube-player.component';
 import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -37,7 +37,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, MessageModule],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, YouTubePlayerComponent, PdfViewerComponent, MessageModule],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -55,6 +55,33 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
+    readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
+    readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
+    readonly youtubePlayerFailed = signal(false);
+
+    // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
+    // construct a privacy-enhanced embed URL from the video ID when available.
+    readonly iframeFallbackUrl = computed(() => {
+        const id = this.youtubeVideoId();
+        if (id) {
+            return `https://www.youtube-nocookie.com/embed/${id}`;
+        }
+        return this.rawVideoSource();
+    });
+
+    // Reset the fallback latch whenever the lecture unit changes (panel reopen, new
+    // unit selected). Without this, one transient YouTube init failure sticks this
+    // component instance on iframe fallback for its whole lifetime.
+    constructor() {
+        super();
+        effect(() => {
+            const id = this.lectureUnit()?.id;
+            // read id to create the dependency; then schedule reset
+            void id;
+            untracked(() => this.youtubePlayerFailed.set(false));
+        });
+    }
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
@@ -76,37 +103,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
         return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
-
-    // TODO: This must use a server configuration to make it compatible with deployments other than TUM
-    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
-
-    /**
-     * Return the URL of the video source
-     */
-    readonly videoUrl = computed(() => this.computeVideoUrl());
-
-    /**
-     * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
-     */
-    private computeVideoUrl(): string | undefined {
-        const source = this.lectureUnit().videoSource;
-        if (!source) {
-            return undefined;
-        }
-        // Check if it matches the allow list (e.g., TUM Live URLs)
-        if (this.videoUrlAllowList.some((r) => r.test(source))) {
-            return source;
-        }
-        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
-        if (urlParser) {
-            const parsed = urlParser.parse(source);
-            if (parsed) {
-                return source;
-            }
-        }
-        return undefined;
-    }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
         const failedUrl = event.pdfUrl;
@@ -167,6 +163,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
+            // For YouTube sources, fetch transcript directly (no playlist URL needed)
+            if (this.lectureUnit().youtubeVideoId) {
+                this.fetchTranscript();
+                this.isLoading.set(false);
+                if (this.hasPdf()) {
+                    this.loadPdf();
+                }
+                return;
+            }
+
             // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
@@ -189,6 +195,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
+            this.youtubePlayerFailed.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
@@ -337,6 +344,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
+    }
+
+    onYouTubePlayerFailed(): void {
+        this.youtubePlayerFailed.set(true);
     }
 
     hasAttachment(): boolean {
