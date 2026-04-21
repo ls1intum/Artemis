@@ -190,6 +190,15 @@ class ArtemisWebAuthnAuthenticationProviderTest {
     }
 
     @Test
+    void testAuthenticateThrowsNoPasskeyFoundExceptionWhenCredentialMissing() {
+        String credentialId = "unknown-credential-id";
+        WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
+        when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(NoPasskeyFoundException.class);
+    }
+
+    @Test
     void testAuthenticateRelyingPartyThrowsException() {
         // Setup
         String credentialId = "test-credential-id";
