@@ -1,15 +1,21 @@
 /**
  * Video URL parser for YouTube and Vimeo.
  *
- * Replaces the unmaintained `js-video-url-parser` (CVE GHSA-93p6-54v5-593v, a ReDoS in its time-string regexes).
+ * Replaces the unmaintained `js-video-url-parser` (GHSA-8fgx-wgvr-pcx8, a ReDoS in its time-string regexes,
+ * with no upstream fix released as of 0.5.1).
  * Inspired by https://github.com/radiovisual/get-video-id, rewritten in TypeScript and using the native `URL` API
  * to keep parsing linear and avoid regex pitfalls.
  *
- * ReDoS safety: the only regexes used here are `^[A-Za-z0-9_-]{11}$` and `^\d+$`. Both are fully anchored and
- * contain no nested quantifiers or ambiguous alternation, so matching time is linear in the input length. All
- * structural parsing (host, path segments, query params) goes through the browser's native `URL` API, which does
- * not perform user-code backtracking. Do NOT introduce patterns of the form `(X+)+`, `(X|X)+`, or similar when
- * extending this file.
+ * ReDoS safety: the only regexes used here are `^[A-Za-z0-9_-]{11}$`, `^\d+$`, and `^[A-Za-z0-9]+$`. All are fully
+ * anchored and contain no nested quantifiers or ambiguous alternation, so matching time is linear in the input
+ * length. All structural parsing (host, path segments, query params) goes through the browser's native `URL` API,
+ * which does not perform user-code backtracking. Do NOT introduce patterns of the form `(X+)+`, `(X|X)+`, or
+ * similar when extending this file.
+ *
+ * Client / server contract: the Java `YouTubeUrlService` on the server independently extracts the YouTube video
+ * id from the persisted `videoSource`. The YouTube host list below MUST remain a subset of the server's
+ * accepted-host set, and `buildEmbedUrl` MUST produce `https://www.youtube.com/embed/<id>` so the server parser
+ * can round-trip. If you add a host here, add it to `YouTubeUrlService.YOUTUBE_HOSTS` in the same PR.
  */
 
 /** Supported video hosting providers. */
@@ -22,9 +28,9 @@ export interface ParsedVideo {
     /** The canonical video id (YouTube: 11-char shortcode; Vimeo: numeric id as string). */
     id: string;
     /**
-     * Vimeo unlisted-video hash (`h=` query parameter on player URLs).
-     * Required for playback of unlisted videos, so we capture and preserve it through the embed round-trip.
-     * Undefined for public videos and for all YouTube URLs.
+     * Vimeo unlisted-video hash. Appears as the `h=` query parameter on player URLs, or as a trailing path segment
+     * on bare vimeo.com URLs (`vimeo.com/<id>/<hash>`). Required for playback of unlisted videos, so we capture and
+     * preserve it through the embed round-trip. Undefined for public videos and for all YouTube URLs.
      */
     unlistedHash?: string;
 }
@@ -41,40 +47,49 @@ const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
  */
 const NUMERIC_PATTERN = /^\d+$/;
 
-/** YouTube watch/embed hosts. `youtube-nocookie.com` is the privacy-preserving variant used by the embed player. */
-const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'gaming.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
+/**
+ * Matches a Vimeo unlisted-video hash: lowercase alphanumerics only.
+ * Used to reject anything that isn't obviously a Vimeo hash before embedding it unescaped into a URL.
+ * Anchored + single unnested quantifier → linear time, ReDoS-safe.
+ */
+const VIMEO_HASH_PATTERN = /^[A-Za-z0-9]+$/;
+
+/**
+ * YouTube hosts we accept. This list MUST remain a subset of the server-side `YouTubeUrlService.YOUTUBE_HOSTS`
+ * (Java); otherwise the client would validate URLs that the viewer's `youtubeVideoId` extraction silently rejects.
+ * `music.youtube.com` and `gaming.youtube.com` are intentionally excluded.
+ */
+const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
 
 /** Short-link hosts that carry the video id directly as the first path segment (e.g. `https://youtu.be/<id>`). */
 const YOUTUBE_SHORT_HOSTS = new Set(['youtu.be', 'y2u.be']);
 
 /**
  * First path segment of YouTube URLs that expose a video id as the second segment.
- * Covers `/watch/<id>`, `/embed/<id>`, `/shorts/<id>`, `/live/<id>`, `/v/<id>`, `/vi/<id>`, `/e/<id>`, `/an_webp/<id>`.
+ * Covers `/embed/<id>`, `/shorts/<id>`, `/live/<id>`, `/v/<id>`, `/vi/<id>`, `/e/<id>`, `/an_webp/<id>`.
+ *
+ * Note: `/watch/<id>` is NOT included. The canonical watch URL is `/watch?v=<id>` (handled by the query-param
+ * lookup), and the server parser does not recognize the `/watch/<id>` shape, so accepting it on the client would
+ * create a helper/viewer mismatch.
  */
-const YOUTUBE_VIDEO_PATH_PREFIXES = new Set(['embed', 'shorts', 'live', 'v', 'vi', 'e', 'an_webp', 'watch']);
-
-/**
- * First path segment of YouTube URLs that are NOT individual videos (channel pages, playlists, search, etc.).
- * These are rejected explicitly so a random 11-char-looking segment in such a path is not mistaken for a video id.
- */
-const YOUTUBE_NON_VIDEO_PATH_PREFIXES = new Set(['user', 'c', 'channel', 'playlist', 'results', 'feed']);
+const YOUTUBE_VIDEO_PATH_PREFIXES = new Set(['embed', 'shorts', 'live', 'v', 'vi', 'e', 'an_webp']);
 
 /** Vimeo canonical and player hosts. */
 const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']);
 
 /**
- * Parses a video URL and returns the provider and video id if recognized.
+ * Parses a video URL and returns the provider, video id, and (for unlisted Vimeo videos) unlisted-hash.
  *
  * Supported YouTube formats:
  *  - `https://www.youtube.com/watch?v=<id>` (and `?vi=<id>`)
  *  - `https://www.youtube.com/embed/<id>` (also on `youtube-nocookie.com`)
  *  - `https://www.youtube.com/shorts/<id>`, `/live/<id>`, `/v/<id>`, `/vi/<id>`, `/e/<id>`, `/an_webp/<id>`
  *  - `https://youtu.be/<id>`, `https://y2u.be/<id>`
- *  - `https://www.youtube.com/attribution_link?u=/watch%3Fv%3D<id>`
+ *  - `https://www.youtube.com/attribution_link?u=/watch%3Fv%3D<id>` (the wrapped target must itself be on a YouTube host)
  *  - Any of the above with extra query params (`t`, `list`, `feature`, ...), trailing slashes, or `#t=` hashes.
  *
  * Supported Vimeo formats:
- *  - `https://vimeo.com/<numericId>` (optionally followed by `/<unlistedHash>`)
+ *  - `https://vimeo.com/<numericId>` (optionally followed by `/<unlistedHash>` as a path segment)
  *  - `https://vimeo.com/channels/<name>/<numericId>`
  *  - `https://vimeo.com/groups/<group>/videos/<numericId>`
  *  - `https://vimeo.com/album/<album>/video/<numericId>`
@@ -82,7 +97,8 @@ const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']);
  *  - `https://player.vimeo.com/video/<numericId>` (with optional `?h=<hash>` unlisted token)
  *  - `https://vimeo.com/moogaloop.swf?clip_id=<numericId>`
  *
- * Channel pages, playlists, user handles (`@handle`) and malformed ids are rejected.
+ * Channel pages, playlists, group/album landing pages (no trailing video segment), user handles (`@handle`),
+ * and malformed ids are rejected.
  *
  * @param rawUrl The URL to parse. May be undefined for convenience (returns undefined).
  * @returns The parsed video, or undefined if the URL is not a supported video URL.
@@ -104,11 +120,9 @@ export function parseVideoUrl(rawUrl: string | undefined): ParsedVideo | undefin
     if (youtubeId) {
         return { provider: 'youtube', id: youtubeId };
     }
-    const vimeoId = parseVimeoId(url);
-    if (vimeoId) {
-        // Capture the unlisted hash so the embed URL we later build stays playable for unlisted videos.
-        const unlistedHash = url.searchParams.get('h') ?? undefined;
-        return { provider: 'vimeo', id: vimeoId, ...(unlistedHash ? { unlistedHash } : {}) };
+    const vimeo = parseVimeo(url);
+    if (vimeo) {
+        return { provider: 'vimeo', ...vimeo };
     }
     return undefined;
 }
@@ -132,6 +146,7 @@ export function buildEmbedUrl(parsed: ParsedVideo): string {
             return `https://www.youtube.com/embed/${parsed.id}`;
         case 'vimeo': {
             // Preserve the unlisted-video hash. Without `h=`, embeds of unlisted Vimeo videos return a 403.
+            // We restrict the hash to `[A-Za-z0-9]+` in the parser, so direct interpolation here is safe.
             const hashSuffix = parsed.unlistedHash ? `?h=${parsed.unlistedHash}` : '';
             return `https://player.vimeo.com/video/${parsed.id}${hashSuffix}`;
         }
@@ -165,6 +180,7 @@ function parseYouTubeId(url: URL): string | undefined {
     }
 
     // The two canonical query-parameter forms: `?v=<id>` (watch page) and `?vi=<id>` (older inline-player URLs).
+    // `searchParams.get` returns the first value — multiple `v=`s picks the first, which matches browser behavior.
     const queryId = url.searchParams.get('v') ?? url.searchParams.get('vi');
     if (queryId) {
         const id = validYouTubeId(queryId);
@@ -175,18 +191,9 @@ function parseYouTubeId(url: URL): string | undefined {
 
     // `attribution_link` wraps a real watch URL in a `u` query param (percent-encoded). Unwrap it once and try again.
     if (url.pathname === '/attribution_link') {
-        const inner = url.searchParams.get('u');
-        if (inner) {
-            try {
-                // The wrapped value is typically relative (e.g. `/watch?v=<id>`); the base URL is only used to parse it.
-                const innerUrl = new URL(inner, 'https://www.youtube.com');
-                const innerId = innerUrl.searchParams.get('v');
-                if (innerId) {
-                    return validYouTubeId(innerId);
-                }
-            } catch {
-                // Ignore malformed attribution targets and fall through to path-based matching below.
-            }
+        const unwrapped = parseAttributionLinkTarget(url);
+        if (unwrapped) {
+            return unwrapped;
         }
     }
 
@@ -195,18 +202,48 @@ function parseYouTubeId(url: URL): string | undefined {
         return undefined;
     }
 
-    // Explicitly reject non-video pages. Without this, a path like `/user/<11-char-name>` could be misread as a video id.
-    const head = segments[0];
-    if (YOUTUBE_NON_VIDEO_PATH_PREFIXES.has(head) || head.startsWith('@')) {
+    // Lowercase the prefix for case-insensitive matching. Hostnames are already lowercased by URL,
+    // but path segments aren't — be tolerant of e.g. `/Embed/<id>` from hand-edited URLs.
+    const head = segments[0].toLowerCase();
+
+    // Reject non-video pages explicitly. Without this, a path like `/user/<11-char-name>` could be misread as a video id.
+    // The list is not exhaustive; the whitelist below is the primary defense.
+    if (head === 'user' || head === 'c' || head === 'channel' || head === 'playlist' || head === 'results' || head === 'feed' || head.startsWith('@')) {
         return undefined;
     }
 
-    // Known `/<prefix>/<id>` forms (embed, shorts, live, v, vi, e, an_webp, watch).
+    // Known `/<prefix>/<id>` forms (embed, shorts, live, v, vi, e, an_webp).
     if (YOUTUBE_VIDEO_PATH_PREFIXES.has(head) && segments.length >= 2) {
         return validYouTubeId(segments[1]);
     }
 
     return undefined;
+}
+
+/**
+ * Unwraps a YouTube `/attribution_link?u=...` URL. The `u` parameter carries a relative path like
+ * `/watch?v=<id>`; we resolve it against youtube.com, then confirm the resolved URL stays on a YouTube host
+ * before extracting the id. This prevents an attacker-supplied absolute `u=https://evil.com/watch?v=<id>` from
+ * contributing an id to our pipeline.
+ */
+function parseAttributionLinkTarget(url: URL): string | undefined {
+    const inner = url.searchParams.get('u');
+    if (!inner) {
+        return undefined;
+    }
+    try {
+        // The wrapped value is typically relative (e.g. `/watch?v=<id>`); the base URL handles that case and also
+        // surfaces the host for absolute URLs so we can re-check it.
+        const innerUrl = new URL(inner, 'https://www.youtube.com');
+        if (!YOUTUBE_HOSTS.has(innerUrl.hostname.toLowerCase())) {
+            return undefined;
+        }
+        const innerId = innerUrl.searchParams.get('v');
+        return innerId ? validYouTubeId(innerId) : undefined;
+    } catch {
+        // Ignore malformed attribution targets.
+        return undefined;
+    }
 }
 
 /**
@@ -222,30 +259,82 @@ function validYouTubeId(candidate: string | undefined): string | undefined {
 }
 
 /**
- * Extracts the Vimeo numeric video id from a URL, or undefined if the URL is not a recognized Vimeo video URL.
- * Vimeo video ids are always numeric and appear as a path segment. For compound paths like
- * `/groups/<group>/videos/<id>` or `/album/<album>/video/<id>`, the video id is always the LAST numeric segment,
- * so we scan the path from the end.
+ * Extracts the Vimeo numeric video id (and optional unlisted-hash) from a URL.
+ * Uses a path-shape whitelist rather than a "last numeric segment" scan, because the latter would return spurious
+ * ids for landing pages like `/channels/<numericSlug>` or `/ondemand/<numericSlug>`.
  */
-function parseVimeoId(url: URL): string | undefined {
+function parseVimeo(url: URL): { id: string; unlistedHash?: string } | undefined {
     const host = url.hostname.toLowerCase();
     if (!VIMEO_HOSTS.has(host)) {
         return undefined;
     }
 
-    // Scan from the end so compound paths (e.g. `/groups/1234/videos/567890`) return the video id, not an intermediate id.
     const segments = pathSegments(url);
-    for (let i = segments.length - 1; i >= 0; i--) {
-        if (NUMERIC_PATTERN.test(segments[i])) {
-            return segments[i];
+    const queryHash = normalizeHash(url.searchParams.get('h'));
+
+    // player.vimeo.com: the canonical embed shape is /video/<id>, and the hash travels in the `h=` query param.
+    if (host === 'player.vimeo.com') {
+        if (segments.length >= 2 && segments[0].toLowerCase() === 'video' && NUMERIC_PATTERN.test(segments[1])) {
+            return withHash(segments[1], queryHash);
         }
+        return undefined;
+    }
+
+    // vimeo.com / www.vimeo.com — whitelist each accepted path shape explicitly.
+    if (segments.length === 0) {
+        return undefined;
+    }
+    const head = segments[0].toLowerCase();
+
+    // /<id>   or   /<id>/<unlistedHash>
+    if (NUMERIC_PATTERN.test(segments[0])) {
+        const pathHash = segments.length >= 2 ? normalizeHash(segments[1]) : undefined;
+        return withHash(segments[0], queryHash ?? pathHash);
+    }
+
+    // /channels/<name>/<id>
+    if (head === 'channels' && segments.length >= 3 && NUMERIC_PATTERN.test(segments[2])) {
+        return withHash(segments[2], queryHash);
+    }
+
+    // /groups/<name>/videos/<id>
+    if (head === 'groups' && segments.length >= 4 && segments[2].toLowerCase() === 'videos' && NUMERIC_PATTERN.test(segments[3])) {
+        return withHash(segments[3], queryHash);
+    }
+
+    // /album/<album>/video/<id>
+    if (head === 'album' && segments.length >= 4 && segments[2].toLowerCase() === 'video' && NUMERIC_PATTERN.test(segments[3])) {
+        return withHash(segments[3], queryHash);
+    }
+
+    // /event/<id>
+    if (head === 'event' && segments.length >= 2 && NUMERIC_PATTERN.test(segments[1])) {
+        return withHash(segments[1], queryHash);
     }
 
     // Legacy Flash-era URL form: `https://vimeo.com/moogaloop.swf?clip_id=<id>`.
-    const clipId = url.searchParams.get('clip_id');
-    if (clipId && NUMERIC_PATTERN.test(clipId)) {
-        return clipId;
+    if (head === 'moogaloop.swf') {
+        const clipId = url.searchParams.get('clip_id');
+        if (clipId && NUMERIC_PATTERN.test(clipId)) {
+            return withHash(clipId, queryHash);
+        }
     }
 
     return undefined;
+}
+
+/**
+ * Validates a Vimeo hash candidate. Returns the candidate if it matches `[A-Za-z0-9]+`, otherwise undefined.
+ * This keeps `buildEmbedUrl` safe to interpolate without percent-encoding, and rejects anything that clearly
+ * isn't a Vimeo unlisted-hash (e.g. percent-decoded query-string fragments like `abc&x=1`).
+ */
+function normalizeHash(candidate: string | null | undefined): string | undefined {
+    if (!candidate) {
+        return undefined;
+    }
+    return VIMEO_HASH_PATTERN.test(candidate) ? candidate : undefined;
+}
+
+function withHash(id: string, unlistedHash: string | undefined): { id: string; unlistedHash?: string } {
+    return unlistedHash ? { id, unlistedHash } : { id };
 }
