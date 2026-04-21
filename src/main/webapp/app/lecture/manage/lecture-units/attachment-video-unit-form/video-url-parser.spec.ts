@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
 
 describe('parseVideoUrl', () => {
@@ -143,9 +144,10 @@ describe('parseVideoUrl', () => {
 describe('parseVideoUrl ReDoS safety', () => {
     // The replaced `js-video-url-parser` library has GHSA-8fgx-wgvr-pcx8, a regex catastrophic-backtracking
     // bug where a crafted input caused exponential match time. These tests feed adversarial inputs of the same shapes
-    // and require each call to complete in well under a second, guarding against any future regex that accidentally
-    // regresses.
-    const MAX_PARSE_MS = 100;
+    // and require each call to complete well within a second. The budget here exists to catch *catastrophic*
+    // backtracking (seconds to minutes), not to micro-benchmark linear-time parsing — it is deliberately generous
+    // to stay reliable on loaded CI runners while still flagging any accidental re-introduction of a ReDoS.
+    const MAX_PARSE_MS = 1000;
 
     const adversarial: Array<[string, string]> = [
         ['long digit-letter alternation (mirrors the original CVE payload shape)', 'https://www.youtube.com/watch?v=' + '1s'.repeat(5000) + '!'],

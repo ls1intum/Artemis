@@ -122,7 +122,8 @@ export function parseVideoUrl(rawUrl: string | undefined): ParsedVideo | undefin
     }
     const vimeo = parseVimeo(url);
     if (vimeo) {
-        return { provider: 'vimeo', ...vimeo };
+        // Explicit field construction (no object spread) per the project's TypeScript guidelines.
+        return vimeo.unlistedHash ? { provider: 'vimeo', id: vimeo.id, unlistedHash: vimeo.unlistedHash } : { provider: 'vimeo', id: vimeo.id };
     }
     return undefined;
 }
