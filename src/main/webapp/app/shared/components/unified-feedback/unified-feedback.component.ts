@@ -13,7 +13,7 @@ import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-a
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted';
+export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
 interface FeedbackTypeConfig {
     icon: IconDefinition;
@@ -48,13 +48,18 @@ export class UnifiedFeedbackComponent {
         },
         needs_revision: {
             icon: faRedo,
-            alertClass: 'alert-danger',
+            alertClass: 'alert-secondary',
             defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.needsRevision'),
         },
         not_attempted: {
             icon: faTimes,
             alertClass: 'alert-secondary',
             defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.notAttempted'),
+        },
+        non_compliant: {
+            icon: faTimes,
+            alertClass: 'alert-danger',
+            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.nonCompliant'),
         },
     };
 
@@ -69,9 +74,9 @@ export class UnifiedFeedbackComponent {
             return 'correct';
         }
         if (points < 0) {
-            return 'needs_revision';
+            return 'non_compliant';
         }
-        return 'not_attempted';
+        return 'needs_revision';
     });
 
     readonly inferredTitle = computed(() => {

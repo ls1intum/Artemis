@@ -6,7 +6,8 @@
             "type": {
                 "correct": "Korrekt",
                 "needsRevision": "Überarbeitung erforderlich",
-                "notAttempted": "Nicht versucht"
+                "notAttempted": "Nicht versucht",
+                "nonCompliant": "Nicht konform"
             }
         }
     }
