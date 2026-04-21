@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
