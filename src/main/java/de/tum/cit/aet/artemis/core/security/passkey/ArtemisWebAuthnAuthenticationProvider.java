@@ -73,10 +73,10 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
         try {
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
-            if (this.passkeyCredentialsRepository.findByCredentialId(credentialId).isEmpty()) {
+            PasskeyCredential credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId).orElseThrow(() -> {
                 log.warn("Passkey login attempt with unregistered credential id '{}'", credentialId);
-                throw new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
-            }
+                return new NoPasskeyFoundException("No passkey credential found for id " + credentialId);
+            });
 
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();
@@ -88,7 +88,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
                 throw new UserNotActivatedException("User " + username + " is not activated");
             }
 
-            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credentialId);
+            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credential);
 
             WebAuthnAuthentication auth = new WebAuthnAuthentication(userEntity, user.get().getGrantedAuthorities());
             auth.setDetails(details);
@@ -111,14 +111,12 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     /**
      * Creates authentication details containing the passkey super admin approval status.
      *
-     * @param credentialId to check for super admin approval
+     * @param credential the passkey credential to check for super admin approval
      * @return a map containing the authentication details with the passkey super admin approval status
      */
-    private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(String credentialId) {
-        Optional<PasskeyCredential> credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId);
-        boolean isPasskeyApproved = credential.map(PasskeyCredential::isSuperAdminApproved).orElse(false);
+    private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(PasskeyCredential credential) {
         Map<String, Object> details = new HashMap<>();
-        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved);
+        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, credential.isSuperAdminApproved());
         return details;
     }
 }
