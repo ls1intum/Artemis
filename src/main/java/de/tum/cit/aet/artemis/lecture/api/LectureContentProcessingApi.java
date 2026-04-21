@@ -12,11 +12,11 @@ import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 
 /**
  * API for lecture content processing operations.
- * This class allows other modules (e.g., nebula, iris) to interact with the lecture
+ * This class allows other modules (e.g., iris) to interact with the lecture
  * content processing pipeline without creating direct dependencies.
  * <p>
  * Note: Callback methods for transcription and ingestion completion have been moved to
- * {@link ProcessingStateCallbackApi} to break the circular dependency between lecture and nebula modules.
+ * {@link ProcessingStateCallbackApi} to break the circular dependency between lecture and iris modules.
  */
 @Conditional(LectureWithIrisEnabled.class)
 @Controller

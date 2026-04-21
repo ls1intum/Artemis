@@ -41,7 +41,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
+import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 @Lazy
 @Service
@@ -62,21 +63,21 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
-    private final Optional<TumLiveApi> tumLiveApi;
+    private final VideoSourceResolverService videoSourceResolver;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<TumLiveApi> tumLiveApi) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.tumLiveApi = tumLiveApi;
+        this.videoSourceResolver = videoSourceResolver;
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -120,19 +121,21 @@ public class PyrisWebhookService {
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
-        // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg
-        String videoLink = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
+        // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.
+        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        String videoUrl = resolved.type() != null ? resolved.url() : null;
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
 
             return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     PyrisLectureTranscriptionDTO.of(transcription), lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription,
-                    lectureUnitLink, videoLink);
+                    lectureUnitLink, videoUrl, resolved.type());
         }
 
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
-                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoLink);
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type());
     }
 
     /**
@@ -142,23 +145,8 @@ public class PyrisWebhookService {
      * @param videoSource the raw video URL (may be a TUM Live watch page URL)
      * @return the resolved HLS playlist URL, or the original URL if resolution is not applicable
      */
-    private String resolveVideoUrl(String videoSource) {
-        if (videoSource == null || videoSource.isBlank()) {
-            return videoSource;
-        }
-        if (tumLiveApi.isPresent()) {
-            try {
-                Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
-                if (resolved.isPresent()) {
-                    log.info("Resolved TUM Live URL to HLS playlist for Iris ingestion");
-                    return resolved.get();
-                }
-            }
-            catch (Exception e) {
-                log.warn("Could not resolve TUM Live URL for Iris ingestion, falling back to original video source", e);
-            }
-        }
-        return videoSource;
+    ResolvedVideo resolveVideoUrl(String videoSource) {
+        return videoSourceResolver.resolve(videoSource);
     }
 
     /**
@@ -173,7 +161,7 @@ public class PyrisWebhookService {
         Long lectureUnitId = attachmentVideoUnit.getId();
         Long lectureId = attachmentVideoUnit.getLecture().getId();
         Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "");
+        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "", null);
     }
 
     /**
