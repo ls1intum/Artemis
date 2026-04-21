@@ -130,7 +130,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         long start = System.nanoTime();
 
         if (auxiliaryRepository.getVcsRepositoryUri() == null) {
-            return ResponseEntity.unprocessableEntity()
+            return ResponseEntity.unprocessableContent()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "repositoryNotConfigured", "The auxiliary repository is not configured correctly."))
                     .body(null);
         }
