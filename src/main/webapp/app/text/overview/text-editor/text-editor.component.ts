@@ -156,39 +156,39 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textService.get(participationId!, this.resultId).subscribe({
                     next: (data: StudentParticipation) => {
                         this.updateParticipation(data, this.submissionId, this.resultId);
+                        this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
                 this.isReadOnlyWithShowResult = !!this.submissionId;
-                return;
-            }
-
-            this.route.params?.subscribe((params) => {
-                const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
-                const newParticipationId = Number(params['participationId']);
-                const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
-                const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
-                this.submissionId = newSubmissionId;
-                this.resultId = newResultId;
-                this.isReadOnlyWithShowResult = !!newSubmissionId;
-                if (participationChanged || submissionOrResultChanged) {
-                    const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
-                    if (participationIdToFetch === undefined) {
-                        return;
+            } else {
+                this.route.params?.subscribe((params) => {
+                    const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
+                    const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
+                    const newParticipationId = Number(params['participationId']);
+                    const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
+                    const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
+                    this.submissionId = newSubmissionId;
+                    this.resultId = newResultId;
+                    this.isReadOnlyWithShowResult = !!newSubmissionId;
+                    if (participationChanged || submissionOrResultChanged) {
+                        const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
+                        if (participationIdToFetch === undefined) {
+                            return;
+                        }
+                        this.textService.get(participationIdToFetch, this.resultId).subscribe({
+                            next: (data: StudentParticipation) => {
+                                this.updateParticipation(data, this.submissionId, this.resultId);
+                            },
+                            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                        });
+                    } else {
+                        this.updateParticipation(this.participation, this.submissionId, this.resultId);
                     }
-                    this.textService.get(participationIdToFetch, this.resultId).subscribe({
-                        next: (data: StudentParticipation) => {
-                            this.updateParticipation(data, this.submissionId, this.resultId);
-                        },
-                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                    });
-                } else {
-                    this.updateParticipation(this.participation, this.submissionId, this.resultId);
-                }
-            });
+                });
 
-            this.isReadOnlyWithShowResult = !!this.submissionId;
+                this.isReadOnlyWithShowResult = !!this.submissionId;
+            }
         }
         this.participationUpdateListener?.unsubscribe();
         // Triggers on new result received

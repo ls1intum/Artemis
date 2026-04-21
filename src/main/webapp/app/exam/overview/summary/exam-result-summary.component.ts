@@ -307,7 +307,6 @@ export class ExamResultSummaryComponent implements OnInit, OnDestroy {
                 this.isRequestingFeedback = false;
                 this.localStorageService.store(this.getFeedbackRequestedStorageKey(), true);
                 this.alertService.success('artemisApp.exam.examSummary.feedbackRequestSent');
-                this.loadAthenaFeedbackUsage();
             },
             error: (error: HttpErrorResponse) => {
                 this.isRequestingFeedback = false;
