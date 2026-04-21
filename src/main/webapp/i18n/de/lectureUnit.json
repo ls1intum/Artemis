@@ -87,6 +87,9 @@
             }
         },
         "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "Diese URL sieht wie eine YouTube-URL aus, konnte aber nicht verarbeitet werden. Unterstützte Formate: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+            },
             "created": "Neuer Datei-/Video-Inhalt erstellt",
             "updated": "Datei-/Video-Inhalt aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
@@ -103,10 +106,16 @@
                 "cancelled": "Verarbeitung wurde abgebrochen",
                 "error": {
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "processingFailed": "Verarbeitung fehlgeschlagen",
                     "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
                     "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
-                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen",
+                    "youtubePrivate": "Das Video ist privat und kann nicht transkribiert werden.",
+                    "youtubeLive": "Das Video ist ein Livestream und kann nicht transkribiert werden.",
+                    "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
+                    "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
+                    "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden."
                 }
             },
             "createAttachmentVideoUnits": {

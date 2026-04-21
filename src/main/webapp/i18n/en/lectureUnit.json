@@ -87,6 +87,9 @@
             }
         },
         "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "This looks like a YouTube URL but couldn't be parsed. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+            },
             "created": "New file/video content created",
             "updated": "File/video content updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
@@ -103,10 +106,16 @@
                 "cancelled": "Processing was cancelled",
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
+                    "processingFailed": "Processing failed",
                     "transcriptionFailed": "Transcription generation failed after multiple attempts",
                     "ingestionFailed": "Content indexing failed after multiple attempts",
                     "noPlaylist": "Video playlist is no longer available",
-                    "timeout": "Processing timed out after multiple attempts"
+                    "timeout": "Processing timed out after multiple attempts",
+                    "youtubePrivate": "The video is private and cannot be transcribed.",
+                    "youtubeLive": "The video is a live stream and cannot be transcribed.",
+                    "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
+                    "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
+                    "youtubeDownloadFailed": "The video could not be downloaded for transcription."
                 }
             },
             "createAttachmentVideoUnits": {

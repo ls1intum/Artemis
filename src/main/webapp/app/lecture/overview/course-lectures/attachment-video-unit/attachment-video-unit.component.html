@@ -58,7 +58,7 @@
         (fullscreenChange)="onFullscreenChange($event)"
     >
         <div content-main class="main-content">
-            @if (!!videoUrl()) {
+            @if (!!rawVideoSource() || !!youtubeVideoId()) {
                 @if (
                     (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
                     !isFullscreen()
@@ -75,17 +75,30 @@
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
                         <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
                     </div>
+                } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+                    <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                        <jhi-youtube-player
+                            [videoId]="youtubeVideoId()!"
+                            [transcriptSegments]="transcriptSegments()"
+                            [initialTimestamp]="targetTimestamp()"
+                            (playerFailed)="onYouTubePlayerFailed()"
+                        />
+                    </div>
                 } @else {
                     <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
                         <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'ratio ratio-16x9'">
-                            <iframe [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                            <iframe
+                                [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'"
+                                [src]="iframeFallbackUrl() | safeResourceUrl"
+                                allow="fullscreen"
+                            ></iframe>
                         </div>
                     </div>
                 }
             }
 
             @if (hasPdf()) {
-                @if ((lectureUnit()?.description || !!videoUrl()) && !isFullscreen()) {
+                @if ((lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) && !isFullscreen()) {
                     <hr />
                 }
                 @if (pdfLoadError()) {
