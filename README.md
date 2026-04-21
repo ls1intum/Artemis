@@ -129,7 +129,7 @@ The following members of the project management team are responsible for specifi
 | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
-| Quiz exercises        | Phoebe Morrien ([@Hialus](https://github.com/Hialus))                                |
+| Quiz exercises        | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | File upload exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
@@ -141,7 +141,6 @@ The following members of the project management team are responsible for specifi
 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Hyperion              | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| Nebula                | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
@@ -200,7 +199,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-9.0.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-9.0.1.war
 ```
 
 ## Architecture
