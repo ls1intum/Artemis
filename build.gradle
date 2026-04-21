@@ -344,17 +344,20 @@ dependencies {
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // Required for Hibernate multi node caching via JCache bridge (hazelcast-hibernate53 is incompatible with Hibernate 7).
-    // Version managed by the Spring Boot BOM.
-    implementation "org.hibernate.orm:hibernate-jcache"
+    // Pinned one minor ahead of the Spring Boot 4.0.5 BOM (7.2.7) to pick up HHH-20209 (race in JavaTypeRegistry
+    // during parallel UNION queries) and HHH-20231 (2L-cached native queries with same SQL but different result
+    // type). Drop this override once Spring Boot's BOM catches up to 7.2.12+.
+    implementation "org.hibernate.orm:hibernate-jcache:7.2.12.Final"
     implementation "javax.cache:cache-api:1.1.1"
     // alternative for Hazelcast
     implementation "org.redisson:redisson:${redisson_version}"
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
 
-    // Hibernate ORM — versions managed by the Spring Boot BOM.
-    implementation "org.hibernate.orm:hibernate-core"
-    implementation "org.hibernate.orm:hibernate-envers"
+    // Hibernate ORM — pinned to 7.2.12.Final (patch bumps over the 7.2.7 shipped by Spring Boot 4.0.5 BOM).
+    // See the note on hibernate-jcache above for the rationale; keep all four artifacts in lockstep.
+    implementation "org.hibernate.orm:hibernate-core:7.2.12.Final"
+    implementation "org.hibernate.orm:hibernate-envers:7.2.12.Final"
 
     // Required for jdbc connection pooling to databases
     implementation "com.zaxxer:HikariCP:7.0.2"
@@ -487,9 +490,9 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    // Hibernate annotation processors — versions managed by the Spring Boot BOM.
-    annotationProcessor "org.hibernate.orm:hibernate-processor"
-    annotationProcessor "org.hibernate.orm:hibernate-core"
+    // Hibernate annotation processors — kept in lockstep with hibernate-core/envers/jcache above.
+    annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.12.Final"
+    annotationProcessor "org.hibernate.orm:hibernate-core:7.2.12.Final"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
