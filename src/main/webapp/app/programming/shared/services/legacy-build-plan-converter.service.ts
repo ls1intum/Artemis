@@ -33,7 +33,7 @@ export class LegacyBuildPlanConverterService {
     }
 
     private isObject(value: unknown): value is Record<string, unknown> {
-        return typeof value === 'object' && value !== null && value !== undefined;
+        return typeof value === 'object' && value !== null;
     }
 
     private parseDockerImage(parsed: Record<string, unknown>): string | undefined {
