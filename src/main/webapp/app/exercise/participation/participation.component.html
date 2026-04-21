@@ -1,10 +1,14 @@
 @if (exercise()) {
     <ng-template titleBarTitle>
         <h5 class="mb-0">
-            @if (exercise()!.exerciseGroup) {
-                <span>{{ exercise()!.exerciseGroup?.exam?.title }} - </span>
-            }
-            <span>{{ exercise()!.title }}</span>
+            <span jhiTranslate="artemisApp.participation.home.title"></span>
+            <span class="text-secondary fw-normal mx-1">·</span>
+            <span class="text-secondary fw-normal">
+                @if (exercise()!.exerciseGroup) {
+                    {{ exercise()!.exerciseGroup?.exam?.title }} -
+                }
+                {{ exercise()!.title }}
+            </span>
         </h5>
     </ng-template>
 

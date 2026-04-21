@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed,
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription, forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -49,6 +49,8 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 /**
  * Filter properties for a result
@@ -112,6 +114,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private readonly participationService = inject(ParticipationService);
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
+    private readonly breakpointObserver = inject(BreakpointObserver);
+
+    // Laptop and smaller: covers screens up to 1920px (covers most 13"–15" laptops)
+    private static readonly LAPTOP_BREAKPOINT = '(max-width: 1920px)';
+    readonly isLaptopOrSmaller = toSignal(this.breakpointObserver.observe(ExerciseScoresComponent.LAPTOP_BREAKPOINT).pipe(map((r) => r.matches)), {
+        initialValue: this.breakpointObserver.isMatched(ExerciseScoresComponent.LAPTOP_BREAKPOINT),
+    });
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -183,6 +192,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
+        const compact = this.isLaptopOrSmaller();
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
             {
@@ -192,13 +202,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 sort: true,
                 templateRef: this.nameCellTemplate(),
             },
-            {
+        ];
+
+        if (!compact) {
+            cols.push({
                 headerKey: ex.teamMode ? 'artemisApp.exercise.teamShortName' : 'artemisApp.exercise.studentId',
                 field: 'participantIdentifier',
                 width: '110px',
                 sort: true,
                 templateRef: this.idCellTemplate(),
-            },
+            });
+        }
+
+        cols.push(
             {
                 headerKey: 'artemisApp.exercise.completionDate',
                 field: 'completionDate',
@@ -213,9 +229,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 sort: true,
                 templateRef: this.lastResultTemplate(),
             },
-        ];
+        );
 
-        if (this.newManualResultAllowed() || ex.allowComplaintsForAutomaticAssessments) {
+        if (!compact && (this.newManualResultAllowed() || ex.allowComplaintsForAutomaticAssessments)) {
             cols.push({
                 headerKey: 'artemisApp.exercise.type',
                 field: 'assessmentType',
@@ -225,7 +241,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (ex.assessmentType === AssessmentType.MANUAL || ex.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+        if (!compact && (ex.assessmentType === AssessmentType.MANUAL || ex.assessmentType === AssessmentType.SEMI_AUTOMATIC)) {
             cols.push({
                 headerKey: 'artemisApp.assessment.assessmentNote',
                 width: '100px',
@@ -233,7 +249,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
+        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate() && !compact) {
             cols.push({
                 headerKey: 'artemisApp.participation.practice',
                 field: 'testRun',
