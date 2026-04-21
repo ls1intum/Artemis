@@ -47,6 +47,8 @@ import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 /**
  * Filter properties for a result
@@ -85,6 +87,8 @@ export enum FilterProp {
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         FilterDropdownComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {

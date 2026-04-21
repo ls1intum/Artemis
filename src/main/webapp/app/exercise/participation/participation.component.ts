@@ -44,6 +44,8 @@ import { ParticipationManagementDTO } from './participation-management-dto.model
 import { ParticipationSearch } from 'app/shared/table/pageable-table';
 import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 export enum FilterProp {
     ALL = 'All',
@@ -71,6 +73,8 @@ export enum FilterProp {
         ArtemisTranslatePipe,
         FilterDropdownComponent,
         TeamStudentsListComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
