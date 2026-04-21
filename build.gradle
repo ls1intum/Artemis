@@ -629,8 +629,8 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests (PostgreSQL default, Docker required): ./gradlew test -x webapp
-// 2a) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
+// 2) Execute tests (PostgreSQL, Docker required):  ./gradlew test -x webapp
+// 2a) Execute tests with coverage report:          ./gradlew test jacocoTestReport -x webapp
 // 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
 // 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
@@ -639,7 +639,7 @@ tasks.named("dependencyUpdates").configure {
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release -x webapp
-// 6a) Find only minor/patch dependency updates:     ./gradlew dependencyUpdates -Drevision=release -DskipMajorUpdates -x webapp
+// 6a) Find only minor/patch dependency updates:    ./gradlew dependencyUpdates -Drevision=release -DskipMajorUpdates -x webapp
 // 7) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
 // 8) Detects uses of legacy code:                  ./gradlew modernizer -x webapp
 // 9) Check for vulnerabilities in dependencies     ./gradlew dependencyCheckAnalyze -x webapp
