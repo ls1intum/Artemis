@@ -81,7 +81,6 @@ describe('parseVideoUrl', () => {
             ['https://vimeo.com/channels/staffpicks/123456789', '123456789'],
             ['https://vimeo.com/groups/someName/videos/123456789', '123456789'],
             ['https://vimeo.com/album/1234/video/123456789', '123456789'],
-            ['https://vimeo.com/event/123456789', '123456789'],
             ['https://player.vimeo.com/video/123456789', '123456789'],
             ['https://player.vimeo.com/video/123456789?autoplay=1', '123456789'],
             ['https://player.vimeo.com/video/123456789/', '123456789'],
@@ -101,6 +100,10 @@ describe('parseVideoUrl', () => {
             'https://vimeo.com/album/12345',
             'https://vimeo.com/ondemand/12345',
             'https://vimeo.com/staffpicks',
+            // Vimeo live events use an event-specific iframe (not `player.vimeo.com/video/<id>`), so
+            // accepting `/event/<id>` and producing the standard player URL would silently yield a
+            // broken embed. Users must paste the event-dashboard iframe URL directly into videoSource.
+            'https://vimeo.com/event/123456789',
         ])('rejects non-video Vimeo URL %s', (url) => {
             expect(parseVideoUrl(url)).toBeUndefined();
         });

@@ -93,7 +93,6 @@ const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com', 'player.vimeo.com']);
  *  - `https://vimeo.com/channels/<name>/<numericId>`
  *  - `https://vimeo.com/groups/<group>/videos/<numericId>`
  *  - `https://vimeo.com/album/<album>/video/<numericId>`
- *  - `https://vimeo.com/event/<numericId>`
  *  - `https://player.vimeo.com/video/<numericId>` (with optional `?h=<hash>` unlisted token)
  *  - `https://vimeo.com/moogaloop.swf?clip_id=<numericId>`
  *
@@ -308,10 +307,10 @@ function parseVimeo(url: URL): { id: string; unlistedHash?: string } | undefined
         return withHash(segments[3], queryHash);
     }
 
-    // /event/<id>
-    if (head === 'event' && segments.length >= 2 && NUMERIC_PATTERN.test(segments[1])) {
-        return withHash(segments[1], queryHash);
-    }
+    // Note: `/event/<id>` is intentionally NOT accepted. Vimeo live events use a separate embedding
+    // mechanism (event-specific iframe from the event dashboard / Live API); `player.vimeo.com/video/<id>`
+    // with an event id fails to embed. Users who need to embed a live event should paste the dashboard-
+    // provided iframe URL directly into `videoSource`.
 
     // Legacy Flash-era URL form: `https://vimeo.com/moogaloop.swf?clip_id=<id>`.
     if (head === 'moogaloop.swf') {
