@@ -32,6 +32,11 @@ import { of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { BehaviorSubject } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
@@ -194,6 +199,7 @@ function sharedSetup(url: string[]) {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: { updateLLMSelectionDecision: jest.fn().mockReturnValue(of(undefined)) } },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
@@ -713,5 +719,202 @@ describe('ExamResultSummaryComponent', () => {
             expect(component.feedbackRequested).toBeFalse();
             expect(component.isRequestingFeedback).toBeFalse();
         }));
+    });
+
+    describe('loadAthenaFeedbackUsage', () => {
+        const athenaUsage = { used: 3, limit: 10 };
+
+        function activateAthena(): void {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        }
+
+        it('should fetch usage and populate used/limit for a submitted test exam', () => {
+            activateAthena();
+            const usageSpy = jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+
+            expect(usageSpy).toHaveBeenCalledOnce();
+            expect(usageSpy).toHaveBeenCalledWith(1, studentExamForTestExam.exam!.id, studentExamForTestExam.id);
+            expect(component.athenaFeedbackUsed).toBe(3);
+            expect(component.athenaFeedbackLimit).toBe(10);
+        });
+
+        it('should skip fetching usage for a real (non-test) exam', () => {
+            activateAthena();
+            const usageSpy = jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+
+            component.studentExam = { ...studentExam, submitted: true };
+            component.ngOnInit();
+
+            expect(usageSpy).not.toHaveBeenCalled();
+        });
+
+        it('should skip fetching usage when Athena is not active', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            const usageSpy = jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+
+            expect(usageSpy).not.toHaveBeenCalled();
+        });
+
+        it('should skip fetching usage for an unsubmitted test exam (still in conduction)', () => {
+            activateAthena();
+            const usageSpy = jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+
+            component.studentExam = { ...studentExamForTestExam, submitted: false };
+            component.ngOnInit();
+
+            expect(usageSpy).not.toHaveBeenCalled();
+        });
+
+        it('should mark the current attempt as counted when it already has an Athena result', () => {
+            activateAthena();
+            jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
+
+            const athenaTextSubmission = {
+                id: 1,
+                submitted: true,
+                submissionDate: dayjs(),
+                results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result],
+            } as TextSubmission;
+            const athenaTextParticipation = { id: 1, student: user, submissions: [athenaTextSubmission] } as StudentParticipation;
+            const athenaTextExercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [athenaTextParticipation], exerciseGroup } as TextExercise;
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true, exercises: [athenaTextExercise] };
+            component.ngOnInit();
+
+            // handleAthenaResult should now be a no-op for this attempt.
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            expect(component.athenaFeedbackUsed).toBe(3);
+        });
+    });
+
+    describe('handleAthenaResult', () => {
+        function primeCounter(initial: number): void {
+            component.athenaFeedbackUsed = initial;
+            (component as any).currentAttemptCounted = false;
+        }
+
+        it('should increment used and mark attempt as counted for a successful Athena result', () => {
+            primeCounter(1);
+
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.athenaFeedbackUsed).toBe(2);
+            expect((component as any).currentAttemptCounted).toBeTrue();
+        });
+
+        it('should not increment when the same attempt has already been counted', () => {
+            component.athenaFeedbackUsed = 1;
+            (component as any).currentAttemptCounted = true;
+
+            (component as any).handleAthenaResult({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.athenaFeedbackUsed).toBe(1);
+        });
+
+        it('should not increment for an unsuccessful result', () => {
+            primeCounter(1);
+
+            (component as any).handleAthenaResult({ successful: false, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.athenaFeedbackUsed).toBe(1);
+            expect((component as any).currentAttemptCounted).toBeFalse();
+        });
+
+        it('should not increment when completionDate is missing', () => {
+            primeCounter(1);
+
+            (component as any).handleAthenaResult({ successful: true, completionDate: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.athenaFeedbackUsed).toBe(1);
+        });
+    });
+
+    describe('hasAnyAthenaResultForCurrentAttempt', () => {
+        it('should return false when no participations have Athena results', () => {
+            component.studentExam = studentExamForTestExam;
+            expect(component.hasAnyAthenaResultForCurrentAttempt).toBeFalse();
+        });
+
+        it('should return true when a text participation has an Athena result on its latest submission', () => {
+            const submissionWithAthena = {
+                id: 10,
+                submitted: true,
+                submissionDate: dayjs(),
+                results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result],
+            } as TextSubmission;
+            const participation = { id: 42, student: user, submissions: [submissionWithAthena] } as StudentParticipation;
+            const exercise = { id: 99, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
+
+            component.studentExam = { ...studentExamForTestExam, exercises: [exercise] };
+            expect(component.hasAnyAthenaResultForCurrentAttempt).toBeTrue();
+        });
+
+        it('should ignore Athena results on quiz or programming exercises', () => {
+            const quizSubmissionWithAthena = { id: 11, results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, rated: true } as Result] } as QuizSubmission;
+            const quizParticipationWithAthena = { id: 42, student: user, submissions: [quizSubmissionWithAthena] } as StudentParticipation;
+            const quizExerciseWithAthena = {
+                id: 99,
+                type: ExerciseType.QUIZ,
+                studentParticipations: [quizParticipationWithAthena],
+                exerciseGroup,
+            } as QuizExercise;
+
+            component.studentExam = { ...studentExamForTestExam, exercises: [quizExerciseWithAthena] };
+            expect(component.hasAnyAthenaResultForCurrentAttempt).toBeFalse();
+        });
+    });
+
+    describe('subscribeToAthenaResultsForCurrentAttempt via websocket', () => {
+        it('should forward Athena websocket results to handleAthenaResult and increment usage once', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+            jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+
+            const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+            const websocketService = TestBed.inject(ParticipationWebsocketService);
+            const subscribeSpy = jest.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+
+            expect(subscribeSpy).toHaveBeenCalled();
+
+            // The stream skips its initial value (per component's `skip(1)`), so only the push below should count.
+            resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+
+            expect(component.athenaFeedbackUsed).toBe(1);
+
+            // A second Athena result for the same attempt must not double-count.
+            resultSubject.next({ successful: true, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+            expect(component.athenaFeedbackUsed).toBe(1);
+        });
+
+        it('should unsubscribe websocket subscriptions on destroy', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+            jest.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+
+            const websocketService = TestBed.inject(ParticipationWebsocketService);
+            jest.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(new BehaviorSubject<Result | undefined>(undefined));
+
+            component.studentExam = { ...studentExamForTestExam, submitted: true };
+            component.ngOnInit();
+
+            const subscriptions: { unsubscribe: jest.Mock }[] = (component as any).athenaResultSubscriptions;
+            expect(subscriptions.length).toBeGreaterThan(0);
+            const unsubscribeSpies = subscriptions.map((sub) => jest.spyOn(sub, 'unsubscribe'));
+
+            component.ngOnDestroy();
+
+            unsubscribeSpies.forEach((spy) => expect(spy).toHaveBeenCalled());
+        });
     });
 });

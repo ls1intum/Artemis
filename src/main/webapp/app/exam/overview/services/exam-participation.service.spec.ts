@@ -323,4 +323,49 @@ describe('ExamParticipationService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush('Hand-in failed', errorResponse);
     });
+
+    describe('Athena feedback for test exams', () => {
+        it('should POST to the request-feedback endpoint with an empty body', () => {
+            let nextCalled = false;
+            service
+                .requestAthenaFeedback(7, 8, 9)
+                .pipe(take(1))
+                .subscribe(() => (nextCalled = true));
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
+            expect(req.request.body).toBeNull();
+            req.flush(null);
+
+            expect(nextCalled).toBeTrue();
+        });
+
+        it('should GET the Athena feedback usage and return used/limit', () => {
+            const usage = { used: 3, limit: 10 };
+            let received: { used: number; limit: number } | undefined;
+            service
+                .getAthenaFeedbackUsage(7, 8, 9)
+                .pipe(take(1))
+                .subscribe((resp) => (received = resp));
+
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
+            req.flush(usage);
+
+            expect(received).toEqual(usage);
+        });
+
+        it('should propagate errors from the request-feedback endpoint', () => {
+            let errorStatus: number | undefined;
+            service
+                .requestAthenaFeedback(1, 2, 3)
+                .pipe(take(1))
+                .subscribe({
+                    error: (err: HttpErrorResponse) => (errorStatus = err.status),
+                });
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
+            req.flush('rate limit reached', new HttpErrorResponse({ status: 400 }));
+
+            expect(errorStatus).toBe(400);
+        });
+    });
 });

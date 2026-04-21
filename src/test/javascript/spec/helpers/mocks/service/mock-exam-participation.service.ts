@@ -49,4 +49,8 @@ export class MockExamParticipationService {
     requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
         return of(undefined);
     }
+
+    getAthenaFeedbackUsage(courseId: number, examId: number, studentExamId: number): Observable<{ used: number; limit: number }> {
+        return of({ used: 0, limit: 10 });
+    }
 }
