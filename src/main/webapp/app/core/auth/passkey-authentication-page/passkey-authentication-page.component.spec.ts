@@ -189,7 +189,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             await component.signInWithPasskey();
 
-            expect(identitySpy).not.toHaveBeenCalledWith(true);
+            expect(identitySpy).not.toHaveBeenCalled();
             expect(redirectSpy).not.toHaveBeenCalled();
         });
 
