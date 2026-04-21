@@ -33,12 +33,12 @@ public class LocalCIBuildConfigurationService {
      * @return the build script
      */
     public String createBuildScriptFromActivePhases(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
-        String buildScript = computeAeolusStyleScript(activePhases);
+        String buildScript = computeBuildScript(activePhases);
         return buildScriptProviderService.replacePlaceholders(buildScript, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());
     }
 
-    private static String computeAeolusStyleScript(List<BuildPhaseDTO> activePhases) {
+    private static String computeBuildScript(List<BuildPhaseDTO> activePhases) {
         List<BuildPhaseDTO> nonForceRunPhases = new ArrayList<>();
         List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
 
@@ -100,7 +100,7 @@ public class LocalCIBuildConfigurationService {
 
     private static void appendMainFunction(StringBuilder scriptBuilder, List<BuildPhaseDTO> nonForceRunPhase, boolean hasRunAlwaysPhases) {
         scriptBuilder.append("main () {\n");
-        scriptBuilder.append("  if [[ \"${1}\" == \"aeolus_sourcing\" ]]; then\n");
+        scriptBuilder.append("  if [[ \"${1}\" == \"script_sourcing\" ]]; then\n");
         scriptBuilder.append("    return 0 # just source to use the methods in the subshell, no execution\n");
         scriptBuilder.append("  fi\n");
         scriptBuilder.append("  local _script_name\n");
@@ -111,7 +111,7 @@ public class LocalCIBuildConfigurationService {
 
         for (BuildPhaseDTO phase : nonForceRunPhase) {
             scriptBuilder.append("  cd \"${INITIAL_WORKING_DIRECTORY}\"\n");
-            scriptBuilder.append("  bash -c \"source ${_script_name} aeolus_sourcing; ").append(phase.name()).append("\"\n");
+            scriptBuilder.append("  bash -c \"source ${_script_name} script_sourcing; ").append(phase.name()).append("\"\n");
         }
 
         scriptBuilder.append("}\n\n");

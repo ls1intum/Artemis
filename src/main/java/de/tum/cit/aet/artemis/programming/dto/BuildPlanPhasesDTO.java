@@ -34,6 +34,9 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
      * @return true if valid else false
      */
     public static boolean isInPhasesFormat(String buildPlanConfiguration) {
+        if (buildPlanConfiguration == null) {
+            return true;
+        }
         try {
             fromBuildPlanConfiguration(buildPlanConfiguration);
         }
