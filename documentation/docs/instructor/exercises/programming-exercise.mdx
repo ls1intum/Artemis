@@ -75,6 +75,15 @@ import collaborativeCodeEditor from './assets/programming/collaborative-editing-
 import collaborativeMetadataModal from './assets/programming/collaborative-editing-metadata-modal.png';
 import collaborativeProblemStatement from './assets/programming/collaborative-editing-problem-statement.gif';
 import collaborativeNewCommitAlert from './assets/programming/collaborative-editing-new-commit-alert.png';
+import hyperionGenerate from './assets/programming/hyperion-generate.png';
+import hyperionRefinement from './assets/programming/hyperion-refinement.png';
+import hyperionTargetedRefinementButton from './assets/programming/hyperion-targeted-refinement-button.png';
+import hyperionTargetedRefinementPrompt from './assets/programming/hyperion-targeted-refinement-prompt.png';
+import hyperionDiffView from './assets/programming/hyperion-diff-view.png';
+import hyperionChecklistQuality from './assets/programming/hyperion-checklist-quality.png';
+import hyperionDifficultyAssessment from './assets/programming/hyperion-difficulty-assessment.png';
+import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
+import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
 import reviewAddButton from './assets/programming/review-add-button.png';
 import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
 import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
@@ -585,6 +594,68 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
     </ul>
 </Callout>
 
+### AI-Assisted Problem Statement Authoring
+
+<Callout variant={CalloutVariant.info}>
+    <p>This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). All AI-assisted features require at least the <strong>Editor</strong> role within the course.</p>
+</Callout>
+
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. The AI assists the process while the instructor retains full control — every AI-generated modification must be reviewed and accepted through a diff view before it is applied.
+
+The AI-assisted authoring features are organized into two areas:
+
+1. **Problem Statement Generation and Refinement** — create and iteratively improve problem statements
+2. **Instructor Checklist** — analyze quality, infer learning goals, and assess difficulty
+
+#### Generate Problem Statement
+
+When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system generates a Markdown draft that includes task annotations for linking tasks to test cases and inserts it directly into the editor.
+
+<Image src={hyperionGenerate} alt="Problem statement generation interface" size={ImageSize.large} caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor" />
+
+#### Refine Problem Statement
+
+Once a problem statement exists in the editor, the same input field accepts a refinement instruction. Click **Refine Problem Statement** to revise the entire document based on the instruction. The system produces a revised version and presents the changes in a diff view.
+
+<Image src={hyperionRefinement} alt="Problem statement refinement interface" size={ImageSize.large} caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content" />
+
+#### Targeted Refinement
+
+To modify a specific portion of the problem statement, select a text region in the Markdown editor. A **Refine Selection** button appears next to the selection. Click it to open an inline instruction field (up to 500 characters), then enter a description of the desired change. The system produces a localized revision affecting only the selected region.
+
+<Image src={hyperionTargetedRefinementButton} alt="Refine Selection button next to selected text" size={ImageSize.large} caption="Targeted refinement entry point — the button appears when text is selected in the editor" />
+
+<Image src={hyperionTargetedRefinementPrompt} alt="Inline instruction field for targeted refinement" size={ImageSize.large} caption="Inline instruction field for describing the desired change to the selected region" />
+
+#### Diff View
+
+All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+
+<Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
+
+#### Instructor Checklist
+
+The instructor checklist analyzes the problem statement across three dimensions concurrently:
+
+- **Quality Assessment** — detects issues in clarity, coherence, and completeness
+- **Learning Goal Estimation** — infers learning goals from the problem statement
+- **Difficulty Assessment** — evaluates exercise complexity relative to the declared level
+
+Click **Analyze Problem Statement** in the checklist panel to run all three analyses. Results appear in collapsible sections. After modifying the problem statement, sections are marked as stale and can be re-analyzed individually.
+
+**Quality Assessment:** Displays a radar chart with percentage scores for clarity, coherence, and completeness. Detected issues appear with category badges, severity levels, descriptions, suggested fixes, and impact assessments. Use **Fix** to apply an AI-generated correction for a single issue, or **Fix All Issues** for batch correction. Both actions present proposed changes in the diff view.
+
+<Image src={hyperionChecklistQuality} alt="Quality assessment panel with radar chart and detected issues" size={ImageSize.large} caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction" />
+
+**Difficulty Assessment:** Shows the suggested difficulty level alongside the declared level. When a mismatch exists, an arrow indicator and descriptive text alert you. Task and test counts summarize the exercise structure, and a detailed explanation describes the reasoning. Click an **Adapt to** button (Easy, Medium, or Hard) to generate a revised problem statement adjusted to the target difficulty, presented in the diff view.
+
+<Image src={hyperionDifficultyAssessment} alt="Difficulty assessment panel showing mismatch indicator" size={ImageSize.large} caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls" />
+
+**Learning Goal Estimation:** Presents estimated learning goals, each tagged with a knowledge area badge (e.g., AL for Algorithms, SE for Software Engineering), a taxonomy level (e.g., APPLY, ANALYZE), and a "Linked" indicator when the goal matches an existing course competency. Each entry includes textual evidence from the problem statement. Select individual goals or use **Select All**, then click **Apply All** to link them to the course's competencies. The system checks whether suitable competencies already exist, links matching ones directly, and creates new competencies only where no match is found.
+
+<Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
+
+<Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
 ### Review Comments
 
 During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.
