@@ -20,6 +20,14 @@ export default defineConfig({
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                loadPaths: [path.resolve(__dirname)],
+                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
+            },
+        },
+    },
     // JIT mode required for ng-mocks compatibility
     plugins: [angular({ jit: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
