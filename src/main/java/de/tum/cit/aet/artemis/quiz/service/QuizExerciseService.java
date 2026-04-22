@@ -104,7 +104,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -120,8 +119,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final ResultRepository resultRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
-
-    private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -150,8 +147,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            SubmittedAnswerRepository submittedAnswerRepository, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
-            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
+            InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
+            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
@@ -159,7 +156,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
@@ -560,7 +556,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
-            submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(quizSubmission));
             result.setSubmission(quizSubmission);
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {

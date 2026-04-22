@@ -64,30 +64,44 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, 1);
             await quizExerciseMultipleChoice.submit();
 
-            // Wait for the quiz to end and the scheduled evaluation job to create a rated result; a small buffer covers scheduler latency.
-            await page.waitForTimeout((quizDurationSeconds + 10) * 1000);
-
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
             const expectedCorrectOptionIds = shortQuiz.quizQuestions![0].answerOptions!.filter((option: any) => option.isCorrect).map((option: any) => option.id);
             expect(expectedCorrectOptionIds.length).toBe(2);
 
-            // Repeatedly reload as the student; on every reload the /start-participation response must return both selected options
-            // for the MC question. The loop amplifies the flakiness of the original bug, which manifested non-deterministically.
-            for (let iteration = 0; iteration < 5; iteration++) {
+            /**
+             * Reload the participation page and read the server's response to `/start-participation`. Returns the set of selected option ids for
+             * the MC question on this response, or null when evaluation has not yet populated a rated result (e.g. the `results` array is still empty).
+             */
+            async function reloadAndReadSelectedOptionIds(): Promise<number[] | null> {
                 const responsePromise = page.waitForResponse(
                     (response) =>
                         response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
                 );
                 await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
                 const body = await (await responsePromise).json();
-                const submissions = body.submissions ?? [];
-                expect(submissions.length, `iteration ${iteration}: expected exactly one submission`).toBe(1);
-                const mcAnswer = (submissions[0].submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
-                expect(mcAnswer, `iteration ${iteration}: expected an MC submitted answer for question ${mcQuestionId}`).toBeDefined();
-                const selectedOptionIds = (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b);
-                expect(selectedOptionIds, `iteration ${iteration}: selected options must include both chosen correct options`).toEqual(
-                    [...expectedCorrectOptionIds].sort((a, b) => a - b),
-                );
+                const submission = (body.submissions ?? [])[0];
+                if (!submission || !(submission.results ?? []).length) {
+                    return null;
+                }
+                const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
+                return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
+            }
+
+            // Poll the refresh endpoint until the scheduled evaluation job has created a rated result — more robust than a fixed sleep on loaded CI workers.
+            const evaluationTimeoutMs = (quizDurationSeconds + 30) * 1000;
+            await expect
+                .poll(() => reloadAndReadSelectedOptionIds().then((ids) => ids !== null), {
+                    message: 'evaluation did not produce a rated result within the expected window',
+                    timeout: evaluationTimeoutMs,
+                    intervals: [1000, 2000, 3000],
+                })
+                .toBe(true);
+
+            const expectedSortedOptionIds = [...expectedCorrectOptionIds].sort((a, b) => a - b);
+            // Reload several times after evaluation completes; the bug manifested non-deterministically, so the loop amplifies any remaining flakiness.
+            for (let iteration = 0; iteration < 5; iteration++) {
+                const selectedOptionIds = await reloadAndReadSelectedOptionIds();
+                expect(selectedOptionIds, `iteration ${iteration}: selected options must include both chosen correct options`).toEqual(expectedSortedOptionIds);
             }
         });
     });

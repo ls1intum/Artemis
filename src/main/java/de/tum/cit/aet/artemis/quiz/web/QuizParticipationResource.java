@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWit
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 
 /**
@@ -65,8 +64,6 @@ public class QuizParticipationResource {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final SubmittedAnswerRepository submittedAnswerRepository;
-
     private final QuizBatchService quizBatchService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -74,15 +71,13 @@ public class QuizParticipationResource {
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository,
-            QuizBatchService quizBatchService, StudentParticipationRepository studentParticipationRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, QuizBatchService quizBatchService,
+            StudentParticipationRepository studentParticipationRepository, ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizBatchService = quizBatchService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationAuthCheckService = participationAuthCheckService;
@@ -124,7 +119,6 @@ public class QuizParticipationResource {
             // Load the actual submission of the result
             submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         }
-        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(submission));
         submission.setResults(List.of(result));
         participation.setSubmissions(Set.of(submission));
 
@@ -193,7 +187,6 @@ public class QuizParticipationResource {
                 submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
             }
         }
-        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(submission));
 
         submission.setResults(List.of(result));
         participation.setSubmissions(Set.of(submission));

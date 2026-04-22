@@ -69,8 +69,6 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
@@ -119,12 +117,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private QuizSubmissionRepository quizSubmissionRepository;
-
-    @Autowired
-    private SubmittedAnswerRepository submittedAnswerRepository;
 
     @BeforeEach
     void init() {
@@ -858,13 +850,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 quizExercise.getScoreForSubmission(quizSubmission), true);
         Result result = submissionWithResult.getResults().getFirst();
 
-        QuizSubmission loadedByResult = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
-        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(loadedByResult));
+        QuizSubmission loadedByResult = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         assertLoadedSubmissionHasAllSelectedOptions(loadedByResult, mcQuestion.getId(), expectedSelectedOptionIds);
 
         // simulate a second refresh hitting the other repository path used when a specific submissionId is provided
-        QuizSubmission loadedById = quizSubmissionRepository.findWithEagerResultAndFeedbackById(quizSubmission.getId()).orElseThrow();
-        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(loadedById));
+        QuizSubmission loadedById = quizSubmissionTestRepository.findWithEagerResultAndFeedbackById(quizSubmission.getId()).orElseThrow();
         assertLoadedSubmissionHasAllSelectedOptions(loadedById, mcQuestion.getId(), expectedSelectedOptionIds);
 
         // re-evaluation recomputes scoreInPoints from selectedOptions via ScoringStrategyMultipleChoiceAllOrNothing.
