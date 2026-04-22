@@ -58,15 +58,17 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await exerciseAPIRequests.setQuizVisible(shortQuiz.id!);
             await exerciseAPIRequests.startQuizNow(shortQuiz.id!);
 
-            // Student selects both correct options from the template (indexes 0 and 1) and submits.
+            // Pick answer-option indices to tick explicitly — the assertion below must compare against what the student ticked, not against the (unrelated) `isCorrect` property.
+            const tickedOptionIndices = [0, 1];
             await login(studentOne, `/courses/${course.id}/exercises/${shortQuiz.id!}`);
-            await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, 0);
-            await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, 1);
+            for (const index of tickedOptionIndices) {
+                await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, index);
+            }
             await quizExerciseMultipleChoice.submit();
 
             const mcQuestionId = shortQuiz.quizQuestions![0].id!;
-            const expectedCorrectOptionIds = shortQuiz.quizQuestions![0].answerOptions!.filter((option: any) => option.isCorrect).map((option: any) => option.id);
-            expect(expectedCorrectOptionIds.length).toBe(2);
+            const expectedTickedOptionIds = tickedOptionIndices.map((index) => shortQuiz.quizQuestions![0].answerOptions![index].id);
+            expect(expectedTickedOptionIds).toHaveLength(tickedOptionIndices.length);
 
             /**
              * Reload the participation page and read the server's response to `/start-participation`. Returns the set of selected option ids for
@@ -97,11 +99,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 })
                 .toBe(true);
 
-            const expectedSortedOptionIds = [...expectedCorrectOptionIds].sort((a, b) => a - b);
+            const expectedSortedOptionIds = [...expectedTickedOptionIds].sort((a, b) => a - b);
             // Reload several times after evaluation completes; the bug manifested non-deterministically, so the loop amplifies any remaining flakiness.
             for (let iteration = 0; iteration < 5; iteration++) {
                 const selectedOptionIds = await reloadAndReadSelectedOptionIds();
-                expect(selectedOptionIds, `iteration ${iteration}: selected options must include both chosen correct options`).toEqual(expectedSortedOptionIds);
+                expect(selectedOptionIds, `iteration ${iteration}: server must return exactly the answer options the student ticked`).toEqual(expectedSortedOptionIds);
             }
         });
     });
