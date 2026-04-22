@@ -44,10 +44,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
-import urlParser from 'js-video-url-parser';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -83,14 +83,14 @@ describe('AttachmentVideoUnitComponent', () => {
     let mockLectureTranscriptionService: any;
 
     function expectPlaylistRequest(url: string, response: string | null) {
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === url);
+        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === url);
         expect(req.request.method).toBe('GET');
         req.flush(response);
     }
 
     beforeEach(async () => {
         mockLectureTranscriptionService = {
-            getTranscription: vi.fn(),
+            getTranscription: vi.fn(() => of(undefined)),
             getTranscriptionStatus: vi.fn(() => of(undefined)),
         };
 
@@ -107,6 +107,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 AttachmentVideoUnitService,
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
 
@@ -205,38 +206,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('videoUrl: handles allow-listed TUM Live URLs', () => {
-        const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-        expect(component.videoUrl()).toBe(src);
-    });
-
-    it('videoUrl: returns source when parser recognizes non-allowlisted URL', () => {
-        const src = 'https://example.com/some-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue({} as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        expect(component.videoUrl()).toBe(src);
-        parseSpy.mockRestore();
-    });
-
-    it('videoUrl: returns undefined when parser returns undefined and URL is not in allow list', () => {
-        const src = 'https://example.com/not-a-video';
-        // @ts-ignore - default export object has parse()
-        const parseSpy = vi.spyOn(urlParser, 'parse').mockReturnValue(undefined as any);
-
-        component.lectureUnit().videoSource = src;
-        fixture.detectChanges();
-
-        // The URL is not in allow list and parser doesn't recognize it, so it should return undefined
-        expect(component.videoUrl()).toBeUndefined();
-        parseSpy.mockRestore();
-    });
-
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript', async () => {
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
         const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
@@ -279,7 +248,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.toggleCollapse(false);
         expect(component.isLoading()).toBe(true);
 
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist');
         req.flush('Not found', { status: 404, statusText: 'Not Found' });
         await fixture.whenStable();
 
@@ -341,7 +310,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request (even .m3u8 URLs go through the API)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === m3u8Url);
+        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === m3u8Url);
         expect(req.request.method).toBe('GET');
         req.flush(m3u8Url);
 
@@ -369,7 +338,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
+        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === nonTumLiveUrl);
         req.flush(null);
 
         await fixture.whenStable();
@@ -408,6 +377,129 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.hasAttachment()).toBe(false);
         expect(component.getFileName()).toBe('');
+    });
+
+    describe('YouTube player branching (server metadata)', () => {
+        it('renders YouTube player when DTO declares videoSourceType YOUTUBE and youtubeVideoId is present', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeTruthy();
+        });
+
+        it('falls back to iframe with embed URL when playerFailed fires', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+            // iframeFallbackUrl should use privacy-enhanced embed URL, not the raw watch URL
+            expect(component.iframeFallbackUrl()).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+        });
+
+        it('resets youtubePlayerFailed when unit is collapsed and reopened', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 1,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'dQw4w9WgXcQ',
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            expect(component.youtubePlayerFailed()).toBe(true);
+
+            // Collapse the unit
+            component.toggleCollapse(true);
+            fixture.detectChanges();
+            expect(component.youtubePlayerFailed()).toBe(false);
+        });
+
+        it('uses raw video source URL for non-YouTube iframe fallback', () => {
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 5,
+                videoSource: 'https://vimeo.com/123456',
+            } as any);
+            fixture.detectChanges();
+            expect(component.iframeFallbackUrl()).toBe('https://vimeo.com/123456');
+        });
+
+        it('renders TUM Live player when playlistUrl present (regression guard)', async () => {
+            const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
+            const mockTranscriptDTO: LectureTranscriptionDTO = {
+                lectureUnitId: 2,
+                language: 'en',
+                segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 1 }],
+            };
+            vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
+
+            // Set lectureUnit first, then expand (initiallyExpanded triggers toggleCollapse)
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 2,
+                videoSourceType: 'TUM_LIVE',
+                videoSource: src,
+            } as any);
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.detectChanges();
+
+            // Flush the HTTP request triggered by initiallyExpanded → toggleCollapse(false)
+            expectPlaylistRequest(src, playlist);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-video-player')).toBeTruthy();
+        });
+
+        it('renders iframe fallback for non-YouTube, non-TUM-Live source', async () => {
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 3,
+                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
+            } as any);
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.detectChanges();
+
+            // initiallyExpanded triggers toggleCollapse → playlist request
+            expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
+        });
+
+        it('youtubePlayerFailed resets when the lecture unit changes', () => {
+            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 10,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'aaa',
+                videoSource: 'https://youtu.be/aaa',
+            } as any);
+            fixture.detectChanges();
+            component.onYouTubePlayerFailed();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
+            fixture.componentRef.setInput('lectureUnit', {
+                id: 11,
+                videoSourceType: 'YOUTUBE',
+                youtubeVideoId: 'bbb',
+                videoSource: 'https://youtu.be/bbb',
+            } as any);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeTruthy();
+        });
     });
 
     describe('PDF functionality', () => {
@@ -555,7 +647,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component.toggleCollapse(false);
 
             // Mock video playlist request
-            const videoReq = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+            const videoReq = httpMock.expectOne((request) => request.url === '/api/videosource/playlist');
             videoReq.flush(playlist);
 
             await fixture.whenStable();
