@@ -1,4 +1,91 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { vi } from 'vitest';
+
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    /**
+     * Ensures the model has v4-format nodes/edges arrays.
+     * If only v3-format elements/relationships exist, converts them.
+     */
+    function ensureV4Format(m: any): any {
+        if (!m) {
+            return m;
+        }
+        if (!m.nodes) {
+            // Convert v3 elements to v4 nodes
+            m.nodes = m.elements ? Object.entries(m.elements).map(([id, el]: [string, any]) => ({ ...el, id, data: el.data || {} })) : [];
+        }
+        if (!m.edges) {
+            // Convert v3 relationships to v4 edges
+            m.edges = m.relationships ? Object.entries(m.relationships).map(([id, rel]: [string, any]) => ({ ...rel, id, data: rel.data || {} })) : [];
+        }
+        if (!m.assessments) {
+            m.assessments = {};
+        }
+        return m;
+    }
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptions = new Map<number, (model: any) => void>();
+        _assessmentSubscriptions = new Map<number, (selections: string[]) => void>();
+        _subscriptionCounter = 0;
+        _destroyed = false;
+
+        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._subscriptions.set(id, callback);
+            return id;
+        });
+
+        subscribeToAssessmentSelection = vi.fn((callback: (selections: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._assessmentSubscriptions.set(id, callback);
+            return id;
+        });
+
+        unsubscribe = vi.fn((id: number) => {
+            this._subscriptions.delete(id);
+            this._assessmentSubscriptions.delete(id);
+        });
+
+        addOrUpdateAssessment = vi.fn();
+
+        destroy = vi.fn(() => {
+            this._destroyed = true;
+            this._subscriptions.clear();
+            this._assessmentSubscriptions.clear();
+        });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._model = ensureV4Format(options?.model ? deepClone(options.model) : {});
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = ensureV4Format(value);
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: MockApollonEditor,
+    };
+});
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -137,6 +224,11 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        // Properly clean up the Apollon editor before test environment teardown.
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
     });
 

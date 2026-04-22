@@ -191,7 +191,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             assertThat(hasNewCpcPlagiarismCaseNotification).isTrue();
 
-            Optional<CourseNotification> newCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 13).findFirst();
+            Optional<CourseNotification> newCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .filter(notification -> notification.getType() == 13).findFirst();
 
             assertThat(newCpcPlagiarismCaseNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newCpcPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
@@ -215,7 +216,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(hasNewPlagiarismCaseNotification).isTrue();
 
             // Verify the notification was sent only to the correct user
-            Optional<CourseNotification> newPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 14).findFirst();
+            Optional<CourseNotification> newPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .filter(notification -> notification.getType() == 14).findFirst();
 
             assertThat(newPlagiarismCaseNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
@@ -239,7 +241,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             assertThat(hasNewPlagiarismVerdictNotification).isTrue();
 
-            var newPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getType() == 17).findFirst();
+            var newPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .filter(notification -> notification.getType() == 17).findFirst();
 
             assertThat(newPlagiarismVerdictNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismVerdictNotification.get().getId(), user.getId())).isTrue();
