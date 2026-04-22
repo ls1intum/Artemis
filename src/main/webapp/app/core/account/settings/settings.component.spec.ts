@@ -330,6 +330,29 @@ describe('SettingsComponent', () => {
             expect(compSaml2.isSaml2Active).toBe(true);
         });
 
+        it('should disable firstName, lastName and email form controls after loading user', async () => {
+            const user: User = {
+                internal: true,
+                name: 'Jane Smith',
+                firstName: 'Jane',
+                lastName: 'Smith',
+                activated: true,
+                email: 'jane.smith@idp.example.com',
+                langKey: 'en',
+                login: 'jsmith',
+                authorities: [],
+                imageUrl: '',
+            };
+            vi.spyOn(accountServiceSaml2, 'identity').mockReturnValue(Promise.resolve(user));
+
+            compSaml2.ngOnInit();
+            await vi.waitFor(() => expect(compSaml2.currentUser()).toBeDefined());
+
+            expect(compSaml2.settingsForm.controls.firstName.disabled).toBe(true);
+            expect(compSaml2.settingsForm.controls.lastName.disabled).toBe(true);
+            expect(compSaml2.settingsForm.controls.email.disabled).toBe(true);
+        });
+
         it('should not update firstName, lastName, or email when saving with SAML2 active', async () => {
             const user: User = {
                 internal: true,

@@ -97,8 +97,22 @@ export class SettingsComponent implements OnInit {
                 });
                 this.currentUser.set(user);
                 this.isInternalUser.set(user.internal || false);
+                this.updateNameAndEmailControlState(user.internal || false);
             }
         });
+    }
+
+    /**
+     * Enables or disables the firstName, lastName, and email form controls based on
+     * whether the user is internal and whether SAML2 is active.
+     * Disabled controls are excluded from validation, preventing spurious errors.
+     */
+    private updateNameAndEmailControlState(isInternal: boolean): void {
+        const shouldDisable = !isInternal || this.isSaml2Active;
+        const action = shouldDisable ? 'disable' : 'enable';
+        this.settingsForm.controls.firstName[action]();
+        this.settingsForm.controls.lastName[action]();
+        this.settingsForm.controls.email[action]();
     }
 
     /**
