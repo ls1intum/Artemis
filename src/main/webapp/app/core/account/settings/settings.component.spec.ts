@@ -333,13 +333,13 @@ describe('SettingsComponent', () => {
         it('should not update firstName, lastName, or email when saving with SAML2 active', async () => {
             const user: User = {
                 internal: true,
-                name: 'External User',
-                firstName: 'External',
-                lastName: 'User',
+                name: 'Jane Smith',
+                firstName: 'Jane',
+                lastName: 'Smith',
                 activated: true,
-                email: 'external@idp.example.com',
+                email: 'jane.smith@idp.example.com',
                 langKey: 'en',
-                login: 'extuser',
+                login: 'jsmith',
                 authorities: [],
                 imageUrl: '',
             };
@@ -356,9 +356,9 @@ describe('SettingsComponent', () => {
 
             const savedUser = compSaml2.currentUser();
             // Name and email should remain unchanged
-            expect(savedUser?.firstName).toBe('External');
-            expect(savedUser?.lastName).toBe('User');
-            expect(savedUser?.email).toBe('external@idp.example.com');
+            expect(savedUser?.firstName).toBe('Jane');
+            expect(savedUser?.lastName).toBe('Smith');
+            expect(savedUser?.email).toBe('jane.smith@idp.example.com');
             // Only langKey should be updated
             expect(savedUser?.langKey).toBe('de');
         });
