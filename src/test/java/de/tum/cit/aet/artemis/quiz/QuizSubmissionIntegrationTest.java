@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -67,6 +69,8 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
@@ -115,6 +119,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
+    private SubmittedAnswerRepository submittedAnswerRepository;
 
     @BeforeEach
     void init() {
@@ -801,6 +811,57 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             case PROPORTIONAL_WITHOUT_PENALTY -> 41.7;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
+    }
+
+    /**
+     * Regression test for <a href="https://github.com/ls1intum/Artemis/issues/12574">#12574</a>: after submitting an MC quiz and
+     * retrieving the submission through the endpoints used on page refresh, every selected answer option must be returned for every
+     * question. Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
+     * which was not reliably initialized when the polymorphic {@code submittedAnswers} collection was loaded alongside a join-table
+     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMultipleChoiceSelectedOptionsFullyLoadedAfterSubmission() {
+        Course course = courseUtilService.createCourse();
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.duration(60);
+        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+
+        MultipleChoiceQuestion mcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
+                .findFirst().orElseThrow();
+        // select every answer option so we can assert the full selection survives the load round-trip
+        Set<Long> expectedSelectedOptionIds = mcQuestion.getAnswerOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
+
+        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+        mcSubmittedAnswer.setQuizQuestion(mcQuestion);
+        mcQuestion.getAnswerOptions().forEach(mcSubmittedAnswer::addSelectedOptions);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(mcSubmittedAnswer);
+        quizSubmission.submitted(true);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        Submission submissionWithResult = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null,
+                quizExercise.getScoreForSubmission(quizSubmission), true);
+        Result result = submissionWithResult.getResults().getFirst();
+
+        QuizSubmission loadedByResult = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(loadedByResult));
+        assertLoadedSubmissionHasAllSelectedOptions(loadedByResult, mcQuestion.getId(), expectedSelectedOptionIds);
+
+        // simulate a second refresh hitting the other repository path used when a specific submissionId is provided
+        QuizSubmission loadedById = quizSubmissionRepository.findWithEagerResultAndFeedbackById(quizSubmission.getId()).orElseThrow();
+        submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(loadedById));
+        assertLoadedSubmissionHasAllSelectedOptions(loadedById, mcQuestion.getId(), expectedSelectedOptionIds);
+    }
+
+    private void assertLoadedSubmissionHasAllSelectedOptions(QuizSubmission loaded, long mcQuestionId, Set<Long> expectedSelectedOptionIds) {
+        MultipleChoiceSubmittedAnswer loadedMcAnswer = loaded.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
+                .map(MultipleChoiceSubmittedAnswer.class::cast).filter(mcSa -> mcSa.getQuizQuestion() != null && mcSa.getQuizQuestion().getId().equals(mcQuestionId)).findFirst()
+                .orElseThrow();
+        Set<Long> actualSelectedOptionIds = loadedMcAnswer.getSelectedOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
+        assertThat(actualSelectedOptionIds).containsExactlyInAnyOrderElementsOf(expectedSelectedOptionIds);
     }
 
     private List<MultipartFile> generateMultipartFilesFromQuizExercise(QuizExercise quizExercise) {
