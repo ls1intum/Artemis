@@ -12,6 +12,7 @@
                 },
                 "from": "From",
                 "to": "To",
+                "costWarning": "A longer time range and more participations with activity in that window increase runtime and use more model and server resources. The run executes in the background and may take a long time. Prefer the narrowest range that still fits your review goal.",
                 "validation": {
                     "required": "Please select both start and end date.",
                     "order": "Start date must be before or equal to end date.",
@@ -19,7 +20,7 @@
                 }
             },
             "trigger": {
-                "success": "Malicious Participation Analysis started. You will receive a completion notification.",
+                "success": "Malicious Participation Analysis started. You will receive a completion email when the run finishes.",
                 "error": "Could not start Malicious Participation Analysis. Please try again."
             }
         }

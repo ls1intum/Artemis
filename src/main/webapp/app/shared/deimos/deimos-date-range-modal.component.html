@@ -4,6 +4,10 @@
     </ng-template>
 
     <div class="d-flex flex-column gap-3">
+        <p-message severity="warn" [closable]="false" styleClass="w-100">
+            <span jhiTranslate="artemisApp.deimos.modal.costWarning"></span>
+        </p-message>
+
         <div class="d-flex flex-column gap-2">
             <label for="deimos-from" jhiTranslate="artemisApp.deimos.modal.from"></label>
             <p-datepicker

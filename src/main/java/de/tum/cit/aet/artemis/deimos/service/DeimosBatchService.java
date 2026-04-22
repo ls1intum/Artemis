@@ -147,8 +147,8 @@ public class DeimosBatchService {
             }
             String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + analysis.exerciseId() + "/participations/" + analysis.participationId()
                     + "/submissions";
-            maliciousParticipationLinks
-                    .add(new DeimosMaliciousParticipationLink(participationUrl, analysis.participationId(), analysis.rationale() != null ? analysis.rationale() : ""));
+            String rationale = analysis.rationale() != null ? analysis.rationale().strip() : "";
+            maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, analysis.participationId(), rationale));
         }
 
         Map<String, Object> emailContext = new HashMap<>();

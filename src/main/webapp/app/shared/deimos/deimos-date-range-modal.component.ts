@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { DialogModule } from 'primeng/dialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export interface DeimosDateRangeSelection {
@@ -14,7 +15,7 @@ export interface DeimosDateRangeSelection {
 @Component({
     selector: 'jhi-deimos-date-range-modal',
     templateUrl: './deimos-date-range-modal.component.html',
-    imports: [FormsModule, DialogModule, DatePickerModule, ButtonModule, TranslateDirective],
+    imports: [FormsModule, DialogModule, DatePickerModule, ButtonModule, MessageModule, TranslateDirective],
 })
 export class DeimosDateRangeModalComponent {
     titleTranslationKey = input.required<string>();
