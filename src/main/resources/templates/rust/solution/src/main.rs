@@ -2,7 +2,7 @@ use std::time::Duration;
 use std::{cell::RefCell, ops::RangeInclusive};
 
 use chrono::{NaiveDate, TimeDelta};
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 
 use rust_template_exercise::{context::Context, policy::Policy};
 
@@ -34,7 +34,7 @@ fn main() {
 /// Generates a [Vec] of random [NaiveDate] objects with a random length
 /// between [LENGTH_MIN] and [LENGTH_MAX].
 fn create_random_dates() -> Vec<NaiveDate> {
-    let length = thread_rng().gen_range(LENGTH_MIN..=LENGTH_MAX);
+    let length = rng().random_range(LENGTH_MIN..=LENGTH_MAX);
 
     let date_format = "%Y-%m-%d";
     let low_date = NaiveDate::parse_from_str("2024-09-15", date_format).unwrap();
@@ -52,7 +52,7 @@ fn random_date_within(range: RangeInclusive<NaiveDate>) -> NaiveDate {
     let max_delta = end - start;
     let max_duration = max_delta.to_std().unwrap();
 
-    let random_duration = thread_rng().gen_range(Duration::ZERO..=max_duration);
+    let random_duration = rng().random_range(Duration::ZERO..=max_duration);
     let random_delta = TimeDelta::from_std(random_duration).unwrap();
 
     start + random_delta
