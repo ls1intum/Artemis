@@ -6,6 +6,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -134,8 +136,31 @@ public class DeimosBatchService {
         }
         String notificationUrl = base + "/courses/" + courseId;
 
-        var emailContext = Map.of("courseId", (Object) courseId, "courseTitle", courseTitle, "scopeTitle", scopeTitle, "analyzed", summary.analyzed(), "maliciousCount",
-                summary.maliciousCount(), "benignCount", summary.benignCount(), "failed", summary.failed(), "notificationUrl", notificationUrl);
+        List<DeimosMaliciousParticipationLink> maliciousParticipationLinks = new ArrayList<>();
+        for (DeimosBatchSummaryDTO.ParticipationAnalysis analysis : summary.analyzedParticipations()) {
+            if (!analysis.malicious()) {
+                continue;
+            }
+            if (analysis.exerciseId() <= 0) {
+                log.warn("Omitting deep link in Deimos completion email: malicious participation {} has no exercise id", analysis.participationId());
+                continue;
+            }
+            String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + analysis.exerciseId() + "/participations/" + analysis.participationId()
+                    + "/submissions";
+            maliciousParticipationLinks
+                    .add(new DeimosMaliciousParticipationLink(participationUrl, analysis.participationId(), analysis.rationale() != null ? analysis.rationale() : ""));
+        }
+
+        Map<String, Object> emailContext = new HashMap<>();
+        emailContext.put("courseId", courseId);
+        emailContext.put("courseTitle", courseTitle);
+        emailContext.put("scopeTitle", scopeTitle);
+        emailContext.put("analyzed", summary.analyzed());
+        emailContext.put("maliciousCount", summary.maliciousCount());
+        emailContext.put("benignCount", summary.benignCount());
+        emailContext.put("failed", summary.failed());
+        emailContext.put("notificationUrl", notificationUrl);
+        emailContext.put("maliciousParticipationLinks", maliciousParticipationLinks);
         mailSendingService.buildAndSendAsync(triggerUser, DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE, emailContext);
     }
 

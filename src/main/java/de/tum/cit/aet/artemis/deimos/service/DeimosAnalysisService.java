@@ -75,7 +75,11 @@ public class DeimosAnalysisService {
 
                 DeimosLlmRequest request = buildPrompt(participationId, programmingParticipation);
                 DeimosLlmResponse response = deimosLlmClient.analyze(request);
-                analyzedParticipations.add(new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, response.malicious(), response.rationale()));
+                long exerciseId = 0L;
+                if (programmingParticipation.getProgrammingExercise() != null && programmingParticipation.getProgrammingExercise().getId() != null) {
+                    exerciseId = programmingParticipation.getProgrammingExercise().getId();
+                }
+                analyzedParticipations.add(new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, exerciseId, response.malicious(), response.rationale()));
 
                 analyzed++;
                 if (response.malicious()) {

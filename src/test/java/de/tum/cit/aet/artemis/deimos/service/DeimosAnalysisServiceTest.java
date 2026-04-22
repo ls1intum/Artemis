@@ -64,6 +64,7 @@ class DeimosAnalysisServiceTest {
         long participationId = 10L;
         var participation = Mockito.mock(ProgrammingExerciseStudentParticipation.class);
         var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
         var repoUri = Mockito.mock(LocalVCRepositoryUri.class);
 
         when(studentParticipationRepository.findById(participationId)).thenReturn(Optional.of(participation));
@@ -109,6 +110,7 @@ class DeimosAnalysisServiceTest {
         assertThat(request.userPrompt()).contains("=== Final state vs. template ===");
 
         assertThat(summary.analyzedParticipations()).hasSize(1);
+        assertThat(summary.analyzedParticipations().getFirst().exerciseId()).isEqualTo(42L);
         assertThat(summary.analyzedParticipations().getFirst().malicious()).isTrue();
         assertThat(summary.analyzedParticipations().getFirst().rationale()).isEqualTo("Incremental probing detected");
         assertThat(summary.maliciousCount()).isEqualTo(1);
@@ -120,6 +122,7 @@ class DeimosAnalysisServiceTest {
         long participationId = 20L;
         var participation = Mockito.mock(ProgrammingExerciseStudentParticipation.class);
         var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
         var repoUri = Mockito.mock(LocalVCRepositoryUri.class);
 
         when(studentParticipationRepository.findById(participationId)).thenReturn(Optional.of(participation));
@@ -148,6 +151,7 @@ class DeimosAnalysisServiceTest {
         long participationId = 30L;
         var participation = Mockito.mock(ProgrammingExerciseStudentParticipation.class);
         var exercise = new ProgrammingExercise();
+        exercise.setId(42L);
         var repoUri = Mockito.mock(LocalVCRepositoryUri.class);
 
         when(studentParticipationRepository.findById(participationId)).thenReturn(Optional.of(participation));

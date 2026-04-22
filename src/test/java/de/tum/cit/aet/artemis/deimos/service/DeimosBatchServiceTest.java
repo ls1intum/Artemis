@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -79,15 +81,25 @@ class DeimosBatchServiceTest {
         when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
-                .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 0, 2, 0, List.of()));
+                .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 1, 1, 0,
+                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(101L, 55L, true, "bad"), new DeimosBatchSummaryDTO.ParticipationAnalysis(102L, 55L, false, "ok"))));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
         var userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
+                contextCaptor.capture());
         assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
+        @SuppressWarnings("unchecked")
+        List<DeimosMaliciousParticipationLink> links = (List<DeimosMaliciousParticipationLink>) contextCaptor.getValue().get("maliciousParticipationLinks");
+        assertThat(links).hasSize(1);
+        assertThat(links.getFirst().participationId()).isEqualTo(101L);
+        assertThat(links.getFirst().url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/55/participations/101/submissions");
+        assertThat(links.getFirst().rationale()).isEqualTo("bad");
     }
 
     @Test

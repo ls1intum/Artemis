@@ -37,6 +37,20 @@
         </li>
     </ul>
 
+    <th:block th:if="${maliciousParticipationLinks != null and !maliciousParticipationLinks.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.maliciousLinksHeading}">Flagged participations</p>
+        <ul>
+            <li th:each="link : ${maliciousParticipationLinks}">
+                <div>
+                    <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
+                </div>
+                <p class="rationale-block" th:if="${link.rationale != null and !link.rationale.isEmpty()}"
+                   style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
+                   th:text="${link.rationale}">Rationale</p>
+            </li>
+        </ul>
+    </th:block>
+
     <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
     <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
 </div>
