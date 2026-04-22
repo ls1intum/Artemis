@@ -260,7 +260,7 @@ export class ComplaintService implements IComplaintService {
         return res.clone({ body: res.body ? this.convertComplaintFromServer(res.body) : undefined });
     }
 
-    public convertComplaintFromServer(dto: ComplaintDTO): Complaint {
+    private convertComplaintFromServer(dto: ComplaintDTO): Complaint {
         const complaint = new Complaint();
         complaint.id = dto.id;
         complaint.complaintText = dto.complaintText;
