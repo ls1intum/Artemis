@@ -2,8 +2,8 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { QuizQuestionCreateDTO, convertQuizQuestionsToDTOs } from './quiz-exercise-creation/quiz-question-creation-dto.model';
 
 export interface QuizExerciseUpdateDTO {
     title?: string;
@@ -19,7 +19,7 @@ export interface QuizExerciseUpdateDTO {
     startDate?: dayjs.Dayjs;
     dueDate?: dayjs.Dayjs;
     includedInOverallScore?: IncludedInOverallScore;
-    quizQuestions?: QuizQuestion[];
+    quizQuestions?: QuizQuestionCreateDTO[];
 }
 
 export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExerciseUpdateDTO {
@@ -40,6 +40,6 @@ export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExercis
         startDate: quizExercise.startDate,
         dueDate: quizExercise.dueDate,
         includedInOverallScore: quizExercise.includedInOverallScore,
-        quizQuestions: quizExercise.quizQuestions,
+        quizQuestions: quizExercise.quizQuestions ? convertQuizQuestionsToDTOs(quizExercise.quizQuestions) : undefined,
     };
 }
