@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tumlive;
+package de.tum.cit.aet.artemis.videosource;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -29,7 +29,7 @@ class TumLivePlaylistResourceIntegrationTest extends AbstractSpringIntegrationIn
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Non-TUM-Live URLs should return 404
-        restTumLivePlaylistMockMvc.perform(get("/api/tumlive/playlist").param("url", "https://youtube.com/watch?v=123")).andExpect(status().isNotFound());
+        restTumLivePlaylistMockMvc.perform(get("/api/videosource/playlist").param("url", "https://youtube.com/watch?v=123")).andExpect(status().isNotFound());
     }
 
     @Test
@@ -39,6 +39,6 @@ class TumLivePlaylistResourceIntegrationTest extends AbstractSpringIntegrationIn
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Invalid TUM Live URL format should return 404
-        restTumLivePlaylistMockMvc.perform(get("/api/tumlive/playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
+        restTumLivePlaylistMockMvc.perform(get("/api/videosource/playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
     }
 }
