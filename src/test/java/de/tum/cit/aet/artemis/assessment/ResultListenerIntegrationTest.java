@@ -458,15 +458,16 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         var exercise = exerciseRepository.findById(idOfExercise).orElseThrow();
 
-        // Wait for the scheduler to execute its task
-        participantScoreScheduleService.executeScheduledTasks();
-        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
-
         Double lastPoints = expectedLastScore != null ? round(expectedLastScore * 0.01 * 10.0) : null;
         Double lastRatedPoints = expectedLastRatedScore != null ? round(expectedLastRatedScore * 0.01 * 10.0) : null;
 
-        // Use await().untilAsserted() to handle timing issues with asynchronous participant score updates
+        // Use await().untilAsserted() with executeScheduledTasks() inside the retry loop to handle
+        // timing issues with asynchronous participant score updates. The scheduler must be
+        // re-triggered inside the retry loop because the first call may miss newly modified results
+        // if lastScheduledRun hasn't been updated yet.
         await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
             List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
             assertThat(savedParticipantScore).isNotEmpty();
             assertThat(savedParticipantScore).hasSize(1);
