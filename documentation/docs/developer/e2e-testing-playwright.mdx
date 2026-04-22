@@ -2,7 +2,8 @@ import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
-import playwrightBambooDeployment from './assets/playwright_bamboo_deployment_diagram.svg';
+import e2eHwSwMapping from './assets/playwright_hw_sw_mapping.png';
+import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 
 # E2E Testing with Playwright
 
@@ -14,14 +15,11 @@ In order to prevent as many faults (bugs) as possible from being introduced into
 we want to execute the Playwright test suite whenever new commits are pushed to a Git branch
 (just like the unit and integration test suites).
 
-To accomplish this we need to be able to dynamically deploy multiple different instances of Artemis at the same time.
-An ideal setup would be to deploy the whole Artemis system using Kubernetes.
-However, this setup is too complex at the moment.
-The main reason for the complexity is that it is very hard to automatically setup Docker containers for
-the external services (e.g. Jenkins) and connect them directly with Artemis.
-
-Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
-the prelive system, which is already properly setup in the university data center.
+Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners because they require
+substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
+To keep feedback cycles short, the pipeline uses a **two-phase execution model**: Phase 1 runs only the tests
+mapped to the files changed in the pull request, and Phase 2 runs the remaining tests only when Phase 1 passes.
+See the [CI Pipeline](#ci-pipeline) section for details.
 
 ## Set up Playwright locally
 
@@ -162,11 +160,16 @@ STUDENT_GROUP_NAME=students
 TUTOR_GROUP_NAME=tutors
 EDITOR_GROUP_NAME=editors
 INSTRUCTOR_GROUP_NAME=instructors
-BASE_URL=http://localhost:9000
+BASE_URL=https://localhost
 EXERCISE_REPO_DIRECTORY=test-exercise-repos
 FAST_TEST_TIMEOUT_SECONDS=45
-SLOW_TEST_TIMEOUT_SECONDS=180
+SLOW_TEST_TIMEOUT_SECONDS=90
 ```
+
+<Callout variant={CalloutVariant.info}>
+    <p><code>BASE_URL=http://localhost:9000</code> is correct for manual setup where the Angular dev server runs on port 9000.
+    The committed <code>playwright.env</code> defaults to <code>BASE_URL=https://localhost</code> (no port, HTTPS) for the Docker-based setup.</p>
+</Callout>
 
 Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
 `ADMIN_PASSWORD` match your Artemis admin user credentials.
@@ -224,7 +227,7 @@ For example, you can run the test suite "Course creation" located in the file `C
 the command:
 
 ```bash
-npx playwright test src/test/playwright/tests/CourseManagement.spec.ts -g "Course creation"
+npx playwright test e2e/course/CourseManagement.spec.ts -g "Course creation"
 ```
 
 ## Test parallelization
@@ -243,6 +246,25 @@ file.
 
 To run tests sequentially (one after another), set the `workers` option to `1`. To run tests within each file
 sequentially, while running test files in parallel, set the `fullyParallel` option to `false`.
+
+## Test projects: fast and slow tests
+
+Playwright is configured with two test projects that determine the per-test timeout budget:
+
+| Project | Tag | Timeout (local) | Timeout (CI) | Use for |
+|---------|-----|-----------------|--------------|---------|
+| `fast-tests` | `@fast` or no tag | 45 s | 60 s | Tests that complete quickly and do not involve long-running background jobs |
+| `slow-tests` | `@slow` | 90 s | 90 s | Tests that wait for CI/CD builds, large data processing, or other asynchronous operations |
+
+Tag a test suite with `{ tag: '@slow' }` when it involves build pipelines or polling for background jobs; otherwise omit the tag (defaults to `fast-tests`):
+
+```typescript
+// Fast test (default — no tag needed)
+test.describe('Competency Management', { tag: '@fast' }, () => { ... });
+
+// Slow test
+test.describe('Programming Exercise Participation', { tag: '@slow' }, () => { ... });
+```
 
 ## Best practices when writing new E2E tests
 
@@ -366,6 +388,10 @@ Avoid using locators that are prone to change. If a component lacks a unique sel
 add a `data-testid` attribute with a unique value to its template. This ensures that the component is easily
 identifiable, making tests less likely to break when there are changes to the component.
 
+Prefer `data-testid` over text-based and role-based locators as the primary strategy. Text-based and role-based
+locators break whenever display text or component structure changes — turning a UI rename into a test failure
+unrelated to any regression. A `data-testid` attribute survives UI refactors as long as the attribute itself is preserved.
+
 ### 4. Consider actionability of elements
 
 Checking for the state of an element before interacting with it is crucial to avoid flaky behavior. Actions like
@@ -400,24 +426,165 @@ await page.waitForLoadState('load');
     the page - use <code>waitFor()</code> function of a locator instead.</p>
 </Callout>
 
+### 5. AI-assisted test authoring with a Playwright MCP server
+
+You can optionally use a Playwright Model Context Protocol (MCP) server as an external tool to expose the live
+application DOM to AI coding assistants such as GitHub Copilot and Claude Code while Artemis is running locally.
+
+Without access to the running page state, AI assistants can still generate test structure and boilerplate, but they
+may produce incorrect locators. When a separately configured Playwright MCP server is active, the assistant can
+inspect the current DOM, retrieve the `data-testid` attributes attached to elements, and generate locators that
+reference those IDs directly.
+
+To use this workflow, start Artemis locally (via the fast runner or any other method) and configure a Playwright MCP
+server in your editor or AI assistant environment. The assistant can then inspect page structure and generate
+accurate `data-testid`-based locators for the workflow under test. Review the generated test by running it locally,
+confirm that the interaction sequence matches the intended workflow, and correct any steps where the assistant
+misread the application state.
+
+## CI Pipeline
+
+### Overview: two-phase execution
+
+Every pull request triggers a two-phase E2E pipeline. Phase 1 runs only the tests mapped to the files changed in
+the pull request; Phase 2 runs all remaining tests, but only when Phase 1 passes.
+This architecture ensures developers receive targeted feedback within minutes for the tests most likely to surface
+a regression, while still running the full suite before merge.
+
+<Image src={e2eCiPipelineSsd} alt="Two-phase CI pipeline activity diagram showing Developer, CI Pipeline, Helios, and Reports Dashboard swimlanes" size={ImageSize.large} caption="Two-phase CI pipeline activity diagram. Phase 1 runs change-relevant tests first. If Phase 1 passes, Phase 2 runs the remaining tests. Both phases query Helios for flakiness scores and upload artifacts to the Reports Dashboard before posting the PR comment." />
+
+**Observed performance** (across 89 measured runs):
+
+| Metric | Phase 1 | Phase 2 | Full suite (single-phase baseline) |
+|--------|--------:|--------:|----------------------------------:|
+| Median duration | 4.3 min | 23.8 min | 27.7 min |
+| P90 duration | 8.3 min | 29.4 min | 32.2 min |
+| Pass rate | 82% | 64.4% (of runs that reach it) | — |
+
+When Phase 1 detects a failure, developers receive feedback within approximately four minutes and Phase 2
+does not consume compute resources.
+
+**For pushes to `develop` or `main`:** the pipeline skips the two-phase logic and runs the full suite in a single job.
+
+### Selective test execution and `e2e-test-mapping.json`
+
+The `determine-tests` CI job reads `.ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
+The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it.
+All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
+
+```json
+{
+  "allTestPaths": [
+    "e2e/atlas/",
+    "e2e/course/",
+    "e2e/exam/ExamAssessment.spec.ts",
+    "e2e/exam/ExamChecklists.spec.ts",
+    "e2e/exam/ExamCreationDeletion.spec.ts",
+    "e2e/exam/ExamDateVerification.spec.ts",
+    "e2e/exam/ExamManagement.spec.ts",
+    "e2e/exam/ExamParticipation.spec.ts",
+    "e2e/exam/ExamResults.spec.ts",
+    "e2e/exam/ExamTestRun.spec.ts",
+    "e2e/exam/test-exam/",
+    "e2e/exercise/ExerciseImport.spec.ts",
+    "e2e/exercise/file-upload/",
+    "e2e/exercise/modeling/",
+    "e2e/exercise/programming/",
+    "e2e/exercise/quiz-exercise/",
+    "e2e/exercise/text/",
+    "e2e/lecture/",
+    "e2e/Login.spec.ts",
+    "e2e/Logout.spec.ts",
+    "e2e/SystemHealth.spec.ts"
+  ],
+  "mappings": {
+    "atlas": {
+      "sourcePaths": [
+        "src/main/java/de/tum/cit/aet/artemis/atlas/",
+        "src/main/webapp/app/atlas/"
+      ],
+      "testPaths": ["e2e/atlas/"]
+    },
+    "exam": {
+      "sourcePaths": [
+        "src/main/java/de/tum/cit/aet/artemis/exam/",
+        "src/main/webapp/app/exam/"
+      ],
+      "testPaths": ["e2e/exam/"]
+    }
+  },
+  "alwaysRunTests": [
+    "e2e/Login.spec.ts",
+    "e2e/Logout.spec.ts",
+    "e2e/SystemHealth.spec.ts"
+  ],
+  "runAllTestsPatterns": [
+    "src/main/resources/config/",
+    "docker/",
+    "build.gradle",
+    "angular.json"
+  ]
+}
+```
+
+The `determine-tests` job compares the PR branch against the base branch and maps each changed file to its module.
+The union of the test paths from all matched modules, plus the `alwaysRunTests` entries, forms the Phase 1 set.
+The remaining entries from `allTestPaths` form the Phase 2 set.
+
+**Special cases:**
+- If a changed file matches a `runAllTestsPatterns` entry (e.g., a Docker or Gradle file), the pipeline runs all tests in a single job.
+- If only Playwright spec files were changed, Phase 2 is skipped and only Phase 1 runs.
+- If no module mapping is found for a changed file, it falls through to Phase 2.
+
+**Adding tests for a new module:** add an entry to `mappings` in `e2e-test-mapping.json` and add the test path(s) to `allTestPaths`.
+
+### PR comment reporting
+
+The pipeline posts a single comment on each pull request and updates it progressively as phases complete.
+A typical comment shows a phase table with status (✅ / ❌), test count, passed, skipped, failed, and wall-clock
+time per phase; the test file paths assigned to each phase; links to the workflow run and full HTML report;
+a collapsible section listing each failed test name and its duration; and a flakiness score table for any failed
+tests when Helios data is available.
+
+Three outcomes are possible:
+1. **Both phases pass** — example: [PR #12516](https://github.com/ls1intum/Artemis/pull/12516)
+2. **Phase 1 passes, Phase 2 fails** — example: [PR #12489](https://github.com/ls1intum/Artemis/pull/12489)
+3. **Phase 1 fails, Phase 2 skipped** — example: [PR #12487](https://github.com/ls1intum/Artemis/pull/12487)
+
+### Helios flakiness scores
+
+After each phase, the pipeline queries the Helios API to retrieve flakiness scores for any failed tests.
+A **flakiness score** reflects how often a test has non-deterministically produced different results over recent CI runs.
+A high score suggests the failure may be a flake; a low score suggests a genuine regression. Scores appear in the
+PR comment alongside failed test names.
+
+### Reports Dashboard
+
+The Reports Dashboard is a web interface that stores and serves all E2E test artifacts from CI runs,
+accessible from the link in the PR comment. It provides:
+
+- **Aggregate view:** total runs, 30-day pass rate, average flakiness rate, pass rate trend chart, and runtime-by-phase chart
+- **Per-run view:** phase breakdown, test-level results with status and duration, links to the full HTML and coverage reports
+- **Failure detail view:** the full assertion error, stack trace, and an embedded video recording of the browser at the moment of failure
+
 ## Artemis Deployment on GitHub Runner
 
 Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
-The easiest way to accomplish this is to deploy Artemis locally on the GitHub runner, which executes the Playwright tests.
-Using `docker compose` the runner can start a MySQL database and the Artemis server (potentially as multi-node deployment) and the client locally.
+The runner starts all required services using Docker Compose and executes Playwright tests on the host.
 
-<Image src={playwrightBambooDeployment} alt="Artemis Deployment on GitHub runner for Playwright" size={ImageSize.large} caption="Artemis Deployment on GitHub runner for Playwright" />
+<Image src={e2eHwSwMapping} alt="Hardware-software mapping showing five nodes: Developer Machine, GitHub, Self-Hosted CI Runner, Reports Dashboard, and Helios" size={ImageSize.large} caption="Hardware-software mapping of the E2E testing infrastructure. The Developer Machine pushes to GitHub, which triggers the Actions Orchestrator. The Self-Hosted CI Runner executes tests and sends results to the Reports Dashboard and PR comments via the Report and Communication Handler. The Helios node provides flakiness scores." />
 
-In total there are three Docker containers started on the GitHub runner:
+E2E tests run on self-hosted runners (not GitHub-hosted) because they require substantial compute resources.
+Self-hosted runners do not start from a clean state between jobs; the pipeline explicitly cleans up leftover
+test result files between phases to prevent workspace pollution from inflating test counts.
 
-### 1. MySQL
+In total there are two Docker containers started on the GitHub runner, plus Playwright running on the host:
 
-This container starts a MySQL database and exposes it on port 3306.
-The container automatically creates a new database 'Artemis' and configures it
+### 1. PostgreSQL
+
+This container starts a PostgreSQL database and exposes it on port 5432.
+The container automatically creates a new database `Artemis` and configures it
 with the recommended settings for Artemis.
-The Playwright setup reuses the already existing
-[MySQL docker image](https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml)
-from the standard Artemis Docker setup.
 
 ### 2. Artemis Application
 
@@ -427,44 +594,41 @@ When the build of the Playwright test suite starts, it retrieves the Artemis exe
 Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
 for the Artemis server.
 
-The main configuration of the Artemis server are contained in the
+The main configuration of the Artemis server is contained in the
 [Playwright environment configuration files](https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config).
-However, those files do not contain any security relevant information.
-Security relevant settings are instead passed to the Docker container via environment variables and GitHub secrets.
+Security-relevant settings are passed to the Docker container via environment variables and GitHub secrets.
 
-The Artemis container is also configured to
+The Artemis container is configured to
 [depend on](https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on)
-the MySQL container and uses
+the PostgreSQL container and uses
 [health checks](https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck)
-to wait until the MySQL container is up and running.
+to wait until the database is up and running.
 
 ### 3. Playwright
 
-Playwright offers a test environment [docker image](https://hub.docker.com/r/microsoft/playwright)
-to execute Playwright tests.
-The image contains Playwright browsers and browser system dependencies.
-However, Playwright itself is not included in the image.
-This is convenient for us because the image is smaller and the Artemis Playwright project requires
-additional dependencies to fully function.
-Therefore, the Artemis Playwright Docker container is configured to install all dependencies
-(using `npm ci`) upon start. This will also install Playwright itself.
-Afterwards the Artemis Playwright test suite is executed.
-
-The necessary configuration for the Playwright test suite is also passed in via environment variables.
-Furthermore, the Playwright container depends on the Artemis container and is only started
-once Artemis has been fully booted.
+Playwright runs directly on the runner host (not in a container).
+The base URL is configurable via the `BASE_URL` environment variable read from
+`src/test/playwright/playwright.env` (defaults to `https://localhost`).
+The necessary configuration for the Playwright test suite is passed in via environment variables.
+Playwright only starts once Artemis has been fully booted.
 
 ## Maintenance
 
-The Artemis Dockerfile as well as the MySQL image are already maintained because they are used in
+The Artemis Dockerfile as well as the PostgreSQL image are already maintained because they are used in
 other Artemis Docker setups.
 Therefore, only Playwright and the Playwright Docker image require active maintenance.
 Since the Playwright test suite simulates a real user, it makes sense to execute the test suite with
 the latest browser versions.
-The Playwright Docker image we use always has browsers with specific versions installed.
-Therefore, the
+If you run Playwright inside Docker locally (using `docker/playwright.yml`), the Playwright Docker image
+has browsers at specific pinned versions. The
 [docker-compose file](https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml)
-should be updated every month to make sure that the latest Playwright image is used.
+should be updated monthly to pull the latest Playwright image with up-to-date browsers.
+This step does not apply to CI, where Playwright runs directly on the host (not in a container).
+
+When a new Artemis module is created or an existing module is significantly reorganized, update
+`.ci/E2E-tests/e2e-test-mapping.json`:
+1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
+2. Add all new test paths to `allTestPaths` so Phase 2 covers them on unrelated PRs.
 
 ## Functionalities Covered
 
@@ -478,6 +642,31 @@ should be updated every month to make sure that the latest Playwright image is u
   </thead>
   <tbody>
     <tr>
+      <td rowspan="6"><strong>Atlas</strong></td>
+      <td>Competency Management</td>
+      <td>Creating, editing, and deleting competencies; setting taxonomy levels and mastery thresholds; soft-deleting with linked exercise warnings</td>
+    </tr>
+    <tr>
+      <td>Competency–Exercise Interactions</td>
+      <td>Linking and unlinking exercises to competencies; verifying that exercise progress contributes to competency mastery</td>
+    </tr>
+    <tr>
+      <td>Competency–Lecture Unit Interactions</td>
+      <td>Linking lecture units to competencies; verifying lecture unit completion updates competency progress</td>
+    </tr>
+    <tr>
+      <td>Competency Import</td>
+      <td>Importing competencies from other courses; verifying imported data integrity</td>
+    </tr>
+    <tr>
+      <td>Learning Path Management</td>
+      <td>Enabling learning paths in a course; verifying the learning path activation flow</td>
+    </tr>
+    <tr>
+      <td>Student Competency Progress View</td>
+      <td>Student competency overview, mastery indicators, judgment of learning ratings, and progress tracking across lecture units and exercises</td>
+    </tr>
+    <tr>
       <td rowspan="3"><strong>Courses</strong></td>
       <td>Course Management</td>
       <td>Creating, editing, deleting courses; adding/removing students from a course</td>
@@ -488,10 +677,10 @@ should be updated every month to make sure that the latest Playwright image is u
     </tr>
     <tr>
       <td>Course Communication</td>
-      <td>Messaging within courses, including channel creation, student participation, and message interactions</td>
+      <td>Messaging within courses, including channel creation, group chats, student participation, and message interactions</td>
     </tr>
     <tr>
-      <td rowspan="9"><strong>Exams</strong></td>
+      <td rowspan="10"><strong>Exams</strong></td>
       <td>Exam Management</td>
       <td>Manage exam students and exercise groups</td>
     </tr>
@@ -526,6 +715,31 @@ should be updated every month to make sure that the latest Playwright image is u
     <tr>
       <td>Exam Statistics</td>
       <td>Exam statistics is displayed correctly</td>
+    </tr>
+    <tr>
+      <td>PlantUML Diagram Isolation</td>
+      <td>PlantUML diagrams in exam exercises render in isolation without leaking state between participants</td>
+    </tr>
+    <tr>
+      <td rowspan="5"><strong>Test Exams</strong></td>
+      <td>Test Exam Creation & Deletion</td>
+      <td>Creating and deleting test exams</td>
+    </tr>
+    <tr>
+      <td>Test Exam Management</td>
+      <td>Managing test exam configuration and settings</td>
+    </tr>
+    <tr>
+      <td>Test Exam Participation</td>
+      <td>Participating in test exams as a student</td>
+    </tr>
+    <tr>
+      <td>Test Exam Student Exams</td>
+      <td>Generating and managing individual student exam instances</td>
+    </tr>
+    <tr>
+      <td>Test Exam Test Runs</td>
+      <td>Creating and managing test runs within a test exam</td>
     </tr>
     <tr>
       <td><strong>Exercises</strong></td>

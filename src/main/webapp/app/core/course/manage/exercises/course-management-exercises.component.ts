@@ -3,7 +3,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
@@ -82,6 +82,14 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.filteredTextExercisesCount() +
             this.filteredFileUploadExercisesCount(),
     );
+
+    readonly iconMap = {
+        [ExerciseType.MODELING]: getIcon(ExerciseType.MODELING),
+        [ExerciseType.PROGRAMMING]: getIcon(ExerciseType.PROGRAMMING),
+        [ExerciseType.QUIZ]: getIcon(ExerciseType.QUIZ),
+        [ExerciseType.TEXT]: getIcon(ExerciseType.TEXT),
+        [ExerciseType.FILE_UPLOAD]: getIcon(ExerciseType.FILE_UPLOAD),
+    };
 
     /**
      * initializes course

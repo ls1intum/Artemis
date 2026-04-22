@@ -62,11 +62,20 @@ function writePkg(path, pkg) {
 
 // ── Version mapping: which .env variable controls which packages ─────────────
 
+/** Packages with independent release cycles, excluded from ANGULAR_VERSION sync. */
+const ANGULAR_INDEPENDENT_PACKAGES = new Set([
+    '@angular/cdk',             // Angular Components team, separate releases
+    '@angular/material',        // Angular Components team, separate releases
+    '@angular-devkit/build-angular', // Angular CLI team, separate releases
+    '@angular/build',           // Angular CLI team, separate releases
+    '@angular/cli',             // Angular CLI team, separate releases
+]);
+
 /** Given a package name and current version, return the .env key that controls it. */
 function envKeyForPackage(name) {
-    // Angular core packages (@angular/*, @angular-devkit/build-angular)
+    // Angular core packages (@angular/*), excluding packages with independent versioning.
     // Note: @angular-builders/* are third-party packages with independent versioning
-    if (name.startsWith('@angular/') || name === '@angular-devkit/build-angular') {
+    if ((name.startsWith('@angular/') || name === '@angular-devkit/build-angular') && !ANGULAR_INDEPENDENT_PACKAGES.has(name)) {
         return 'ANGULAR_VERSION';
     }
     // Angular ESLint (@angular-eslint/*, angular-eslint)
