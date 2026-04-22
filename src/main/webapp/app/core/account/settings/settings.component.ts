@@ -9,6 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { PROFILE_SAML2 } from 'app/app.constants';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Type definition for the user settings form controls.
@@ -27,7 +28,7 @@ interface SettingsForm {
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, FindLanguageFromKeyPipe, MessageModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
