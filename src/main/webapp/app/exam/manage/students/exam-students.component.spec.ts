@@ -5,16 +5,14 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -91,11 +89,9 @@ describe('ExamStudentsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                NgxDatatableModule,
                 FaIconComponent,
                 UsersImportButtonStubComponent,
                 ExamStudentsComponent,
-                MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -228,7 +224,7 @@ describe('ExamStudentsComponent', () => {
         expect(component.allRegisteredUsers()).toEqual([]);
     });
 
-    it('should remove all users from the exam with participaations', () => {
+    it('should remove all users from the exam with participations', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.exam.set({

@@ -18,7 +18,6 @@ import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-
 import { StudentsUploadImagesDialogComponent } from './upload-images/students-upload-images-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
@@ -81,7 +80,6 @@ interface MenuCommandEvent {
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
         DeleteButtonDirective,
-        NgxDatatableModule,
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
         ExamStudentsMenuButtonComponent,
@@ -337,8 +335,8 @@ export class ExamStudentsComponent implements OnDestroy {
 
     openUploadImagesDialog() {
         const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.exam = this.exam;
+        modalRef.componentInstance.courseId = this.courseId; // passing the signal itself here else eslint error
+        modalRef.componentInstance.exam = this.exam; // same here
         modalRef.result.then(
             () => this.reloadExamWithRegisteredUsers(),
             () => {},
@@ -561,7 +559,7 @@ export class ExamStudentsComponent implements OnDestroy {
         );
     }
 
-    didAttendExam(examUser: ExamUser | undefined) {
+    didNotAttendExam(examUser: ExamUser | undefined) {
         return !examUser?.didExamUserAttendExam && this.hasExamEnded();
     }
 

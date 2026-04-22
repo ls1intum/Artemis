@@ -300,7 +300,7 @@
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
                                     <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
                                 </div>
-                            } @else if (didAttendExam(examUser)) {
+                            } @else if (didNotAttendExam(examUser)) {
                                 <div title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
                                     <fa-icon [icon]="faUserTimes" class="fa-2x" />
                                 </div>
