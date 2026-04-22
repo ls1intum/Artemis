@@ -118,11 +118,6 @@ public class ProgrammingExerciseBuildPlanService {
             windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
         }
 
-        // windfile with no script actions would produce empty phases, use default template instead
-        if (windfile != null && windfile.scriptActions().isEmpty() && aeolusTemplateService.isPresent()) {
-            windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
-        }
-
         if (windfile != null) {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
             buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
