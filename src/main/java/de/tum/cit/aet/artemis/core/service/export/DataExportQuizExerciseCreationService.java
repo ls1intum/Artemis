@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.DragAndDropQuizAnswerConversionService;
 
 /**
@@ -53,15 +54,19 @@ public class DataExportQuizExerciseCreationService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     private final QuizQuestionRepository quizQuestionRepository;
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public DataExportQuizExerciseCreationService(QuizSubmissionRepository quizSubmissionRepository, QuizQuestionRepository quizQuestionRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, StudentParticipationRepository studentParticipationRepository) {
+    public DataExportQuizExerciseCreationService(QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository,
+            QuizQuestionRepository quizQuestionRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -96,6 +101,7 @@ public class DataExportQuizExerciseCreationService {
         boolean errorOccurred = false;
         for (var submission : participation.getSubmissions()) {
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
+            submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(quizSubmission));
             List<String> multipleChoiceQuestionsSubmissions = new ArrayList<>();
             List<String> shortAnswerQuestionsSubmissions = new ArrayList<>();
             for (var question : quizQuestions) {

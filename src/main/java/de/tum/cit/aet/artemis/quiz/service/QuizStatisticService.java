@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -44,19 +45,23 @@ public class QuizStatisticService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final Optional<LtiApi> ltiApi;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiApi> ltiApi) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository,
+            Optional<LtiApi> ltiApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
         this.ltiApi = ltiApi;
     }
 
@@ -103,10 +108,12 @@ public class QuizStatisticService {
             // update statistics with the latest rated und unrated Result
             if (latestRatedResult != null && latestRatedResult.getSubmission() != null) {
                 var latestRatedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestRatedResult.getSubmission().getId());
+                submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(latestRatedSubmission));
                 quizExercise.addResultToAllStatistics(latestRatedResult, latestRatedSubmission);
             }
             if (latestUnratedResult != null && latestUnratedResult.getSubmission() != null) {
                 var latestUnratedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestUnratedResult.getSubmission().getId());
+                submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(latestUnratedSubmission));
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
 
@@ -143,6 +150,7 @@ public class QuizStatisticService {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
+                submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(quizSubmission));
                 quiz.addResultToAllStatistics(result, quizSubmission);
             }
             // save statistics

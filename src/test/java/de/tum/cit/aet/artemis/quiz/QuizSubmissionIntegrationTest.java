@@ -816,27 +816,39 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     /**
      * Regression test for <a href="https://github.com/ls1intum/Artemis/issues/12574">#12574</a>: after submitting an MC quiz and
      * retrieving the submission through the endpoints used on page refresh, every selected answer option must be returned for every
-     * question. Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
+     * question. Also verifies that {@link QuizExerciseService#reEvaluate} — which recomputes {@code scoreInPoints} based on
+     * {@code selectedOptions} — observes the full selection, otherwise the stored per-question score would drop to zero.
+     * <p>
+     * Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
      * which was not reliably initialized when the polymorphic {@code submittedAnswers} collection was loaded alongside a join-table
-     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes.
+     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes and (once
+     * re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testMultipleChoiceSelectedOptionsFullyLoadedAfterSubmission() {
+    void testMultipleChoiceSelectedOptionsFullyLoadedAfterSubmission() throws IOException {
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
+        MultipleChoiceQuestion builtMcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
+                .findFirst().orElseThrow();
+        // The default MC question has only one correct option, but the bug manifests with multiple correct options loaded into a Set.
+        // Add extra correct options so a fully-correct selection across several rows exercises the ManyToMany fetch we are fixing.
+        builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
         quizExercise = quizExerciseService.save(quizExercise);
         quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
 
         MultipleChoiceQuestion mcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).map(MultipleChoiceQuestion.class::cast)
                 .findFirst().orElseThrow();
-        // select every answer option so we can assert the full selection survives the load round-trip
-        Set<Long> expectedSelectedOptionIds = mcQuestion.getAnswerOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
+        // Pick only correct options so ALL_OR_NOTHING scoring awards full points — that lets us also assert re-evaluation reads the full selection.
+        List<AnswerOption> correctOptions = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).toList();
+        assertThat(correctOptions).hasSizeGreaterThan(1);
+        Set<Long> expectedSelectedOptionIds = correctOptions.stream().map(AnswerOption::getId).collect(Collectors.toSet());
 
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
         mcSubmittedAnswer.setQuizQuestion(mcQuestion);
-        mcQuestion.getAnswerOptions().forEach(mcSubmittedAnswer::addSelectedOptions);
+        correctOptions.forEach(mcSubmittedAnswer::addSelectedOptions);
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(mcSubmittedAnswer);
@@ -854,6 +866,18 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         QuizSubmission loadedById = quizSubmissionRepository.findWithEagerResultAndFeedbackById(quizSubmission.getId()).orElseThrow();
         submittedAnswerRepository.initializeSelectedOptionsForMultipleChoiceAnswers(List.of(loadedById));
         assertLoadedSubmissionHasAllSelectedOptions(loadedById, mcQuestion.getId(), expectedSelectedOptionIds);
+
+        // re-evaluation recomputes scoreInPoints from selectedOptions via ScoringStrategyMultipleChoiceAllOrNothing.
+        // If any correct option is missing from the loaded set the score collapses to zero, so asserting that all fully-correct
+        // MC answers receive the full score exercises the evaluation read path.
+        QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
+        quizExerciseService.reEvaluate(dto, quizExercise, List.of());
+        List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        assertThat(results).hasSize(1);
+        QuizSubmission reEvaluatedSubmission = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(results.getFirst().getSubmission().getId());
+        MultipleChoiceSubmittedAnswer reEvaluatedMcAnswer = reEvaluatedSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
+                .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
+        assertThat(reEvaluatedMcAnswer.getScoreInPoints()).isEqualTo(mcQuestion.getPoints());
     }
 
     private void assertLoadedSubmissionHasAllSelectedOptions(QuizSubmission loaded, long mcQuestionId, Set<Long> expectedSelectedOptionIds) {

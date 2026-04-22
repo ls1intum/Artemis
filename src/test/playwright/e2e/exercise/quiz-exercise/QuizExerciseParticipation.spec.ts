@@ -40,6 +40,56 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 2);
             await quizExerciseMultipleChoice.submit();
         });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12574: after ending and evaluating an MC quiz,
+         * every refresh of the participation page must return the complete set of answer options the student selected. Previously,
+         * Hibernate's EAGER fetch of MultipleChoiceSubmittedAnswer.selectedOptions (combined with second-level caching) could
+         * yield partial collections, so options appeared deselected and the per-question score flipped between 0 and its true value.
+         */
+        test('Selected MC options stay fully populated across reloads after quiz evaluation', async ({ login, exerciseAPIRequests, page, quizExerciseMultipleChoice }) => {
+            const quizDurationSeconds = 10;
+            await login(admin);
+            const shortQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                duration: quizDurationSeconds,
+            });
+            await exerciseAPIRequests.setQuizVisible(shortQuiz.id!);
+            await exerciseAPIRequests.startQuizNow(shortQuiz.id!);
+
+            // Student selects both correct options from the template (indexes 0 and 1) and submits.
+            await login(studentOne, `/courses/${course.id}/exercises/${shortQuiz.id!}`);
+            await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, 0);
+            await quizExerciseMultipleChoice.tickAnswerOption(shortQuiz.id!, 1);
+            await quizExerciseMultipleChoice.submit();
+
+            // Wait for the quiz to end and the scheduled evaluation job to create a rated result; a small buffer covers scheduler latency.
+            await page.waitForTimeout((quizDurationSeconds + 10) * 1000);
+
+            const mcQuestionId = shortQuiz.quizQuestions![0].id!;
+            const expectedCorrectOptionIds = shortQuiz.quizQuestions![0].answerOptions!.filter((option: any) => option.isCorrect).map((option: any) => option.id);
+            expect(expectedCorrectOptionIds.length).toBe(2);
+
+            // Repeatedly reload as the student; on every reload the /start-participation response must return both selected options
+            // for the MC question. The loop amplifies the flakiness of the original bug, which manifested non-deterministically.
+            for (let iteration = 0; iteration < 5; iteration++) {
+                const responsePromise = page.waitForResponse(
+                    (response) =>
+                        response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                );
+                await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
+                const body = await (await responsePromise).json();
+                const submissions = body.submissions ?? [];
+                expect(submissions.length, `iteration ${iteration}: expected exactly one submission`).toBe(1);
+                const mcAnswer = (submissions[0].submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
+                expect(mcAnswer, `iteration ${iteration}: expected an MC submitted answer for question ${mcQuestionId}`).toBeDefined();
+                const selectedOptionIds = (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b);
+                expect(selectedOptionIds, `iteration ${iteration}: selected options must include both chosen correct options`).toEqual(
+                    [...expectedCorrectOptionIds].sort((a, b) => a - b),
+                );
+            }
+        });
     });
 
     test.describe('Quiz exercise scheduled participation', () => {
