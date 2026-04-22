@@ -7,16 +7,19 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
@@ -31,7 +34,7 @@ class DeimosBatchServiceTest {
 
     private DeimosAnalysisService deimosAnalysisService;
 
-    private CourseNotificationService courseNotificationService;
+    private MailSendingService mailSendingService;
 
     private CourseRepository courseRepository;
 
@@ -40,14 +43,14 @@ class DeimosBatchServiceTest {
     private DeimosBatchService deimosBatchService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws MalformedURLException {
         programmingSubmissionRepository = Mockito.mock(ProgrammingSubmissionRepository.class);
         deimosAnalysisService = Mockito.mock(DeimosAnalysisService.class);
-        courseNotificationService = Mockito.mock(CourseNotificationService.class);
+        mailSendingService = Mockito.mock(MailSendingService.class);
         courseRepository = Mockito.mock(CourseRepository.class);
         programmingExerciseRepository = Mockito.mock(ProgrammingExerciseRepository.class);
-        deimosBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, courseNotificationService, courseRepository,
-                programmingExerciseRepository, Runnable::run);
+        deimosBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository, programmingExerciseRepository,
+                URI.create("http://localhost:8080").toURL(), r -> r.run());
     }
 
     @Test
@@ -75,14 +78,16 @@ class DeimosBatchServiceTest {
 
         when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
-        when(courseRepository.getCourseIconById(7L)).thenReturn(null);
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
                 .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 0, 2, 0, List.of()));
 
-        var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+        var triggerUser = createTriggerUser();
+        var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        verify(courseNotificationService).sendCourseNotification(any(), any());
+        var userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
     }
 
     @Test
@@ -97,10 +102,13 @@ class DeimosBatchServiceTest {
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.EXERCISE), eq(from), eq(to), eq(List.of(201L, 202L))))
                 .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 1, 1, 0, List.of()));
 
-        var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+        var triggerUser = createTriggerUser();
+        var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        verify(courseNotificationService).sendCourseNotification(any(), any());
+        var userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
     }
 
     private static User createTriggerUser() {

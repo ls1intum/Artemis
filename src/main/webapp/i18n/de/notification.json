@@ -268,11 +268,6 @@
                 "content": "Tests haben sich in {{exerciseTitle}} geändert.",
                 "settingsTitle": "Tests geändert"
             },
-            "maliciousParticipationAnalysisRunResultNotification": {
-                "title": "Analyse fertig",
-                "content": "Analysiert: {{analyzed}}{{maliciousSummary}}",
-                "settingsTitle": "Ergebnisse der Analyse schadhafter Teilnahmen"
-            },
             "plagiarismCaseVerdictNotification": {
                 "title": "Plagiat Beurteilung",
                 "content": "Neue Beurteilung zu einem Plagiatsfall in {{exerciseTitle}}.",

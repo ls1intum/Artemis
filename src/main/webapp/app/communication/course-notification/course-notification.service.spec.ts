@@ -9,12 +9,10 @@ import { CourseNotificationViewingStatus } from 'app/communication/shared/entiti
 import { CourseNotificationPage } from 'app/communication/shared/entities/course-notification/course-notification-page';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import dayjs from 'dayjs/esm';
-import { faComments, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
-
 describe('CourseNotificationService', () => {
     setupTestBed({ zoneless: true });
 
@@ -371,20 +369,6 @@ describe('CourseNotificationService', () => {
             const icon = service.getIconFromType('unknownType');
 
             expect(icon).toBe(faComments);
-        });
-
-        it('should return warning icon for malicious analysis run result notification', () => {
-            const icon = service.getIconFromType('maliciousParticipationAnalysisRunResultNotification');
-
-            expect(icon).toBe(faTriangleExclamation);
-        });
-    });
-
-    describe('notification channel config', () => {
-        it('should keep all channels enabled for malicious analysis run result notification', () => {
-            const disabled = CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES.maliciousParticipationAnalysisRunResultNotification;
-
-            expect(disabled).toEqual([] as CourseNotificationChannel[]);
         });
     });
 

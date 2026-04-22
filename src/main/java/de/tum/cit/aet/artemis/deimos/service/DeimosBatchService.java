@@ -2,16 +2,19 @@ package de.tum.cit.aet.artemis.deimos.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.TaskExecutor;
@@ -19,8 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.MaliciousParticipationAnalysisRunResultNotification;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
@@ -34,13 +36,17 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 @Service
 public class DeimosBatchService {
 
+    private static final String DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT = "email.deimos.analysisComplete.title";
+
+    private static final String DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE = "mail/deimos/deimosAnalysisCompleteEmail";
+
     private static final Logger log = LoggerFactory.getLogger(DeimosBatchService.class);
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final DeimosAnalysisService deimosAnalysisService;
 
-    private final CourseNotificationService courseNotificationService;
+    private final MailSendingService mailSendingService;
 
     private final CourseRepository courseRepository;
 
@@ -48,20 +54,23 @@ public class DeimosBatchService {
 
     private final TaskExecutor taskExecutor;
 
+    private final URL artemisServerUrl;
+
     private static final long MAX_PARTICIPATIONS_PER_RUN = 5000;
 
     private static final long MAX_MANUAL_WINDOW_DAYS = 31;
 
     private static final int PAGE_SIZE = 200;
 
-    public DeimosBatchService(ProgrammingSubmissionRepository programmingSubmissionRepository, DeimosAnalysisService deimosAnalysisService,
-            CourseNotificationService courseNotificationService, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public DeimosBatchService(ProgrammingSubmissionRepository programmingSubmissionRepository, DeimosAnalysisService deimosAnalysisService, MailSendingService mailSendingService,
+            CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository, @Value("${server.url}") URL artemisServerUrl,
             @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.deimosAnalysisService = deimosAnalysisService;
-        this.courseNotificationService = courseNotificationService;
+        this.mailSendingService = mailSendingService;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.artemisServerUrl = artemisServerUrl;
         this.taskExecutor = taskExecutor;
     }
 
@@ -93,38 +102,41 @@ public class DeimosBatchService {
     private void sendManualRunFinishedNotification(DeimosBatchScope scope, long scopeId, DeimosBatchSummaryDTO summary, User triggerUser) {
         long courseId;
         String courseTitle;
-        String courseIconUrl;
         String scopeTitle;
 
         if (scope == DeimosBatchScope.COURSE) {
             courseId = scopeId;
             courseTitle = courseRepository.getCourseTitle(scopeId);
             if (courseTitle == null) {
-                log.warn("Skipping Deimos completion notification: could not resolve course title for course {}", scopeId);
+                log.warn("Skipping Deimos completion email: could not resolve course title for course {}", scopeId);
                 return;
             }
-            courseIconUrl = courseRepository.getCourseIconById(scopeId);
             scopeTitle = courseTitle;
         }
         else if (scope == DeimosBatchScope.EXERCISE) {
             var exerciseScopeInfo = programmingExerciseRepository.findDeimosExerciseScopeInfoById(scopeId).orElse(null);
             if (exerciseScopeInfo == null) {
-                log.warn("Skipping Deimos completion notification: could not resolve exercise {}", scopeId);
+                log.warn("Skipping Deimos completion email: could not resolve exercise {}", scopeId);
                 return;
             }
 
             courseId = exerciseScopeInfo.courseId();
             courseTitle = exerciseScopeInfo.courseTitle();
-            courseIconUrl = exerciseScopeInfo.courseIconUrl();
             scopeTitle = exerciseScopeInfo.exerciseTitle();
         }
         else {
             return;
         }
 
-        var notification = new MaliciousParticipationAnalysisRunResultNotification(courseId, courseTitle, courseIconUrl, scopeTitle, summary.analyzed(), summary.maliciousCount(),
-                summary.benignCount(), summary.failed());
-        courseNotificationService.sendCourseNotification(notification, List.of(triggerUser));
+        String base = artemisServerUrl.toString();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        String notificationUrl = base + "/courses/" + courseId;
+
+        var emailContext = Map.of("courseId", (Object) courseId, "courseTitle", courseTitle, "scopeTitle", scopeTitle, "analyzed", summary.analyzed(), "maliciousCount",
+                summary.maliciousCount(), "benignCount", summary.benignCount(), "failed", summary.failed(), "notificationUrl", notificationUrl);
+        mailSendingService.buildAndSendAsync(triggerUser, DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE, emailContext);
     }
 
     private List<Long> collectParticipationIds(Function<Pageable, Slice<Long>> sliceProvider) {
