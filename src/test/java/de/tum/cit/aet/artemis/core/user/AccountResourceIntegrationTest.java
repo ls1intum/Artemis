@@ -70,7 +70,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             test.execute();
         }
         finally {
-            Mockito.reset(profileService);
+            Mockito.doCallRealMethod().when(profileService).isSaml2Active();
         }
     }
 
