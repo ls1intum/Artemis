@@ -1,7 +1,7 @@
 <p-tag
     class="d-flex gap-2 align-items-center"
     [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
-    [title]="hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
+    [title]="!isTestExam() && hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
 >
     @if (isTestExam()) {
         <i class="pi pi-info-circle"></i>

@@ -32,7 +32,7 @@ export class StudentExamManagementPage {
     }
 
     getGenerateMissingStudentExamsButton() {
-        return this.page.locator('.p-menu-item-link', { hasText: 'Generate missing individual exams' }).last().locator('xpath=ancestor::li[1]');
+        return this.page.locator('.p-menu-item-link', { hasText: 'Generate missing individual exams' }).last();
     }
 
     getStudentExamRows() {

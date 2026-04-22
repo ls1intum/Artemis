@@ -46,20 +46,16 @@
                                     @let exPrepStatus = exercisePreparationStatus();
                                     @if (exPrepStatus) {
                                         <div>
-                                            <div
-                                                class="flex-grow-1 position-relative text-white mt-1"
-                                                [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate"
-                                            >
-                                                <div class="position-absolute w-100">
-                                                    <ngb-progressbar
-                                                        [value]="exPrepStatus.finished!"
-                                                        [max]="exPrepStatus.overall ? exPrepStatus.overall - exPrepStatus.failed! : 0"
-                                                        [animated]="true"
-                                                        height="2em"
-                                                        type="success"
+                                            <div class="position-relative text-white mt-1" [title]="'artemisApp.studentExams.exercisePreparationProgress.label' | artemisTranslate">
+                                                <div class="position-absolute w-100 h-100">
+                                                    <p-progress-bar
+                                                        [value]="exercisePreparationPercentage()"
+                                                        color="var(--bs-success)"
+                                                        showValue="false"
+                                                        [style]="{ height: '100%' }"
                                                     />
                                                 </div>
-                                                <div class="d-flex justify-content-center gap-1 position-relative mx-2">
+                                                <div class="d-flex justify-content-center align-items-center gap-1 position-relative mx-2">
                                                     @let exPrepPercentage = exercisePreparationPercentage();
                                                     <span>
                                                         {{ exPrepPercentage }}% {{ exPrepStatus.finished }} / {{ exPrepStatus.overall }}
@@ -226,6 +222,7 @@
                             [id]="examUser.id"
                             class="img-fluid"
                             [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : missingImage"
+                            [alt]="examUser.user?.name || ''"
                         />
                     </td>
                     <td>
@@ -265,7 +262,7 @@
                         @if (examUser.actualRoom) {
                             <div>
                                 <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</del>
-                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
+                                <span class="ms-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
                             </div>
                         } @else if (examUser.plannedRoom) {
                             <div>
@@ -281,7 +278,7 @@
                         @if (examUser.actualSeat) {
                             <div>
                                 <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</del>
-                                <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
+                                <span class="ms-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
                             </div>
                         } @else if (examUser.plannedSeat) {
                             <div>

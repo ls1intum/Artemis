@@ -4,7 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Subject } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -51,6 +51,7 @@ import { Tag } from 'primeng/tag';
 import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { Tooltip } from 'primeng/tooltip';
+import { ProgressBar } from 'primeng/progressbar';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
@@ -93,13 +94,13 @@ interface MenuCommandEvent {
         RouterLink,
         NgTemplateOutlet,
         ArtemisDatePipe,
-        NgbProgressbar,
         StudentExamStatusComponent,
         StudentExamWorkingTimeComponent,
         TestExamWorkingTimeComponent,
         Tag,
         Popover,
         Tooltip,
+        ProgressBar,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -470,7 +471,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 next: () => {
                     this.reloadExamWithRegisteredUsers();
                 },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
     }
