@@ -132,6 +132,11 @@ export class UnifiedFeedbackComponent {
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return this.stripFeedbackSuggestionPrefix(feedback.text);
             }
+            // Only use feedback.text as title when detailText exists as separate content;
+            // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.
+            if (feedback.detailText) {
+                return feedback.text;
+            }
             return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
         }
 

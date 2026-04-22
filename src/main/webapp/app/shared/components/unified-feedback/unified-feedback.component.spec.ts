@@ -68,7 +68,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('Explicit Title');
     });
 
-    it('should fall back to default title when feedback.text is plain text (not a suggestion)', () => {
+    it('should use feedback.text as title only when detailText also exists', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('feedback', { text: 'Title', detailText: 'Description' } as any);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('Title');
+    });
+
+    it('should fall back to default title when feedback.text is plain text without detailText', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('feedback', { text: 'Feedback Text' } as any);
         fixture.detectChanges();
@@ -141,6 +148,15 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('points', 0);
         fixture.componentRef.setInput('feedback', { referenceId: 999 } as any);
+        fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+    });
+
+    it('should use default title and not assessmentsNames when feedback.text is set without detailText', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('points', 0);
+        fixture.componentRef.setInput('feedback', { text: 'Override description', referenceId: 42 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
