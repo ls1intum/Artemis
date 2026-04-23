@@ -1,16 +1,20 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -67,15 +71,11 @@ public class AtlasAgentSessionCacheService {
 
     private final CacheManager cacheManager;
 
-    /**
-     * Per-session locks serializing read-modify-write on the preview history cache entry.
-     * Prevents concurrent {@link #storePreviewForMessage} calls for the same session from
-     * overwriting each other's history maps.
-     */
-    private final ConcurrentHashMap<String, Object> previewHistoryLocks = new ConcurrentHashMap<>();
+    private final HazelcastInstance hazelcastInstance;
 
-    public AtlasAgentSessionCacheService(CacheManager cacheManager) {
+    public AtlasAgentSessionCacheService(CacheManager cacheManager, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.cacheManager = cacheManager;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -211,23 +211,22 @@ public class AtlasAgentSessionCacheService {
      * @param messageIndex the 0-based index of the assistant message
      * @param previewData  the preview data to store
      */
-    @SuppressWarnings("unchecked")
     public void storePreviewForMessage(String sessionId, int messageIndex, MessagePreviewData previewData) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        if (cache == null) {
-            return;
-        }
-        // Serialize per-session read-modify-write: without this, concurrent calls for the same session
-        // can both observe a null history, each create a fresh map, and the final cache.put leaves only
-        // the last writer's map — silently dropping the loser's messageIndex entry.
-        Object lock = previewHistoryLocks.computeIfAbsent(sessionId, k -> new Object());
-        synchronized (lock) {
-            Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
-            if (history == null) {
-                history = new ConcurrentHashMap<>();
+        // Serialize per-session read-modify-write across the Hazelcast cluster: IMap.lock(key) is a
+        // distributed per-key lock, so concurrent writers on any node observe a consistent history
+        // map and neither one's messageIndex entry is dropped by the final put.
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        history.lock(sessionId);
+        try {
+            Map<Integer, MessagePreviewData> entries = history.get(sessionId);
+            if (entries == null) {
+                entries = new HashMap<>();
             }
-            history.put(messageIndex, previewData);
-            cache.put(sessionId, history);
+            entries.put(messageIndex, previewData);
+            history.put(sessionId, entries);
+        }
+        finally {
+            history.unlock(sessionId);
         }
     }
 
@@ -237,14 +236,10 @@ public class AtlasAgentSessionCacheService {
      * @param sessionId the session ID
      * @return map of assistant message index to preview data, or empty map if none exist
      */
-    @SuppressWarnings("unchecked")
     public Map<Integer, MessagePreviewData> getPreviewHistory(String sessionId) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        if (cache == null) {
-            return Map.of();
-        }
-        Map<Integer, MessagePreviewData> history = cache.get(sessionId, Map.class);
-        return history != null ? history : Map.of();
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        Map<Integer, MessagePreviewData> entries = history.get(sessionId);
+        return entries != null ? entries : Map.of();
     }
 
     /**
@@ -253,10 +248,7 @@ public class AtlasAgentSessionCacheService {
      * @param sessionId the session ID
      */
     public void clearPreviewHistory(String sessionId) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        if (cache != null) {
-            cache.evict(sessionId);
-        }
-        previewHistoryLocks.remove(sessionId);
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        history.delete(sessionId);
     }
 }

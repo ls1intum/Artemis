@@ -19,7 +19,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -39,13 +42,16 @@ class AtlasAgentSessionCacheServiceTest {
     @Mock
     private Cache relationsCache;
 
+    @Mock
+    private HazelcastInstance mockHazelcastInstance;
+
     private AtlasAgentSessionCacheService service;
 
     private static final String SESSION_ID = "course_1_user_1";
 
     @BeforeEach
     void setUp() {
-        service = new AtlasAgentSessionCacheService(cacheManager);
+        service = new AtlasAgentSessionCacheService(cacheManager, mockHazelcastInstance);
     }
 
     @Test
@@ -106,29 +112,34 @@ class AtlasAgentSessionCacheServiceTest {
 
     @Test
     void shouldNotLoseEntriesUnderConcurrentStoreCalls() throws Exception {
-        // Use a real cache manager so the read-modify-write race on the history map is actually reproducible.
-        CacheManager realCacheManager = new ConcurrentMapCacheManager(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(realCacheManager);
+        // Use a real local Hazelcast instance so the distributed IMap.lock() contract is actually exercised.
+        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(new Config().setClusterName("atlas-session-cache-test-" + System.nanoTime()));
+        try {
+            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, hazelcast);
 
-        int threads = 32;
-        ExecutorService pool = Executors.newFixedThreadPool(threads);
-        CountDownLatch start = new CountDownLatch(1);
-        List<Future<?>> futures = new ArrayList<>();
-        for (int i = 0; i < threads; i++) {
-            int idx = i;
-            futures.add(pool.submit(() -> {
-                start.await();
-                realService.storePreviewForMessage(SESSION_ID, idx, new MessagePreviewData(null, null, null, null));
-                return null;
-            }));
-        }
-        start.countDown();
-        for (Future<?> f : futures) {
-            f.get(10, TimeUnit.SECONDS);
-        }
-        pool.shutdown();
+            int threads = 32;
+            ExecutorService pool = Executors.newFixedThreadPool(threads);
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                int idx = i;
+                futures.add(pool.submit(() -> {
+                    start.await();
+                    realService.storePreviewForMessage(SESSION_ID, idx, new MessagePreviewData(null, null, null, null));
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> f : futures) {
+                f.get(10, TimeUnit.SECONDS);
+            }
+            pool.shutdown();
 
-        assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
+            assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
+        }
+        finally {
+            hazelcast.shutdown();
+        }
     }
 
     @Test
