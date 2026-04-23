@@ -54,7 +54,12 @@ import { ProgressBar } from 'primeng/progressbar';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
-type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted';
+type ExamProgress =
+    | { status: 'examMissing' }
+    | { status: 'notStarted' }
+    | { status: 'started' }
+    | { status: 'submitted' }
+    | { status: 'inconsistent'; state: { hasExam: boolean; started: boolean; submitted: boolean } };
 
 interface ExamUserWithExamData extends ExamUser {
     workingTime?: number;
@@ -152,14 +157,13 @@ export class ExamStudentsComponent implements OnDestroy {
 
         return exam.examUsers.map((examUser) => {
             const studentExam = examUser.user?.id ? studentExamsByUserId.get(examUser.user.id) : undefined;
+
+            const hasExam = !!studentExam;
+            const started = !!studentExam?.started;
+            const submitted = !!studentExam?.submitted;
             const studentExamWithExam = studentExam ? Object.assign({}, studentExam, { exam }) : undefined;
-            const progress: ExamProgress = studentExamWithExam?.submitted
-                ? 'submitted'
-                : studentExamWithExam?.started
-                  ? 'started'
-                  : studentExamWithExam
-                    ? 'notStarted'
-                    : 'examMissing';
+
+            const progress = this.computeProgress(submitted, hasExam, started);
 
             return Object.assign({}, examUser, {
                 didExamUserAttendExam: hasExamEnded ? !!studentExamWithExam?.started : examUser.didExamUserAttendExam,
@@ -172,6 +176,7 @@ export class ExamStudentsComponent implements OnDestroy {
             }) as ExamUserWithExamData;
         });
     });
+
     readonly hasRegisteredUsers = computed(() => this.allRegisteredUsers().length != 0);
 
     readonly isMissingIndividualExams = computed(() => {
@@ -198,11 +203,12 @@ export class ExamStudentsComponent implements OnDestroy {
 
     readonly filterFields: Path<ExamUser, 1>[] = ['user.login', 'user.name', 'user.email', 'user.visibleRegistrationNumber'] as const;
 
-    private readonly progressRank: Record<ExamProgress, number> = {
-        examMissing: 0,
-        notStarted: 1,
-        started: 2,
-        submitted: 3,
+    private readonly progressRank: Record<ExamProgress['status'], number> = {
+        inconsistent: 0,
+        examMissing: 1,
+        notStarted: 2,
+        started: 3,
+        submitted: 4,
     } as const;
 
     // Icons
@@ -306,6 +312,10 @@ export class ExamStudentsComponent implements OnDestroy {
                 exercisePreparationSubscription.unsubscribe();
             });
         });
+    }
+
+    ngOnDestroy() {
+        this.dialogErrorSource.unsubscribe();
     }
 
     openImportUsersDialog() {
@@ -424,8 +434,24 @@ export class ExamStudentsComponent implements OnDestroy {
         });
     }
 
-    ngOnDestroy() {
-        this.dialogErrorSource.unsubscribe();
+    private computeProgress(submitted: boolean, hasExam: boolean, started: boolean): ExamProgress {
+        if (submitted) {
+            if (!hasExam || !started) {
+                return { status: 'inconsistent', state: { hasExam, started, submitted } };
+            } else {
+                return { status: 'submitted' };
+            }
+        } else if (started) {
+            if (!hasExam) {
+                return { status: 'inconsistent', state: { hasExam, started, submitted } };
+            } else {
+                return { status: 'started' };
+            }
+        } else if (hasExam) {
+            return { status: 'notStarted' };
+        } else {
+            return { status: 'examMissing' };
+        }
     }
 
     /**
@@ -687,12 +713,12 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     private compareProgress(a: ExamUserWithExamData, b: ExamUserWithExamData, order: number) {
-        const byProgress = (this.progressRank[a.progress] - this.progressRank[b.progress]) * order;
+        const byProgress = (this.progressRank[a.progress.status] - this.progressRank[b.progress.status]) * order;
         if (byProgress !== 0) {
             return byProgress;
         }
 
-        if (a.progress === 'submitted' && b.progress === 'submitted') {
+        if (a.progress.status === 'submitted' && b.progress.status === 'submitted') {
             const bySubmissionDate = this.compareNullableNumbers(a.submissionDate?.valueOf(), b.submissionDate?.valueOf(), order);
             if (bySubmissionDate !== 0) {
                 return bySubmissionDate;

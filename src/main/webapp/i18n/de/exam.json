@@ -607,6 +607,8 @@
                     "sessions": "Sitzungen",
                     "actions": "Aktionen",
                     "progressSubmittedOn": "Abgegeben am",
+                    "progressInconsistent": "Inkonsistent",
+                    "progressInconsistentTooltip": "hat Klausur: {{hasExam}}, gestartet: {{started}}, abgegeben: {{submitted}}",
                     "progressSubmitted": "Abgegeben",
                     "progressStarted": "Gestartet",
                     "progressNotStarted": "Nicht gestartet",

@@ -607,6 +607,8 @@
                     "sessions": "Sessions",
                     "actions": "Actions",
                     "progressSubmittedOn": "Submitted on",
+                    "progressInconsistent": "Inconsistent",
+                    "progressInconsistentTooltip": "has Exam: {{hasExam}}, started: {{started}}, submitted: {{submitted}}",
                     "progressSubmitted": "Submitted",
                     "progressStarted": "Started",
                     "progressNotStarted": "Not started",

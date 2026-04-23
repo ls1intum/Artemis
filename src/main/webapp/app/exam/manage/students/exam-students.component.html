@@ -319,18 +319,34 @@
                         }
                     </td>
                     <td>
-                        @if (examUser.progress === 'submitted' && examUser.submissionDate) {
+                        @if (examUser.progress.status === 'inconsistent') {
+                            <p-tag
+                                severity="danger"
+                                [pTooltip]="
+                                    'artemisApp.examManagement.examStudents.table.progressInconsistentTooltip'
+                                        | artemisTranslate
+                                            : {
+                                                  hasExam: (examUser.progress.state.hasExam ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate,
+                                                  started: (examUser.progress.state.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate,
+                                                  submitted: (examUser.progress.state.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate,
+                                              }
+                                "
+                                tooltipPosition="top"
+                            >
+                                {{ 'artemisApp.examManagement.examStudents.table.progressInconsistent' | artemisTranslate }}
+                            </p-tag>
+                        } @else if (examUser.progress.status === 'submitted' && examUser.submissionDate) {
                             <p-tag severity="success"
                                 >{{ 'artemisApp.examManagement.examStudents.table.progressSubmittedOn' | artemisTranslate }} {{ examUser.submissionDate | artemisDate }}</p-tag
                             >
-                        } @else if (examUser.progress === 'submitted') {
+                        } @else if (examUser.progress.status === 'submitted') {
                             <p-tag severity="success" jhiTranslate="artemisApp.examManagement.examStudents.table.progressSubmitted" />
-                        } @else if (examUser.progress === 'started') {
+                        } @else if (examUser.progress.status === 'started') {
                             <p-tag severity="info" jhiTranslate="artemisApp.examManagement.examStudents.table.progressStarted" />
-                        } @else if (examUser.progress === 'notStarted') {
-                            <p-tag severity="warn" jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted" />
+                        } @else if (examUser.progress.status === 'notStarted') {
+                            <p-tag severity="info" jhiTranslate="artemisApp.examManagement.examStudents.table.progressNotStarted" />
                         } @else {
-                            <p-tag severity="danger" jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing" />
+                            <p-tag severity="warn" jhiTranslate="artemisApp.examManagement.examStudents.table.progressExamMissing" />
                         }
                     </td>
                     <td>

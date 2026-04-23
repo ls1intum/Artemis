@@ -139,9 +139,9 @@ describe('ExamStudentsComponent', () => {
         expect(component.exam()).toEqual(examWithCourse);
         expect(component.allRegisteredUsers()[0].studentExamId).toBe(123);
         expect(component.allRegisteredUsers()[0].numberOfExamSessions).toBe(2);
-        expect(component.allRegisteredUsers()[0].progress).toBe('started');
+        expect(component.allRegisteredUsers()[0].progress.status).toBe('started');
         expect(component.allRegisteredUsers()[1].studentExamId).toBeUndefined();
-        expect(component.allRegisteredUsers()[1].progress).toBe('examMissing');
+        expect(component.allRegisteredUsers()[1].progress.status).toBe('examMissing');
     });
 
     it('should reload with only registered users', () => {
@@ -162,7 +162,7 @@ describe('ExamStudentsComponent', () => {
         expect(component.allRegisteredUsers()).toHaveLength(1);
         expect(component.allRegisteredUsers()[0].user?.id).toBe(user2.id);
         expect(component.allRegisteredUsers()[0].studentExamId).toBeUndefined();
-        expect(component.allRegisteredUsers()[0].progress).toBe('examMissing');
+        expect(component.allRegisteredUsers()[0].progress.status).toBe('examMissing');
     });
 
     it('should remove users from the exam', () => {
