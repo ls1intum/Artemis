@@ -24,12 +24,12 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchem
  * others. Weaviate's null-aware inverted index (enabled in {@code WeaviateService.ensureCollectionExists})
  * makes this wide, optional schema cheap.
  */
-public final class SearchableItemSchema {
+public final class SearchableEntitySchema {
 
     /**
      * Utility class, should not be instantiated.
      */
-    private SearchableItemSchema() {
+    private SearchableEntitySchema() {
     }
 
     /**

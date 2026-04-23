@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 
 /**
@@ -188,7 +188,7 @@ public class FaqResource {
         faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
         if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.FAQ, faqId);
+            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }

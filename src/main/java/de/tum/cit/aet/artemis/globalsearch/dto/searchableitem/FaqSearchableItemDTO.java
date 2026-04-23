@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
  * Snapshot of the data needed to upsert an FAQ into the unified {@code SearchableItems} Weaviate
@@ -28,19 +28,19 @@ public record FaqSearchableItemDTO(Long faqId, Long courseId, String questionTit
     /**
      * Produces the Weaviate property map for this FAQ row.
      *
-     * @return the property map keyed by {@link SearchableItemSchema.Properties}
+     * @return the property map keyed by {@link SearchableEntitySchema.Properties}
      */
     public Map<String, Object> toPropertyMap() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableItemSchema.Properties.TYPE, SearchableItemSchema.TypeValues.FAQ);
-        properties.put(SearchableItemSchema.Properties.ENTITY_ID, faqId);
-        properties.put(SearchableItemSchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableItemSchema.Properties.TITLE, questionTitle);
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.FAQ);
+        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, faqId);
+        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
+        properties.put(SearchableEntitySchema.Properties.TITLE, questionTitle);
         if (questionAnswer != null) {
-            properties.put(SearchableItemSchema.Properties.DESCRIPTION, questionAnswer);
+            properties.put(SearchableEntitySchema.Properties.DESCRIPTION, questionAnswer);
         }
         if (faqState != null) {
-            properties.put(SearchableItemSchema.Properties.FAQ_STATE, faqState);
+            properties.put(SearchableEntitySchema.Properties.FAQ_STATE, faqState);
         }
         return properties;
     }

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
  * Snapshot of the data needed to upsert a channel into the unified {@code SearchableItems} Weaviate
@@ -58,19 +58,19 @@ public record ChannelSearchableItemDTO(Long channelId, Long courseId, String nam
     /**
      * Produces the Weaviate property map for this channel row.
      *
-     * @return the property map keyed by {@link SearchableItemSchema.Properties}
+     * @return the property map keyed by {@link SearchableEntitySchema.Properties}
      */
     public Map<String, Object> toPropertyMap() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableItemSchema.Properties.TYPE, SearchableItemSchema.TypeValues.CHANNEL);
-        properties.put(SearchableItemSchema.Properties.ENTITY_ID, channelId);
-        properties.put(SearchableItemSchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableItemSchema.Properties.TITLE, name);
-        properties.put(SearchableItemSchema.Properties.CHANNEL_IS_COURSE_WIDE, isCourseWide);
-        properties.put(SearchableItemSchema.Properties.CHANNEL_IS_PUBLIC, isPublic);
-        properties.put(SearchableItemSchema.Properties.CHANNEL_IS_ARCHIVED, isArchived);
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL);
+        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, channelId);
+        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
+        properties.put(SearchableEntitySchema.Properties.TITLE, name);
+        properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, isCourseWide);
+        properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, isPublic);
+        properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED, isArchived);
         if (description != null) {
-            properties.put(SearchableItemSchema.Properties.DESCRIPTION, description);
+            properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }
         return properties;
     }

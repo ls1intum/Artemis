@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ChannelSearchableItemDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ExamSearchableItemDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ExerciseSearchableItemDTO;
@@ -58,8 +58,8 @@ public class SearchableItemWeaviateService {
      * short-name matches (exercises only) count twice as much. Prevents long problem statements from
      * outscoring short, on-point titles.
      */
-    private static final String[] QUERY_PROPERTIES = { SearchableItemSchema.Properties.TITLE + "^3", SearchableItemSchema.Properties.SHORT_NAME + "^2",
-            SearchableItemSchema.Properties.DESCRIPTION + "^1" };
+    private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
+            SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
     private final WeaviateService weaviateService;
 
@@ -86,7 +86,7 @@ public class SearchableItemWeaviateService {
      */
     public List<Map<String, Object>> searchSearchableItems(String query, Filter filter, int limit) {
         try {
-            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             boolean browse = query == null || query.isBlank();
 
             if (browse) {
@@ -157,7 +157,7 @@ public class SearchableItemWeaviateService {
         }
         try {
             ExerciseSearchableItemDTO dto = ExerciseSearchableItemDTO.fromExercise(exercise);
-            upsertRow(SearchableItemSchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
             log.debug("Successfully upserted exercise {} '{}' in Weaviate", dto.exerciseId(), dto.exerciseTitle());
         }
         catch (Exception e) {
@@ -196,7 +196,7 @@ public class SearchableItemWeaviateService {
         int successCount = 0;
         for (ExerciseSearchableItemDTO dto : dtos) {
             try {
-                upsertRow(SearchableItemSchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
+                upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
                 successCount++;
             }
             catch (Exception e) {
@@ -222,7 +222,7 @@ public class SearchableItemWeaviateService {
         }
         try {
             LectureSearchableItemDTO dto = LectureSearchableItemDTO.fromLecture(lecture);
-            upsertRow(SearchableItemSchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture {} '{}' in Weaviate", dto.lectureId(), dto.lectureTitle());
         }
         catch (Exception e) {
@@ -252,7 +252,7 @@ public class SearchableItemWeaviateService {
         }
         try {
             LectureUnitSearchableItemDTO dto = LectureUnitSearchableItemDTO.fromLectureUnit(unit);
-            upsertRow(SearchableItemSchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture unit {} '{}' in Weaviate", dto.lectureUnitId(), dto.unitName());
         }
         catch (Exception e) {
@@ -271,9 +271,9 @@ public class SearchableItemWeaviateService {
     public void deleteAllLectureUnitsForLectureAsync(long lectureId) {
         SecurityUtils.setAuthorizationObject();
         try {
-            var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
-            var filter = Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.LECTURE_UNIT),
-                    Filter.property(SearchableItemSchema.Properties.LECTURE_ID).eq(lectureId));
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
+                    Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId));
             var result = collection.data.deleteMany(filter);
             log.debug("Deleted {} lecture unit rows for lecture {}", result.successful(), lectureId);
         }
@@ -298,7 +298,7 @@ public class SearchableItemWeaviateService {
         }
         try {
             ExamSearchableItemDTO dto = ExamSearchableItemDTO.fromExam(exam);
-            upsertRow(SearchableItemSchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
             log.debug("Successfully upserted exam {} '{}' in Weaviate", dto.examId(), dto.examTitle());
         }
         catch (Exception e) {
@@ -322,7 +322,7 @@ public class SearchableItemWeaviateService {
         }
         try {
             FaqSearchableItemDTO dto = FaqSearchableItemDTO.fromFaq(faq);
-            upsertRow(SearchableItemSchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
             log.debug("Successfully upserted faq {} '{}' in Weaviate", dto.faqId(), dto.questionTitle());
         }
         catch (Exception e) {
@@ -347,12 +347,12 @@ public class SearchableItemWeaviateService {
         }
         try {
             if (!ChannelSearchableItemDTO.isIndexable(channel)) {
-                deleteEntityInternal(SearchableItemSchema.TypeValues.CHANNEL, channel.getId());
+                deleteEntityInternal(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
                 log.debug("Channel {} is no longer indexable (not course-wide and not public); removed from Weaviate", channel.getId());
                 return;
             }
             ChannelSearchableItemDTO dto = ChannelSearchableItemDTO.fromChannel(channel);
-            upsertRow(SearchableItemSchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
+            upsertRow(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
             log.debug("Successfully upserted channel {} '{}' in Weaviate", dto.channelId(), dto.name());
         }
         catch (Exception e) {
@@ -365,7 +365,7 @@ public class SearchableItemWeaviateService {
     /**
      * Asynchronously deletes a specific entity row from the unified collection.
      *
-     * @param type     the entity type (use constants from {@link SearchableItemSchema.TypeValues})
+     * @param type     the entity type (use constants from {@link SearchableEntitySchema.TypeValues})
      * @param entityId the entity id
      */
     @Async
@@ -390,8 +390,8 @@ public class SearchableItemWeaviateService {
     public void deleteAllForCourseAsync(long courseId) {
         SecurityUtils.setAuthorizationObject();
         try {
-            var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
-            var result = collection.data.deleteMany(Filter.property(SearchableItemSchema.Properties.COURSE_ID).eq(courseId));
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var result = collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
             log.debug("Deleted {} rows for course {}", result.successful(), courseId);
         }
         catch (Exception e) {
@@ -407,9 +407,10 @@ public class SearchableItemWeaviateService {
      */
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
-            var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             var existing = collection.query.fetchObjects(query -> query
-                    .filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(type), Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(entityId)))
+                    .filters(
+                            Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)))
                     .limit(1));
             if (!existing.objects().isEmpty()) {
                 String uuid = existing.objects().getFirst().uuid();
@@ -425,8 +426,8 @@ public class SearchableItemWeaviateService {
     }
 
     private void deleteEntityInternal(String type, long entityId) {
-        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
-        collection.data
-                .deleteMany(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(type), Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(entityId)));
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        collection.data.deleteMany(
+                Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)));
     }
 }

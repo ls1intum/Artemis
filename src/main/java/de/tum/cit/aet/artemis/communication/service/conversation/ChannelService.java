@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -210,7 +210,7 @@ public class ChannelService {
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             if (searchableItemWeaviateService != null) {
-                searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.CHANNEL, channel.getId());
+                searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
             }
             conversationService.deleteConversation(channel.getId());
         }
@@ -537,7 +537,7 @@ public class ChannelService {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
             if (searchableItemWeaviateService != null) {
-                searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.CHANNEL, exerciseChannelId);
+                searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
             }
             conversationService.deleteConversation(exerciseChannelId);
         }

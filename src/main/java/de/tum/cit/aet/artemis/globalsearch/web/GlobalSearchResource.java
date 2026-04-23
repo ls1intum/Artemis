@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,8 +55,9 @@ public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
 
-    private static final Set<String> VALID_TYPES = Set.of(SearchableItemSchema.TypeValues.EXERCISE, SearchableItemSchema.TypeValues.LECTURE,
-            SearchableItemSchema.TypeValues.LECTURE_UNIT, SearchableItemSchema.TypeValues.EXAM, SearchableItemSchema.TypeValues.FAQ, SearchableItemSchema.TypeValues.CHANNEL);
+    private static final Set<String> VALID_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
+            SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
+            SearchableEntitySchema.TypeValues.CHANNEL);
 
     private final SearchableItemWeaviateService searchableItemWeaviateService;
 
@@ -160,7 +161,7 @@ public class GlobalSearchResource {
     private Map<Long, String> resolveCourseNames(List<Map<String, Object>> rawResults) {
         Set<Long> courseIds = new HashSet<>();
         for (Map<String, Object> properties : rawResults) {
-            Object raw = properties.get(SearchableItemSchema.Properties.COURSE_ID);
+            Object raw = properties.get(SearchableEntitySchema.Properties.COURSE_ID);
             if (raw instanceof Number number) {
                 courseIds.add(number.longValue());
             }
@@ -209,37 +210,37 @@ public class GlobalSearchResource {
         CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
 
         List<Filter> disjuncts = new ArrayList<>();
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.EXERCISE)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
             Filter disjunct = buildExerciseDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.LECTURE)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
             Filter disjunct = buildLectureDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.LECTURE_UNIT)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
             Filter disjunct = buildLectureUnitDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.EXAM)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
             Filter disjunct = buildExamDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.FAQ)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
             Filter disjunct = buildFaqDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableItemSchema.TypeValues.CHANNEL)) {
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
             Filter disjunct = buildChannelDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
@@ -299,30 +300,30 @@ public class GlobalSearchResource {
     private Filter buildExerciseDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
         }
         if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT)));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT)));
         }
         Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableItemSchema.TypeValues.EXERCISE), combined);
+        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), combined);
     }
 
     private static Filter exerciseAccessFilter(Role role) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
             // TAs: regular exercises always visible; exam exercises only after exam end
-            return Filter.or(Filter.property(SearchableItemSchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
-                    .and(Filter.property(SearchableItemSchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableItemSchema.Properties.EXAM_END_DATE).lte(now)));
+            return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
+                    .and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now)));
         }
         // Students: released regular exercises OR exam exercises after exam start
-        Filter releasedRegularExercises = Filter.and(Filter.property(SearchableItemSchema.Properties.IS_EXAM_EXERCISE).eq(false),
-                Filter.or(Filter.property(SearchableItemSchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableItemSchema.Properties.RELEASE_DATE).isNull()));
-        Filter startedExamExercises = Filter.and(Filter.property(SearchableItemSchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                Filter.property(SearchableItemSchema.Properties.EXAM_START_DATE).lte(now));
+        Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
+                Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
+        Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
         return Filter.or(releasedRegularExercises, startedExamExercises);
     }
 
@@ -332,7 +333,7 @@ public class GlobalSearchResource {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableItemSchema.TypeValues.LECTURE), courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     // -- LectureUnit disjunct --
@@ -340,14 +341,14 @@ public class GlobalSearchResource {
     private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.property(SearchableItemSchema.Properties.UNIT_VISIBLE).eq(true)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+                    Filter.property(SearchableEntitySchema.Properties.UNIT_VISIBLE).eq(true)));
         }
         Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableItemSchema.TypeValues.LECTURE_UNIT), combined);
+        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);
     }
 
     // -- Exam disjunct --
@@ -356,14 +357,14 @@ public class GlobalSearchResource {
         OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.property(SearchableItemSchema.Properties.VISIBLE_DATE).lte(now)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+                    Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now)));
         }
         Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableItemSchema.TypeValues.EXAM), combined);
+        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXAM), combined);
     }
 
     // -- FAQ disjunct --
@@ -371,14 +372,14 @@ public class GlobalSearchResource {
     private Filter buildFaqDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.property(SearchableItemSchema.Properties.FAQ_STATE).eq("ACCEPTED")));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+                    Filter.property(SearchableEntitySchema.Properties.FAQ_STATE).eq("ACCEPTED")));
         }
         Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableItemSchema.TypeValues.FAQ), combined);
+        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.FAQ), combined);
     }
 
     // -- Channel disjunct --
@@ -387,16 +388,16 @@ public class GlobalSearchResource {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        Filter courseScope = courseIdIn(SearchableItemSchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
-        Filter visibility = Filter.or(Filter.property(SearchableItemSchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
-                Filter.property(SearchableItemSchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
-        return Filter.and(typeEquals(SearchableItemSchema.TypeValues.CHANNEL), courseScope, visibility);
+        Filter courseScope = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
+        Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
+                Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
     }
 
     // -- Shared helpers --
 
     private static Filter typeEquals(String type) {
-        return Filter.property(SearchableItemSchema.Properties.TYPE).eq(type);
+        return Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type);
     }
 
     private static Filter courseIdIn(String property, List<Long> courseIds) {

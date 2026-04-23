@@ -20,7 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -77,9 +77,9 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
-            assertThat(properties.get(SearchableItemSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
-            assertThat(properties.get(SearchableItemSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
-            assertThat(((Number) properties.get(SearchableItemSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
+            assertThat(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+            assertThat(properties.get(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
         }
 
         @Test
@@ -100,9 +100,9 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(updatedTitle);
-                assertThat(((Number) properties.get(SearchableItemSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
-                assertThat(((Number) properties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId());
+                assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedTitle);
+                assertThat(((Number) properties.get(SearchableEntitySchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
+                assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId());
             });
         }
 
@@ -113,7 +113,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
 
-            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.EXERCISE, programmingExercise.getId());
+            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
         }
@@ -138,7 +138,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.DESCRIPTION)).isEqualTo(newProblem);
+                assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo(newProblem);
             });
         }
 
@@ -161,7 +161,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.DUE_DATE)).isNotNull();
+                assertThat(properties.get(SearchableEntitySchema.Properties.DUE_DATE)).isNotNull();
             });
         }
     }

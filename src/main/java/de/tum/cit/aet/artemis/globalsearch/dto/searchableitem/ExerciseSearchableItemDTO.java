@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -74,39 +74,39 @@ public record ExerciseSearchableItemDTO(Long exerciseId, Long courseId, String e
      * Produces the Weaviate property map for this exercise row. Absent/null fields are omitted so the
      * sparse inverted index does not record them.
      *
-     * @return the property map keyed by {@link SearchableItemSchema.Properties}
+     * @return the property map keyed by {@link SearchableEntitySchema.Properties}
      */
     public Map<String, Object> toPropertyMap() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableItemSchema.Properties.TYPE, SearchableItemSchema.TypeValues.EXERCISE);
-        properties.put(SearchableItemSchema.Properties.ENTITY_ID, exerciseId);
-        properties.put(SearchableItemSchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableItemSchema.Properties.TITLE, exerciseTitle);
-        properties.put(SearchableItemSchema.Properties.EXERCISE_TYPE, exerciseType);
-        properties.put(SearchableItemSchema.Properties.MAX_POINTS, maxPoints);
-        properties.put(SearchableItemSchema.Properties.IS_EXAM_EXERCISE, isExamExercise);
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
+        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, exerciseId);
+        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
+        properties.put(SearchableEntitySchema.Properties.TITLE, exerciseTitle);
+        properties.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, exerciseType);
+        properties.put(SearchableEntitySchema.Properties.MAX_POINTS, maxPoints);
+        properties.put(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE, isExamExercise);
 
-        putIfNotNull(properties, SearchableItemSchema.Properties.SHORT_NAME, shortName);
-        putIfNotNull(properties, SearchableItemSchema.Properties.DESCRIPTION, problemStatement);
-        putIfNotNull(properties, SearchableItemSchema.Properties.RELEASE_DATE, formatDate(releaseDate));
-        putIfNotNull(properties, SearchableItemSchema.Properties.START_DATE, formatDate(startDate));
-        putIfNotNull(properties, SearchableItemSchema.Properties.DUE_DATE, formatDate(dueDate));
-        putIfNotNull(properties, SearchableItemSchema.Properties.DIFFICULTY, difficulty);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.SHORT_NAME, shortName);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.DESCRIPTION, problemStatement);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.RELEASE_DATE, formatDate(releaseDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.START_DATE, formatDate(startDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.DUE_DATE, formatDate(dueDate));
+        putIfNotNull(properties, SearchableEntitySchema.Properties.DIFFICULTY, difficulty);
 
         if (isExamExercise && examId != null) {
-            properties.put(SearchableItemSchema.Properties.EXAM_ID, examId);
-            putIfNotNull(properties, SearchableItemSchema.Properties.TEST_EXAM, isTestExam);
-            putIfNotNull(properties, SearchableItemSchema.Properties.EXAM_VISIBLE_DATE, formatDate(examVisibleDate));
-            putIfNotNull(properties, SearchableItemSchema.Properties.EXAM_START_DATE, formatDate(examStartDate));
-            putIfNotNull(properties, SearchableItemSchema.Properties.EXAM_END_DATE, formatDate(examEndDate));
+            properties.put(SearchableEntitySchema.Properties.EXAM_ID, examId);
+            putIfNotNull(properties, SearchableEntitySchema.Properties.TEST_EXAM, isTestExam);
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, formatDate(examVisibleDate));
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_START_DATE, formatDate(examStartDate));
+            putIfNotNull(properties, SearchableEntitySchema.Properties.EXAM_END_DATE, formatDate(examEndDate));
         }
 
-        putIfNotNull(properties, SearchableItemSchema.Properties.PROGRAMMING_LANGUAGE, programmingLanguage);
-        putIfNotNull(properties, SearchableItemSchema.Properties.PROJECT_TYPE, projectType);
-        putIfNotNull(properties, SearchableItemSchema.Properties.DIAGRAM_TYPE, diagramType);
-        putIfNotNull(properties, SearchableItemSchema.Properties.QUIZ_MODE, quizMode);
-        putIfNotNull(properties, SearchableItemSchema.Properties.QUIZ_DURATION, quizDuration);
-        putIfNotNull(properties, SearchableItemSchema.Properties.FILE_PATTERN, filePattern);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE, programmingLanguage);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.PROJECT_TYPE, projectType);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.DIAGRAM_TYPE, diagramType);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.QUIZ_MODE, quizMode);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.QUIZ_DURATION, quizDuration);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.FILE_PATTERN, filePattern);
 
         return properties;
     }

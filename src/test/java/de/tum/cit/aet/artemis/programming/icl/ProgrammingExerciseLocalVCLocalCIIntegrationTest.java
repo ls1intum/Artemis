@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
@@ -249,7 +249,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
-                Object releaseDateObj = properties.get(SearchableItemSchema.Properties.RELEASE_DATE);
+                Object releaseDateObj = properties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Initial release date should be set in Weaviate").isNotNull();
             });
         }
@@ -271,10 +271,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
                 var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
                 assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
-                assertThat(weaviateProperties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
-                assertThat(((Number) weaviateProperties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
+                assertThat(((Number) weaviateProperties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.getId());
                 // Verify that the release date was actually updated in Weaviate
-                Object releaseDateObj = weaviateProperties.get(SearchableItemSchema.Properties.RELEASE_DATE);
+                Object releaseDateObj = weaviateProperties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
                 ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
                 // Compare as instants with a small tolerance because Weaviate may not preserve

@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -174,7 +174,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(newChannelName);
+                assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(newChannelName);
             });
         }
 
@@ -192,7 +192,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryChannelProperties(weaviateService, createdChannel.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo("exercise-renamed");
+                assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("exercise-renamed");
             });
         }
 
@@ -213,7 +213,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 var properties = queryChannelProperties(weaviateService, createdChannel.getId());
                 assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableItemSchema.Properties.CHANNEL_IS_ARCHIVED)).isEqualTo(true);
+                assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED)).isEqualTo(true);
             });
         }
     }

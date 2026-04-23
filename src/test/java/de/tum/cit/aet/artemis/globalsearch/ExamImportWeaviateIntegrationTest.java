@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -79,7 +79,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
 
         var examProperties = queryExamProperties(weaviateService, importedExam.getId());
         assertThat(examProperties).isNotNull();
-        assertThat(examProperties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(importedExam.getTitle());
+        assertThat(examProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(importedExam.getTitle());
 
         // Verify all imported exercises are indexed in Weaviate with correct exam dates
         for (ExerciseGroup group : importedExam.getExerciseGroups()) {

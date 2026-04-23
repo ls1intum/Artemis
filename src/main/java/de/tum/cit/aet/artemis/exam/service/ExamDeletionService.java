@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -162,7 +162,7 @@ public class ExamDeletionService {
         deleteGradingScaleOfExam(exam);
 
         if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.EXAM, examId);
+            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId);
         }
 
         // fetch the exam again to allow Hibernate to delete it properly

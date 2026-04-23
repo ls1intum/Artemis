@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
@@ -560,7 +560,7 @@ public class CourseDeletionService {
         var faqs = faqRepository.findAllByCourseId(courseId);
         pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
         if (searchableItemWeaviateService != null) {
-            faqs.forEach(faq -> searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.FAQ, faq.getId()));
+            faqs.forEach(faq -> searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId()));
         }
         faqRepository.deleteAllByCourseId(courseId);
     }

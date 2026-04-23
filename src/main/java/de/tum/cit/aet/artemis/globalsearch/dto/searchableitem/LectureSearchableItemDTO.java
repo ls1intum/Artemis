@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
@@ -32,22 +32,22 @@ public record LectureSearchableItemDTO(Long lectureId, Long courseId, String lec
     /**
      * Produces the Weaviate property map for this lecture row. Null optional fields are omitted.
      *
-     * @return the property map keyed by {@link SearchableItemSchema.Properties}
+     * @return the property map keyed by {@link SearchableEntitySchema.Properties}
      */
     public Map<String, Object> toPropertyMap() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableItemSchema.Properties.TYPE, SearchableItemSchema.TypeValues.LECTURE);
-        properties.put(SearchableItemSchema.Properties.ENTITY_ID, lectureId);
-        properties.put(SearchableItemSchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableItemSchema.Properties.TITLE, lectureTitle);
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE);
+        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, lectureId);
+        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
+        properties.put(SearchableEntitySchema.Properties.TITLE, lectureTitle);
         if (description != null) {
-            properties.put(SearchableItemSchema.Properties.DESCRIPTION, description);
+            properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }
         if (startDate != null) {
-            properties.put(SearchableItemSchema.Properties.START_DATE, startDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            properties.put(SearchableEntitySchema.Properties.START_DATE, startDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         if (endDate != null) {
-            properties.put(SearchableItemSchema.Properties.END_DATE, endDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            properties.put(SearchableEntitySchema.Properties.END_DATE, endDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         return properties;
     }

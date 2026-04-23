@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -514,7 +514,7 @@ public class LectureResource {
 
     private void deleteLectureFromWeaviate(long lectureId) {
         if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.LECTURE, lectureId);
+            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lectureId);
         }
     }
 }

@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
  * <p>
  * Only {@link TextUnit}, {@link OnlineUnit} and {@link AttachmentVideoUnit} are indexed; exercise
  * units are intentionally skipped because the underlying exercise is already indexed as
- * {@link SearchableItemSchema.TypeValues#EXERCISE}.
+ * {@link SearchableEntitySchema.TypeValues#EXERCISE}.
  * <p>
  * {@code unitVisible} is pre-computed at upsert time from {@link LectureUnit#getReleaseDate()} so
  * student visibility can be filtered with a single boolean predicate — no join back to the parent
@@ -78,22 +78,22 @@ public record LectureUnitSearchableItemDTO(Long lectureUnitId, Long courseId, Lo
     /**
      * Produces the Weaviate property map for this lecture unit row.
      *
-     * @return the property map keyed by {@link SearchableItemSchema.Properties}
+     * @return the property map keyed by {@link SearchableEntitySchema.Properties}
      */
     public Map<String, Object> toPropertyMap() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableItemSchema.Properties.TYPE, SearchableItemSchema.TypeValues.LECTURE_UNIT);
-        properties.put(SearchableItemSchema.Properties.ENTITY_ID, lectureUnitId);
-        properties.put(SearchableItemSchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableItemSchema.Properties.LECTURE_ID, lectureId);
-        properties.put(SearchableItemSchema.Properties.TITLE, unitName);
-        properties.put(SearchableItemSchema.Properties.UNIT_TYPE, unitType);
-        properties.put(SearchableItemSchema.Properties.UNIT_VISIBLE, unitVisible);
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE_UNIT);
+        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, lectureUnitId);
+        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
+        properties.put(SearchableEntitySchema.Properties.LECTURE_ID, lectureId);
+        properties.put(SearchableEntitySchema.Properties.TITLE, unitName);
+        properties.put(SearchableEntitySchema.Properties.UNIT_TYPE, unitType);
+        properties.put(SearchableEntitySchema.Properties.UNIT_VISIBLE, unitVisible);
         if (description != null) {
-            properties.put(SearchableItemSchema.Properties.DESCRIPTION, description);
+            properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }
         if (releaseDate != null) {
-            properties.put(SearchableItemSchema.Properties.RELEASE_DATE, releaseDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            properties.put(SearchableEntitySchema.Properties.RELEASE_DATE, releaseDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
         return properties;
     }
