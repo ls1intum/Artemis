@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.0.1"
+version = "9.1.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -437,7 +437,10 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 
-    implementation "org.springframework.security:spring-security-saml2-service-provider"
+    // Spring Boot 4 moved SAML2 autoconfiguration out of spring-boot-autoconfigure into this dedicated starter.
+    // It transitively brings spring-security-saml2-service-provider and registers the
+    // RelyingPartyRegistrationRepository bean from spring.security.saml2.relyingparty.* properties.
+    implementation "org.springframework.boot:spring-boot-starter-security-saml2"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
