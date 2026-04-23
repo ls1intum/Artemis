@@ -139,6 +139,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     filePreviewPaths: Map<string, string> = new Map<string, string>();
     dropAllowed = false;
     showPreview = false;
+    backgroundReady = false;
     readonly CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
     isQuestionCollapsed = false;
@@ -244,6 +245,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.adjustClickLayerWidthSubscription = this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
             if (loadingStatus === ImageLoadingStatus.SUCCESS) {
                 setTimeout(() => this.adjustClickLayerWidth(), 300);
+            } else if (loadingStatus === ImageLoadingStatus.LOADING || loadingStatus === ImageLoadingStatus.ERROR) {
+                this.backgroundReady = false;
             }
         });
 
@@ -265,6 +268,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Adjust the click layer to correspond to the area of the background image.
         this.clickLayer().nativeElement.style.width = `${this.backgroundImage().element.nativeElement.offsetWidth}px`;
         this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
+        this.backgroundReady = true;
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -314,6 +319,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     setBackgroundFileFromFile(file: File) {
         const question = this.question();
+        this.backgroundReady = false;
         if (question.backgroundFilePath) {
             this.removeFile.emit(question.backgroundFilePath);
         }
