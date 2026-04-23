@@ -75,12 +75,12 @@ public class FaqResource {
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
-            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
-        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
     }
 
     /**

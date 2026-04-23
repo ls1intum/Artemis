@@ -93,7 +93,7 @@ public class LectureService {
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository, ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider,
+            LectureUnitRepository lectureUnitRepository, ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider,
             YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
@@ -105,7 +105,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
         this.youTubeUrlService = youTubeUrlService;
     }
 

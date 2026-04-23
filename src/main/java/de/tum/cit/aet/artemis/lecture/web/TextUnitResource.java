@@ -63,13 +63,13 @@ public class TextUnitResource {
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository,
-            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
     }
 
     /**

@@ -103,7 +103,7 @@ public class AttachmentVideoUnitResource {
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
             FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
-            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -115,7 +115,7 @@ public class AttachmentVideoUnitResource {
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
         this.youTubeUrlService = youTubeUrlService;
     }
 

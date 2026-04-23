@@ -114,7 +114,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
+            SlideRepository slideRepository, ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -124,7 +124,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
-        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
         this.youTubeUrlService = youTubeUrlService;
     }
 
