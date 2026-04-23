@@ -197,9 +197,11 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
 
     // When called on an /edit page, the Angular component may still be hydrating the
     // form from the server response. A setValue() that races ahead of hydration gets
-    // overwritten when the API response arrives. Retry setValue until the Monaco
-    // value stays put across the debounce window — i.e., no hydration clobbers it.
-    const MAX_ATTEMPTS = 5;
+    // overwritten when the API response arrives (including late arrivals after our
+    // debounce wait). Retry setValue until Monaco holds our text *and keeps holding
+    // it* across a sustained observation window — i.e., no late hydration will
+    // clobber it after we return.
+    const MAX_ATTEMPTS = 8;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         // Get the bounding box of the target Monaco editor element (re-read each
         // attempt; layout can shift on hydration)
@@ -255,29 +257,37 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
             throw new Error(`Failed to set Monaco editor content: ${result.error}`);
         }
 
-        // Artemis's Monaco wrapper pushes the new value into the Angular form via
-        // `textChanged`, which is debounced (200ms). Wait 1s so the debounce has
-        // definitely emitted even under multi-node load.
-        await page.waitForTimeout(1000);
-
-        // Verify our value survived: if hydration raced past us, Monaco's current
-        // value differs from newText and we try again.
-        const actualValue = await page.evaluate(
-            ({ targetBox }) => {
-                const monaco = (window as any).monaco;
-                const editors = monaco?.editor?.getEditors() || [];
-                for (const editor of editors) {
-                    const rect = editor.getDomNode()?.getBoundingClientRect();
-                    if (rect && Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        return editor.getValue();
+        // Sustained-value check: read Monaco's value every 300ms for 2.1s. We need
+        // the value to both (a) match `text` and (b) stay that way — that catches
+        // late hydration that would otherwise overwrite after we return. The first
+        // 1s covers the textChanged debounce (200ms, with buffer), the rest guards
+        // against deferred form population.
+        const readValue = async () =>
+            page.evaluate(
+                ({ targetBox }) => {
+                    const monaco = (window as any).monaco;
+                    const editors = monaco?.editor?.getEditors() || [];
+                    for (const editor of editors) {
+                        const rect = editor.getDomNode()?.getBoundingClientRect();
+                        if (rect && Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
+                            return editor.getValue();
+                        }
                     }
-                }
-                return editors[editors.length - 1]?.getValue() ?? null;
-            },
-            { targetBox: boundingBox },
-        );
+                    return editors[editors.length - 1]?.getValue() ?? null;
+                },
+                { targetBox: boundingBox },
+            );
 
-        if (actualValue === text) {
+        let stable = true;
+        for (let i = 0; i < 7; i++) {
+            await page.waitForTimeout(300);
+            const v = await readValue();
+            if (v !== text) {
+                stable = false;
+                break;
+            }
+        }
+        if (stable) {
             return;
         }
     }
