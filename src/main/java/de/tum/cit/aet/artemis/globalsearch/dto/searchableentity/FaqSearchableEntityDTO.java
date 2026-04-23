@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * collection. The {@code faqState} is stored as a filterable text property so students (who may only
  * see {@code ACCEPTED} entries) can be filtered out from staff-visible entries in a single query.
  */
-public record FaqSearchableItemDTO(Long faqId, Long courseId, String questionTitle, String questionAnswer, String faqState) {
+public record FaqSearchableEntityDTO(Long faqId, Long courseId, String questionTitle, String questionAnswer, String faqState) {
 
     /**
      * Extracts all required data from a {@link Faq} entity.
@@ -20,8 +20,8 @@ public record FaqSearchableItemDTO(Long faqId, Long courseId, String questionTit
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static FaqSearchableItemDTO fromFaq(Faq faq) {
-        return new FaqSearchableItemDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(),
+    public static FaqSearchableEntityDTO fromFaq(Faq faq) {
+        return new FaqSearchableEntityDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(),
                 faq.getFaqState() != null ? faq.getFaqState().name() : null);
     }
 

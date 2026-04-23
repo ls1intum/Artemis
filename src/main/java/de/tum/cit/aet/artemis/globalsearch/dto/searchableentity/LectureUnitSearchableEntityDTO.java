@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
  * student visibility can be filtered with a single boolean predicate — no join back to the parent
  * lecture is needed at query time.
  */
-public record LectureUnitSearchableItemDTO(Long lectureUnitId, Long courseId, Long lectureId, String unitName, String description, String unitType, ZonedDateTime releaseDate,
+public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, Long lectureId, String unitName, String description, String unitType, ZonedDateTime releaseDate,
         boolean unitVisible) {
 
     /**
@@ -36,7 +36,7 @@ public record LectureUnitSearchableItemDTO(Long lectureUnitId, Long courseId, Lo
      * @throws IllegalArgumentException                  if the unit type is not supported for indexing
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static LectureUnitSearchableItemDTO fromLectureUnit(LectureUnit unit) {
+    public static LectureUnitSearchableEntityDTO fromLectureUnit(LectureUnit unit) {
         Lecture lecture = unit.getLecture();
         Long courseId = lecture.getCourse().getId();
         Long lectureId = lecture.getId();
@@ -61,7 +61,7 @@ public record LectureUnitSearchableItemDTO(Long lectureUnitId, Long courseId, Lo
 
         boolean unitVisible = unit.getReleaseDate() == null || !unit.getReleaseDate().isAfter(ZonedDateTime.now());
 
-        return new LectureUnitSearchableItemDTO(unit.getId(), courseId, lectureId, unit.getName(), description, unitType, unit.getReleaseDate(), unitVisible);
+        return new LectureUnitSearchableEntityDTO(unit.getId(), courseId, lectureId, unit.getName(), description, unitType, unit.getReleaseDate(), unitVisible);
     }
 
     /**

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * students before / after the exam — concatenated with a blank line separator. Both are typically
  * short or empty.
  */
-public record ExamSearchableItemDTO(Long examId, Long courseId, String examTitle, String description, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
+public record ExamSearchableEntityDTO(Long examId, Long courseId, String examTitle, String description, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean isTestExam) {
 
     /**
@@ -26,8 +26,8 @@ public record ExamSearchableItemDTO(Long examId, Long courseId, String examTitle
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static ExamSearchableItemDTO fromExam(Exam exam) {
-        return new ExamSearchableItemDTO(exam.getId(), exam.getCourse().getId(), exam.getTitle(), buildDescription(exam), exam.getVisibleDate(), exam.getStartDate(),
+    public static ExamSearchableEntityDTO fromExam(Exam exam) {
+        return new ExamSearchableEntityDTO(exam.getId(), exam.getCourse().getId(), exam.getTitle(), buildDescription(exam), exam.getVisibleDate(), exam.getStartDate(),
                 exam.getEndDate(), exam.isTestExam());
     }
 

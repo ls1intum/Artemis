@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * when the async Weaviate write runs outside the original Hibernate session. All fields are
  * primitives, strings, enums, or other immutable types safe to pass across thread boundaries.
  */
-public record ExerciseSearchableItemDTO(Long exerciseId, Long courseId, String exerciseTitle, String exerciseType, Double maxPoints, String shortName, String problemStatement,
+public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String exerciseTitle, String exerciseType, Double maxPoints, String shortName, String problemStatement,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, String difficulty, boolean isExamExercise, Long examId, Boolean isTestExam,
         ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, String programmingLanguage, String projectType, String diagramType, String quizMode,
         Integer quizDuration, String filePattern) {
@@ -36,7 +36,7 @@ public record ExerciseSearchableItemDTO(Long exerciseId, Long courseId, String e
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static ExerciseSearchableItemDTO fromExercise(Exercise exercise) {
+    public static ExerciseSearchableEntityDTO fromExercise(Exercise exercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Exam exam = exercise.isExamExercise() ? exercise.getExam() : null;
         return buildDto(exercise, course, exam);
@@ -52,13 +52,13 @@ public record ExerciseSearchableItemDTO(Long exerciseId, Long courseId, String e
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static ExerciseSearchableItemDTO fromExerciseWithExam(Exercise exercise, Exam exam) {
+    public static ExerciseSearchableEntityDTO fromExerciseWithExam(Exercise exercise, Exam exam) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return buildDto(exercise, course, exam);
     }
 
-    private static ExerciseSearchableItemDTO buildDto(Exercise exercise, Course course, Exam exam) {
-        return new ExerciseSearchableItemDTO(exercise.getId(), course.getId(), exercise.getTitle(), exercise.getExerciseType().name(), exercise.getMaxPoints(),
+    private static ExerciseSearchableEntityDTO buildDto(Exercise exercise, Course course, Exam exam) {
+        return new ExerciseSearchableEntityDTO(exercise.getId(), course.getId(), exercise.getTitle(), exercise.getExerciseType().name(), exercise.getMaxPoints(),
                 exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
                 exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(), exam != null ? exam.getId() : null,
                 exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,

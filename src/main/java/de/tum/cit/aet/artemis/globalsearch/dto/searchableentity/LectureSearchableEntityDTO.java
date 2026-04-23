@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * Extracted before the async boundary so the Weaviate write runs outside the Hibernate session
  * without touching lazy relationships.
  */
-public record LectureSearchableItemDTO(Long lectureId, Long courseId, String lectureTitle, String description, ZonedDateTime startDate, ZonedDateTime endDate) {
+public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String lectureTitle, String description, ZonedDateTime startDate, ZonedDateTime endDate) {
 
     /**
      * Extracts all required data from a {@link Lecture} entity.
@@ -24,8 +24,8 @@ public record LectureSearchableItemDTO(Long lectureId, Long courseId, String lec
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static LectureSearchableItemDTO fromLecture(Lecture lecture) {
-        return new LectureSearchableItemDTO(lecture.getId(), lecture.getCourse().getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(),
+    public static LectureSearchableEntityDTO fromLecture(Lecture lecture) {
+        return new LectureSearchableEntityDTO(lecture.getId(), lecture.getCourse().getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(),
                 lecture.getEndDate());
     }
 

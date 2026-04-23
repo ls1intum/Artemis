@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.globalsearch.dto.searchableitem;
+package de.tum.cit.aet.artemis.globalsearch.dto.searchableentity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * channels (and {@code OneToOneChat} / {@code GroupChat}) are not searchable in this PR. The description
  * is composed from {@link Channel#getTopic() topic} and {@link Channel#getDescription() description}.
  */
-public record ChannelSearchableItemDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic, boolean isArchived) {
+public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic, boolean isArchived) {
 
     /**
      * Extracts all required data from a {@link Channel} entity.
@@ -23,8 +23,8 @@ public record ChannelSearchableItemDTO(Long channelId, Long courseId, String nam
      * @return the extracted data safe to use in an async context
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
-    public static ChannelSearchableItemDTO fromChannel(Channel channel) {
-        return new ChannelSearchableItemDTO(channel.getId(), channel.getCourse().getId(), channel.getName(), buildDescription(channel), channel.getIsCourseWide(),
+    public static ChannelSearchableEntityDTO fromChannel(Channel channel) {
+        return new ChannelSearchableEntityDTO(channel.getId(), channel.getCourse().getId(), channel.getName(), buildDescription(channel), channel.getIsCourseWide(),
                 channel.getIsPublic(), channel.getIsArchived());
     }
 

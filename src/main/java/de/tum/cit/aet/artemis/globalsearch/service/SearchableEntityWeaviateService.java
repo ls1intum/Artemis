@@ -22,12 +22,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ChannelSearchableItemDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ExamSearchableItemDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.ExerciseSearchableItemDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.FaqSearchableItemDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.LectureSearchableItemDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.searchableitem.LectureUnitSearchableItemDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -156,7 +156,7 @@ public class SearchableEntityWeaviateService {
             return;
         }
         try {
-            ExerciseSearchableItemDTO dto = ExerciseSearchableItemDTO.fromExercise(exercise);
+            ExerciseSearchableEntityDTO dto = ExerciseSearchableEntityDTO.fromExercise(exercise);
             upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
             log.debug("Successfully upserted exercise {} '{}' in Weaviate", dto.exerciseId(), dto.exerciseTitle());
         }
@@ -182,11 +182,11 @@ public class SearchableEntityWeaviateService {
         }
         log.info("Updating {} exercise groups for exam {} in Weaviate", exam.getExerciseGroups().size(), exam.getId());
 
-        List<ExerciseSearchableItemDTO> dtos = new ArrayList<>();
+        List<ExerciseSearchableEntityDTO> dtos = new ArrayList<>();
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
                 try {
-                    dtos.add(ExerciseSearchableItemDTO.fromExerciseWithExam(exercise, exam));
+                    dtos.add(ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, exam));
                 }
                 catch (Exception e) {
                     log.error("Failed to convert exercise {} in exam {}: {}", exercise.getId(), exam.getId(), e.getMessage(), e);
@@ -194,7 +194,7 @@ public class SearchableEntityWeaviateService {
             }
         }
         int successCount = 0;
-        for (ExerciseSearchableItemDTO dto : dtos) {
+        for (ExerciseSearchableEntityDTO dto : dtos) {
             try {
                 upsertRow(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
                 successCount++;
@@ -221,7 +221,7 @@ public class SearchableEntityWeaviateService {
             return;
         }
         try {
-            LectureSearchableItemDTO dto = LectureSearchableItemDTO.fromLecture(lecture);
+            LectureSearchableEntityDTO dto = LectureSearchableEntityDTO.fromLecture(lecture);
             upsertRow(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture {} '{}' in Weaviate", dto.lectureId(), dto.lectureTitle());
         }
@@ -246,12 +246,12 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        if (!LectureUnitSearchableItemDTO.isIndexable(unit)) {
+        if (!LectureUnitSearchableEntityDTO.isIndexable(unit)) {
             log.debug("Skipping non-indexable lecture unit type: {}", unit.getClass().getSimpleName());
             return;
         }
         try {
-            LectureUnitSearchableItemDTO dto = LectureUnitSearchableItemDTO.fromLectureUnit(unit);
+            LectureUnitSearchableEntityDTO dto = LectureUnitSearchableEntityDTO.fromLectureUnit(unit);
             upsertRow(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
             log.debug("Successfully upserted lecture unit {} '{}' in Weaviate", dto.lectureUnitId(), dto.unitName());
         }
@@ -297,7 +297,7 @@ public class SearchableEntityWeaviateService {
             return;
         }
         try {
-            ExamSearchableItemDTO dto = ExamSearchableItemDTO.fromExam(exam);
+            ExamSearchableEntityDTO dto = ExamSearchableEntityDTO.fromExam(exam);
             upsertRow(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
             log.debug("Successfully upserted exam {} '{}' in Weaviate", dto.examId(), dto.examTitle());
         }
@@ -321,7 +321,7 @@ public class SearchableEntityWeaviateService {
             return;
         }
         try {
-            FaqSearchableItemDTO dto = FaqSearchableItemDTO.fromFaq(faq);
+            FaqSearchableEntityDTO dto = FaqSearchableEntityDTO.fromFaq(faq);
             upsertRow(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
             log.debug("Successfully upserted faq {} '{}' in Weaviate", dto.faqId(), dto.questionTitle());
         }
@@ -346,12 +346,12 @@ public class SearchableEntityWeaviateService {
             return;
         }
         try {
-            if (!ChannelSearchableItemDTO.isIndexable(channel)) {
+            if (!ChannelSearchableEntityDTO.isIndexable(channel)) {
                 deleteEntityInternal(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
                 log.debug("Channel {} is no longer indexable (not course-wide and not public); removed from Weaviate", channel.getId());
                 return;
             }
-            ChannelSearchableItemDTO dto = ChannelSearchableItemDTO.fromChannel(channel);
+            ChannelSearchableEntityDTO dto = ChannelSearchableEntityDTO.fromChannel(channel);
             upsertRow(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
             log.debug("Successfully upserted channel {} '{}' in Weaviate", dto.channelId(), dto.name());
         }
