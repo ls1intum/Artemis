@@ -119,7 +119,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -185,7 +185,7 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
@@ -193,7 +193,7 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -216,7 +216,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
-        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -247,8 +247,8 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.upsertExamAsync(savedExam);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(savedExam);
         }
         return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }

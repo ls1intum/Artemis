@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -86,14 +86,15 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository, ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
+            LectureUnitRepository lectureUnitRepository, ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider,
+            YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -104,7 +105,7 @@ public class LectureService {
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -202,8 +203,8 @@ public class LectureService {
         // Clean up Weaviate: remove every lecture unit row that belonged to this lecture so the JPA
         // cascade delete does not leave orphaned rows in the unified search index. The lecture row
         // itself is removed by LectureResource.deleteLecture via deleteEntityAsync(LECTURE, ...).
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         }
 
         lectureRepository.deleteById(lecture.getId());

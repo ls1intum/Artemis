@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -85,12 +85,12 @@ public class LectureUnitResource {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
             LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -99,7 +99,7 @@ public class LectureUnitResource {
         this.lectureContentProcessingService = lectureContentProcessingService;
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
-        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -197,8 +197,8 @@ public class LectureUnitResource {
         long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
 
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();

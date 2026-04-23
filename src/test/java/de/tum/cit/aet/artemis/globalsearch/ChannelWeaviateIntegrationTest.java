@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -53,7 +53,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     private ChannelRepository channelRepository;
 
     @Autowired
-    private SearchableItemWeaviateService searchableItemWeaviateService;
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
     private WeaviateService weaviateService;

@@ -49,9 +49,9 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Lazy
 @Service
 @Conditional(WeaviateEnabled.class)
-public class SearchableItemWeaviateService {
+public class SearchableEntityWeaviateService {
 
-    private static final Logger log = LoggerFactory.getLogger(SearchableItemWeaviateService.class);
+    private static final Logger log = LoggerFactory.getLogger(SearchableEntityWeaviateService.class);
 
     /**
      * Property-level BM25 weights. Title matches count three times as much as description matches,
@@ -65,7 +65,7 @@ public class SearchableItemWeaviateService {
 
     private final boolean useHybridSearch;
 
-    public SearchableItemWeaviateService(WeaviateService weaviateService) {
+    public SearchableEntityWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
         this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }

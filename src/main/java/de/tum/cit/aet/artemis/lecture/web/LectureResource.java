@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -108,13 +108,13 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final YouTubeUrlService youTubeUrlService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
+            SlideRepository slideRepository, ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -124,7 +124,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
-        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -507,14 +507,14 @@ public class LectureResource {
     }
 
     private void indexLectureInWeaviate(Lecture lecture) {
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.upsertLectureAsync(lecture);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureAsync(lecture);
         }
     }
 
     private void deleteLectureFromWeaviate(long lectureId) {
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lectureId);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lectureId);
         }
     }
 }

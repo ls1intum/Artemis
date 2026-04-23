@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -54,7 +54,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     private static final String TEST_PREFIX = "cdweaviateint";
 
     @Autowired
-    private SearchableItemWeaviateService searchableItemWeaviateService;
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -93,7 +93,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesExercisesFromWeaviate() throws Exception {
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        searchableItemWeaviateService.upsertExerciseAsync(exercise);
+        searchableEntityWeaviateService.upsertExerciseAsync(exercise);
         assertExerciseExistsInWeaviate(weaviateService, exercise);
 
         long exerciseId = exercise.getId();
@@ -106,7 +106,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesLecturesFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
-        searchableItemWeaviateService.upsertLectureAsync(lecture);
+        searchableEntityWeaviateService.upsertLectureAsync(lecture);
         assertLectureExistsInWeaviate(weaviateService, lecture);
 
         long lectureId = lecture.getId();
@@ -120,7 +120,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesLectureUnitsFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        searchableItemWeaviateService.upsertLectureUnitAsync(textUnit);
+        searchableEntityWeaviateService.upsertLectureUnitAsync(textUnit);
         assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId());
 
         long textUnitId = textUnit.getId();
@@ -133,7 +133,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourse_removesExamsFromWeaviate() throws Exception {
         Exam exam = examUtilService.addExam(course);
-        searchableItemWeaviateService.upsertExamAsync(exam);
+        searchableEntityWeaviateService.upsertExamAsync(exam);
         assertExamExistsInWeaviate(weaviateService, exam.getId());
 
         long examId = exam.getId();
@@ -147,11 +147,11 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteCourse_removesFaqsFromWeaviate() throws Exception {
         Faq faq1 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 1", "FAQ Answer 1");
         faq1 = faqRepository.save(faq1);
-        searchableItemWeaviateService.upsertFaqAsync(faq1);
+        searchableEntityWeaviateService.upsertFaqAsync(faq1);
 
         Faq faq2 = FaqFactory.generateFaq(course, FaqState.ACCEPTED, "FAQ Title 2", "FAQ Answer 2");
         faq2 = faqRepository.save(faq2);
-        searchableItemWeaviateService.upsertFaqAsync(faq2);
+        searchableEntityWeaviateService.upsertFaqAsync(faq2);
 
         assertFaqExistsInWeaviate(weaviateService, faq1.getId());
         assertFaqExistsInWeaviate(weaviateService, faq2.getId());

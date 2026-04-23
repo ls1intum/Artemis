@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -59,17 +59,17 @@ public class TextUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository,
-            ObjectProvider<SearchableItemWeaviateService> searchableItemWeaviateServiceProvider) {
+            ObjectProvider<SearchableEntityWeaviateService> searchableItemWeaviateServiceProvider) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.searchableItemWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableItemWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -135,8 +135,8 @@ public class TextUnitResource {
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.upsertLectureUnitAsync(existingTextUnit);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(existingTextUnit);
         }
 
         // convert into DTO
@@ -175,8 +175,8 @@ public class TextUnitResource {
         textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        if (searchableItemWeaviateService != null) {
-            searchableItemWeaviateService.upsertLectureUnitAsync(persistedUnit);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
         }
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client

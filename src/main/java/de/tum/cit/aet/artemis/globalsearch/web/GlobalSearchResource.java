@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
-import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,7 +41,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 /**
  * REST controller for the unified global search endpoint backed by Weaviate.
  * <p>
- * Invokes {@link SearchableItemWeaviateService#searchSearchableItems(String, Filter, int)} exactly
+ * Invokes {@link SearchableEntityWeaviateService#searchSearchableItems(String, Filter, int)} exactly
  * once per request with a compound access filter built from the user's per-course roles. Per-type
  * access rules are enforced via {@code OR}-of-{@code AND}s disjuncts gated by the row's {@code type}
  * discriminator, which is why a single request can safely cover every indexable entity type.
@@ -59,7 +59,7 @@ public class GlobalSearchResource {
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
             SearchableEntitySchema.TypeValues.CHANNEL);
 
-    private final SearchableItemWeaviateService searchableItemWeaviateService;
+    private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final CourseRepository courseRepository;
 
@@ -67,9 +67,9 @@ public class GlobalSearchResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public GlobalSearchResource(SearchableItemWeaviateService searchableItemWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
+    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService) {
-        this.searchableItemWeaviateService = searchableItemWeaviateService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -117,7 +117,7 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableItemWeaviateService.searchSearchableItems(query, filterResult.filter(), effectiveLimit);
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableItems(query, filterResult.filter(), effectiveLimit);
 
         Map<Long, String> courseNameById = resolveCourseNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
