@@ -285,8 +285,9 @@ export class ExamStudentsComponent implements OnDestroy {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isAdmin.set(this.accountService.isAdmin());
 
-        this.removeAllStudentsEmitter.pipe(takeUntilDestroyed()).subscribe((event) => {
-            this.removeAllStudents(event);
+        this.removeAllStudentsEmitter.pipe(takeUntilDestroyed()).subscribe({
+            next: (event) => this.removeAllStudents(event),
+            error: (err) => onError(this.alertService, err),
         });
 
         effect(() => {
@@ -426,7 +427,10 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         const courseId = this.courseId();
-        this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe((res) => this.setExercisePreparationStatus(res.body ?? undefined));
+        this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe({
+            next: (res) => this.setExercisePreparationStatus(res.body ?? undefined),
+            error: (err) => onError(this.alertService, err),
+        });
 
         this.studentExamService.findAllForExam(courseId, exam.id).subscribe({
             next: (res) => {
