@@ -639,8 +639,8 @@ describe('MetisConversationService', () => {
         sub.unsubscribe();
     });
 
-    describe('removeEmptyOneToOneChatFromList', () => {
-        it('should remove empty one-to-one chat from list when navigating away', () => {
+    describe('emitConversationsOfUser filters empty one-to-one chats', () => {
+        it('should hide empty one-to-one chat from emitted list when navigating away', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({
                     complete: () => {
@@ -654,19 +654,20 @@ describe('MetisConversationService', () => {
                         // Navigate away by setting a different active conversation
                         metisConversationService.setActiveConversation(channel);
 
-                        // The empty one-to-one chat should be removed from the list
-                        const conversations = (metisConversationService as any).conversationsOfUser;
-                        expect(conversations).not.toContainEqual(emptyOneToOneChat);
-                        expect(conversations).toContainEqual(groupChat);
-                        expect(conversations).toContainEqual(channel);
-                        expect(conversations).toHaveLength(2);
+                        // The empty one-to-one chat should be filtered from the emitted list
+                        metisConversationService.conversationsOfUser$.subscribe((conversations) => {
+                            expect(conversations).not.toContainEqual(emptyOneToOneChat);
+                            expect(conversations).toContainEqual(groupChat);
+                            expect(conversations).toContainEqual(channel);
+                            expect(conversations).toHaveLength(2);
+                        });
                         done({});
                     },
                 });
             });
         });
 
-        it('should NOT remove one-to-one chat with messages from list when navigating away', () => {
+        it('should NOT hide one-to-one chat with messages from emitted list when navigating away', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({
                     complete: () => {
@@ -678,17 +679,18 @@ describe('MetisConversationService', () => {
                         // Navigate away by setting a different active conversation
                         metisConversationService.setActiveConversation(channel);
 
-                        // The one-to-one chat with messages should still be in the list
-                        const conversations = (metisConversationService as any).conversationsOfUser;
-                        expect(conversations).toContainEqual(oneToOneChat);
-                        expect(conversations).toHaveLength(3);
+                        // The one-to-one chat with messages should still be in the emitted list
+                        metisConversationService.conversationsOfUser$.subscribe((conversations) => {
+                            expect(conversations).toContainEqual(oneToOneChat);
+                            expect(conversations).toHaveLength(3);
+                        });
                         done({});
                     },
                 });
             });
         });
 
-        it('should NOT remove empty one-to-one chat when re-selecting the same conversation', () => {
+        it('should keep empty one-to-one chat in emitted list when it is the active conversation', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({
                     complete: () => {
@@ -702,17 +704,18 @@ describe('MetisConversationService', () => {
                         // Re-select the same empty one-to-one chat
                         metisConversationService.setActiveConversation(emptyOneToOneChat);
 
-                        // The empty one-to-one chat should still be in the list since we did not navigate away
-                        const conversations = (metisConversationService as any).conversationsOfUser;
-                        expect(conversations).toContainEqual(emptyOneToOneChat);
-                        expect(conversations).toHaveLength(3);
+                        // The empty one-to-one chat should still be in the emitted list since it is active
+                        metisConversationService.conversationsOfUser$.subscribe((conversations) => {
+                            expect(conversations).toContainEqual(emptyOneToOneChat);
+                            expect(conversations).toHaveLength(3);
+                        });
                         done({});
                     },
                 });
             });
         });
 
-        it('should NOT remove group chat or channel when navigating away', () => {
+        it('should NOT hide group chat or channel from emitted list even without messages', () => {
             return new Promise((done) => {
                 metisConversationService.setUpConversationService(course).subscribe({
                     complete: () => {
@@ -726,10 +729,11 @@ describe('MetisConversationService', () => {
                         // Navigate away
                         metisConversationService.setActiveConversation(channel);
 
-                        // The group chat should still be in the list (only one-to-one chats are removed)
-                        const conversations = (metisConversationService as any).conversationsOfUser;
-                        expect(conversations).toContainEqual(emptyGroupChat);
-                        expect(conversations).toHaveLength(3);
+                        // The group chat should still be in the emitted list (only one-to-one chats are filtered)
+                        metisConversationService.conversationsOfUser$.subscribe((conversations) => {
+                            expect(conversations).toContainEqual(emptyGroupChat);
+                            expect(conversations).toHaveLength(3);
+                        });
                         done({});
                     },
                 });
