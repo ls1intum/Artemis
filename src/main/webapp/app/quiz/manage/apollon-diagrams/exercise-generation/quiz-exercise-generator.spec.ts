@@ -160,8 +160,18 @@ describe('QuizExercise Generator', () => {
         it('should generate background image excluding interactive elements', async () => {
             await generateDragAndDropQuizExercise(course, 'Background Test', v3Model);
 
-            // The renderer exports the full model and blanks the interactive regions afterward.
-            expect(mockExportModelAsSvg).toHaveBeenCalledWith(v3Model, expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
+            const calls = mockExportModelAsSvg.mock.calls;
+            const expectedExcludedIds = Object.entries((v3Model as any).interactive.elements)
+                .filter(([, value]) => value)
+                .map(([id]) => id);
+
+            expect(calls[calls.length - 1][1]).toEqual(
+                expect.objectContaining({
+                    exclude: expect.arrayContaining(expectedExcludedIds),
+                    keepOriginalSize: true,
+                    svgMode: 'compat',
+                }),
+            );
         });
 
         it('should handle v3 model with empty interactive elements', async () => {
@@ -252,10 +262,10 @@ describe('QuizExercise Generator', () => {
         it('should use node IDs from v4 array elements', async () => {
             await generateDragAndDropQuizExercise(course, 'ID Test', v4Model);
 
-            // exportModelAsSvg should be called once for the background and then once per generated drag item.
+            // exportModelAsSvg should be called once for sizing, once per generated drag item, and once for the background.
             const calls = mockExportModelAsSvg.mock.calls;
 
-            // Background call should export the full diagram in compat mode.
+            // Sizing call should export the full diagram in compat mode.
             expect(calls[0][1]).toEqual(expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
 
             // Individual element calls should include specific IDs
@@ -268,6 +278,14 @@ describe('QuizExercise Generator', () => {
             expect(includeCallIds).toContain('package-1');
             expect(includeCallIds).toContain('class-in-package');
             expect(includeCallIds).not.toContain('0'); // Should NOT be array index
+
+            expect(calls[calls.length - 1][1]).toEqual(
+                expect.objectContaining({
+                    exclude: expect.arrayContaining(includeCallIds),
+                    keepOriginalSize: true,
+                    svgMode: 'compat',
+                }),
+            );
         });
     });
 

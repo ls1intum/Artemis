@@ -48,7 +48,6 @@ function getModelElements(model: UMLModel): any[] {
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 export const MAX_SIZE_UNIT = 200;
-const BACKGROUND_CUTOUT_PADDING_PIXELS = 4;
 
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
@@ -81,7 +80,8 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
         dropLocations.set(element.id, generatedElement.dropLocation);
     }
 
-    const diagramBackground = await createBlankedDiagramBackground(renderedDiagram, [...dropLocations.values()]);
+    const renderedBackground = await createDiagramBackground(model, renderedDiagram, [...dropLocations.keys()]);
+    const diagramBackground = await convertRenderedSVGToPNG(renderedBackground);
     files.set('diagram-background.png', diagramBackground);
 
     // Create all possible correct mappings between drag items and drop locations
@@ -200,63 +200,39 @@ export function computeDropLocation(
     return dropLocation;
 }
 
-async function createBlankedDiagramBackground(renderedDiagram: SVG, dropLocations: DropLocation[]): Promise<Blob> {
-    const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
-    const imageUrl = URL.createObjectURL(diagramBackground);
-
-    try {
-        const image = await loadImage(imageUrl);
-        const canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        const context = canvas.getContext('2d');
-        if (!context) {
-            throw new Error('Failed to create background canvas context');
-        }
-
-        context.drawImage(image, 0, 0);
-        context.fillStyle = 'white';
-
-        for (const dropLocation of dropLocations) {
-            const x = (dropLocation.posX! / MAX_SIZE_UNIT) * canvas.width;
-            const y = (dropLocation.posY! / MAX_SIZE_UNIT) * canvas.height;
-            const width = (dropLocation.width! / MAX_SIZE_UNIT) * canvas.width;
-            const height = (dropLocation.height! / MAX_SIZE_UNIT) * canvas.height;
-            const paddedX = Math.max(0, Math.floor(x - BACKGROUND_CUTOUT_PADDING_PIXELS));
-            const paddedY = Math.max(0, Math.floor(y - BACKGROUND_CUTOUT_PADDING_PIXELS));
-            const paddedRight = Math.min(canvas.width, Math.ceil(x + width + BACKGROUND_CUTOUT_PADDING_PIXELS));
-            const paddedBottom = Math.min(canvas.height, Math.ceil(y + height + BACKGROUND_CUTOUT_PADDING_PIXELS));
-
-            // Overpaint only the generated background so antialiased Apollon strokes do not remain visible.
-            context.fillRect(paddedX, paddedY, paddedRight - paddedX, paddedBottom - paddedY);
-        }
-
-        return await canvasToBlob(canvas);
-    } finally {
-        URL.revokeObjectURL(imageUrl);
+async function createDiagramBackground(model: UMLModel, renderedDiagram: SVG, excludedElementIds: string[]): Promise<SVG> {
+    if (excludedElementIds.length === 0) {
+        return renderedDiagram;
     }
+
+    const renderedBackground = await ApollonEditor.exportModelAsSvg(model, {
+        exclude: excludedElementIds,
+        keepOriginalSize: true,
+        svgMode: 'compat',
+    });
+
+    return forceSVGClip(renderedBackground, renderedDiagram.clip);
 }
 
-function loadImage(source: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = (error) => reject(error);
-        image.src = source;
-    });
-}
+function forceSVGClip(renderedSVG: SVG, clip: SVG['clip']): SVG {
+    const parser = new DOMParser();
+    const documentFragment = parser.parseFromString(renderedSVG.svg, 'image/svg+xml');
+    const svg = documentFragment.documentElement;
+    if (!(svg instanceof SVGSVGElement)) {
+        return {
+            svg: renderedSVG.svg,
+            clip,
+        };
+    }
 
-function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-            if (blob) {
-                resolve(blob);
-                return;
-            }
-            reject(new Error('Failed to convert background canvas to PNG'));
-        }, 'image/png');
-    });
+    svg.setAttribute('viewBox', `${clip.x} ${clip.y} ${clip.width} ${clip.height}`);
+    svg.setAttribute('width', `${clip.width}`);
+    svg.setAttribute('height', `${clip.height}`);
+
+    return {
+        svg: new XMLSerializer().serializeToString(svg),
+        clip,
+    };
 }
 
 /**
