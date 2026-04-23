@@ -330,6 +330,174 @@ public final class WeaviateTestUtil {
         });
     }
 
+    // -- Exam utilities --
+
+    /**
+     * Queries Weaviate for the exam with the given ID and returns its properties,
+     * or {@code null} if no exam was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam to look up
+     * @return the exam properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryExamProperties(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.EXAM),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(examId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the exam exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam that should exist
+     */
+    public static void assertExamExistsInWeaviate(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, examId);
+            assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no exam with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param examId          the ID of the exam that should not exist
+     */
+    public static void assertExamNotInWeaviate(WeaviateService weaviateService, long examId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, examId);
+            assertThat(properties).as("Exam %d should not exist in Weaviate", examId).isNull();
+        });
+    }
+
+    // -- Lecture unit utilities --
+
+    /**
+     * Queries Weaviate for the lecture unit with the given ID and returns its properties,
+     * or {@code null} if no lecture unit was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit to look up
+     * @return the lecture unit properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryLectureUnitProperties(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.LECTURE_UNIT),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(lectureUnitId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the lecture unit exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit that should exist
+     */
+    public static void assertLectureUnitExistsInWeaviate(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
+            assertThat(properties).as("Lecture unit %d should exist in Weaviate", lectureUnitId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no lecture unit with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureUnitId   the ID of the lecture unit that should not exist
+     */
+    public static void assertLectureUnitNotInWeaviate(WeaviateService weaviateService, long lectureUnitId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
+            assertThat(properties).as("Lecture unit %d should not exist in Weaviate", lectureUnitId).isNull();
+        });
+    }
+
+    // -- FAQ utilities --
+
+    /**
+     * Queries Weaviate for the FAQ with the given ID and returns its properties,
+     * or {@code null} if no FAQ was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ to look up
+     * @return the FAQ properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryFaqProperties(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.FAQ),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(faqId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the FAQ exists in Weaviate and its core properties match the given FAQ.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ that should exist
+     */
+    public static void assertFaqExistsInWeaviate(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryFaqProperties(weaviateService, faqId);
+            assertThat(properties).as("FAQ %d should exist in Weaviate", faqId).isNotNull();
+        });
+    }
+
+    /**
+     * Asserts that no FAQ with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param faqId           the ID of the FAQ that should not exist
+     */
+    public static void assertFaqNotInWeaviate(WeaviateService weaviateService, long faqId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryFaqProperties(weaviateService, faqId);
+            assertThat(properties).as("FAQ %d should not exist in Weaviate", faqId).isNull();
+        });
+    }
+
     // -- Channel utilities --
 
     /**
