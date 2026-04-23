@@ -279,12 +279,20 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
-        var quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+        // Load questions eagerly so we can sanitize the client-submitted references below (answer options, drag items,
+        // drop locations, short-answer spots). Without this, a stale id from the client causes Hibernate's merge to fail
+        // the whole save with ObjectNotFoundException — see #12584.
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
         quizExercise.setQuizBatches(null);
         // A submission always exists because the user has to start the participation before submitting, which creates a submission
         var existingSubmission = quizSubmissionRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), userLogin)
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find quiz submission for exercise " + exerciseId + " and user " + userLogin));
         checkSubmissionForLiveModeOrThrow(quizExercise, existingSubmission, userLogin, logText, start);
+
+        // Replace client-supplied references with server-managed ones, and drop any that no longer exist. This protects
+        // the downstream Hibernate merge from stale ids (e.g. after a quiz was re-imported) that would otherwise trigger
+        // ObjectNotFoundException and abort the entire save.
+        sanitizeSubmittedAnswersAgainstQuestions(quizSubmission, quizExercise);
 
         // TODO: ideally we only save if something has changed, we can use "if (!isContentEqualTo(existingSubmission, quizSubmission))"
 
@@ -367,6 +375,103 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // TODO: add additional checks that may be beneficial
         // for example it is possible for students that are not members of the course to submit the quiz
         // but for performance reasons the checks may have to be done in the quiz submission service where no feedback for the students can be generated
+    }
+
+    /**
+     * Replace every client-supplied reference inside the submitted answers (question, answer option, drag item, drop location, short-answer spot) with the server-side managed
+     * instance loaded from {@code quizExercise}. Any reference that does not exist server-side is dropped. Submitted answers whose question is no longer part of the quiz are
+     * removed entirely.
+     *
+     * <p>
+     * This is a defensive sanitization: the live-submit endpoint still accepts a raw {@link QuizSubmission} from the client (see the TODO on
+     * {@code QuizSubmissionResource.saveOrSubmitForLiveMode}). Without this step a single stale id — e.g. after a quiz was re-imported between tab open and submit — causes the
+     * downstream Hibernate merge to abort the whole request with {@code ObjectNotFoundException} when it tries to resolve the reference (#12584).
+     */
+    private void sanitizeSubmittedAnswersAgainstQuestions(QuizSubmission quizSubmission, QuizExercise quizExercise) {
+        if (quizSubmission.getSubmittedAnswers() == null || quizSubmission.getSubmittedAnswers().isEmpty()) {
+            return;
+        }
+        Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
+        Set<SubmittedAnswer> sanitizedAnswers = new HashSet<>();
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            QuizQuestion clientQuestion = submittedAnswer.getQuizQuestion();
+            if (clientQuestion == null || clientQuestion.getId() == null) {
+                continue;
+            }
+            QuizQuestion serverQuestion = questionsById.get(clientQuestion.getId());
+            if (serverQuestion == null) {
+                continue;
+            }
+            submittedAnswer.setQuizQuestion(serverQuestion);
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcAnswer && serverQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                sanitizeMultipleChoiceSelectedOptions(mcAnswer, mcQuestion);
+            }
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer dndAnswer && serverQuestion instanceof DragAndDropQuestion dndQuestion) {
+                sanitizeDragAndDropMappings(dndAnswer, dndQuestion);
+            }
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer saAnswer && serverQuestion instanceof ShortAnswerQuestion saQuestion) {
+                sanitizeShortAnswerSubmittedTexts(saAnswer, saQuestion);
+            }
+            sanitizedAnswers.add(submittedAnswer);
+        }
+        quizSubmission.setSubmittedAnswers(sanitizedAnswers);
+    }
+
+    private void sanitizeMultipleChoiceSelectedOptions(MultipleChoiceSubmittedAnswer submittedAnswer, MultipleChoiceQuestion question) {
+        Map<Long, AnswerOption> validOptions = question.getAnswerOptions().stream().filter(option -> option.getId() != null)
+                .collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+        Set<AnswerOption> sanitized = new HashSet<>();
+        for (AnswerOption clientOption : submittedAnswer.getSelectedOptions()) {
+            if (clientOption == null || clientOption.getId() == null) {
+                continue;
+            }
+            AnswerOption serverOption = validOptions.get(clientOption.getId());
+            if (serverOption != null) {
+                sanitized.add(serverOption);
+            }
+        }
+        submittedAnswer.setSelectedOptions(sanitized);
+    }
+
+    private void sanitizeDragAndDropMappings(DragAndDropSubmittedAnswer submittedAnswer, DragAndDropQuestion question) {
+        Map<Long, DragItem> validDragItems = question.getDragItems().stream().filter(item -> item.getId() != null).collect(Collectors.toMap(DragItem::getId, Function.identity()));
+        Map<Long, DropLocation> validDropLocations = question.getDropLocations().stream().filter(location -> location.getId() != null)
+                .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
+        Set<DragAndDropMapping> sanitized = new HashSet<>();
+        for (DragAndDropMapping mapping : submittedAnswer.getMappings()) {
+            if (mapping == null || mapping.getDragItem() == null || mapping.getDropLocation() == null || mapping.getDragItem().getId() == null
+                    || mapping.getDropLocation().getId() == null) {
+                continue;
+            }
+            DragItem serverDragItem = validDragItems.get(mapping.getDragItem().getId());
+            DropLocation serverDropLocation = validDropLocations.get(mapping.getDropLocation().getId());
+            if (serverDragItem == null || serverDropLocation == null) {
+                continue;
+            }
+            mapping.setDragItem(serverDragItem);
+            mapping.setDropLocation(serverDropLocation);
+            sanitized.add(mapping);
+        }
+        submittedAnswer.setMappings(sanitized);
+    }
+
+    private void sanitizeShortAnswerSubmittedTexts(ShortAnswerSubmittedAnswer submittedAnswer, ShortAnswerQuestion question) {
+        Map<Long, ShortAnswerSpot> validSpots = question.getSpots().stream().filter(spot -> spot.getId() != null)
+                .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
+        Set<ShortAnswerSubmittedText> sanitized = new HashSet<>();
+        for (ShortAnswerSubmittedText submittedText : submittedAnswer.getSubmittedTexts()) {
+            if (submittedText == null || submittedText.getSpot() == null || submittedText.getSpot().getId() == null) {
+                continue;
+            }
+            ShortAnswerSpot serverSpot = validSpots.get(submittedText.getSpot().getId());
+            if (serverSpot == null) {
+                continue;
+            }
+            submittedText.setSpot(serverSpot);
+            sanitized.add(submittedText);
+        }
+        submittedAnswer.setSubmittedTexts(sanitized);
     }
 
     /**

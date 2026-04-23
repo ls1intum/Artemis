@@ -1031,5 +1031,39 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.OK);
             request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         }
+
+        /**
+         * Regression test for #12584: a stale client-side AnswerOption id (e.g. from a tab opened before the quiz was re-imported) used to abort the whole live save with
+         * {@code ObjectNotFoundException} because Hibernate's merge cascade couldn't resolve the reference. The service now sanitizes the submission against the server-side quiz
+         * questions and silently drops unknown references.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmitLiveMode_ignoresStaleAnswerOptionIds() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+            // Corrupt the MC submitted answer: inject an AnswerOption whose id does not exist in the database. Before #12584 this caused the save to fail with
+            // ObjectNotFoundException; now it must be silently dropped and the remaining valid selections must still be persisted.
+            MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
+                    .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            AnswerOption staleOption = new AnswerOption();
+            staleOption.setId(Long.MAX_VALUE);
+            mcAnswer.addSelectedOptions(staleOption);
+            int validSelectionCount = mcAnswer.getSelectedOptions().size() - 1;
+
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
+
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            MultipleChoiceSubmittedAnswer persistedMcAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
+                    .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
+            assertThat(persistedMcAnswer.getSelectedOptions()).hasSize(validSelectionCount).allSatisfy(option -> assertThat(option.getId()).isNotEqualTo(Long.MAX_VALUE));
+        }
     }
 }
