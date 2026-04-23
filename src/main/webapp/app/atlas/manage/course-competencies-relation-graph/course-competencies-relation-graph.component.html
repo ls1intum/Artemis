@@ -11,7 +11,7 @@
         [center$]="center$"
     >
         <ng-template #defsTemplate>
-            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="4" markerHeight="4" orient="auto">
                 <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
             </svg:marker>
         </ng-template>
@@ -24,7 +24,7 @@
         </ng-template>
         <ng-template #linkTemplate let-link>
             <svg:g class="edge" (click)="selectRelation(link.data.id)">
-                <svg:path class="line" [class.selected]="selectedRelationId() === link.data.id" stroke-width="2" marker-end="url(#arrow)" />
+                <svg:path [attr.id]="link.id" class="line" [class.selected]="selectedRelationId() === link.data.id" stroke-width="2" marker-end="url(#arrow)" />
                 <svg:text class="edge-label" text-anchor="middle">
                     <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
                         {{ ('artemisApp.courseCompetency.relations.relationTypes.' + link.label | artemisTranslate).toUpperCase() }}

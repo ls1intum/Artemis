@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
@@ -8,7 +9,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -53,6 +53,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCBatchTest extends A
         registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+
+        // Override parent's Weaviate configuration with a unique prefix for this test context
+        de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "JenkinsLocalVC_Batch_");
     }
 
     private static int findAvailableTcpPort() {

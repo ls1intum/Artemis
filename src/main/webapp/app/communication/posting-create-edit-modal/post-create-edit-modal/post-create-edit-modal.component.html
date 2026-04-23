@@ -1,54 +1,61 @@
-<ng-template #postingEditor let-d="dismiss">
-    <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-        <div class="modal-header">
-            <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
+@if (isDialogVisible()) {
+    <div class="modal-backdrop" (click)="close()"></div>
+    <div class="modal d-block" tabindex="-1" (keydown.escape)="close()">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form [formGroup]="formGroup" (ngSubmit)="confirm()">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
+                        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- info if announcement is created-->
+                        @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting()?.conversation)?.isAnnouncementChannel) {
+                            <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
+                        }
+                        <!-- title -->
+                        <div class="position-relative mb-3">
+                            <div>
+                                <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title"></label>
+                                <jhi-help-icon text="artemisApp.metis.post.titleTooltip" />
+                            </div>
+                            <div>
+                                <input id="title" formControlName="title" type="text" class="form-control" name="title" />
+                            </div>
+                        </div>
+                        <div class="position-relative mb-1">
+                            <div>
+                                <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
+                                <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
+                            </div>
+                            <div class="row mb-2">
+                                <jhi-posting-markdown-editor
+                                    formControlName="content"
+                                    [editorHeight]="editorHeight"
+                                    [maxContentLength]="maxContentLength"
+                                    [suppressNewlineOnEnter]="false"
+                                    [isButtonLoading]="isLoading"
+                                    [isFormGroupValid]="formGroup.valid"
+                                    [editType]="editType"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    @if (editType === EditType.UPDATE) {
+                        <div class="modal-footer">
+                            <button
+                                jhi-posting-button
+                                [buttonLoading]="isLoading"
+                                [disabled]="isLoading || !formGroup.valid"
+                                [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                                class="btn btn-sm btn-outline-primary"
+                                id="save"
+                                type="submit"
+                            ></button>
+                        </div>
+                    }
+                </form>
+            </div>
         </div>
-        <div class="modal-body">
-            <!-- info if announcement is created-->
-            @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
-                <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
-            }
-            <!-- title -->
-            <div class="position-relative mb-3">
-                <div>
-                    <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title"></label>
-                    <jhi-help-icon text="artemisApp.metis.post.titleTooltip" />
-                </div>
-                <div>
-                    <input id="title" formControlName="title" type="text" class="form-control" name="title" />
-                </div>
-            </div>
-            <div class="position-relative mb-1">
-                <div>
-                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
-                    <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
-                </div>
-                <div class="row mb-2">
-                    <jhi-posting-markdown-editor
-                        formControlName="content"
-                        [editorHeight]="editorHeight"
-                        [maxContentLength]="maxContentLength"
-                        [suppressNewlineOnEnter]="false"
-                        [isButtonLoading]="isLoading"
-                        [isFormGroupValid]="formGroup.valid"
-                        [editType]="editType"
-                    />
-                </div>
-            </div>
-        </div>
-        @if (editType === EditType.UPDATE) {
-            <div class="modal-footer">
-                <button
-                    jhi-posting-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="isLoading || !formGroup.valid"
-                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
-                    class="btn btn-sm btn-outline-primary"
-                    id="save"
-                    type="submit"
-                ></button>
-            </div>
-        }
-    </form>
-</ng-template>
+    </div>
+}

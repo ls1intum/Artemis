@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.PlaceholderResolutionException;
 
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
+import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateAuthenticationFailureAnalyzer;
 import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
 
 /**
@@ -116,7 +117,7 @@ public class DeferredEagerBeanInitializer {
      * @return a FailureAnalysis if an analyzer can handle the exception, null otherwise
      */
     private FailureAnalysis analyzeFailure(Throwable failure) {
-        List<FailureAnalyzer> analyzersToTryOut = List.of(new WeaviateConnectionFailureAnalyzer()
+        List<FailureAnalyzer> analyzersToTryOut = List.of(new WeaviateAuthenticationFailureAnalyzer(), new WeaviateConnectionFailureAnalyzer()
         // Add more failure analyzers here, e.g.:
         // new SomeOtherFailureAnalyzer()
         );

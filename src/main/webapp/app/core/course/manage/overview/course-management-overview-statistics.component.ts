@@ -45,7 +45,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     // Icons
     readonly faSpinner = faSpinner;
 
-    private initialized = false;
+    private readonly initialized = signal(false);
 
     constructor() {
         super();
@@ -58,8 +58,8 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         // Effect for initialization based on course
         effect(() => {
             const course = this.course();
-            if (!this.initialized && course) {
-                this.initialized = true;
+            if (!this.initialized() && course) {
+                this.initialized.set(true);
                 this.determineDisplayedPeriod(course, 4);
                 this.createChartLabels(this.currentOffsetToEndDate);
                 untracked(() => this.createChartData());
@@ -69,7 +69,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         // Effect for initialStats changes
         effect(() => {
             const stats = this.initialStats();
-            if (stats && this.initialized) {
+            if (stats && this.initialized()) {
                 untracked(() => this.createChartData());
             }
         });

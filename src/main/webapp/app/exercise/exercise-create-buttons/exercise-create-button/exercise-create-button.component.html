@@ -1,10 +1,4 @@
-<button
-    [id]="'create-' + exerciseType() + '-exercise'"
-    class="btn btn-primary text-truncate mb-1 me-1"
-    (click)="linkToExerciseCreation()"
-    [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined"
->
+<p-button [id]="'create-' + exerciseType() + '-exercise'" size="small" (click)="linkToExerciseCreation()" [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined">
     <fa-icon [icon]="faPlus" />
-    <span [jhiTranslate]="translationLabel"></span>
-    <fa-icon [icon]="icon" />
-</button>
+    <span jhiTranslate="artemisApp.exercise.createAction"></span>
+</p-button>

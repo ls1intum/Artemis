@@ -1,4 +1,4 @@
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
@@ -74,6 +74,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        RouterLink,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -124,7 +125,6 @@ export class CourseUpdateComponent implements OnInit {
     courseOrganizations: Organization[];
     isAdmin = false;
 
-    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     atlasEnabled = false;
@@ -155,7 +155,6 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -229,7 +228,6 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
-                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -565,10 +563,6 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
-    changeFaqEnabled() {
-        this.faqEnabled = !this.faqEnabled;
-        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
-    }
     /**
      * Enable or disable test course
      */

@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -8,10 +8,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import dayjs from 'dayjs/esm';
-import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
@@ -86,6 +86,7 @@ export class CodeButtonComponent implements OnInit {
     participations = input<ProgrammingExerciseStudentParticipation[]>([]);
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
+    isPractice = input<boolean>(false);
 
     // Fields (immutable after construction)
     sshEnabled = false;
@@ -99,7 +100,6 @@ export class CodeButtonComponent implements OnInit {
 
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
     // as they are
-    isPracticeMode = signal<boolean | null>(null);
     wasCopied = signal(false);
     copyEnabled = signal(false);
     isTeamParticipation = computed(() => !!this.activeParticipation()?.team);
@@ -116,9 +116,9 @@ export class CodeButtonComponent implements OnInit {
     ideName = signal('');
     // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
     authenticationMechanisms = signal<RepositoryAuthenticationMethod[]>([
-        RepositoryAuthenticationMethod.Password,
         RepositoryAuthenticationMethod.Token,
         RepositoryAuthenticationMethod.SSH,
+        RepositoryAuthenticationMethod.Password,
     ]);
 
     // Computed/Derived States
@@ -127,34 +127,20 @@ export class CodeButtonComponent implements OnInit {
         if (!participations.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
 
         const exercise = this.exercise();
-        const practice = this.effectivePracticeMode();
+        const practice = this.isPractice();
 
         return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     });
-    // Default preference from exercise (reflecting behaviour before signal migration)
-    preferPracticeDefault = computed(() => this.participationService.shouldPreferPractice(this.exercise()));
-    // Selection preference: user override if set, else default (reflecting behavior before signal migration)
-    preferPracticeForSelection = computed(() => this.isPracticeMode() ?? this.preferPracticeDefault());
-    activeParticipation: Signal<ProgrammingExerciseStudentParticipation | undefined> = computed(() => {
+    activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
         const participations = this.participations();
         if (!participations.length) {
             return undefined;
         }
 
-        const preferredMode = this.preferPracticeForSelection();
-        return this.participationService.getSpecificStudentParticipation(participations, preferredMode) ?? participations[0];
-    });
-    effectivePracticeMode = computed(() => {
-        const initialMode = this.isPracticeMode();
-        if (initialMode !== null) {
-            return initialMode;
-        }
-
-        const currentParticipation = this.activeParticipation();
-        return currentParticipation ? (isPracticeMode(currentParticipation) ?? false) : this.preferPracticeDefault();
+        return this.participationService.getSpecificStudentParticipation(participations, this.isPractice()) ?? participations[0];
     });
     selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(
-        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? RepositoryAuthenticationMethod.Password,
+        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? this.authenticationMechanisms()[0],
     );
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
@@ -399,14 +385,6 @@ export class CodeButtonComponent implements OnInit {
         );
     }
 
-    switchPracticeMode() {
-        this.isPracticeMode.set(!this.effectivePracticeMode());
-        const currentParticipation = this.activeParticipation();
-        if (currentParticipation?.vcsAccessToken) {
-            this.user.vcsAccessToken = currentParticipation.vcsAccessToken;
-        }
-    }
-
     /**
      * Checks whether the user owns any SSH keys, and checks if any of them is expired
      */
@@ -435,7 +413,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private initTheia(profileInfo: ProfileInfo) {
-        if (this.profileService.isProfileActive(PROFILE_THEIA) && this.exercise()) {
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && this.exercise()) {
             const exercise = this.exercise()!;
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {

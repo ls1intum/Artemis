@@ -1,4 +1,4 @@
-import { BASE_API, USER_ID_SELECTOR } from './constants';
+import { BASE_API } from './constants';
 import { User } from 'app/core/user/user.model';
 import { APIRequestContext, Page } from '@playwright/test';
 import { Account } from 'app/core/user/account.model';
@@ -35,81 +35,38 @@ export const USER_ROLE = {
 };
 
 export class PlaywrightUserManagement {
-    /**
-     * @returns admin credentials.
-     */
     public getAdmin(): UserCredentials {
-        const adminUsername = process.env.ADMIN_USERNAME ?? 'admin';
-        const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin';
-        return { username: adminUsername, password: adminPassword };
+        return admin;
     }
 
-    /**
-     * @returns the first testing account with student rights.
-     */
     public getStudentOne(): UserCredentials {
-        return this.getUserWithId(USER_ID.studentOne);
+        return studentOne;
     }
 
-    /**
-     * @returns the second testing account with student rights.
-     */
     public getStudentTwo(): UserCredentials {
-        return this.getUserWithId(USER_ID.studentTwo);
+        return studentTwo;
     }
 
-    /**
-     * @returns the third testing account with student rights.
-     */
     public getStudentThree(): UserCredentials {
-        return this.getUserWithId(USER_ID.studentThree);
+        return studentThree;
     }
 
-    /**
-     * @returns the fourth testing account with student rights.
-     */
     public getStudentFour(): UserCredentials {
-        return this.getUserWithId(USER_ID.studentFour);
+        return studentFour;
     }
 
-    /**
-     * @returns an instructor account.
-     */
     public getInstructor(): UserCredentials {
-        return this.getUserWithId(USER_ID.instructor);
+        return instructor;
     }
 
-    /**
-     * @returns a tutor account.
-     */
     public getTutor(): UserCredentials {
-        return this.getUserWithId(USER_ID.tutor);
+        return tutor;
     }
 
     public getUserWithId(userId: number): UserCredentials {
-        const username = this.getUsernameTemplate().replace(USER_ID_SELECTOR, userId.toString());
-        const password = this.getPasswordTemplate().replace(USER_ID_SELECTOR, userId.toString());
-        return { username, password };
+        return { username: `artemis_test_user_${userId}`, password: `artemis_test_user_${userId}` };
     }
 
-    /**
-     * @returns the username template.
-     */
-    private getUsernameTemplate(): string {
-        return (process.env.PLAYWRIGHT_USERNAME_TEMPLATE ?? 'user_') + USER_ID_SELECTOR;
-    }
-
-    /**
-     * @returns the password template.
-     */
-    private getPasswordTemplate(): string {
-        return (process.env.PLAYWRIGHT_PASSWORD_TEMPLATE ?? 'password_') + USER_ID_SELECTOR;
-    }
-
-    /**
-     * Provides the entire account info for the user that is currently logged in
-     * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
-     * */
     public async getAccountInfo(request: APIRequestContext): Promise<Account> {
         const response = await request.get(`${BASE_API}/core/public/account`);
         return response.json();
@@ -120,15 +77,6 @@ export class PlaywrightUserManagement {
         return response.json();
     }
 
-    /**
-     * Creates a user in a course with the specified role. This method takes care of navigating to the course management page, no prerequisites for a previous page state are required.
-     *
-     * @param courseId for which the user should be created
-     * @param userCredentials of the user to be created
-     * @param role of the user to be created
-     * @param navigationBar to navigate to the course management page
-     * @param courseManagement to perform the user creation
-     */
     public static async createUserInCourse(
         courseId: number,
         userCredentials: UserCredentials,
@@ -156,10 +104,12 @@ export class PlaywrightUserManagement {
 }
 
 export const users = new PlaywrightUserManagement();
-export const admin = users.getAdmin();
-export const instructor = users.getInstructor();
-export const tutor = users.getTutor();
-export const studentOne = users.getStudentOne();
-export const studentTwo = users.getStudentTwo();
-export const studentThree = users.getStudentThree();
-export const studentFour = users.getStudentFour();
+
+// Fixed user credentials — passwords equal usernames
+export const admin: UserCredentials = { username: 'artemis_admin', password: 'artemis_admin' };
+export const studentOne: UserCredentials = { username: 'artemis_test_user_1', password: 'artemis_test_user_1' };
+export const studentTwo: UserCredentials = { username: 'artemis_test_user_2', password: 'artemis_test_user_2' };
+export const studentThree: UserCredentials = { username: 'artemis_test_user_3', password: 'artemis_test_user_3' };
+export const studentFour: UserCredentials = { username: 'artemis_test_user_4', password: 'artemis_test_user_4' };
+export const tutor: UserCredentials = { username: 'artemis_test_user_6', password: 'artemis_test_user_6' };
+export const instructor: UserCredentials = { username: 'artemis_test_user_16', password: 'artemis_test_user_16' };

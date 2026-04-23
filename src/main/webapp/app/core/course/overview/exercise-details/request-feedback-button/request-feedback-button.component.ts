@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -85,7 +85,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.exercise().id) {
             this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                    this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
+                    const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                    const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
+                    const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+                    // Prefer practice participation when it exists (student is working in practice mode)
+                    this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
                         this.currentFeedbackRequestCount =
                             getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
@@ -102,24 +106,25 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     setUserAcceptedLLMUsage(): void {
-        this.hasUserAcceptedLLMUsage = this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI;
+        const selection = this.accountService.userIdentity()?.selectedLLMUsage;
+        this.hasUserAcceptedLLMUsage = selection === LLMSelectionDecision.CLOUD_AI;
     }
 
     async showLLMSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 // Store that the user actively declined AI usage
                 this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLM_MODAL_DISMISSED:
                 break;
         }
     }
@@ -171,14 +176,25 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     requestFeedback() {
-        if (!this.assureConditionsSatisfied()) {
-            return;
-        }
-        this.processFeedbackRequest();
+        this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+            next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
+                const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+                this.participation = practiceParticipation ?? gradedParticipation;
+                if (!this.assureConditionsSatisfied()) {
+                    return;
+                }
+                this.processFeedbackRequest();
+            },
+            error: (error: HttpErrorResponse) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
     }
 
     private processFeedbackRequest() {
-        this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
+        this.courseExerciseService.requestFeedback(this.exercise().id!, this.participation!.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.generatingFeedback.emit();
@@ -194,12 +210,14 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     /**
      * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
      * The student can request automatic non-graded feedback under the following conditions:
-     * 1. They have a graded submission.
-     * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no already pending feedback request.
+     * 1. They have a participation with a submission.
+     * 2. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
+        if (!this.participation?.id) {
+            return false;
+        }
         return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
     }
 

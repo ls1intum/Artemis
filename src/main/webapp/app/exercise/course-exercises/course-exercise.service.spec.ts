@@ -17,7 +17,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 

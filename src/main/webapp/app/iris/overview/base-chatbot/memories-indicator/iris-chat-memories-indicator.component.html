@@ -1,0 +1,46 @@
+@if (show()) {
+    <button
+        type="button"
+        class="memories-indicator"
+        (click)="togglePopover($event)"
+        [pTooltip]="tooltipText()"
+        tooltipPosition="top"
+        data-testid="memories-indicator-button"
+        [attr.aria-label]="tooltipText()"
+    >
+        <fa-icon [icon]="faBrain" />
+        <span class="memories-indicator-label">{{ compactLabel() }}</span>
+    </button>
+
+    <p-popover #popover (onShow)="onShow()" (onHide)="onHide()" appendTo="body" [style]="{ 'max-width': 'min(840px, calc(100vw - 24px))', width: 'max-content' }">
+        <div class="memories-popover">
+            @if (usedCount() > 0) {
+                <div class="memories-section" data-testid="memories-used-section">
+                    <div class="memories-section-title" jhiTranslate="artemisApp.iris.memories.indicator.usedSectionTitle"></div>
+                    <ul class="memories-list">
+                        @for (memory of accessedMemories() ?? []; track memory.id) {
+                            <li class="memories-item">
+                                <div class="memories-item-title">{{ memory.title }}</div>
+                                <div class="memories-item-content">{{ memory.content }}</div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (createdCount() > 0) {
+                <div class="memories-section" data-testid="memories-created-section">
+                    <div class="memories-section-title" jhiTranslate="artemisApp.iris.memories.indicator.createdSectionTitle"></div>
+                    <ul class="memories-list">
+                        @for (memory of createdMemories() ?? []; track memory.id) {
+                            <li class="memories-item">
+                                <div class="memories-item-title">{{ memory.title }}</div>
+                                <div class="memories-item-content">{{ memory.content }}</div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </p-popover>
+}

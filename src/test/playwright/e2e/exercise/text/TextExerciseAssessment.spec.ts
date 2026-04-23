@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import dayjs from 'dayjs';
 
@@ -7,8 +6,8 @@ import { test } from '../../../support/fixtures';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { Commands } from '../../../support/commands';
-import { CourseManagementAPIRequests } from '../../../support/requests/CourseManagementAPIRequests';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const tutorFeedback = 'Try to use some newlines next time!';
@@ -17,40 +16,35 @@ const tutorTextFeedback = 'Nice ending of the sentence!';
 const tutorTextFeedbackPoints = 2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Text exercise assessment', { tag: '@fast' }, () => {
-    let course: Course;
+const course = { id: SEED_COURSES.textAssessment.id } as any;
+
+test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     let exercise: TextExercise;
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
-    test.beforeAll('Create course and make a submission', async ({ browser }) => {
-        const context = await browser.newContext();
+    test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
         const page = await context.newPage();
-        dueDate = dayjs().add(20, 'seconds');
-        assessmentDueDate = dueDate.add(30, 'seconds');
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+        // Initialize deadlines after login so the short windows aren't consumed by setup.
+        // Use generous windows to avoid flakiness under CI parallel load.
+        dueDate = dayjs().add(10, 'seconds');
+        assessmentDueDate = dueDate.add(10, 'seconds');
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
-        //exercise = await exerciseAPIRequests.createTextExercise({ course });
         const now = dayjs();
         if (now.isBefore(dueDate)) {
-            await page.waitForTimeout(dueDate.diff(now, 'ms'));
+            await page.waitForTimeout(dueDate.diff(now, 'ms') + 2000);
         }
     });
 
     test.describe.serial('Feedback', () => {
-        test('Assesses the text exercise submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, textExerciseAssessment }) => {
-            await login(tutor, '/course-management');
-            await courseManagement.openAssessmentDashboardOfCourse(course.id!);
-            await courseAssessment.clickExerciseDashboardButton();
+        test('Assesses the text exercise submission', async ({ login, page, exerciseAssessment, textExerciseAssessment }) => {
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${exercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: exercise.title })).toBeVisible();
@@ -66,18 +60,20 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
             expect(response.status()).toBe(200);
         });
 
-        test('Student sees feedback after assessment due date and complains', async ({ login, page, exerciseResult, textExerciseFeedback }) => {
+        test('Student sees feedback after assessment due date and complains', async ({ login, page, courseManagementAPIRequests, exerciseResult, textExerciseFeedback }) => {
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
-                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
+                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms') + 2000);
             }
+            // Reset complaint limit to avoid "complaint limit reached" on shared seed courses
+            await login(admin);
+            await courseManagementAPIRequests.updateCourseMaxComplaints(course.id, 999);
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
             await exerciseResult.shouldShowExerciseTitle(exercise.title!);
             await exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             await exerciseResult.shouldShowScore(percentage);
-            await exerciseResult.clickOpenExercise(exercise.id!);
             await textExerciseFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             await textExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             await textExerciseFeedback.shouldShowScore(percentage);
@@ -91,10 +87,5 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterAll('Delete course', async ({ browser }) => {
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

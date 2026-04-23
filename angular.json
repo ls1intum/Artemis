@@ -34,7 +34,6 @@
                   "hoist-non-react-statics",
                   "interactjs",
                   "is-mobile",
-                  "js-video-url-parser",
                   "jszip",
                   "localforage",
                   "markdown-it-highlightjs",
@@ -119,6 +118,11 @@
                 "glob": "**/*",
                 "input": "./node_modules/monaco-editor/bundles/vs",
                 "output": "vs"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
+                "output": "assets/ngx-extended-pdf-viewer"
               }
             ],
             "styles": [
@@ -128,7 +132,8 @@
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
               },
-              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css",
+              "node_modules/@tumaet/apollon/dist/assets/style.css"
             ],
             "scripts": []
           },
@@ -157,8 +162,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.5mb",
-                  "maximumError": "4.8mb"
+                  "maximumWarning": "4.5mb",
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",

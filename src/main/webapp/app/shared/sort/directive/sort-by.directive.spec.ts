@@ -5,6 +5,8 @@ import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 @Component({
     template: `
@@ -19,16 +21,17 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
             </thead>
         </table>
     `,
-    imports: [SortDirective, SortByDirective, FaIconComponent],
+    imports: [FaIconComponent, SortDirective, SortByDirective],
 })
 class TestSortByDirectiveComponent {
     predicate?: string;
     ascending?: boolean;
-    transition = jest.fn();
+    transition = vi.fn();
     faSort = faSort;
 }
 
 describe('Directive: SortByDirective', () => {
+    setupTestBed({ zoneless: true });
     let component: TestSortByDirectiveComponent;
     let fixture: ComponentFixture<TestSortByDirectiveComponent>;
     let tableHead: DebugElement;
@@ -54,9 +57,9 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('_score');
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSort);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSort);
         expect(component.transition).not.toHaveBeenCalled();
     });
 
@@ -69,9 +72,9 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('id');
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSort);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSort);
         expect(component.transition).not.toHaveBeenCalled();
     });
 
@@ -85,10 +88,10 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBeTrue();
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSortUp);
+        expect(component.ascending).toBe(true);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSortUp);
         expect(component.transition).not.toHaveBeenCalled();
     });
 
@@ -104,10 +107,10 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBeTrue();
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSortUp);
+        expect(component.ascending).toBe(true);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSortUp);
         expect(component.transition).toHaveBeenCalledOnce();
     });
 
@@ -124,8 +127,8 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBeFalse();
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSortDown);
+        expect(component.ascending).toBe(false);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSortDown);
         expect(component.transition).toHaveBeenCalledOnce();
     });
 
@@ -147,8 +150,8 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBeTrue();
-        expect(sortByDirective.iconComponent?.icon()).toBe(faSortUp);
+        expect(component.ascending).toBe(true);
+        expect(sortByDirective.iconComponent()?.icon()).toBe(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 });

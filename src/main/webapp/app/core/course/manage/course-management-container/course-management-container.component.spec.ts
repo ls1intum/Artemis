@@ -90,7 +90,6 @@ const course1: Course = {
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     courseIconPath: 'api/core/files/path/to/icon.png',
     onlineCourse: true,
-    faqEnabled: true,
 };
 
 const course2: Course = {
@@ -336,51 +335,64 @@ describe('CourseManagementContainerComponent', () => {
         expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should create sidebar items based on course properties', async () => {
+    it('should create sidebar items based on course properties', () => {
         component.course.set({
             ...course1,
             isAtLeastEditor: true,
             isAtLeastInstructor: true,
             tutorialGroupsConfiguration: {},
-            faqEnabled: true,
             onlineCourse: true,
         });
-        fixture.detectChanges();
-
-        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        await component.ngOnInit();
-        const sidebarItems = component.sidebarItems();
+        component.lectureEnabled = true;
+        component.atlasEnabled = true;
+        component.ltiEnabled = true;
+        component.irisEnabled = true;
+        component.tutorialGroupEnabled = true;
+        const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Exercises')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
-
         expect(sidebarItems.find((item) => item.title === 'Lectures')).toBeTruthy();
-
-        expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Learning Path')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeTruthy();
-
-        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Assessment Dashboard')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
     });
+    it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
+        component.course.set({
+            ...course1,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            tutorialGroupsConfiguration: {},
+        });
+        component.lectureEnabled = true;
+        component.atlasEnabled = true;
+        // tutorialGroupEnabled defaults to false (module feature disabled)
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeUndefined();
+    });
+
     it('should not include sidebar items for disabled features for non-instructors', async () => {
         const courseWithDisabledFeatures = {
             ...course1,
             isAtLeastEditor: true,
             isAtLeastInstructor: false,
-            faqEnabled: false,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
         };
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
-        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 
     it('should subscribe to course updates when handleCourseIdChange is called', () => {

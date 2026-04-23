@@ -12,9 +12,12 @@ import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
+import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -30,6 +33,8 @@ import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/qui
         FaIconComponent,
         NgClass,
         QuizQuestionListEditExistingComponent,
+        QuizAiQuestionRefinementPanelComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class QuizQuestionListEditComponent {
@@ -38,6 +43,7 @@ export class QuizQuestionListEditComponent {
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
     disabled = input(false);
+    hyperionEnabled = input(false);
 
     onQuestionAdded = output<QuizQuestion>();
     onQuestionUpdated = output<void>();
@@ -52,8 +58,14 @@ export class QuizQuestionListEditComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly ApollonQuizDragAndDrop = FeatureToggle.ApollonQuizDragAndDrop;
 
     faPlus = faPlus;
+
+    /** Questions whose AI refinement panel is currently open. */
+    openRefinementQuestions = signal(new Set<QuizQuestion>());
+    /** Questions whose editor card is currently collapsed. */
+    collapsedQuestions = signal(new Set<QuizQuestion>());
 
     showExistingQuestions = false;
 
@@ -67,13 +79,76 @@ export class QuizQuestionListEditComponent {
     }
 
     /**
-     * Remove the QuizQuestion from the quizQuestions list according to the given index.
+     * Toggle the AI refinement panel for the given question.
      *
-     * @param index the index of QuizQuestion to be deleted
+     * @param question the question whose refinement panel to toggle
      */
-    handleQuestionDeleted(index: number) {
-        const quizQuestion = this.quizQuestions()[index];
+    toggleRefinement(question: QuizQuestion): void {
+        const updated = new Set(this.openRefinementQuestions());
+        if (updated.has(question)) {
+            updated.delete(question);
+        } else {
+            updated.add(question);
+        }
+        this.openRefinementQuestions.set(updated);
+    }
+
+    /**
+     * Track collapsed state of a question so the AI refinement panel hides while collapsed
+     * but its open state is preserved for when the question is expanded again.
+     *
+     * @param question the question whose collapsed state changed
+     * @param collapsed whether the question is now collapsed
+     */
+    handleCollapseChanged(question: QuizQuestion, collapsed: boolean): void {
+        const updated = new Set(this.collapsedQuestions());
+        if (collapsed) {
+            updated.add(question);
+        } else {
+            updated.delete(question);
+        }
+        this.collapsedQuestions.set(updated);
+    }
+
+    /**
+     * Refresh the edit component after the question object was mutated in-place by AI refinement.
+     *
+     * @param question the refined question object
+     * @param _refinedQuestion the refined Question
+     */
+    handleQuestionRefined(question: QuizQuestion, _refinedQuestion: MultipleChoiceQuestion) {
+        // The question object was mutated in-place; find the corresponding MC edit component and reload its editor.
+        const index = this.quizQuestions().indexOf(question);
+        if (index < 0) {
+            return;
+        }
+        const mcIndex = this.quizQuestions()
+            .slice(0, index)
+            .filter((q) => q.type === this.MULTIPLE_CHOICE).length;
+        const mcComponent = this.editMultipleChoiceQuestionComponents()[mcIndex];
+        if (mcComponent) {
+            mcComponent.reloadFromQuestion();
+            this.onQuestionUpdated.emit();
+        }
+    }
+
+    /**
+     * Remove the given QuizQuestion from the quizQuestions list.
+     *
+     * @param quizQuestion the QuizQuestion to be deleted
+     */
+    handleQuestionDeleted(quizQuestion: QuizQuestion) {
+        const index = this.quizQuestions().indexOf(quizQuestion);
+        if (index < 0) {
+            return;
+        }
         this.quizQuestions().splice(index, 1);
+        const openUpdated = new Set(this.openRefinementQuestions());
+        openUpdated.delete(quizQuestion);
+        this.openRefinementQuestions.set(openUpdated);
+        const collapsedUpdated = new Set(this.collapsedQuestions());
+        collapsedUpdated.delete(quizQuestion);
+        this.collapsedQuestions.set(collapsedUpdated);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 

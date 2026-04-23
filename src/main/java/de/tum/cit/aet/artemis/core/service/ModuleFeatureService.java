@@ -107,20 +107,20 @@ public class ModuleFeatureService {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled() {
-        return artemisConfigHelper.isNebulaEnabled(environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @return true if the LTI module is enabled, false otherwise
      */
     public boolean isLtiEnabled() {
         return artemisConfigHelper.isLtiEnabled(environment);
+    }
+
+    /**
+     * Check if the Theia module is enabled.
+     *
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled() {
+        return artemisConfigHelper.isTheiaEnabled(environment);
     }
 }

@@ -31,6 +31,7 @@ textarea {
 
 table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin: 20px 0;
     font-size: 16px;
@@ -40,6 +41,14 @@ table {
 th,
 td {
     padding: 15px;
+    overflow-wrap: anywhere;
+
+    &:last-child {
+        width: 5rem;
+        white-space: nowrap;
+        text-align: right;
+        overflow-wrap: normal;
+    }
 }
 
 /* Button styling */

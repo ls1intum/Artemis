@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -13,9 +15,10 @@ import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/student
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { fakeAsync, tick } from '@angular/core/testing';
 
 describe('StudentsExportDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: StudentsExportDialogComponent;
     let fixture: ComponentFixture<StudentsExportDialogComponent>;
     let examManagementService: ExamManagementService;
@@ -46,8 +49,7 @@ describe('StudentsExportDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent, DialogModule, ButtonModule],
-            declarations: [MockDirective(TranslateDirective)],
+            imports: [FormsModule, FaIconComponent, DialogModule, ButtonModule, StudentsExportDialogComponent, MockDirective(TranslateDirective)],
             providers: [MockProvider(ExamManagementService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -59,16 +61,17 @@ describe('StudentsExportDialogComponent', () => {
 
         examManagementService = TestBed.inject(ExamManagementService);
 
-        jest.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
+        vi.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
         component.openDialog();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should open the dialog', () => {
-        expect(component['dialogVisible']()).toBeTrue();
+        expect(component['dialogVisible']()).toBe(true);
     });
 
     it('should close the dialog when cancel button is clicked', () => {
@@ -77,12 +80,12 @@ describe('StudentsExportDialogComponent', () => {
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
 
-        expect(component['dialogVisible']()).toBeFalse();
-        expect(component['lastExportAttemptFailed']()).toBeFalse();
+        expect(component['dialogVisible']()).toBe(false);
+        expect(component['lastExportAttemptFailed']()).toBe(false);
     });
 
     it('should call exportExamUsers with correct arguments', () => {
-        const exportSpy = jest.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
+        const exportSpy = vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
 
         component.exportUsers();
 
@@ -90,29 +93,30 @@ describe('StudentsExportDialogComponent', () => {
         expect(exportSpy).toHaveBeenCalledWith(course.id, exam.id);
     });
 
-    it('should download CSV and close dialog on successful export', fakeAsync(() => {
-        jest.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
+    it('should download CSV and close dialog on successful export', () => {
+        vi.useFakeTimers();
+        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
 
-        const downloadSpy = jest.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
-        const closeSpy = jest.spyOn(component, 'closeDialog');
+        const downloadSpy = vi.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
+        const closeSpy = vi.spyOn(component, 'closeDialog');
 
         component.exportUsers();
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy.mock.calls[0][1]).toBe(`exam-${exam.id}-students.csv`);
         expect(closeSpy).toHaveBeenCalled();
-    }));
+    });
 
     it('should set error flag when export fails', () => {
-        jest.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(throwError(() => new Error('boom')));
+        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(throwError(() => new Error('boom')));
 
         component.exportUsers();
 
-        expect(component['lastExportAttemptFailed']()).toBeTrue();
-        expect(component['dialogVisible']()).toBeTrue();
+        expect(component['lastExportAttemptFailed']()).toBe(true);
+        expect(component['dialogVisible']()).toBe(true);
     });
 
     it('should reset error flag when dialog is closed', () => {
@@ -120,8 +124,8 @@ describe('StudentsExportDialogComponent', () => {
 
         component.closeDialog();
 
-        expect(component['lastExportAttemptFailed']()).toBeFalse();
-        expect(component['dialogVisible']()).toBeFalse();
+        expect(component['lastExportAttemptFailed']()).toBe(false);
+        expect(component['dialogVisible']()).toBe(false);
     });
 
     it('should sanitize dangerous CSV values', () => {
@@ -158,7 +162,7 @@ describe('StudentsExportDialogComponent', () => {
     }
 
     it('should not throw when exporting empty user list', () => {
-        jest.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of([]));
+        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of([]));
 
         expect(() => component.exportUsers()).not.toThrow();
     });

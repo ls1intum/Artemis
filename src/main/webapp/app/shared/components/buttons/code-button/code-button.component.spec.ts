@@ -20,13 +20,13 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PROFILE_THEIA } from 'app/app.constants';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
@@ -62,7 +62,7 @@ describe('CodeButtonComponent', () => {
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
-                LocalStorageService,
+                MockProvider(LocalStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -197,6 +197,7 @@ describe('CodeButtonComponent', () => {
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
+        component.onClick();
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
@@ -269,6 +270,7 @@ describe('CodeButtonComponent', () => {
             testRun: true,
         };
         fixture.componentRef.setInput('participations', [participation1, participation2]);
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -276,7 +278,8 @@ describe('CodeButtonComponent', () => {
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
         expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
-        component.switchPracticeMode();
+        fixture.componentRef.setInput('isPractice', true);
+        fixture.detectChanges();
 
         expect(component.activeParticipation()).toEqual(participation2);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
@@ -286,6 +289,7 @@ describe('CodeButtonComponent', () => {
     it('should handle no participation', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.isTeamParticipation()).toBe(false);
@@ -315,7 +319,7 @@ describe('CodeButtonComponent', () => {
 
         component.sshEnabled = true;
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH, RepositoryAuthenticationMethod.Password]);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -351,43 +355,59 @@ describe('CodeButtonComponent', () => {
                 { id: 2, testRun: false },
             ],
             { dueDate: dayjs().subtract(1, 'hour') } as Exercise,
-            1,
+            false,
+            2,
         ],
-        [[{ id: 1, testRun: true }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, 1],
-        [[{ id: 2, testRun: false }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, 2],
+        [[{ id: 1, testRun: true }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, false, 1],
+        [[{ id: 2, testRun: false }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, false, 2],
         [
             [
                 { id: 1, testRun: true },
                 { id: 2, testRun: false },
             ],
             { dueDate: dayjs().add(1, 'hour') } as Exercise,
+            false,
             2,
         ],
-        [[{ id: 2, testRun: false }], { dueDate: dayjs().add(1, 'hour') } as Exercise, 2],
+        [[{ id: 2, testRun: false }], { dueDate: dayjs().add(1, 'hour') } as Exercise, false, 2],
         [
             [
                 { id: 1, testRun: true },
                 { id: 2, testRun: false },
             ],
             { dueDate: undefined } as Exercise,
+            false,
             2,
         ],
-        [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, 2],
-        [[{ id: 1, testRun: true }], { exerciseGroup: {} } as Exercise, 1],
-    ])('should correctly choose active participation', async (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, expected: number) => {
-        fixture.componentRef.setInput('participations', participations);
-        fixture.componentRef.setInput('exercise', exercise);
+        [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, false, 2],
+        [[{ id: 1, testRun: true }], { exerciseGroup: {} } as Exercise, false, 1],
+        [
+            [
+                { id: 1, testRun: true },
+                { id: 2, testRun: false },
+            ],
+            { dueDate: dayjs().subtract(1, 'hour') } as Exercise,
+            true,
+            1,
+        ],
+    ])(
+        'should correctly choose active participation',
+        async (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, isPractice: boolean, expected: number) => {
+            fixture.componentRef.setInput('participations', participations);
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('isPractice', isPractice);
 
-        fixture.detectChanges();
+            fixture.detectChanges();
 
-        expect(component.activeParticipation()?.id).toBe(expected);
-    });
+            expect(component.activeParticipation()?.id).toBe(expected);
+        },
+    );
 
     it.each([
         [
-            'start theia button should be visible when profile is active and theia is configured',
+            'start theia button should be visible when module feature is active and theia is configured',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -399,9 +419,9 @@ describe('CodeButtonComponent', () => {
             true,
         ],
         [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
+            'start theia button should not be visible when module feature is active but theia is ill-configured',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -413,9 +433,9 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
+            'start theia button should not be visible when module feature is active but onlineIde is not activated',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
             {
@@ -427,9 +447,9 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is active but url is not set',
+            'start theia button should not be visible when module feature is active but url is not set',
             {
-                activeProfiles: [PROFILE_THEIA],
+                activeModuleFeatures: [MODULE_FEATURE_THEIA],
             },
             {
                 allowOnlineIde: true,
@@ -440,7 +460,7 @@ describe('CodeButtonComponent', () => {
             false,
         ],
         [
-            'start theia button should not be visible when profile is not active but url is set',
+            'start theia button should not be visible when module feature is not active but url is set',
             {
                 theiaPortalURL: 'https://theia.test',
             },

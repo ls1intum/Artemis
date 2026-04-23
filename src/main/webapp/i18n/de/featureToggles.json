@@ -35,10 +35,6 @@
                     "name": "Apollon (Modellierung)",
                     "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
                 },
-                "theia": {
-                    "name": "Theia (Online-IDE)",
-                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
-                },
                 "ldap": {
                     "name": "LDAP-Authentifizierung",
                     "description": "Aktiviert LDAP-basierte Authentifizierung für die Benutzeranmeldung über institutionelle Verzeichnisdienste."
@@ -105,9 +101,9 @@
                     "name": "Übungsgruppen",
                     "description": "Aktiviert die Übungsgruppenverwaltung zur Organisation von Studierenden und Tutor:innen."
                 },
-                "nebula": {
-                    "name": "Nebula (Videoverarbeitung)",
-                    "description": "Aktiviert die Verarbeitung und Transkription von Vorlesungsvideos für KI-gestütztes Inhaltsverständnis."
+                "theia": {
+                    "name": "Theia (Online-IDE)",
+                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
                 },
                 "sharing": {
                     "name": "Aufgaben-Sharing",
@@ -180,13 +176,28 @@
                 },
                 "LectureContentProcessing": {
                     "name": "Videotranskription",
-                    "description": "Nutzt Nebula, um automatisch Transkriptionen aus Vorlesungsvideos zu generieren und diese an Pyris/Iris zu senden, sodass KI-Assistenten Fragen zu Vorlesungsinhalten beantworten und genauere, inhaltsbezogene Antworten geben können.",
-                    "disableWarning": "Vorlesungsvideos werden nicht von Nebula transkribiert und Iris kann in seinen Antworten nicht auf Vorlesungsinhalte Bezug nehmen."
+                    "description": "Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion.",
+                    "disableWarning": "Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."
                 },
                 "RateLimit": {
                     "name": "API-Rate-Limiting",
                     "description": "Schützt die Anwendung vor Missbrauch und Überlastung durch Begrenzung der Anzahl spezifischer API-Anfragen pro Nutzer:in in einem bestimmten Zeitraum.",
                     "disableWarning": "Spezifische API-Endpunkte sind nicht durch Rate-Limiting geschützt, was zu potenziellem Missbrauch oder Überlastung führen kann."
+                },
+                "AutonomousTutor": {
+                    "name": "Autonomer Tutor",
+                    "description": "Aktiviert den Iris-gestützten autonomen Tutor, der automatisch auf Studierendenbeiträge in Kurskanälen mit kontextrelevanten Antworten reagiert.",
+                    "disableWarning": "Der autonome Tutor antwortet nicht automatisch auf Studierendenbeiträge. Studierende müssen auf manuelle Tutor-Antworten warten."
+                },
+                "GlobalSearch": {
+                    "name": "Globale Suche",
+                    "description": "Aktiviert eine einheitliche Suchoberfläche, die über Cmd+K/Strg+K erreichbar ist und es Nutzer:innen ermöglicht, schnell über Kurse, Aufgaben, Vorlesungen und andere Inhalte zu suchen.",
+                    "disableWarning": "Nutzer:innen haben keinen Zugriff auf die globale Suchfunktion und müssen manuell durch die Oberfläche navigieren."
+                },
+                "ApollonQuizDragAndDrop": {
+                    "name": "Apollon-Quiz-Drag-and-Drop-Import",
+                    "description": "Ermöglicht Lehrenden, im Quiz-Editor Apollon-basierte Drag-and-Drop-Fragen hinzuzufügen.",
+                    "disableWarning": "Lehrende können im Quiz-Editor keine neuen Apollon-basierten Drag-and-Drop-Fragen erstellen."
                 }
             }
         }

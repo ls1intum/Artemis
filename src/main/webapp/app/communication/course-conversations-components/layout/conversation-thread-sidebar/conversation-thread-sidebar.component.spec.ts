@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,13 +14,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentRef, signal } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ConversationThreadSidebarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ConversationThreadSidebarComponent;
     let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
     let componentRef: ComponentRef<ConversationThreadSidebarComponent>;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [
                 ConversationThreadSidebarComponent,
@@ -29,10 +34,22 @@ describe('ConversationThreadSidebarComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(TutorSuggestionComponent),
             ],
-        }).compileComponents();
-    }));
+            providers: [{ provide: TranslateService, useValue: { instant: vi.fn((key: string) => key), get: vi.fn() } }],
+        });
+    });
 
     beforeEach(() => {
+        TestBed.overrideComponent(ConversationThreadSidebarComponent, {
+            remove: { imports: [PostComponent, MessageReplyInlineInputComponent, TutorSuggestionComponent, TranslateDirective] },
+            add: {
+                imports: [
+                    MockComponent(PostComponent),
+                    MockComponent(MessageReplyInlineInputComponent),
+                    MockComponent(TutorSuggestionComponent),
+                    MockDirective(TranslateDirective),
+                ],
+            },
+        });
         fixture = TestBed.createComponent(ConversationThreadSidebarComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
@@ -47,7 +64,8 @@ describe('ConversationThreadSidebarComponent', () => {
     it('should create empty default answer post', () => {
         const newPost = new Post();
         post.id = 1;
-        component.activePost = newPost;
+        fixture.componentRef.setInput('activePost', newPost);
+        fixture.detectChanges();
         expect(component.createdAnswerPost).toBeDefined();
         expect(component.createdAnswerPost.content).toBe('');
         expect(component.createdAnswerPost.post).toEqual(newPost);
@@ -56,7 +74,8 @@ describe('ConversationThreadSidebarComponent', () => {
     it.each([true, false])('should determine channel moderation rights based on active conversation', (hasModerationRights: boolean) => {
         const conversation = new ChannelDTO();
         conversation.hasChannelModerationRights = hasModerationRights;
-        component.activeConversation = conversation;
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
         expect(component.hasChannelModerationRights).toBe(hasModerationRights);
     });
 
@@ -73,18 +92,18 @@ describe('ConversationThreadSidebarComponent', () => {
     });
 
     it('should toggle isExpanded and call close() on expandTooltip signal when toggleExpand() is called', () => {
-        const closeMock = jest.fn();
+        const closeMock = vi.fn();
 
         component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
 
-        expect(component.isExpanded).toBeFalse();
+        expect(component.isExpanded).toBe(false);
 
         component.toggleExpand();
-        expect(component.isExpanded).toBeTrue();
+        expect(component.isExpanded).toBe(true);
         expect(closeMock).toHaveBeenCalledOnce();
 
         component.toggleExpand();
-        expect(component.isExpanded).toBeFalse();
+        expect(component.isExpanded).toBe(false);
         expect(closeMock).toHaveBeenCalledTimes(2);
     });
 });

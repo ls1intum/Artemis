@@ -6,8 +6,8 @@ import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
@@ -28,7 +28,7 @@ public class HermesHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
+    @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String hermesUrl;
 
     public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {

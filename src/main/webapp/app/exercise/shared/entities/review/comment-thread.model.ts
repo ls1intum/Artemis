@@ -25,6 +25,14 @@ export interface CommentThread {
     comments: Comment[];
 }
 
+export interface ReviewThreadLocation {
+    threadId: number;
+    targetType: CommentThreadLocationType;
+    auxiliaryRepositoryId?: number;
+    filePath?: string;
+    lineNumber?: number;
+}
+
 export interface CreateCommentThread {
     targetType: CommentThreadLocationType;
     auxiliaryRepositoryId?: number;

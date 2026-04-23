@@ -351,3 +351,8 @@ export abstract class TextEditorAction implements Disposable {
         }
     }
 }
+
+/**
+ * Class representing actions for styling text, e.g. bold or italic.
+ */
+export abstract class TextStyleTextEditorAction extends TextEditorAction {}

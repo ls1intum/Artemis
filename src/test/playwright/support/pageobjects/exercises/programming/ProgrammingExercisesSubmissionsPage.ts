@@ -1,4 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
+import { Commands } from '../../../commands';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseSubmissionsPage {
     private readonly page: Page;
@@ -14,19 +16,20 @@ export class ProgrammingExerciseSubmissionsPage {
             .filter({ hasText: `${text}` });
     }
 
-    async checkInstructorSubmission() {
-        let submissionRow = this.getSubmissionWithText('INSTRUCTOR');
-        await this.checkSubmissionVisible(submissionRow);
+    async checkInstructorSubmission(timeout?: number) {
+        const submissionRow = this.getSubmissionWithText('INSTRUCTOR');
+        await this.checkSubmissionVisible(submissionRow, timeout);
     }
 
-    async checkStudentSubmission() {
-        let submissionRow = this.getSubmissionWithText('MANUAL');
-        await this.checkSubmissionVisible(submissionRow);
+    async checkStudentSubmission(timeout?: number) {
+        const submissionRow = this.getSubmissionWithText('MANUAL');
+        await this.checkSubmissionVisible(submissionRow, timeout);
     }
 
-    private async checkSubmissionVisible(submissionRow: Locator) {
-        await submissionRow.waitFor({ state: 'visible' });
-        expect(submissionRow).not.toBeUndefined();
+    private async checkSubmissionVisible(submissionRow: Locator, timeout?: number) {
+        // Submissions appear after the build agent processes the git push,
+        // so use the standard build result timeout instead of an arbitrary value.
+        await Commands.reloadUntilFound(this.page, submissionRow, POLLING_INTERVAL, timeout ?? BUILD_RESULT_TIMEOUT);
         expect(submissionRow.locator('jhi-result')).not.toBeUndefined();
     }
 }

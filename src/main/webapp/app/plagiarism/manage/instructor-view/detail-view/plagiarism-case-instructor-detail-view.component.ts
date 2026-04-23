@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -35,12 +36,14 @@ import {
     NgbNavOutlet,
 } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
+import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
+import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -78,6 +81,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private themeService = inject(ThemeService);
     private accountService = inject(AccountService);
+    private plagiarismPostService = inject(PlagiarismPostService);
 
     courseId: number;
     plagiarismCaseId: number;
@@ -124,7 +128,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
             const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
 
-            // Handle post deletion case by checking if unfiltered posts are empty.
+            // Handle post-deletion case by checking if unfiltered posts are empty.
             if (filteredPosts.length > 0 || posts.length === 0) {
                 // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
                 // when "posts.length > 0 && filteredPosts.length === 0".
@@ -219,18 +223,26 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return this.posts?.length > 0;
     }
 
-    onStudentNotified(post: Post) {
-        if (!this.posts) {
-            this.posts = [];
+    /**
+     * Called after successfully creating the plagiarism notification post.
+     * Adds the created post to the local list so the thread becomes visible immediately.
+     */
+    onStudentNotified(createdPost: Post): void {
+        const currentPosts = this.posts ?? [];
+
+        const exists = currentPosts.some((post) => post.id === createdPost.id);
+        if (!exists) {
+            this.posts = [...currentPosts, createdPost];
         }
-        this.posts.push(post);
+
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
+        this.metisService.getFilteredPosts({ plagiarismCaseId: this.plagiarismCaseId }, true);
     }
 
     /**
      * Creates a post for the student notification.
      * This method invokes the metis service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
-     * The plagiarism case is set as context and an example title and body for the instructor is generated.
+     * The plagiarism case is set as context, and an example title and body for the instructor is generated.
      **/
     createEmptyPost(): void {
         const studentName = abbreviateString(this.plagiarismCase.student?.name ?? '', 70);
@@ -242,8 +254,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             70,
         );
 
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.plagiarismCase);
-        // Note the limit of 1.000 characters for the post's content
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.plagiarismCase); // Note the limit of 1.000 characters for the post's content
         this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
             exercise: exerciseTitle,
         });
@@ -265,4 +276,15 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     async printPlagiarismCase() {
         return await this.themeService.print();
     }
+
+    createPlagiarismPost = (post: Post): Observable<Post> => {
+        const dto: PlagiarismPostCreationDtoModel = {
+            title: post.title ?? '',
+            content: post.content ?? '',
+            visibleForStudents: post.visibleForStudents ?? true,
+            hasForwardedMessages: post.hasForwardedMessages ?? false,
+            plagiarismCaseId: this.plagiarismCaseId,
+        };
+        return this.plagiarismPostService.createPlagiarismPost(this.courseId, dto);
+    };
 }

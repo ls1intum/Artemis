@@ -21,6 +21,7 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
+        Constants.ATLASML_ENABLED_PROPERTY_NAME,
         Constants.HYPERION_ENABLED_PROPERTY_NAME,
         Constants.EXAM_ENABLED_PROPERTY_NAME,
         Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
@@ -30,8 +31,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.LECTURE_ENABLED_PROPERTY_NAME,
         Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME,
         Constants.PASSKEY_ENABLED_PROPERTY_NAME,
-        Constants.NEBULA_ENABLED_PROPERTY_NAME,
         Constants.SHARING_ENABLED_PROPERTY_NAME,
+        Constants.THEIA_ENABLED_PROPERTY_NAME,
         Constants.IRIS_ENABLED_PROPERTY_NAME,
         Constants.LTI_ENABLED_PROPERTY_NAME
     );
@@ -40,6 +41,7 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_ATLASML,
         Constants.MODULE_FEATURE_HYPERION,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
@@ -49,8 +51,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_LECTURE,
         Constants.MODULE_FEATURE_TUTORIALGROUP,
         Constants.FEATURE_PASSKEY,
-        Constants.MODULE_FEATURE_NEBULA,
         Constants.MODULE_FEATURE_SHARING,
+        Constants.MODULE_FEATURE_THEIA,
         Constants.MODULE_FEATURE_IRIS,
         Constants.MODULE_FEATURE_LTI
     );

@@ -27,10 +27,10 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -200,7 +200,15 @@ public class JenkinsBuildPlanService {
         existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
         // remove potential username from repo URI. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URI
-        final var repoUri = newRepoUri.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        final String repoUri;
+        var schemeEnd = newRepoUri.indexOf("://");
+        var atIndex = schemeEnd >= 0 ? newRepoUri.indexOf('@', schemeEnd + 3) : -1;
+        if (schemeEnd >= 0 && atIndex >= 0) {
+            repoUri = newRepoUri.substring(0, schemeEnd + 3) + newRepoUri.substring(atIndex + 1);
+        }
+        else {
+            repoUri = newRepoUri;
+        }
         final Document jobConfig = jenkinsJobService.getJobConfig(buildProjectKey, buildPlanKey);
 
         try {
@@ -250,7 +258,7 @@ public class JenkinsBuildPlanService {
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
          */
         if (nameParams.length != 4) {
-            var requestBodyString = new ObjectMapper().writeValueAsString(testResultsDTO);
+            var requestBodyString = JsonObjectMapper.get().writeValueAsString(testResultsDTO);
             log.error("Can't extract planKey from requestBody! Not a test notification result!: {}", requestBodyString);
             throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + requestBodyString);
         }

@@ -9,9 +9,47 @@ tasks.withType(Test).configureEach {
     // See: https://github.com/weaviate/java-client?tab=readme-ov-file#gson-and-reflective-access-to-internal-jdk-classes
     // This is harmless: it only opens java.lang to classpath code within the same JVM process and does not expand the attack surface for remote exploits.
     jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+    // Force UTC timezone for the test JVM. PostgreSQL's TIMESTAMP WITHOUT TIME ZONE columns
+    // in @SecondaryTable mappings can shift values by the JVM timezone offset during Hibernate
+    // round-trips. Combined with hibernate.jdbc.time_zone=UTC and the PostgreSQL session
+    // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
+    // and PostgreSQL.
+    jvmArgs += "-Duser.timezone=UTC"
 
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
+
+    // Pin the Ryuk container image version (Testcontainers reads this env var)
+    environment 'TESTCONTAINERS_RYUK_CONTAINER_IMAGE', "testcontainers/ryuk:${findProperty('ryuk_version')}"
+
+    // Pass Docker image versions from .env to integration tests as system properties
+    // (e.g. MYSQL_VERSION=9.6.0 becomes -Dmysql.version=9.6.0, usable in Spring YAML as ${mysql.version})
+    // Parsed by gradle/env.gradle, applied in build.gradle
+    rootProject.envProperties.each { key, value ->
+        // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
+        systemProperty key.toLowerCase().replaceAll('_', '.'), value
+    }
+
+    // Forward Gradle command-line -D properties to the test JVM for database type selection.
+    // Default: PostgreSQL via Testcontainers (Docker required). The default is set in
+    // src/test/resources/config/application.yml (zonky.test.database.type: POSTGRES).
+    // Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker), or =MYSQL for MySQL.
+    def dbType = System.getProperty('zonky.test.database.type')
+    if (dbType) {
+        systemProperty 'zonky.test.database.type', dbType
+        // Override Hibernate dialect to match the selected test database.
+        switch (dbType.toUpperCase()) {
+            case 'MYSQL':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.MySQLDialect'
+                systemProperty 'spring.jpa.database', 'MYSQL'
+                break
+            case 'H2':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.H2Dialect'
+                systemProperty 'spring.jpa.database', 'h2'
+                break
+            // PostgreSQL is the default from application.yml, no override needed
+        }
+    }
 
     // a collection to track failedTests
     ext.failedTests = []
@@ -98,6 +136,37 @@ test {
     reports.html.required = false
     minHeapSize = "2g" // initial heap size
     maxHeapSize = "6g" // maximum heap size
+}
+
+// Convenience tasks for running the full test suite against specific databases via Testcontainers:
+//   ./gradlew testMysql -x webapp     - Run all tests against MySQL (Docker required)
+//   ./gradlew testPostgres -x webapp  - Run all tests against PostgreSQL (Docker required)
+//
+// These tasks set the Zonky database type and Hibernate dialect/platform so that Spring Boot
+// uses a Testcontainers-managed database. The database container is automatically started and
+// stopped by Zonky. Connection pooling and timezone handling are configured by
+// TestDataSourcePoolConfig, and PostgreSQL tmpfs is configured by PostgresTmpfsContainerCustomizer.
+//
+// Note: The default 'test' task already uses PostgreSQL (configured in application.yml).
+// These convenience tasks are equivalent but explicit. To use H2 instead:
+//   ./gradlew test -x webapp -Dzonky.test.database.type=H2
+['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
+ 'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
+    tasks.register("test${name}", Test) {
+        description = "Run tests against ${name} (via Testcontainers)"
+        group = 'verification'
+        testClassesDirs = testing.suites.test.sources.output.classesDirs
+        classpath = testing.suites.test.sources.runtimeClasspath
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+        testLogging.showStandardStreams = true
+        reports.html.required = false
+        minHeapSize = "2g"
+        maxHeapSize = "6g"
+        systemProperty 'zonky.test.database.type', config[0]
+        systemProperty 'spring.jpa.database-platform', config[1]
+        systemProperty 'spring.jpa.database', config[2]
+    }
 }
 
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)

@@ -21,7 +21,7 @@ export class HeaderCourseComponent {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    public readonly course = input<Course>(undefined!);
+    public readonly course = input.required<Course>();
 
     readonly courseColor = computed(() => this.course()?.color || ARTEMIS_DEFAULT_COLOR);
     readonly contentColor = computed(() => getContrastingTextColor(this.courseColor()));

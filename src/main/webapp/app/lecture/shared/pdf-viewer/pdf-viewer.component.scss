@@ -1,0 +1,85 @@
+:host {
+    scroll-margin-top: 20px;
+}
+
+.pdf-iframe-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.pdf-iframe-wrapper--embedded {
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.15rem;
+}
+
+.pdf-iframe {
+    width: 100%;
+    border: none;
+    display: block;
+
+    .pdf-iframe-wrapper--embedded & {
+        height: 100%;
+        aspect-ratio: 2 / 1;
+    }
+
+    .pdf-fullscreen-window & {
+        flex: 1;
+    }
+}
+
+.pdf-iframe--hidden {
+    visibility: hidden;
+}
+
+.pdf-fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    // Above Artemis sticky bars (z-index of 1030)
+    z-index: 1031;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.pdf-fullscreen-window {
+    --pdf-fullscreen-margin: 2rem;
+
+    position: fixed;
+    top: calc(2 * var(--pdf-fullscreen-margin));
+    right: var(--pdf-fullscreen-margin);
+    bottom: var(--pdf-fullscreen-margin);
+    left: var(--pdf-fullscreen-margin);
+    width: auto;
+    height: auto;
+    // One level above the dimming overlay (z-index of 1031, see above)
+    z-index: 1032;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.4rem;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.pdf-fullscreen-window:focus,
+.pdf-fullscreen-window:focus-visible {
+    outline: none;
+}
+
+.pdf-viewer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.65rem;
+    line-height: 1;
+    color: var(--body-color);
+    white-space: nowrap;
+    border-top: 1px solid var(--card-border-color);
+    background-color: var(--card-bg);
+}
+
+.pdf-viewer-footer__separator {
+    margin: 0 0.35rem;
+}

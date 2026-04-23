@@ -232,7 +232,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
     });
 
-    it('should clear consistency comment widgets before re-adding them', () => {
+    it('should clear feedback widgets before re-adding them', () => {
         const disposeWidgetsByPrefixSpy = jest.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation();
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
             cb(0);
@@ -242,7 +242,6 @@ describe('CodeEditorMonacoComponent', () => {
         (comp as any).renderFeedbackWidgets();
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
-        expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('comment-');
 
         rafSpy.mockRestore();
     });
@@ -280,6 +279,143 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.fileSession()).toEqual({
             [selectedFile]: { ...fileSession[selectedFile], code: newCode, scrollTop: 0 },
         });
+    });
+
+    it('should suppress initial hydration change after initial sync finalizes and emit only user changes afterwards', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const isAwaitingInitialSync = jest.fn(() => true);
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: isAwaitingInitialSync,
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const onFileContentChangeSpy = jest.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+
+        comp.fileSession.set({
+            [filePath]: { code: 'original', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        // Bootstrap clear while awaiting initial sync.
+        comp.onFileTextChanged({ fileName: filePath, text: '' });
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        // Initial sync completes; suppress one post-finalize hydration update.
+        isAwaitingInitialSync.mockReturnValue(false);
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'original' });
+        comp.onFileTextChanged({ fileName: filePath, text: 'original' });
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        // Subsequent user edit must mark file as dirty.
+        comp.onFileTextChanged({ fileName: filePath, text: 'user edit' });
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'user edit' });
+    });
+
+    it('should lock editor while selected file initial sync is pending and unlock on finalize', async () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => true),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+
+        expect(comp.editorLocked()).toBeTrue();
+
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'server content' });
+        expect(comp.editorLocked()).toBeFalse();
+    });
+
+    it('should not lock editor when selecting a file whose initial sync already finished', async () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+
+        expect(comp.editorLocked()).toBeFalse();
+    });
+
+    it('should mark the file as dirty after initial sync if finalized content diverged from fallback', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const onFileContentChangeSpy = jest.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.detectChanges();
+
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: true, finalContent: 'remote unsaved content' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'remote unsaved content' });
+        expect(comp.fileSession()[filePath]?.code).toBe('remote unsaved content');
+    });
+
+    it('should not emit dirty signal when initial sync finalizes without divergence', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const onFileContentChangeSpy = jest.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.detectChanges();
+
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'server content' });
+
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
     });
 
     it('should load a selected file if it is not present yet', async () => {
@@ -693,6 +829,101 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', scrolledFile);
         await comp.selectFileInEditor(scrolledFile);
         expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
+    });
+
+    it('should defer review comment rendering until initial sync finalized', async () => {
+        const selectedFile = 'src/Foo.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const isFileAwaitingInitialSync = jest.fn(() => true);
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync,
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const selectFileInEditorSpy = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const renderReviewCommentWidgetsSpy = jest.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation();
+
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(selectFileInEditorSpy).toHaveBeenCalledWith(selectedFile);
+        expect(renderReviewCommentWidgetsSpy).not.toHaveBeenCalled();
+
+        isFileAwaitingInitialSync.mockReturnValue(false);
+        initialSyncFinalized$.next({ filePath: selectedFile, contentDivergedFromFallback: false, finalContent: '' });
+
+        expect(renderReviewCommentWidgetsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should rerender review comment widgets when synced file state is replaced', () => {
+        const selectedFile = 'src/Foo.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const renderReviewCommentWidgetsSpy = jest.spyOn(comp as any, 'renderReviewCommentWidgets').mockImplementation();
+
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
+        fixture.changeDetectorRef.detectChanges();
+
+        renderReviewCommentWidgetsSpy.mockClear();
+        stateReplaced$.next({ filePath: selectedFile });
+
+        expect(renderReviewCommentWidgetsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not suppress first edit after switching to a file with background state replacement', async () => {
+        const fileA = 'src/A.java';
+        const fileB = 'src/B.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const onFileContentChangeSpy = jest.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+
+        comp.fileSession.set({
+            [fileA]: { code: 'A0', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+            [fileB]: { code: 'B0', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', fileA);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+
+        // Replacement arrives for a background file while A is selected.
+        stateReplaced$.next({ filePath: fileB });
+
+        // Switch to B and perform first user edit.
+        fixture.componentRef.setInput('selectedFile', fileB);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+        comp.onFileTextChanged({ fileName: fileB, text: 'B-user-edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledWith({ fileName: fileB, text: 'B-user-edit' });
     });
 
     it('should expose review comment manager callbacks for repository context', () => {

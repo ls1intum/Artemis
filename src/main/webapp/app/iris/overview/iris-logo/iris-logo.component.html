@@ -1,1 +1,1 @@
-<img [src]="logoUrl()" alt="Iris Logo" [classList]="'iris-logo ' + classList()" />
+<img [src]="logoUrl()" alt="Iris Logo" [classList]="'iris-logo ' + classList() + (spinning() ? ' spinning' : '')" [style.height.px]="numericHeight()" />

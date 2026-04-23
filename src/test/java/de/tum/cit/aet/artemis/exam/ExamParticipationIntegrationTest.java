@@ -408,7 +408,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
-        // Remove student1 from the exam and his participations
+        // Remove student1 from the exam and their participations
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withParticipationsAndSubmission", "true");
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK, params);
@@ -833,7 +833,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
                 // Create results
                 if (withSecondCorrectionAndStarted) {
-                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
+                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(6));
                     firstResult.setAssessor(instructor);
                     firstResult.setSubmission(submission);
                     firstResult.setExerciseId(exercise.getId());

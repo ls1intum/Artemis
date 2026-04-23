@@ -17,7 +17,7 @@ services:
             file: ./mysql.yml
             service: mysql
     migration-check:
-        image: docker.io/library/alpine:3.23.2
+        image: docker.io/library/alpine:${ALPINE_VERSION}
         container_name: migration-check
         command: /bin/sh -c "exit 0"
         depends_on:

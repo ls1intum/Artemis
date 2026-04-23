@@ -18,3 +18,9 @@
     // standard toggle button size
     min-width: 40px;
 }
+
+:host ::ng-deep .footer-action-button .p-button-loading-icon {
+    align-self: center;
+    line-height: 1;
+    margin-top: 0;
+}

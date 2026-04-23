@@ -43,6 +43,8 @@ import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-qu
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 describe('QuizExerciseUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -162,6 +164,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
                 MockProvider(CalendarService),
+                MockProvider(ProfileService, {
+                    isModuleFeatureActive: () => true,
+                }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -740,6 +745,11 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('unloading notification and can deactivate', () => {
+            beforeEach(() => {
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
+            });
+
             it('should return opposite of pendingChangesCache', () => {
                 comp.pendingChangesCache = true;
                 expect(comp.canDeactivate()).toBe(false);
@@ -757,6 +767,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.pendingChangesCache = false;
                 const canDeactivate = comp.canDeactivate();
                 expect(canDeactivate).toBe(true);
+            });
+
+            it('should always deactivate when quiz is not editable', () => {
+                comp.quizExercise.isEditable = false;
+                comp.pendingChangesCache = true;
+                expect(comp.canDeactivate()).toBe(true);
             });
         });
 
@@ -1317,6 +1333,26 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.previousState();
                 expect(routerSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 5, 'exercise-groups']);
             });
+
+            it('should return correct re-evaluate URL for course quiz', () => {
+                comp.quizExercise.id = 456;
+                comp.courseId = 123;
+                comp.isExamMode = false;
+                expect(comp.reEvaluateUrl).toEqual(['/course-management', '123', 'quiz-exercises', '456', 're-evaluate']);
+            });
+
+            it('should return correct re-evaluate URL for exam quiz', () => {
+                comp.quizExercise.id = 456;
+                comp.courseId = 123;
+                comp.examId = 789;
+                comp.isExamMode = true;
+                const testRoute = {
+                    snapshot: { paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }) },
+                    queryParams: of({}),
+                } as any as ActivatedRoute;
+                (comp as any).route = testRoute;
+                expect(comp.reEvaluateUrl).toEqual(['/course-management', '123', 'exams', '789', 'exercise-groups', '111', 'quiz-exercises', '456', 're-evaluate']);
+            });
         });
 
         describe('prepare entity', () => {
@@ -1427,6 +1463,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     comp.quizIsValid = true;
                     comp.quizExercise = quizExercise;
                     comp.quizExercise.dueDateError = false;
+                    comp.quizExercise.isEditable = true;
 
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(false);
                     vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
@@ -1453,6 +1490,11 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 it('should be disabled if the saved quiz has already started', () => {
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(true);
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if quiz is not editable', () => {
+                    comp.quizExercise.isEditable = false;
                     expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
@@ -2117,6 +2159,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
                 const translateService = TestBed.inject(TranslateService);
                 translateSpy = vi.spyOn(translateService, 'instant');
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.isEditable = true;
             });
 
             it('should prevent default and return warning text when changes are pending', () => {
@@ -2137,6 +2181,117 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(event.preventDefault).not.toHaveBeenCalled();
                 expect(result).toBeTruthy();
             });
+        });
+    });
+
+    describe('AI Quiz Generation', () => {
+        beforeEach(async () => {
+            await configureTestBed();
+            configureFixtureAndServices();
+            comp.quizExercise = quizExercise;
+            comp.quizExercise.isEditable = true;
+            comp.courseId = course.id;
+            comp.isImport = false;
+            comp.isExamMode = false;
+            comp.hyperionEnabled = true;
+        });
+
+        it('should show AI generation button in edit/create contexts when requirements are met', () => {
+            expect(comp.canShowAiGenerationButton()).toBe(true);
+        });
+
+        it('should not show AI generation button when Hyperion is disabled', () => {
+            comp.hyperionEnabled = false;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button in import mode', () => {
+            comp.isImport = true;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button in exam mode', () => {
+            comp.isExamMode = true;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button without courseId', () => {
+            comp.courseId = undefined;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button when quiz is not editable', () => {
+            comp.quizExercise.isEditable = false;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should open AI generation modal', () => {
+            comp.aiGenerationModalVisible = false;
+
+            comp.openAiGenerationModal();
+
+            expect(comp.aiGenerationModalVisible).toBe(true);
+        });
+
+        it('should append generated questions to existing quiz questions', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+
+            const existingQuestion = new MultipleChoiceQuestion();
+            existingQuestion.title = 'Existing question';
+            existingQuestion.points = 1;
+            existingQuestion.answerOptions = [];
+            comp.quizExercise.quizQuestions = [existingQuestion];
+            const originalReference = comp.quizExercise.quizQuestions;
+
+            const generatedQuestions: GeneratedQuestion[] = [
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    title: 'Generated Title 1',
+                    questionText: 'First generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+                {
+                    id: 'q2',
+                    type: 'multiple-choice',
+                    title: 'Generated Title 2',
+                    questionText: 'Second generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: true },
+                        { text: 'C', correct: false },
+                    ],
+                },
+                {
+                    id: 'q3',
+                    type: 'true-false',
+                    title: 'Generated Title 3',
+                    questionText: 'Third generated question',
+                    options: [
+                        { text: 'True', correct: false },
+                        { text: 'False', correct: true },
+                    ],
+                },
+            ];
+
+            comp.appendAiGeneratedQuestions(generatedQuestions);
+
+            expect(comp.quizExercise.quizQuestions).toHaveLength(4);
+            expect(comp.quizExercise.quizQuestions).not.toBe(originalReference);
+            expect(comp.quizExercise.quizQuestions?.[0]).toBe(existingQuestion);
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).title).toBe('Generated Title 1');
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).text).toBe('First generated question');
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
+            expect((comp.quizExercise.quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
+            expect((comp.quizExercise.quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
         });
     });
 });

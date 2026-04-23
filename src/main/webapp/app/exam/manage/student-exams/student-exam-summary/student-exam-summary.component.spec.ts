@@ -18,7 +18,7 @@ describe('StudentExamSummaryComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [StudentExamSummaryComponent, MockComponent(ExamResultSummaryComponent)],
+            imports: [StudentExamSummaryComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -26,6 +26,11 @@ describe('StudentExamSummaryComponent', () => {
                 },
             ],
         })
+            .overrideComponent(StudentExamSummaryComponent, {
+                set: {
+                    imports: [MockComponent(ExamResultSummaryComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StudentExamSummaryComponent);

@@ -70,13 +70,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, RepositoryType.SOLUTION)).thenReturn("job-123");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION)).thenReturn("job-123");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, RepositoryType.SOLUTION);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
     }
 
     @Test
@@ -85,13 +86,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, RepositoryType.TEMPLATE)).thenReturn("job-456");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TEMPLATE)).thenReturn("job-456");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-456");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, RepositoryType.TEMPLATE);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE);
     }
 
     @Test
@@ -100,13 +102,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, RepositoryType.TESTS)).thenReturn("job-789");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TESTS)).thenReturn("job-789");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-789");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, RepositoryType.TESTS);
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS);
     }
 
     @Test
@@ -208,13 +211,13 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, RepositoryType.SOLUTION)).thenReturn("job-exam-1");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION)).thenReturn("job-exam-1");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-exam-1");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
     }
 
     @Test
@@ -231,8 +234,9 @@ class HyperionCodeGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-check-1");
+        assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
     }
 
     @Test
@@ -248,6 +252,6 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNull();
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
     }
 }

@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.tutorialgroup.util;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
@@ -22,14 +25,20 @@ public class TutorialGroupFactory {
      * @param campus                The campus of the TutorialGroup
      * @return The generated TutorialGroup
      */
-    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, String language, String campus) {
+    public static TutorialGroup generateTutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
+            User teachingAssistant, TutorialGroupSchedule schedule) {
         TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(title);
         tutorialGroup.setAdditionalInformation(additionalInformation);
         tutorialGroup.setCapacity(capacity);
         tutorialGroup.setIsOnline(isOnline);
         tutorialGroup.setLanguage(language);
         tutorialGroup.setCampus(campus);
+        tutorialGroup.setTeachingAssistant(teachingAssistant);
+        if (schedule != null) {
+            tutorialGroup.setTutorialGroupSchedule(schedule);
+        }
         return tutorialGroup;
     }
 

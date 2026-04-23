@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
@@ -33,8 +34,10 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 
 @Profile(PROFILE_CORE)
@@ -47,8 +50,11 @@ public class ExerciseReviewResource {
 
     private final ExerciseReviewService exerciseReviewService;
 
-    public ExerciseReviewResource(ExerciseReviewService exerciseReviewService) {
+    private final ExerciseEditorSyncService exerciseEditorSyncService;
+
+    public ExerciseReviewResource(ExerciseReviewService exerciseReviewService, ExerciseEditorSyncService exerciseEditorSyncService) {
         this.exerciseReviewService = exerciseReviewService;
+        this.exerciseEditorSyncService = exerciseEditorSyncService;
     }
 
     /**
@@ -59,15 +65,16 @@ public class ExerciseReviewResource {
      * @return the created thread with its initial comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @NotNull @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
         ExerciseReviewService.ThreadCreationResult result = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
         CommentThread savedThread = result.thread();
         Comment savedComment = result.comment();
-        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
-                .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
+        CommentThreadDTO createdThread = new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment)));
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId())).body(createdThread);
     }
 
     /**
@@ -77,12 +84,12 @@ public class ExerciseReviewResource {
      * @return list of comment threads with comments
      */
     @GetMapping("exercises/{exerciseId}/review-threads")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<CommentThreadDTO>> getThreads(@PathVariable long exerciseId) {
         log.debug("REST request to get exercise review threads for exercise {}", exerciseId);
         List<CommentThreadDTO> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(exerciseId).stream()
                 .sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
+                .map(thread -> new CommentThreadDTO(thread, CommentDTO.fromThread(thread))).collect(Collectors.toUnmodifiableList());
         return ResponseEntity.ok(threads);
     }
 
@@ -94,11 +101,13 @@ public class ExerciseReviewResource {
      * @return the created group
      */
     @PostMapping("exercises/{exerciseId}/review-thread-groups")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadGroupDTO> createThreadGroup(@PathVariable long exerciseId,
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
         CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO);
+        List<Long> savedThreadIds = savedGroup.getThreads().stream().map(CommentThread::getId).sorted().collect(Collectors.toUnmodifiableList());
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.groupUpdated(savedThreadIds, savedGroup.getId()));
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-thread-groups/" + savedGroup.getId())).body(new CommentThreadGroupDTO(savedGroup));
     }
 
@@ -110,10 +119,11 @@ public class ExerciseReviewResource {
      * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-thread-groups/{groupId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
-        exerciseReviewService.deleteGroup(exerciseId, groupId);
+        var threadIds = exerciseReviewService.deleteGroup(exerciseId, groupId);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.groupUpdated(threadIds, null));
         return ResponseEntity.noContent().build();
     }
 
@@ -126,12 +136,14 @@ public class ExerciseReviewResource {
      * @return the created comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads/{threadId}/comments")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @NotNull @RequestBody UserCommentContentDTO content)
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
         Comment savedComment = exerciseReviewService.createUserComment(exerciseId, threadId, content);
-        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
+        CommentDTO createdComment = new CommentDTO(savedComment);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentCreated(createdComment));
+        return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(createdComment);
     }
 
     /**
@@ -142,10 +154,11 @@ public class ExerciseReviewResource {
      * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-comments/{commentId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
         exerciseReviewService.deleteComment(exerciseId, commentId);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentDeleted(commentId));
         return ResponseEntity.noContent().build();
     }
 
@@ -158,12 +171,14 @@ public class ExerciseReviewResource {
      * @return the updated thread
      */
     @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/resolved")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentThreadDTO> updateThreadResolvedState(@PathVariable long exerciseId, @PathVariable long threadId,
             @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
         CommentThread updated = exerciseReviewService.updateThreadResolvedState(exerciseId, threadId, dto);
-        return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
+        CommentThreadDTO updatedThread = new CommentThreadDTO(updated, CommentDTO.fromThread(updated));
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadUpdated(updatedThread));
+        return ResponseEntity.ok(updatedThread);
     }
 
     /**
@@ -175,21 +190,14 @@ public class ExerciseReviewResource {
      * @return the updated comment
      */
     @PutMapping("exercises/{exerciseId}/review-comments/{commentId}")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<CommentDTO> updateUserCommentContent(@PathVariable long exerciseId, @PathVariable long commentId,
             @Valid @NotNull @RequestBody UserCommentContentDTO dto) {
         log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
         Comment updated = exerciseReviewService.updateUserCommentContent(exerciseId, commentId, dto);
-        return ResponseEntity.ok(new CommentDTO(updated));
-    }
-
-    private List<CommentDTO> mapComments(CommentThread thread) {
-        if (thread.getComments() == null || thread.getComments().isEmpty()) {
-            return List.of();
-        }
-
-        return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
+        CommentDTO updatedComment = new CommentDTO(updated);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(updatedComment));
+        return ResponseEntity.ok(updatedComment);
     }
 
 }

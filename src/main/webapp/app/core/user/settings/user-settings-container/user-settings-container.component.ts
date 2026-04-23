@@ -30,13 +30,12 @@ export class UserSettingsContainerComponent implements OnInit {
 
     isPasskeyEnabled = false;
     isAtLeastTutor = false;
-    isUsingExternalLLM = false;
-    isUsingInternalLLM = false;
+    isAiEnabled = false;
 
     ngOnInit() {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
 
-        this.isUsingExternalLLM = this.dataGuard.isUsingLLM();
+        this.isAiEnabled = this.dataGuard.isUsingLLM();
         this.accountService
             .getAuthenticationState()
             .pipe(

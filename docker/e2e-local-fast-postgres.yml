@@ -1,0 +1,17 @@
+# Minimal Postgres-only compose file for fast local E2E testing.
+# Used by run-e2e-tests-local-fast.sh — the server and client run on the host.
+
+services:
+    postgres:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-postgres-data:
+        name: artemis-postgres-data

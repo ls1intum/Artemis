@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -73,12 +74,14 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -93,6 +96,7 @@ public class ExamImportService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.channelService = channelService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -116,7 +120,12 @@ public class ExamImportService {
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
         channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
-        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
+
+        // 3rd: Index all imported exercises in Weaviate
+        exerciseWeaviateService.ifPresent(service -> service.updateExamExercisesAsync(examWithExercises));
+
+        return examWithExercises;
     }
 
     /**
@@ -276,24 +285,28 @@ public class ExamImportService {
         for (Exercise exerciseToCopy : exerciseGroupToCopy.getExercises()) {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
+            // Extract the source exercise ID and clear it from the skeleton exercise to avoid
+            // Hibernate conflicts with managed entities that have the same ID in the persistence context
+            Long sourceExerciseId = exerciseToCopy.getId();
+            exerciseToCopy.setId(null);
             Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
                     if (modelingExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield modelingExerciseImportApi.get().importModelingExercise(exerciseToCopy.getId(), (ModelingExercise) exerciseToCopy);
+                    yield modelingExerciseImportApi.get().importModelingExercise(sourceExerciseId, (ModelingExercise) exerciseToCopy);
                 }
 
                 case TEXT -> {
                     if (textExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield textExerciseImportApi.get().importTextExercise(exerciseToCopy.getId(), (TextExercise) exerciseToCopy);
+                    yield textExerciseImportApi.get().importTextExercise(sourceExerciseId, (TextExercise) exerciseToCopy);
                 }
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseToCopy.getId());
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(sourceExerciseId);
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         yield Optional.empty();
                     }
@@ -312,16 +325,29 @@ public class ExamImportService {
                     if (fileUploadImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield fileUploadImportApi.get().importFileUploadExercise(exerciseToCopy.getId(), (FileUploadExercise) exerciseToCopy);
+                    yield fileUploadImportApi.get().importFileUploadExercise(sourceExerciseId, (FileUploadExercise) exerciseToCopy);
                 }
 
                 case QUIZ -> {
-                    final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository.findById(exerciseToCopy.getId());
+                    // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
+                    final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
+                            .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         yield Optional.empty();
                     }
+                    var originalQuizExercise = optionalOriginalQuizExercise.get();
+                    // The import service mutates the second parameter (importedExercise) in-place
+                    // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
+                    // same managed entity for both parameters, as that would corrupt the original
+                    // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
+                    // exercise group, title, shortName, etc. from the DTO conversion.
+                    // However, the skeleton does not contain quiz questions or batches (these are
+                    // not part of ExerciseImportDTO), so we must copy them from the original.
+                    QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
+                    quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
+                    quizSkeleton.setQuizBatches(originalQuizExercise.getQuizBatches());
                     // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                    yield Optional.of(quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy, null));
+                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                 }
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful

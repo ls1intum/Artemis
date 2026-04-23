@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, Memiris, AtlasAgent, AtlasML, RateLimit disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 6;
+    // science, TutorSuggestions, AtlasAgent, AtlasML, Memiris, RateLimit, GlobalSearch, AutonomousTutor, ApollonQuizDragAndDrop disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 9;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -36,7 +36,11 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.AutonomousTutor)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.Memiris)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearch)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ApollonQuizDragAndDrop)).isFalse();
 
     }
 
@@ -48,13 +52,16 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.LearningPaths);
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
-
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);
         featureToggleService.disableFeature(Feature.AtlasML);
         featureToggleService.disableFeature(Feature.AtlasAgent);
+        featureToggleService.disableFeature(Feature.AutonomousTutor);
         featureToggleService.disableFeature(Feature.RateLimit);
+        featureToggleService.disableFeature(Feature.GlobalSearch);
+        featureToggleService.disableFeature(Feature.Memiris);
+        featureToggleService.disableFeature(Feature.ApollonQuizDragAndDrop);
     }
 
     @Test

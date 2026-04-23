@@ -3,13 +3,17 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
@@ -17,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
@@ -39,6 +44,8 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 @Conditional(IrisEnabled.class)
 public class PyrisStatusUpdateService {
 
+    private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+
     private final PyrisJobService pyrisJobService;
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
@@ -53,12 +60,15 @@ public class PyrisStatusUpdateService {
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
+    private final AutonomousTutorService autonomousTutorService;
+
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -66,6 +76,7 @@ public class PyrisStatusUpdateService {
         this.competencyGenerationService = competencyGenerationService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
@@ -143,23 +154,38 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a lecture ingestion job.
-     * Also notifies the lecture content processing service when ingestion completes.
+     * <p>
+     * On EVERY callback (not just terminal): passes the {@code result} field to the checkpoint handler.
+     * This allows Artemis to save transcription data mid-pipeline and transition TRANSCRIBING → INGESTING.
+     * <p>
+     * On terminal callback: notifies the processing service that the job completed or failed.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
+        log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
+
+        // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
+        if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
+            processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
+        }
+
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
-            pyrisJobService.removeJob(job);
-
-            // Notify the lecture content processing service with token for validation
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
+            String rawCode = statusUpdate.errorCode();
+            String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode));
+            pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);
+            // Update lastUpdated on every non-terminal callback so stuck detection
+            // can use "time since last callback" instead of "time since phase started"
+            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
         }
     }
 
@@ -195,6 +221,18 @@ public class PyrisStatusUpdateService {
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+    }
+
+    /**
+     * Handles the status update of an autonomous tutor job.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update received
+     */
+    public void handleStatusUpdate(AutonomousTutorJob job, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate) {
+        autonomousTutorService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 
 }

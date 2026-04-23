@@ -207,6 +207,8 @@ artemis:
 
     user-management:
         use-external: true # enables ldap authentication
+        passkey:
+          enabled: true
         password-reset:
             links:
                 en: '<link>'
@@ -221,6 +223,30 @@ artemis:
     git:
         name: Artemis
         email: artemis@in.tum.de
+
+    # Required module feature toggles
+    atlas:
+      enabled: true
+    exam:
+      enabled: true
+    fileupload:
+      enabled: true
+    lecture:
+      enabled: true
+    lti:
+      enabled: true
+    modeling:
+      enabled: true
+    plagiarism:
+      enabled: true
+    text:
+      enabled: true
+    tutorialgroup:
+      enabled: true
+    sharing:
+      enabled: true
+    hyperion:
+      enabled: true
 
     athena:
         # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
@@ -249,8 +275,7 @@ The recommended way is to run the server and the client separately. This provide
 - **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local`.
 - **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
 - **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. To enable Iris, add the VM option `-Dartemis.iris.enabled=true` or the program argument `--artemis.iris.enabled=true`.
-- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with the profiles `theia,dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local`.
+- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
 - **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 - **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,ldap,localvc,localci,scheduling,local`. This configuration is used for production-like testing.
 
@@ -312,6 +337,50 @@ You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
     **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
     On an *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
 </Callout>
+
+#### Required Configuration
+
+<Callout variant={CalloutVariant.info}>
+  The Docker image requires several module properties to be explicitly configured. Without them, the server will fail to start with an error such as:
+  *Property artemis.atlas.enabled not found in Artemis configuration.
+  Make sure to add it to your application.yml-file.*
+</Callout>
+
+To provide the required configuration, one option is to create an `application-local.yml` and mount it into `/opt/artemis/config/`. Use the properties from [Common Configuration Options](#common-configuration-options) as a base, and add a `spring.datasource` block:
+
+```yaml
+# application-local.yml
+# ... all other properties from Common Configuration Options
+spring:
+    datasource:
+        # If your database is running in another Docker container locally on your machine, replace `<db-host>` with `host.docker.internal` (macOS/Windows) or the host's IP address (Linux).
+        url: "jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+        # Depending on your database setup, the following may be required:
+        username: root
+        password: ""
+```
+
+Then run the container using the following command and replace `<TAG/VERSION>` as described above:
+
+```bash
+docker run \
+  -v "$PWD/application-local.yml:/opt/artemis/config/application-local.yml:ro" \
+  -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/opt/artemis/config/ \
+  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,apollon \
+  -p 8080:8080 \
+  ghcr.io/ls1intum/artemis:<TAG/VERSION>
+```
+
+Alternatively, you can pass properties directly as Docker environment variables using [Spring's relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables) (e.g. `artemis.atlas.enabled` → `ARTEMIS_ATLAS_ENABLED`). You can adapt the following to your needs:
+
+```bash
+docker run \
+  -e ARTEMIS_ATLAS_ENABLED=true \
+  -e SPRING_DATASOURCE_URL="jdbc:mysql://<db-host>:3306/Artemis?..." \
+  ...
+  -p 8080:8080 \
+  ghcr.io/ls1intum/artemis:<TAG/VERSION>
+```
 
 #### Debugging with Docker
 

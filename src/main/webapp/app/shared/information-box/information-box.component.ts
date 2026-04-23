@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DateType } from '../pipes/artemis-date.pipe';
@@ -51,5 +51,5 @@ export type InformationBoxContent = StudentExamContent | DateContent | ExerciseC
     styleUrls: ['./information-box.component.scss'],
 })
 export class InformationBoxComponent {
-    @Input() informationBoxData: InformationBox;
+    informationBoxData = input<InformationBox>();
 }

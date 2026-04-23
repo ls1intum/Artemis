@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -10,10 +12,13 @@ import { CourseNotificationChannelSetting } from 'app/communication/shared/entit
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 
 describe('CourseNotificationSettingService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseNotificationSettingService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [CourseNotificationSettingService, provideHttpClient(), provideHttpClientTesting()],
         });
@@ -23,8 +28,9 @@ describe('CourseNotificationSettingService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -32,7 +38,7 @@ describe('CourseNotificationSettingService', () => {
     });
 
     describe('getSettingInfo', () => {
-        it('should make GET request to fetch notification settings', fakeAsync(() => {
+        it('should make GET request to fetch notification settings', () => {
             const courseId = 123;
             const mockSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 1,
@@ -53,12 +59,12 @@ describe('CourseNotificationSettingService', () => {
             const req = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             expect(req.request.method).toBe('GET');
             req.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toEqual(mockSettingInfo);
-        }));
+        });
 
-        it('should return cached value if available and forceFetch is false', fakeAsync(() => {
+        it('should return cached value if available and forceFetch is false', () => {
             const courseId = 123;
             const mockSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 1,
@@ -74,19 +80,19 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId).subscribe((response) => {
                 result = response;
             });
-            tick();
+            vi.advanceTimersByTime(0);
 
             httpMock.expectNone(`/api/communication/notification/${courseId}/settings`);
             expect(result).toEqual(mockSettingInfo);
-        }));
+        });
 
-        it('should make a new request if forceFetch is true, even with cached value', fakeAsync(() => {
+        it('should make a new request if forceFetch is true, even with cached value', () => {
             const courseId = 123;
             const mockSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 1,
@@ -107,7 +113,7 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId, true).subscribe((response) => {
@@ -116,14 +122,14 @@ describe('CourseNotificationSettingService', () => {
 
             const secondReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             secondReq.flush(updatedMockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toEqual(updatedMockSettingInfo);
-        }));
+        });
     });
 
     describe('setSettingPreset', () => {
-        it('should make PUT request to set notification preset', fakeAsync(() => {
+        it('should make PUT request to set notification preset', () => {
             const courseId = 123;
             const presetTypeId = 2;
 
@@ -133,10 +139,10 @@ describe('CourseNotificationSettingService', () => {
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toBe(presetTypeId);
             req.flush({});
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should update the subject with new preset when current value exists', fakeAsync(() => {
+        it('should update the subject with new preset when current value exists', () => {
             const courseId = 123;
             const presetTypeId = 2;
             const mockSettingInfo: CourseNotificationSettingInfo = {
@@ -153,24 +159,24 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             service.setSettingPreset(courseId, presetTypeId, undefined);
             const updateReq = httpMock.expectOne(`/api/communication/notification/${courseId}/setting-preset`);
             updateReq.flush({});
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId).subscribe((response) => {
                 result = response;
             });
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toBeDefined();
             expect(result?.selectedPreset).toBe(presetTypeId);
-        }));
+        });
 
-        it('should copy preset map when copyPreset is provided', fakeAsync(() => {
+        it('should copy preset map when copyPreset is provided', () => {
             const courseId = 123;
             const presetTypeId = 2;
             const mockSettingInfo: CourseNotificationSettingInfo = {
@@ -199,27 +205,27 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             service.setSettingPreset(courseId, presetTypeId, mockPreset);
             const updateReq = httpMock.expectOne(`/api/communication/notification/${courseId}/setting-preset`);
             updateReq.flush({});
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId).subscribe((response) => {
                 result = response;
             });
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toBeDefined();
             expect(result?.selectedPreset).toBe(presetTypeId);
             expect(result?.notificationTypeChannels).toEqual(mockPreset.presetMap);
-        }));
+        });
     });
 
     describe('setSettingSpecification', () => {
-        it('should make PUT request with transformed specifications', fakeAsync(() => {
+        it('should make PUT request with transformed specifications', () => {
             const courseId = 123;
             const channelSetting: CourseNotificationChannelSetting = {
                 [CourseNotificationChannel.PUSH]: true,
@@ -239,10 +245,10 @@ describe('CourseNotificationSettingService', () => {
                 },
             });
             req.flush({});
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should update the subject with new specification when current value exists', fakeAsync(() => {
+        it('should update the subject with new specification when current value exists', () => {
             const courseId = 123;
             const mockSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 1,
@@ -266,25 +272,25 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             service.setSettingSpecification(courseId, specification, undefined);
             const updateReq = httpMock.expectOne(`/api/communication/notification/${courseId}/setting-specification`);
             updateReq.flush({});
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId).subscribe((response) => {
                 result = response;
             });
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toBeDefined();
             expect(result?.selectedPreset).toBe(0);
             expect(result?.notificationTypeChannels['notification1']).toEqual(channelSetting);
-        }));
+        });
 
-        it('should copy preset map when copyPreset is provided', fakeAsync(() => {
+        it('should copy preset map when copyPreset is provided', () => {
             const courseId = 123;
             const mockSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 1,
@@ -320,24 +326,24 @@ describe('CourseNotificationSettingService', () => {
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
-            tick();
+            vi.advanceTimersByTime(0);
 
             service.setSettingSpecification(courseId, specification, mockPreset);
             const updateReq = httpMock.expectOne(`/api/communication/notification/${courseId}/setting-specification`);
             updateReq.flush({});
-            tick();
+            vi.advanceTimersByTime(0);
 
             let result: CourseNotificationSettingInfo | undefined;
             service.getSettingInfo(courseId).subscribe((response) => {
                 result = response;
             });
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(result).toBeDefined();
             expect(result?.selectedPreset).toBe(0);
             expect(result?.notificationTypeChannels).toHaveProperty('newNotification');
             expect(result?.notificationTypeChannels['notification1']).toEqual(channelSetting);
-        }));
+        });
     });
 
     describe('transformNotificationSettingSpecificationToRequestBody', () => {

@@ -8,19 +8,17 @@ import { NgClass } from '@angular/common';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
     private learnerProfileAPIService = inject(LearnerProfileApiService);
-    private modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
 
     /** Signal containing the learner profile for the current user */
@@ -35,11 +33,15 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
+    /** Whether the onboarding modal is visible */
+    showOnboardingModal = signal<boolean>(false);
+
     openOnboardingModal() {
-        const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
-        modalRef.result.then(() => {
-            this.loadProfile();
-        });
+        this.showOnboardingModal.set(true);
+    }
+
+    onOnboardingCompleted() {
+        this.loadProfile();
     }
 
     /**

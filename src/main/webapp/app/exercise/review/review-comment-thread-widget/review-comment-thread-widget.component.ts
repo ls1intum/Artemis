@@ -3,17 +3,24 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
-import { MenuItem } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { faArrowUpRightFromSquare, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+
+interface RelatedThreadLocation {
+    threadId: number;
+    locationLabel: string;
+}
 
 @Component({
     selector: 'jhi-review-comment-thread-widget',
@@ -23,7 +30,8 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent],
+    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent],
+    providers: [ConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
@@ -31,13 +39,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly showLocationWarning = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
+    readonly onNavigateToLocation = output<ReviewThreadLocation>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faEllipsisVertical = faEllipsisVertical;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     readonly showThreadBody = signal(true);
+    readonly languageVersion = signal(0);
     readonly editingCommentId = signal<number | undefined>(undefined);
     readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly editText = signal('');
@@ -49,17 +60,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
-    readonly orderedComments = computed(() => {
-        const comments = this.thread().comments ?? [];
-        return [...comments].sort((a, b) => {
-            const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
-            const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
-            if (aDate !== bDate) {
-                return aDate - bDate;
-            }
-            return (a.id ?? 0) - (b.id ?? 0);
-        });
-    });
+    private readonly confirmationService = inject(ConfirmationService);
+    readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
+    readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
         return this.orderedComments().map((comment) => ({
             comment,
@@ -68,6 +71,45 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly firstComment = computed(() => this.orderedComments()[0]);
+    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
+        const firstComment = this.firstComment();
+        if (!firstComment || !this.isConsistencyCheckComment(firstComment)) {
+            return undefined;
+        }
+        const content = firstComment.content as CommentContent | undefined;
+        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+        return content;
+    });
+    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
+    readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
+        // Recompute related location labels when language changes because repository labels are translated.
+        this.languageVersion();
+        const currentThread = this.thread();
+        const groupId = currentThread.groupId;
+
+        if (!this.isConsistencyIssueThread() || groupId === undefined) {
+            return [];
+        }
+
+        const distinctLocations = new Map<string, RelatedThreadLocation>();
+        for (const groupedThread of this.reviewCommentService.threads()) {
+            if (groupedThread.groupId !== groupId || groupedThread.id === currentThread.id) {
+                continue;
+            }
+
+            const locationLabel = this.getThreadLocationLabel(groupedThread);
+            if (!locationLabel) {
+                continue;
+            }
+
+            distinctLocations.set(locationLabel, { threadId: groupedThread.id, locationLabel });
+        }
+
+        return Array.from(distinctLocations.values()).sort((a, b) => a.locationLabel.localeCompare(b.locationLabel));
+    });
 
     /**
      * Deletes the given comment via the review comment service.
@@ -75,7 +117,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * @param commentId The id of the comment to delete.
      */
     deleteComment(commentId: number): void {
-        this.reviewCommentService.deleteCommentInContext(commentId);
+        this.confirmationService.confirm({
+            key: this.deleteCommentDialogKey(),
+            header: this.translateService.instant('artemisApp.review.deleteCommentConfirmTitle'),
+            message: this.translateService.instant('artemisApp.review.deleteCommentConfirmText'),
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => this.reviewCommentService.deleteCommentInContext(commentId),
+        });
     }
 
     /**
@@ -110,7 +158,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (id === undefined || !trimmed || this.editingCommentType() !== CommentType.USER) {
             return;
         }
-        this.reviewCommentService.updateCommentInContext(id, { contentType: 'USER', text: trimmed }, () => this.cancelEditing());
+        this.reviewCommentService.updateCommentInContext(id, { contentType: CommentContentType.USER, text: trimmed }, () => this.cancelEditing());
     }
 
     /**
@@ -121,7 +169,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!trimmed) {
             return;
         }
-        this.reviewCommentService.createReplyInContext(this.thread().id, { contentType: 'USER', text: trimmed }, () => {
+        this.reviewCommentService.createReplyInContext(this.thread().id, { contentType: CommentContentType.USER, text: trimmed }, () => {
             this.replyText.set('');
         });
     }
@@ -153,6 +201,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.updateMenuItems();
         this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => {
             this.updateMenuItems();
+            this.languageVersion.update((version) => version + 1);
             this.changeDetectorRef.detectChanges();
         });
     }
@@ -186,11 +235,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!content) {
             return '';
         }
-        if ('contentType' in content && content.contentType === 'CONSISTENCY_CHECK') {
-            const severity = content.severity ?? '';
-            const category = content.category ?? '';
-            const text = content.text ?? '';
-            return [severity, category, text].filter(Boolean).join(' - ');
+        if ('contentType' in content && content.contentType === CommentContentType.CONSISTENCY_CHECK) {
+            return content.text ?? '';
         }
         return content.text ?? '';
     }
@@ -217,7 +263,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return;
         }
         if (actionId === 'delete') {
-            this.deleteComment(comment.id);
+            if (comment.id !== undefined) {
+                this.deleteComment(comment.id);
+            }
         }
     }
 
@@ -232,6 +280,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks whether a comment is a consistency-check comment.
+     *
+     * @param comment The comment to check.
+     * @returns True if it is a consistency-check comment.
+     */
+    isConsistencyCheckComment(comment: Comment): boolean {
+        return comment.type === CommentType.CONSISTENCY_CHECK;
+    }
+
+    /**
      * Hides all currently open comment action menus in this thread widget.
      */
     hideAllCommentMenus(): void {
@@ -240,11 +298,67 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Navigates to another thread location from the same consistency-check group.
+     *
+     * @param location The related location entry.
+     */
+    goToRelatedLocation(location: RelatedThreadLocation): void {
+        const targetThread = this.reviewCommentService.threads().find((thread) => thread.id === location.threadId);
+        if (!targetThread) {
+            return;
+        }
+
+        this.onNavigateToLocation.emit({
+            threadId: targetThread.id,
+            targetType: targetThread.targetType,
+            filePath: targetThread.filePath ?? targetThread.initialFilePath ?? undefined,
+            lineNumber: targetThread.lineNumber ?? targetThread.initialLineNumber,
+            auxiliaryRepositoryId: targetThread.auxiliaryRepositoryId,
+        });
+    }
+
     private updateMenuItems(): void {
         this.userCommentMenuItems = [
             { id: 'edit', label: this.translateService.instant('artemisApp.review.editComment') },
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ];
         this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
+    }
+
+    private getThreadLocationLabel(thread: CommentThread): string | undefined {
+        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+        if (!lineNumber || lineNumber < 1) {
+            return undefined;
+        }
+
+        const repositoryLabel = this.getRepositoryLabel(thread.targetType);
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return `${repositoryLabel}:${lineNumber}`;
+        }
+
+        const filePath = thread.filePath ?? thread.initialFilePath;
+        if (!filePath) {
+            return undefined;
+        }
+
+        return `${repositoryLabel}: ${filePath}:${lineNumber}`;
+    }
+
+    private getRepositoryLabel(targetType: CommentThreadLocationType): string {
+        switch (targetType) {
+            case CommentThreadLocationType.PROBLEM_STATEMENT:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.problemStatement');
+            case CommentThreadLocationType.TEMPLATE_REPO:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.template');
+            case CommentThreadLocationType.SOLUTION_REPO:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.solution');
+            case CommentThreadLocationType.TEST_REPO:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.tests');
+            case CommentThreadLocationType.AUXILIARY_REPO:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.auxiliary');
+            default:
+                return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
+        }
     }
 }

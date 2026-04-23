@@ -1,12 +1,15 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -32,16 +35,24 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConversationDetailDialogComponent;
         let fixture: ComponentFixture<ConversationDetailDialogComponent>;
         const course = { id: 1 } as Course;
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(async () => {
             TestBed.configureTestingModule({
-                declarations: [ConversationDetailDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
-                imports: [FontAwesomeModule],
+                imports: [
+                    FontAwesomeModule,
+                    ConversationDetailDialogComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(ChannelIconComponent),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [
-                    MockProvider(NgbActiveModal),
+                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
+                    { provide: DynamicDialogConfig, useValue: { data: {} } },
                     MockProvider(ConversationService),
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -51,23 +62,21 @@ examples.forEach((activeConversation) => {
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                     { provide: DialogService, useClass: MockDialogService },
                 ],
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(ConversationDetailDialogComponent);
-                    component = fixture.componentInstance;
-                    initializeDialog(component, fixture, { course, activeConversation, selectedTab: ConversationDetailTabs.INFO });
-                    fixture.changeDetectorRef.detectChanges();
-                });
-        }));
+            });
+
+            fixture = TestBed.createComponent(ConversationDetailDialogComponent);
+            component = fixture.componentInstance;
+            initializeDialog(component, fixture, { course, activeConversation, selectedTab: ConversationDetailTabs.INFO });
+            fixture.changeDetectorRef.detectChanges();
+        });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should create', () => {
             expect(component).toBeTruthy();
-            expect(component.isInitialized).toBeTrue();
+            expect(component.isInitialized).toBe(true);
         });
 
         it('should not show the settings tab for one-to-one chats', () => {
@@ -87,10 +96,10 @@ examples.forEach((activeConversation) => {
 
             const membersComponent = membersComponentDebug.componentInstance;
             expect(membersComponent).toBeTruthy();
-            expect(component.changesWerePerformed).toBeFalse();
+            expect(component.changesWerePerformed).toBe(false);
 
             membersComponent.changesPerformed.emit();
-            expect(component.changesWerePerformed).toBeTrue();
+            expect(component.changesWerePerformed).toBe(true);
         });
 
         it('should react correctly to events from info tab', () => {
@@ -102,10 +111,10 @@ examples.forEach((activeConversation) => {
 
             const infoComponent = infoComponentDebug.componentInstance;
             expect(infoComponent).toBeTruthy();
-            expect(component.changesWerePerformed).toBeFalse();
+            expect(component.changesWerePerformed).toBe(false);
 
             infoComponent.changesPerformed.emit();
-            expect(component.changesWerePerformed).toBeTrue();
+            expect(component.changesWerePerformed).toBe(true);
         });
 
         it('should react correctly to events from settings tab', () => {
@@ -119,63 +128,71 @@ examples.forEach((activeConversation) => {
                 const settingsComponent = settingsComponentDebug.componentInstance;
                 expect(settingsComponent).toBeTruthy();
 
-                const activeModal = TestBed.inject(NgbActiveModal);
-                const closeSpy = jest.spyOn(activeModal, 'close');
+                const dialogRef = TestBed.inject(DynamicDialogRef);
+                const closeSpy = vi.spyOn(dialogRef, 'close');
 
                 settingsComponent.channelArchivalChange.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
                 closeSpy.mockClear();
                 settingsComponent.channelDeleted.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
                 closeSpy.mockClear();
                 settingsComponent.conversationLeave.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
             }
         });
 
         it('should mark changes and close the dialog on privacy/archival/channelDeleted/leave events', () => {
-            const activeModal = TestBed.inject(NgbActiveModal);
-            const closeSpy = jest.spyOn(activeModal, 'close');
-            const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+            const dialogRef = TestBed.inject(DynamicDialogRef);
+            const closeSpy = vi.spyOn(dialogRef, 'close');
 
-            expect(component.changesWerePerformed).toBeFalse();
+            expect(component.changesWerePerformed).toBe(false);
 
             component.onPrivacyChange();
-            expect(component.changesWerePerformed).toBeTrue();
-            expect(closeSpy).toHaveBeenCalledOnce();
-            expect(dismissSpy).not.toHaveBeenCalled();
+            expect(component.changesWerePerformed).toBe(true);
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onArchivalChange();
-            expect(component.changesWerePerformed).toBeTrue();
-            expect(closeSpy).toHaveBeenCalledOnce();
-            expect(dismissSpy).not.toHaveBeenCalled();
+            expect(component.changesWerePerformed).toBe(true);
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onChannelDeleted();
-            expect(component.changesWerePerformed).toBeTrue();
-            expect(closeSpy).toHaveBeenCalledOnce();
+            expect(component.changesWerePerformed).toBe(true);
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onConversationLeave();
-            expect(component.changesWerePerformed).toBeTrue();
-            expect(closeSpy).toHaveBeenCalledOnce();
-            expect(dismissSpy).not.toHaveBeenCalled();
+            expect(component.changesWerePerformed).toBe(true);
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
         });
 
         it('should emit userNameClicked event when onUserNameClicked is called', () => {
             const testUserId = 42;
-            const spy = jest.spyOn(component.userNameClicked, 'emit');
+            const spy = vi.spyOn(component.userNameClicked, 'emit');
             component.onUserNameClicked(testUserId);
             expect(spy).toHaveBeenCalledWith(testUserId);
+        });
+
+        it('should invoke the username click callback from dialog data without replacing the component method', () => {
+            const testUserId = 42;
+            const callback = vi.fn();
+            component.dialogConfig!.data.onUserNameClicked = callback;
+            const emitSpy = vi.spyOn(component.userNameClicked, 'emit');
+
+            component.onUserNameClicked(testUserId);
+
+            expect(emitSpy).toHaveBeenCalledWith(testUserId);
+            expect(callback).toHaveBeenCalledWith(testUserId);
         });
     });
 });

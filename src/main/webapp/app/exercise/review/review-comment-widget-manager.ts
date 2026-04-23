@@ -2,7 +2,7 @@ import { ComponentRef, OutputRefSubscription, ViewContainerRef } from '@angular/
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export type ReviewCommentDraftContext = {
     targetType: CommentThreadLocationType;
@@ -20,6 +20,7 @@ export type ReviewCommentWidgetManagerConfig = {
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
     onAdd: (payload: { lineNumber: number; fileName: string }) => void;
+    onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
 };
 
@@ -210,6 +211,7 @@ export class ReviewCommentWidgetManager {
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
                 widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
+                widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
                 this.threadWidgetRefs.set(thread.id, widgetRef);
             } else {
                 widgetRef.setInput('thread', thread);

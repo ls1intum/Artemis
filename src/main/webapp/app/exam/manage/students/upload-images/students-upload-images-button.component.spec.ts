@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -9,6 +11,8 @@ import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 describe('StudentsUploadImagesButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentsUploadImagesButtonComponent>;
     let comp: StudentsUploadImagesButtonComponent;
     let modalService: NgbModal;
@@ -16,8 +20,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), TranslateModule.forRoot()],
-            declarations: [StudentsUploadImagesButtonComponent, MockComponent(ButtonComponent)],
+            imports: [MockModule(NgbModule), TranslateModule.forRoot(), StudentsUploadImagesButtonComponent, MockComponent(ButtonComponent)],
             providers: [MockProvider(AlertService)],
         })
             .compileComponents()
@@ -31,7 +34,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize and set modal inputs correctly', () => {
@@ -39,7 +42,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
             componentInstance: { courseId: undefined as any, exam: undefined as any },
             result: new Promise((resolve) => resolve(true)),
         };
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        const modalServiceOpenStub = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
         comp.openUploadImagesDialog(new MouseEvent('click'));
 

@@ -43,9 +43,13 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -335,8 +339,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage message3 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
         IrisMessage message4 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
 
-        var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
+        var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessageResponseDTO.class);
+        assertThat(messages).hasSize(4);
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(message1.getId(), message2.getId(), message3.getId(), message4.getId());
     }
 
     @Test
@@ -346,7 +351,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isTrue();
     }
@@ -358,7 +364,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isFalse();
     }
@@ -370,7 +377,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessage.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessageResponseDTO.class,
+                HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isNull();
     }
@@ -382,7 +390,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -394,7 +403,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession1);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
-        request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessageResponseDTO.class,
+                HttpStatus.CONFLICT);
     }
 
     @Test
@@ -479,6 +489,465 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_invokesIrisCitationService() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        verify(irisCitationService).resolveCitationInfo(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqJsonResultStoresAsJsonContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), mcqJson, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisJsonMessageContent.class);
+        var jsonContent = (IrisJsonMessageContent) llmMessages.getFirst().getContent().getFirst();
+        assertThat(jsonContent.getJsonNode().get("type").asText()).isEqualTo("mcq");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendPlainTextResultStoresAsTextContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Just a text response", dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisTextMessageContent.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendNonMcqJsonResultStoresAsTextContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String nonMcqJson = """
+                {"type":"other","data":"something"}""";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), nonMcqJson, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisTextMessageContent.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendInvalidJsonResultStoresAsTextContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String invalidJson = "{this is not valid json}";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), invalidJson, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisTextMessageContent.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMixedTextAndMcqJsonStoresMultipleContents() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String mixedContent = "Here are your questions! "
+                + "{\"type\":\"mcq\",\"question\":\"What is X?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true},{\"text\":\"C\",\"correct\":false},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"B is correct.\"}"
+                + " Good luck!";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), mixedContent, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        var contents = llmMessages.getFirst().getContent();
+        assertThat(contents).hasSize(3);
+        assertThat(contents.get(0)).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
+        assertThat(contents.get(1)).isInstanceOf(IrisJsonMessageContent.class);
+        assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq");
+        assertThat(contents.get(2)).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMixedTextAndMcqSetJsonStoresMultipleContents() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String mixedContent = "Here are your questions! "
+                + "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"What is X?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true},{\"text\":\"C\",\"correct\":false},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"B is correct.\"}]}"
+                + " Good luck!";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), mixedContent, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        var contents = llmMessages.getFirst().getContent();
+        assertThat(contents).hasSize(3);
+        assertThat(contents.get(0)).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
+        assertThat(contents.get(1)).isInstanceOf(IrisJsonMessageContent.class);
+        assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asText()).isEqualTo("mcq-set");
+        assertThat(contents.get(2)).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendTextWithNonMcqJsonStoresAsSingleTextContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String textWithNonMcqJson = "The config is {\"key\": \"value\"}";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), textWithNonMcqJson, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) llmMessages.getFirst().getContent().getFirst()).getTextContent()).isEqualTo(textWithNonMcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendPureMcqJsonStoresAsSingleJsonContent() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        String mcqJson = "{\"type\":\"mcq\",\"question\":\"What is 2+2?\",\"options\":[{\"text\":\"3\",\"correct\":false},{\"text\":\"4\",\"correct\":true}],\"explanation\":\"Basic arithmetic.\"}";
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), mcqJson, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent()).hasSize(1);
+        assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisJsonMessageContent.class);
+        var jsonContent = (IrisJsonMessageContent) llmMessages.getFirst().getContent().getFirst();
+        assertThat(jsonContent.getJsonNode().get("type").asText()).isEqualTo("mcq");
+        assertThat(jsonContent.getJsonNode().get("question").asText()).isEqualTo("What is 2+2?");
+    }
+
+    // -- Malformed MCQ validation tests (should show error message instead of raw JSON) --
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithZeroCorrectOptionsShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"5","correct":false}],"explanation":"Basic arithmetic."}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithTwoCorrectOptionsShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"text":"4","correct":true},{"text":"four","correct":true}],"explanation":"Basic arithmetic."}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithOnlyOneOptionShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithMissingExplanationShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"text":"3","correct":false},{"text":"4","correct":true}]}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithBlankQuestionShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"  ","options":[{"text":"3","correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqWithMissingOptionTextShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq","question":"What is 2+2?","options":[{"correct":false},{"text":"4","correct":true}],"explanation":"Basic arithmetic."}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqSetWithEmptyQuestionsArrayShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq-set","questions":[]}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMcqSetWithOneInvalidQuestionShowsErrorMessage() throws Exception {
+        String mcqJson = """
+                {"type":"mcq-set","questions":[{"question":"Valid?","options":[{"text":"A","correct":false},{"text":"B","correct":true}],"explanation":"OK."},{"question":"Invalid?","options":[{"text":"Only one","correct":true}],"explanation":"Bad."}]}""";
+        assertMalformedMcqShowsErrorMessage(mcqJson);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendEmbeddedMalformedMcqShowsErrorMessage() throws Exception {
+        String mixedContent = "Here is a quiz: " + "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false}],\"explanation\":\"E.\"}" + " Good luck!";
+        assertMalformedMcqShowsErrorMessage(mixedContent);
+    }
+
+    private void assertMalformedMcqShowsErrorMessage(String result) throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), result, dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var llmMessages = irisSessionFromDb.getMessages().stream().filter(m -> m.getSender() == IrisMessageSender.LLM).toList();
+        assertThat(llmMessages).hasSize(1);
+        var contents = llmMessages.getFirst().getContent();
+        assertThat(contents).hasSize(1);
+        assertThat(contents.getFirst()).isInstanceOf(IrisTextMessageContent.class);
+        assertThat(((IrisTextMessageContent) contents.getFirst()).getTextContent())
+                .isEqualTo("Sorry, I tried to generate a quiz question but the response was malformed. Please try again.");
+    }
+
+    // -- MCQ response endpoint tests --
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseForSingleMcq() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = createLlmMessageWithMcqContent(irisSession,
+                "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+        var responseDTO = new IrisMcqResponseDTO(1, true, null);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.OK);
+
+        var sessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var updatedMessage = sessionFromDb.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
+        var jsonContent = (IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow();
+        assertThat(jsonContent.getJsonNode().has("response")).isTrue();
+        assertThat(jsonContent.getJsonNode().get("response").get("selectedIndex").asInt()).isEqualTo(1);
+        assertThat(jsonContent.getJsonNode().get("response").get("submitted").asBoolean()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseForMcqSet() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = createLlmMessageWithMcqContent(irisSession,
+                "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"Q1?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E1.\"},{\"question\":\"Q2?\",\"options\":[{\"text\":\"C\",\"correct\":true},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"E2.\"}]}");
+
+        var responseDTO = new IrisMcqResponseDTO(0, false, 1);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.OK);
+
+        var sessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var updatedMessage = sessionFromDb.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
+        var jsonContent = (IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow();
+        var responses = jsonContent.getJsonNode().get("responses");
+        assertThat(responses).isNotNull();
+        assertThat(responses.size()).isEqualTo(1);
+        assertThat(responses.get(0).get("questionIndex").asInt()).isEqualTo(1);
+        assertThat(responses.get(0).get("selectedIndex").asInt()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseForMcqSetUpdatesExistingResponse() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = createLlmMessageWithMcqContent(irisSession,
+                "{\"type\":\"mcq-set\",\"questions\":[{\"question\":\"Q1?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E1.\"},{\"question\":\"Q2?\",\"options\":[{\"text\":\"C\",\"correct\":true},{\"text\":\"D\",\"correct\":false}],\"explanation\":\"E2.\"}]}");
+
+        // First response for question 0
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", new IrisMcqResponseDTO(0, false, 0), HttpStatus.OK);
+        // Update response for question 0
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+        var sessionFromDb = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        var updatedMessage = sessionFromDb.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
+        var jsonContent = (IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow();
+        var responses = jsonContent.getJsonNode().get("responses");
+        assertThat(responses.size()).isEqualTo(1);
+        assertThat(responses.get(0).get("selectedIndex").asInt()).isEqualTo(1);
+        assertThat(responses.get(0).get("submitted").asBoolean()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseSessionMismatchReturnsConflict() throws Exception {
+        var irisSession1 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession2 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = createLlmMessageWithMcqContent(irisSession1,
+                "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+        var responseDTO = new IrisMcqResponseDTO(0, true, null);
+        request.put("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseOnUserMessageReturnsBadRequest() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
+
+        var responseDTO = new IrisMcqResponseDTO(0, true, null);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseOnTextOnlyMessageReturnsBadRequest() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
+
+        var responseDTO = new IrisMcqResponseDTO(0, true, null);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseOnNonMcqJsonReturnsBadRequest() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var message = createLlmMessageWithMcqContent(irisSession, "{\"type\":\"other\",\"data\":\"something\"}");
+
+        var responseDTO = new IrisMcqResponseDTO(0, true, null);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void saveMcqResponseWrongSessionAccessReturnsForbidden() throws Exception {
+        var irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        var message = createLlmMessageWithMcqContent(irisSession,
+                "{\"type\":\"mcq\",\"question\":\"Q?\",\"options\":[{\"text\":\"A\",\"correct\":false},{\"text\":\"B\",\"correct\":true}],\"explanation\":\"E.\"}");
+
+        var responseDTO = new IrisMcqResponseDTO(0, true, null);
+        request.put("/api/iris/sessions/" + irisSession.getId() + "/messages/" + message.getId() + "/mcq-response", responseDTO, HttpStatus.FORBIDDEN);
+    }
+
+    private IrisMessage createLlmMessageWithMcqContent(IrisProgrammingExerciseChatSession session, String jsonString) {
+        var message = new IrisMessage();
+        var jsonContent = new IrisJsonMessageContent();
+        jsonContent.setJsonContent(jsonString);
+        message.addContent(jsonContent);
+        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {

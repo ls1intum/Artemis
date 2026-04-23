@@ -1,5 +1,4 @@
 import { Page } from 'playwright';
-import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { drag } from '../../../utils';
 import { Locator } from '@playwright/test';
 
@@ -27,10 +26,42 @@ export class DragAndDropQuiz {
         await this.page.locator('#field_title').fill(title);
     }
 
+    /**
+     * Adds a class node to the Apollon diagram at the given position using the editor API.
+     * In Apollon v4, drag-and-drop from the sidebar is replaced by direct API manipulation.
+     */
     async dragUsingCoordinates(x: number, y: number) {
-        const classElement = this.page.locator('#modeling-editor-sidebar').locator('div').nth(3);
-        const modelingEditorCanvas = this.page.locator(MODELING_EDITOR_CANVAS);
-        await classElement.dragTo(modelingEditorCanvas, { targetPosition: { x: x, y: y } });
+        await this.page.waitForFunction(
+            () => {
+                const el = document.querySelector('jhi-apollon-diagram-detail');
+                return el && (el as any).__apollonEditor;
+            },
+            { timeout: 30000 },
+        );
+
+        await this.page.evaluate(
+            ({ posX, posY }) => {
+                const el = document.querySelector('jhi-apollon-diagram-detail');
+                const editor = (el as any).__apollonEditor;
+                const model = JSON.parse(JSON.stringify(editor.model));
+                if (!model.nodes) model.nodes = [];
+                model.nodes.push({
+                    id: 'e2e-' + Math.random().toString(36).slice(2, 11),
+                    width: 200,
+                    height: 100,
+                    type: 'class',
+                    position: { x: posX, y: posY },
+                    data: {
+                        name: 'TestClass',
+                        attributes: [],
+                        methods: [],
+                    },
+                    measured: { width: 200, height: 100 },
+                });
+                editor.model = model;
+            },
+            { posX: x, posY: y },
+        );
     }
 
     async getXAxis(elements: Locator) {
@@ -55,24 +86,14 @@ export class DragAndDropQuiz {
         return { minX, maxX };
     }
 
-    async activateInteractiveMode() {
-        const modelingEditorSidebar = this.page.locator('#modeling-editor-sidebar');
-        const modeDropdownList = modelingEditorSidebar.locator('.dropdown').locator('select');
-        await modeDropdownList.selectOption('Exporting');
-    }
-
-    async markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {
-        const modelingEditorCanvas = this.page.locator(MODELING_EDITOR_CANVAS);
-        const canvasElements = modelingEditorCanvas.locator('g').locator('svg').nth(0);
-        const nthElement = canvasElements.locator('svg', { has: this.page.locator('svg') }).nth(nthElementOnCanvas);
-        const nthChild = nthElement.locator('g').locator('svg').nth(nthChildOfElement);
-        await nthChild.click({ force: true });
-    }
-
-    async generateQuizExercise() {
+    async generateQuizExercise(): Promise<number> {
         await this.page.locator('#generate-quiz-exercise').click();
-        await this.page.locator('#quiz-save').isVisible();
+        await this.page.locator('#quiz-save').waitFor({ state: 'visible' });
+        const responsePromise = this.page.waitForResponse(/api\/quiz\/(courses|exercise-groups)\/\d+\/quiz-exercises$/);
         await this.page.locator('#quiz-save').click();
+        const response = await responsePromise;
+        const exercise = await response.json();
+        return exercise.id;
     }
 
     async waitForQuizExerciseToBeGenerated() {
@@ -80,7 +101,7 @@ export class DragAndDropQuiz {
     }
 
     async previewQuiz() {
-        await this.page.locator('#preview-quiz').click();
+        await this.page.locator('#preview-quiz').first().click();
     }
 
     async waitForQuizPreviewToLoad() {
@@ -89,7 +110,7 @@ export class DragAndDropQuiz {
 
     async submit() {
         const responsePromise = this.page.waitForResponse(`api/quiz/exercises/*/submissions/live?submit=true`);
-        await this.page.locator('#submit-quiz').click();
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit-quiz').first().click();
         await responsePromise;
     }
 }

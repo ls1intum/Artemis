@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
@@ -9,8 +10,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -23,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +37,11 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -71,6 +73,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -81,20 +85,24 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_AEOLUS,
-        PROFILE_THEIA, PROFILE_ATHENA })
+        PROFILE_ATHENA })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
         "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
+        "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
         "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
         "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
         "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
-        "artemis.hyperion.enabled=true", "artemis.nebula.enabled=false",
+        "artemis.hyperion.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
         "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationLocalCILocalVCTest.class);
 
     private static final int serverPort;
 
@@ -102,11 +110,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     private static final int hazelcastPort;
 
-    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
+    protected static final WeaviateContainer weaviateContainer;
+
+    private static final String UNIQUE_COLLECTION_PREFIX = "LocalCILocalVC_";
+
+    // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
     }
 
     @DynamicPropertySource
@@ -116,6 +129,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
+
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
     }
 
     private static int findAvailableTcpPort() {
@@ -193,7 +208,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected IrisCourseChatSessionService irisCourseChatSessionService;
 
     @MockitoSpyBean
-    protected CompetencyJolService competencyJolService;
+    protected IrisCitationService irisCitationService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
@@ -262,7 +277,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi);
+                competencyProgressService, competencyProgressApi, irisCitationService);
         super.resetSpyBeans();
     }
 

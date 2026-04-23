@@ -35,7 +35,7 @@
                     <div class="my-2">
                         <div class="card-body px-0">
                             <jhi-post
-                                [readOnlyMode]="readOnlyMode"
+                                [readOnlyMode]="readOnlyMode()"
                                 [posting]="post"
                                 [showAnswers]="true"
                                 [isCommunicationPage]="true"
@@ -45,7 +45,7 @@
                             />
                         </div>
                         <div class="message-input mx-3 pt-2">
-                            @if (!readOnlyMode) {
+                            @if (!readOnlyMode()) {
                                 <jhi-message-reply-inline-input
                                     [activeConversation]="conversation"
                                     [posting]="createdAnswerPost"

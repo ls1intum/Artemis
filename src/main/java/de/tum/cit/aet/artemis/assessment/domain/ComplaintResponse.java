@@ -41,7 +41,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     private String responseText;
 
     /**
-     * will be set as soon as the reviewer has submitted his complaint evaluation
+     * will be set as soon as the reviewer has submitted their complaint evaluation
      */
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;

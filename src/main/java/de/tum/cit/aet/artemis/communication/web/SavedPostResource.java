@@ -105,7 +105,7 @@ public class SavedPostResource {
         }
 
         log.info("getSavedPosts took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(postingList, null, HttpStatus.OK);
+        return ResponseEntity.ok(postingList);
     }
 
     /**
@@ -140,7 +140,7 @@ public class SavedPostResource {
         savedPostService.savePostForCurrentUser(post);
 
         log.info("savePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     /**
@@ -158,7 +158,7 @@ public class SavedPostResource {
         log.debug("DELETE deletePost invoked for post {}", postId);
         long start = System.nanoTime();
 
-        // the user should only be able to delete his/her own saved posts, this is checked in removeSavedPostForCurrentUser
+        // the user should only be able to delete their own saved posts, this is checked in removeSavedPostForCurrentUser
 
         var posting = retrievePostingElseThrow(postId, postingType);
 
@@ -167,7 +167,7 @@ public class SavedPostResource {
         }
 
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -192,7 +192,7 @@ public class SavedPostResource {
         savedPostService.updateStatusOfSavedPostForCurrentUser(posting, savedPostStatus);
 
         log.info("putSavedPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
 
     private Posting retrievePostingElseThrow(long postId, PostingType postingType) throws BadRequestAlertException {

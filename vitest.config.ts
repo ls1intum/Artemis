@@ -8,6 +8,8 @@ import angular from '@analogjs/vite-plugin-angular';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
+const isCI = process.env.CI === 'true';
+
 export default defineConfig({
     // Only show errors, suppress sourcemap warnings from node_modules packages
     logLevel: 'error',
@@ -18,17 +20,24 @@ export default defineConfig({
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                loadPaths: [path.resolve(__dirname)],
+                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
+            },
+        },
+    },
     // JIT mode required for ng-mocks compatibility
     plugins: [angular({ jit: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
         globals: true,
+        pool: 'forks',
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
-            'src/main/webapp/app/core/account/**/*.spec.ts', // include core account tests
-            'src/main/webapp/app/core/admin/**/*.spec.ts', // include core admin tests
-            'src/main/webapp/app/core/course/manage/**/*.spec.ts', // include course manage tests
+            'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
             'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
@@ -39,8 +48,24 @@ export default defineConfig({
             'src/main/webapp/app/modeling/**/*.spec.ts', // include modeling tests
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
+            'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
+            'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
+            'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
+            'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
+            'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
+            'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
+            'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
+            'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
+            'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
+            'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
+            'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
+            'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
+            'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
+            'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -53,14 +78,12 @@ export default defineConfig({
         },
         coverage: {
             provider: 'istanbul',
-            reporter: ['text', 'lcov', 'html', 'json-summary'],
+            reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
-                'src/main/webapp/app/core/account/**/*.ts', // include core account for code coverage
-                'src/main/webapp/app/core/admin/**/*.ts', // include core admin for code coverage
-                'src/main/webapp/app/core/course/manage/**/*.ts', // include course manage for code coverage
+                'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
@@ -70,8 +93,24 @@ export default defineConfig({
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
+                'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
+                'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
+                'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
+                'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
+                'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
+                'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
+                'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
+                'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
+                'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
+                'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
+                'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
+                'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code
@@ -84,10 +123,10 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 92.05,
-                statements: 91.95,
-                branches: 76.90,
-                functions: 89.10,
+                lines: 90.67,
+                statements: 90.43,
+                branches: 74.43,
+                functions: 88.29,
             },
         },
     },

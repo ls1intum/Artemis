@@ -227,7 +227,8 @@
 
 .badge,
 .badge-experimental,
-.badge-recommended {
+.badge-recommended,
+.badge-current {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 13px;
@@ -246,6 +247,10 @@
 
 .badge-recommended {
     background: var(--info);
+}
+
+.badge-current {
+    background: var(--success);
 }
 
 .description {
@@ -313,6 +318,46 @@
     opacity: 0.8;
 }
 
+/* --- MEMIRIS TOGGLE --- */
+.memiris-toggle-section {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--bs-border-color);
+    background: var(--ai-modal-card-bg);
+}
+
+.memiris-toggle-content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.memiris-toggle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.memiris-toggle-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.memiris-toggle-description {
+    font-size: 13px;
+    color: var(--ai-modal-subtitle);
+    line-height: 1.4;
+}
+
+p-toggleswitch {
+    flex-shrink: 0;
+}
+
 /* --- RESPONSIVE --- */
 @media (max-width: 800px) {
     .option-card {
@@ -328,6 +373,10 @@
     .modal-content {
         padding: 24px 16px;
         border-radius: 16px;
+    }
+
+    .memiris-toggle-section {
+        padding: 12px 16px;
     }
 
     .modal-header h1 {

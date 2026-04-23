@@ -1,0 +1,18 @@
+.textarea-counter-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.textarea-with-counter {
+    padding-bottom: 1.75rem;
+}
+
+.textarea-char-count {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--p-text-muted-color);
+    pointer-events: none;
+    line-height: 1;
+}

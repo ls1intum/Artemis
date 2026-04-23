@@ -119,7 +119,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<Submission> submissionListTutor2CorrectionRound1;
 
-    // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+    // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
     private final boolean tutorAssessUnique = true;
 
     @BeforeEach
