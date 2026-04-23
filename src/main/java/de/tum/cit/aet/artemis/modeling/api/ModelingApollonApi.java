@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.springframework.context.annotation.Conditional;
@@ -32,8 +33,9 @@ public class ModelingApollonApi extends AbstractModelingApi {
      *
      * @param model the model JSON string to convert
      * @return an InputStream containing the PDF data
+     * @throws IOException if the conversion fails
      */
-    public InputStream convertModel(String model) {
+    public InputStream convertModel(String model) throws IOException {
         return apollonConversionService.convertModel(model);
     }
 }

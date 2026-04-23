@@ -14,7 +14,12 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     getStudentParticipation(user: UserCredentials) {
-        return this.getParticipationByText(user.username);
+        // Match against the build plan ID which contains the username uppercased without underscores
+        const usernamePattern = user.username.replace(/_/g, '').toUpperCase();
+        return this.page
+            .getByRole('table')
+            .getByRole('row')
+            .filter({ hasText: new RegExp(usernamePattern, 'i') });
     }
 
     private getParticipationByText(text: string) {
@@ -73,7 +78,7 @@ export class ProgrammingExerciseParticipationsPage {
         console.log(`[openRepositoryOnNewPage] Navigating to: ${absoluteUrl}`);
 
         const newPage = await this.page.context().newPage();
-        await newPage.goto(absoluteUrl, { waitUntil: 'networkidle' });
+        await newPage.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
         console.log(`[openRepositoryOnNewPage] Navigation complete. New page URL: ${newPage.url()}`);
 
         return new RepositoryPage(newPage);

@@ -3,10 +3,12 @@ import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fo
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -16,7 +18,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { catchError } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -87,7 +89,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
 
     private accountService = inject(AccountService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
@@ -255,16 +257,19 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         translationParams: { [key: string]: string },
         confirmedCallback: () => Observable<HttpResponse<void>>,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = translationKeys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
-        modalRef.componentInstance.initialize();
+        const ref = this.dialogService.open(GenericConfirmationDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: {
+                translationParameters: translationParams,
+                translationKeys,
+                canBeUndone: true,
+                isDangerousAction: true,
+            },
+        });
 
-        from(modalRef.result)
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {

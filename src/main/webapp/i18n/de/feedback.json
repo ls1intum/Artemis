@@ -18,8 +18,8 @@
             "detailText": "Detailtext",
             "type": "Type",
             "result": "Ergebnis",
-            "truncatedInfo": "Das Feedback ist zu lang, um komplett angezeigt zu werden, und wurde gekürzt.",
-            "downloadFullFeedback": "Vollständiges Feedback herunterladen",
+            "truncatedInfo": "Das Feedback ist lang und wurde eventuell gekürzt.",
+            "downloadTruncatedFeedback": "Feedback herunterladen",
             "modal": {
                 "submitted": "Abgegeben",
                 "linkedToCommit": "verknüpft mit Commit"

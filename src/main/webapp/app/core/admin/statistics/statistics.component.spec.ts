@@ -34,7 +34,7 @@ describe('StatisticsComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

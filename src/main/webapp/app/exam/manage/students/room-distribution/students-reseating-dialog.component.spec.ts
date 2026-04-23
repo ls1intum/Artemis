@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -12,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 
 describe('StudentsReseatingDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: StudentsReseatingDialogComponent;
     let fixture: ComponentFixture<StudentsReseatingDialogComponent>;
     let service: StudentsRoomDistributionService;
@@ -43,7 +47,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
+            imports: [FaIconComponent, StudentsReseatingDialogComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
@@ -57,11 +61,12 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should request used rooms on creation', () => {
-        const loadSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
 
         expect(loadSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
@@ -75,11 +80,12 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.examUser()).toEqual(examUser);
         expect(component.selectedRoomNumber()).toBe('2.0.1');
         expect(component.selectedSeat()).toBe('');
-        expect(component.dialogVisible()).toBeTrue();
+        expect(component.dialogVisible()).toBe(true);
     });
 
     it('openDialog() should fallback to empty rooms list on error', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
+        vi.useFakeTimers();
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -92,15 +98,15 @@ describe('StudentsReseatingDialogComponent', () => {
 
         component.closeDialog();
 
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('calling openDialog() twice should update fields to the latest user and trigger a new seat load for persisted rooms', () => {
         const userA = { ...examUser, id: 20, plannedRoom: rooms[0].roomNumber, plannedSeat: 'A1' };
         const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
 
-        const loadUsedRoomsSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const loadSeatsInSelectedRoomSpy = jest.spyOn(service, 'loadSeatsOfExamRoom');
+        const loadUsedRoomsSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSeatsInSelectedRoomSpy = vi.spyOn(service, 'loadSeatsOfExamRoom');
 
         component.openDialog(userA);
         fixture.detectChanges();
@@ -119,8 +125,8 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should call reseatStudent with correct values', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const reseatSpy = jest.spyOn(service, 'reseatStudent').mockReturnValue(of());
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -133,21 +139,21 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should show if location is known', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        jest.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
 
         component.selectedRoomNumber.set(rooms[0].roomNumber);
         fixture.detectChanges();
-        expect(component.selectedRoomIsPersisted()).toBeTrue();
-        expect(component.selectedSeatIsPersisted()).toBeFalse();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(false);
 
         component.selectedSeat.set('A3');
         fixture.detectChanges();
-        expect(component.selectedRoomIsPersisted()).toBeTrue();
-        expect(component.selectedSeatIsPersisted()).toBeTrue();
+        expect(component.selectedRoomIsPersisted()).toBe(true);
+        expect(component.selectedSeatIsPersisted()).toBe(true);
     });
 
     it('should format room name correctly', () => {
@@ -162,49 +168,51 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should find correct rooms', fakeAsync(() => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+    it('should find correct rooms', () => {
+        vi.useFakeTimers();
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component['roomSearch'](of('t')).subscribe((rooms) => {
             searchResult = rooms;
         });
 
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         expect(searchResult).toHaveLength(2);
         expect(searchResult).toContainEqual(rooms[1]);
         expect(searchResult).toContainEqual(rooms[2]);
-    }));
+    });
 
-    it('should find correct seats', fakeAsync(() => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        jest.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
+    it('should find correct seats', () => {
+        vi.useFakeTimers();
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
 
         let searchResult: string[] = [];
         component['examSeatSearch'](of('2')).subscribe((rooms) => {
             searchResult = rooms;
         });
 
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         expect(searchResult).toHaveLength(3);
         expect(searchResult).toContainEqual('A2');
         expect(searchResult).toContainEqual('B2');
         expect(searchResult).toContainEqual('1, 2');
-    }));
+    });
 
     it('should close the dialog on pressing the close button', () => {
         component.openDialog(examUser);
         fixture.detectChanges();
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 });

@@ -21,29 +21,37 @@ export default defineConfig({
     fullyParallel: true,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
-    workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
+    workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
-        [
-            'monocart-reporter',
-            {
-                outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
-                coverage: {
-                    reports: ['lcov', 'json'],
-                    filter: {
-                        '**/src/**': true,
-                        '**/node_modules/**': false,
-                        client: false,
-                        '**/**': true,
-                    },
-                },
-            },
-        ],
+        ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
+            ? ([
+                  [
+                      'monocart-reporter',
+                      {
+                          outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
+                          coverage: {
+                              reports: ['lcov', 'json'],
+                              filter: {
+                                  '**/src/**': true,
+                                  '**/node_modules/**': false,
+                                  client: false,
+                                  '**/**': true,
+                              },
+                          },
+                      },
+                  ],
+              ] as const)
+            : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 
+    /* Increase default expect timeout from 5s to 10s for CI environments under parallel load */
+    expect: {
+        timeout: parseNumber(process.env.EXPECT_TIMEOUT_MS) ?? 10000,
+    },
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
@@ -52,7 +60,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
         video: {
-            mode: 'on',
+            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on',
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
@@ -64,7 +72,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
-            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
+            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
         // Tests with @slow tag. These tests are expected to run longer
@@ -72,19 +80,7 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: {
-                browserName: 'chromium',
-                viewport: { width: 1920, height: 1080 },
-            },
-        },
-        // Tests with @sequential tag. These tests are triggering programming exercise submissions.
-        // Running only one programming exercise evaluation at a time could make the tests more stable.
-        // Thus, it is recommended to run this project with a single worker.
-        {
-            name: 'sequential-tests',
-            grep: /@sequential/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',
                 viewport: { width: 1920, height: 1080 },

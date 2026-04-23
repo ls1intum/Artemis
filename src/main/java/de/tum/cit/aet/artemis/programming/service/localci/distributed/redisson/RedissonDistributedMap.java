@@ -117,7 +117,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public UUID addEntryListener(MapEntryListener<K, V> listener) {
-        int registrationId = notificationTopic.addListener(MapItemEvent.class, (channel, event) -> {
+        int registrationId = notificationTopic.addListener(MapItemEvent.class, (_, event) -> {
             MapItemEvent<K, V> mapItemEvent = (MapItemEvent<K, V>) event;
             if (event.getType() == MapItemEvent.EventType.ADD) {
                 listener.entryAdded(new MapEntryAddedEvent<>(mapItemEvent.getKey(), mapItemEvent.getValue()));
@@ -136,7 +136,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public UUID addListener(MapListener listener) {
-        int registrationId = notificationTopic.addListener(MapItemEvent.class, (channel, event) -> {
+        int registrationId = notificationTopic.addListener(MapItemEvent.class, (_, event) -> {
             if (event.getType() == MapItemEvent.EventType.ADD) {
                 listener.entryAdded();
             }

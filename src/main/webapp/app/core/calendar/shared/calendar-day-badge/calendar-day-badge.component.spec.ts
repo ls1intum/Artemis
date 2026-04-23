@@ -1,11 +1,19 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CalendarDayBadgeComponent } from './calendar-day-badge.component';
 
 describe('CalendarDayBadgeComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CalendarDayBadgeComponent;
     let fixture: ComponentFixture<CalendarDayBadgeComponent>;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
@@ -9,7 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
@@ -67,6 +67,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -87,7 +88,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
-            const irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
             untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
@@ -123,14 +124,30 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     private async loadCourseCompetencies(courseId: number) {
+        const done = this.pendingTasks.add();
         try {
             this.isLoading.set(true);
-            const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
+            const [competenciesResult, progressResult] = await Promise.allSettled([
+                this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId),
+                this.courseCompetencyApiService.getCourseProgressForCourse(courseId),
+            ]);
+            if (competenciesResult.status === 'rejected') {
+                this.alertService.error(competenciesResult.reason);
+                return;
+            }
+            const courseCompetencies = competenciesResult.value;
+            if (progressResult.status === 'fulfilled') {
+                const progressMap = new Map(progressResult.value.map((p) => [p.competencyId, p]));
+                courseCompetencies.forEach((c) => {
+                    c.courseProgress = progressMap.get(c.id);
+                });
+            }
             this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
             this.alertService.error(error);
         } finally {
             this.isLoading.set(false);
+            done();
         }
     }
 
@@ -217,7 +234,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             size: 'lg',
             backdrop: true,
         });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId.set(this.courseId());
 
         modalRef.componentInstance.competencyChanged.subscribe(() => {
             this.loadCourseCompetencies(this.courseId());

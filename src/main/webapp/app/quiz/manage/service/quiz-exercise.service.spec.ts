@@ -222,7 +222,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PATCH', url: 'api/quiz/quiz-exercises/1' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -258,7 +258,6 @@ describe('QuizExercise Service', () => {
         ['setVisible', [123], quizEx, 'PUT', '/set-visible'],
         ['end', [123], quizEx, 'PUT', '/end-now'],
         ['start', [123], quizEx, 'PUT', '/start-now'],
-        ['openForPractice', [123], quizEx, 'PUT', '/open-for-practice'],
         ['findForStudent', [123], quizEx, 'GET', '/for-student'],
         ['findForExam', [123], [quizEx], 'GET', '/quiz-exercises'],
         ['findForCourse', [123], [quizEx], 'GET', '/quiz-exercises'],
@@ -279,15 +278,16 @@ describe('QuizExercise Service', () => {
     });
 
     it.each([
-        [QuizStatus.INVISIBLE, false, false, false, false],
-        [QuizStatus.VISIBLE, true, false, false, false],
-        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false, true],
-        [QuizStatus.ACTIVE, true, false, true, false],
+        [QuizStatus.INVISIBLE, false, false, false],
+        [QuizStatus.VISIBLE, true, false, false],
+        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false],
+        [QuizStatus.ACTIVE, true, false, true],
         // all other combinations are not valid
-    ])('should get status %p', (result, quizStarted, quizEnded, started, practice) => {
+    ])('should get status %p', (result, quizStarted, quizEnded, started) => {
         elemDefault.quizStarted = quizStarted;
         elemDefault.quizEnded = quizEnded;
-        elemDefault.dueDate = practice ? dayjs().subtract(1, 'day') : dayjs().add(1, 'day');
+        elemDefault.dueDate = dayjs().add(1, 'day');
+        elemDefault.visibleToStudents = quizStarted;
         if (started !== undefined) {
             elemDefault.quizBatches = [{ started }];
         }

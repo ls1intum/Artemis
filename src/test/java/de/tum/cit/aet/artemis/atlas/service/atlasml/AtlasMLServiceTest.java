@@ -8,8 +8,10 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,18 +31,16 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -48,6 +48,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasMLServiceTest {
+
+    private static final String HEALTHY_ATLASML_RESPONSE = """
+            {"status":"ok","components":{"api":{"status":"ok"},"weaviate":{"status":"ok","collections":{"Exercise":{"status":"ok"},"Competency":{"status":"ok"},"SemanticCluster":{"status":"ok"}}}}}
+            """;
+
+    private static final String UNHEALTHY_ATLASML_RESPONSE = """
+            {"status":"error","components":{"api":{"status":"ok"},"weaviate":{"status":"error","message":"Weaviate is unreachable"}}}
+            """;
 
     @Mock
     private RestTemplate atlasmlRestTemplate;
@@ -59,15 +67,15 @@ class AtlasMLServiceTest {
     private AtlasMLRestTemplateConfiguration config;
 
     @Mock
-    private CompetencyRepository competencyRepository;
-
-    @Mock
     private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     @Mock
     private FeatureToggleService featureToggleService;
 
     private AtlasMLService atlasMLService;
+
+    @SuppressWarnings("rawtypes")
+    private final ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
 
     @BeforeEach
     void setUp() {
@@ -79,8 +87,8 @@ class AtlasMLServiceTest {
     @Test
     void testIsHealthy_WhenServiceIsUp() {
         // Given
-        ResponseEntity<String> response = new ResponseEntity<>("[]", HttpStatus.OK);
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ResponseEntity<String> response = new ResponseEntity<>(HEALTHY_ATLASML_RESPONSE, HttpStatus.OK);
+
         when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(response);
 
@@ -91,8 +99,44 @@ class AtlasMLServiceTest {
         assertThat(result).isTrue();
         verify(shortTimeoutAtlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), captor.capture(), eq(String.class));
         HttpEntity<?> sentEntity = captor.getValue();
-        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        HttpHeaders headers = sentEntity.getHeaders();
         assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
+    }
+
+    @Test
+    void testHealth_WhenServiceIsUp_ExposesDetailedStatus() {
+        // Given
+        ResponseEntity<String> response = new ResponseEntity<>(HEALTHY_ATLASML_RESPONSE, HttpStatus.OK);
+
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(response);
+
+        // When
+        ConnectorHealth result = atlasMLService.health();
+
+        // Then
+        assertThat(result.isUp()).isTrue();
+        assertThat(result.additionalInfo()).containsEntry("url", "http://localhost:8000").containsEntry("status", "\uD83D\uDFE2 ok").containsEntry("api", "\uD83D\uDFE2 ok")
+                .containsEntry("weaviate", "\uD83D\uDFE2 ok").containsEntry("collection Exercise", "\uD83D\uDFE2 ok").containsEntry("collection Competency", "\uD83D\uDFE2 ok")
+                .containsEntry("collection SemanticCluster", "\uD83D\uDFE2 ok");
+    }
+
+    @Test
+    void testHealth_WhenServiceReturns503_ExposesDetailedStatusFromResponseBody() {
+        // Given
+        HttpServerErrorException exception = HttpServerErrorException.create(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", HttpHeaders.EMPTY,
+                UNHEALTHY_ATLASML_RESPONSE.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(exception);
+
+        // When
+        ConnectorHealth result = atlasMLService.health();
+
+        // Then
+        assertThat(result.isUp()).isFalse();
+        assertThat(result.additionalInfo()).containsEntry("url", "http://localhost:8000").containsEntry("status", "\uD83D\uDD34 error").containsEntry("api", "\uD83D\uDFE2 ok")
+                .containsEntry("weaviate", "\uD83D\uDD34 error: Weaviate is unreachable");
     }
 
     @Test
@@ -113,7 +157,6 @@ class AtlasMLServiceTest {
         // Given
         SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(
                         "{\"competencies\":[{\"id\":1,\"title\":\"Test Competency 1\",\"description\":\"Test Description 1\",\"course_id\":1},{\"id\":2,\"title\":\"Test Competency 2\",\"description\":\"Test Description 2\",\"course_id\":1}]}",
@@ -129,7 +172,7 @@ class AtlasMLServiceTest {
         assertThat(result.competencies().get(1).id()).isEqualTo(2L);
         verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         HttpEntity<?> sentEntity = captor.getValue();
-        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        HttpHeaders headers = sentEntity.getHeaders();
         assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
     }
 
@@ -137,7 +180,6 @@ class AtlasMLServiceTest {
     void testSuggestCompetencyRelations_AddsAuthorizationHeader() {
         // Given
         Long courseId = 42L;
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         ResponseEntity<String> response = new ResponseEntity<>('{' + "\"relations\":[]" + '}', HttpStatus.OK);
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/42"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(response);
@@ -148,7 +190,7 @@ class AtlasMLServiceTest {
         // Then
         verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/42"), eq(HttpMethod.GET), captor.capture(), eq(String.class));
         HttpEntity<?> sentEntity = captor.getValue();
-        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        HttpHeaders headers = sentEntity.getHeaders();
         assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
     }
 
@@ -157,7 +199,6 @@ class AtlasMLServiceTest {
         // Given
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("", HttpStatus.OK));
 
@@ -167,7 +208,7 @@ class AtlasMLServiceTest {
         // Then
         verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         HttpEntity<?> sentEntity = captor.getValue();
-        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        HttpHeaders headers = sentEntity.getHeaders();
         assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
     }
 
@@ -203,9 +244,6 @@ class AtlasMLServiceTest {
         course.setId(1L);
         competency.setCourse(course);
 
-        CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(RelationType.ASSUMES);
-
         SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, OperationTypeDTO.UPDATE);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
@@ -228,9 +266,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.saveCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.saveCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -242,9 +278,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -274,9 +308,7 @@ class AtlasMLServiceTest {
                 .thenReturn(response);
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -306,9 +338,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencyRelations(courseId);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencyRelations(courseId)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -356,7 +386,6 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WhenFeatureDisabled() {
         // Given
-        Long exerciseId = 123L;
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
 
         // When
@@ -491,6 +520,21 @@ class AtlasMLServiceTest {
         // Given
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 1L;
+        final var link = getCompetencyExerciseLink(exerciseId);
+
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenReturn(List.of(link));
+
+        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
+
+        // When
+        boolean result = atlasMLService.saveExerciseWithCompetenciesById(exerciseId, OperationTypeDTO.UPDATE);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    private static @NonNull CompetencyExerciseLink getCompetencyExerciseLink(Long exerciseId) {
         Exercise exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         exercise.setTitle("Test Exercise");
@@ -506,23 +550,13 @@ class AtlasMLServiceTest {
         CompetencyExerciseLink link = new CompetencyExerciseLink();
         link.setExercise(exercise);
         link.setCompetency(competency);
-
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenReturn(List.of(link));
-
-        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
-
-        // When
-        boolean result = atlasMLService.saveExerciseWithCompetenciesById(exerciseId, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isTrue();
+        return link;
     }
 
     @Test
     void testSaveExerciseWithCompetenciesById_NoLinks() {
         // Given
-        Long exerciseId = 1L;
+        long exerciseId = 1L;
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenReturn(List.of());
 
@@ -550,7 +584,7 @@ class AtlasMLServiceTest {
     void testSaveExerciseWithCompetenciesById_WhenException() {
         // Given
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        Long exerciseId = 1L;
+        long exerciseId = 1L;
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenThrow(new RuntimeException("Database error"));
 
         // When
@@ -564,7 +598,7 @@ class AtlasMLServiceTest {
     void testIsHealthy_HttpServerErrorException() {
         // Given
         when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+                .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
 
         // When
         boolean result = atlasMLService.isHealthy();
@@ -622,9 +656,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.saveCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.saveCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -637,9 +669,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.saveCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.saveCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -651,9 +681,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -665,9 +693,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencies(request);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencies(request)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -679,9 +705,7 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencyRelations(courseId);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencyRelations(courseId)).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -693,8 +717,35 @@ class AtlasMLServiceTest {
                 .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When & Then
-        assertThatThrownBy(() -> {
-            atlasMLService.suggestCompetencyRelations(courseId);
-        }).isInstanceOf(AtlasMLServiceException.class);
+        assertThatThrownBy(() -> atlasMLService.suggestCompetencyRelations(courseId)).isInstanceOf(AtlasMLServiceException.class);
+    }
+
+    @Test
+    void testMapCompetencyToCompetency_Success() {
+        Long sourceCompetencyId = 1L;
+        Long targetCompetencyId = 2L;
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+
+        ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.OK);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/map-competency-to-competency"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(response);
+
+        boolean result = atlasMLService.mapCompetencyToCompetency(sourceCompetencyId, targetCompetencyId);
+
+        assertThat(result).isTrue();
+        verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/map-competency-to-competency"), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(Void.class));
+    }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenFeatureDisabled() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
+        Competency competency = new Competency();
+        competency.setId(1L);
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.UPDATE);
+
+        assertThat(result).isTrue();
+        verify(atlasmlRestTemplate, org.mockito.Mockito.never()).exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
 }

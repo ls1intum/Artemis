@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faEdit, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/node/code-editor-file-browser-node.component';
@@ -15,9 +15,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, NgClass, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
-    @Input() disableActions: boolean;
-    @Input() hasChanges = false;
-    @Input() badges: FileBadge[] = [];
+    disableActions = input.required<boolean>();
+    hasChanges = input<boolean>(false);
+    badges = input<FileBadge[]>([]);
 
     // Icons
     faTrash = faTrash;

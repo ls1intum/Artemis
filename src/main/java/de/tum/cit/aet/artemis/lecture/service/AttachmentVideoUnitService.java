@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -24,6 +22,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -46,11 +45,11 @@ public class AttachmentVideoUnitService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final LectureContentProcessingService contentProcessingService;
+    private final Optional<LectureContentProcessingService> contentProcessingService;
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            LectureContentProcessingService contentProcessingService) {
+            Optional<LectureContentProcessingService> contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -71,39 +70,39 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
         // Trigger automated content processing (transcription and ingestion)
-        contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+        contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
 
     /**
      * Updates the provided attachment video unit with an optional file.
+     * Note: Competency links must be updated by the caller before invoking this method.
      *
      * @param existingAttachmentVideoUnit The attachment video unit to update.
-     * @param updateUnit                  The new attachment video unit data.
+     * @param updateUnitDTO               The DTO with the new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
+     * @param originalCompetencyIds       The competency IDs before the update (for progress tracking)
      * @return The updated attachment video unit.
      */
-    public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
-        Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
-
-        existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
-        existingAttachmentVideoUnit.setName(updateUnit.getName());
-        existingAttachmentVideoUnit.setReleaseDate(updateUnit.getReleaseDate());
-        existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
-        existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
+    public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
+            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+        existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
+        existingAttachmentVideoUnit.setName(updateUnitDTO.name());
+        existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
+        existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
+        // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
         boolean createdNewAttachment = false;
@@ -113,16 +112,13 @@ public class AttachmentVideoUnitService {
             createdNewAttachment = true;
         }
 
-        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
 
-        // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
-        existingAttachmentVideoUnit.setCompetencyLinks(existingCompetencyLinks);
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
         if (updateAttachment == null) {
             // Trigger processing for video-only updates (video source change detection is done inside the service)
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
@@ -133,7 +129,7 @@ public class AttachmentVideoUnitService {
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
             }
             // Trigger processing for newly added attachment
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
         else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
@@ -157,7 +153,7 @@ public class AttachmentVideoUnitService {
             }
 
             // Trigger automated content processing (transcription and ingestion)
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);

@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -15,6 +16,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -28,7 +30,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -47,6 +49,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ButtonModule } from 'primeng/button';
+import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -73,6 +82,9 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        RouterLink,
+        ButtonModule,
+        QuizAiGenerationModalComponent,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -88,8 +100,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private location = inject(Location);
+    private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    aiGenerationModalVisible = false;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -132,6 +148,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
+    faArrowLeft = faArrowLeft;
+    faWrench = faWrench;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
@@ -206,9 +224,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (!this.quizExercise.isEditable) {
-                    this.alertService.error('error.http.403');
-                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -285,6 +300,29 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
 
         this.cacheValidation();
+    }
+
+    openAiGenerationModal(): void {
+        this.aiGenerationModalVisible = true;
+    }
+
+    canShowAiGenerationButton(): boolean {
+        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
+    appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
+        if (!generatedQuestions.length) {
+            return;
+        }
+
+        const existingQuestions = this.quizExercise.quizQuestions ?? [];
+        const existingQuestionCount = existingQuestions.length;
+        const mappedQuestions = generatedQuestions.map((generatedQuestion, index) =>
+            this.convertGeneratedQuestionToQuizQuestion(generatedQuestion, existingQuestionCount + index + 1),
+        );
+        // Reassign the array to ensure OnPush children receive a new input reference.
+        this.quizExercise.quizQuestions = [...existingQuestions, ...mappedQuestions];
+        this.handleQuestionChanged();
     }
 
     /**
@@ -373,6 +411,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Returns whether pending changes are present, preventing a deactivation.
      */
     canDeactivate(): boolean {
+        if (!this.quizExercise?.isEditable) {
+            return true;
+        }
         return !this.pendingChangesCache;
     }
 
@@ -543,20 +584,31 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
         this.isSaving = false;
         this.pendingChangesCache = false;
-        this.prepareEntity(quizExercise);
         this.quizQuestionListEditComponent().fileMap.clear();
+
+        if (this.isImport) {
+            this.calendarService.reloadEvents();
+            this.previousState();
+            return;
+        }
+
+        // The DTO response serializes mapping items as separate object copies from the
+        // question's item arrays. Reconcile so mapping.dragItem IS the same reference as
+        // dragItems[i], enabling identity-based matching in the edit components.
+        this.reconcileMappingReferences(quizExercise);
+        this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        // Respect the server-provided isEditable flag (accounts for exam dates), combined with local check
+        this.quizExercise.isEditable = this.quizExercise.isEditable && isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
 
-        // Navigate back only if it's an import
-        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
-        if (this.isImport) {
-            this.previousState();
-        } else if (isCreate) {
-            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
+        if (isCreate) {
+            // Update the browser URL from /new to /<id>/edit without Angular navigation.
+            // The component stays alive with the POST response data which includes all entity data.
+            const editUrl = this.router.url.replace('/new', `/${quizExercise.id}/edit`);
+            this.location.replaceState(editUrl);
         }
         this.calendarService.reloadEvents();
     }
@@ -586,6 +638,33 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         for (const question of quizExercise.quizQuestions ?? []) {
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
+            }
+        }
+    }
+
+    /**
+     * Reconciles mapping references in DnD and SA questions so that mapping.dragItem / mapping.dropLocation /
+     * mapping.solution / mapping.spot point to the SAME object instances as the question's item arrays.
+     * This is needed because DTO responses serialize mappings with separate copies of the referenced items.
+     */
+    private reconcileMappingReferences(quizExercise: QuizExercise): void {
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                const dnd = question as DragAndDropQuestion;
+                const dragItemById = new Map((dnd.dragItems ?? []).filter((di) => di.id).map((di) => [di.id!, di]));
+                const dropLocationById = new Map((dnd.dropLocations ?? []).filter((dl) => dl.id).map((dl) => [dl.id!, dl]));
+                for (const mapping of dnd.correctMappings ?? []) {
+                    if (mapping.dragItem?.id) mapping.dragItem = dragItemById.get(mapping.dragItem.id) ?? mapping.dragItem;
+                    if (mapping.dropLocation?.id) mapping.dropLocation = dropLocationById.get(mapping.dropLocation.id) ?? mapping.dropLocation;
+                }
+            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                const sa = question as ShortAnswerQuestion;
+                const solutionById = new Map((sa.solutions ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                const spotById = new Map((sa.spots ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                for (const mapping of sa.correctMappings ?? []) {
+                    if (mapping.solution?.id) mapping.solution = solutionById.get(mapping.solution.id) ?? mapping.solution;
+                    if (mapping.spot?.id) mapping.spot = spotById.get(mapping.spot.id) ?? mapping.spot;
+                }
             }
         }
     }
@@ -629,6 +708,28 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
+    navigateBack(): void {
+        this.previousState();
+    }
+
+    get reEvaluateUrl(): string[] {
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                String(this.courseId),
+                'exams',
+                String(this.examId),
+                'exercise-groups',
+                String(groupId),
+                'quiz-exercises',
+                String(this.quizExercise?.id),
+                're-evaluate',
+            ];
+        }
+        return ['/course-management', String(this.courseId), 'quiz-exercises', String(this.quizExercise?.id), 're-evaluate'];
+    }
+
     /**
      * Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
@@ -652,7 +753,25 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+        return (
+            this.isSaving ||
+            !this.pendingChangesCache ||
+            !this.quizIsValid ||
+            this.hasSavedQuizStarted ||
+            !this.quizExercise.isEditable ||
+            this.quizExercise.dueDateError ||
+            this.hasErrorInQuizBatches()
+        );
+    }
+
+    get saveButtonTooltip(): string {
+        if (!this.quizExercise.isEditable) {
+            if (this.quizExercise.quizEnded) {
+                return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            }
+            return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+        }
+        return '';
     }
 
     hasErrorInQuizBatches(): boolean {
@@ -661,6 +780,33 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     handleQuestionChanged() {
         this.cacheValidation();
+    }
+
+    private convertGeneratedQuestionToQuizQuestion(generatedQuestion: GeneratedQuestion, questionNumber: number): MultipleChoiceQuestion {
+        const question = new MultipleChoiceQuestion();
+        question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
+        question.text = generatedQuestion.questionText;
+        question.hint = generatedQuestion.hint;
+        question.explanation = generatedQuestion.explanation;
+        question.points = 1;
+        question.randomizeOrder = true;
+        question.scoringType = ScoringType.ALL_OR_NOTHING;
+        question.singleChoice = this.isSingleChoiceType(generatedQuestion.type);
+        question.answerOptions = generatedQuestion.options.map((generatedOption) => {
+            const answerOption = new AnswerOption();
+            answerOption.text = generatedOption.text;
+            answerOption.isCorrect = generatedOption.correct;
+            answerOption.hint = generatedOption.hint;
+            answerOption.explanation = generatedOption.explanation;
+            answerOption.question = question;
+            return answerOption;
+        });
+        question.hasCorrectOption = question.answerOptions.some((answerOption) => !!answerOption.isCorrect);
+        return question;
+    }
+
+    private isSingleChoiceType(type: GeneratedQuestionType): boolean {
+        return type === 'single-choice' || type === 'true-false';
     }
 
     /**

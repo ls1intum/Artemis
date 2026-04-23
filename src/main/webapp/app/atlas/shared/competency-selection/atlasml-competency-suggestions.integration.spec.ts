@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { delay, of, throwError } from 'rxjs';
@@ -20,6 +21,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Integration test suite for AtlasML Competency Suggestion Feature
@@ -31,6 +33,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
  * 4. Handle various edge cases and error scenarios
  */
 describe('AtlasML Competency Suggestions Integration Tests', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
@@ -78,14 +81,16 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         httpClient = fixture.debugElement.injector.get(HttpClient);
         profileService = fixture.debugElement.injector.get(ProfileService);
 
+        vi.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }));
+
         // Enable Atlas module feature
         const profileInfo = new ProfileInfo();
         profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-        const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+        const getProfileInfoMock = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoMock.mockReturnValue(profileInfo);
 
         // Setup mock competencies
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: sampleCompetencies });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: sampleCompetencies });
 
         // Setup exercise description for suggestions
         fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a binary search tree with insertion and deletion operations');
@@ -93,7 +98,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('UI Component Visibility', () => {
@@ -101,7 +106,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
             expect(btnDe).toBeTruthy();
             const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeFalsy();
+            expect(btn.disabled()).toBeFalsy();
         });
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
@@ -116,7 +121,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         it('should show proper tooltip for lightbulb button', () => {
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
             const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            expect(btn.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should disable lightbulb button when exercise description is empty', () => {
@@ -141,7 +146,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     describe('API Integration', () => {
         it('should call AtlasML API with correct parameters', () => {
             const mockResponse = { competencies: [{ id: 1, title: 'Programming Fundamentals' }] };
-            const httpPostSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            const httpPostSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -151,50 +156,53 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             });
         });
 
-        it('should handle successful API response', fakeAsync(() => {
-            const mockResponse = {
-                competencies: [
-                    { id: 1, title: 'Programming Fundamentals' },
-                    { id: 2, title: 'Data Structures' },
-                ],
-            };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse).pipe(delay(100)));
+        it('should handle successful API response', () => {
+            vi.useFakeTimers();
+            try {
+                const mockResponse = {
+                    competencies: [
+                        { id: 1, title: 'Programming Fundamentals' },
+                        { id: 2, title: 'Data Structures' },
+                    ],
+                };
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse).pipe(delay(100)));
 
-            component.suggestCompetencies();
-            expect(component.isSuggesting).toBeTruthy();
+                component.suggestCompetencies();
+                expect(component.isSuggesting).toBeTruthy();
 
-            tick(100);
-            fixture.detectChanges();
+                vi.advanceTimersByTime(100);
+                fixture.detectChanges();
 
-            expect(component.isSuggesting).toBeFalsy();
-            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(2)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(3)).toBeFalsy();
-        }));
+                expect(component.isSuggesting).toBeFalsy();
+                expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
+                expect(component.suggestedCompetencyIds.has(2)).toBeTruthy();
+                expect(component.suggestedCompetencyIds.has(3)).toBeFalsy();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
 
-        it('should handle API errors gracefully', fakeAsync(() => {
-            const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
+        it('should handle API errors gracefully', () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             component.suggestCompetencies();
             // After error, isSuggesting should be false due to finalize operator
-            tick();
             fixture.detectChanges();
 
             expect(component.isSuggesting).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
             consoleSpy.mockRestore();
-        }));
+        });
 
-        it('should handle network timeout', fakeAsync(() => {
-            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ name: 'TimeoutError' })));
+        it('should handle network timeout', () => {
+            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ name: 'TimeoutError' })));
 
             component.suggestCompetencies();
-            tick();
 
             expect(component.isSuggesting).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
-        }));
+        });
     });
 
     describe('Suggestion Display and Interaction', () => {
@@ -205,7 +213,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                     { id: 3, title: 'Algorithms' },
                 ],
             };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
             component.suggestCompetencies();
             fixture.detectChanges();
         });
@@ -250,7 +258,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
             // Mock new response with different suggestions
             const newMockResponse = { competencies: [{ id: 1, title: 'Programming Fundamentals' }] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(newMockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(newMockResponse));
 
             component.suggestCompetencies();
 
@@ -261,54 +269,64 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     });
 
     describe('Loading States', () => {
-        it('should show spinner during API call', fakeAsync(() => {
-            jest.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(200)));
+        it('should show spinner during API call', () => {
+            vi.useFakeTimers();
+            try {
+                vi.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(200)));
 
-            component.suggestCompetencies();
-            fixture.detectChanges();
+                component.suggestCompetencies();
+                fixture.detectChanges();
 
-            // Should show spinner
-            // Loading is now handled by jhi-button isLoading; spinner element is not directly in DOM here
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.isLoading).toBeTruthy();
+                // Should show spinner
+                // Loading is now handled by jhi-button isLoading; spinner element is not directly in DOM here
+                const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+                const btn = btnDe.componentInstance as ButtonComponent;
+                expect(btn.isLoading).toBeTruthy();
 
-            // Should not show lightbulb icon (hidden when loading)
-            const lightbulbIcon = btnDe.query(By.css('.jhi-btn__icon'));
-            expect(lightbulbIcon).toBeFalsy();
-            // Spinner should be visible on the button while loading
-            const spinnerIcon = btnDe.query(By.css('.jhi-btn__loading'));
-            expect(spinnerIcon).toBeTruthy();
+                // Should not show lightbulb icon (hidden when loading)
+                const lightbulbIcon = btnDe.query(By.css('.jhi-btn__icon'));
+                expect(lightbulbIcon).toBeFalsy();
+                // Spinner should be visible on the button while loading
+                const spinnerIcon = btnDe.query(By.css('.jhi-btn__loading'));
+                expect(spinnerIcon).toBeTruthy();
 
-            tick(200);
-            fixture.detectChanges();
+                vi.advanceTimersByTime(200);
+                fixture.detectChanges();
 
-            // After completion, spinner should be gone
-            const spinnerAfter = fixture.debugElement.query(By.css('.spinner-border-sm'));
-            expect(spinnerAfter).toBeFalsy();
-        }));
+                // After completion, spinner should be gone
+                const spinnerAfter = fixture.debugElement.query(By.css('.spinner-border-sm'));
+                expect(spinnerAfter).toBeFalsy();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
 
-        it('should disable button during API call', fakeAsync(() => {
-            jest.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(100)));
+        it('should disable button during API call', () => {
+            vi.useFakeTimers();
+            try {
+                vi.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(100)));
 
-            let btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            let btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeFalsy();
+                let btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+                let btn = btnDe.componentInstance as ButtonComponent;
+                expect(btn.disabled()).toBeFalsy();
 
-            component.suggestCompetencies();
-            fixture.detectChanges();
+                component.suggestCompetencies();
+                fixture.detectChanges();
 
-            btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeTruthy();
+                btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+                btn = btnDe.componentInstance as ButtonComponent;
+                expect(btn.disabled()).toBeTruthy();
 
-            tick(100);
-            fixture.detectChanges();
+                vi.advanceTimersByTime(100);
+                fixture.detectChanges();
 
-            btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeFalsy();
-        }));
+                btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+                btn = btnDe.componentInstance as ButtonComponent;
+                expect(btn.disabled()).toBeFalsy();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
     });
 
     describe('Exercise Type Integration', () => {
@@ -336,16 +354,15 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         ];
 
         exerciseScenarios.forEach((scenario) => {
-            it(`should work correctly for ${scenario.type} exercises`, fakeAsync(() => {
+            it(`should work correctly for ${scenario.type} exercises`, () => {
                 fixture.componentRef.setInput('exerciseDescription', scenario.description);
 
                 const mockResponse = {
                     competencies: scenario.expectedSuggestions.map((id) => ({ id, title: sampleCompetencies[id - 1].title })),
                 };
-                jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
                 component.suggestCompetencies();
-                tick();
                 fixture.detectChanges();
 
                 // Verify correct competencies are suggested
@@ -358,14 +375,14 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                     description: scenario.description,
                     course_id: '1',
                 });
-            }));
+            });
         });
     });
 
     describe('Edge Cases and Error Handling', () => {
         it('should handle empty competency list from API', () => {
             const mockResponse = { competencies: [] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -374,8 +391,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should handle malformed API response', () => {
-            const mockResponse = { invalid: 'response' };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            const mockResponse = { invalid: 'response', competencies: [] };
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             expect(() => component.suggestCompetencies()).not.toThrow();
             expect(component.suggestedCompetencyIds.size).toBe(0);
@@ -389,7 +406,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                     { id: 888, title: 'Another Non-existent' },
                 ],
             };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -400,7 +417,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should not make API call if description is null or undefined', () => {
-            const httpPostSpy = jest.spyOn(httpClient, 'post');
+            const httpPostSpy = vi.spyOn(httpClient, 'post');
 
             fixture.componentRef.setInput('exerciseDescription', null as any);
             component.suggestCompetencies();
@@ -416,7 +433,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             fixture.componentRef.setInput('exerciseDescription', longDescription);
 
             const mockResponse = { competencies: [{ id: 1, title: 'Test' }] };
-            const httpPostSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            const httpPostSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             component.suggestCompetencies();
 
@@ -442,7 +459,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
                 // Then get suggestions
                 const mockResponse = { competencies: [{ id: 2, title: 'Data Structures' }] };
-                jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
                 component.suggestCompetencies();
 
                 // User selections should be preserved
@@ -458,7 +475,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         it('should allow users to select suggested competencies', () => {
             // Get suggestions first
             const mockResponse = { competencies: [{ id: 2, title: 'Data Structures' }] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
             component.suggestCompetencies();
             fixture.detectChanges();
 

@@ -30,6 +30,7 @@
                     "EMAIL_SENT": "Ready",
                     "DOWNLOADED": "Downloaded",
                     "FAILED": "Failed",
+                    "EMAIL_FAILED": "Email Failed",
                     "DELETED": "Deleted",
                     "DOWNLOADED_DELETED": "Deleted"
                 }

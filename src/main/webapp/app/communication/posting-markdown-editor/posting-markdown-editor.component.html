@@ -1,6 +1,7 @@
 <div class="col-12">
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
+        [showMarkdownInfoText]="false"
         [markdown]="content"
         (markdownChange)="updateField($event)"
         (onEditSelect)="previewMode = false"
@@ -17,8 +18,8 @@
         [showDefaultPreview]="false"
         [useDefaultMarkdownEditorOptions]="false"
         [linkEditorHeightToContentHeight]="true"
-        [initialEditorHeight]="editorHeight"
-        [resizableMinHeight]="editorHeight"
+        [initialEditorHeight]="editorHeight()"
+        [resizableMinHeight]="editorHeight()"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
         (keydown)="onKeyDown($event)"
         [isButtonLoading]="isButtonLoading()"
@@ -38,10 +39,10 @@
         <!-- End of Preview-->
     </jhi-markdown-editor-monaco>
 </div>
-@if (isInputLengthDisplayed || (content?.length ?? 0) > maxContentLength) {
+@if (isInputLengthDisplayed() || (content?.length ?? 0) > maxContentLength()!) {
     <div class="col mt-1 text-end">
-        <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! === 0 ? 'red' : 'inherit' }">
-            {{ content?.length ?? 0 }} / {{ maxContentLength }}
+        <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength()! || content?.length! === 0 ? 'red' : 'inherit' }">
+            {{ content?.length ?? 0 }} / {{ maxContentLength() }}
         </p>
     </div>
 }

@@ -313,7 +313,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
+        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepository.save(course);
 
@@ -323,7 +323,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
+        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepository.save(course);
 

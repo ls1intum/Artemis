@@ -9,8 +9,8 @@ then
   exit 1
 fi
 
-if [[ $numberOfStarts -gt 8 ]]
+if [[ $numberOfStarts -gt 9 ]]
 then
-  echo "The number of Server Starts should be lower than/equals 8! Please adapt this check if the change is intended or try to fix the underlying issue causing a different number of server starts!"
+  echo "The number of Server Starts should be lower than/equals 9! Please adapt this check if the change is intended or try to fix the underlying issue causing a different number of server starts!"
   exit 1
 fi

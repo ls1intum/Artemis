@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
-import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
+import { DataGuard } from 'app/core/user/settings/data-guard.service';
 
 export const routes: Routes = [
     {
@@ -28,13 +28,9 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'external-data',
-                loadComponent: () =>
-                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
-                data: {
-                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
-                },
-                canActivate: [ExternalDataGuard],
+                path: 'llm-usage',
+                redirectTo: 'ai-experience',
+                pathMatch: 'full',
             },
             {
                 path: 'profile',
@@ -119,6 +115,14 @@ export const routes: Routes = [
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.QUIZ_TRAINING_SETTINGS',
                 },
+            },
+            {
+                path: 'ai-experience',
+                loadComponent: () => import('app/core/user/settings/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.aiExperienceSettingsPage.title',
+                },
+                canActivate: [DataGuard],
             },
         ],
     },

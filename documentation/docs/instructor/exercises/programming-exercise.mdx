@@ -71,6 +71,23 @@ import notGradedLabel from './assets/programming/not-graded-label.png';
 import submissionPolicyUpdateButton from './assets/programming/submission-policy-update-button.png';
 import submissionPolicyDeactivateButton from './assets/programming/submission-policy-deactivate-button.png';
 import submissionPolicyActivateButton from './assets/programming/submission-policy-activate-button.png';
+import collaborativeCodeEditor from './assets/programming/collaborative-editing-code-editor.png';
+import collaborativeMetadataModal from './assets/programming/collaborative-editing-metadata-modal.png';
+import collaborativeProblemStatement from './assets/programming/collaborative-editing-problem-statement.gif';
+import collaborativeNewCommitAlert from './assets/programming/collaborative-editing-new-commit-alert.png';
+import hyperionGenerate from './assets/programming/hyperion-generate.png';
+import hyperionRefinement from './assets/programming/hyperion-refinement.png';
+import hyperionTargetedRefinementButton from './assets/programming/hyperion-targeted-refinement-button.png';
+import hyperionTargetedRefinementPrompt from './assets/programming/hyperion-targeted-refinement-prompt.png';
+import hyperionDiffView from './assets/programming/hyperion-diff-view.png';
+import hyperionChecklistQuality from './assets/programming/hyperion-checklist-quality.png';
+import hyperionDifficultyAssessment from './assets/programming/hyperion-difficulty-assessment.png';
+import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
+import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
+import reviewAddButton from './assets/programming/review-add-button.png';
+import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
+import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
+import reviewThreadWidget from './assets/programming/review-thread-widget.png';
 
 # Programming Exercise
 
@@ -87,7 +104,7 @@ Conducting a programming exercise consists of the following main steps:
 
 <Callout variant={CalloutVariant.info}>
   <p>The workflow diagram above shows the detailed steps from the student perspective.
-    For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/Artemis/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.</p>
+    For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.</p>
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -166,7 +183,7 @@ Auxiliary repositories are additional repositories beyond the standard template,
 
 Each auxiliary repository has a name, checkout directory, and description.
 They are created during exercise setup and added to the build plan automatically.
-For more details, see the [Auxiliary Repositories configuration section](/Artemis/instructor/exercises/programming-exercise#auxiliary-repositories-details) in Exercise Creation.
+For more details, see the [Auxiliary Repositories configuration section](/instructor/exercises/programming-exercise#auxiliary-repositories-details) in Exercise Creation.
 
 
 #### Feature Support by Language Matrix
@@ -175,7 +192,7 @@ Not all templates support the same feature set. The table below provides an over
 
 **L** = Local CI, **J** = Jenkins
 
-| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
+| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
 |  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  2  | Python     |                L: ✅<br />J: ❌                 |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
@@ -531,6 +548,154 @@ Open <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', ver
 
 You can switch between different repositories and <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> the code when done.
 
+<Callout variant={CalloutVariant.info}>
+    <p>
+        The online code editor supports real-time collaborative editing. Multiple instructors or editors can edit the same
+        file simultaneously with automatic conflict resolution and cursor awareness.
+    </p>
+</Callout>
+
+### Collaborative Editing
+
+Artemis supports real-time collaborative editing for programming exercises. Multiple instructors and editors can work on the same exercise simultaneously, with no additional setup required. Collaboration spans two views:
+
+- **Online Code Editor** (<img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />) — live synchronization of code files, the file tree, and the problem statement.
+- **Edit Page** (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />) — synchronization of exercise settings and the problem statement.
+
+To start collaborating, have a second instructor or editor open the same exercise. Both users are connected automatically.
+
+**Live Code Editing:** When two or more users open the same file in the same repository, their edits are synchronized automatically. This is supported across all repository types: **Template**, **Solution**, **Tests**, and **Auxiliary**. Each collaborator's cursor and text selection are visible with a colored marker and name label.
+
+When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Submit" button) while the online code editor is open, a **new commit alert** is displayed. This advises you to save your work by clicking <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and refresh the page to incorporate the new changes. The alert only appears for the repository that received the new commit.
+
+<Image src={collaborativeCodeEditor} alt="Two instructors editing the same file with visible cursors" size={ImageSize.large} caption="Live collaborative code editing with cursor awareness" />
+
+<Image src={collaborativeNewCommitAlert} alt="New commit alert notification" size={ImageSize.large} caption="Alert shown when an external commit is detected" />
+
+**File Tree Synchronization:** File creation, deletion, and renaming are broadcast to all connected editors immediately. If another user had a deleted or renamed file open, it is handled gracefully.
+
+**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (<img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />) and on the edit page (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />).
+
+<Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
+
+**Exercise Settings Synchronization:** On the edit page (<img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />), changes to exercise settings (title, points, dates, grading criteria, etc.) are synchronized to other users when saved. Non-conflicting changes are applied automatically. If both instructors modified the same fields, a merge conflict modal lets you choose which values to keep.
+
+<Image src={collaborativeMetadataModal} alt="Settings conflict resolution modal" size={ImageSize.large} caption="Resolving conflicting exercise setting changes" />
+
+<Callout variant={CalloutVariant.info}>
+    <p><strong>Tips and Limitations:</strong></p>
+    <ul>
+        <li>Click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> frequently to ensure your work is committed to the repository.</li>
+        <li>Avoid mixing the online editor and external Git tools at the same time — pick one workflow per editing session to reduce the chance of conflicts.</li>
+        <li>Use cursor awareness to see where your collaborators are editing.</li>
+        <li>Handle commit alerts promptly — save and refresh before continuing to edit.</li>
+        <li>Unsaved/unsubmitted content is not preserved on the server. When all users close the page, unsaved content is lost. </li>
+        <li>Binary files are not synchronized through the collaborative editor.</li>
+    </ul>
+</Callout>
+
+### AI-Assisted Problem Statement Authoring
+
+<Callout variant={CalloutVariant.info}>
+    <p>This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). All AI-assisted features require at least the <strong>Editor</strong> role within the course.</p>
+</Callout>
+
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. The AI assists the process while the instructor retains full control — every AI-generated modification must be reviewed and accepted through a diff view before it is applied.
+
+The AI-assisted authoring features are organized into two areas:
+
+1. **Problem Statement Generation and Refinement** — create and iteratively improve problem statements
+2. **Instructor Checklist** — analyze quality, infer learning goals, and assess difficulty
+
+#### Generate Problem Statement
+
+When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system generates a Markdown draft that includes task annotations for linking tasks to test cases and inserts it directly into the editor.
+
+<Image src={hyperionGenerate} alt="Problem statement generation interface" size={ImageSize.large} caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor" />
+
+#### Refine Problem Statement
+
+Once a problem statement exists in the editor, the same input field accepts a refinement instruction. Click **Refine Problem Statement** to revise the entire document based on the instruction. The system produces a revised version and presents the changes in a diff view.
+
+<Image src={hyperionRefinement} alt="Problem statement refinement interface" size={ImageSize.large} caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content" />
+
+#### Targeted Refinement
+
+To modify a specific portion of the problem statement, select a text region in the Markdown editor. A **Refine Selection** button appears next to the selection. Click it to open an inline instruction field (up to 500 characters), then enter a description of the desired change. The system produces a localized revision affecting only the selected region.
+
+<Image src={hyperionTargetedRefinementButton} alt="Refine Selection button next to selected text" size={ImageSize.large} caption="Targeted refinement entry point — the button appears when text is selected in the editor" />
+
+<Image src={hyperionTargetedRefinementPrompt} alt="Inline instruction field for targeted refinement" size={ImageSize.large} caption="Inline instruction field for describing the desired change to the selected region" />
+
+#### Diff View
+
+All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+
+<Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
+
+#### Instructor Checklist
+
+The instructor checklist analyzes the problem statement across three dimensions concurrently:
+
+- **Quality Assessment** — detects issues in clarity, coherence, and completeness
+- **Learning Goal Estimation** — infers learning goals from the problem statement
+- **Difficulty Assessment** — evaluates exercise complexity relative to the declared level
+
+Click **Analyze Problem Statement** in the checklist panel to run all three analyses. Results appear in collapsible sections. After modifying the problem statement, sections are marked as stale and can be re-analyzed individually.
+
+**Quality Assessment:** Displays a radar chart with percentage scores for clarity, coherence, and completeness. Detected issues appear with category badges, severity levels, descriptions, suggested fixes, and impact assessments. Use **Fix** to apply an AI-generated correction for a single issue, or **Fix All Issues** for batch correction. Both actions present proposed changes in the diff view.
+
+<Image src={hyperionChecklistQuality} alt="Quality assessment panel with radar chart and detected issues" size={ImageSize.large} caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction" />
+
+**Difficulty Assessment:** Shows the suggested difficulty level alongside the declared level. When a mismatch exists, an arrow indicator and descriptive text alert you. Task and test counts summarize the exercise structure, and a detailed explanation describes the reasoning. Click an **Adapt to** button (Easy, Medium, or Hard) to generate a revised problem statement adjusted to the target difficulty, presented in the diff view.
+
+<Image src={hyperionDifficultyAssessment} alt="Difficulty assessment panel showing mismatch indicator" size={ImageSize.large} caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls" />
+
+**Learning Goal Estimation:** Presents estimated learning goals, each tagged with a knowledge area badge (e.g., AL for Algorithms, SE for Software Engineering), a taxonomy level (e.g., APPLY, ANALYZE), and a "Linked" indicator when the goal matches an existing course competency. Each entry includes textual evidence from the problem statement. Select individual goals or use **Select All**, then click **Apply All** to link them to the course's competencies. The system checks whether suitable competencies already exist, links matching ones directly, and creates new competencies only where no match is found.
+
+<Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
+
+<Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
+### Review Comments
+
+During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.
+
+<TumLiveVideo
+    src="https://live.rbg.tum.de/w/artemisintro/73628"
+    title="Video tutorial for review comments in programming exercises on TUM-Live"
+/>
+
+To add a review comment, open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, hover next to the relevant line, and use the comment action. If Artemis asks you to submit first, click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> so the comment can be attached to the current saved version of the file or problem statement.
+
+<Image src={reviewAddButton} alt="Review comment button next to an editor line" size={ImageSize.medium} caption="Add a review comment from the editor gutter" />
+
+<Image src={reviewAddThreadWidget} alt="Draft widget for adding a review comment" size={ImageSize.medium} caption="Drafting a new review comment" />
+
+Review comments can be attached to:
+
+- Problem statement lines
+- Template repository files
+- Solution repository files
+- Test repository files
+- Auxiliary repository files
+
+Each review comment starts a thread at the selected location. Other instructors and editors working on the same exercise see new comments, replies, edits, deletions, and resolved states in real time. Files with unresolved review comments are marked in the file tree. Reply to a thread to continue the discussion, and resolve it when the issue has been addressed. Resolved threads remain available, but they are collapsed so open discussions stay visible.
+
+<Image src={reviewThreadWidget} alt="Review comment thread with replies and resolve action" size={ImageSize.medium} caption="Review comment thread in the online editor" />
+
+**Consistency Check Comments:** Hyperion's consistency check can create review comments for potential mismatches between the problem statement and the exercise repositories. These AI-created threads are labelled as consistency issues and show their severity and category. If one issue affects multiple artifacts, the related locations are grouped, and you can jump between them from the review comment. The issue navigator in the editor toolbar lets you move through the current consistency findings.
+
+<Image src={reviewConsistencyThreadWidget} alt="AI-created consistency issue review comment with severity and category labels" size={ImageSize.large} caption="Consistency check result shown as a review comment" />
+
+Some consistency check comments may include a suggested inline fix. This suggested change is intended for simple, local corrections, such as aligning a name, signature, or small code fragment. Review the suggested change before applying it. For complex or ambiguous issues, Artemis may leave the suggested fix empty and only keep the explanatory review comment.
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        Review comments stay attached to saved exercise content. If the referenced line changes later, Artemis may mark the
+        thread as outdated. Re-check the referenced location before resolving the thread or applying an AI-suggested fix.
+    </p>
+</Callout>
+
 ### Testing Frameworks by Language
 
 Write test cases in the Test repository using language-specific frameworks:
@@ -587,7 +752,7 @@ You can also use a custom Docker image. Make sure to:
 
 ### Edit Repositories Checkout Paths (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Preconfigured checkout paths usually don't need changes.
 
@@ -613,7 +778,7 @@ Update the build script accordingly (see the [Adapt Build Script](#adapt-build-s
 
 ### Edit Maximum Build Duration (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 The default maximum build duration (120 seconds) usually doesn't need changes.
 
@@ -623,7 +788,7 @@ Use the slider to adjust the time limit for build plan execution:
 
 ### Edit Container Configuration (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 In most cases, the default container configuration does not need to be changed.
 
@@ -753,7 +918,7 @@ On exercise import, configurations are copied from the imported exercise.
 
 ### Adapt Interactive Problem Statement
 
-Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the programming exercise or navigate to <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and adapt the interactive problem statement.
+Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the programming exercise or navigate to <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and adapt the interactive problem statement. When multiple instructors edit the problem statement simultaneously, changes are synchronized in real time. See <a href="#collaborative-editing">Collaborative Editing</a> for details on real-time collaboration features.
 
 The initial example shows how to:
 - Integrate tasks
@@ -823,11 +988,11 @@ Left side configuration options:
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases he will receive a score of 150%, which amounts to 10 points and 5 bonus points.</p>
+  <p><strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases they will receive a score of 150%, which amounts to 10 points and 5 bonus points.</p>
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases he will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.</p>
+  <p><strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases they will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.</p>
 </Callout>
 
 The right side displays statistics:
@@ -971,18 +1136,7 @@ After verifying the exercise configuration, the **Feedback Analysis** feature he
 
    <Image src={feedbackAnalysisChannel} alt="Feedback Analysis Channel" size={ImageSize.large} caption="Creating a Feedback Discussion Channel" />
 
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0"
-    title="Video tutorial for feedback analysis on TUM-Live"
-    width="600"
-    height="350"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Video tutorial for feedback analysis on TUM-Live.
-</iframe>
+<TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/56245" title="Video tutorial for feedback analysis" />
 
 ## Static Code Analysis Default Configuration
 
@@ -1574,7 +1728,7 @@ Save changes with <img src={saveButton} alt="Save" style={{display: 'inline', ve
 
 ## Repository Access Configuration
 
-If you are a student looking for repository access information, see the [student documentation on integrated code lifecycle setup](/student/integrated-code-lifecycle).
+If you are a student looking for repository access information, see the [student documentation on integrated code lifecycle setup](/student/tools-reference/integrated-code-lifecycle).
 
 The following sections explain repository types and access rights for different user roles.
 
@@ -2132,4 +2286,4 @@ For custom test case feedback, create a `customFeedbacks` folder at workspace to
 
 ## Integrated Code Lifecycle
 
-The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrated-code-lifecycle).
+The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrations/integrated-code-lifecycle).

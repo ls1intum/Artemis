@@ -1,7 +1,7 @@
 /**
  * Vitest tests for PasswordResetInitComponent.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
@@ -13,8 +13,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -24,31 +22,27 @@ describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;
     let comp: PasswordResetInitComponent;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             imports: [PasswordResetInitComponent],
-            providers: [
-                FormBuilder,
-                ProfileService,
-                MockProvider(AlertService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
-                provideHttpClient(),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                // Mock ProfileService before component creation
-                const profileService = TestBed.inject(ProfileService);
-                vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    useExternal: false,
-                    externalCredentialProvider: '',
-                    externalPasswordResetLinkMap: {},
-                } as any);
+            providers: [FormBuilder, ProfileService, MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+        });
+        await TestBed.compileComponents();
 
-                fixture = TestBed.createComponent(PasswordResetInitComponent);
-                comp = fixture.componentInstance;
-            });
+        // Mock ProfileService before component creation
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            useExternal: false,
+            externalCredentialProvider: '',
+            externalPasswordResetLinkMap: {},
+        } as any);
+
+        fixture = TestBed.createComponent(PasswordResetInitComponent);
+        comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('sets focus after the view has been initialized', () => {
@@ -80,7 +74,7 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).toBeUndefined();
+        expect(comp.showExternalResetModal()).toBe(false);
     }));
 
     it('opens external reset modal upon external user error response', () => {
@@ -103,7 +97,7 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).toBeDefined(); // External reference
+        expect(comp.showExternalResetModal()).toBe(true);
     });
 
     it('shows error alert when emailUsernameValue is empty', inject([AlertService], (alertService: AlertService) => {

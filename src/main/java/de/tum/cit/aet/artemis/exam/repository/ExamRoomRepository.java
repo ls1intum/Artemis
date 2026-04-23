@@ -13,26 +13,30 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
  * Spring Data JPA repository for the {@link ExamRoom} entity.
+ *
+ * <p>
+ * <b>Important:</b> Do NOT use {@code SELECT DISTINCT} on queries that return {@link ExamRoom}
+ * or its related entities (e.g., LayoutStrategy). These entities contain {@code json} columns
+ * ({@code exam_seats}, {@code parameters}) and PostgreSQL's {@code json} type does not support
+ * equality operators, causing {@code SELECT DISTINCT} to fail at runtime.
+ * Use {@link java.util.Set} return types or {@code stream().distinct()} in Java to deduplicate instead.
+ *
+ * <p>
+ * TODO: Remove this restriction once the json columns are migrated to jsonb.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
 @Repository
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
 
-    @Query("""
-            SELECT er
-            FROM ExamRoom er
-            LEFT JOIN FETCH er.layoutStrategies
-            """)
-    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
-
     /**
      * Finds and returns all IDs of outdated and unused exam rooms.
-     * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
+     * An exam room is outdated if there exists a newer entry with the same room number.
      * An exam room is unused if it isn't connected to any exam.
      *
      * @return A collection of all outdated and unused exam rooms
@@ -41,17 +45,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WITH latestRooms AS (
                 SELECT
                     roomNumber AS roomNumber,
-                    name AS name,
                     MAX(createdDate) AS maxCreatedDate
                 FROM ExamRoom
-                GROUP BY roomNumber, name
+                GROUP BY roomNumber
                 HAVING COUNT(*) > 1
             )
             SELECT examRoom.id
             FROM ExamRoom examRoom
             JOIN latestRooms latestRoom
                 ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
             WHERE NOT EXISTS (
                 SELECT 1
@@ -63,12 +65,12 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
 
     /**
      * Returns the IDs of the current (latest) version of each unique exam room, uniquely identified by
-     * its combination of {@code roomNumber} and {@code name}.
+     * its {@code roomNumber}.
      *
      * <p>
      * This query uses the SQL window function {@code ROW_NUMBER()} in combination with
      * the {@code OVER (PARTITION BY ... ORDER BY ...)} clause to identify, for each group of
-     * exam rooms that share the same {@code roomNumber} and {@code name}, which row represents
+     * exam rooms that share the same {@code roomNumber}, which row represents
      * the latest version.
      *
      * <p>
@@ -79,8 +81,8 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * into a single result. Instead, each row retains its identity while having access to other rows
      * in its partition.
      * <ul>
-     * <li>{@code PARTITION BY er.roomNumber, er.name} divides the full result set into
-     * partitions, one per unique room number/name combination.</li>
+     * <li>{@code PARTITION BY er.roomNumber} divides the full result set into
+     * partitions, one per unique room number.</li>
      * <li>{@code ORDER BY er.createdDate DESC, er.id DESC} orders each partition so that the
      * most recently created room (and, in case of ties, the one with the highest ID) appears first.</li>
      * <li>{@code ROW_NUMBER()} then assigns an increasing row number within each partition
@@ -99,15 +101,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     @Query("""
             SELECT id
             FROM (
-                SELECT er.id AS id, er.roomNumber AS roomNumber, er.name AS name, er.createdDate AS createdDate, ROW_NUMBER() OVER (
-                    PARTITION BY er.roomNumber, er.name
+                SELECT er.id AS id, er.roomNumber AS roomNumber, er.createdDate AS createdDate, ROW_NUMBER() OVER (
+                    PARTITION BY er.roomNumber
                     ORDER BY er.createdDate DESC, er.id DESC
                 ) AS rowNumber
                 FROM ExamRoom er
             )
             WHERE rowNumber = 1
             """)
-    Set<Long> findAllIdsOfCurrentExamRooms();
+    Set<Long> findAllIdsOfNewestExamRoomVersions();
 
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
     Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
@@ -115,7 +117,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Returns a collection of {@link ExamRoomForDistributionDTO}, which are derived from {@link ExamRoom}.
      *
-     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfCurrentExamRooms}
+     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfNewestExamRoomVersions}
      *
      * @return Basic room information for distribution
      */
@@ -130,7 +132,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             )
             FROM (
                 SELECT er.id AS id, er.roomNumber AS roomNumber, er.alternativeRoomNumber AS alternativeRoomNumber, er.name AS name, er.alternativeName AS alternativeName, er.building AS building, er.createdDate AS createdDate, ROW_NUMBER() OVER (
-                    PARTITION BY er.roomNumber, er.name
+                    PARTITION BY er.roomNumber
                     ORDER BY er.createdDate DESC, er.id DESC
                 ) AS rowNumber
                 FROM ExamRoom er
@@ -182,4 +184,14 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 AND er.roomNumber = :roomNumber
             """)
     boolean existsByRoomNumberAndIsConnectedToExam(@Param("roomNumber") String roomNumber, @Param("examId") long examId);
+
+    /**
+     * Finds all newest versions of {@link ExamRoom}s with eagerly loaded {@link LayoutStrategy}s
+     *
+     * @return All newest room versions with eagerly loaded layout strategies.
+     */
+    default Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies() {
+        Set<Long> idsOfNewestExamRoomVersions = findAllIdsOfNewestExamRoomVersions();
+        return findAllWithEagerLayoutStrategiesByIdIn(idsOfNewestExamRoomVersions);
+    }
 }

@@ -32,7 +32,7 @@
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport" />
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
-        <div class="form-group" name="problemStatement" id="field_problemStatement">
+        <div class="form-group" name="problemStatement" id="field_problemStatement" (keydown)="onMarkdownEditorKeydown($event)">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
             <jhi-markdown-editor-monaco
                 class="markdown-editor background-editor-color"
@@ -62,10 +62,11 @@
                 [umlModel]="exampleSolution"
                 (onModelChanged)="calculateFormSectionStatus()"
                 [withExplanation]="false"
+                [scrollLock]="true"
             />
         </div>
         @if (!isImport) {
-            <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
+            <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation" (keydown)="onMarkdownEditorKeydown($event)">
                 <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation"></label>
                 <jhi-markdown-editor-monaco
                     class="markdown-editor background-editor-color"
@@ -85,7 +86,11 @@
                     [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
                     [error]="modelingExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
+                    [disabled]="isImport"
                 />
+                @if (isImport) {
+                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
+                }
                 @if (modelingExercise.exampleSolutionPublicationDateError) {
                     <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
                 }
@@ -267,7 +272,7 @@
             <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
         }
         <jhi-presentation-score-checkbox [exercise]="modelingExercise" />
-        <div class="form-group">
+        <div class="form-group" (keydown)="onMarkdownEditorKeydown($event)">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
         </div>

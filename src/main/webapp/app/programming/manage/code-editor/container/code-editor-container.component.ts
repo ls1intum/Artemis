@@ -1,18 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    HostListener,
-    Input,
-    OnChanges,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    inject,
-    input,
-    output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -42,8 +28,13 @@ import { ConnectionError } from 'app/programming/shared/code-editor/services/cod
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { Subscription } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -66,75 +57,57 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
     private changeDetector = inject(ChangeDetectorRef);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
-
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
-    @Input()
-    editable = true;
-    @Input()
-    forRepositoryView = false;
-    @Input()
-    showInlineFeedback = true;
-    @Input()
-    buildable = true;
-    @Input()
-    showEditorInstructions = true;
-    @Input()
-    isTutorAssessment = false;
-    @Input()
-    highlightFileChanges = false;
-    @Input()
-    allowHiddenFiles = false;
-    @Input()
-    feedbackSuggestions: Feedback[] = [];
-    @Input()
-    readOnlyManualFeedback = false;
-    @Input()
-    highlightDifferences: boolean;
-    @Input()
-    disableAutoSave = false;
-
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-
+    editable = input<boolean>(true);
+    forRepositoryView = input<boolean>(false);
+    showInlineFeedback = input<boolean>(true);
+    buildable = input<boolean>(true);
+    showEditorInstructions = input<boolean>(true);
+    isTutorAssessment = input<boolean>(false);
+    highlightFileChanges = input<boolean>(false);
+    allowHiddenFiles = input<boolean>(false);
+    feedbackSuggestions = input<Feedback[]>([]);
+    readOnlyManualFeedback = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    disableAutoSave = input<boolean>(false);
     isProblemStatementVisible = input<boolean>(true);
-
-    @Output()
-    onCommitStateChange = new EventEmitter<CommitState>();
-    @Output()
-    onFileChanged = new EventEmitter<void>();
-    @Output()
-    onUpdateFeedback = new EventEmitter<Feedback[]>();
-    @Output()
-    onFileLoad = new EventEmitter<string>();
-    @Output()
-    onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onDiscardSuggestion = new EventEmitter<Feedback>();
-    @Input()
-    course?: Course;
-
-    onEditorLoaded = output<void>();
-
+    showNavbar = input<boolean>(true);
+    course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
+    enableExerciseReviewComments = input<boolean>(false);
+    selectedAuxiliaryRepositoryId = input<number | undefined>();
+
+    onCommitStateChange = output<CommitState>();
+    onFileChanged = output<void>();
+    onUpdateFeedback = output<Feedback[]>();
+    onFileLoad = output<string>();
+    onAcceptSuggestion = output<Feedback>();
+    onDiscardSuggestion = output<Feedback>();
+    onEditorLoaded = output<void>();
+    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
-    @Input()
-    participation: Participation;
+    participation = input.required<Participation>();
 
     /** END WIP */
 
@@ -155,6 +128,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return PROBLEM_STATEMENT_IDENTIFIER;
     }
 
+    shouldShowProblemStatement(): boolean {
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions() && this.isProblemStatementVisible();
+    }
+
     /** Code Editor State Variables **/
     editorState: EditorState;
     commitState: CommitState;
@@ -162,15 +139,26 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
+    private fileTreeChangeSubscription?: Subscription;
+
     constructor() {
         this.initializeProperties();
+
+        effect(() => {
+            this.updateFileBadges();
+        });
+
+        effect(() => {
+            const syncService = this.fileSyncService();
+            this.fileTreeChangeSubscription?.unsubscribe();
+            if (syncService) {
+                this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
+            }
+        });
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
-        if (changes.feedbackSuggestions) {
-            this.updateFileBadges();
-        }
+    ngOnDestroy(): void {
+        this.fileTreeChangeSubscription?.unsubscribe();
     }
 
     get unsavedFiles() {
@@ -200,20 +188,74 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     /**
-     * Update the file badges for the code editor (currently only feedback suggestions)
+     * Updates file-browser badges for code files and the Problem Statement entry
+     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
      */
     updateFileBadges() {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
         this.fileBadges = {};
-        // Create badges for feedback suggestions
-        // Get file paths from feedback suggestions:
-        const filePathsWithSuggestions = this.feedbackSuggestions
-            .map((feedback) => Feedback.getReferenceFilePath(feedback))
-            .filter((filePath) => filePath !== undefined) as string[];
-        for (const filePath of filePathsWithSuggestions) {
-            // Count the number of suggestions for this file
-            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
-            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            this.fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
         }
+        this.changeDetector.markForCheck();
+    }
+
+    private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
+        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
+        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
+        for (const feedback of allFeedbacks) {
+            const filePath = Feedback.getReferenceFilePath(feedback);
+            if (!filePath) {
+                continue;
+            }
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.FEEDBACK_SUGGESTION, 1);
+        }
+    }
+
+    private collectReviewThreadBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
+        if (!this.enableExerciseReviewComments()) {
+            return;
+        }
+
+        const selectedRepository = this.selectedRepository();
+        const selectedAuxiliaryRepositoryId = this.selectedAuxiliaryRepositoryId();
+        const reviewThreads = this.exerciseReviewCommentService.threads();
+        for (const thread of reviewThreads) {
+            // File badges should only reflect active threads that still need attention.
+            if (thread.resolved || thread.outdated) {
+                continue;
+            }
+            if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+                this.addBadgeCount(fileBadgesByType, PROBLEM_STATEMENT_IDENTIFIER, FileBadgeType.REVIEW_COMMENT, 1);
+                continue;
+            }
+            if (!matchesSelectedRepository(thread, selectedRepository, selectedAuxiliaryRepositoryId)) {
+                continue;
+            }
+            const filePath = thread.filePath ?? thread.initialFilePath;
+            if (!filePath) {
+                continue;
+            }
+            // Count one badge item per thread, independent of the number of comments inside it.
+            this.addBadgeCount(fileBadgesByType, filePath, FileBadgeType.REVIEW_COMMENT, 1);
+        }
+    }
+
+    private addBadgeCount(fileBadgesByType: Map<string, Map<FileBadgeType, number>>, filePath: string, badgeType: FileBadgeType, countToAdd: number): void {
+        if (countToAdd <= 0) {
+            return;
+        }
+        let badgeCountsByType = fileBadgesByType.get(filePath);
+        if (!badgeCountsByType) {
+            badgeCountsByType = new Map<FileBadgeType, number>();
+            fileBadgesByType.set(filePath, badgeCountsByType);
+        }
+        const existingCount = badgeCountsByType.get(badgeType) ?? 0;
+        badgeCountsByType.set(badgeType, existingCount + countToAdd);
     }
 
     /**
@@ -235,13 +277,14 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * Also, all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
+    onFileChange<F extends FileChange>([, fileChange, isRemote]: [string[], F, boolean?]) {
         if (fileChange instanceof CreateFileChange) {
-            // Select newly created file
-            if (fileChange.fileType === FileType.FILE) {
+            // Select newly created file, but only for local operations — remote creates must not
+            // hijack the local user's current selection.
+            if (fileChange.fileType === FileType.FILE && !isRemote) {
                 this.selectedFile = fileChange.fileName;
-                this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -258,6 +301,39 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.monacoEditor?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
+    }
+
+    /**
+     * Handle remote file tree change events from the sync service.
+     * Delegates to fileBrowser.handleFileChange() which updates repositoryFiles, rebuilds
+     * the tree view, and emits onFileChange — mirroring the local file operation flow exactly.
+     *
+     * If fileBrowser is not yet rendered (e.g. during initial load), the event is safely
+     * ignored. This is acceptable because the file browser fetches the full file list from
+     * the server on initialization, so it will already reflect the current state.
+     *
+     * This follows the same pattern as {@link ProblemStatementSyncService}, where the sync
+     * service emits events and the consuming component handles them if ready, gracefully
+     * skipping events that arrive before the UI is initialized.
+     */
+    private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
+        switch (event.eventType) {
+            case ExerciseEditorSyncEventType.FILE_CREATED:
+                // isRemote=true: prevents the container from auto-selecting the new file,
+                // which would hijack the local user's current editor selection.
+                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_DELETED:
+                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_RENAMED:
+                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
+                break;
+        }
+    }
+
+    private mapFileType(type: 'FILE' | 'FOLDER'): FileType {
+        return type === 'FILE' ? FileType.FILE : FileType.FOLDER;
     }
 
     /**
@@ -292,6 +368,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * When the content of a file changes, set it as unsaved.
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        const syncService = this.fileSyncService();
+        if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
+            return;
+        }
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }
@@ -319,6 +399,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     getText(): string {
         return this.monacoEditor?.getText() ?? '';
+    }
+
+    commit(): void {
+        this.actions?.commit();
     }
 
     getNumberOfLines(): number {
@@ -358,9 +442,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
     feedbackForSubmission(): Feedback[] {
-        const submission = this.participation?.submissions?.[0];
+        const submission = this.participation()?.submissions?.[0];
         const result = submission?.results?.[0];
-        return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**

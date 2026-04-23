@@ -12,14 +12,20 @@
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {
-                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
-                    "multiple": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!.<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
                 },
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -45,6 +51,23 @@
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programmieraufgaben-Metadaten",
+                    "noProgrammingData": "Diese Version enthält keine programmierspezifischen Metadaten.",
+                    "emptyValueHint": "In diesem Snapshot nicht verfügbar",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker-Flags",
+                    "theiaImage": "Online-IDE-Image",
+                    "postDueDateHandling": "Verhalten nach Abgabefrist",
+                    "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
+                    "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
+                    "testsCheckoutPath": "Tests-Checkout-Pfad",
+                    "buildPlanConfiguration": "Build-Plan-Konfiguration (JSON)",
+                    "noBuildPlanConfiguration": "Keine Build-Plan-Konfiguration in diesem Snapshot",
+                    "noBuildScript": "Kein Build-Skript in diesem Snapshot"
+                }
+            },
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
@@ -65,7 +88,7 @@
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
                     "versionControlTitle": "Versionskontrolle",
                     "versionControlMessage": "Lege fest, welche Features für die Versionskontrolle erlaubt sein sollen.",
-                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://docs.artemis.cit.tum.de/user/exercises/programming.html#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
+                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
@@ -110,6 +133,34 @@
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
+            "buildPhasesEditor": {
+                "title": "Build-Phasen",
+                "help": "Bevor ein Build ausgeführt wird, werden die Skripte aller Phasen, deren Bedingungen erfüllt sind, in ihrer Reihenfolge zusammengefügt. Wenn keine Ergebnispfade konfiguriert sind, bestimmt der Exit-Code des Skripts den Build-Erfolg. Andernfalls hängt der Erfolg davon ab, ob Testergebnisse erzeugt werden.",
+                "addPhase": "Phase hinzufügen",
+                "phase": "Phase",
+                "phaseName": "Phasenname",
+                "phaseNamePlaceholder": "z. B. compile",
+                "phaseNameInvalidCharacters": "Phasenname ist ungültig",
+                "phaseNameDuplicate": "Phasennamen müssen eindeutig sein",
+                "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen und '_', beginne mit einem Buchstaben oder '_' und stelle sicher, dass Namen eindeutig sind.",
+                "condition": "Inklusionsbedingung",
+                "forceRun": "Trotz vorheriger Fehler ausführen",
+                "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",
+                "script": "Skript",
+                "scriptHelp": "Gib die Befehle ein, die in dieser Phase des Builds ausgeführt werden sollen.",
+                "resultPaths": "Ergebnispfade",
+                "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
+                "testsExpected": "Tests erwartet",
+                "resultPathPlaceholder": "z. B. **/results/*.xml",
+                "addResultPath": "Ergebnispfad hinzufügen",
+                "moveUp": "Nach oben verschieben",
+                "moveDown": "Nach unten verschieben",
+                "delete": "Löschen",
+                "conditions": {
+                    "always": "Immer",
+                    "afterDueDate": "Nach Abgabefrist"
+                }
+            },
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
             "parameters": "Parameter",
             "dockerImage": "Docker Image",
@@ -202,8 +253,12 @@
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
+            "projectKey": "Projektschlüssel",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
+            "testsCommitId": "Test-Commit-ID",
+            "templateCommitId": "Vorlagen-Commit-ID",
+            "solutionCommitId": "Lösungs-Commit-ID",
             "theiaImage": {
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
@@ -231,25 +286,86 @@
                 "testCaseCommand": "Testfall einfügen",
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
-                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
+                "reviewChanges": "KI-Vorschläge prüfen",
+                "reviewChangesDescription": "Die KI hat die unten gezeigten Änderungen vorgeschlagen. Grün markierte Zeilen werden hinzugefügt; rot markierte Zeilen werden entfernt.",
+                "revertAll": "Alle verwerfen",
+                "revertAllTooltip": "Alle KI-Vorschläge ablehnen und die ursprüngliche Aufgabenstellung wiederherstellen.",
+                "doneReviewing": "Übernehmen & Speichern",
+                "doneReviewingTooltip": "Alle KI-Vorschläge annehmen und auf die Aufgabenstellung anwenden.",
+                "diffView": {
+                    "originalLabel": "Dein Original",
+                    "suggestionLabel": "KI-Vorschlag",
+                    "unifiedHint": "→ rot markiert wird entfernt, grün markiert wird hinzugefügt →"
+                },
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
+                "generate": "Generieren",
+                "refine": "Verfeinern",
+                "inlineRefinement": {
+                    "placeholder": "Beschreibe, was geändert werden soll...",
+                    "triggerButton": "Auswahl verfeinern",
+                    "submitTooltip": "Verfeinerungsanweisung absenden",
+                    "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
+                    "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
+                    "emptyStatementError": "Eine leere Aufgabenstellung kann nicht verfeinert werden.",
+                    "close": "Schließen",
+                    "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
+                },
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
+                "generateWithAi": "Mit KI generieren",
                 "generating": "Generiere...",
+                "runningTitle": "Code-Generierung läuft",
+                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
                 "confirmTitle": "Code-Generierung bestätigen",
                 "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
-                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
+                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
                 "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
+                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
                 "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "attempts": "Versuche: {{attempts}}"
+                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
+                "settingsTitle": "Generierungs-Einstellungen",
+                "settingsTooltip": "Repositories für die Generierung auswählen",
+                "statusTitle": "Generierungsstatus",
+                "statusTooltip": "Live-Status der Generierung anzeigen",
+                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Template, Lösung, Test.",
+                "repositories": {
+                    "template": "Template Repository",
+                    "solution": "Solution Repository",
+                    "tests": "Tests Repository"
+                },
+                "activityTitle": "Dateiaktivität",
+                "iteration": "Iteration {{iteration}}",
+                "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
+                "attempts": "Versuche: {{attempts}}",
+                "status": {
+                    "idle": "Nicht gestartet",
+                    "queued": "In Warteschlange",
+                    "running": "Läuft",
+                    "success": "Abgeschlossen",
+                    "warning": "Mit Problemen abgeschlossen",
+                    "error": "Fehlgeschlagen",
+                    "skipped": "Übersprungen",
+                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
+                    "fileCreated": "erstellt",
+                    "fileUpdated": "aktualisiert"
+                }
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -539,6 +655,7 @@
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
+                "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann beim Import nicht gesetzt werden.",
                 "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
@@ -682,7 +799,6 @@
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
-
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
@@ -759,6 +875,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligenz",
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",
@@ -771,6 +888,64 @@
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
+                "competencies": {
+                    "title": "Geschätzte Lernziele",
+                    "empty": "Keine Kompetenzen abgeleitet.",
+                    "primary": "Primär",
+                    "evidence": "Belege:",
+                    "relatedTasks": "Zugehörige Aufgaben:",
+                    "linked": "Verknüpft",
+                    "applyCompetencies": "Kompetenzen anwenden",
+                    "applyHint": "Verknüpft passende Kurskompetenzen und erstellt neue für nicht zugeordnete Lernziele.",
+                    "syncSuccess": "Kompetenzen erfolgreich auf die Aufgabe angewendet.",
+                    "allLinked": "Alle abgeleiteten Kompetenzen sind bereits verknüpft.",
+                    "syncError": "Anwenden der Kompetenzen fehlgeschlagen. Bitte erneut versuchen.",
+                    "showDetails": "Details",
+                    "hideDetails": "Ausblenden"
+                },
+                "difficulty": {
+                    "title": "Schwierigkeitsbewertung",
+                    "suggested": "Vorgeschlagen:",
+                    "vsDeclared": "vs. Angegeben:",
+                    "tasks": "Aufgaben:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Schwerer als angegeben",
+                    "easierThanDeclared": "Leichter als angegeben",
+                    "matchesDeclared": "Entspricht der Angabe",
+                    "unknown": "Unbekannt"
+                },
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Beheben",
+                    "fixSelected": "Ausgewählte beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discardedMultiple": "Ausgewählte Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
+                },
+                "actions": {
+                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig.",
+                    "adaptTo": "Anpassen auf:",
+                    "current": "(aktuell)",
+                    "adaptedReasoning": "An {{ difficulty }} angepasst. Erneut analysieren für eine aktualisierte Bewertung."
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
             }
         },
         "error": {

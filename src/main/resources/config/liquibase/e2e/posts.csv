@@ -1,0 +1,16 @@
+id;creation_date;content;visible_for_students;author_id;conversation_id;display_priority;resolved;has_forwarded_messages
+90001;2026-01-01T01:00:00.000;Test message 1 in channel;true;102;90003;NONE;false;false
+90002;2026-01-01T02:00:00.000;Test message 2 in channel;true;106;90003;NONE;false;false
+90003;2026-01-01T03:00:00.000;Test message 3 in channel;true;116;90003;NONE;false;false
+90004;2026-01-01T04:00:00.000;Test message 4 in channel;true;101;90003;NONE;false;false
+90005;2026-01-01T05:00:00.000;Test message 5 in channel;true;102;90003;NONE;false;false
+90006;2026-01-01T01:00:00.000;Test message 1 in channel 2;true;102;90007;NONE;false;false
+90007;2026-01-01T02:00:00.000;Test message 2 in channel 2;true;106;90007;NONE;false;false
+90008;2026-01-01T03:00:00.000;Test message 3 in channel 2;true;116;90007;NONE;false;false
+90009;2026-01-01T04:00:00.000;Test message 4 in channel 2;true;101;90007;NONE;false;false
+90010;2026-01-01T05:00:00.000;Test message 5 in channel 2;true;102;90007;NONE;false;false
+90011;2026-01-01T01:00:00.000;Test message 1 in course 3;true;106;90011;NONE;false;false
+90012;2026-01-01T02:00:00.000;Test message 2 in course 3;true;116;90011;NONE;false;false
+90013;2026-01-01T03:00:00.000;Test message 3 in course 3;true;101;90011;NONE;false;false
+90014;2026-01-01T04:00:00.000;Test message 4 in course 3;true;106;90011;NONE;false;false
+90015;2026-01-01T05:00:00.000;Test message 5 in course 3;true;116;90011;NONE;false;false

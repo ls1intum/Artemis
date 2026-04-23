@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -9,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-contribution-card',
-    imports: [FaIconComponent, FaLayersComponent, NgbTooltipModule, NgbProgressbar, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [DecimalPipe, FaIconComponent, FaLayersComponent, NgbTooltipModule, NgbProgressbar, TranslateDirective, ArtemisTranslatePipe, RouterLink],
     templateUrl: './competency-contribution-card.component.html',
 })
 export class CompetencyContributionCardComponent {

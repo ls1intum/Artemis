@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -27,15 +25,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -75,7 +74,7 @@ public class ExamRoomService {
 
     /**
      * Looks through all JSON files contained in a given zip file (recursive search).
-     * Then it adds all exam rooms it could parse to the database, ignoring duplicates of the same room.
+     * Adds all exam rooms it could parse to the database.
      * The exam rooms' primary room numbers are the filenames of the JSON files containing their data.
      *
      * @param zipFile A zip file containing JSON files of exam room data.
@@ -84,10 +83,8 @@ public class ExamRoomService {
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
         // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
-        // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
-        // as it would be a mistake to store the same room twice and risk a potential creation date collision later on.
-        // All 3 fields are explicitly not nullable.
-        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber).thenComparing(ExamRoom::getName).thenComparing(ExamRoom::getBuilding));
+        // and will thus raise an error, indicating the ambiguity.
+        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber, String.CASE_INSENSITIVE_ORDER));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
@@ -100,19 +97,28 @@ public class ExamRoomService {
                     continue;
                 }
 
-                // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
-                // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
+                // extract the filename (= room number) : remove the folder path (if existent) and remove the trailing '.json'
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
+                String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));
                 if (roomNumber.isBlank()) {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
+                }
+
+                if (roomNumber.startsWith(".")) {
+                    // ignore hidden files, see https://github.com/ls1intum/Artemis/pull/11788#pullrequestreview-3606138410
+                    // (Mac can create hidden files with garbage data when creating zip archives)
+                    continue;
                 }
 
                 try {
                     ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
                     ExamRoom examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
+                    if (examRooms.contains(examRoom)) {
+                        throw new BadRequestAlertException("Duplicate room number", ENTITY_NAME, "room.duplicateRooms", Map.of("roomNumber", roomNumber));
+                    }
+
                     examRooms.add(examRoom);
                 }
                 finally {
@@ -122,7 +128,7 @@ public class ExamRoomService {
 
         }
         catch (IOException e) {
-            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException", Map.of("errorMessage", e.getMessage()));
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 
         examRoomRepository.saveAll(examRooms);
@@ -154,7 +160,7 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
+        room.setRoomNumber(roomNumber);
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
         if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
@@ -303,29 +309,21 @@ public class ExamRoomService {
      *
      * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
      */
-    public ExamRoomAdminOverviewDTO getExamRoomAdminOverview() {
-        final Set<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
+    public ExamRoomOverviewDTO getExamRoomOverview() {
+        final Set<ExamRoom> examRooms = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 
-        final int numberOfStoredExamRooms = examRooms.size();
-        final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
-        final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
-
-        Map<String, ExamRoom> newestRoomByRoomNumberAndName = examRooms.stream().collect(Collectors.toMap(
-                // Use null character as a separator, as it is not allowed in room numbers or names
-                examRoom -> examRoom.getRoomNumber() + "\u0000" + examRoom.getName(), Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
-
-        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumberAndName.values().stream()
+        final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
-        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, examRoomDTOS);
+        return new ExamRoomOverviewDTO(examRoomDTOS);
     }
 
     /**
      * Deletes all outdated and unused exam rooms.
      * <p/>
-     * An exam room is outdated if another exam room with the same room-number and room-name exists, and that exam
+     * An exam room is outdated if another exam room with the same room-number exists, and that exam
      * room's creation date is before the other's. An exam room is unused if there is no existing mapping to an exam.
      *
      * @return A summary containing some information about the deletion process.
@@ -567,7 +565,7 @@ public class ExamRoomService {
      * @return {@code true} iff the {@link #examRoomRepository} contains all the given ids
      */
     public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
-        return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
+        return examRoomRepository.findAllIdsOfNewestExamRoomVersions().containsAll(examRoomIds);
     }
 
     /**
@@ -581,4 +579,22 @@ public class ExamRoomService {
         return examRoomRepository.existsByRoomNumberAndIsConnectedToExam(roomNumber, examId);
     }
 
+    /**
+     * Formats the metadata of an exam room into a human-readable format
+     *
+     * @param room The exam room
+     */
+    protected String humanReadableFormat(ExamRoom room) {
+        String namePart = room.getName();
+        if (room.getAlternativeName() != null) {
+            namePart += " (" + room.getAlternativeName() + ")";
+        }
+
+        String numberPart = room.getRoomNumber();
+        if (room.getAlternativeRoomNumber() != null) {
+            numberPart += " (" + room.getAlternativeRoomNumber() + ")";
+        }
+
+        return namePart + " - " + numberPart + " - [" + room.getBuilding() + "]";
+    }
 }

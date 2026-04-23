@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -27,9 +29,14 @@ class TestComponent extends CourseSettingCategoryDirective {
 }
 
 describe('CourseSettingCategoryDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
-    let courseStorageServiceMock: jest.Mocked<CourseStorageService>;
+    let courseStorageServiceMock: {
+        getCourse: ReturnType<typeof vi.fn>;
+        subscribeToCourseUpdates: ReturnType<typeof vi.fn>;
+    };
     let activatedRouteMock: Partial<ActivatedRoute>;
     let parentRouteParamsSubject: BehaviorSubject<{ courseId: string }>;
     let courseUpdatesSubject: Subject<Course>;
@@ -45,9 +52,9 @@ describe('CourseSettingCategoryDirective', () => {
         courseUpdatesPair.subject = courseUpdatesSubject;
 
         courseStorageServiceMock = {
-            getCourse: jest.fn().mockReturnValue(mockCourse),
-            subscribeToCourseUpdates: jest.fn().mockReturnValue(courseUpdatesPair.observable),
-        } as unknown as jest.Mocked<CourseStorageService>;
+            getCourse: vi.fn().mockReturnValue(mockCourse),
+            subscribeToCourseUpdates: vi.fn().mockReturnValue(courseUpdatesPair.observable),
+        };
 
         activatedRouteMock = {
             // @ts-ignore
@@ -69,7 +76,7 @@ describe('CourseSettingCategoryDirective', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create an instance', () => {
@@ -99,8 +106,8 @@ describe('CourseSettingCategoryDirective', () => {
     it('should unsubscribe from observables when destroyed', () => {
         fixture.detectChanges();
 
-        const parentParamUnsubscribeSpy = jest.spyOn((component as any).parentParamSubscription, 'unsubscribe');
-        const courseUpdatesUnsubscribeSpy = jest.spyOn((component as any).courseUpdatesSubscription, 'unsubscribe');
+        const parentParamUnsubscribeSpy = vi.spyOn((component as any).parentParamSubscription, 'unsubscribe');
+        const courseUpdatesUnsubscribeSpy = vi.spyOn((component as any).courseUpdatesSubscription, 'unsubscribe');
 
         fixture.destroy();
 

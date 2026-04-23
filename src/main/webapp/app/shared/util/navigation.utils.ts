@@ -96,8 +96,14 @@ export class ArtemisNavigationUtilService {
 
     replaceNewWithIdInUrl(url: string, id: number) {
         const newUrl = url.slice(0, -3) + id;
-        const regex = /http(s)?:\/\/([a-zA-Z0-9.:]*)(?<rest>\/.*)/;
-        this.location.go(newUrl.match(regex)!.groups!.rest);
+        let path = newUrl;
+        try {
+            const parsed = new URL(newUrl, window.location.origin || window.location.href);
+            path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        } catch {
+            // Fallback keeps the existing path when URL parsing fails
+        }
+        this.location.go(path.startsWith('/') ? path : `/${path}`);
     }
 
     /**

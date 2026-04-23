@@ -1,5 +1,12 @@
 # Easy Artemis set up and running playwright locally
 
+> **Recommended:** For the fastest local E2E setup, use `./run-e2e-tests-local-fast.sh` from the repository root instead.
+> It handles everything (database, server, client, test users, Playwright) in a single command and automatically
+> kills conflicting processes on ports 8080/9000. See the [E2E testing docs](../../documentation/docs/developer/e2e-testing-playwright.mdx)
+> for details.
+
+The scripts below provide an alternative Docker-based approach where Artemis runs entirely in containers.
+
 Running playwright locally involves three steps:
 1. Run an Artemis application instance, with client and server.
 2. If no users have been set up, set up users.
@@ -23,7 +30,7 @@ setupUsers.sh
 
 This will create 20 test users.
 
-## 3. Setup Playwright and run Playwright tests
+## 3. Setup Playwright and run Playwright tests in terminal
 
 You can run Playwright tests in two different ways: running all tests or running in UI mode.
 
@@ -37,6 +44,8 @@ The `startPlaywright.sh` script runs the full suite of Playwright tests in a hea
 The `startPlaywrightUI.sh` script starts Playwright in a graphical mode for debugging and interactive test execution.
 - Launches a browser window to display available test cases.
 - Allows manual selection and execution of individual or multiple tests.
-- Provides real-time debugging features, such as visual test steps and screenshots. 
+- Provides real-time debugging features, such as visual test steps and screenshots.
 - Useful for debugging and inspecting browser behavior during test execution.
 
+## 4. Setup Playwright and run Playwright tests in VS Code
+The `prepareVSCodeForE2ETests.sh` script allows VSCode to discover the E2E Tests and execute them directly from inside the IDE. Once the script has run, wait for 10 seconds, go to the "Erlenmayerkolben" (flask) symbol at the left-side toolbar in VS-Code and the E2E Tests should appear and be ready to execute.

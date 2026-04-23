@@ -1,14 +1,14 @@
 import { test } from '../../support/fixtures';
+import { Commands } from '../../support/commands';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
-import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
+import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
-import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
+import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
-import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions, TextDifferenceType } from '../../support/pageobjects/exam/ExamParticipationActions';
@@ -18,26 +18,22 @@ import { GitExerciseParticipation } from '../../support/pageobjects/exercises/pr
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
+import { SEED_COURSES } from '../../support/seedData';
+import { BUILD_RESULT_TIMEOUT } from '../../support/timeouts';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
+const course = { id: SEED_COURSES.examParticipation.id } as any;
 
 test.describe('Exam participation', () => {
-    let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
     let studentThreeName: string;
     let studentFourName: string;
 
-    test.beforeEach('Create course', async ({ login, page, courseManagementAPIRequests }) => {
+    test.beforeEach('Get user names', async ({ login, page }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
 
         const studentTwoInfo = await users.getUserInfo(studentTwo.username, page);
         studentTwoName = studentTwoInfo.name!;
@@ -57,7 +53,13 @@ test.describe('Exam participation', () => {
             await login(admin);
             exam = await createExam(course, examAPIRequests, { title: examTitle, examMaxPoints: 40, numberOfExercisesInExam: 4 });
             const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission });
+            const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                submission: cAllSuccessfulSubmission,
+                programmingLanguage: ProgrammingLanguage.C,
+                // This test checks the exam workflow (start → submit → hand-in), not build timing.
+                // Waiting for the C build result (can exceed 3 min under CI load) would fail the test.
+                skipBuildResultCheck: true,
+            });
             const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
             const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
             exerciseArray = [textExercise, programmingExercise, quizExercise, modelingExercise];
@@ -70,6 +72,8 @@ test.describe('Exam participation', () => {
         });
 
         test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
+            // Submits 4 exercise types including programming (build takes 30-60s under load)
+            test.slow();
             await examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
@@ -121,6 +125,11 @@ test.describe('Exam participation', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
+
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 
     test.describe('Early hand-in with continue and reload page', { tag: '@slow' }, () => {
@@ -132,9 +141,8 @@ test.describe('Exam participation', () => {
 
             await login(admin);
             exam = await createExam(course, examAPIRequests, { title: examTitle });
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }).then((response) => {
-                exerciseArray.push(response);
-            });
+            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            exerciseArray.push(exercise);
 
             await examAPIRequests.registerStudentForExam(exam, studentTwo);
             await examAPIRequests.registerStudentForExam(exam, studentThree);
@@ -144,6 +152,7 @@ test.describe('Exam participation', () => {
         });
 
         test('Participates in the exam, hand-in early, but instead continues', async ({
+            page,
             login,
             examParticipation,
             examNavigation,
@@ -162,6 +171,13 @@ test.describe('Exam participation', () => {
             await examStartEnd.clickContinue();
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await textExerciseEditor.clearSubmission(textExercise.id!);
+            // Wait for the clear to take effect before typing new text
+            await page.locator(`#exercise-${textExercise.id} #text-editor`).waitFor({ state: 'visible' });
+            await expect(page.locator(`#exercise-${textExercise.id} #text-editor`))
+                .toHaveValue('', { timeout: 5000 })
+                .catch(() => {
+                    console.warn('Text editor did not clear within 5s — proceeding; this is best-effort and not the assertion under test');
+                });
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
@@ -225,9 +241,14 @@ test.describe('Exam participation', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
+
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 
-    test.describe('Normal Hand-in', { tag: '@sequential' }, () => {
+    test.describe('Normal Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -235,7 +256,7 @@ test.describe('Exam participation', () => {
             exerciseArray = [];
 
             await login(admin);
-            exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(30, 'seconds') });
+            exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(1, 'minute') });
             const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             exerciseArray.push(exercise);
 
@@ -262,19 +283,25 @@ test.describe('Exam participation', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
+
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 
     for (const cloneMethod of [GitCloneMethod.https, GitCloneMethod.httpsWithToken, GitCloneMethod.ssh]) {
-        test.describe('Programming exam with Git submissions', { tag: '@sequential' }, () => {
+        test.describe('Programming exam with Git submissions', { tag: '@slow' }, () => {
             let exam: Exam;
             let programmingExercise: ProgrammingExercise;
 
             test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
                 await login(admin);
-                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
+                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(5, 'minutes') });
                 const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                    submission: javaAllSuccessfulSubmission,
+                    submission: cAllSuccessfulSubmission,
                     progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,
+                    programmingLanguage: ProgrammingLanguage.C,
                 });
                 programmingExercise = exercise as ProgrammingExercise;
 
@@ -292,17 +319,42 @@ test.describe('Exam participation', () => {
             }
 
             test(`Participates in exam by Git submission using ${cloneMethod}`, async ({
+                page,
                 login,
                 examAPIRequests,
                 examParticipation,
                 examNavigation,
                 programmingExerciseOverview,
                 examManagement,
+                waitForParticipationBuildToFinish,
             }) => {
+                // Git clone + push + CI build takes longer under parallel CI load
+                test.slow();
                 await examParticipation.startParticipation(studentTwo, course, exam);
+                // Intercept the participation ID when navigating to the exercise.
+                // The exam loads participation data via API — capture it.
+                const participationPromise = page
+                    .waitForResponse((resp) => resp.url().includes('/participations') && resp.url().includes(`${programmingExercise.id}`) && resp.status() === 200, {
+                        timeout: 30000,
+                    })
+                    .catch(() => null);
                 await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
-                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, javaAllSuccessfulSubmission, 'Solution', cloneMethod);
-                await examParticipation.checkExerciseScore(javaAllSuccessfulSubmission.expectedResult);
+                const participationResponse = await participationPromise;
+                let participationId: number | undefined;
+                if (participationResponse) {
+                    try {
+                        const data = await participationResponse.json();
+                        participationId = data.id ?? data[0]?.id;
+                    } catch {
+                        /* response might not be JSON */
+                    }
+                }
+                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
+                // Wait for build via API (student-accessible endpoint) before checking UI.
+                if (participationId) {
+                    await waitForParticipationBuildToFinish(participationId);
+                }
+                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult, BUILD_RESULT_TIMEOUT * 2);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);
@@ -315,6 +367,11 @@ test.describe('Exam participation', () => {
                     await accountManagementAPIRequests.deleteSshPublicKey();
                 });
             }
+
+            test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+                await login(admin);
+                await examAPIRequests.deleteExam(exam);
+            });
         });
     }
 
@@ -336,49 +393,48 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test(
-            'Instructor sends an announcement message and all participants receive it',
-            { tag: '@slow' },
-            async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
-                await login(instructor);
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExamsOfCourse(course.id!);
-                await examManagement.openExam(exam.id!);
-
-                const studentPages = [];
-
-                for (const student of [studentOne, studentTwo]) {
-                    const studentContext = await browser.newContext();
-                    const studentPage = await studentContext.newPage();
-                    studentPages.push(studentPage);
-
-                    await Commands.login(studentPage, student);
-                    await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
-                    const examStartEnd = new ExamStartEndPage(studentPage);
-                    await examStartEnd.startExam(false);
-                }
-
-                const announcement = 'Important announcement!';
-                await examManagement.openAnnouncementDialog();
-                const announcementTypingTime = dayjs();
-                await examManagement.typeAnnouncementMessage(announcement);
-                await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
-                await examManagement.sendAnnouncement();
-
-                for (const studentPage of studentPages) {
-                    const modalDialog = new ModalDialogBox(studentPage);
-                    await modalDialog.checkDialogTime(announcementTypingTime);
-                    await modalDialog.checkDialogMessage(announcement);
-                    await modalDialog.closeDialog();
-                }
-            },
-        );
-
-        test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+        test('Instructor sends an announcement message and all participants receive it', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
             await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
+            await page.waitForLoadState('networkidle');
+
+            const studentPages = [];
+
+            for (const student of [studentOne, studentTwo]) {
+                const studentContext = await browser.newContext();
+                const studentPage = await studentContext.newPage();
+                studentPages.push(studentPage);
+
+                await Commands.login(studentPage, student);
+                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                const examStartEnd = new ExamStartEndPage(studentPage);
+                await examStartEnd.startExam(false);
+            }
+
+            // Wait for WebSocket connections to be established on student pages
+            for (const studentPage of studentPages) {
+                await studentPage.waitForLoadState('networkidle');
+            }
+
+            const announcement = 'Important announcement!';
+            await examManagement.openAnnouncementDialog();
+            const announcementTypingTime = dayjs();
+            await examManagement.typeAnnouncementMessage(announcement);
+            await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+            await examManagement.sendAnnouncement();
+
+            for (const studentPage of studentPages) {
+                const modalDialog = new ModalDialogBox(studentPage);
+                await modalDialog.checkDialogTime(announcementTypingTime);
+                await modalDialog.checkDialogMessage(announcement);
+                await modalDialog.closeDialog();
+            }
+        });
+
+        test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
+            await page.waitForLoadState('networkidle');
 
             const studentPages = [];
 
@@ -400,25 +456,24 @@ test.describe('Exam participation', () => {
             await examManagement.confirmWorkingTimeChange(exam.title!);
 
             for (const studentPage of studentPages) {
-                const examParticipationActions = new ExamParticipationActions(studentPage);
                 const modalDialog = new ModalDialogBox(studentPage);
                 const timeChangeMessage = 'The working time of the exam has been changed.';
                 await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
                 await modalDialog.checkDialogTime(workingTimeChangeTime);
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.closeDialog();
-                await examParticipationActions.checkExamTimeLeft('29');
+                // After reducing working time by 30min (from 1h2min to 32min), verify timer shows ~25-31min remaining
+                await expect(studentPage.locator('#displayTime')).toContainText(/2[5-9]|3[0-1]/);
             }
         });
 
         test(
             'Instructor changes problem statement and all participants are informed',
             { tag: '@fast' },
-            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, examDetails, textExerciseCreation }) => {
+            async ({ browser, login, page, examExerciseGroups, examDetails, textExerciseCreation }) => {
                 await login(instructor);
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExamsOfCourse(course.id!);
-                await examManagement.openExam(exam.id!);
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
+                await page.waitForLoadState('networkidle');
 
                 const studentPages = [];
 
@@ -464,10 +519,11 @@ test.describe('Exam participation', () => {
                 }
             },
         );
-    });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 });
 

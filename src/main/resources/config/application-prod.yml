@@ -14,7 +14,7 @@
 # ===================================================================
 
 artemis:
-    push-notification-relay: https://hermes.artemis.cit.tum.de
+    push-notification-relay: https://hermes-prod.artemis.cit.tum.de
     # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
     # and used profiles (localVC, ...) to a telemetry collection service.
     telemetry:
@@ -89,7 +89,9 @@ server:
 jhipster:
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     security:
         authentication:
             jwt:
@@ -123,11 +125,7 @@ info:
     operatorName: # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. university or school)
     operatorAdminName: # Can be set before starting the application in production. Shown in the about us page and used by the telemetry service
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service
-
-atlas:
-  atlasml:
-    # TODO: provide a local system for development
-    base-url: https://atlasml.aet.cit.tum.de
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # Overrides for sample rate and environment
 # To ensure consistency across all parts of the Sentry SDK, these settings need to be specified in the configuration files

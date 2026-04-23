@@ -1,15 +1,17 @@
-import { Component, OnChanges, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { faArrowRight, faBookmark, faCheck, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBookmark, faCheck, faEnvelopeOpenText, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
@@ -18,7 +20,7 @@ import { DisplayPriority } from '../metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -29,6 +31,7 @@ import { MetisConversationService } from '../service/metis-conversation.service'
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
@@ -88,10 +91,33 @@ interface ReactionMetaDataMap {
         PostCreateEditModalComponent,
     ],
 })
-export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
+export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            const postingValue = this.posting();
+            this.isReadOnlyMode();
+            this.previewMode();
+            untracked(() => {
+                if (!postingValue) return;
+                this.updatePostingWithReactions();
+                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
+                this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false;
+                if (this.getPostingType() === 'post') {
+                    this.resetTooltipsAndPriority();
+                }
+                this.setMayDelete();
+                this.setMayEdit();
+                this.setCanMarkAsUnread();
+            });
+        });
+    }
+
     readonly onBookmarkClicked = output<void>();
     readonly DisplayPriority = DisplayPriority;
     readonly faBookmark = faBookmark;
+    readonly farBookmark = farBookmark;
     readonly faSmile = faSmile;
     readonly faCheck = faCheck;
     readonly faPencilAlt = faPencilAlt;
@@ -99,6 +125,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly faInfoCircle = faInfoCircle;
     readonly faTrash = faTrashAlt;
     readonly faShare = faShare;
+    readonly faEnvelopeOpenText = faEnvelopeOpenText;
 
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
@@ -111,10 +138,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     isAtLeastInstructorInCourse: boolean;
     mayEdit: boolean;
     mayDelete: boolean;
+    canMarkAsUnread: boolean;
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
-    channels: ChannelDTO[] = [];
+    channels: (ChannelDTO | GroupChatDTO)[] = [];
     users: UserPublicInfoDTO[] = [];
     posting = input<T>();
     isThreadSidebar = input<boolean>();
@@ -127,6 +155,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
+    canMarkAsUnreadOutput = output<boolean>();
     showAnswers = input<boolean>();
     showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
@@ -146,7 +175,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
     private conversationService = inject(ConversationService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private metisConversationService = inject(MetisConversationService);
     private courseSidebarService = inject(CourseSidebarService);
 
@@ -170,20 +199,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
         this.setMayDelete();
         this.setMayEdit();
-    }
-
-    /**
-     * on changes: updates the current posting and its reactions,
-     * invokes metis service to check user authority
-     */
-    ngOnChanges() {
-        this.updatePostingWithReactions();
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        if (this.getPostingType() === 'post') {
-            this.resetTooltipsAndPriority();
-        }
-        this.setMayDelete();
-        this.setMayEdit();
+        this.setCanMarkAsUnread();
     }
 
     /*
@@ -466,6 +482,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.mayEditOutput.emit(this.mayEdit);
     }
 
+    setCanMarkAsUnread(): void {
+        this.canMarkAsUnread = !this.isAuthorOfPosting && this.getPostingType() === 'post';
+        this.canMarkAsUnreadOutput.emit(this.canMarkAsUnread);
+    }
+
     /**
      * Handles opening of the create/edit modal based on post type.
      */
@@ -494,6 +515,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    markMessageAsUnread() {
+        this.metisService.markMessageAsUnread(this.posting()!);
+    }
+
     /**
      * Opens the forward message modal dialog.
      * Fetches user and channel conversations, opens the modal, and forwards the message
@@ -519,22 +544,25 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
                             this.channels.push(conversation as ChannelDTO);
+                        } else if (conversation.type === ConversationType.GROUP_CHAT) {
+                            (conversation as GroupChatDTO).name = this.conversationService.getConversationName(conversation);
+                            this.channels.push(conversation as GroupChatDTO);
                         }
                     });
 
-                    // Open the forward message dialog
-                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
-                        size: 'lg',
-                        backdrop: 'static',
+                    // Open the forward message dialog using PrimeNG DialogService
+                    const ref = this.dialogService.open(ForwardMessageDialogComponent, {
+                        ...defaultFirstLayerDialogOptions,
+                        closable: false,
+                        data: {
+                            users: [],
+                            channels: this.channels,
+                            postToForward: post,
+                            courseId: this.course()?.id,
+                        },
                     });
 
-                    // Pass initial data to the dialog
-                    modalRef.componentInstance.users.set([]);
-                    modalRef.componentInstance.channels.set(this.channels);
-                    modalRef.componentInstance.postToForward.set(post);
-                    modalRef.componentInstance.courseId.set(this.course()?.id);
-
-                    modalRef.result.then(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                    ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
                         if (selection) {
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);

@@ -6,7 +6,7 @@ services:
     nginx:
         # nginx setup based on artemis prod ansible repository
         container_name: artemis-nginx
-        image: docker.io/library/nginx:1.29.3-alpine-slim
+        image: docker.io/library/nginx:${NGINX_VERSION}${NGINX_IMAGE_VARIANT}
         pull_policy: missing
         volumes:
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -36,7 +36,7 @@ services:
             - "443"
             - "7921" # Git SSH
         healthcheck:
-            test: service nginx status || exit 1
+            test: wget -q --spider --no-check-certificate https://127.0.0.1 || exit 1
             start_period: 60s
         networks:
             - artemis

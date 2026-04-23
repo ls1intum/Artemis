@@ -1,13 +1,14 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
-import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
+import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -25,6 +26,18 @@ export const courseManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
+        },
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
+    },
+    {
+        path: ':courseId/onboarding',
+        loadComponent: () => import('./onboarding/course-onboarding.component').then((m) => m.CourseOnboardingComponent),
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.course.onboarding.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -70,7 +83,7 @@ export const courseManagementRoutes: Routes = [
             {
                 path: ':courseId/tutorial-groups',
                 resolve: {
-                    course: TutorialGroupManagementResolve,
+                    course: TutorialGroupManagementCourseResolver,
                 },
                 loadChildren: () => import('app/tutorialgroup/manage/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
             },
@@ -374,7 +387,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.create.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -383,7 +396,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.edit.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -423,11 +436,20 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'build-queue',
+                        path: 'build-overview',
                         loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.buildQueue.title',
+                        },
+                        canActivate: [UserRouteAccessService, LocalCIGuard],
+                    },
+                    {
+                        path: 'build-overview/:jobId/job-details',
+                        loadComponent: () => import('app/buildagent/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.buildQueue.detail.title',
                         },
                         canActivate: [UserRouteAccessService, LocalCIGuard],
                     },

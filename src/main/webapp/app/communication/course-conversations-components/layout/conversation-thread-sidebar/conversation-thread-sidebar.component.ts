@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -21,28 +22,40 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit {
-    @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
+export class ConversationThreadSidebarComponent implements AfterViewInit, OnDestroy {
+    readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
 
-    @Input()
-    readOnlyMode = false;
-    @Input()
-    set activeConversation(conversation: ConversationDTO | Conversation) {
-        this.conversation = conversation as ConversationDTO;
-        this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
-    }
-    @Input()
-    set activePost(activePost: Post) {
-        this.post = activePost;
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
+    readonly readOnlyMode = input(false);
+    readonly activeConversation = input<ConversationDTO | Conversation>();
+    readonly activePost = input<Post>();
 
     course = input<Course>();
 
-    @Output()
-    closePostThread = new EventEmitter<void>();
+    readonly closePostThread = output<void>();
+    private readonly conversationSelectionState = inject(ConversationSelectionState);
+
+    constructor() {
+        effect(() => {
+            const conversation = this.activeConversation();
+            untracked(() => {
+                if (conversation) {
+                    this.conversation = conversation as ConversationDTO;
+                    this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+                }
+            });
+        });
+        effect(() => {
+            const activePost = this.activePost();
+            untracked(() => {
+                if (activePost) {
+                    this.post = activePost;
+                    this.createdAnswerPost = this.createEmptyAnswerPost();
+                }
+            });
+        });
+    }
 
     post?: Post;
     createdAnswerPost: AnswerPost;
@@ -83,11 +96,22 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.isExpanded = !this.isExpanded;
         this.expandTooltip()?.close();
     }
+
+    /**
+     * Emits the close post thread and resets the open post variable
+     */
+    closeThread() {
+        this.closePostThread.emit();
+        this.conversationSelectionState.setOpenPostId(undefined);
+    }
+
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-thread')
+        this.interactable = interact('.expanded-thread')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
@@ -111,9 +135,13 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
             });
     }
 
+    ngOnDestroy(): void {
+        this.interactable?.unset();
+    }
+
     scrollEditorIntoView(): void {
-        this.scrollBody?.nativeElement?.scrollTo({
-            top: this.scrollBody.nativeElement.scrollHeight,
+        this.scrollBody()?.nativeElement?.scrollTo({
+            top: this.scrollBody()?.nativeElement.scrollHeight,
             behavior: 'instant',
         });
     }

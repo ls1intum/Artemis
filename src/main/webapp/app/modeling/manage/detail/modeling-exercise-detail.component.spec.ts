@@ -23,6 +23,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 describe('ModelingExercise Management Detail Component', () => {
     setupTestBed({ zoneless: true });
@@ -33,7 +35,15 @@ describe('ModelingExercise Management Detail Component', () => {
     let eventManager: EventManager;
     let statisticsService: StatisticsService;
 
-    const model = { element: { id: '33' } };
+    const model = {
+        id: 'test-diagram-id',
+        version: '4.0.0',
+        title: 'Test Diagram',
+        type: 'ClassDiagram',
+        nodes: [],
+        edges: [],
+        assessments: {},
+    };
     const modelingExercise = { id: 123, exampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
     const route = { params: of({ exerciseId: modelingExercise.id }) } as any as ActivatedRoute;
     const modelingExerciseStatistics = {
@@ -111,5 +121,60 @@ describe('ModelingExercise Management Detail Component', () => {
         const destroySpy = vi.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
+    });
+
+    describe('competency links display', () => {
+        it('should display competency links when exercise has competencies', async () => {
+            const competency1 = { id: 1, title: 'Competency 1' } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Competency 2' } as CourseCompetency;
+            const exerciseWithCompetencies = {
+                ...modelingExercise,
+                competencyLinks: [{ competency: competency1 } as CompetencyExerciseLink, { competency: competency2 } as CompetencyExerciseLink],
+            } as ModelingExercise;
+
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(modelingExerciseService, 'find').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: exerciseWithCompetencies,
+                        headers,
+                    }),
+                ),
+            );
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
+
+            comp.ngOnInit();
+            await fixture.whenStable();
+
+            expect(comp.detailOverviewSections).toBeDefined();
+            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeDefined();
+            expect(competencyDetail).toHaveProperty('type', DetailType.Text);
+            expect(competencyDetail).toHaveProperty('data.text', 'Competency 1, Competency 2');
+        });
+
+        it('should not display competency links when exercise has no competencies', async () => {
+            const headers = new HttpHeaders().append('link', 'link;link');
+            vi.spyOn(modelingExerciseService, 'find').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: modelingExercise,
+                        headers,
+                    }),
+                ),
+            );
+            vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
+
+            comp.ngOnInit();
+            await fixture.whenStable();
+
+            expect(comp.detailOverviewSections).toBeDefined();
+            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(problemSection).toBeDefined();
+            const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
+            expect(competencyDetail).toBeUndefined();
+        });
     });
 });

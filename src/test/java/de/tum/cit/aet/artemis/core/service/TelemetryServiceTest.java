@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import java.net.URI;
 
@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetrySendingService;
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +44,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private MockRestServiceServer mockServer;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JsonObjectMapper.get();
 
     private TelemetryService telemetryServiceSpy;
 

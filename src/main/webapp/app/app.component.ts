@@ -10,16 +10,29 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
+import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 
 @Component({
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, FooterComponent, CourseNotificationPopupOverlayComponent],
+    imports: [
+        AlertOverlayComponent,
+        CdkScrollable,
+        NgClass,
+        NgStyle,
+        PageRibbonComponent,
+        RouterOutlet,
+        FooterComponent,
+        CourseNotificationPopupOverlayComponent,
+        LLMSelectionModalComponent,
+        GlobalSearchModalComponent,
+    ],
 })
 export class AppComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
@@ -33,10 +46,13 @@ export class AppComponent implements OnInit, OnDestroy {
     private document = inject<Document>(DOCUMENT);
     private renderer = inject(Renderer2);
     private ltiService = inject(LtiService);
+    private featureToggleService = inject(FeatureToggleService);
 
+    globalSearchEnabled = false;
     private examStartedSubscription: Subscription;
     private testRunSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private globalSearchSubscription: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -49,6 +65,7 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestRunExam = false;
     isShownViaLti = false;
     usesModuleBackground = false;
+    showPageRibbon = true;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -76,7 +93,13 @@ export class AppComponent implements OnInit, OnDestroy {
         return this.getDeepestSnapshot(root).data?.['usesModuleBackground'] ?? false;
     }
 
+    private getDeepestHidePageRibbon(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['hidePageRibbon'] ?? false;
+    }
+
     ngOnInit() {
+        this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 /*
@@ -102,6 +125,17 @@ export class AppComponent implements OnInit, OnDestroy {
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
+                this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+                const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
+                if (showSkeletonFromRoute !== undefined) {
+                    if (!showSkeletonFromRoute && this.showSkeleton) {
+                        this.showSkeleton = false;
+                        this.renderer.addClass(this.document.body, 'transparent-background');
+                    } else if (showSkeletonFromRoute && !this.showSkeleton) {
+                        this.showSkeleton = true;
+                        this.renderer.removeClass(this.document.body, 'transparent-background');
+                    }
+                }
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
@@ -123,23 +157,32 @@ export class AppComponent implements OnInit, OnDestroy {
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;
         });
-
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled = isActive;
+        });
         this.themeService.initialize();
     }
 
     /**
-     * The skeleton should not be shown for the problem statement component if it is directly accessed and
-     * for the standalone feedback component.
+     * The skeleton should not be shown for the problem statement component if it is directly accessed,
+     * for the standalone feedback component, and for the PDF viewer iframe content.
      */
     private shouldShowSkeleton(url: string): boolean {
+        const isLandingPage = url === '/' || url === '';
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        return !isStandaloneProblemStatement && !isStandaloneFeedback;
+        const isPdfViewerIframe = url.includes('/pdf-viewer-iframe');
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback && !isPdfViewerIframe;
+    }
+
+    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {
+        return this.getDeepestSnapshot(root).data?.['showSkeleton'];
     }
 
     ngOnDestroy(): void {
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
+        this.globalSearchSubscription?.unsubscribe();
     }
 }

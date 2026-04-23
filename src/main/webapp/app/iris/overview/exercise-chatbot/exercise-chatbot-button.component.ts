@@ -1,37 +1,39 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { EMPTY, filter, of, switchMap } from 'rxjs';
-import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { EMPTY, filter, map, of, switchMap } from 'rxjs';
+import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { createStageRotation } from 'app/iris/overview/iris-stage-rotation.util';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    imports: [FaIconComponent, IrisLogoComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faAngleDoubleDown = faAngleDoubleDown;
 
     private readonly dialog = inject(MatDialog);
     private readonly overlay = inject(Overlay);
     private readonly chatService = inject(IrisChatService);
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -44,12 +46,25 @@ export class IrisExerciseChatbotButtonComponent {
 
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
-    readonly isOverflowing = signal(false);
     readonly newIrisMessage = signal<string | undefined>(undefined);
 
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
+
+    // Convert stages observable to signal for processing indicator
+    private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
+    private readonly visibleStages = computed(() => this.currentStages().filter((s) => !s.internal));
+
+    // Active stage: first visible stage that is not completed (ERROR, NOT_STARTED, IN_PROGRESS are all "unfinished")
+    readonly activeStage = computed(() => this.visibleStages().find((s) => s.state !== IrisStageStateDTO.DONE && s.state !== IrisStageStateDTO.SKIPPED));
+    readonly isProcessing = computed(() => {
+        const stage = this.activeStage();
+        return stage?.state === IrisStageStateDTO.IN_PROGRESS || stage?.state === IrisStageStateDTO.NOT_STARTED;
+    });
+    private readonly stageRotation = createStageRotation(this.translateService, this.destroyRef);
+    readonly displayName = this.stageRotation.displayName;
+    readonly animToggle = this.stageRotation.animToggle;
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -61,6 +76,7 @@ export class IrisExerciseChatbotButtonComponent {
                 }
                 return EMPTY;
             }),
+            map((textContent) => removeCitationBlocks(textContent)),
         ),
         { initialValue: undefined },
     );
@@ -76,10 +92,10 @@ export class IrisExerciseChatbotButtonComponent {
     // Not a signal because it's internal bookkeeping read only with untracked() - no reactivity needed
     private lastShownBubbleMessage: string | undefined;
 
-    readonly chatBubble = viewChild<ElementRef>('chatBubble');
+    private readonly shouldReopenChat = toSignal(this.chatService.shouldReopenChat$, { initialValue: false });
 
     constructor() {
-        // Register cleanup for dialog
+        // Register cleanup for dialog and rotation interval
         this.destroyRef.onDestroy(() => {
             if (this.dialogRef) {
                 this.dialogRef.close();
@@ -126,7 +142,6 @@ export class IrisExerciseChatbotButtonComponent {
             if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
                 this.lastShownBubbleMessage = message;
                 this.newIrisMessage.set(message);
-                setTimeout(() => this.checkOverflow(), 0);
 
                 // Clear any existing timeout
                 if (this.bubbleTimeoutId) {
@@ -136,8 +151,24 @@ export class IrisExerciseChatbotButtonComponent {
                 // Auto-hide the bubble after timeout
                 this.bubbleTimeoutId = setTimeout(() => {
                     this.newIrisMessage.set(undefined);
-                    this.isOverflowing.set(false);
                 }, this.CHAT_BUBBLE_TIMEOUT);
+            }
+        });
+
+        // Display name effect — show stage message, rotate labels during IN_PROGRESS
+        effect(() => {
+            const stage = this.activeStage();
+            this.currentLocale();
+            this.stageRotation.update(stage);
+        });
+
+        effect(() => {
+            const shouldReopen = this.shouldReopenChat();
+            if (shouldReopen && !untracked(() => this.chatOpen())) {
+                untracked(() => {
+                    this.openChat();
+                    this.chatService.setShouldReopenChat(false);
+                });
             }
         });
     }
@@ -149,20 +180,11 @@ export class IrisExerciseChatbotButtonComponent {
      */
     public handleButtonClick() {
         if (this.chatOpen() && this.dialogRef) {
-            this.dialog.closeAll();
-            this.chatOpen.set(false);
+            this.dialogRef.close();
         } else {
             this.openChat();
             this.chatOpen.set(true);
         }
-    }
-
-    /**
-     * Checks if the chat bubble is overflowing and sets isOverflowing to true if it is.
-     */
-    public checkOverflow() {
-        const element = this.chatBubble()?.nativeElement;
-        this.isOverflowing.set(!!element && element.scrollHeight > element.clientHeight);
     }
 
     /**
@@ -172,7 +194,6 @@ export class IrisExerciseChatbotButtonComponent {
     public openChat() {
         this.chatOpen.set(true);
         this.newIrisMessage.set(undefined);
-        this.isOverflowing.set(false);
         this.lastShownBubbleMessage = undefined;
         this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
             hasBackdrop: false,

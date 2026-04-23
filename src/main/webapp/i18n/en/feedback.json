@@ -18,8 +18,8 @@
             "detailText": "Detail Text",
             "type": "Type",
             "result": "Result",
-            "truncatedInfo": "This feedback is too long to be displayed fully here and has been truncated.",
-            "downloadFullFeedback": "Download full feedback",
+            "truncatedInfo": "This feedback is long and was potentially truncated.",
+            "downloadTruncatedFeedback": "Download feedback",
             "modal": {
                 "submitted": "Submitted",
                 "linkedToCommit": "linked to commit"

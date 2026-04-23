@@ -93,7 +93,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
+            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -560,6 +561,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
+            SELECT COUNT(p)
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
             SELECT DISTINCT p.id
             FROM ProgrammingExercise p
             WHERE p.exerciseGroup.exam.id = :examId
@@ -617,6 +625,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.exampleSubmissions
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteriaAndExampleSubmissions(@Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithGradingCriteriaAndExampleSubmissions(exerciseId), exerciseId);
+    }
 
     @Query("""
             SELECT e

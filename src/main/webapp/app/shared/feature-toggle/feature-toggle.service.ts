@@ -23,6 +23,10 @@ export enum FeatureToggle {
     AtlasAgent = 'AtlasAgent',
     Memiris = 'Memiris',
     LectureContentProcessing = 'LectureContentProcessing',
+    RateLimit = 'RateLimit',
+    AutonomousTutor = 'AutonomousTutor',
+    GlobalSearch = 'GlobalSearch',
+    ApollonQuizDragAndDrop = 'ApollonQuizDragAndDrop',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

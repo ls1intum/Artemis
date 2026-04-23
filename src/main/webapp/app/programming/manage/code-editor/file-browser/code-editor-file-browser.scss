@@ -11,10 +11,6 @@ File browser
     }
 
     .card-second-header {
-        display: flex;
-        background-color: var(--code-editor-file-browser-header-background);
-        border-bottom: 1px solid var(--code-editor-file-browser-header-border);
-
         button {
             width: 60px;
         }
@@ -35,6 +31,7 @@ File browser tree
                 margin-bottom: 2px;
                 border: none;
                 display: flex;
+                align-items: center;
                 background: transparent;
 
                 &--folder {
@@ -55,6 +52,32 @@ File browser tree
                 }
             }
 
+            .file-label-group {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                min-width: 0;
+                flex: 1 1 auto;
+                margin-right: 0.35rem;
+                overflow: hidden;
+            }
+
+            .file-label-group .list-group-item__fileName {
+                min-width: 0;
+                white-space: nowrap;
+            }
+
+            .rename-input-wrapper {
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+
+            .rename-input-wrapper .list-group-item__input {
+                width: 100%;
+                min-width: 7rem;
+                max-width: 18rem;
+            }
+
             .list-group-item:hover {
                 background-color: var(--code-editor-file-browser-tree-hover);
             }
@@ -72,6 +95,7 @@ File browser tree
             opacity: 0;
             transition: all 100ms ease-in-out;
             margin-left: auto;
+            flex: 0 0 auto;
 
             :not(:last-child) {
                 margin-right: 5px;

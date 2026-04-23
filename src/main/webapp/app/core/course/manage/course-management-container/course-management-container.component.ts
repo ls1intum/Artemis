@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -19,6 +20,7 @@ import {
     faQuestion,
     faSync,
     faTable,
+    faTableCells,
     faTimes,
     faTrash,
     faUndo,
@@ -59,6 +61,8 @@ import { CourseOperationProgressDTO, CourseOperationType } from 'app/core/course
 import { CourseOperationProgressComponent } from 'app/core/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Component({
@@ -86,6 +90,7 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly eventManager = inject(EventManager);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly sidebarItemService = inject(CourseSidebarItemService);
@@ -110,13 +115,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     protected readonly ButtonSize = ButtonSize;
     protected readonly ActionType = ActionType;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
-    private eventSubscriber: Subscription;
-    private featureToggleSub: Subscription;
-    private courseSub?: Subscription;
-    private urlSubscription?: Subscription;
-    private routeSubscription?: Subscription;
+    // Keep progressSubscription as it needs manual management due to dynamic re-subscription
     private progressSubscription?: Subscription;
+    // Keep courseSub as it needs manual management due to dynamic re-subscription on course change
+    private courseSub?: Subscription;
+    // Keep eventSubscriber as EventManager.subscribe() returns Subscription, not Observable
+    private eventSubscriber?: Subscription;
 
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
@@ -160,15 +166,18 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     >(undefined);
 
     async ngOnInit() {
-        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
         });
 
-        this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
-            this.learningPathsActive.set(isActive);
-        });
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.LearningPaths)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.learningPathsActive.set(isActive);
+            });
 
         await super.ngOnInit();
 
@@ -247,6 +256,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             }
             return routerUrl.includes(route.urlPart);
         });
+
+        // Hide Student View button for routes that have no corresponding student view
+        if (routerUrl.includes('build-overview')) {
+            this.studentViewLink.set([]);
+            return;
+        }
 
         this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
@@ -328,85 +343,61 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (!currentCourse) {
             return [];
         }
+        const courseId = this.courseId();
         const isInstructor = currentCourse.isAtLeastInstructor;
+        const isEditor = currentCourse.isAtLeastEditor;
 
-        sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
+        // 1. Overview
+        sidebarItems.push({
+            routerLink: courseId ? `${courseId}` : '',
+            icon: faTableCells,
+            title: 'Overview',
+            translation: 'artemisApp.course.overview',
+            hidden: false,
+            isPrefix: true,
+        });
 
-        if (this.lectureEnabled && currentCourse.isAtLeastEditor) {
-            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
+        // 2–7. Content items (same order as Explore Artemis cards)
+        sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
+        if (this.lectureEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
-        const nonInstructorItems: SidebarItem[] = [];
+        sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
+        sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));
+        if (this.atlasEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(courseId));
+        }
+        sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
-        const communicationItem = this.addCommunicationItem(currentCourse);
-        const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
-        this.addAssessmentItem(nonInstructorItems);
-        this.addFaqItem(currentCourse, nonInstructorItems);
-        nonInstructorItems.unshift(...communicationItem, ...tutorialGroupItem);
-        sidebarItems.push(...nonInstructorItems);
-
-        // Atlas items are available for editors and instructors
-        const atlasItems = currentCourse.isAtLeastEditor ? this.getAtlasItems() : [];
-
+        // 8+. Other management items
+        sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
-            const irisItems = this.getIrisSettingsItem();
-            const scoresItem = this.getScoresItem();
-            const buildAndLtiItems: SidebarItem[] = [];
-            this.addBuildQueueItem(buildAndLtiItems);
-            this.addLtiItem(currentCourse, buildAndLtiItems);
-
-            sidebarItems.splice(3, 0, ...irisItems); // After lectures
-            sidebarItems.splice(5 + irisItems.length + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems); // After tutorial groups
-            sidebarItems.splice(6 + irisItems.length + tutorialGroupItem.length + communicationItem.length + atlasItems.length, 0, ...scoresItem); // After assessment
-            sidebarItems.push(...buildAndLtiItems); // At the end but before settings
-            sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(this.courseId()));
-        } else if (currentCourse.isAtLeastEditor) {
-            // For editors (non-instructors), add Atlas items after tutorial groups
-            sidebarItems.splice(3 + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems);
+            sidebarItems.push(...this.getIrisSettingsItem());
+        }
+        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(courseId));
+        if (this.atlasEnabled && isEditor && this.learningPathsActive()) {
+            sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(courseId));
+        }
+        if (isInstructor) {
+            sidebarItems.push(this.sidebarItemService.getScoresItem(courseId));
+        }
+        sidebarItems.push(this.sidebarItemService.getStatisticsItem(courseId));
+        if (isInstructor) {
+            if (this.localCIActive) {
+                sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.ltiEnabled && currentCourse.onlineCourse) {
+                sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));
+            }
+            sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(courseId));
         }
 
         return sidebarItems;
     }
 
-    private addLtiItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.ltiEnabled && currentCourse.onlineCourse) {
-            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
-        }
-    }
-
-    private addBuildQueueItem(sidebarItems: SidebarItem[]) {
-        if (this.localCIActive) {
-            sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
-        }
-    }
-
-    private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor || currentCourse.faqEnabled) {
-            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
-        }
-    }
-
-    private addAssessmentItem(sidebarItems: SidebarItem[]) {
-        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
-    }
-
-    private getScoresItem() {
-        return [this.sidebarItemService.getScoresItem(this.courseId())];
-    }
-
-    private getAtlasItems() {
-        const atlasItems: SidebarItem[] = [];
-        if (this.atlasEnabled) {
-            atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
-            if (this.learningPathsActive()) {
-                atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
-            }
-        }
-        return atlasItems;
-    }
-
     private addTutorialGroupsItem(currentCourse: Course, isInstructor = false) {
         const tutorialGroupsItem: SidebarItem[] = [];
-        if (currentCourse.tutorialGroupsConfiguration || isInstructor) {
+        if (this.tutorialGroupEnabled && (currentCourse.tutorialGroupsConfiguration || isInstructor)) {
             tutorialGroupsItem.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
         return tutorialGroupsItem;
@@ -430,12 +421,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        this.eventManager.destroy(this.eventSubscriber);
-        this.featureToggleSub?.unsubscribe();
-        this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
-        this.routeSubscription?.unsubscribe();
         this.progressSubscription?.unsubscribe();
+        this.eventSubscriber?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummaryCategory[]> {

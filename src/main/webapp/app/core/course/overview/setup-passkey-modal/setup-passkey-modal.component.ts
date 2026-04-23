@@ -1,26 +1,27 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, model } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faKey, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { DialogModule } from 'primeng/dialog';
 
 export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FontAwesomeModule],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FontAwesomeModule, DialogModule],
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent {
     protected readonly faKey = faKey;
     protected readonly faShieldHalved = faShieldHalved;
 
-    private readonly activeModal = inject(NgbActiveModal);
+    readonly visible = model<boolean>(false);
+
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
@@ -40,6 +41,6 @@ export class SetupPasskeyModalComponent {
     }
 
     closeModal(): void {
-        this.activeModal.close();
+        this.visible.set(false);
     }
 }

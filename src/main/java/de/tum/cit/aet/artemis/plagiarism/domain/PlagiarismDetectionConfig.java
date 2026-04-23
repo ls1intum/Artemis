@@ -5,6 +5,8 @@ import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -44,6 +46,8 @@ public class PlagiarismDetectionConfig extends DomainObject {
     private int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = 7;
 
     @Column(name = "similarity_threshold")
+    @Min(0)
+    @Max(100)
     private int similarityThreshold;
 
     /**
@@ -51,6 +55,8 @@ public class PlagiarismDetectionConfig extends DomainObject {
      * This is used to filter out submissions that are not successful enough to be considered for plagiarism detection.
      */
     @Column(name = "minimum_score")
+    @Min(0)
+    @Max(100)
     private int minimumScore;
 
     /**
@@ -58,6 +64,7 @@ public class PlagiarismDetectionConfig extends DomainObject {
      * This is used to filter out submissions that are too small to be considered for plagiarism detection.
      */
     @Column(name = "minimum_size")
+    @Min(0)
     private int minimumSize;
 
     /**

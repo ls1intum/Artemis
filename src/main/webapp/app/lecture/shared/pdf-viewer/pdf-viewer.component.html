@@ -1,0 +1,53 @@
+@if (isFullscreen()) {
+    <div class="pdf-fullscreen-overlay" (click)="closeFullscreen()"></div>
+}
+
+<div
+    #fullscreenWindow
+    class="pdf-iframe-wrapper"
+    [class.pdf-iframe-wrapper--embedded]="!isFullscreen()"
+    [class.pdf-fullscreen-window]="isFullscreen()"
+    [attr.role]="isFullscreen() ? 'dialog' : null"
+    [attr.aria-modal]="isFullscreen() ? 'true' : null"
+    [attr.tabindex]="isFullscreen() ? '0' : null"
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="closeFullscreen()"
+>
+    @if (isLoading()) {
+        <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+            </div>
+        </div>
+    }
+
+    <iframe
+        #pdfIframe
+        [src]="iframeSrc() | safeResourceUrl"
+        class="pdf-iframe"
+        [class.pdf-iframe--hidden]="isLoading()"
+        [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"
+    ></iframe>
+
+    @if (!isLoading()) {
+        <ng-container *ngTemplateOutlet="footerTemplate" />
+    }
+</div>
+
+<ng-template #footerTemplate>
+    @if (effectiveUploadDate() || effectiveVersion()) {
+        <div class="pdf-viewer-footer">
+            @if (effectiveUploadDate()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                {{ effectiveUploadDate() | artemisDate }}
+            }
+            @if (effectiveUploadDate() && effectiveVersion()) {
+                <span class="pdf-viewer-footer__separator">-</span>
+            }
+            @if (effectiveVersion()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                {{ effectiveVersion() }}
+            }
+        </div>
+    }
+</ng-template>

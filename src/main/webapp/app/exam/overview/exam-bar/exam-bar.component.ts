@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',
 })
-export class ExamBarComponent implements AfterViewInit, OnInit {
+export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
 
     protected readonly faDoorClosed = faDoorClosed;
@@ -42,6 +42,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     isTestRun: boolean;
 
     private previousHeight: number;
+    private resizeObserver: ResizeObserver | undefined;
     examTitle: string;
     exercises: Exercise[] = [];
 
@@ -61,7 +62,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
         const barElement = this.elementRef.nativeElement.querySelector('.exam-bar');
         this.previousHeight = barElement.offsetHeight;
 
-        const resizeObserver = new ResizeObserver((entries) => {
+        this.resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.target === barElement) {
                     const newHeight = entry.contentRect.height;
@@ -72,8 +73,13 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
                 }
             }
         });
-        resizeObserver.observe(barElement);
+        this.resizeObserver.observe(barElement);
     }
+
+    ngOnDestroy(): void {
+        this.resizeObserver?.disconnect();
+    }
+
     /**
      * Save the currently active exercise
      */

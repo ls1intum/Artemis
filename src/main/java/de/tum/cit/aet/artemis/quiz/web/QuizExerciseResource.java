@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -31,8 +30,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -72,8 +71,6 @@ public class QuizExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final QuizBatchService quizBatchService;
 
     private final QuizExerciseRepository quizExerciseRepository;
@@ -85,16 +82,14 @@ public class QuizExerciseResource {
     private final ExerciseVersionService exerciseVersionService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
-            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
-            QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
+            UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService, QuizBatchService quizBatchService,
+            QuizBatchRepository quizBatchRepository, QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.authCheckService = authCheckService;
-        this.groupNotificationService = groupNotificationService;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionService = quizSubmissionService;
@@ -132,7 +127,7 @@ public class QuizExerciseResource {
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
+    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -215,6 +210,11 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         exerciseVersionService.createExerciseVersion(quizExercise, user);
-        return new ResponseEntity<>(quizExercise, HttpStatus.OK);
+        if (quizBatch != null && quizBatch.getStartTime() != null) {
+            // Set the start date from the batch to the quiz exercise DTO
+            quizExercise.setStartDate(quizBatch.getStartTime());
+        }
+        QuizExerciseDatesDTO quizExerciseDatesDTO = QuizExerciseDatesDTO.of(quizExercise);
+        return new ResponseEntity<>(quizExerciseDatesDTO, HttpStatus.OK);
     }
 }

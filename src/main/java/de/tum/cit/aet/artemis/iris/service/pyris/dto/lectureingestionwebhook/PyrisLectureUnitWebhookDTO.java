@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 /**
  * Represents a webhook data transfer object for lecture units in the Pyris system.
@@ -10,7 +10,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
  * providing necessary details such as lecture and course identifiers, names, and descriptions.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-
-public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, LectureTranscription transcription, long lectureUnitId, String lectureUnitName, long lectureId,
-        String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink) {
+public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, PyrisLectureTranscriptionDTO transcription, long lectureUnitId, String lectureUnitName,
+        long lectureId, String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink, VideoSourceType videoSourceType) {
 }

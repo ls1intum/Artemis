@@ -32,7 +32,6 @@
             "isolated": "View Isolated",
             "originalVersion": "Original Version",
             "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
-            "markdownHelp": "You can enter Markdown here. More information: ",
             "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
             "createTextUnit": {
                 "title": "Create Text Content",
@@ -83,13 +82,13 @@
             }
         },
         "attachmentVideoUnit": {
+            "errors": {
+                "invalidYouTubeUrl": "This looks like a YouTube URL but couldn't be parsed. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/..., youtube.com/shorts/..."
+            },
             "created": "New file/video content created",
             "updated": "File/video content updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
-            "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
-            "generateTranscription": "Generate transcription",
-            "transcriptionPossible": "Transcription Possible",
             "transcriptionProcessing": "Transcription Processing",
             "transcriptionFailed": "Transcription Failed",
             "hasTranscription": "Transcription complete",
@@ -102,10 +101,16 @@
                 "cancelled": "Processing was cancelled",
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
+                    "processingFailed": "Processing failed",
                     "transcriptionFailed": "Transcription generation failed after multiple attempts",
                     "ingestionFailed": "Content indexing failed after multiple attempts",
                     "noPlaylist": "Video playlist is no longer available",
-                    "timeout": "Processing timed out after multiple attempts"
+                    "timeout": "Processing timed out after multiple attempts",
+                    "youtubePrivate": "The video is private and cannot be transcribed.",
+                    "youtubeLive": "The video is a live stream and cannot be transcribed.",
+                    "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
+                    "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
+                    "youtubeDownloadFailed": "The video could not be downloaded for transcription."
                 }
             },
             "createAttachmentVideoUnits": {
@@ -179,7 +184,7 @@
                 "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
                 "videoTranscription": "Video Transcription",
                 "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
-                "generateTranscriptLabel": "Generate transcript after saving"
+                "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"
@@ -218,6 +223,23 @@
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
                 "loading": "Loading..."
+            },
+            "pdfViewer": {
+                "title": "PDF Viewer",
+                "loadingPdf": "Loading PDF...",
+                "loadFailed": "Failed to load PDF",
+                "zoomOut": "Zoom out",
+                "zoomIn": "Zoom in",
+                "search": "Search in document",
+                "searchPlaceholder": "Search...",
+                "nextMatch": "Next match",
+                "previousMatch": "Previous match",
+                "clearSearch": "Clear search",
+                "goToPage": "Go to page",
+                "pageInputPlaceholder": "Page",
+                "downloadPdf": "Download PDF",
+                "openFullscreen": "Open fullscreen",
+                "closeFullscreen": "Close fullscreen"
             }
         },
         "exerciseUnit": {

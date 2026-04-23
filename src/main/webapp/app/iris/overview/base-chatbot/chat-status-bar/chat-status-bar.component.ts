@@ -1,91 +1,69 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
-
-/**
- * Extended stage type with computed lowercase state for CSS class binding
- */
-interface ProcessedStage extends IrisStageDTO {
-    lowerCaseState?: string;
-}
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { createStageRotation, translateLabel } from 'app/iris/overview/iris-stage-rotation.util';
 
 @Component({
     selector: 'jhi-chat-status-bar',
     templateUrl: './chat-status-bar.component.html',
     styleUrl: './chat-status-bar.component.scss',
-    imports: [FaIconComponent, NgClass],
+    imports: [FaIconComponent, IrisLogoComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatStatusBarComponent {
-    // UI state as signals for OnPush change detection
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
     readonly open = signal(false);
     readonly activeStage = signal<IrisStageDTO | undefined>(undefined);
-    readonly displayedText = signal<string | undefined>(undefined);
-    readonly displayedSubText = signal<string | undefined>(undefined);
-    readonly style = signal<string | undefined>(undefined);
+    readonly stageMessage = signal<string | undefined>(undefined);
 
-    // Timeouts are not signals since they're not used in the template
-    private openTimeout: ReturnType<typeof setTimeout> | undefined;
-    private styleTimeout: ReturnType<typeof setTimeout> | undefined;
+    private readonly stageRotation = createStageRotation(this.translateService, this.destroyRef);
+    readonly animToggle = this.stageRotation.animToggle;
+    readonly displayName = this.stageRotation.displayName;
 
-    readonly stages = input<IrisStageDTO[]>([]);
+    readonly isError = computed(() => this.activeStage()?.state === IrisStageStateDTO.ERROR);
 
-    // Computed signal that creates copies with lowerCaseState added (avoids mutating input)
-    readonly processedStages = computed<ProcessedStage[]>(() => {
-        return this.stages().map((stage) => ({
-            ...stage,
-            lowerCaseState: stage.state?.toLowerCase(),
-        }));
-    });
+    stages = input<IrisStageDTO[]>([]);
 
-    faArrowsRotate = faArrowsRotate;
     faCircleXmark = faCircleXmark;
 
-    protected readonly JSON = JSON;
-    protected readonly IrisStageStateDTO = IrisStageStateDTO;
-
     constructor() {
-        effect((onCleanup) => {
+        // Stage detection effect
+        effect(() => {
             const stages = this.stages();
-            const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
+            // Read locale to re-run translations on language change
+            this.currentLocale();
+            const visibleStages = stages.filter((stage) => !stage.internal);
+            const firstUnfinished = visibleStages.find((stage) => !this.isStageFinished(stage));
+            const current = untracked(() => this.activeStage());
             if (firstUnfinished) {
-                clearTimeout(this.openTimeout);
-                clearTimeout(this.styleTimeout);
-                this.open.set(true);
-                // Only update style tag if the active stage changed; otherwise the animations are reset on each change
-                if (firstUnfinished.name !== this.activeStage()?.name) {
-                    this.style.set(undefined);
-                    // Use a timeout to let the bar of this stage autofill until 5% in 500ms (using scss)
-                    // This makes it more clear that the stage has started
-                    // After that, change it to 90% to let it slowly fill up using css transition
-                    // Stopping at 90% makes it more clear that the stage is not yet finished
-                    this.styleTimeout = setTimeout(() => this.style.set('transform: scaleX(0.9)'), 500);
+                if (current?.name !== firstUnfinished.name || current?.state !== firstUnfinished.state) {
+                    this.open.set(true);
+                    this.activeStage.set(firstUnfinished);
                 }
-                this.activeStage.set(firstUnfinished);
-                this.displayedText.set(firstUnfinished.name);
-                this.displayedSubText.set(firstUnfinished.message || undefined);
-            } else {
+                const label = firstUnfinished.message || '';
+                this.stageMessage.set(label ? translateLabel(this.translateService, label) : undefined);
+            } else if (current !== undefined) {
                 this.activeStage.set(undefined);
-                if (this.open()) {
-                    this.openTimeout = setTimeout(() => {
-                        this.open.set(false);
-                        this.displayedText.set(undefined);
-                        this.displayedSubText.set(undefined);
-                    }, 5000);
-                }
+                this.open.set(false);
+                this.stageMessage.set(undefined);
             }
+        });
 
-            // Cleanup timeouts when effect re-runs or component destroys
-            onCleanup(() => {
-                clearTimeout(this.openTimeout);
-                clearTimeout(this.styleTimeout);
-            });
+        // Display name effect — show the active stage name, rotate labels during IN_PROGRESS
+        effect(() => {
+            const stage = this.activeStage();
+            this.currentLocale();
+            this.stageRotation.update(stage);
         });
     }
 
     isStageFinished(stage: IrisStageDTO) {
-        return stage.state === 'DONE' || stage.state === 'SKIPPED';
+        return stage.state === IrisStageStateDTO.DONE || stage.state === IrisStageStateDTO.SKIPPED;
     }
 }

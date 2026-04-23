@@ -1,0 +1,67 @@
+---
+id: local-database-tests
+title: Running Database Tests Locally
+sidebar_label: Local Database Tests
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import postgresTestsConfig from './assets/intellij-postgres-tests-run-configuration.png';
+
+# Running Server Tests Locally
+
+Server integration tests run against PostgreSQL by default using Docker containers managed by Testcontainers. No additional flags are needed — `./gradlew test -x webapp` uses PostgreSQL automatically. The Gradle test task pulls the necessary Docker images and starts the containers.
+
+---
+
+## Prerequisites
+
+Before running server tests, make sure you have a working Docker setup:
+
+1. Install [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Engine and Docker CLI](https://docs.docker.com/engine/install/).
+2. Enable [remote access for the Docker daemon](https://docs.docker.com/config/daemon/remote-access/).
+
+---
+
+## Executing Tests from IntelliJ
+
+You can execute the database tests by running the run configurations provided in the repository:
+
+- **For PostgreSQL tests (recommended):** `Artemis Server Tests Postgres`
+- **For MySQL tests:** `Artemis Server Tests MySQL`
+
+### Creating a Custom Configuration
+
+Alternatively, you can create a custom configuration.
+
+<Image
+    src={postgresTestsConfig}
+    alt="An example of IntelliJ run configuration for starting Postgres server tests"
+    size={ImageSize.large}
+    caption="IntelliJ run configuration for Postgres server tests"
+/>
+
+---
+
+## Executing Tests from the Console
+
+### PostgreSQL Tests (default)
+
+```bash
+./gradlew test -x webapp
+```
+
+### MySQL Tests
+
+```bash
+./gradlew testMysql -x webapp
+```
+
+### H2 Tests (in-memory, no Docker needed)
+
+For quick local iteration without Docker, you can run tests against H2. Note that H2 may not catch all Postgres-specific issues.
+
+```bash
+./gradlew test -x webapp -Dzonky.test.database.type=H2
+```

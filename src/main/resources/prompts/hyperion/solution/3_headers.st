@@ -13,6 +13,17 @@ Your task is to generate the boilerplate code for each file based on the solutio
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+If there are no issues listed above, skip the following steps.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which classes, methods, and files each issue touches.
+2. Explain the mismatch between required APIs and the current headers.
+3. Apply the minimal header changes needed to resolve the issue.
+4. Verify signatures and docstrings stay consistent with the plan and repository patterns.
+5. If multiple options exist, pick the most conservative and justify it.
+
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 First, think step-by-step for each file.
 1.  **Create classes:** For each source file, define the public class.

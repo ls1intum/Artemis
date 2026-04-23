@@ -155,11 +155,6 @@ describe('LectureUnitService', () => {
         httpMock.expectOne({ method: 'GET', url: 'api/lecture/lecture-units/42' });
     });
 
-    it('should get processing status', async () => {
-        service.getProcessingStatus(5, 42).subscribe();
-        httpMock.expectOne({ method: 'GET', url: 'api/lecture/lectures/5/lecture-units/42/processing-status' });
-    });
-
     it('should retry processing', async () => {
         service.retryProcessing(5, 42).subscribe();
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/retry-processing' });

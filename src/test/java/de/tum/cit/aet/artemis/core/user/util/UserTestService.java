@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.core.user.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -573,7 +573,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/core/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
     }
 
     // Test

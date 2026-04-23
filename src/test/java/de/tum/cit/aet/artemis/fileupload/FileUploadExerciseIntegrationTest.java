@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFileUploadExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,6 +43,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -53,6 +57,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
 
@@ -60,7 +66,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 
@@ -156,6 +168,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
+
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -290,10 +304,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var exerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
         }
         assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).isEmpty();
+        for (var exerciseId : exerciseIds) {
+            assertExerciseNotInWeaviate(weaviateService, exerciseId);
+        }
     }
 
     @Test
@@ -378,7 +396,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -709,28 +728,111 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
 
-        // Create
+            // Create
+            courseUtilService.enableMessagingForCourse(course);
+            var create = new FileUploadExercise();
+            create.setCourse(course);
+            create.setTitle("AtlasML FileUpload Create");
+            create.setFilePattern("pdf, png");
+            create.setMaxPoints(10.0);
+            create.setChannelName("atlasml-fileupload-create");
+            request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+
+            // Update
+            FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+            persisted.setTitle("AtlasML FileUpload Update");
+            request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
+                    FileUploadExercise.class, HttpStatus.OK);
+
+            // Delete
+            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         courseUtilService.enableMessagingForCourse(course);
-        var create = new FileUploadExercise();
-        create.setCourse(course);
-        create.setTitle("AtlasML FileUpload Create");
-        create.setFilePattern("pdf, png");
-        create.setMaxPoints(10.0);
-        create.setChannelName("atlasml-fileupload-create");
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+        fileUploadExercise.setId(null);
+        fileUploadExercise.setTitle("new fileupload exercise with invalid config");
+        fileUploadExercise.setFilePattern(creationFilePattern);
+        fileUploadExercise.setChannelName("test-channel");
 
-        // Update
-        FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        persisted.setTitle("AtlasML FileUpload Update");
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
-                FileUploadExercise.class, HttpStatus.OK);
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        fileUploadExercise.setPlagiarismDetectionConfig(config);
 
-        // Delete
-        request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumScore
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumSize
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(5); // invalid: below 7
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(101); // invalid: above 100
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        fileUploadExercise.setPlagiarismDetectionConfig(config);
+
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period upper bound
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
+        Course course2 = courseUtilService.addEmptyCourse();
+        expectedFileUploadExercise.setCourse(course2);
+        expectedFileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
+
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(-5); // invalid: negative
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        expectedFileUploadExercise.setPlagiarismDetectionConfig(config);
+
+        var sourceExerciseId = expectedFileUploadExercise.getId();
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -760,6 +862,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, importedFileUploadExercise);
     }
 
     @Test

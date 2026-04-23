@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -44,6 +45,9 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -116,6 +120,43 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(response.numberNotStartedExams()).isEqualTo(2);
         assertThat(response.numberStartedExams()).isEqualTo(2);
         assertThat(response.numberSubmittedExams()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExamWithExamSessions_shouldDeleteExamSessionsAndStudentExams() throws Exception {
+        // Create a new exam specifically for this test to avoid interference with other tests
+        Exam resetExam = examUtilService.addExam(course);
+        resetExam = examUtilService.addTextModelingProgrammingExercisesToExam(resetExam, false, false);
+
+        // Add student exams with exam sessions
+        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(resetExam, student1);
+        StudentExam studentExam2 = examUtilService.addStudentExamWithUser(resetExam, student2);
+
+        // Start exam sessions for both student exams (creates exam_session records)
+        examSessionService.startExamSession(studentExam1, "fingerprint1", "userAgent1", "instance1", null);
+        examSessionService.startExamSession(studentExam2, "fingerprint2", "userAgent2", "instance2", null);
+        // Create additional sessions for the first student exam
+        examSessionService.startExamSession(studentExam1, "fingerprint1b", "userAgent1b", "instance1b", null);
+
+        // Verify exam sessions exist before reset
+        var examSessionsBefore = examSessionRepository.findAllExamSessionsByExamId(resetExam.getId());
+        assertThat(examSessionsBefore).hasSize(3);
+
+        // Verify student exams exist before reset
+        var studentExamsBefore = studentExamRepository.findByExamId(resetExam.getId());
+        assertThat(studentExamsBefore).hasSize(2);
+
+        // Reset the exam - this should delete exam sessions first, then student exams
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + resetExam.getId() + "/reset", HttpStatus.OK);
+
+        // Verify all exam sessions are deleted
+        var examSessionsAfter = examSessionRepository.findAllExamSessionsByExamId(resetExam.getId());
+        assertThat(examSessionsAfter).isEmpty();
+
+        // Verify all student exams are deleted
+        var studentExamsAfter = studentExamRepository.findByExamId(resetExam.getId());
+        assertThat(studentExamsAfter).isEmpty();
     }
 
     private void addStudentExam(User student, boolean isStarted, boolean isSubmitted) {

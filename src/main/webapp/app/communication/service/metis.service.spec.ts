@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -54,11 +56,13 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('Metis Service', () => {
+    setupTestBed({ zoneless: true });
+
     let metisService: MetisService;
-    let metisServiceUserStub: jest.SpyInstance;
-    let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
-    let metisServiceCreateWebsocketSubscriptionSpy: jest.SpyInstance;
-    let websocketServiceSubscribeSpy: jest.SpyInstance;
+    let metisServiceUserStub: ReturnType<typeof vi.spyOn>;
+    let metisServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;
+    let metisServiceCreateWebsocketSubscriptionSpy: ReturnType<typeof vi.spyOn>;
+    let websocketServiceSubscribeSpy: ReturnType<typeof vi.spyOn>;
     let websocketService: WebsocketService;
     let reactionService: ReactionService;
     let postService: PostService;
@@ -70,14 +74,15 @@ describe('Metis Service', () => {
     let reaction: Reaction;
     let course: Course;
     let savedPostService: SavedPostService;
-    let setIsSavedAndStatusOfPostSpy: jest.SpyInstance;
+    let setIsSavedAndStatusOfPostSpy: ReturnType<typeof vi.spyOn>;
     let originalPosts: Posting[];
     let targetConversation: Conversation;
     let newContent: string;
-    let forwardedMessageCreateSpy: jest.SpyInstance;
+    let forwardedMessageCreateSpy: ReturnType<typeof vi.spyOn>;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -104,11 +109,11 @@ describe('Metis Service', () => {
         answerPostService = TestBed.inject(AnswerPostService);
         conversationService = TestBed.inject(ConversationService);
         savedPostService = TestBed.inject(SavedPostService);
-        metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
-        metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
-        metisServiceUserStub = jest.spyOn(metisService, 'getUser');
+        metisServiceGetFilteredPostsSpy = vi.spyOn(metisService, 'getFilteredPosts');
+        metisServiceCreateWebsocketSubscriptionSpy = vi.spyOn(metisService, 'createWebsocketSubscription');
+        metisServiceUserStub = vi.spyOn(metisService, 'getUser');
         // @ts-ignore method is private
-        setIsSavedAndStatusOfPostSpy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
+        setIsSavedAndStatusOfPostSpy = vi.spyOn(metisService, 'setIsSavedAndStatusOfPost');
         httpMock = TestBed.inject(HttpTestingController);
 
         post = metisPostExerciseUser1;
@@ -120,7 +125,7 @@ describe('Metis Service', () => {
         targetConversation = { id: 999, type: ConversationType.CHANNEL } as Conversation;
         newContent = 'Forwarded content';
 
-        forwardedMessageCreateSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
+        forwardedMessageCreateSpy = vi.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
             of(
                 new HttpResponse({
                     body: { ...fm, id: Math.floor(Math.random() * 10000) } as ForwardedMessage,
@@ -130,12 +135,13 @@ describe('Metis Service', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     describe('Invoke post service methods', () => {
-        it('should create a post', fakeAsync(() => {
-            const postServiceSpy = jest.spyOn(postService, 'create');
+        it('should create a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'create');
 
             const createdPostSub = metisService.createPost(post).subscribe((createdPost) => {
                 expect(createdPost).toEqual(post);
@@ -143,28 +149,28 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([post]));
 
             expect(postServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should delete a post', fakeAsync(() => {
-            const postServiceSpy = jest.spyOn(postService, 'delete');
+        it('should delete a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'delete');
             const createdPostSub = metisService.createPost(post).subscribe();
 
             metisService.deletePost(post);
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
 
             expect(postServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should update a post', fakeAsync(() => {
-            const postServiceSpy = jest.spyOn(postService, 'update');
+        it('should update a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'update');
             const createdPostSub = metisService.createPost(post).subscribe();
             post.content = 'new content for update';
 
@@ -174,14 +180,14 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([post]));
 
             expect(postServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should pin a post and add it to pinnedPosts$ when receiving a WebSocket update', fakeAsync(() => {
+        it('should pin a post and add it to pinnedPosts$ when receiving a WebSocket update', () => {
             let pinnedPostsResult: Post[] = [];
             const pinnedPostsSubscription = metisService.getPinnedPosts().subscribe((pinned) => {
                 pinnedPostsResult = pinned;
@@ -197,16 +203,16 @@ describe('Metis Service', () => {
             metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](pinnedPostDTO);
 
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
 
             pinnedPostsSubscription.unsubscribe();
-        }));
+        });
 
-        it('should unpin a post and remove it from pinnedPosts$ when receiving a WebSocket update', fakeAsync(() => {
+        it('should unpin a post and remove it from pinnedPosts$ when receiving a WebSocket update', () => {
             const pinnedPost = { id: 42, displayPriority: DisplayPriority.PINNED } as Post;
             metisService['pinnedPosts$'].next([pinnedPost]);
 
@@ -224,15 +230,15 @@ describe('Metis Service', () => {
 
             metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](unpinnedPostDTO);
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(pinnedPostsResult).toHaveLength(0);
             pinnedPostsSubscription.unsubscribe();
-        }));
+        });
 
-        it('should fetch pinned posts from server and update pinnedPosts$', fakeAsync(() => {
+        it('should fetch pinned posts from server and update pinnedPosts$', () => {
             const pinnedPostsMock: Post[] = [{ id: 100, displayPriority: DisplayPriority.PINNED } as Post, { id: 101, displayPriority: DisplayPriority.PINNED } as Post];
-            const getPostsSpy = jest.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: pinnedPostsMock })));
+            const getPostsSpy = vi.spyOn(postService, 'getPosts').mockReturnValue(of(new HttpResponse({ body: pinnedPostsMock })));
 
             let pinnedPostsResult: Post[] = [];
             const subscription = metisService.getPinnedPosts().subscribe((pinned) => {
@@ -243,59 +249,59 @@ describe('Metis Service', () => {
                 expect(fetched).toEqual(pinnedPostsMock);
             });
 
-            tick();
+            vi.advanceTimersByTime(0);
 
             expect(pinnedPostsResult).toEqual(pinnedPostsMock);
             expect(getPostsSpy).toHaveBeenCalledOnce();
 
             subscription.unsubscribe();
-        }));
+        });
 
-        it('should ignore posts with invalid postContext when receiving WebSocket update', fakeAsync(() => {
+        it('should ignore posts with invalid postContext when receiving WebSocket update', () => {
             // Creating invalid postContext by not providing conversationId
             const post: Post = { id: 100 } as Post;
             const postDTO: MetisPostDTO = { post, action: MetisPostAction.CREATE } as MetisPostDTO;
 
             metisService['handleNewOrUpdatedMessage'](postDTO);
-            tick();
+            vi.advanceTimersByTime(0);
 
             const cachedPostsStub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
 
-            tick();
+            vi.advanceTimersByTime(0);
             cachedPostsStub.unsubscribe();
-        }));
+        });
 
-        it('should archive a post', fakeAsync(() => {
-            const postServiceSpy = jest.spyOn(postService, 'updatePostDisplayPriority');
+        it('should archive a post', () => {
+            const postServiceSpy = vi.spyOn(postService, 'updatePostDisplayPriority');
             const updatedPostSub = metisService.updatePostDisplayPriority(post.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual({ id: post.id, displayPriority: DisplayPriority.ARCHIVED });
             });
             expect(postServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
-        }));
+        });
 
-        it('should get correct list of posts when set', fakeAsync(() => {
+        it('should get correct list of posts when set', () => {
             metisService.setPosts([post]);
-            tick();
+            vi.advanceTimersByTime(0);
             const postsSub = metisService.posts.subscribe((posts) => {
                 expect(posts).toEqual([post]);
             });
-            tick();
+            vi.advanceTimersByTime(0);
             postsSub.unsubscribe();
-        }));
+        });
 
         it('should get posts for course', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
+            const postServiceSpy = vi.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ courseId: course.id });
             expect(postServiceSpy).toHaveBeenCalledOnce();
         });
     });
 
     describe('Invoke answer post service methods', () => {
-        it('should create an answer post', fakeAsync(() => {
-            const answerPostServiceSpy = jest.spyOn(answerPostService, 'create');
+        it('should create an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'create');
             const createdPostSub = metisService.createPost(post).subscribe();
             answerPost = { ...answerPost, post };
 
@@ -305,15 +311,15 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should delete an answer post', fakeAsync(() => {
-            const answerPostServiceSpy = jest.spyOn(answerPostService, 'delete');
+        it('should delete an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'delete');
             const createdPostSub = metisService.createPost(post).subscribe();
             answerPost = { ...answerPost, post };
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
@@ -322,15 +328,15 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should update an answer post', fakeAsync(() => {
-            const answerPostServiceSpy = jest.spyOn(answerPostService, 'update');
+        it('should update an answer post', () => {
+            const answerPostServiceSpy = vi.spyOn(answerPostService, 'update');
             const createdPostSub = metisService.createPost(post).subscribe();
             answerPost = { ...answerPost, post };
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
@@ -341,18 +347,18 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedAnswerPostSub.unsubscribe();
             createdAnswerPostSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
     });
 
     describe('Invoke reaction service methods', () => {
-        it('should create a reaction', fakeAsync(() => {
-            const reactionServiceSpy = jest.spyOn(reactionService, 'create');
+        it('should create a reaction', () => {
+            const reactionServiceSpy = vi.spyOn(reactionService, 'create');
             const createdPostSub = metisService.createPost(post).subscribe();
             reaction = { ...reaction, post };
 
@@ -362,15 +368,15 @@ describe('Metis Service', () => {
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [reaction] }]));
 
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
 
-        it('should delete a reaction', fakeAsync(() => {
-            const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
+        it('should delete a reaction', () => {
+            const reactionServiceSpy = vi.spyOn(reactionService, 'delete');
             post = { ...post, reactions: [reaction] };
             reaction.post = post;
             const createdPostSub = metisService.createPost(post).subscribe();
@@ -380,23 +386,23 @@ describe('Metis Service', () => {
             });
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [] }]));
 
-            tick();
+            vi.advanceTimersByTime(0);
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
-        }));
+        });
     });
 
     it('should determine that metis user is author of post', () => {
         metisServiceUserStub.mockReturnValue(metisUser1);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
-        expect(metisUserIsAuthorOfPostingReturn).toBeTrue();
+        expect(metisUserIsAuthorOfPostingReturn).toBe(true);
     });
 
     it('should determine that metis user is not author of post', () => {
         metisServiceUserStub.mockReturnValue(metisUser2);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
-        expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
+        expect(metisUserIsAuthorOfPostingReturn).toBe(false);
     });
 
     it('should set course when current course has different id', () => {
@@ -472,14 +478,14 @@ describe('Metis Service', () => {
     it('should determine the query param for a reference to conversation message', () => {
         metisService.setCourse(course);
         const referenceLinkComponents = metisService.getQueryParamsForPost({ id: 1 } as Post);
-        expect(referenceLinkComponents).toBeEmpty();
+        expect(referenceLinkComponents).toEqual({});
     });
 
     it('should determine context information for a conversation message', () => {
         metisService.setCourse(course);
         const contextInformation = metisService.getContextInformation(metisPostInChannel);
         expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'communication']);
-        expect(contextInformation.displayName).not.toBeEmpty();
+        expect(contextInformation.displayName).toBeTruthy();
     });
 
     it('should return "Direct Message" when conversation is a one-to-one chat', () => {
@@ -523,12 +529,12 @@ describe('Metis Service', () => {
 
     describe('Handle websocket related functionality', () => {
         beforeEach(() => {
-            metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
-            websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
+            metisServiceCreateWebsocketSubscriptionSpy = vi.spyOn(metisService, 'createWebsocketSubscription');
+            websocketServiceSubscribeSpy = vi.spyOn(websocketService, 'subscribe');
             metisService.setCourse(metisCourse);
         });
 
-        it('should create websocket subscription when posts with lecture context are initially retrieved from DB', fakeAsync(() => {
+        it('should create websocket subscription when posts with lecture context are initially retrieved from DB', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
@@ -536,11 +542,11 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
+        it('should create websocket subscription when posts with exercise context are initially retrieved from DB', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.DELETE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
@@ -549,11 +555,11 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
+        it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.UPDATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
@@ -562,11 +568,11 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should not create new subscription if already exists', fakeAsync(() => {
+        it('should not create new subscription if already exists', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.DELETE } as MetisPostDTO));
             // setup subscription for the first time
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
@@ -576,9 +582,9 @@ describe('Metis Service', () => {
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ conversationIds: [metisPostInChannel.conversation!.id!] });
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('subscribes to broadcast topic for course-wide channels', fakeAsync(() => {
+        it('subscribes to broadcast topic for course-wide channels', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
@@ -590,15 +596,15 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: true,
             } as ChannelDTO);
-        }));
+        });
 
-        it('subscribes to user specific topic for non-course-wide channels', fakeAsync(() => {
+        it('subscribes to user specific topic for non-course-wide channels', () => {
             websocketServiceSubscribeSpy.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
@@ -610,13 +616,13 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
-            tick();
+            vi.advanceTimersByTime(0);
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: false,
             } as ChannelDTO);
-        }));
+        });
 
         it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
             'should not call postService.getPosts() for new or updated messages received over WebSocket',
@@ -637,8 +643,8 @@ describe('Metis Service', () => {
                 expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(2);
 
                 // Emulate receiving a message
-                const getPostsSpy = jest.spyOn(postService, 'getPosts');
-                const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
+                const getPostsSpy = vi.spyOn(postService, 'getPosts');
+                const markAsReadSpy = vi.spyOn(conversationService, 'markAsRead');
                 mockReceiveObservable.next(mockPostDTO);
 
                 expect(markAsReadSpy).not.toHaveBeenCalled();
@@ -667,8 +673,8 @@ describe('Metis Service', () => {
                 expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
                 // Emulate receiving a message
-                const getPostsSpy = jest.spyOn(postService, 'getPosts');
-                const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
+                const getPostsSpy = vi.spyOn(postService, 'getPosts');
+                const markAsReadSpy = vi.spyOn(conversationService, 'markAsRead');
                 mockReceiveObservable.next(mockPostDTO);
 
                 expect(markAsReadSpy).not.toHaveBeenCalled();
@@ -701,7 +707,7 @@ describe('Metis Service', () => {
             expect(metisService['cachedPosts'].findIndex((post) => post.id === mockPostDTO.post.id)).toBeTruthy();
         });
 
-        it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
+        it('should update displayed conversation messages if new message does not match search text', () => {
             // Setup
             const channel = 'someChannel';
             const mockPostDTO = {
@@ -713,7 +719,7 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.OVERVIEW);
             metisService.createWebsocketSubscription(channel);
 
-            jest.spyOn(postService, 'getPosts').mockReturnValue(
+            vi.spyOn(postService, 'getPosts').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: [mockPostDTO.post],
@@ -727,7 +733,7 @@ describe('Metis Service', () => {
             // set currentPostContextFilter with search text
             metisService.getFilteredPosts({ conversationIds: [mockPostDTO.post.conversation?.id], searchText: 'Search text' } as PostContextFilter);
 
-            jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
             // Emulate receiving a message matching the search text
             mockReceiveObservable.next(mockPostDTO);
             // Emulate receiving a message not matching the search text
@@ -739,8 +745,8 @@ describe('Metis Service', () => {
             metisService.posts.subscribe((posts) => {
                 expect(posts[0]).toBe(mockPostDTO.post);
             });
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
         it('should return current conversation', () => {
             metisService.getFilteredPosts({ conversationIds: [metisLectureChannelDTO.id] } as PostContextFilter, false, metisLectureChannelDTO);
@@ -748,9 +754,9 @@ describe('Metis Service', () => {
         });
     });
 
-    it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', fakeAsync(() => {
+    it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', () => {
         metisService.setCourse(course);
-        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+        const forwardedMessageServiceSpy = vi.spyOn(forwardedMessageService, 'getForwardedMessages');
         const postIds = [1, 2, 3];
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.POST);
@@ -759,11 +765,11 @@ describe('Metis Service', () => {
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
         expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', fakeAsync(() => {
-        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+    it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', () => {
+        const forwardedMessageServiceSpy = vi.spyOn(forwardedMessageService, 'getForwardedMessages');
 
         metisService.getForwardedMessagesByIds([], PostingType.POST);
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
@@ -773,70 +779,70 @@ describe('Metis Service', () => {
 
         metisService.getForwardedMessagesByIds(undefined as any, PostingType.POST);
         expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('should call PostService.getSourcePostsByIds with correct parameters', fakeAsync(() => {
-        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
+    it('should call PostService.getSourcePostsByIds with correct parameters', () => {
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds');
         const postIds = [4, 5, 6];
 
         metisService.getSourcePostsByIds(postIds);
 
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('should return undefined if no source post is found with the given ids (404 error)', fakeAsync(() => {
+    it('should return undefined if no source post is found with the given ids (404 error)', () => {
         const postIds = [4, 5, 6];
-        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
         let result: Post[] | undefined;
         metisService.getSourcePostsByIds(postIds).subscribe((res) => {
             result = res;
         });
-        tick();
+        vi.advanceTimersByTime(0);
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
         expect(result).toBeUndefined();
-    }));
+    });
 
-    it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', fakeAsync(() => {
-        const postServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+    it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', () => {
+        const postServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
         const answerPostIds = [7, 8, 9];
 
         metisService.getSourceAnswerPostsByIds(answerPostIds);
 
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], answerPostIds);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('should return undefined if no source answer post is found with the given ids (404 error)', fakeAsync(() => {
+    it('should return undefined if no source answer post is found with the given ids (404 error)', () => {
         const postIds = [4, 5, 6];
-        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        const answerPostServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
         let result: Post[] | undefined;
         metisService.getSourceAnswerPostsByIds(postIds).subscribe((res) => {
             result = res;
         });
-        tick();
+        vi.advanceTimersByTime(0);
         expect(answerPostServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
         expect(result).toBeUndefined();
-    }));
+    });
 
-    it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
+    it('should not call getSourcePostsByIds if postId list is undefined', () => {
         const postIds: number[] | undefined = undefined;
+        const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds');
         metisService.getSourcePostsByIds(postIds as any);
-        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
 
         expect(postServiceSpy).not.toHaveBeenCalled();
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
     it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
         const answerPostIds: number[] | undefined = undefined;
+        const answerPostServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
         metisService.getSourceAnswerPostsByIds(answerPostIds as any);
-        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
         expect(answerPostServiceSpy).not.toHaveBeenCalled();
     });
 
-    it('should create forwarded messages and update cached posts', fakeAsync(() => {
+    it('should create forwarded messages and update cached posts', () => {
         const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
         metisService.setCourse(course);
         const targetConversation: Conversation = { id: 1, type: ConversationType.CHANNEL } as Conversation;
@@ -844,19 +850,19 @@ describe('Metis Service', () => {
         const newContent = 'Forwarded content';
 
         const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
-        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+        vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
 
         let result: ForwardedMessage[] | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, isAnswer, newContent).subscribe((res) => (result = res));
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(postService.create).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({ content: newContent }));
         expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
         expect(result?.length).toBe(originalPosts.length);
-        expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBeTrue();
-    }));
+        expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBe(true);
+    });
 
-    it('should throw an error if course ID is not set before forwarding', fakeAsync(() => {
+    it('should throw an error if course ID is not set before forwarding', () => {
         metisService.setCourse(undefined);
         let errorThrown: Error | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe({
@@ -865,13 +871,13 @@ describe('Metis Service', () => {
             },
         });
 
-        tick();
+        vi.advanceTimersByTime(0);
         expect(errorThrown).toBeDefined();
         expect(errorThrown?.message).toContain('Course ID is not set');
         expect(forwardedMessageCreateSpy).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should fail if any forwardedMessageService.createForwardedMessage fails', fakeAsync(() => {
+    it('should fail if any forwardedMessageService.createForwardedMessage fails', () => {
         metisService.setCourse(metisCourse);
         forwardedMessageCreateSpy
             .mockReturnValueOnce(
@@ -890,25 +896,25 @@ describe('Metis Service', () => {
             },
         });
 
-        tick();
+        vi.advanceTimersByTime(0);
         expect(errorThrown).toBeDefined();
         expect(errorThrown?.message).toBe('Some forwardedMessage creation error');
         expect(forwardedMessageCreateSpy).toHaveBeenCalledTimes(2);
-    }));
+    });
 
-    it('should NOT update local cache if target conversation differs from currentConversation', fakeAsync(() => {
+    it('should NOT update local cache if target conversation differs from currentConversation', () => {
         metisService.setCourse(metisCourse);
         metisService.getFilteredPosts({ conversationIds: [101] } as PostContextFilter, false, { id: 101 } as ChannelDTO);
 
         let result: ForwardedMessage[] | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(result).toHaveLength(originalPosts.length);
         expect(metisService['cachedPosts'].findIndex((p) => p.id === 123)).toBe(-1);
-    }));
+    });
 
-    it('should NOT add newly created post to cache if it already exists in cache', fakeAsync(() => {
+    it('should NOT add newly created post to cache if it already exists in cache', () => {
         metisService.setCourse(metisCourse);
         metisService.getFilteredPosts({ conversationIds: [targetConversation.id] } as PostContextFilter, false, targetConversation);
 
@@ -916,26 +922,26 @@ describe('Metis Service', () => {
 
         let result: ForwardedMessage[] | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(result).toHaveLength(originalPosts.length);
         const matchesInCache = metisService['cachedPosts'].filter((p) => p.id === 123);
         expect(matchesInCache).toHaveLength(1);
-    }));
+    });
 
-    it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', fakeAsync(() => {
+    it('should create forwarded messages with sourceType=ANSWER if isAnswer=true', () => {
         metisService.setCourse(course);
         const targetConversation: Conversation = { id: 2 } as Conversation;
         const originalAnswerPosts: Posting[] = [{ id: 10, content: 'originalAnswer1' } as Posting, { id: 11, content: 'originalAnswer2' } as Posting];
 
         const createdPost: Post = { id: 200, content: 'Forwarded answer container', hasForwardedMessages: true } as Post;
-        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+        vi.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
 
-        const createFwSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1234 } as ForwardedMessage })));
+        const createFwSpy = vi.spyOn(forwardedMessageService, 'createForwardedMessage').mockReturnValue(of(new HttpResponse({ body: { id: 1234 } as ForwardedMessage })));
 
         let result: ForwardedMessage[] = [];
         metisService.createForwardedMessages(originalAnswerPosts, targetConversation, true, 'some content').subscribe((res) => (result = res));
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(postService.create).toHaveBeenCalled();
         expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
@@ -945,11 +951,11 @@ describe('Metis Service', () => {
         });
 
         expect(result).toHaveLength(originalAnswerPosts.length);
-    }));
+    });
 
     describe('Save post methods', () => {
         it('should save a post and update cached posts', () => {
-            const savedPostServiceSpy = jest.spyOn(savedPostService, 'savePost');
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'savePost');
 
             metisService.createPost(post).subscribe();
             metisService.savePost(post);
@@ -959,7 +965,7 @@ describe('Metis Service', () => {
         });
 
         it('should remove a saved post and update cached posts', () => {
-            const savedPostServiceSpy = jest.spyOn(savedPostService, 'removeSavedPost');
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'removeSavedPost');
 
             metisService.createPost(post).subscribe();
             metisService.removeSavedPost(post);
@@ -970,7 +976,7 @@ describe('Metis Service', () => {
 
         it('should change the saved post status and update cached posts', () => {
             const status = SavedPostStatus.ARCHIVED;
-            const savedPostServiceSpy = jest.spyOn(savedPostService, 'changeSavedPostStatus');
+            const savedPostServiceSpy = vi.spyOn(savedPostService, 'changeSavedPostStatus');
 
             metisService.createPost(post).subscribe();
             metisService.changeSavedPostStatus(post, status);
@@ -980,8 +986,8 @@ describe('Metis Service', () => {
         });
 
         it('should reset cached posts and update total number of posts', () => {
-            const spyPostsNext = jest.spyOn(metisService['posts$'], 'next');
-            const spyNumberOfPostsNext = jest.spyOn(metisService['totalNumberOfPosts$'], 'next');
+            const spyPostsNext = vi.spyOn(metisService['posts$'], 'next');
+            const spyNumberOfPostsNext = vi.spyOn(metisService['totalNumberOfPosts$'], 'next');
             metisService.resetCachedPosts();
 
             expect(metisService['cachedPosts']).toEqual([]);
@@ -1043,7 +1049,7 @@ describe('Metis Service', () => {
             pinnedSub.unsubscribe();
         });
 
-        it('should update a pinned post when receiving a WebSocket update', fakeAsync(() => {
+        it('should update a pinned post when receiving a WebSocket update', () => {
             const pinnedPost = {
                 id: 42,
                 displayPriority: DisplayPriority.PINNED,
@@ -1070,7 +1076,7 @@ describe('Metis Service', () => {
 
             metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](updateDTO);
-            tick();
+            vi.advanceTimersByTime(0);
 
             let pinnedPostsResult: Post[] = [];
             metisService.getPinnedPosts().subscribe((pinned) => (pinnedPostsResult = pinned));
@@ -1078,10 +1084,10 @@ describe('Metis Service', () => {
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].content).toBe('Updated Content');
-        }));
+        });
     });
 
-    it('should properly set answer.post properties when receiving a post update via WebSocket', fakeAsync(() => {
+    it('should properly set answer.post properties when receiving a post update via WebSocket', () => {
         // Set up test data
         metisService.setCourse(course);
 
@@ -1113,7 +1119,7 @@ describe('Metis Service', () => {
 
         // Call the method that handles WebSocket updates
         metisService['handleNewOrUpdatedMessage'](updateDTO);
-        tick();
+        vi.advanceTimersByTime(0);
 
         // Verify that the answer.post properties are set correctly for all answers
         const updatedCachedPost = metisService['cachedPosts'][0];
@@ -1125,7 +1131,7 @@ describe('Metis Service', () => {
             expect(answer.post?.author).toEqual({ id: 789, login: 'author' });
             expect(answer.post?.conversation).toEqual({ id: 123 });
         });
-    }));
+    });
 
     it('should make PUT request to enable communication with messaging', () => {
         metisService.enable(1, true).subscribe((resp) => expect(resp).toEqual(of()));

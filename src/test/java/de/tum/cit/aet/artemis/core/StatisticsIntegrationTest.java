@@ -9,10 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -80,10 +77,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private ConversationUtilService conversationUtilService;
 
-    private Course course;
-
-    private TextExercise exercise;
-
     private final List<GraphType> artemisGraphs = List.of(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES,
             GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS);
@@ -97,13 +90,18 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private static final int NUMBER_OF_STUDENTS = 5;
 
-    @BeforeEach
-    void initTestCase() {
+    // Both tests are intentionally long because they each set up their own data inline (no shared @BeforeEach).
+    // This avoids redundant setup that previously ran before every parameterized variant, which caused
+    // significant slowdowns especially on MySQL/PostgreSQL testcontainers (~2-3 min per SpanType variant).
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testStatisticsEndpointResponseSizes() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
-        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
-        exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(exercise);
         textExerciseRepository.save(exercise);
         Post post = new Post();
@@ -133,57 +131,29 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
             submission = participationUtilService.addSubmission(exercise, textSubmission, TEST_PREFIX + "student" + i);
             participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL);
         }
-    }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(SpanType.class)
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDataRangeEachGraph(SpanType span) throws Exception {
-        int expectedResultLength = expectedResultLength(span);
-
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            var parameters = buildParameters(span, periodIndex, graph);
-            Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result).hasSize(expectedResultLength);
-        }
-    }
-
-    private int expectedResultLength(SpanType spanType) {
-        return switch (spanType) {
-            case DAY -> 24;
-            case WEEK -> 7;
-            case MONTH -> {
-                ZonedDateTime now = ZonedDateTime.now();
-                yield (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
+        // Test admin statistics endpoint for all graph types and span types
+        for (SpanType span : SpanType.values()) {
+            int expectedResultLength = expectedResultLength(span);
+            for (GraphType graph : artemisGraphs) {
+                var parameters = buildParameters(span, 0, graph);
+                Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
+                assertThat(result).hasSize(expectedResultLength);
             }
-            case QUARTER, YEAR -> 12;
-        };
-    }
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetChartDataForCourse() throws Exception {
-        SpanType span = SpanType.WEEK;
-        int periodIndex = 0;
-        var view = StatisticsView.COURSE;
+        // Test course chart data endpoint for all course graph types
         var courseId = course.getId();
         for (GraphType graph : courseGraphs) {
-            var parameters = buildParameters(span, periodIndex, graph, view, courseId);
+            var parameters = buildParameters(SpanType.WEEK, 0, graph, StatisticsView.COURSE, courseId);
             Integer[] result = request.get("/api/core/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(7);
         }
-    }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetChartDataForExercise() throws Exception {
-        SpanType span = SpanType.WEEK;
-        int periodIndex = 0;
-        var view = StatisticsView.EXERCISE;
+        // Test exercise chart data endpoint for all exercise graph types
         var exerciseId = exercise.getId();
         for (GraphType graph : exerciseGraphs) {
-            var parameters = buildParameters(span, periodIndex, graph, view, exerciseId);
+            var parameters = buildParameters(SpanType.WEEK, 0, graph, StatisticsView.EXERCISE, exerciseId);
             Integer[] result = request.get("/api/core/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(7);
         }
@@ -191,7 +161,11 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetCourseStatistics() throws Exception {
+    void testCourseAndExerciseStatistics() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+
+        // --- Course statistics ---
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise laterTextExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         TextExercise earlierTextExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1),
@@ -223,42 +197,37 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         });
 
         Long courseId = course.getId();
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("courseId", "" + courseId);
-        CourseManagementStatisticsDTO result = request.get("/api/core/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
+        LinkedMultiValueMap<String, String> courseParameters = new LinkedMultiValueMap<>();
+        courseParameters.add("courseId", "" + courseId);
+        CourseManagementStatisticsDTO courseResult = request.get("/api/core/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class,
+                courseParameters);
 
-        assertThat(result.averageScoreOfCourse()).isEqualTo(66.0);
-        assertThat(result.averageScoresOfExercises()).hasSize(2);
+        assertThat(courseResult.averageScoreOfCourse()).isEqualTo(66.0);
+        assertThat(courseResult.averageScoresOfExercises()).hasSize(2);
 
         // take the second entry as the results are getting sorted for release dates
-        var firstTextExerciseStatistics = result.averageScoresOfExercises().get(1);
+        var firstTextExerciseStatistics = courseResult.averageScoresOfExercises().get(1);
         assertThat(firstTextExerciseStatistics.getAverageScore()).isEqualTo(75.0);
         assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(laterTextExerciseId);
         assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
         // take the first entry as the results are getting sorted for release dates
-        var secondTextExerciseStatistics = result.averageScoresOfExercises().getFirst();
+        var secondTextExerciseStatistics = courseResult.averageScoresOfExercises().getFirst();
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());
-    }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetExerciseStatistics() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        // --- Exercise statistics ---
+        TextExercise exerciseForStats = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
-        var firstTextExerciseId = textExercise.getId();
-        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        var exerciseForStatsId = exerciseForStats.getId();
 
-        // Creating result for student1 and student2 for firstExercise
-        participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
-        participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
+        // Creating result for student1 and student2 for the exercise
+        participationUtilService.createParticipationSubmissionAndResult(exerciseForStatsId, student1, 10.0, 0.0, 50, true);
+        participationUtilService.createParticipationSubmissionAndResult(exerciseForStatsId, student2, 10.0, 0.0, 100, true);
 
         Post post = new Post();
-        post.setConversation(conversationUtilService.addChannelToExercise(textExercise));
+        post.setConversation(conversationUtilService.addChannelToExercise(exerciseForStats));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusHours(2));
@@ -273,26 +242,38 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         answerPost.setPost(post);
         answerPostRepository.save(answerPost);
 
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 2);
+        await().until(() -> participantScoreRepository.findAllByExercise(exerciseForStats).size() == 2);
 
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("exerciseId", "" + firstTextExerciseId);
-        ExerciseManagementStatisticsDTO result = request.get("/api/core/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class,
-                parameters);
+        LinkedMultiValueMap<String, String> exerciseParameters = new LinkedMultiValueMap<>();
+        exerciseParameters.add("exerciseId", "" + exerciseForStatsId);
+        ExerciseManagementStatisticsDTO exerciseResult = request.get("/api/core/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class,
+                exerciseParameters);
 
-        assertThat(result.averageScoreOfExercise()).isEqualTo(75.0);
-        assertThat(result.maxPointsOfExercise()).isEqualTo(10);
-        assertThat(result.numberOfExerciseScores()).isEqualTo(2);
-        assertThat(result.numberOfParticipations()).isEqualTo(2);
-        assertThat(result.numberOfStudentsOrTeamsInCourse()).isEqualTo(userTestRepository.countUserInGroup(course.getStudentGroupName()));
-        assertThat(result.numberOfPosts()).isEqualTo(1);
-        assertThat(result.numberOfResolvedPosts()).isEqualTo(1);
+        assertThat(exerciseResult.averageScoreOfExercise()).isEqualTo(75.0);
+        assertThat(exerciseResult.maxPointsOfExercise()).isEqualTo(10);
+        assertThat(exerciseResult.numberOfExerciseScores()).isEqualTo(2);
+        assertThat(exerciseResult.numberOfParticipations()).isEqualTo(2);
+        assertThat(exerciseResult.numberOfStudentsOrTeamsInCourse()).isEqualTo(userTestRepository.countUserInGroup(course.getStudentGroupName()));
+        assertThat(exerciseResult.numberOfPosts()).isEqualTo(1);
+        assertThat(exerciseResult.numberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];
         Arrays.fill(expectedScoresResult, 0);
         // We have one assessment with 50% and one with 100%
         expectedScoresResult[5] = 1;
         expectedScoresResult[9] = 1;
-        assertThat(result.scoreDistribution()).isEqualTo(expectedScoresResult);
+        assertThat(exerciseResult.scoreDistribution()).isEqualTo(expectedScoresResult);
+    }
+
+    private int expectedResultLength(SpanType spanType) {
+        return switch (spanType) {
+            case DAY -> 24;
+            case WEEK -> 7;
+            case MONTH -> {
+                ZonedDateTime now = ZonedDateTime.now();
+                yield (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
+            }
+            case QUARTER, YEAR -> 12;
+        };
     }
 
     private MultiValueMap<String, String> buildParameters(SpanType span, Integer periodIndex, GraphType graph) {

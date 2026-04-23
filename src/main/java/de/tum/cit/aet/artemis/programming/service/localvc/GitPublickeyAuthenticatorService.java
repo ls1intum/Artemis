@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -21,11 +22,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 @Profile(PROFILE_LOCALVC)
 @Lazy
@@ -40,16 +45,19 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
+    private final RateLimitService rateLimitService;
+
     private static final int AUTHENTICATION_FAILED_CODE = 10;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
     public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<DistributedDataAccessService> localCIDistributedDataAccessService,
-            UserSshPublicKeyRepository userSshPublicKeyRepository) {
+            UserSshPublicKeyRepository userSshPublicKeyRepository, RateLimitService rateLimitService) {
         this.userRepository = userRepository;
         this.localCIDistributedDataAccessService = localCIDistributedDataAccessService;
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
+        this.rateLimitService = rateLimitService;
     }
 
     @Override
@@ -79,6 +87,17 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      * @return true if the authentication succeeds, and false if it doesn't
      */
     private boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
+        try {
+            String ipString = ((InetSocketAddress) session.getRemoteAddress()).getHostString();
+            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+        }
+        catch (RuntimeException e) {
+            log.warn("Rate limit exceeded for SSH authentication from {}", session.getRemoteAddress(), e);
+            return false;
+        }
+
         try {
             var user = userRepository.findById(storedKey.getUserId());
             if (user.isEmpty()) {

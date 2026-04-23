@@ -12,14 +12,20 @@
                 "switchToAdvancedMode": "Switch to advanced mode",
                 "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "User Prompt"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "User Prompt"
+            },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
+                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
                 "questionLocalVC": {
-                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
-                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
                 },
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
@@ -44,6 +50,23 @@
                 "title": "Programming Exercise",
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
+            },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programming Exercise Metadata",
+                    "noProgrammingData": "This version does not contain programming-specific metadata.",
+                    "emptyValueHint": "Not available in this snapshot",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker Flags",
+                    "theiaImage": "Online IDE Image",
+                    "postDueDateHandling": "Post Due Date Handling",
+                    "assignmentCheckoutPath": "Assignment Checkout Path",
+                    "solutionCheckoutPath": "Solution Checkout Path",
+                    "testsCheckoutPath": "Tests Checkout Path",
+                    "buildPlanConfiguration": "Build Plan Configuration (JSON)",
+                    "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
+                    "noBuildScript": "No build script in this snapshot"
+                }
             },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
@@ -75,7 +98,7 @@
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "versionControlTitle": "Version Control",
                     "versionControlMessage": "Decide which version control features should be available.",
-                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.cit.tum.de/user/exercises/programming.html#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
+                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
@@ -123,6 +146,34 @@
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
             "script": "Build script",
+            "buildPhasesEditor": {
+                "title": "Build Phases",
+                "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
+                "addPhase": "Add Phase",
+                "phase": "Phase",
+                "phaseName": "Phase Name",
+                "phaseNamePlaceholder": "e.g. compile",
+                "phaseNameInvalidCharacters": "Phase name is invalid",
+                "phaseNameDuplicate": "Phase name must be unique",
+                "invalidPhaseNames": "Build phase names are invalid. Use only letters, numbers and '_', start with a letter or '_', and ensure names are unique.",
+                "condition": "Inclusion condition",
+                "forceRun": "Execute regardless of previous failures",
+                "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
+                "script": "Script",
+                "scriptHelp": "Enter the commands to execute in this phase of the build.",
+                "resultPaths": "Result Paths",
+                "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
+                "testsExpected": "Tests expected",
+                "resultPathPlaceholder": "e.g. **/results/*.xml",
+                "addResultPath": "Add Result Path",
+                "moveUp": "Move up",
+                "moveDown": "Move down",
+                "delete": "Delete",
+                "conditions": {
+                    "always": "Always",
+                    "afterDueDate": "After due date"
+                }
+            },
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "checkoutPath": {
                 "title": "Checkout Path",
@@ -202,8 +253,12 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "projectKey": "Project Key",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "testsCommitId": "Tests Commit Id",
+            "templateCommitId": "Template Commit Id",
+            "solutionCommitId": "Solution Commit Id",
             "theiaImage": {
                 "title": "Configuration for Online IDE",
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
@@ -231,25 +286,86 @@
                 "testCaseCommand": "Insert Test Case",
                 "tasksOfExercise": "Tasks:",
                 "generationAssistance": "Generate Draft Problem Statement",
+                "refinementAssistance": "Refine Problem Statement",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
-                "generationError": "Failed to generate problem statement. Please try again."
+                "generationError": "Failed to generate problem statement. Please try again.",
+                "refinementSuccess": "Problem statement has been successfully refined.",
+                "refinementError": "Failed to refine problem statement. Please try again.",
+                "cannotRefineEmpty": "Cannot refine an empty problem statement. Please add some content first.",
+                "problemStatementTooLong": "The problem statement is too long to refine. Please reduce the content and try again.",
+                "reviewChanges": "Review AI Suggestions",
+                "reviewChangesDescription": "The AI suggested the changes shown below. Lines highlighted in green will be added; lines highlighted in red will be removed.",
+                "revertAll": "Discard All",
+                "revertAllTooltip": "Reject all AI suggestions and restore your original problem statement.",
+                "doneReviewing": "Accept & Save",
+                "doneReviewingTooltip": "Accept all AI suggestions and apply them to your problem statement.",
+                "diffView": {
+                    "originalLabel": "Your Original",
+                    "suggestionLabel": "AI Suggestion",
+                    "unifiedHint": "→ highlighted in red will be removed, highlighted in green will be added →"
+                },
+                "aiRefining": "AI is updating the problem statement...",
+                "generate": "Generate",
+                "refine": "Refine",
+                "inlineRefinement": {
+                    "placeholder": "Describe what should change...",
+                    "triggerButton": "Refine Selection",
+                    "submitTooltip": "Submit refinement instruction",
+                    "success": "Selected section has been successfully refined.",
+                    "error": "Failed to refine the selected section. Please try again.",
+                    "emptyStatementError": "Cannot refine: the problem statement is empty.",
+                    "close": "Close",
+                    "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
+                },
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
+                "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
+                "runningTitle": "Code generation in progress",
+                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
                 "description": "Generate solution, template, and test code using AI",
                 "tooltip": "AI Code Generation - Generate solution, template, and test code",
                 "confirmTitle": "Confirm Code Generation",
                 "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed successfully!",
-                "partialSuccess": "{{repositoryType}} code generation completed with some issues. Please review the generated code.",
+                "success": "{{repositoryType}} code generation completed.",
+                "warning": "{{repositoryType}} code generation completed with issues.",
                 "error": "{{repositoryType}} code generation failed. Please try again later.",
+                "timeoutDetails": "The generation timed out after waiting too long for a response.",
+                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
                 "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "attempts": "Attempts made: {{attempts}}"
+                "noRepositorySelected": "Select at least one repository before starting code generation.",
+                "settingsTitle": "Generation Settings",
+                "settingsTooltip": "Select repositories to generate",
+                "statusTitle": "Generation Status",
+                "statusTooltip": "Show live generation status",
+                "executionOrder": "Selected repositories run consecutively in this order: Template, Solution, Test.",
+                "repositories": {
+                    "template": "Template Repository",
+                    "solution": "Solution Repository",
+                    "tests": "Tests Repository"
+                },
+                "activityTitle": "File Activity",
+                "iteration": "Iteration {{iteration}}",
+                "noActivity": "No files have been created or updated yet.",
+                "attempts": "Attempts made: {{attempts}}",
+                "status": {
+                    "idle": "Not started",
+                    "queued": "Queued",
+                    "running": "Running",
+                    "success": "Completed",
+                    "warning": "Completed with issues",
+                    "error": "Failed",
+                    "skipped": "Skipped",
+                    "skippedMessage": "Skipped because a previous repository generation failed.",
+                    "fileCreated": "created",
+                    "fileUpdated": "updated"
+                }
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -539,6 +655,7 @@
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "exampleSolutionPublicationDateTooltipOnImport": "The date when the Solution Repository becomes available to download for students. Cannot be set on import.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
                 "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
@@ -758,6 +875,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligence",
                 "consistencyCheckAlert": {
                     "title": "Consistency Check Result",
                     "improvement": "Suggestion for improvement",
@@ -770,6 +888,64 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "competencies": {
+                    "title": "Estimated Learning Goals",
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "linked": "Linked",
+                    "applyCompetencies": "Apply Competencies",
+                    "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
+                    "syncSuccess": "Competencies applied to the exercise successfully.",
+                    "allLinked": "All inferred competencies are already linked.",
+                    "syncError": "Failed to apply competencies. Please try again.",
+                    "showDetails": "Details",
+                    "hideDetails": "Hide"
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "vsDeclared": "vs. Declared:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
+                },
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "fixSelected": "Fix Selected",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
             }
         },
         "error": {

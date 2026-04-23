@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CodeGenerationResponseDTO(
         /**
-         * The solution plan as a string
+         * The plan as a string for the current generation stage (solution, test, or template).
          */
         String solutionPlan,
 

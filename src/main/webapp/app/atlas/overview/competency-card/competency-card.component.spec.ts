@@ -1,8 +1,10 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { Competency, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,14 +13,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyCardComponent', () => {
+    setupTestBed({ zoneless: true });
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
@@ -26,8 +30,20 @@ describe('CompetencyCardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(TranslateService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideComponent(CompetencyCardComponent, {
+                remove: { imports: [ArtemisTranslatePipe, HtmlForMarkdownPipe, CompetencyRingsComponent, ArtemisTimeAgoPipe, TranslateDirective] },
+                add: {
+                    imports: [
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(HtmlForMarkdownPipe),
+                        MockComponent(CompetencyRingsComponent),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 competencyCardComponentFixture = TestBed.createComponent(CompetencyCardComponent);
@@ -36,7 +52,7 @@ describe('CompetencyCardComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should calculate correct progress, confidence and mastery', () => {
@@ -56,7 +72,7 @@ describe('CompetencyCardComponent', () => {
 
         expect(competencyCardComponent.progress).toBe(45);
         expect(competencyCardComponent.mastery).toBe(Math.round(45 * 1.1));
-        expect(competencyCardComponent.isMastered).toBeFalse();
+        expect(competencyCardComponent.isMastered).toBeFalsy();
     });
 
     it('should display competency as mastered', () => {
@@ -76,7 +92,7 @@ describe('CompetencyCardComponent', () => {
 
         expect(competencyCardComponent.progress).toBe(100);
         expect(competencyCardComponent.mastery).toBe(100);
-        expect(competencyCardComponent.isMastered).toBeTrue();
+        expect(competencyCardComponent.isMastered).toBeTruthy();
     });
 
     it('should display optional badge for optional competency', () => {
@@ -109,12 +125,12 @@ describe('CompetencyCardComponent', () => {
         const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
         competencyCardComponentFixture.componentRef.setInput('competency', competencyFuture);
         competencyCardComponentFixture.detectChanges();
-        expect(competencyCardComponent.softDueDatePassed).toBeFalse();
+        expect(competencyCardComponent.softDueDatePassed).toBeFalsy();
 
         const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
         competencyCardComponentFixture.componentRef.setInput('competency', competencyPast);
         competencyCardComponentFixture.detectChanges();
-        expect(competencyCardComponent.softDueDatePassed).toBeTrue();
+        expect(competencyCardComponent.softDueDatePassed).toBeTruthy();
     });
 
     it.each([

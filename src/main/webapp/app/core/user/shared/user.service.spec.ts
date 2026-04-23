@@ -1,11 +1,16 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { UserService } from 'app/core/user/shared/user.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('User Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: UserService;
     let adminService: AdminUserService;
     let httpMock: HttpTestingController;
@@ -22,6 +27,7 @@ describe('User Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('Service methods', () => {
@@ -42,9 +48,9 @@ describe('User Service', () => {
         });
 
         it('should call correct URL to accept external LLM', () => {
-            service.updateExternalLLMUsageConsent(true).subscribe();
+            service.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/accept-external-llm-usage';
+            const resourceUrl = 'api/core/users/select-llm-usage';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
     });

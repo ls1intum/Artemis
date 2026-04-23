@@ -47,10 +47,13 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseSearchService;
-import tech.jhipster.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
  * REST controller for managing access to courses and searching members in courses.
@@ -69,15 +72,18 @@ public class CourseAccessResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final EnrollmentService enrollmentService;
+
     private final CourseRepository courseRepository;
 
     private final CourseSearchService courseSearchService;
 
     public CourseAccessResource(CourseAccessService courseAccessService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, CourseSearchService courseSearchService) {
+            EnrollmentService enrollmentService, UserRepository userRepository, CourseSearchService courseSearchService) {
         this.courseAccessService = courseAccessService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
+        this.enrollmentService = enrollmentService;
         this.userRepository = userRepository;
         this.courseSearchService = courseSearchService;
     }
@@ -132,7 +138,7 @@ public class CourseAccessResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
+        enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
     }
@@ -148,7 +154,8 @@ public class CourseAccessResource {
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
+                .toList();
         return ResponseEntity.ok(courses);
     }
 
@@ -159,7 +166,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -248,7 +255,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/tutors")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -262,7 +269,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/editors")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -276,7 +283,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/instructors")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
@@ -12,10 +11,11 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class PyrisDTOService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);
@@ -122,6 +122,9 @@ public class PyrisDTOService {
     }
 
     private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+        if (participation == null) {
+            return Map.of();
+        }
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
@@ -130,14 +133,18 @@ public class PyrisDTOService {
     }
 
     /**
-     * Helper method to get & checkout the repository contents for a participation.
-     * This is an exception safe way to fetch the repository, as it will return an empty map if the repository could not be fetched.
+     * Helper method to get & checkout the repository contents for a given repository URI.
+     * This is an exception-safe way to fetch the repository contents: it returns an empty map
+     * if {@code repositoryUri} is null or if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
      *
      * @param repositoryUri the repositoryUri of the repository
-     * @return the repository or empty if it could not be fetched
+     * @return the repository contents, or an empty map if the URI is null or the fetch fails
      */
     private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+        if (repositoryUri == null) {
+            return Map.of();
+        }
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }

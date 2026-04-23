@@ -1,23 +1,27 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { PasskeyAuthenticationPageComponent } from './passkey-authentication-page.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { provideRouter } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockDirective } from 'ng-mocks';
 
 describe('PasskeyAuthenticationPageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PasskeyAuthenticationPageComponent;
     let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;
@@ -29,9 +33,6 @@ describe('PasskeyAuthenticationPageComponent', () => {
         TestBed.configureTestingModule({
             imports: [PasskeyAuthenticationPageComponent],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                provideRouter([]),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -44,7 +45,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
                     },
                 },
             ],
-        });
+        })
+            .overrideComponent(PasskeyAuthenticationPageComponent, {
+                remove: { imports: [TranslateDirective, FaIconComponent, RouterLink] },
+                add: { imports: [MockDirective(TranslateDirective), MockComponent(FaIconComponent), MockDirective(RouterLink)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(PasskeyAuthenticationPageComponent);
         component = fixture.componentInstance;
@@ -55,7 +61,8 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        fixture.destroy();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -64,7 +71,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
     describe('ngOnInit', () => {
         it('should initialize user identity on init', async () => {
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -73,7 +80,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should retrieve returnUrl from query parameters on init', async () => {
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -81,13 +88,23 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should redirect to returnUrl if user is already logged in with passkey', async () => {
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-            const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-            component.returnUrl = '/admin/user-management';
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
-            component.ngOnInit();
+            // Mock identity to resolve after allowing the route subscription to fire first
+            vi.spyOn(accountService, 'identity').mockImplementation(() => {
+                return new Promise((resolve) => {
+                    // Use queueMicrotask to allow the route subscription to fire first
+                    queueMicrotask(() => resolve({} as User));
+                });
+            });
+
+            // Trigger ngOnInit via detectChanges
+            fixture.detectChanges();
+
+            // Wait for all promises and microtasks to resolve
             await fixture.whenStable();
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });
@@ -96,29 +113,29 @@ describe('PasskeyAuthenticationPageComponent', () => {
     describe('redirectToOriginalUrlOrHome', () => {
         it('should navigate to returnUrl when redirectToOriginalUrlOrHome is called with returnUrl', () => {
             component.returnUrl = '/admin/metrics';
-            const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+            const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
 
             component.redirectToOriginalUrlOrHome();
 
             expect(navigateByUrlSpy).toHaveBeenCalledExactlyOnceWith('/admin/metrics');
         });
 
-        it('should navigate to home when redirectToOriginalUrlOrHome is called without returnUrl', () => {
+        it('should navigate to sign-in when redirectToOriginalUrlOrHome is called without returnUrl', () => {
             component.returnUrl = undefined;
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/sign-in']);
         });
     });
 
     describe('setupPasskey', () => {
         it('should call webauthnService.addNewPasskey with user identity', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
-            const addNewPasskeySpy = jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
-            const alertSuccessSpy = jest.spyOn(alertService, 'success');
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
+            const addNewPasskeySpy = vi.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
+            const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component.setupPasskey();
 
@@ -128,9 +145,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
         it('should show success alert after passkey setup', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
-            jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
-            const alertSuccessSpy = jest.spyOn(alertService, 'success');
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
+            vi.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
+            const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
             await component.setupPasskey();
 
@@ -140,10 +157,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
     describe('signInWithPasskey', () => {
         it('should login with passkey and redirect when user is logged in with approved passkey', async () => {
-            const loginSpy = jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-            const redirectSpy = jest.spyOn(component, 'redirectToOriginalUrlOrHome');
+            const loginSpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
 
             await component.signInWithPasskey();
 
@@ -153,11 +170,11 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should show error when passkey is not super admin approved', async () => {
-            jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-            const alertErrorSpy = jest.spyOn(alertService, 'error');
-            const redirectSpy = jest.spyOn(component, 'redirectToOriginalUrlOrHome');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
 
             await component.signInWithPasskey();
 
@@ -166,9 +183,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should refresh identity after login', async () => {
-            jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-            jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const identitySpy = vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
+            vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
 
             await component.signInWithPasskey();
 
@@ -177,7 +194,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display setup passkey button when user should setup passkey', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -185,11 +202,11 @@ describe('PasskeyAuthenticationPageComponent', () => {
         expect(buttonDebugElement).toBeTruthy();
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.admin.setupPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.admin.setupPasskey');
     });
 
     it('should display sign in button when user has passkey registered', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -197,7 +214,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         expect(buttonDebugElement).toBeTruthy();
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.account.loginWithPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.account.loginWithPasskey');
     });
 
     it('should display page heading', async () => {
@@ -209,7 +226,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display info text when user is not logged in with passkey', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -218,7 +235,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display info alert when user is not logged in with passkey', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -230,7 +247,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display approval instructions with correct translation keys when user is logged in with passkey but not approved', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -255,7 +272,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should display warning alert when user is logged in with passkey but not approved', async () => {
-        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -267,7 +284,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
     });
 
     it('should set shouldSubmit to false on setup passkey button to prevent duplicate requests', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -276,12 +293,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const button = buttonElement.querySelector('button');
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.admin.setupPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.admin.setupPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 
     it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', async () => {
-        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -290,7 +307,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const button = buttonElement.querySelector('button');
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.account.loginWithPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.account.loginWithPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 });

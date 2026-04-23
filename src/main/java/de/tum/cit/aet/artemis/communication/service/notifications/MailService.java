@@ -18,6 +18,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
 
 /**
  * Service for preparing and sending emails.
@@ -45,6 +47,12 @@ public class MailService {
 
     private static final String CONSECUTIVE_BUILD_FAILURES = "consecutiveBuildFailures";
 
+    private static final String VULNERABILITIES = "vulnerabilities";
+
+    private static final String VERSION_INFO = "versionInfo";
+
+    private static final String SHOULD_RECOMMEND_UPGRADE = "shouldRecommendUpgrade";
+
     @Value("${server.url}")
     private URL artemisServerUrl;
 
@@ -71,23 +79,6 @@ public class MailService {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = createBaseContext(user, locale);
         prepareTemplateAndSendEmail(user, templateName, titleKey, context);
-    }
-
-    /**
-     * Sends an email to a user (the internal admin user) about a failed data export creation.
-     *
-     * @param admin        the admin user
-     * @param templateName the name of the email template
-     * @param titleKey     the subject of the email
-     * @param dataExport   the data export that failed
-     * @param reason       the exception that caused the data export to fail
-     */
-    public void sendDataExportFailedEmailForAdmin(User admin, String templateName, String titleKey, DataExport dataExport, Exception reason) {
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(DATA_EXPORT, dataExport);
-        context.setVariable(REASON, reason.getMessage());
-        prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
     }
 
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
@@ -131,9 +122,51 @@ public class MailService {
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
     }
 
+    /**
+     * Sends an email to admin users informing them that a data export has failed.
+     *
+     * @param admin      the admin user to notify
+     * @param dataExport the data export that failed
+     * @param reason     the exception that caused the failure
+     */
     public void sendDataExportFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
         log.debug("Sending data export failed email to admin email address '{}'", admin.getEmail());
-        sendDataExportFailedEmailForAdmin(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport, reason);
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(DATA_EXPORT, dataExport);
+        context.setVariable(REASON, reason.getMessage());
+        prepareTemplateAndSendEmailWithArgumentInSubject(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport.getUser().getLogin(), context);
+    }
+
+    /**
+     * Sends an email to admin users informing them that a data export has failed.
+     *
+     * @param admin      the admin user to notify
+     * @param dataExport the data export that failed
+     * @param reason     the exception that caused the failure
+     */
+    public void sendDataExportEmailFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
+        log.debug("Sending data export email failed email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(DATA_EXPORT, dataExport);
+        context.setVariable(REASON, reason.getMessage());
+        prepareTemplateAndSendEmailWithArgumentInSubject(admin, "mail/dataExportEmailFailedAdminEmail", "email.dataExportEmailFailedAdmin.title", dataExport.getUser().getLogin(),
+                context);
+    }
+
+    /**
+     * Sends an email to a user informing them that their data export has been successfully created.
+     *
+     * @param user       the user to send the email to
+     * @param dataExport the data export that was created
+     */
+    public void sendDataExportCreatedEmail(User user, DataExport dataExport) {
+        log.debug("Sending data export created email to '{}'", user.getEmail());
+        Locale locale = Locale.forLanguageTag(user.getLangKey());
+        Context context = createBaseContext(user, locale);
+        context.setVariable(DATA_EXPORT, dataExport);
+        prepareTemplateAndSendEmail(user, "mail/dataExportCreatedEmail", "email.dataExportCreated.title", context);
     }
 
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
@@ -155,5 +188,23 @@ public class MailService {
         context.setVariable(BUILD_AGENT_NAME, buildAgentName);
         context.setVariable(CONSECUTIVE_BUILD_FAILURES, consecutiveBuildFailures);
         prepareTemplateAndSendEmail(admin, "mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", context);
+    }
+
+    /**
+     * Sends an email to admin users with the results of the weekly vulnerability scan.
+     *
+     * @param admin                  the admin user to notify
+     * @param vulnerabilities        the vulnerability scan results
+     * @param versionInfo            the Artemis version information
+     * @param shouldRecommendUpgrade whether to recommend upgrading due to high/critical vulnerabilities and available update
+     */
+    public void sendVulnerabilityScanResultEmail(User admin, ComponentVulnerabilitiesDTO vulnerabilities, ArtemisVersionDTO versionInfo, boolean shouldRecommendUpgrade) {
+        log.debug("Sending vulnerability scan result email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(VULNERABILITIES, vulnerabilities);
+        context.setVariable(VERSION_INFO, versionInfo);
+        context.setVariable(SHOULD_RECOMMEND_UPGRADE, shouldRecommendUpgrade);
+        prepareTemplateAndSendEmail(admin, "mail/vulnerabilityScanResultEmail", "email.vulnerabilityScan.title", context);
     }
 }

@@ -1,10 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
-
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
@@ -12,6 +8,8 @@ import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
 import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     let component: ProgrammingExerciseEditCheckoutDirectoriesComponent;
@@ -56,17 +54,26 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         programmingExercise.buildConfig!.windfile = windFile;
 
         await TestBed.configureTestingModule({
-            declarations: [ProgrammingExerciseEditCheckoutDirectoriesComponent, MockComponent(HelpIconComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            imports: [ProgrammingExerciseEditCheckoutDirectoriesComponent],
+        })
+            .overrideComponent(ProgrammingExerciseEditCheckoutDirectoriesComponent, {
+                remove: { imports: [HelpIconComponent, TranslateDirective] },
+                add: { imports: [MockComponent(HelpIconComponent), MockDirective(TranslateDirective)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseEditCheckoutDirectoriesComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('pattern', /^[a-zA-Z0-9_\-/]+$/);
         fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', {
             testCheckoutDirectory: '/',
         });
+    });
+
+    afterEach(() => {
+        fixture.destroy();
     });
 
     it('should create', () => {

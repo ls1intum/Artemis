@@ -11,88 +11,49 @@
     }
 }
 
-.message-bubble {
-    --r: 13px; /* the radius */
-
+%iris-popup {
     position: absolute;
-    z-index: 50;
-    bottom: 100px;
-    right: 80px;
-    width: 350px;
-    height: 150px;
-    background-color: var(--iris-client-chat-background);
-    cursor: pointer;
-    overflow-y: hidden;
-    overflow-wrap: break-word;
-    padding: 10px;
+    right: min(80px, calc(100vw - 100%));
     display: flex;
-    border-radius: var(--r);
-    border-bottom-right-radius: 0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    align-items: center;
+    text-align: left;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    background-color: var(--iris-secondary-background);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    z-index: 9998;
+    overflow: hidden;
+}
+
+.message-bubble {
+    @extend %iris-popup;
+
+    bottom: 100px;
+    width: min(350px, calc(100vw - 120px));
+    max-height: 240px;
+    cursor: pointer;
+    border: none;
+    font: inherit;
+    color: inherit;
+    overflow-wrap: break-word;
     transform-origin: bottom right;
     transition:
         opacity 300ms ease-out,
         transform 300ms ease-out;
 
-    &.bubble-hidden {
-        opacity: 0;
-        transform: scale(0);
-        pointer-events: none;
-    }
-
-    &.bubble-visible {
-        opacity: 1;
-        transform: scale(1);
+    .preview-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     &:hover {
+        background-color: var(--iris-accent-background);
         transform: scale(1.05);
-
-        .read-more > span {
-            text-decoration: underline;
-        }
     }
-}
-
-.content-overflow {
-    &::before {
-        content: '';
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        background: linear-gradient(0deg, var(--iris-chat-bubble-fade) 2%, transparent);
-    }
-}
-
-.read-more {
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 5px 10px;
-    width: 150px;
-    font-size: 14px;
-    z-index: 100;
-    color: var(--link-color);
-    transition: all 0.2s ease;
-
-    &:focus-visible {
-        outline: 2px solid var(--link-color);
-        outline-offset: 2px;
-    }
-}
-
-.hidden {
-    display: none;
-}
-
-.btn-circle {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
 }
 
 .unread-indicator {
@@ -102,4 +63,105 @@
     width: 10px;
     height: 10px;
     color: var(--red);
+}
+
+.status-indicator {
+    @extend %iris-popup;
+
+    bottom: 96px;
+    animation: status-bubble-enter 300ms ease-out;
+    cursor: pointer;
+    border: none;
+    font: inherit;
+    color: inherit;
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.status-label {
+    color: var(--bs-body-color);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: nowrap;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(200px, 40vw);
+
+    &.anim-a,
+    &.anim-b {
+        animation: slideUpFade 0.4s ease-out forwards;
+    }
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: var(--bs-body-color);
+        animation: dotPulse 1.4s ease-in-out infinite;
+
+        &:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    }
+}
+
+@keyframes dotPulse {
+    0%,
+    80%,
+    100% {
+        transform: scale(0.8);
+        opacity: 0.3;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes status-bubble-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .typing-dots .dot,
+    .status-indicator {
+        animation: none;
+    }
+
+    .status-label.anim-a,
+    .status-label.anim-b {
+        animation: none;
+    }
+
+    .typing-dots .dot {
+        opacity: 0.6;
+    }
 }

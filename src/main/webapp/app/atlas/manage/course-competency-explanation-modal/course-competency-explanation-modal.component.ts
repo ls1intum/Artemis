@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class CourseCompetencyExplanationModalComponent {
     protected readonly closeIcon = faXmark;
 
-    protected readonly DOCUMENTATION_LINK = 'https://docs.artemis.cit.tum.de/user/adaptive-learning/';
+    protected readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/adaptive-learning';
 
     private readonly activeModal = inject(NgbActiveModal);
 

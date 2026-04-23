@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -11,9 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 /**
  * Component that displays build job statistics with a pie chart visualization.
@@ -22,13 +19,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
  * Can receive statistics via input signal (for embedding in other components like BuildAgentDetailsComponent)
  * or fetch them from the REST API based on the current route (for the build queue view).
  *
- * Features a collapsible panel and supports time span filtering (day, week, month) in build queue mode.
+ * Supports time span filtering (day, week, month) in build queue mode.
  *
  * Uses OnPush change detection with signals for optimal performance.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, NgxChartsModule, NgbCollapse, HelpIconComponent, FaIconComponent],
+    imports: [TranslateDirective, NgxChartsModule, HelpIconComponent],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,17 +41,10 @@ export class BuildJobStatisticsComponent implements OnInit {
      */
     buildJobStatisticsInput = input<BuildJobStatistics>();
 
-    // Font Awesome icons for collapse toggle
-    readonly faAngleDown = faAngleDown;
-    readonly faAngleRight = faAngleRight;
-
     protected readonly SpanType = SpanType;
 
     /** Currently selected time span for statistics (day, week, or month) */
     currentSpan: SpanType = SpanType.WEEK;
-
-    /** Whether the statistics panel is collapsed */
-    isCollapsed = false;
 
     /** Formatted percentage strings for display */
     successfulBuildsPercentage = signal('-%');
@@ -105,8 +95,8 @@ export class BuildJobStatisticsComponent implements OnInit {
         // Determine context by checking the current route
         this.route.url.pipe(take(1)).subscribe((urlSegments) => {
             const firstSegment = urlSegments[0];
-            if (firstSegment?.path === 'build-queue') {
-                // Build queue context: fetch statistics from API with time span filtering
+            if (firstSegment?.path === 'build-overview') {
+                // Build overview context: fetch statistics from API with time span filtering
                 this.getBuildJobStatisticsForBuildQueue(span);
             } else {
                 // Embedded in another component: use input statistics without span selector
@@ -174,13 +164,17 @@ export class BuildJobStatisticsComponent implements OnInit {
         }
 
         // Update pie chart data with current statistics
-        this.pieChartData.set([
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [
             { name: 'Successful', value: statistics.successfulBuilds },
             { name: 'Failed', value: statistics.failedBuilds },
             { name: 'Cancelled', value: statistics.cancelledBuilds },
             { name: 'Timeout', value: statistics.timeOutBuilds },
-            { name: 'Missing', value: statistics.missingBuilds },
-        ]);
+        ];
+        // Only include missing builds when displayMissingBuilds is enabled
+        if (this.displayMissingBuilds) {
+            chartData.push({ name: 'Missing', value: statistics.missingBuilds });
+        }
+        this.pieChartData.set(chartData);
     }
 
     /**
@@ -192,5 +186,55 @@ export class BuildJobStatisticsComponent implements OnInit {
             this.currentSpan = span;
             this.getBuildJobStatistics(span);
         }
+    }
+
+    /**
+     * Increments the appropriate statistics counter based on the build job status.
+     * Used for real-time updates when a finished job arrives via WebSocket.
+     * @param status The status of the finished build job
+     */
+    incrementStatisticsByStatus(status: string | undefined): void {
+        if (!status) {
+            return;
+        }
+
+        const currentStats = this.buildJobStatistics();
+        const updatedStats = new BuildJobStatistics();
+
+        // Copy current values
+        updatedStats.totalBuilds = currentStats.totalBuilds + 1;
+        updatedStats.successfulBuilds = currentStats.successfulBuilds;
+        updatedStats.failedBuilds = currentStats.failedBuilds;
+        updatedStats.cancelledBuilds = currentStats.cancelledBuilds;
+        updatedStats.timeOutBuilds = currentStats.timeOutBuilds;
+        updatedStats.missingBuilds = currentStats.missingBuilds;
+
+        // Increment the appropriate counter based on status
+        switch (status) {
+            case 'SUCCESSFUL':
+                updatedStats.successfulBuilds++;
+                break;
+            case 'FAILED':
+            case 'ERROR':
+                updatedStats.failedBuilds++;
+                break;
+            case 'CANCELLED':
+                updatedStats.cancelledBuilds++;
+                break;
+            case 'TIMEOUT':
+                updatedStats.timeOutBuilds++;
+                break;
+            case 'MISSING':
+                updatedStats.missingBuilds++;
+                break;
+            default:
+                // Unknown status - don't increment totalBuilds to avoid statistics drift
+                updatedStats.totalBuilds--;
+                // eslint-disable-next-line no-undef
+                console.warn(`Unknown build job status received: ${status}`);
+                break;
+        }
+
+        this.updateDisplayedBuildJobStatistics(updatedStats);
     }
 }

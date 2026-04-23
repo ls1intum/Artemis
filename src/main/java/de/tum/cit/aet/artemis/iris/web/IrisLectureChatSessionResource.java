@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,21 +16,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/lecture-chat/")
@@ -55,9 +54,12 @@ public class IrisLectureChatSessionResource {
 
     private final MessageSource messageSource;
 
+    private final IrisCitationService irisCitationService;
+
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService, MessageSource messageSource) {
+            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService, MessageSource messageSource,
+            IrisCitationService irisCitationService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -66,6 +68,7 @@ public class IrisLectureChatSessionResource {
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.messageSource = messageSource;
+        this.irisCitationService = irisCitationService;
     }
 
     /**
@@ -75,14 +78,10 @@ public class IrisLectureChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the lecture or {@code 404 (Not Found)} if no session exists
      */
     @PostMapping("{lectureId}/sessions/current")
-    public ResponseEntity<IrisLectureChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long lectureId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long lectureId) throws URISyntaxException {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
         var lecture = api.findByIdElseThrow(lectureId);
-
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
@@ -93,7 +92,8 @@ public class IrisLectureChatSessionResource {
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
-            return ResponseEntity.ok(session);
+            irisCitationService.enrichSessionWithCitationInfo(session);
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
         }
 
         return createSessionForLecture(lectureId);
@@ -108,26 +108,22 @@ public class IrisLectureChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the lecture
      */
     @PostMapping("{lectureId}/sessions")
-    public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
-
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var session = new IrisLectureChatSession(lecture, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         session = irisLectureChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
     /**
@@ -137,29 +133,19 @@ public class IrisLectureChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{lectureId}/sessions")
-    public ResponseEntity<List<IrisLectureChatSession>> getAllSessions(@PathVariable Long lectureId) {
+    public ResponseEntity<List<IrisChatSessionResponseDTO>> getAllSessions(@PathVariable Long lectureId) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
-
-        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
-        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());
         // Access check might not even be necessary here -> see comments in hasAccess method
         var filteredSessions = sessions.stream().filter(session -> irisLectureChatSessionService.hasAccess(user, session)).toList();
-        return ResponseEntity.ok(filteredSessions);
-    }
-
-    private static void checkWhetherLectureIsVisibleToStudentsElseThrow(Lecture lecture) {
-        if (!lecture.isVisibleToStudents()) {
-            throw new ConflictException("The lecture is not visible to students yet", "Iris", "irisLecture");
-        }
+        return ResponseEntity.ok(filteredSessions.stream().map(IrisChatSessionResponseDTO::of).toList());
     }
 }

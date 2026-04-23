@@ -7,7 +7,7 @@ The generated report is copied to the clipboard and pasted into a pull request o
 
 ### Prerequisites
 
-- Python 3.13 or higher
+- Python 3.14 or higher
 - pip
 - git
 

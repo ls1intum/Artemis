@@ -9,7 +9,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
     - '!.github/workflows/test-e2e.yml'
@@ -109,11 +109,19 @@ jobs:
           java-version: '${{ env.java }}'
           cache: 'gradle'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-      - name: Production Build
-        run: ./gradlew -Pprod -Pwar clean bootWar
+        uses: gradle/actions/setup-gradle@v5
+      - name: Install npm dependencies
+        run: npm install
+      - name: Build Angular Client
+        # Build the Angular client separately so that Node.js/esbuild get full system
+        # memory without competing with the Gradle JVM (which reserves up to 4g).
+        # Use --optimization=false to work around esbuild crash during script optimization.
+        run: npm run clean-www && npm run prebuild && npx ng build --configuration production --optimization=false
+      - name: Build .war
+        # Skip the webapp Gradle task since the Angular client was already built above.
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Artemis.war
           path: build/libs/Artemis-*.war
@@ -154,7 +162,7 @@ jobs:
           echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
 
       - name: Upload Docker Tag as Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: docker-tag
           path: docker-tag.txt

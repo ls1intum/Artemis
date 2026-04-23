@@ -17,6 +17,10 @@
             }
             @if (!isTestExam) {
                 <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
+                <button class="btn btn-primary ms-auto" (click)="studentsExportDialog.openDialog()">
+                    <fa-icon [icon]="faFileExport" />
+                    <span jhiTranslate="artemisApp.exam.examUsers.export.buttonTitle"></span>
+                </button>
                 <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
                 <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
                     <fa-icon [icon]="faThLarge" />
@@ -289,4 +293,5 @@
     (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
     #studentsRoomDistributionDialog
 />
+<jhi-students-export-dialog [courseId]="courseId" [exam]="exam" #studentsExportDialog />
 <jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

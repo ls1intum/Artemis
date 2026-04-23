@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
@@ -44,6 +45,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT e
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.course
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -51,6 +53,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+                LEFT JOIN FETCH e.course
             WHERE e.course.id IN :courseIds
             """)
     Set<Exercise> findByCourseIds(@Param("courseIds") Set<Long> courseIds);
@@ -330,6 +333,70 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Finds an exercise with participations, submissions, results, and feedbacks for a specific student.
+     * Used for data export of non-programming exercises.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * Finds an exercise with participations, submissions, results, feedbacks, and test cases for a specific student.
+     * Used for data export of programming exercises where test case information is needed.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations including test cases
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * Fetches an exercise by id with its exercise group, exam, and course relationships eagerly loaded.
+     * This is used as a fallback when a student has no participation in the exercise.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return the exercise with exercise group, exam, and course relationships loaded
+     */
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
@@ -721,4 +788,39 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Fetches all deletion summary statistics for an exercise in a single query.
+     * This includes participation count, build count (for programming exercises),
+     * assessment count (for non-quiz exercises), and post/answer counts from the exercise channel.
+     *
+     * @param exerciseId the id of the exercise
+     * @return an Optional containing the ExerciseDeletionSummaryDTO, or empty if exercise not found
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO(
+                (SELECT COUNT(p) FROM StudentParticipation p WHERE p.exercise.id = :exerciseId),
+                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
+                (
+                    SELECT COUNT(DISTINCT sp)
+                    FROM StudentParticipation sp
+                        JOIN sp.submissions s
+                        JOIN s.results r
+                        JOIN sp.exercise ex
+                    WHERE ex.id = :exerciseId
+                        AND sp.testRun = FALSE
+                        AND r.assessor IS NOT NULL
+                        AND r.rated = TRUE
+                        AND s.submitted = TRUE
+                        AND r.completionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
+                ),
+                (SELECT COUNT(post) FROM Post post WHERE post.conversation.id = c.id),
+                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id)
+            )
+            FROM Exercise e
+                LEFT JOIN Channel c ON c.exercise.id = e.id
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
 }

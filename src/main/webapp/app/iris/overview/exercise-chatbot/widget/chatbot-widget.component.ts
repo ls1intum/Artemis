@@ -2,12 +2,14 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import interact from 'interactjs';
+import { Interactable } from '@interactjs/core/Interactable';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -21,18 +23,20 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private dialog = inject(MatDialog);
+    private chatService = inject(IrisChatService);
 
     readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
         initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
     });
 
     // User preferences (constants)
-    readonly initialWidth = 400;
+    readonly initialWidth = 450;
     readonly initialHeight = 600;
     readonly fullWidthFactor = 0.93;
     readonly fullHeightFactor = 0.85;
     readonly fullSize = signal(false);
     public ButtonType = ButtonType;
+    private interactable: Interactable | undefined;
 
     constructor() {
         this.router.events
@@ -49,7 +53,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        interact('.chat-widget')
+        this.interactable = interact('.chat-widget')
             .resizable({
                 // resize from all edges and corners
                 edges: { left: true, right: true, bottom: true, top: '.chat-widget-top-resize-area' },
@@ -153,6 +157,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
+        this.interactable?.unset();
         this.toggleScrollLock(false);
     }
 
@@ -174,5 +179,13 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         } else {
             document.body.classList.remove('cdk-global-scroll');
         }
+    }
+
+    /**
+     * Closes the chat widget and signals that it should reopen after LLM selection.
+     */
+    reopenDialog() {
+        this.chatService.setShouldReopenChat(true);
+        this.dialog.closeAll();
     }
 }

@@ -22,6 +22,10 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { ExerciseEditorSyncService, repositoryTypeToSyncTarget } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { MonacoBinding } from 'y-monaco';
+import { editor } from 'monaco-editor';
 /**
  * Enumeration specifying the loading state
  */
@@ -50,6 +54,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
+    private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+    protected fileSyncService = inject(CodeEditorFileSyncService);
+
+    private currentFileBinding?: MonacoBinding;
+    private previousSyncedFile?: string;
+    private stateReplacedSubscription?: Subscription;
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -111,6 +121,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                        if (exercise.id) {
+                            this.exerciseEditorSyncService.connect(exercise.id);
+                        }
                         // Emit initial markdown to drive the preview after loading the exercise
                         if (exercise.problemStatement != undefined) {
                             this.problemStatementChanges$.next(exercise.problemStatement);
@@ -161,6 +174,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {
+        if (this.exercise) {
+            this.exercise.problemStatement = markdown;
+        }
         this.problemStatementChanges$.next(markdown);
     }
 
@@ -174,6 +190,18 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
+        this.exerciseEditorSyncService.disconnect();
+    }
+
+    /**
+     * Connects the shared exercise synchronization channel for the given exercise.
+     *
+     * @param exerciseId the exercise id for the synchronization topic
+     */
+    protected connectExerciseEditorSync(exerciseId: number): void {
+        this.exerciseEditorSyncService.connect(exerciseId);
     }
 
     /**
@@ -214,6 +242,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.codeEditorContainer != undefined) {
             this.codeEditorContainer.initializeProperties();
         }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
             this.selectedRepository = RepositoryType.AUXILIARY;
             this.selectedRepositoryId = domainValue.id;
@@ -222,6 +252,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
+        }
+        if (this.exercise?.id && this.selectedRepository) {
+            const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
+            if (syncTarget) {
+                const auxId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+                this.fileSyncService.init(this.exercise.id, syncTarget, auxId);
+            }
         }
     }
 
@@ -371,6 +408,116 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe({
                 error: (err: Error) => this.onError(err.message),
             });
+    }
+
+    /**
+     * Called when a file finishes loading in Monaco (via onFileLoad event).
+     * Creates the Yjs <-> Monaco binding for real-time collaborative editing.
+     */
+    protected onFileSyncLoad(fileName: string): void {
+        this.teardownFileBinding();
+        if (this.previousSyncedFile) {
+            this.fileSyncService.closeFile(this.previousSyncedFile);
+            this.previousSyncedFile = undefined;
+        }
+
+        if (!this.fileSyncService.isInitialized()) {
+            return;
+        }
+
+        const monacoComponent = this.codeEditorContainer?.monacoEditor;
+        if (!monacoComponent || monacoComponent.binaryFileSelected()) {
+            return;
+        }
+
+        const editorComponent = monacoComponent.editor();
+        const model = editorComponent.getModel();
+        const editorInstance = editorComponent.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const fallbackContent = this.normalizeLineEndings(editorComponent.getText());
+        const syncState = this.fileSyncService.openFile(fileName, fallbackContent);
+        if (!syncState) {
+            return;
+        }
+        this.previousSyncedFile = fileName;
+
+        // Clear model content before binding — the MonacoBinding constructor immediately
+        // populates the model from Y.Text content, so the brief empty state is not observable
+        // in the UI. This is required because MonacoBinding diffs the model content against
+        // Y.Text on construction, and starting from an empty model ensures a clean diff.
+        // Safe: no MonacoBinding exists yet at this point, so the setValue('') cannot propagate
+        // as a Yjs delete. The binding is only created on the next line.
+        model.setValue('');
+        // Monaco may still keep CRLF as model EOL depending on prior content/defaultEOL.
+        // Force LF right after setValue so y-monaco computes offsets against LF text.
+        this.enforceLfEol(model);
+        this.createFileBinding(syncState, model, editorInstance);
+
+        // Capturing model and editorInstance via closure is safe here: Monaco does not replace
+        // model objects internally (they are stable for the lifetime of a URI), and the editor
+        // instance is equally stable. This subscription is torn down by teardownFileBinding()
+        // on every file switch (line 409), so the captured references cannot go stale.
+        this.stateReplacedSubscription = this.fileSyncService.stateReplaced$.pipe(filter((event) => event.filePath === fileName)).subscribe((replacedState) => {
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.currentFileBinding?.destroy();
+            this.currentFileBinding = undefined;
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(replacedState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
+            this.createFileBinding(replacedState, model, editorInstance);
+        });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for a code file.
+     * Uses a per-binding closure variable to guard against double-destroy: each binding
+     * captures its own `destroyed` flag so that a new binding creation cannot accidentally
+     * reset the guard of an older binding that is still being torn down asynchronously.
+     */
+    private createFileBinding(syncState: FileSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor): void {
+        this.currentFileBinding?.destroy();
+        let destroyed = false;
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
+        const originalDestroy = binding.destroy.bind(binding);
+        binding.destroy = () => {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
+            originalDestroy();
+        };
+        this.currentFileBinding = binding;
+    }
+
+    /**
+     * Tears down the Monaco <-> Yjs binding only (UI concern). Does NOT call closeFile()
+     * because the Yjs document lifecycle is managed by the caller: onFileSyncLoad() closes
+     * the previous file explicitly, while ngOnDestroy() and domain changes call reset()
+     * which bulk-destroys all docs. Keeping these concerns separate is intentional.
+     */
+    private teardownFileBinding(): void {
+        this.stateReplacedSubscription?.unsubscribe();
+        this.stateReplacedSubscription = undefined;
+        this.currentFileBinding?.destroy();
+        this.currentFileBinding = undefined;
     }
 
     /**

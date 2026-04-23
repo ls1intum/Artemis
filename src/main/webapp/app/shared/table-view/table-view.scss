@@ -1,0 +1,24 @@
+.jhi-table-view-container {
+    &.jhi-scrollable {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .p-datatable {
+        tr th {
+            white-space: nowrap !important;
+            padding: 8px 16px !important;
+        }
+        tr td {
+            padding: 8px 16px !important;
+        }
+        .p-datatable-header {
+            padding: 0 0 12px 0 !important;
+        }
+        .p-paginator {
+            padding-bottom: 0 !important;
+            justify-content: start !important;
+        }
+    }
+}

@@ -59,32 +59,6 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         vi.restoreAllMocks();
     });
 
-    it('should open quiz for practice', () => {
-        vi.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
-
-        fixture.componentRef.setInput('quizExercise', quizExercise);
-        comp.openForPractice();
-        expect(quizExerciseService.openForPractice).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.openForPractice).toHaveBeenCalledOnce();
-    });
-
-    it('should not open quiz for practice on error', () => {
-        vi.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
-        vi.spyOn(alertService, 'error');
-
-        fixture.componentRef.setInput('quizExercise', quizExercise);
-        comp.openForPractice();
-        expect(quizExerciseService.openForPractice).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.openForPractice).toHaveBeenCalledOnce();
-        expect(alertService.error).toHaveBeenCalledOnce();
-    });
-
     it('should start quiz', () => {
         vi.spyOn(quizExerciseService, 'start').mockReturnValue(
             of(

@@ -7,42 +7,46 @@
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
+    [initiallyExpanded]="initiallyExpanded()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleDownload()"
     (onShowOriginalVersion)="handleOriginalVersion()"
 >
-    @if (lectureUnit().attachment?.uploadDate) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
-            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.version) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
-            {{ lectureUnit().attachment?.version }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.link) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
-            {{ getFileName() }}
-        </div>
-    }
-
     @if (lectureUnit()?.description) {
         <div>
-            <hr />
             {{ lectureUnit().description }}
         </div>
     }
 
-    @if (!!lectureUnit().attachment && !!videoUrl()) {
-        <hr />
+    @if (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link)) {
+        @if (lectureUnit()?.description) {
+            <hr />
+        }
+        @if (lectureUnit().attachment?.uploadDate) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+                {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.version) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+                {{ lectureUnit().attachment?.version }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.link) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+                {{ getFileName() }}
+            </div>
+        }
     }
 
-    @if (!!videoUrl()) {
+    @if (!!rawVideoSource() || !!youtubeVideoId()) {
+        @if (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) {
+            <hr />
+        }
         @if (isLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">
@@ -50,12 +54,50 @@
                 </div>
             </div>
         } @else if (playlistUrl() && hasTranscript()) {
-            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+        } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+            <jhi-youtube-player
+                [videoId]="youtubeVideoId()!"
+                [transcriptSegments]="transcriptSegments()"
+                [initialTimestamp]="targetTimestamp()"
+                (playerFailed)="onYouTubePlayerFailed()"
+            />
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
-                    <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                    <iframe id="videoFrame" class="rounded" [src]="iframeFallbackUrl() | safeResourceUrl" allow="fullscreen"></iframe>
                 </div>
+            </div>
+        }
+    }
+
+    @if (hasPdf()) {
+        @if (lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) {
+            <hr />
+        }
+        @if (pdfLoadError()) {
+            <p-message severity="error" styleClass="m-3">
+                <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
+            </p-message>
+        } @else if (pdfUrl()) {
+            <div class="pdf-viewer-spacing">
+                @if (showPdfSpinner()) {
+                    <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+                        </div>
+                    </div>
+                }
+                <jhi-pdf-viewer
+                    [class.pdf-viewer-loading]="showPdfSpinner()"
+                    [pdfUrl]="pdfUrl()!"
+                    [uploadDate]="lectureUnit().attachment?.uploadDate"
+                    [version]="lectureUnit().attachment?.version"
+                    [initialPage]="validatedPdfPage()"
+                    (pageRendered)="onPdfPageRendered($event)"
+                    (loadError)="onPdfLoadError($event)"
+                    (downloadRequested)="handleDownload()"
+                />
             </div>
         }
     }

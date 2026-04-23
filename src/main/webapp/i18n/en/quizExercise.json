@@ -12,8 +12,66 @@
                 "createLabel": "Create Quiz",
                 "editLabel": "Edit Quiz",
                 "importLabel": "Import Quiz",
-                "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
+            },
+            "aiGeneration": {
+                "button": "Generate with AI",
+                "modalTitle": "Generate Quiz with AI",
+                "configuration": {
+                    "title": "Configuration",
+                    "topic": "Topic",
+                    "optionalPrompt": "Optional prompt",
+                    "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
+                    "language": "Language",
+                    "numberOfQuestions": "Number of questions",
+                    "questionType": "Question type",
+                    "difficulty": "Difficulty",
+                    "difficultyLevels": {
+                        "easy": "Easy",
+                        "medium": "Medium",
+                        "hard": "Hard"
+                    }
+                },
+                "languages": {
+                    "en": "English",
+                    "de": "German"
+                },
+                "types": {
+                    "single-choice": "Single Choice",
+                    "multiple-choice": "Multiple Choice",
+                    "true-false": "True/False"
+                },
+                "actions": {
+                    "generate": "Generate",
+                    "openInEditor": "Open in editor",
+                    "addToEditor": "Add to quiz",
+                    "loading": {
+                        "thinking": "Thinking",
+                        "analyzing": "Analyzing input",
+                        "generating": "Generating questions",
+                        "refining": "Refining results"
+                    }
+                },
+                "errors": {
+                    "invalidConfiguration": "Please provide a topic and select at least one question type.",
+                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                },
+                "refinement": {
+                    "promptPlaceholder": "Describe how to refine this question...",
+                    "changesLabel": "Changes made",
+                    "defaultReasoning": "The question was refined according to your instructions.",
+                    "errors": {
+                        "failed": "Failed to refine the question. Please try again."
+                    }
+                },
+                "preview": {
+                    "title": "Preview Results",
+                    "emptyTitle": "No questions generated yet",
+                    "emptyDescription": "Fill in the configuration on the left and click Generate to preview AI-generated quiz questions.",
+                    "correct": "CORRECT",
+                    "oneResultGenerated": "1 result generated",
+                    "multipleResultsGenerated": "{{ count }} results generated"
+                }
             },
             "detail": {
                 "title": "Quiz Exercise",
@@ -44,8 +102,11 @@
                 "saving": "Saving...",
                 "saved": "Saved!",
                 "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\" once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
-                "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
+                "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options.",
+                "editNotPossibleDuringQuiz": "During the quiz, editing is not possible. You can re-evaluate after the quiz has finished.",
+                "editNotPossibleAfterEnd": "After the end of the quiz working time, editing is not possible."
             },
+            "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "title": "All quiz questions for course {{ param }}",

@@ -37,6 +37,7 @@
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
         "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
+        "faqRewriteFailed": "Could not rewrite FAQ. Please try again.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
         "examExerciseNotIncludedInScore": "An exam exercise must be included in the score!",
         "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading key. Click on the \"?\" for more information.",
@@ -114,7 +115,23 @@
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
-            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise."
+            "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
+            "unsupportedExerciseType": "This exercise type does not support practice mode.",
+            "notAvailableInExam": "Practice mode is not available for exam exercises.",
+            "notSupportedForTeams": "Practice mode is not supported for team exercises.",
+            "programmingExercisesDisabled": "Practice mode for programming exercises is disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Practice mode for text and modeling exercises is unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active.",
+            "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
+        },
+        "feedbackRequest": {
+            "notAvailableInExam": "Feedback requests are not available for exam exercises.",
+            "unsupportedExerciseType": "This exercise type does not support feedback requests.",
+            "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Feedback requests for text and modeling exercises are unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active."
         },
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
@@ -125,7 +142,7 @@
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
             "malformedJson": "Couldn't parse {{ roomNumber }}, the JSON appears to be malformed",
             "missingRoomNumber": "Missing room number: please ensure none of your .json files have a blank name",
-            "parseIoException": "An internal error has occurred: {{ errorMessage }}",
+            "parseIoException": "An internal error has occurred while trying to parse the rooms",
             "missingNameOrBuilding": "Room {{ roomNumber }} doesn't specify a room name and/or building",
             "missingSeats": "Couldn't parse seats from room {{ roomNumber }}",
             "malformedRow": "Room {{ roomNumber }} has a missing or otherwise malformed row",
@@ -138,6 +155,7 @@
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
             "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout",
+            "duplicateRooms": "The room {{ roomNumber }} was attempted to upload more than once",
             "notFound": "The specified room does not exist",
             "alreadyInRoom": "The student already sits in this room",
             "noFreeSeats": "There are no free seats available",
@@ -165,6 +183,7 @@
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
         "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
+        "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
@@ -174,8 +193,9 @@
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
         "passkeyAuth": {
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
-            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
-            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+            "notSuperAdminApproved": "Your passkey is not approved by a super administrator. Double check in the user settings whether your passkey was super administrator approved and re-login in with the respective passkey.",
+            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance.",
+            "cannotRevokeInternalAdminPasskeyApproval": "Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead."
         },
         "CourseCompetency": {
             "wrongCourse": "The competency does not belong to the exercise's course.",
@@ -202,6 +222,82 @@
             "idMissing": "The modeling exercise must be saved before it can be converted.",
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
-        }
+        },
+        "PlagiarismPost": {
+            "idNull": "The plagiarism post must have an id.",
+            "courseInformationSharingDisabled": "Posting is disabled for this course.",
+            "plagiarismCaseMissing": "The post must be associated with a plagiarism case.",
+            "idExists": "A new post cannot already have an ID"
+        },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
+            "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementGenerationFailed": "Failed to generate problem statement. Please try again later.",
+            "problemStatementGenerationNull": "The AI returned an empty response. Please try again.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again."
+        },
+        "ProblemStatementRefinement": {
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
+            "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
+            "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
+            "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
+            "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
+            "refinedProblemStatementUnchanged": "The AI did not make any changes to the problem statement. Please adjust the refinement instructions and try again.",
+            "problemStatementRefinementFailed": "Failed to refine the problem statement. Please try again later.",
+            "textExtractionFailed": "Failed to extract the selected text for refinement. Please adjust your selection and try again.",
+            "invalidLineRange": "The selected line range is out of bounds. Please adjust your selection and try again.",
+            "invalidColumnRange": "The selected column range is invalid. Please adjust your selection and try again.",
+            "instructionEmpty": "The refinement instruction cannot be empty.",
+            "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
+        },
+        "ProblemStatementRewrite": {
+            "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
+            "problemStatementEmpty": "The problem statement cannot be empty.",
+            "problemStatementRewriteFailed": "Failed to rewrite problem statement. Please try again later.",
+            "problemStatementRewriteNull": "The AI returned an empty response. Please try again.",
+            "rewrittenProblemStatementTooLong": "The rewritten problem statement is too long. Please try again with a shorter input."
+        },
+        "noCourse": "An exam must belong to a course.",
+        "wrongCourseId": "The course ID does not match the course connected to the exam.",
+        "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
+        "negativePoints": "The maximum points for an exam must be greater than 0.",
+        "correctionRoundViolation": "Invalid number of correction rounds: Test exams must have 0 correction rounds, real exams must have 1 or 2 correction rounds.",
+        "attendanceCheckViolation": "Test exams cannot have attendance check enabled.",
+        "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
+        "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
+        "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
+        "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
+        "userManagement": {
+            "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
+            "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
+        },
+        "Bonus": {
+            "invalidSourceGradingScale": "The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists."
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "A new tutorial group configuration cannot already have an ID.",
+            "alreadyExists": "A tutorial group configuration already exists for this course.",
+            "courseHasNoTimeZone": "The course has no configured time zone.",
+            "idNull": "A tutorial group configuration cannot be updated without an id.",
+            "tutorialPeriodMissing": "Tutorial period start date and end date must be set.",
+            "tutorialPeriodInvalidFormat": "Tutorial period start date and end date must be valid ISO 8601 date strings.",
+            "tutorialPeriodInvalidOrder": "Tutorial period start date must be before tutorial period end date.",
+            "courseIdMismatch": "The course id in the path does not match the course of the tutorial group configuration.",
+            "tutorialGroupConfigurationIdMismatch": "The tutorial group configuration id in the path does not match the configuration to be updated."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Tutorial group free period start date must be set.",
+            "tutorialFreePeriodEndDateMissing": "Tutorial group free period end date must be set.",
+            "tutorialFreePeriodInvalidFormat": "Tutorial group free period start date and end date must be valid ISO 8601 date strings.",
+            "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
+            "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
+        },
+        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
     }
 }

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SimpleChange, SimpleChanges } from '@angular/core';
 import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,35 +26,27 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         comp = fixture.componentInstance;
-        comp.item = mockItem;
+        fixture.componentRef.setInput('item', mockItem);
+        fixture.componentRef.setInput('disableActions', false);
+        fixture.detectChanges();
     });
 
-    describe('ngOnChanges', () => {
-        it('should focus input when isBeingRenamed changes to true', fakeAsync(() => {
+    describe('isBeingRenamed', () => {
+        it('should focus input when isBeingRenamed changes to true', async () => {
+            fixture.componentRef.setInput('isBeingRenamed', true);
+            fixture.detectChanges();
             const mockElement = { focus: jest.fn() };
             comp.renamingInput = { nativeElement: mockElement } as any;
-            comp.isBeingRenamed = true;
-
-            const changes: SimpleChanges = {
-                isBeingRenamed: new SimpleChange(false, true, false),
-            };
-
-            comp.ngOnChanges(changes);
-            tick(10);
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(mockElement.focus).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should not focus input when isBeingRenamed changes to false', fakeAsync(() => {
             const mockElement = { focus: jest.fn() };
             comp.renamingInput = { nativeElement: mockElement } as any;
-            comp.isBeingRenamed = false;
-
-            const changes: SimpleChanges = {
-                isBeingRenamed: new SimpleChange(true, false, false),
-            };
-
-            comp.ngOnChanges(changes);
+            fixture.componentRef.setInput('isBeingRenamed', false);
+            fixture.detectChanges();
             tick(10);
 
             expect(mockElement.focus).not.toHaveBeenCalled();
@@ -63,14 +54,10 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
         it('should handle missing renamingInput', fakeAsync(() => {
             comp.renamingInput = undefined as any;
-            comp.isBeingRenamed = true;
-
-            const changes: SimpleChanges = {
-                isBeingRenamed: new SimpleChange(false, true, false),
-            };
 
             expect(() => {
-                comp.ngOnChanges(changes);
+                fixture.componentRef.setInput('isBeingRenamed', true);
+                fixture.detectChanges();
                 tick(10);
             }).not.toThrow();
         }));
@@ -103,7 +90,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
     describe('renameNode', () => {
         it('should emit onRenameNode when value is different and isBeingRenamed', () => {
             const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
-            comp.isBeingRenamed = true;
+            fixture.componentRef.setInput('isBeingRenamed', true);
+            fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
 
             comp.renameNode(event);
@@ -113,7 +101,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
         it('should not emit when value is empty', () => {
             const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
-            comp.isBeingRenamed = true;
+            fixture.componentRef.setInput('isBeingRenamed', true);
+            fixture.detectChanges();
             const event = { target: { value: '' } };
 
             comp.renameNode(event);
@@ -123,7 +112,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
         it('should not emit when isBeingRenamed is false', () => {
             const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
-            comp.isBeingRenamed = false;
+            fixture.componentRef.setInput('isBeingRenamed', false);
+            fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
 
             comp.renameNode(event);
@@ -134,7 +124,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         it('should emit onClearRenamingNode when value equals item text', () => {
             const clearSpy = jest.spyOn(comp.onClearRenamingNode, 'emit');
             const renameSpy = jest.spyOn(comp.onRenameNode, 'emit');
-            comp.isBeingRenamed = true;
+            fixture.componentRef.setInput('isBeingRenamed', true);
+            fixture.detectChanges();
             const event = { target: { value: 'test.ts' } };
 
             comp.renameNode(event);
@@ -158,9 +149,9 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
     describe('inputs', () => {
         it('should have default values for boolean inputs', () => {
-            expect(comp.hasError).toBeFalse();
-            expect(comp.hasUnsavedChanges).toBeFalse();
-            expect(comp.isBeingRenamed).toBeFalse();
+            expect(comp.hasError()).toBeFalse();
+            expect(comp.hasUnsavedChanges()).toBeFalse();
+            expect(comp.isBeingRenamed()).toBeFalse();
         });
 
         it('should accept item input', () => {
@@ -170,9 +161,10 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
                 children: [],
             });
 
-            comp.item = newItem;
+            fixture.componentRef.setInput('item', newItem);
+            fixture.detectChanges();
 
-            expect(comp.item).toEqual(newItem);
+            expect(comp.item()).toEqual(newItem);
         });
     });
 });

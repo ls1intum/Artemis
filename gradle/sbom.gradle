@@ -1,0 +1,75 @@
+// CycloneDX SBOM Configuration
+// Plugin "org.cyclonedx.bom" must be declared in build.gradle plugins block
+
+// CycloneDX SBOM Configuration (v3.x API)
+tasks.cyclonedxDirectBom {
+    includeConfigs = ["runtimeClasspath"]
+    skipConfigs = ["testCompileClasspath", "testRuntimeClasspath", "checkstyle", "mockitoAgent", "liquibaseRuntime"]
+    projectType = "application"
+    includeBomSerialNumber = true
+    includeLicenseText = false
+    // Output configuration for v3.x - use file properties instead of destination/outputName/outputFormat
+    jsonOutput = file("build/reports/sbom/server-sbom.json")
+    // Disable XML output
+    xmlOutput.unsetConvention()
+}
+
+// Task to generate client SBOM using @cyclonedx/cyclonedx-npm
+tasks.register("generateClientSbom", NpmTask) {
+    dependsOn "npm_install"
+    args = ["run", "sbom:generate"]
+    description = "Generate CycloneDX SBOM for client-side npm dependencies"
+    group = "reporting"
+}
+
+// Task to generate both server and client SBOMs
+tasks.register("generateAllSbom") {
+    dependsOn "cyclonedxBom", "generateClientSbom"
+    description = "Generate CycloneDX SBOMs for both server and client dependencies"
+    group = "reporting"
+}
+
+// Copy SBOMs to resources for runtime access (if they exist)
+// This task copies pre-generated SBOMs without forcing regeneration
+tasks.register("copySbomsToResources") {
+    description = "Copy SBOM files to resources if they exist"
+    group = "build"
+
+    // If cyclonedxBom runs, it must run before this task
+    mustRunAfter "cyclonedxBom"
+
+    doLast {
+        def sbomDir = file("build/resources/main/sbom")
+        sbomDir.mkdirs()
+
+        def serverSbom = file("build/reports/sbom/server-sbom.json")
+        if (serverSbom.exists()) {
+            copy {
+                from serverSbom
+                into sbomDir
+            }
+            logger.lifecycle("Copied server SBOM to resources")
+        }
+
+        def clientSbom = file("build/reports/client-sbom.json")
+        if (clientSbom.exists()) {
+            copy {
+                from clientSbom
+                into sbomDir
+            }
+            logger.lifecycle("Copied client SBOM to resources")
+        }
+    }
+}
+
+// Ensure copySbomsToResources runs after processResources
+tasks.named("processResources") {
+    finalizedBy "copySbomsToResources"
+}
+
+// For production builds, generate both server and client SBOMs before copying
+if (project.hasProperty("prod")) {
+    tasks.named("copySbomsToResources") {
+        dependsOn "cyclonedxBom", "generateClientSbom"
+    }
+}

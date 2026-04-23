@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -226,8 +226,12 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        // an empty string is considered as null to satisfy the unique constraint on registration number
-        if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+
+        // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
+        if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(null);
+        }
+        else {
             user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
         }
         if (updatedUserDTO.getImageUrl() != null) {

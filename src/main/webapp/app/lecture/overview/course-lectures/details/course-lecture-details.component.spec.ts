@@ -14,7 +14,6 @@ import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectu
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -111,7 +110,6 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(OnlineUnitComponent),
-                CompetenciesPopoverComponent,
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,
@@ -356,6 +354,56 @@ describe('CourseLectureDetailsComponent', () => {
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
         expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
+    });
+
+    describe('ensureValidDeepLinkTargets', () => {
+        it('should preserve timestamp for unit with only video', () => {
+            const videoUnit = new AttachmentVideoUnit();
+            videoUnit.id = 100;
+            videoUnit.videoSource = 'https://example.com/video.mp4';
+            videoUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [videoUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(100);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
+
+        it('should preserve page for unit with only PDF', () => {
+            const pdfUnit = new AttachmentVideoUnit();
+            pdfUnit.id = 101;
+            pdfUnit.attachment = new Attachment();
+            pdfUnit.attachment.link = '/path/to/slides.pdf';
+            pdfUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [pdfUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(101);
+            courseLecturesDetailsComponent.targetPdfPage.set(5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(5);
+        });
+
+        it('should preserve timestamp when unit has both video and PDF', () => {
+            const unitWithBoth = new AttachmentVideoUnit();
+            unitWithBoth.id = 102;
+            unitWithBoth.videoSource = 'https://example.com/video.mp4';
+            unitWithBoth.attachment = new Attachment();
+            unitWithBoth.attachment.link = '/path/to/slides.pdf';
+            unitWithBoth.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [unitWithBoth];
+            courseLecturesDetailsComponent.targetUnitId.set(102);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
     });
 });
 

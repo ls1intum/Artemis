@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
+
 /**
  * Data Transfer Object for Online Courses.
  * Contains essential fields for representing an online course in the system.
@@ -21,4 +23,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record OnlineCourseDTO(Long id, String title, String shortName, String registrationId, ZonedDateTime startDate, ZonedDateTime endDate, String description,
         Long numberOfStudents) {
+
+    /**
+     * Creates an OnlineCourseDTO from a Course entity.
+     *
+     * @param course the course entity to convert
+     * @return an OnlineCourseDTO containing the course data
+     */
+    public static OnlineCourseDTO from(Course course) {
+        var onlineCourseConfig = course.getOnlineCourseConfiguration();
+        String registrationId = null;
+        if (onlineCourseConfig != null && onlineCourseConfig.getLtiPlatformConfiguration() != null) {
+            registrationId = onlineCourseConfig.getLtiPlatformConfiguration().getRegistrationId();
+        }
+        return new OnlineCourseDTO(course.getId(), course.getTitle(), course.getShortName(), registrationId, course.getStartDate(), course.getEndDate(), course.getDescription(),
+                course.getNumberOfStudents());
+    }
 }

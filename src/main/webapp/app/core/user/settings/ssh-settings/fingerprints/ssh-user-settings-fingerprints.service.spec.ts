@@ -1,9 +1,13 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { SshUserSettingsFingerprintsService } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 describe('SshUserSettingsFingerprintsService', () => {
+    setupTestBed({ zoneless: true });
+
     let sshFingerprintsService: SshUserSettingsFingerprintsService;
     let httpMock: HttpTestingController;
 
@@ -19,11 +23,14 @@ describe('SshUserSettingsFingerprintsService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should get SSH fingerprints', fakeAsync(() => {
-        sshFingerprintsService.getSshFingerprints();
-        httpMock.expectOne({ method: 'GET', url: getUserUrl });
-    }));
+    it('should get SSH fingerprints', async () => {
+        const promise = sshFingerprintsService.getSshFingerprints();
+        const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        expect(req.request.url).toBe(getUserUrl);
+        req.flush({});
+        await promise;
+    });
 });

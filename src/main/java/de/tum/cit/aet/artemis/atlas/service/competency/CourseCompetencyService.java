@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -42,6 +41,7 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -89,13 +89,13 @@ public class CourseCompetencyService {
 
     private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
 
-    private final AtlasMLService atlasMLService;
+    private final Optional<AtlasMLService> atlasMLService;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, @Lazy AtlasMLService atlasMLService) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, Optional<AtlasMLService> atlasMLService) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -222,7 +222,7 @@ public class CourseCompetencyService {
      * @param importOptions      the import options
      * @return The set of imported course competencies, each also containing the relations it is the tail competency for.
      */
-    public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<CourseCompetency> courseCompetencies, CompetencyImportOptionsDTO importOptions) {
+    public Set<CompetencyWithTailRelation> importCourseCompetencies(Course course, Collection<CourseCompetency> courseCompetencies, CompetencyImportOptionsDTO importOptions) {
         Function<CourseCompetency, CourseCompetency> createNewCourseCompetency = courseCompetency -> switch (courseCompetency) {
             case Competency competency -> new Competency(competency);
             case Prerequisite prerequisite -> new Prerequisite(prerequisite);
@@ -241,9 +241,9 @@ public class CourseCompetencyService {
      * @param createNewCourseCompetency the function that creates new course competencies
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
-    public Set<CompetencyWithTailRelationDTO> importCourseCompetencies(Course course, Collection<? extends CourseCompetency> competenciesToImport,
+    public Set<CompetencyWithTailRelation> importCourseCompetencies(Course course, Collection<? extends CourseCompetency> competenciesToImport,
             CompetencyImportOptionsDTO importOptions, Function<CourseCompetency, CourseCompetency> createNewCourseCompetency) {
-        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
+        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelation>();
 
         Set<CourseCompetency> competenciesInCourse = courseCompetencyRepository.findAllForCourse(course.getId());
 
@@ -252,14 +252,14 @@ public class CourseCompetencyService {
                     .filter(competency -> competency.getType().equals(courseCompetency.getType())).findFirst();
             CourseCompetency importedCompetency = existingCompetency.orElse(createNewCourseCompetency.apply(courseCompetency));
             importedCompetency.setCourse(course);
-            idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
+            idToImportedCompetency.put(courseCompetency.getId(), new CompetencyWithTailRelation(importedCompetency, new ArrayList<>()));
         }
-        courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList());
+        courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelation::competency).toList());
 
         // Save imported competencies to AtlasML (always using list-based API)
         List<Competency> allCompetenciesForAtlas = new ArrayList<>();
 
-        for (CompetencyWithTailRelationDTO competencyDTO : idToImportedCompetency.values()) {
+        for (CompetencyWithTailRelation competencyDTO : idToImportedCompetency.values()) {
             CourseCompetency importedCompetency = competencyDTO.competency();
             if (importedCompetency instanceof Competency competency) {
                 allCompetenciesForAtlas.add(competency);
@@ -272,7 +272,7 @@ public class CourseCompetencyService {
         }
 
         if (!allCompetenciesForAtlas.isEmpty()) {
-            atlasMLService.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE);
+            atlasMLService.ifPresent(service -> service.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE));
         }
 
         if (importOptions.importRelations()) {
@@ -438,6 +438,17 @@ public class CourseCompetencyService {
         });
 
         return competencies;
+    }
+
+    /**
+     * Gets the course progress for all competencies of a course.
+     *
+     * @param course the course entity
+     * @return a list of course competency progress DTOs
+     */
+    public List<CourseCompetencyProgressDTO> getCourseProgressForAllCompetencies(Course course) {
+        return courseCompetencyRepository.findByCourseIdWithExercises(course.getId()).stream()
+                .map(competency -> competencyProgressService.getCompetencyCourseProgress(competency, course)).toList();
     }
 
     /**

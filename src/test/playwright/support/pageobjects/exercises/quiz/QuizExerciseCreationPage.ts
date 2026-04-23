@@ -50,7 +50,11 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         // Use specific selector for the short answer question editor
         const textInputField = this.page.locator('.edit-sa-question');
         await setMonacoEditorContentByLocator(this.page, textInputField, fileContent!);
-        await this.page.locator('#short-answer-show-visual').click();
+        // Wait for the visual toggle to be ready before clicking
+        const visualToggle = this.page.locator('#short-answer-show-visual');
+        await visualToggle.waitFor({ state: 'visible' });
+        await expect(visualToggle).toBeEnabled();
+        await visualToggle.click();
     }
 
     async addDragAndDropQuestion(title: string) {
@@ -61,7 +65,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
 
         // Wait for the click-layer to be enabled (background image loaded)
         const clickLayer = this.page.locator('.click-layer:not(.disabled)');
-        await clickLayer.waitFor({ state: 'visible', timeout: 10000 });
+        await clickLayer.waitFor({ state: 'visible', timeout: 20000 });
 
         const element = this.page.locator('.background-area');
         const boundingBox = await element.boundingBox();
@@ -127,10 +131,11 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     async saveQuiz() {
         const saveButton = this.page.locator('#quiz-save');
         await saveButton.scrollIntoViewIfNeeded();
-        // Wait for the save button to be enabled before clicking
+        // Wait for the save button to be visible AND enabled.
+        // After complex question creation (DnD drag operations, image uploads, Monaco editor),
+        // Angular's form validation may take several seconds to complete.
         await saveButton.waitFor({ state: 'visible', timeout: 30000 });
-        // Ensure the page has finished any pending operations
-        await this.page.waitForLoadState('networkidle');
+        await expect(saveButton).toBeEnabled({ timeout: 30000 });
         const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION, { timeout: 60000 });
         await saveButton.click();
         return await responsePromise;

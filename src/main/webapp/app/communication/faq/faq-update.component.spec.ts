@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -17,13 +19,15 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
     let faqUpdateComponent: FaqUpdateComponent;
     let faqService: FaqService;
@@ -33,8 +37,17 @@ describe('FaqUpdateComponent', () => {
     let faq1: Faq;
     let courseId: number;
 
-    let alertServiceStub: jest.SpyInstance;
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         faq1 = new Faq();
@@ -43,10 +56,12 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
-        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+        const mockProfileInfo = {
+            activeModuleFeatures: ['hyperion'] as ModuleFeature[],
+        };
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 FaqUpdateComponent,
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockPipe(HtmlForMarkdownPipe),
@@ -89,17 +104,16 @@ describe('FaqUpdateComponent', () => {
                 }),
 
                 MockProvider(ProfileService, {
-                    getProfileInfo: () => mockProfileInfo,
+                    // The mock must return a boolean to match the service method signature
+                    isModuleFeatureActive: (feature: ModuleFeature) => mockProfileInfo.activeModuleFeatures.includes(feature),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 provideHttpClient(),
             ],
-        }).compileComponents();
-
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
         });
+
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
@@ -113,14 +127,10 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponentFixture.detectChanges();
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should create faq', fakeAsync(() => {
+    it('should create faq', () => {
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.isAtLeastInstructor = true;
-        const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
+        const createSpy = vi.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {
@@ -134,18 +144,17 @@ describe('FaqUpdateComponent', () => {
             ),
         );
 
-        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.save();
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
-        expect(faqUpdateComponent.isSaving).toBeFalse();
-    }));
+        expect(faqUpdateComponent.isSaving).toBe(false);
+    });
 
-    it('should propose faq', fakeAsync(() => {
+    it('should propose faq', () => {
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.isAtLeastInstructor = false;
-        const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
+        const createSpy = vi.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
                     body: {
@@ -159,21 +168,19 @@ describe('FaqUpdateComponent', () => {
             ),
         );
 
-        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.save();
-        tick();
+        vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
-        expect(faqUpdateComponent.isSaving).toBeFalse();
-    }));
+        expect(faqUpdateComponent.isSaving).toBe(false);
+    });
 
-    it('should edit a faq', fakeAsync(() => {
+    it('should edit a faq', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
         faqUpdateComponent.isAtLeastInstructor = true;
-        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
-        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
+        const updateSpy = vi.spyOn(faqService, 'update').mockReturnValue(
             of<HttpResponse<Faq>>(
                 new HttpResponse({
                     body: {
@@ -189,18 +196,17 @@ describe('FaqUpdateComponent', () => {
         );
 
         faqUpdateComponent.save();
-        tick();
+        vi.advanceTimersByTime(0);
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'ACCEPTED' });
-    }));
+    });
 
-    it('should propose to edit a faq', fakeAsync(() => {
+    it('should propose to edit a faq', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
         faqUpdateComponent.isAtLeastInstructor = false;
-        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
-        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
+        const updateSpy = vi.spyOn(faqService, 'update').mockReturnValue(
             of<HttpResponse<Faq>>(
                 new HttpResponse({
                     body: {
@@ -216,58 +222,58 @@ describe('FaqUpdateComponent', () => {
         );
 
         faqUpdateComponent.save();
-        tick();
+        vi.advanceTimersByTime(0);
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
-    }));
+    });
 
-    it('should navigate to previous state', fakeAsync(() => {
+    it('should navigate to previous state', () => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6, questionTitle: '', course: { id: 1 } } });
 
         faqUpdateComponent.ngOnInit();
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const previousState = jest.spyOn(faqUpdateComponent, 'previousState');
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const previousState = vi.spyOn(faqUpdateComponent, 'previousState');
         faqUpdateComponent.previousState();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(previousState).toHaveBeenCalledOnce();
 
         const expectedPath = ['course-management', 1, 'faqs'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
-    }));
+    });
 
-    it('should update categories', fakeAsync(() => {
+    it('should update categories', () => {
         const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.updateCategories(categories);
         expect(faqUpdateComponent.faqCategories).toEqual(categories);
         expect(faqUpdateComponent.faq.categories).toEqual(categories);
-    }));
+    });
 
-    it('should not be able to save unless title and question are filled', fakeAsync(() => {
+    it('should not be able to save unless title and question are filled', () => {
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
+        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
         faqUpdateComponent.faq = { questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
+        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
         faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBeTrue();
-    }));
+        expect(faqUpdateComponent.isAllowedToSave).toBe(true);
+    });
 
-    it('should fail while saving with ErrorResponse', fakeAsync(() => {
-        alertServiceStub = jest.spyOn(alertService, 'error');
+    it('should fail while saving with ErrorResponse', () => {
+        alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
-        jest.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        vi.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqUpdateComponent.save();
-        expect(faqUpdateComponent.isSaving).toBeFalse();
+        expect(faqUpdateComponent.isSaving).toBe(false);
         expect(alertServiceStub).toHaveBeenCalledOnce();
-        flush();
-    }));
+        vi.runAllTimers();
+    });
 
     it('should handleMarkdownChange properly', () => {
         faqUpdateComponent.faq = { questionTitle: 'test1', questionAnswer: 'answer' } as Faq;
@@ -275,23 +281,26 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
     });
 
-    it('should have no intelligence action when IRIS is not active', () => {
+    it('should have no intelligence action when HYPERION is not active', () => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponentFixture.detectChanges();
 
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
+
         expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
     });
 
-    it('should have intelligence action when IRIS is active', () => {
-        const isProfileActiveSpy = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+    it('should have intelligence action when HYPERION is active', () => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponent.courseId = 1;
         faqUpdateComponentFixture.detectChanges();
 
-        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
 
         const actions = faqUpdateComponent.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);

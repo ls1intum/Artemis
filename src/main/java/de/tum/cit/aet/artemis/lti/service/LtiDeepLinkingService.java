@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -11,8 +9,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -28,6 +26,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.dto.LineItem;
 import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
 import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
@@ -39,7 +38,7 @@ import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
  */
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class LtiDeepLinkingService {
 
     @Value("${server.url}")

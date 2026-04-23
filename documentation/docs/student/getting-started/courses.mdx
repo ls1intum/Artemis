@@ -1,0 +1,82 @@
+---
+title: Courses
+sidebar_label: Courses
+---
+
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import courseEnrollmentImg from "../assets/courses/course-enrollment-placeholder.png";
+
+# Courses
+
+Courses in Artemis contain exercises, exams, and lectures. As a student, you can enroll in courses, access learning materials, and track your progress.
+
+---
+
+## Enrollment
+
+If the instructor has enabled student enrollment, you can enroll in a course directly from the Overview page. Navigate to the course and click the **Course Enrollment** button in the upper right corner. A confirmation message may appear depending on the course configuration.
+
+Some courses may have **prerequisites**, i.e. competencies you should have mastered before enrolling. You can view these prerequisites before enrolling by clicking the prerequisites button next to the course.
+
+{/* TODO: Replace with a current screenshot of the course enrollment page */}
+<Image src={courseEnrollmentImg} alt={"Course Enrollment"} size={ImageSize.large} />
+
+---
+
+## My Courses
+
+After enrolling, your courses appear on the **My Courses** page. Each course card shows:
+
+- The course title and a notification badge for unread messages
+- Your current score and a progress chart showing achieved vs. missing points
+- The next upcoming exercise you should work on
+
+You can **search** courses by title and **sort** them alphabetically. If you have more than five courses, they are automatically grouped into **Recently Accessed** and **Other Courses** sections.
+
+If you have an upcoming exam in any course, a prominent banner appears at the top of the page with the exam details.
+
+---
+
+## Course Sidebar
+
+Once you open a course, the left sidebar provides navigation to all course content. The available items depend on your course's configuration and may include:
+
+- **Dashboard:** Shows your overall performance with a progress bar of achieved vs. reachable points, a chart comparing your exercise scores to the class average, and a visualization of how early or late you submitted relative to other students.
+- **Exercises:** Lists all course exercises organized by time period (future, due soon, current, past). Click on an exercise to view its problem statement, submit your solution, and review feedback.
+- **Lectures:** Access lecture slides, videos, and attachments. Lecture units can be linked to competencies so you can see how they connect to the course learning objectives.
+- **Exams:** View upcoming and past exams. From here you can participate in exams during the exam window and review your results and grades after the exam has been assessed.
+- **Communication:** Post questions, participate in discussions, and receive announcements through course channels. You can also send direct messages to other course participants.
+- **Tutorial Groups:** View your enrolled tutorial groups and browse other available groups. Each group page shows the schedule with all upcoming and past sessions.
+- **Competencies:** Track your progress and mastery across the course's learning objectives. Each competency shows linked exercises and lectures so you know what to work on.
+- **Learning Path:** Receive personalized recommendations on which lecture units to study and which exercises to attempt next, based on your current progress and competency mastery.
+- **Training:** Practice quiz questions in a spaced-repetition training mode outside of graded exercises. Earn points and advance through leagues as you answer correctly.
+- **Statistics:** View your personal performance analytics including a donut chart of overall points, a line chart comparing your scores to the course average, and a breakdown of points per exercise type.
+- **Calendar:** See all exercise deadlines, lecture dates, and course events in a calendar view so you can plan your workload.
+- **FAQ:** Browse frequently asked questions curated by the course instructors.
+- **Iris:** Get help from the AI tutor. Iris can answer questions about programming exercises, text exercises, and lecture content, and is also available as a course-wide chat assistant.
+- **Settings:** Configure your notification preferences. Choose a preset or customize which notification types you receive through web, email, or push channels.
+
+You can collapse the sidebar to icon-only mode using **Ctrl+M** or the toggle button. The course icon at the top of the sidebar also serves as a **course switcher**, letting you quickly navigate between recently accessed courses.
+
+---
+
+## Unenrollment
+
+If your instructor has enabled unenrollment, you can leave a course through the sidebar. The unenrollment option is available until the configured end date.
+
+To unenroll, you must type the exact course title to confirm. Be aware that depending on the enrollment settings, you may or may not be able to re-enroll after leaving.
+
+---
+
+## Course Archive
+
+Courses from previous semesters are available in the **Course Archive**, accessible from the bottom of the My Courses page. Archived courses are grouped by semester and can be searched and sorted.
+
+---
+
+## Course Settings
+
+Each course has a **Settings** page (accessible from the sidebar) where you can configure your **notification preferences**. You can choose a preset (e.g., "All notifications" or "Only important") or customize which notification types you receive and through which channels (web, email, or push).
+
+A quick-access notification preset picker is also available directly in the course header bar.

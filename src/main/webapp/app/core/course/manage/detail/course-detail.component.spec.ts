@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { MockProvider } from 'ng-mocks';
@@ -63,6 +63,7 @@ describe('Course Management Detail Component', () => {
     const mockActivatedRoute = {
         data: courseDataSubject.asObservable(),
         params: of({ courseId: course.id }),
+        queryParams: of({}),
     } as unknown as ActivatedRoute;
 
     beforeEach(async () => {
@@ -82,6 +83,7 @@ describe('Course Management Detail Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
+                MockProvider(Router),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
@@ -103,8 +105,8 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should make iris settings call when instructor', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
+        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true, onboardingDone: true } });
         const irisSpy = vi
             .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
             .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));
@@ -113,7 +115,7 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should not make iris settings call when not instructor', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
         const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         await component.ngOnInit();
@@ -127,11 +129,15 @@ describe('Course Management Detail Component', () => {
         await Promise.resolve();
         expect(component.courseDTO()).toEqual(dtoMock);
         // Course will have organizations added from the mocked service
-        expect(component.course()).toEqual({ ...course, organizations: [] });
+        const expectedCourse = Object.assign(new Course(), course, { organizations: [] });
+        expect(component.course()).toEqual(expectedCourse);
         expect(registerSpy).toHaveBeenCalledOnce();
     });
 
-    it('should destroy event subscriber onDestroy', () => {
+    it('should destroy event subscriber onDestroy', async () => {
+        const mockSubscription = {} as any;
+        vi.spyOn(eventManager, 'subscribe').mockReturnValue(mockSubscription);
+        await component.ngOnInit();
         const destroySpy = vi.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();

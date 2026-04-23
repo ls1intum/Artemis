@@ -1,7 +1,11 @@
 artemis:
     atlas:
         enabled: true
+        atlasml:
+            enabled: false
     hyperion:
+        enabled: false
+    iris:
         enabled: false
     exam:
         enabled: true
@@ -27,6 +31,8 @@ artemis:
 
     tutorialgroup:
         enabled: true
+    lti:
+        enabled: false
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
@@ -40,14 +46,12 @@ spring:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed
         exclude:
-          # Important: Make sure to keep the exclusions in sync with the `application-buildagent.yml` file, except for the build agent specific exclusions
-          - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
-          # We can exclude this autoconfiguration. Using standard SpringDocs https://springdoc.org/ is fine and when excluding this, we avoid coupling OpenAPI specs to a profile
-          - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
+          # Important: Keep in sync with application-buildagent.yml (except build agent specific exclusions)
+          - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
+          # Note: DataSourcePoolMetricsAutoConfiguration is NOT excluded — it registers hikaricp.connections.* gauges for the admin metrics page
+          - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
     cloud:
         loadbalancer:
             cache:
@@ -57,10 +61,10 @@ management:
     endpoint:
         health:
             show-details: when_authorized
-            roles: 'ROLE_ADMIN'
+            roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
-        jhimetrics:
+        artemismetrics:
             access: read_only
     metrics:
         enable:

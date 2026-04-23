@@ -14,7 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -27,8 +27,6 @@ import { CommonModule } from '@angular/common';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -46,7 +44,6 @@ import { FeatureActivationComponent } from 'app/shared/feature-activation/featur
         SortDirective,
         CommonModule,
         CourseTitleBarActionsDirective,
-        FeatureActivationComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -110,8 +107,8 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        const irisProfileActive = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (irisProfileActive) {
+        const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        if (irisEnabled) {
             this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
                 this.irisEnabled = response?.settings?.enabled || false;
             });
@@ -227,13 +224,5 @@ export class FaqComponent implements OnInit, OnDestroy {
                 },
             });
         }
-    }
-    enableFaq() {
-        this.faqService.enable(this.courseId).subscribe({
-            next: () => {
-                this.course.faqEnabled = true;
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
     }
 }

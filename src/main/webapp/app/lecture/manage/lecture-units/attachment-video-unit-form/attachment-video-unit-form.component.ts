@@ -1,8 +1,8 @@
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
+import { faArrowLeft, faCircleInfo, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -13,6 +13,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -51,15 +53,13 @@ function videoSourceTransformUrlValidator(control: AbstractControl): ValidationE
     if (!urlValue) {
         return undefined;
     }
-    let parsedUrl, url;
+    let url;
     try {
         url = new URL(urlValue);
-        parsedUrl = urlParser.parse(urlValue);
     } catch {
-        //intentionally empty
+        // intentionally empty
     }
-    // The URL is valid if it's a TUM-Live URL or if it can be parsed by the js-video-url-parser.
-    if ((url && isTumLiveUrl(url)) || parsedUrl) {
+    if ((url && isTumLiveUrl(url)) || parseVideoUrl(urlValue)) {
         return undefined;
     }
     return { invalidVideoUrl: true };
@@ -85,12 +85,24 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+        FeatureToggleHideDirective,
+    ],
 })
 export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly FeatureToggle = FeatureToggle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
@@ -238,14 +250,11 @@ export class AttachmentVideoUnitFormComponent {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
-        const videoInfo = urlParser.parse(videoUrl);
-        if (!videoInfo) {
+        const parsed = parseVideoUrl(videoUrl);
+        if (!parsed) {
             return videoUrl;
         }
-        return urlParser.create({
-            videoInfo,
-            format: 'embed',
-        });
+        return buildEmbedUrl(parsed);
     }
 
     cancelForm() {

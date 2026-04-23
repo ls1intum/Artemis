@@ -1,6 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import warnSphinxRefs from './src/remark/warn-sphinx-refs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
@@ -22,10 +23,10 @@ const config: Config = {
     },
 
     // Set the production url of your site here
-    url: 'https://ls1intum.github.io/',
+    url: 'https://docs.artemis.tum.de',
     // Set the /<baseUrl>/ pathname under which your site is served
-    // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/Artemis/',
+    // For custom domains, use '/'
+    baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
@@ -33,6 +34,13 @@ const config: Config = {
     projectName: 'Artemis', // Usually your repo name.
 
     onBrokenLinks: 'throw',
+    onBrokenAnchors: 'throw',
+
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'throw',
+        },
+    },
 
     // Even if you don't use internationalization, you can use this field to set
     // useful metadata like html lang. For example, if your site is Chinese, you
@@ -47,6 +55,7 @@ const config: Config = {
             'classic',
             {
                 docs: false,
+                blog: false,
                 theme: {
                     customCss: './src/css/custom.css',
                 },
@@ -62,7 +71,8 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
+                indexBlog: false,
+                docsRouteBasePath: ['student', 'instructor', 'developer', 'admin'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -73,11 +83,11 @@ const config: Config = {
                         path: 'instructor'
                     },
                     {
-                        label: 'Development',
-                        path: 'staff'
+                        label: 'Developer Guide',
+                        path: 'developer'
                     },
                     {
-                        label: 'Admin',
+                        label: 'Admin Guide',
                         path: 'admin'
                     }
                 ],
@@ -95,6 +105,7 @@ const config: Config = {
                 sidebarPath: './sidebar-students.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
@@ -106,17 +117,19 @@ const config: Config = {
                 sidebarPath: './sidebar-instructors.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'staff',
-                path: 'docs/staff',
-                routeBasePath: 'staff',
-                sidebarPath: './sidebar-staff.ts',
+                id: 'developer',
+                path: 'docs/developer',
+                routeBasePath: 'developer',
+                sidebarPath: './sidebar-developer.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
@@ -128,6 +141,7 @@ const config: Config = {
                 sidebarPath: './sidebar-admin.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
     ],
@@ -145,6 +159,11 @@ const config: Config = {
                 src: 'img/artemis-favicon.svg',
             },
             items: [
+                {
+                    to: '/compare',
+                    label: 'Compare',
+                    position: 'left',
+                },
                 {
                     href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                     label: 'GitHub',

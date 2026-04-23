@@ -8,19 +8,19 @@
             <div class="col">
                 <dl class="row-md jh-entity-details">
                     <dt><span jhiTranslate="global.field.id"></span></dt>
-                    <dd>{{ organization().id }}</dd>
+                    <dd>{{ organization().id ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
-                    <dd>{{ organization().name }}</dd>
+                    <dd>{{ organization().name ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
-                    <dd>{{ organization().shortName }}</dd>
+                    <dd>{{ organization().shortName ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
-                    <dd>{{ organization().url }}</dd>
+                    <dd>{{ organization().url ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
-                    <dd>{{ organization().logoUrl }}</dd>
+                    <dd>{{ organization().logoUrl ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
-                    <dd>{{ organization().description }}</dd>
+                    <dd>{{ organization().description ?? '-' }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
-                    <dd>{{ organization().emailPattern }}</dd>
+                    <dd>{{ organization().emailPattern ?? '-' }}</dd>
                 </dl>
             </div>
         </div>
@@ -28,133 +28,49 @@
             <h3>
                 <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
             </h3>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th><span jhiTranslate="global.field.id"></span></th>
-                            <th><span jhiTranslate="artemisApp.course.title"></span></th>
-                            <th><span jhiTranslate="artemisApp.course.shortName"></span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (course of organization().courses; track course) {
-                            <tr>
-                                <td>
-                                    <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
-                                </td>
-                                <td>
-                                    <span>{{ course.title }}</span>
-                                </td>
-                                <td>
-                                    <span>{{ course.shortName }}</span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <jhi-table-view
+                [cols]="courseColumns()"
+                [vals]="courses()"
+                [totalRows]="coursesTotal()"
+                [loading]="coursesLoading()"
+                (onLazyLoad)="loadCourses($event)"
+                [options]="tableOptions"
+            />
         </div>
     </div>
     <div class="container p-2">
         <h3>
             <span jhiTranslate="artemisApp.organizationManagement.users"></span>
         </h3>
-        <jhi-data-table
-            [isLoading]="isLoading()"
-            [isSearching]="isSearching()"
-            [searchFailed]="searchFailed()"
-            [searchNoResults]="searchNoResults()"
-            [isTransitioning]="isTransitioning()"
-            entityType="user"
-            [allEntities]="organization().users!"
-            entitiesPerPageTranslation="artemisApp.organizationManagement.userSearch.usersPerPage"
-            showAllEntitiesTranslation="artemisApp.organizationManagement.userSearch.showAllUsers"
-            searchNoResultsTranslation="artemisApp.organizationManagement.userSearch.searchNoResults"
-            searchPlaceholderTranslation="artemisApp.organizationManagement.userSearch.searchForUsers"
-            [searchFields]="['login', 'name']"
-            [searchTextFromEntity]="searchTextFromUser"
-            [searchResultFormatter]="searchResultFormatter"
-            [onSearchWrapper]="searchAllUsers"
-            [onAutocompleteSelectWrapper]="onAutocompleteSelect"
-            (entitiesSizeChange)="handleUsersSizeChange($event)"
-        >
-            <ng-template let-settings="settings" let-controls="controls">
-                <ngx-datatable
-                    class="bootstrap"
-                    [limit]="settings.limit"
-                    [sortType]="settings.sortType"
-                    [columnMode]="settings.columnMode"
-                    [headerHeight]="settings.headerHeight"
-                    [footerHeight]="settings.footerHeight"
-                    [rowHeight]="settings.rowHeight"
-                    [rows]="settings.rows"
-                    [rowClass]="dataTableRowClass"
-                    [scrollbarH]="settings.scrollbarH"
-                >
-                    <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('id')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.login"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('login')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.name"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('name')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
-                        <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.email"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('email')" />
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
-                        <ng-template ngx-datatable-header-template />
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <div class="w-100 text-end">
-                                <button
-                                    jhiDeleteButton
-                                    [actionType]="ActionType.Remove"
-                                    [entityTitle]="value.login"
-                                    deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
-                                    (delete)="removeFromOrganization(value)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faUserSlash" class="me-1" />
-                                </button>
-                            </div>
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
-            </ng-template>
-        </jhi-data-table>
+        <jhi-table-view
+            [cols]="userColumns()"
+            [vals]="users()"
+            [totalRows]="usersTotal()"
+            [loading]="usersLoading()"
+            [rowActions]="userActions"
+            (onLazyLoad)="loadUsers($event)"
+            [options]="tableOptions"
+        />
     </div>
 </div>
+
+<ng-template #userIdTemplate let-cell>
+    <a [routerLink]="['/admin/user-management', cell.data.login]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #courseIdTemplate let-cell>
+    <a [routerLink]="['/course-management', cell.value]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #userActions let-user>
+    <button
+        jhiDeleteButton
+        [actionType]="ActionType.Remove"
+        [entityTitle]="user.login || user.email || ''"
+        deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
+        (delete)="removeFromOrganization(user)"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faUserSlash" class="me-1" />
+    </button>
+</ng-template>

@@ -6,7 +6,9 @@
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
-    <jhi-page-ribbon />
+    @if (showPageRibbon) {
+        <jhi-page-ribbon />
+    }
     @if (showSkeleton && !isShownViaLti) {
         <div class="sticky-top-navbar">
             <router-outlet name="navbar" />
@@ -22,9 +24,14 @@
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />
+    <jhi-llm-selection-modal />
     @if (showSkeleton && !isShownViaLti) {
         @if (isTestRunExam || !isExamStarted) {
             <jhi-footer />
         }
+    }
+    <!-- Global Search Modal -->
+    @if (globalSearchEnabled && showSkeleton && !isShownViaLti && (!isExamStarted || isTestRunExam)) {
+        <jhi-global-search-modal />
     }
 </div>

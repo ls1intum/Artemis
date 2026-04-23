@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,9 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -25,8 +30,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -54,7 +61,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -94,15 +106,15 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     private IrisJsonMessageContent createMockJsonContent() {
         var jsonMap = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
-        JsonNode jsonNode = new ObjectMapper().valueToTree(jsonMap);
+        JsonNode jsonNode = JsonObjectMapper.get().valueToTree(jsonMap);
         return new IrisJsonMessageContent(jsonNode);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisProgrammingExerciseChatSession.class, HttpStatus.CREATED);
-        var actualIrisSession = irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId());
+        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var actualIrisSession = irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.id());
         assertThat(actualIrisSession.getUserId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
         assertThat(exercise.getId()).isEqualTo(actualIrisSession.getExerciseId());
     }
@@ -110,26 +122,26 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession_alreadyExists() throws Exception {
-        var firstResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var secondResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var firstResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var secondResponse = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         assertThat(firstResponse).isNotEqualTo(secondResponse);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var currentIrisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisSession.class, HttpStatus.OK);
-        assertThat(currentIrisSession).isEqualTo(irisSession);
+        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var currentIrisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessions() throws Exception {
-        var irisSession1 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var irisSession2 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        List<IrisSession> irisSessions = request.getList(exerciseChatUrl(exercise.getId()), HttpStatus.OK, IrisSession.class);
-        assertThat(irisSessions).hasSize(2).containsAll(List.of(irisSession1, irisSession2));
+        var irisSession1 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var irisSession2 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        List<IrisChatSessionResponseDTO> irisSessions = request.getList(exerciseChatUrl(exercise.getId()), HttpStatus.OK, IrisChatSessionResponseDTO.class);
+        assertThat(irisSessions).hasSize(2).extracting(IrisChatSessionResponseDTO::id).containsExactlyInAnyOrder(irisSession1.id(), irisSession2.id());
     }
 
     @Test
@@ -155,12 +167,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseWithIrisSession() throws Exception {
-        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
+        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.id())).isNotNull();
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
+        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.id()))).isFalse();
     }
 
     @Test
@@ -303,10 +315,10 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
         var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
 
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.id()).isNotNull();
     }
 
     @Test
@@ -330,10 +342,10 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
         var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles);
 
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.id()).isNotNull();
     }
 
     @Test
@@ -352,12 +364,21 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
         var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
 
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
-        assertThat(response.getContent()).hasSize(3);
-        assertThat(response.getContent().get(0)).isInstanceOf(de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent.class);
+        assertThat(response.id()).isNotNull();
+        assertThat(response.content()).hasSize(3);
+        assertThat(response.content().get(0).type()).isEqualTo("json");
+        assertThat(response.content().get(0).attributes()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getCurrentSessionOrCreateIfNotExists_invokesIrisCitationService() throws Exception {
+        request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+
+        verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
 
     private static String exerciseChatUrl(long sessionId) {

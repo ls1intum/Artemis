@@ -15,6 +15,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -39,6 +41,7 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -61,6 +64,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
+
+    public static final String IRIS_BOT_LOGIN = "iris_bot";
 
     @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
@@ -195,12 +200,17 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "external_llm_usage_accepted")
-    private ZonedDateTime externalLLMUsageAccepted = null;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_selection_decision")
+    private AiSelectionDecision aiSelectionDecision = null;
+
+    @Nullable
+    @Column(name = "ai_selection_decision_date")
+    private ZonedDateTime aiSelectionDecisionDate = null;
 
     @NonNull
     @Column(name = "memiris_enabled", nullable = false)
-    private boolean memirisEnabled = false;
+    private boolean memirisEnabled = true;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "user", allowSetters = true)
@@ -445,6 +455,11 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.internal = internal;
     }
 
+    @JsonProperty("bot")
+    public boolean isBot() {
+        return IRIS_BOT_LOGIN.equals(this.login);
+    }
+
     public boolean isDeleted() {
         return deleted;
     }
@@ -488,25 +503,33 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
-        return externalLLMUsageAccepted;
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return aiSelectionDecisionDate;
     }
 
-    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
+        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    public boolean hasAcceptedExternalLLMUsage() {
-        return externalLLMUsageAccepted != null;
+    public boolean hasOptedIntoLLMUsage() {
+        return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
+    }
+
+    public AiSelectionDecision getSelectedLLMUsage() {
+        return aiSelectionDecision;
+    }
+
+    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
+        this.aiSelectionDecision = aiSelectionDecision;
     }
 
     /**
-     * Checks if the user has accepted the external LLM privacy policy.
+     * Checks if the user has selected to use AI.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedExternalLLMUsageElseThrow() {
-        if (externalLLMUsageAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+    public void hasOptedIntoLLMUsageElseThrow() {
+        if (!hasOptedIntoLLMUsage()) {
+            throw new AccessForbiddenException("The user has not selected to use AI.");
         }
     }
 

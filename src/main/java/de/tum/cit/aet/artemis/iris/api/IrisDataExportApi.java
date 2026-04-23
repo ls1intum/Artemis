@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import java.util.Set;
 
-import java.util.List;
-
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
  * Provides access to all chat sessions and messages for a user.
  */
 @Controller
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 public class IrisDataExportApi extends AbstractIrisApi {
 
@@ -28,11 +27,17 @@ public class IrisDataExportApi extends AbstractIrisApi {
 
     /**
      * Finds all chat sessions for a user with their messages loaded.
+     * Uses a two-query approach to avoid PostgreSQL JSON equality comparison issues
+     * that occur when using DISTINCT with JSON columns in a single query.
      *
      * @param userId the ID of the user
-     * @return a list of all chat sessions with messages for the user
+     * @return a set of all chat sessions with messages for the user
      */
-    public List<IrisChatSession> findAllChatSessionsWithMessagesByUserId(long userId) {
-        return irisChatSessionRepository.findAllWithMessagesByUserId(userId);
+    public Set<IrisChatSession> findAllChatSessionsWithMessagesByUserId(long userId) {
+        Set<Long> sessionIds = irisChatSessionRepository.findSessionIdsByUserId(userId);
+        if (sessionIds.isEmpty()) {
+            return Set.of();
+        }
+        return irisChatSessionRepository.findAllWithMessagesByIds(sessionIds);
     }
 }

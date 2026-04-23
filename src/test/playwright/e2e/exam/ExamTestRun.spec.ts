@@ -1,29 +1,28 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import javaBuildErrorSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Exercise, ExerciseType } from '../../support/constants';
+import cBuildErrorSubmission from '../../fixtures/exercise/programming/c/build_error/submission.json';
+import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
+import { Commands } from '../../support/commands';
+import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
+const course = { id: SEED_COURSES.examTestRun.id } as any;
 
-test.describe('Exam test run', { tag: '@fast' }, () => {
-    let course: Course;
+test.describe('Exam test run', { tag: '@slow' }, () => {
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 
-    test.beforeEach('Create course', async ({ login, examExerciseGroupCreation, courseManagementAPIRequests, examAPIRequests }) => {
+    test.beforeEach('Create exam', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         const examConfig = {
             course,
             title: examTitle,
@@ -34,17 +33,17 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             numberOfExercisesInExam: 4,
         };
         exam = await examAPIRequests.createExam(examConfig);
-        Promise.all([
+        exerciseArray = [
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                submission: javaBuildErrorSubmission,
+                submission: cBuildErrorSubmission,
                 practiceMode: true,
+                skipBuildResultCheck: true,
+                programmingLanguage: ProgrammingLanguage.C,
             }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-        ]).then((responses) => {
-            exerciseArray = responses;
-        });
+        ];
     });
 
     test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {
@@ -100,7 +99,6 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
         });
 
         test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }) => {
-            test.slow();
             await login(instructor);
             const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
 
@@ -133,17 +131,18 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
             testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
         });
 
-        test('Deletes a test run', async ({ login, examTestRun }) => {
+        test('Deletes a test run', async ({ login, page, examTestRun }) => {
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
-            await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
-            await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
+            // The test run was created via API in beforeEach, but the page may load
+            // before the data is available. Reload until the test run element appears.
+            await Commands.reloadUntilFound(page, examTestRun.getTestRun(testRun.id!), 10000, 60000);
             await examTestRun.deleteTestRun(testRun.id!);
             await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
     });
 });

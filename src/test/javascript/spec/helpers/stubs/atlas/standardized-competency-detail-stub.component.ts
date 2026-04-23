@@ -4,6 +4,7 @@ import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardize
 @Component({
     selector: 'jhi-standardized-competency-detail',
     template: '',
+    standalone: true,
 })
 export class StandardizedCompetencyDetailStubComponent {
     // values for the knowledge area select

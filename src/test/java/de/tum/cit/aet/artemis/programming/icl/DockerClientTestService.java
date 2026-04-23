@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -44,6 +44,8 @@ import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.KillContainerCmd;
@@ -54,8 +56,10 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
+import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Version;
 
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 
@@ -126,6 +130,13 @@ public class DockerClientTestService {
             return null;
         });
 
+        // Mock dockerClient.inspectExecCmd(String execId).exec() to return exit code 0 by default
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
+
         // Mock listContainerCmd() method.
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
@@ -170,7 +181,24 @@ public class DockerClientTestService {
         when(disconnectFromNetworkCmd.withContainerId(anyString())).thenReturn(disconnectFromNetworkCmd);
         when(disconnectFromNetworkCmd.withNetworkId(anyString())).thenReturn(disconnectFromNetworkCmd);
 
+        // Mock versionCmd for BuildAgentInformationService.updateDockerVersion()
+        mockVersionCmd(dockerClient, "24.0.0-test");
+
         return dockerClient;
+    }
+
+    /**
+     * Mock dockerClient.versionCmd().exec() to return a Version with the specified version string.
+     *
+     * @param dockerClient  the DockerClient to mock
+     * @param versionString the Docker version string to return
+     */
+    public static void mockVersionCmd(DockerClient dockerClient, String versionString) {
+        VersionCmd versionCmd = mock(VersionCmd.class);
+        Version version = mock(Version.class);
+        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        when(versionCmd.exec()).thenReturn(version);
+        when(version.getVersion()).thenReturn(versionString);
     }
 
     /**

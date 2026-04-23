@@ -1,16 +1,30 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBolt,
+    faChartBar,
+    faClipboard,
+    faEye,
+    faFileImport,
+    faFlag,
+    faGraduationCap,
+    faListAlt,
+    faQuestion,
+    faTable,
+    faTimes,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -22,6 +36,9 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
+import { OnboardingExploreComponent } from 'app/core/course/manage/onboarding/pages/onboarding-explore.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -38,9 +55,18 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
+    imports: [
+        CourseDetailDoughnutChartComponent,
+        CourseDetailLineChartComponent,
+        DetailOverviewListComponent,
+        QuickActionsComponent,
+        ControlCenterComponent,
+        OnboardingExploreComponent,
+        FaIconComponent,
+        TranslateDirective,
+    ],
 })
-export class CourseDetailComponent implements OnInit, OnDestroy {
+export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -54,6 +80,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faQuestion = faQuestion;
+    protected readonly faBolt = faBolt;
+    protected readonly faFileImport = faFileImport;
 
     private eventManager = inject(EventManager);
     private courseManagementService = inject(CourseManagementService);
@@ -63,10 +91,15 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
+    private router = inject(Router);
     private markdownService = inject(ArtemisMarkdownService);
+    private destroyRef = inject(DestroyRef);
+
+    private readonly exploreSection = viewChild<ElementRef>('exploreSection');
 
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
+    readonly fromOnboarding = signal(false);
 
     readonly courseDetailSections = signal<DetailOverviewSection[]>([]);
 
@@ -76,6 +109,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly irisChatEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
+    readonly isHyperionEnabled = signal(false);
 
     readonly isAdmin = signal(false);
 
@@ -85,31 +119,47 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
-    async ngOnInit() {
-        this.ltiEnabled.set(this.profileService.isProfileActive(PROFILE_LTI));
+    ngOnInit() {
+        this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
-        this.irisEnabled.set(this.profileService.isProfileActive(PROFILE_IRIS));
+        this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
-        this.route.data.subscribe(({ course }) => {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            if (params['fromOnboarding'] === 'true') {
+                this.fromOnboarding.set(true);
+                this.router.navigate([], { queryParams: {}, replaceUrl: true });
+            }
+        });
+
+        this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             if (course) {
+                if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
+                    this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
+                    return;
+                }
                 this.course.set(course);
                 this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
                 this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
                 this.fetchOrganizations(course.id);
+                this.fetchIrisSettings(course);
             }
             this.isAdmin.set(this.accountService.isAdmin());
             this.getCourseDetailSections();
         });
-        const currentCourse = this.course();
-        if (this.irisEnabled() && currentCourse?.isAtLeastInstructor) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(currentCourse.id!));
-            this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
-        }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
             this.fetchCourseStatistics(courseId);
             this.registerChangeInCourses(courseId);
         });
+    }
+
+    ngAfterViewInit() {
+        if (this.fromOnboarding()) {
+            setTimeout(() => {
+                this.exploreSection()?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
     }
 
     getGeneralDetailSection(): DetailOverviewSection {
@@ -306,6 +356,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses(courseId: number) {
+        if (this.eventSubscription) {
+            this.eventManager.destroy(this.eventSubscription);
+        }
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
@@ -322,7 +375,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager?.destroy(this.eventSubscription);
+        if (this.eventSubscription) {
+            this.eventManager?.destroy(this.eventSubscription);
+        }
     }
 
     /**
@@ -337,11 +392,19 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    private fetchIrisSettings(course: Course) {
+        if (this.irisEnabled() && course.isAtLeastInstructor) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).subscribe((irisSettings) => {
+                this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
+            });
+        }
+    }
+
     private fetchOrganizations(courseId: number) {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             const currentCourse = this.course();
             if (currentCourse) {
-                this.course.set({ ...currentCourse, organizations });
+                this.course.set(Object.assign(new Course(), currentCourse, { organizations }));
                 this.getCourseDetailSections();
             }
         });

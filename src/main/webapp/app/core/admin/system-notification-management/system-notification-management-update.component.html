@@ -3,23 +3,19 @@
         <h5 *adminTitleBarTitle id="myNotificationLabel" class="mb-0" jhiTranslate="artemisApp.systemNotification.createOrEditLabel"></h5>
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" [formGroup]="form">
             <div>
-                <div class="form-group">
-                    <label for="title" class="form-control-label" jhiTranslate="artemisApp.systemNotification.title"></label>
-                    <input id="title" type="text" class="form-control" name="title" formControlName="title" />
+                <div class="mb-3">
+                    <label for="title" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.title"></label>
+                    <input id="title" type="text" pInputText class="w-100" name="title" formControlName="title" />
                 </div>
-                <div class="form-group">
-                    <label for="text" class="form-control-label" jhiTranslate="artemisApp.systemNotification.text"></label>
-                    <input id="text" type="text" class="form-control" name="text" formControlName="text" />
+                <div class="mb-3">
+                    <label for="text" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.text"></label>
+                    <input id="text" type="text" pInputText class="w-100" name="text" formControlName="text" />
                 </div>
-                <div class="form-group">
-                    <label for="type" jhiTranslate="artemisApp.systemNotification.type"></label>
-                    <select id="type" class="form-select" name="type" formControlName="type">
-                        @for (systemNotificationType of systemNotificationTypes; track systemNotificationType) {
-                            <option [value]="systemNotificationType.value">{{ systemNotificationType.name }}</option>
-                        }
-                    </select>
+                <div class="mb-3">
+                    <label for="type" class="d-block font-bold mb-2" jhiTranslate="artemisApp.systemNotification.type"></label>
+                    <p-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" styleClass="w-100" />
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         formControlName="notificationDate"
@@ -27,7 +23,7 @@
                         name="notificationDate"
                     />
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         formControlName="expireDate"
@@ -35,15 +31,34 @@
                         name="expireDate"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <span class="text-danger" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></span>
+                        <small class="p-error" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
                     }
                 </div>
+                @if (!form.get('id')?.value) {
+                    <div class="mb-3">
+                        <div class="d-flex gap-2 align-items-center">
+                            <p-checkbox
+                                [inputId]="'sendMaintenanceEmail'"
+                                [ngModel]="sendMaintenanceEmail()"
+                                (ngModelChange)="sendMaintenanceEmail.set($event)"
+                                [ngModelOptions]="{ standalone: true }"
+                                [binary]="true"
+                            />
+                            <label for="sendMaintenanceEmail" jhiTranslate="artemisApp.systemNotification.sendMaintenanceEmail"></label>
+                        </div>
+                        @if (sendMaintenanceEmail() && recipientCount() !== undefined) {
+                            <p-message severity="info" class="mt-2">
+                                <span jhiTranslate="artemisApp.systemNotification.maintenanceEmailInfo" [translateValues]="{ count: recipientCount() }"></span>
+                            </p-message>
+                        }
+                    </div>
+                }
             </div>
-            <div>
-                <button id="cancelButton" type="button" class="btn btn-secondary" (click)="goToOverview()">
+            <div class="d-flex gap-2 mt-3">
+                <button id="cancelButton" type="button" pButton class="p-button-secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">
+                <button id="saveButton" type="submit" pButton [disabled]="editForm.form.invalid || isSaving()">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>

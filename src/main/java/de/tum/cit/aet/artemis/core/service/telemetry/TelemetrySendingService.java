@@ -33,7 +33,7 @@ public class TelemetrySendingService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
-            String contact, String adminName) {
+            String contact, String adminName, boolean isLocalLLMDeploymentEnabled) {
     }
 
     private final Environment env;
@@ -42,10 +42,13 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
+    private final ObjectMapper objectMapper;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, ObjectMapper objectMapper) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
+        this.objectMapper = objectMapper;
     }
 
     @Value("${artemis.version}")
@@ -72,6 +75,9 @@ public class TelemetrySendingService {
     @Value("${info.testServer:false}")
     private boolean isTestServer;
 
+    @Value("${info.localLLMDeploymentEnabled:false}")
+    private boolean isLocalLLMDeploymentEnabled;
+
     /**
      * Sends telemetry data to a specified destination via an HTTP POST request asynchronously.
      * The telemetry includes information about the application version, environment, data source,
@@ -90,7 +96,7 @@ public class TelemetrySendingService {
 
         try {
             var telemetryData = buildTelemetryData(sendAdminDetails);
-            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
+            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
@@ -126,7 +132,8 @@ public class TelemetrySendingService {
             contact = operatorContact;
             adminName = operatorAdminName;
         }
-        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName);
+        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName,
+                isLocalLLMDeploymentEnabled);
         return telemetryData;
     }
 }

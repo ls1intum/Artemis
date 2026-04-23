@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -30,6 +30,8 @@ import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * Component for creating and updating users in the admin user management.
@@ -72,6 +74,12 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
     private readonly fb = inject(FormBuilder);
+    private readonly accountService = inject(AccountService);
+
+    protected readonly faBan = faBan;
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
+    protected readonly faSave = faSave;
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -91,6 +99,23 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
+    /** Sorted authorities by role hierarchy (super admin > admin > instructor > editor > tutor) */
+    readonly sortedAuthorities = computed(() => {
+        const roleOrder: Record<string, number> = {
+            ROLE_SUPER_ADMIN: 0,
+            ROLE_ADMIN: 1,
+            ROLE_INSTRUCTOR: 2,
+            ROLE_EDITOR: 3,
+            ROLE_TA: 4,
+            ROLE_USER: 5,
+        };
+        return [...this.authorities()].sort((a, b) => {
+            const orderA = roleOrder[a] ?? 999;
+            const orderB = roleOrder[b] ?? 999;
+            return orderA - orderB;
+        });
+    });
+
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
@@ -106,14 +131,9 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Form control for group autocomplete */
     readonly groupCtrl = new FormControl();
 
-    /** Icons */
-    protected readonly faTimes = faTimes;
-    protected readonly faBan = faBan;
-    protected readonly faSave = faSave;
-    protected readonly faCheck = faCheck;
-
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
+        ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
         ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
         ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
         ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
@@ -161,7 +181,9 @@ export class UserManagementUpdateComponent implements OnInit {
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities.set(authorities);
+            this.authorities.set(
+                this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
+            );
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user

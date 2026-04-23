@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import java.util.Map;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -32,19 +34,26 @@ public class HyperionCodeGenerationTaskService {
      * @param jobId          job identifier
      * @param user           requesting user
      * @param exercise       target exercise
+     * @param courseId       resolved course id for telemetry attribution
      * @param repositoryType target repository type
+     * @param cleanup        optional cleanup action to run after job completion
      */
     @Async
-    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, Runnable cleanup) {
         var topicSuffix = "code-generation/jobs/" + jobId;
         var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);
 
         publisher.started();
         try {
-            executionService.generateAndCompileCode(exercise, user, repositoryType, publisher);
+            executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, publisher);
         }
         catch (Exception ex) {
             publisher.error("Unhandled error: " + ex.getMessage());
+        }
+        finally {
+            if (cleanup != null) {
+                cleanup.run();
+            }
         }
     }
 
@@ -74,38 +83,40 @@ public class HyperionCodeGenerationTaskService {
 
         @Override
         public void started() {
-            websocket.send(login, topicSuffix,
-                    new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.STARTED, jobId, exercise.getId(), null, repositoryType, null, null, null, "Started"));
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.STARTED, jobId, exercise.getId(), null, repositoryType, null,
+                    null, null, null, null, null, "Started"));
         }
 
         @Override
         public void progress(int iteration) {
             websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.PROGRESS, jobId, exercise.getId(), iteration, repositoryType,
-                    null, null, null, "Progress"));
+                    null, null, null, null, null, null, "Progress"));
         }
 
         @Override
-        public void fileUpdated(String path, RepositoryType repoType) {
-            websocket.send(login, topicSuffix,
-                    new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.FILE_UPDATED, jobId, exercise.getId(), null, repoType, path, null, null, null));
+        public void fileUpdated(String path, RepositoryType repoType, int iteration) {
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.FILE_UPDATED, jobId, exercise.getId(), iteration, repoType,
+                    path, null, null, null, null, null, null));
         }
 
         @Override
-        public void newFile(String path, RepositoryType repoType) {
-            websocket.send(login, topicSuffix,
-                    new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.NEW_FILE, jobId, exercise.getId(), null, repoType, path, null, null, null));
+        public void newFile(String path, RepositoryType repoType, int iteration) {
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.NEW_FILE, jobId, exercise.getId(), iteration, repoType, path,
+                    null, null, null, null, null, null));
         }
 
         @Override
-        public void done(boolean success, int attemptsUsed, String message) {
-            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.DONE, jobId, exercise.getId(), attemptsUsed, repositoryType,
-                    null, success, null, message));
+        public void done(HyperionCodeGenerationEventDTO.CompletionStatus completionStatus, HyperionCodeGenerationEventDTO.CompletionReason completionReason,
+                Map<String, String> completionReasonParams, int attemptsUsed, String message) {
+            boolean success = completionStatus == HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS;
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.DONE, jobId, exercise.getId(), null, repositoryType, null,
+                    success, completionStatus, completionReason, completionReasonParams, attemptsUsed, message));
         }
 
         @Override
         public void error(String message) {
-            websocket.send(login, topicSuffix,
-                    new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.ERROR, jobId, exercise.getId(), null, repositoryType, null, null, null, message));
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.ERROR, jobId, exercise.getId(), null, repositoryType, null,
+                    null, null, null, null, null, message));
         }
     }
 }

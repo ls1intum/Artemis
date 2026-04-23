@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,7 +21,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportLearnerProfileServic
 import de.tum.cit.aet.artemis.core.service.export.DataExportTutorialGroupService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
@@ -121,7 +122,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
     @AfterEach
     void tearDown() throws IOException {
         if (workingDirectory != null && Files.exists(workingDirectory)) {
-            Files.walk(workingDirectory).sorted((a, b) -> b.compareTo(a)).forEach(path -> {
+            Files.walk(workingDirectory).sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {
                     Files.delete(path);
                 }
@@ -267,8 +268,8 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = JsonObjectMapper.get();
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();
@@ -295,8 +296,8 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = JsonObjectMapper.get();
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();

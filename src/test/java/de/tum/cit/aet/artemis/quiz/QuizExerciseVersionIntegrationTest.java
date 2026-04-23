@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 
 /**
  * Integration tests for exercise versioning on QuizExercise operations.
@@ -144,11 +145,11 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
 
         ExerciseVersionUtilService.updateExercise(quizExercise);
 
-        QuizExercise updatedExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/" + action.getValue(), quizExercise, QuizExercise.class,
-                OK);
+        QuizExerciseDatesDTO updatedExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/" + action.getValue(), null,
+                QuizExerciseDatesDTO.class, OK);
         assertThat(updatedExercise).isNotNull();
 
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(quizExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
 
         // Verify that a new version was created (different from the original)
         assertThat(originalVersion.getId()).isNotEqualTo(newVersion.getId());

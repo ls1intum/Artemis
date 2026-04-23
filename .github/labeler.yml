@@ -20,7 +20,7 @@ database:
 
 documentation:
   - changed-files:
-      - any-glob-to-any-file: docs/**/*
+      - any-glob-to-any-file: documentation/**/*
 
 docker:
   - changed-files:

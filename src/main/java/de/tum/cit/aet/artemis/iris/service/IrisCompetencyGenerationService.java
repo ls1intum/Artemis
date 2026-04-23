@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -16,6 +14,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisCompetencyGenerationService {
 
     private final PyrisPipelineService pyrisPipelineService;
@@ -75,6 +74,7 @@ public class IrisCompetencyGenerationService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
+                user.getSelectedLLMUsage(),
                 settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),

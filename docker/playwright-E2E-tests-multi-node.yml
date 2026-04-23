@@ -13,7 +13,7 @@ services:
     user: 0:0
     depends_on:
       &depends-on-base
-      mysql:
+      postgres:
         condition: service_healthy
       jhipster-registry:
         condition: service_healthy
@@ -24,6 +24,7 @@ services:
     container_name: artemis-app-node-1
     env_file:
       - ./artemis/config/prod-multinode.env
+      - ./artemis/config/postgres.env
       - ./artemis/config/node1.env
       - ./artemis/config/playwright.env
 
@@ -36,6 +37,7 @@ services:
         condition: service_healthy
     env_file:
       - ./artemis/config/prod-multinode.env
+      - ./artemis/config/postgres.env
       - ./artemis/config/node2.env
       - ./artemis/config/playwright.env
 
@@ -48,6 +50,7 @@ services:
         condition: service_healthy
     env_file:
       - ./artemis/config/prod-multinode.env
+      - ./artemis/config/postgres.env
       - ./artemis/config/node3.env
       - ./artemis/config/playwright.env
 
@@ -65,10 +68,10 @@ services:
     networks:
       - artemis
 
-  mysql:
+  postgres:
     extends:
-      file: ./mysql.yml
-      service: mysql
+      file: ./postgres.yml
+      service: postgres
     restart: always
 
   nginx:
@@ -108,7 +111,7 @@ services:
       nginx:
         condition: service_healthy
     environment:
-      PLAYWRIGHT_DB_TYPE: 'MySQL'
+      PLAYWRIGHT_DB_TYPE: 'Postgres'
     networks:
       - artemis
 
@@ -118,8 +121,7 @@ networks:
     name: artemis
 
 volumes:
-  artemis-mysql-data:
-    name: artemis-mysql-data
+  artemis-postgres-data:
+    name: artemis-postgres-data
   artemis-data:
     name: artemis-data
-

@@ -30,6 +30,15 @@
                     }
                 </div>
             </div>
+            @if (course.id) {
+                <div class="mb-3">
+                    <a
+                        class="btn btn-outline-primary btn-sm"
+                        [routerLink]="['/course-management', course.id, 'onboarding']"
+                        jhiTranslate="artemisApp.course.onboarding.replayWizard"
+                    ></a>
+                </div>
+            }
             <!-- Section: General -->
             <hr />
             <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.general"></h4>
@@ -196,7 +205,7 @@
                         }
                     </select>
                 </div>
-                <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
+                <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
                     <div class="form-check nested-form-group-head">
                         <input
                             type="checkbox"
@@ -344,23 +353,6 @@
                 <hr />
                 <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h4>
                 <span class="d-block form-text mb-3" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></span>
-                <div class="form-group form-check">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        name="faqEnabled"
-                        [checked]="faqEnabled"
-                        (change)="changeFaqEnabled()"
-                        id="field_faq_enabled"
-                        formControlName="faqEnabled"
-                    />
-                    <label for="field_faq_enabled" class="form-control-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.faqEnabled.tooltip' | artemisTranslate }}"
-                    />
-                </div>
                 <jhi-feature-overlay [enabled]="atlasEnabled">
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                         <div class="form-check">

@@ -121,6 +121,11 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
+            @if (currAccount && !isExamActive && !isExamStarted && globalSearchEnabled) {
+                <li class="nav-item">
+                    <jhi-global-search-navbar />
+                </li>
+            }
             @if (currAccount && !isExamActive && !isExamStarted) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
@@ -131,13 +136,7 @@
                     </a>
                 </li>
             }
-            <li
-                *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                ngbDropdown
-                class="nav-item dropdown pointer"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: true }"
-            >
+            <li *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 @if (!isExamActive && !isExamStarted) {
                     <a class="nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>

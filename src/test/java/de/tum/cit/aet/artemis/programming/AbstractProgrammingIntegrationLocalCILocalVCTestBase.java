@@ -15,12 +15,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -66,6 +66,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         // Standard doReturn().when() can cause "WrongTypeOfReturnValue" errors when multiple tests
         // simultaneously stub the same spy bean.
         lenient().doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
+        lenient().doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         this.dockerClient = dockerClientMock;
     }
 
@@ -200,7 +201,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();

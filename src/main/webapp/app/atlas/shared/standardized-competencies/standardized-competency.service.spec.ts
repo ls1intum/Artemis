@@ -1,15 +1,17 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { TestBed } from '@angular/core/testing';
+import { KnowledgeAreaDTO, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { take } from 'rxjs';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StandardizedCompetencyService', () => {
+    setupTestBed({ zoneless: true });
     let standardizedCompetencyService: StandardizedCompetencyService;
     let httpTestingController: HttpTestingController;
-    let defaultStandardizedCompetency: StandardizedCompetency;
+    let defaultStandardizedCompetency: StandardizedCompetencyDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,10 +32,10 @@ describe('StandardizedCompetencyService', () => {
         httpTestingController.verify();
     });
 
-    it('should get competency', fakeAsync(() => {
-        let actualCompetency = new HttpResponse<StandardizedCompetency>();
+    it('should get competency', () => {
+        let actualCompetency = new HttpResponse<StandardizedCompetencyDTO>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetency = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetencyDTO = Object.assign({}, expectedCompetency);
 
         standardizedCompetencyService
             .getStandardizedCompetency(1)
@@ -42,12 +44,11 @@ describe('StandardizedCompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(actualCompetency.body).toEqual(expectedCompetency);
-    }));
+    });
 
-    it('should get all for tree view', fakeAsync(() => {
+    it('should get all for tree view', () => {
         let actualResult = new HttpResponse<KnowledgeAreaDTO[]>();
         const expectedResult: KnowledgeAreaDTO[] = [
             {
@@ -80,12 +81,11 @@ describe('StandardizedCompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(actualResult.body).toEqual(expectedResult);
-    }));
+    });
 
-    it('should get sources', fakeAsync(() => {
+    it('should get sources', () => {
         let actualSources = new HttpResponse<Source[]>();
         const expectedSources: Source[] = [
             { id: 1, title: 'source1' },
@@ -100,8 +100,7 @@ describe('StandardizedCompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(actualSources.body).toEqual(expectedSources);
-    }));
+    });
 });

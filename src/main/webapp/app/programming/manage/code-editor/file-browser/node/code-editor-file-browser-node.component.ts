@@ -1,39 +1,37 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, effect, input, output } from '@angular/core';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 @Component({
     template: '',
 })
-export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
+export abstract class CodeEditorFileBrowserNodeComponent {
     FileType = FileType;
 
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
-    @Input() item: TreeViewItem<string>;
-    @Input() hasError = false;
-    @Input() hasUnsavedChanges = false;
-    @Input() isBeingRenamed = false;
+    item = input.required<TreeViewItem<string>>();
+    hasError = input<boolean>(false);
+    hasUnsavedChanges = input<boolean>(false);
+    isBeingRenamed = input<boolean>(false);
 
-    @Output() onNodeSelect = new EventEmitter<TreeViewItem<string>>();
-    @Output() onSetRenamingNode = new EventEmitter<TreeViewItem<string>>();
-    @Output() onClearRenamingNode = new EventEmitter<void>();
-    @Output() onRenameNode = new EventEmitter<{ item: TreeViewItem<string>; newFileName: string }>();
-    @Output() onDeleteNode = new EventEmitter<TreeViewItem<string>>();
+    onNodeSelect = output<TreeViewItem<string>>();
+    onSetRenamingNode = output<TreeViewItem<string>>();
+    onClearRenamingNode = output<void>();
+    onRenameNode = output<string>();
+    onDeleteNode = output<TreeViewItem<string>>();
 
-    /**
-     * Check if the node is being renamed now, if so, focus the input when the view is rendered.
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.isBeingRenamed && this.isBeingRenamed) {
-            // Timeout is needed to wait for view to render.
-            setTimeout(() => {
-                if (this.renamingInput) {
-                    this.renamingInput.nativeElement.focus();
-                }
-            }, 0);
-        }
+    constructor() {
+        effect(() => {
+            if (this.isBeingRenamed()) {
+                // Timeout is needed to wait for view to render.
+                setTimeout(() => {
+                    if (this.renamingInput) {
+                        this.renamingInput.nativeElement.focus();
+                    }
+                }, 0);
+            }
+        });
     }
 
     /**
@@ -42,7 +40,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
      */
     setRenamingNode(event: any) {
         event.stopPropagation();
-        this.onSetRenamingNode.emit(this.item);
+        this.onSetRenamingNode.emit(this.item());
     }
 
     /**
@@ -59,9 +57,9 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
      * @param event
      */
     renameNode(event: any) {
-        if (!event.target.value || !this.isBeingRenamed) {
+        if (!event.target.value || !this.isBeingRenamed()) {
             return;
-        } else if (event.target.value === this.item.text) {
+        } else if (event.target.value === this.item().text) {
             this.onClearRenamingNode.emit();
             return;
         }
@@ -74,6 +72,6 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
      */
     deleteNode(event: any) {
         event.stopPropagation();
-        this.onDeleteNode.emit(this.item);
+        this.onDeleteNode.emit(this.item());
     }
 }

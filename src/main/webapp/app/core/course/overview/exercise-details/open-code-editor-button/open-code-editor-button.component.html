@@ -1,51 +1,51 @@
 <ng-container>
-    @if (participations?.length && participations?.length === 1) {
+    @if (participations()?.length && participations()?.length === 1) {
         <button
             jhi-exercise-action-button
-            [id]="'open-exercise-' + exercise.id!"
+            [id]="'open-exercise-' + exercise().id!"
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-            [buttonLoading]="loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="hideLabelMobile"
-            [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
+            [buttonLoading]="loading()"
+            [smallButton]="smallButtons()"
+            [hideLabelMobile]="hideLabelMobile()"
+            [routerLink]="[courseAndExerciseNavigationUrl(), participations()[0].id]"
         ></button>
     }
-    @if (participations?.length && participations.length! > 1) {
+    @if (participations()?.length && participations().length! > 1) {
         <button
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-            [buttonLoading]="loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="hideLabelMobile"
+            [buttonLoading]="loading()"
+            [smallButton]="smallButtons()"
+            [hideLabelMobile]="hideLabelMobile()"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
             placement="right auto"
         ></button>
     }
     <ng-template #popContent style="max-width: 660px">
-        @if (participations && participations.length > 1) {
+        @if (participations() && participations().length > 1) {
             <div class="form-check form-switch">
-                <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
+                <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode()" (click)="switchPracticeMode()" />
                 <label for="switchPracticeMode" class="form-check-label" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
         <button
             jhi-exercise-action-button
-            [id]="'open-exercise-popover-' + exercise.id!"
+            [id]="'open-exercise-popover-' + exercise().id!"
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="'artemisApp.exerciseActions.' + (isPracticeMode ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
-            [buttonLoading]="loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="hideLabelMobile"
-            [routerLink]="[courseAndExerciseNavigationUrl, activeParticipation.id]"
+            [buttonLabel]="'artemisApp.exerciseActions.' + (isPracticeMode() ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
+            [buttonLoading]="loading()"
+            [smallButton]="smallButtons()"
+            [hideLabelMobile]="hideLabelMobile()"
+            [routerLink]="[courseAndExerciseNavigationUrl(), activeParticipation()?.id]"
         ></button>
     </ng-template>
 </ng-container>

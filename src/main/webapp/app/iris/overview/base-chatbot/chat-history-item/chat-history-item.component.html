@@ -8,14 +8,38 @@
     (keydown.enter)="onItemClick()"
 >
     <div class="chat-history-text">
-        {{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}
+        @if (isNewChat()) {
+            <fa-icon [icon]="faPlus" class="new-chat-icon" />
+        }
+        <span class="chat-history-label">{{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}</span>
+        @if (!isNewChat()) {
+            <button type="button" class="menu-trigger" (click)="onMenuToggle($event)" [attr.aria-label]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate">
+                <fa-icon [icon]="faEllipsisVertical" />
+            </button>
+        }
     </div>
-    @if (relatedEntityName() && icon() && tooltipKey()) {
-        <div class="related-entity-info">
-            <div class="related-entity-name">
-                {{ relatedEntityName() }}
-            </div>
-            <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
-        </div>
+    @if (icon() && entityRoute()) {
+        <a
+            class="related-entity-icon"
+            [routerLink]="entityRoute()!"
+            queryParamsHandling="preserve"
+            [pTooltip]="tooltipText()!"
+            tooltipPosition="right"
+            tooltipStyleClass="chat-history-entity-tooltip"
+            [attr.aria-label]="ariaLabelText()!"
+            (click)="onEntityIconClick($event)"
+            (keydown.enter)="$event.stopPropagation()"
+            (keydown.space)="$event.stopPropagation()"
+        >
+            <fa-icon [icon]="icon()!" />
+        </a>
     }
+    <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
+        <ng-template #item let-item>
+            <a class="p-menu-item-link danger">
+                <fa-icon [icon]="faTrash" />
+                <span class="p-menu-item-label ms-2">{{ item.label }}</span>
+            </a>
+        </ng-template>
+    </p-menu>
 </div>

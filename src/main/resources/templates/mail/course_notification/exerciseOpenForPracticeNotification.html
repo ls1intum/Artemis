@@ -17,7 +17,6 @@
         <br>
     </th:block>
     <div class="notification-content">
-        <th:block th:replace="~{mail/notification/fragments :: exerciseTypeTranslation}"/>
         <span th:utext="#{email.courseNotification.exerciseOpenForPracticeNotification.text(
                 ${parameters['exerciseTitle']},
                 ${parameters['courseTitle']}

@@ -9,7 +9,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/codeql-analysis.yml'
   pull_request:
@@ -21,7 +21,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/codeql-analysis.yml'
   schedule:
@@ -59,16 +59,21 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       # Override language selection by uncommenting this and choosing your languages
       with:
          languages: javascript, java
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+    # Build Angular client separately so esbuild gets full system memory without
+    # competing with the Gradle JVM (which reserves up to 4g).
+    - name: Install npm dependencies
+      run: npm install
+    - name: Build Angular Client
+      run: npm run clean-www && npm run prebuild && npx ng build --configuration production --optimization=false
+    - name: Build Java
+      run: ./gradlew -Pprod -Pwar bootWar -x webapp
 
     - run: rm -rf build/resources/main/static
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4

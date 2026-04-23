@@ -7,10 +7,8 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -20,8 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.activation.MimetypesFileTypeMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -30,14 +26,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRange;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -63,6 +60,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -103,7 +101,14 @@ public class FileResource {
 
     private static final int DAYS_TO_CACHE = 1;
 
+    /**
+     * Maximum number of bytes allowed in a single PDF range response to prevent oversized range downloads.
+     */
+    private static final int MAX_PDF_RANGE_BYTES = 16 * 1024 * 1024;
+
     private final FileService fileService;
+
+    private final FileDownloadService fileDownloadService;
 
     private final FileUploadService fileUploadService;
 
@@ -131,12 +136,13 @@ public class FileResource {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
-    public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
+    public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
+        this.fileDownloadService = fileDownloadService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
@@ -188,7 +194,7 @@ public class FileResource {
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
         var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
@@ -392,12 +398,12 @@ public class FileResource {
      */
     @GetMapping("files/templates/code-of-conduct")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
+    public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
         // TODO: store a Constant
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
         var resource = resourceLoaderService.getResource(templatePath);
-        return ResponseEntity.ok(resource.getInputStream().readAllBytes());
+        return ResponseEntity.ok(new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
@@ -441,11 +447,12 @@ public class FileResource {
      *
      * @param lectureId      ID of the lecture, the attachment belongs to
      * @param attachmentName the filename of the file
+     * @param requestHeaders request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName) {
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -460,7 +467,8 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
+        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), false,
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -512,11 +520,12 @@ public class FileResource {
      * Accesses to this endpoint are created by the server itself in the FilePathService
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the attachment belongs to
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
     @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -528,7 +537,8 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment video unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
+        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), false,
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -537,11 +547,12 @@ public class FileResource {
      *
      * @param courseId              The ID of the course that the Attachment belongs to
      * @param attachmentVideoUnitId the ID of the attachment to retrieve
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
@@ -549,27 +560,30 @@ public class FileResource {
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
+        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment), false,
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
      * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
      * given attachment ID as a downloadable resource
      *
-     * @param courseId     The ID of the course that the Attachment belongs to
-     * @param attachmentId the ID of the attachment to retrieve
+     * @param courseId       The ID of the course that the Attachment belongs to
+     * @param attachmentId   the ID of the attachment to retrieve
+     * @param requestHeaders request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
     @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get attachment file : {}", attachmentId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         Attachment attachment = api.findAttachmentByIdElseThrow(attachmentId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
+        return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment), false,
+                parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
     /**
@@ -646,11 +660,12 @@ public class FileResource {
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
      *
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
+     * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -663,17 +678,76 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename);
+            return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename, false,
+                    parseRequestedRangesOrThrowBadRequest(requestHeaders));
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
-                downloadFilename, false);
+        return buildAttachmentFileResponse(FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName,
+                downloadFilename, 0, parseRequestedRangesOrThrowBadRequest(requestHeaders));
     }
 
+    /**
+     * Derives the download filename from attachment name and file extension.
+     *
+     * @param attachment attachment metadata
+     * @return derived download filename
+     */
     private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
         return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
+    }
+
+    /**
+     * Parses HTTP range headers and maps malformed range syntax to a client error response.
+     *
+     * @param requestHeaders request headers that may contain a Range entry
+     * @return parsed list of HTTP ranges (empty if no Range header was sent)
+     */
+    private List<HttpRange> parseRequestedRangesOrThrowBadRequest(HttpHeaders requestHeaders) {
+        String rangeHeader = requestHeaders.getFirst(HttpHeaders.RANGE);
+        try {
+            return HttpRange.parseRanges(rangeHeader);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Range header", ex);
+        }
+    }
+
+    /**
+     * Builds an attachment response for a path that already contains the filename.
+     *
+     * @param path            file path including the file name
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cache           true if response should include cache headers; false otherwise
+     * @param ranges          optional requested HTTP ranges
+     * @return response entity for full or partial attachment download
+     */
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, Optional<String> replaceFilename, boolean cache, List<HttpRange> ranges) {
+        return buildAttachmentFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, cache ? DAYS_TO_CACHE : 0, ranges);
+    }
+
+    /**
+     * Builds an attachment response for the given directory and filename with optional range support.
+     *
+     * @param path            directory path of the file
+     * @param filename        file name to serve from {@code path}
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cacheDays       number of days to cache the response
+     * @param ranges          optional requested HTTP ranges
+     * @return response entity for full or partial attachment download
+     */
+    private ResponseEntity<byte[]> buildAttachmentFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays, List<HttpRange> ranges) {
+        var payload = fileDownloadService.prepareAttachmentDownload(path, filename, replaceFilename, ranges, MAX_PDF_RANGE_BYTES);
+        var response = ResponseEntity.status(payload.status()).headers(payload.headers()).contentType(payload.mediaType()).header("filename", filename)
+                .contentLength(payload.content().length);
+        if (payload.contentRange().isPresent()) {
+            response = response.header(HttpHeaders.CONTENT_RANGE, payload.contentRange().get());
+        }
+        if (cacheDays > 0) {
+            response = response.cacheControl(CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic());
+        }
+        return response.body(payload.content());
     }
 
     /**
@@ -763,18 +837,9 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
 
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = fileDownloadService.createFileHeaders(filename, replaceFilename);
 
-            // attachment will force the user to download the file
-            String lowerCaseFilename = filename.toLowerCase();
-            String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
-                    ? "attachment"
-                    : "inline";
-            String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
-            headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
-            headers.set("Filename", headerFilename);
-
-            var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
+            var response = ResponseEntity.ok().headers(headers).contentType(fileDownloadService.getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cacheDays > 0) {
                 var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
                 response = response.cacheControl(cacheControl);
@@ -797,17 +862,6 @@ public class FileResource {
 
     private Path getActualPathFromPublicPathString(@NonNull String publicPath, FilePathType filePathType) {
         return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
-    }
-
-    private MediaType getMediaTypeFromFilename(String filename) {
-        FileNameMap fileNameMap = URLConnection.getFileNameMap();
-        String mimeType = fileNameMap.getContentTypeFor(filename);
-        if (mimeType != null) {
-            return MediaType.parseMediaType(mimeType);
-        }
-        MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-
-        return MediaType.parseMediaType(fileTypeMap.getContentType(filename));
     }
 
     /**
@@ -862,7 +916,7 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS)) // Cache for 30 days;
-                    .contentType(getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
+                    .contentType(fileDownloadService.getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
         }
         catch (IOException e) {
             log.error("Failed to return requested file with path {}", filePath, e);

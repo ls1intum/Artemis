@@ -8,9 +8,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
-import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
+import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsExcepti
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -65,7 +67,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -152,28 +153,42 @@ public class UserService {
      */
     @PostConstruct
     public void applicationReady() {
-
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
                 // authenticate so that db queries are possible
                 SecurityUtils.setAuthorizationObject();
-                Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
-                if (existingInternalAdmin.isPresent()) {
-                    log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
-                    existingInternalAdmin.get().setPassword(passwordService.hashPassword(artemisInternalAdminPassword.get()));
-                    // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-                    saveUser(existingInternalAdmin.get());
-                }
-                else {
-                    log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
-                    final var managedUserVM = createManagedUserVm(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
-                    userCreationService.createUser(managedUserVM);
-                }
+                ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }
-        catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
+        catch (Exception exception) {
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", exception);
+        }
+    }
+
+    /**
+     * Ensures that an internal admin user exists with the specified credentials.
+     * Creates the user if it doesn't exist, or updates its password and authorities if it does.
+     * This method assumes credentials have already been validated by ConfigurationValidator.
+     *
+     * @param internalAdminUsername the username for the admin user
+     * @param internalAdminPassword the password for the admin user
+     */
+    public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
+        log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
+
+        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        if (existingInternalAdmin.isPresent()) {
+            log.info("Update internal admin user {}", internalAdminUsername);
+            existingInternalAdmin.get().setActivated(true);
+            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            // needs to be mutable --> new HashSet<>(Set.of(...))
+            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(existingInternalAdmin.get());
+        }
+        else {
+            log.info("Create internal admin user {}", internalAdminUsername);
+            final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            userCreationService.createUser(managedUserVM);
         }
     }
 
@@ -189,7 +204,7 @@ public class UserService {
         userDto.setCreatedBy("system");
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
-        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
         userDto.setGroups(new HashSet<>());
         return userDto;
     }
@@ -278,6 +293,9 @@ public class UserService {
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
+        if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
+            throw new UsernameAlreadyUsedException();
+        }
         // new user gets initially a generated password
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());

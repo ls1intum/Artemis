@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -76,7 +76,7 @@ public class LocalCIService implements ContinuousIntegrationService {
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(script);
-        buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        buildConfig.setBuildPlanConfiguration(JsonObjectMapper.get().writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }
@@ -161,7 +161,19 @@ public class LocalCIService implements ContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
+        // Return a simplified view of build agents for health check
+        // This excludes sensitive/large data like build scripts, repository URIs, SSH keys
+        var buildAgentsSummary = distributedDataAccessService.getBuildAgentInformation().stream().map(agent -> {
+            var buildAgent = agent.buildAgent();
+            var name = buildAgent.name() != null ? buildAgent.name() : "Unknown";
+            var displayName = buildAgent.displayName() != null ? buildAgent.displayName() : name;
+            var memberAddress = buildAgent.memberAddress() != null ? buildAgent.memberAddress() : "";
+            var status = agent.status() != null ? agent.status().name() : "UNKNOWN";
+            var runningJobs = agent.runningBuildJobs().stream().map(job -> job.name() != null ? job.name() : job.id()).map(String::valueOf).toList();
+            return Map.of("name", name, "displayName", displayName, "memberAddress", memberAddress, "status", status, "maxJobs", agent.maxNumberOfConcurrentBuildJobs(),
+                    "currentJobs", agent.numberOfCurrentBuildJobs(), "runningJobs", runningJobs);
+        }).toList();
+        return new ConnectorHealth(true, Map.of("buildAgents", buildAgentsSummary));
     }
 
     @Override

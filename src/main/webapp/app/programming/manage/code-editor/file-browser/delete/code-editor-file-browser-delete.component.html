@@ -1,19 +1,19 @@
 <form #deleteForm="ngForm" name="deleteForm" (ngSubmit)="deleteFile()">
     <div class="modal-header">
-        @if (fileType === 'FILE') {
+        @if (fileType() === 'FILE') {
             <h4 class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFileTitle"></h4>
         }
-        @if (fileType === 'FOLDER') {
+        @if (fileType() === 'FOLDER') {
             <h4 class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFolderTitle"></h4>
         }
         <button type="button" class="btn-close" data-dismiss="modal" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        @if (fileType === 'FILE') {
-            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | artemisTranslate: { filename: fileNameToDelete }"></p>
+        @if (fileType() === 'FILE') {
+            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
         }
-        @if (fileType === 'FOLDER') {
-            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | artemisTranslate: { filename: fileNameToDelete }"></p>
+        @if (fileType() === 'FOLDER') {
+            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
         }
     </div>
     <div class="modal-footer">

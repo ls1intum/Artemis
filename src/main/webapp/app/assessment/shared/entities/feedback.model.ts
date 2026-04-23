@@ -239,8 +239,11 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo?.instruction?.id) {
-            that.gradingInstruction = dropInfo.instruction;
+        // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
+        // Support both: dropInfo.instruction.id (expected shape) and dropInfo.id (actual Apollon shape)
+        const instruction = dropInfo?.instruction ?? ((dropInfo as any)?.id ? (dropInfo as any) : undefined);
+        if (instruction?.id) {
+            that.gradingInstruction = instruction;
         }
         if (referenceType && referenceId) {
             that.reference = referenceType + ':' + referenceId;
@@ -313,23 +316,17 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
  * @param feedbacks the list of feedbacks
  */
 export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
-    const gradingInstructions: { [key: number]: number } = {}; // { instructionId: number of encounters }
+    const encounteredInstructions = new Map<number, number>(); // instructionId -> number of encounters
     for (const feedback of feedbacks) {
-        if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
-            if (gradingInstructions[feedback.gradingInstruction!.id!]) {
-                // this grading instruction is counted before
-                const maxCount = feedback.gradingInstruction.usageCount;
-                const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
-                if (maxCount && maxCount > 0) {
-                    if (encounters >= maxCount) {
-                        // usage limit is exceeded, mark the feedback as subsequent
-                        feedback.isSubsequent = true;
-                    }
-                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
-                }
-            } else {
-                // the grading instruction is encountered for the first time
-                gradingInstructions[feedback.gradingInstruction!.id!] = 1;
+        if (feedback.gradingInstruction) {
+            const instructionId = feedback.gradingInstruction.id!;
+            const maxCount = feedback.gradingInstruction.usageCount ?? 0; // 0 means unlimited
+            const encounters = encounteredInstructions.get(instructionId) ?? 0;
+
+            encounteredInstructions.set(instructionId, encounters + 1);
+
+            if (maxCount > 0 && encounters >= maxCount) {
+                feedback.isSubsequent = true;
             }
         }
     }

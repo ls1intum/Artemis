@@ -30,6 +30,8 @@ public class Authority implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    public static final Authority SUPER_ADMIN_AUTHORITY = new Authority(Role.SUPER_ADMIN.getAuthority());
+
     public static final Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
     public static final Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());

@@ -1,4 +1,115 @@
-.wrap-long-text {
-    word-break: break-all; /* This will break the text at any character */
-    overflow-wrap: break-word; /* This will only break the text at whitespace */
+// Build agents table section
+.build-agents-section {
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    .table {
+        width: max-content;
+        table-layout: auto;
+
+        th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+    }
+}
+
+// Standard columns with consistent padding
+.build-agents-column {
+    white-space: nowrap;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+// String columns - name column should be wide enough for long names
+.build-agents-column-strings {
+    min-width: 100px;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+// Running jobs column - allow multiple jobs to stack vertically
+.build-agents-column-jobs {
+    min-width: 150px;
+    max-width: 350px;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    white-space: normal;
+    vertical-align: top !important;
+}
+
+// Clickable table rows with pointer cursor
+// Uses a "stretched link" pattern to enable Cmd+Click for opening in new tab
+.clickable-row {
+    cursor: pointer;
+    position: relative;
+
+    td {
+        font-size: 0.85rem;
+        vertical-align: middle;
+    }
+
+    // The stretched link covers the entire row, enabling native browser link behavior
+    // This allows Cmd+Click (Mac) or Ctrl+Click (Windows) to open in a new tab
+    .stretched-row-link {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+
+        // Make the link invisible but still clickable
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    }
+
+    // Ensure interactive elements (buttons, links) appear above the stretched link
+    a:not(.stretched-row-link),
+    button,
+    .btn {
+        position: relative;
+        z-index: 2;
+    }
+}
+
+// Running job item styling
+.running-job-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    .job-link {
+        color: var(--bs-primary);
+        cursor: pointer;
+        font-size: 0.8rem;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+// Extra small cancel button
+.btn-xs {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.7rem;
+    line-height: 1;
 }

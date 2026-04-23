@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -62,6 +63,7 @@ public class HyperionCodeGenerationResource {
      * Uses AI-powered iterative approach to generate, compile, and improve code based on build feedback.
      * Supports generation for SOLUTION, TEMPLATE, and TESTS repositories.
      * Uses websocket to stream progress and completion events.
+     * When {@code checkOnly} is true, returns the current job for the requesting user without starting a new one.
      *
      * @param exerciseId the ID of the programming exercise
      * @param request    the request containing repository type
@@ -72,12 +74,22 @@ public class HyperionCodeGenerationResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeGenerationJobStartDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());
-        validateGenerationRequest(exerciseId, request);
+        if (request.checkOnly()) {
+            validateExerciseId(exerciseId);
+        }
+        else {
+            validateGenerationRequest(exerciseId, request);
+        }
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        String jobId = codeGenerationJobService.startJob(user, exercise, request.repositoryType());
-        log.info(ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId)).toString());
-        return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
+        if (request.checkOnly()) {
+            return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
+                    .orElseGet(() -> ResponseEntity.noContent().build());
+        }
+        Long courseId = resolveCourseId(exercise);
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
+        log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
+        return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
     }
 
     /**
@@ -88,16 +100,22 @@ public class HyperionCodeGenerationResource {
      * @throws BadRequestAlertException if validation fails
      */
     private void validateGenerationRequest(long exerciseId, CodeGenerationRequestDTO request) {
+        validateExerciseId(exerciseId);
+        validateRepositoryType(request.repositoryType());
+    }
+
+    private void validateExerciseId(long exerciseId) {
         if (exerciseId <= 0) {
             throw new BadRequestAlertException("Exercise ID must be positive", ENTITY_NAME, "invalidExerciseId");
         }
+    }
 
-        if (request.repositoryType() == null) {
+    private void validateRepositoryType(RepositoryType repositoryType) {
+        if (repositoryType == null) {
             throw new BadRequestAlertException("Repository type is required", ENTITY_NAME, "missingRepositoryType");
         }
-
-        if (!isSupportedRepositoryType(request.repositoryType())) {
-            throw new BadRequestAlertException("Repository type not supported for code generation: " + request.repositoryType(), ENTITY_NAME, "unsupportedRepositoryType");
+        if (!isSupportedRepositoryType(repositoryType)) {
+            throw new BadRequestAlertException("Repository type not supported for code generation: " + repositoryType, ENTITY_NAME, "unsupportedRepositoryType");
         }
     }
 
@@ -114,6 +132,20 @@ public class HyperionCodeGenerationResource {
         validateExerciseForGeneration(exercise);
 
         return exercise;
+    }
+
+    private static Long resolveCourseId(ProgrammingExercise exercise) {
+        if (exercise == null) {
+            return null;
+        }
+
+        try {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return course != null ? course.getId() : null;
+        }
+        catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     /**

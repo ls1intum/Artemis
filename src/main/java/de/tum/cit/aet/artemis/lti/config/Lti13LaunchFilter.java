@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -12,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -21,10 +19,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
 import de.tum.cit.aet.artemis.lti.dto.Lti13AuthenticationResponse;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
@@ -37,7 +34,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final OAuth2LoginAuthenticationFilter defaultFilter;
@@ -129,7 +126,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(new ObjectMapper().writeValueAsString(jsonResponse));
+        writer.print(JsonObjectMapper.get().writeValueAsString(jsonResponse));
         writer.flush();
     }
 }

@@ -10,7 +10,6 @@ import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
@@ -22,6 +21,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextExerciseRowButtonsComponent } from '../row-buttons/text-exercise-row-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
@@ -39,10 +39,10 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         TextExerciseRowButtonsComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class TextExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
     protected textExerciseService = inject(TextExerciseService); // needed in html code
     private router = inject(Router);
     private courseExerciseService = inject(CourseExerciseService);

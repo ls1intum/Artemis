@@ -14,14 +14,15 @@ export class ModalDialogBox {
 
     async checkDialogTime(dialogTime: Dayjs) {
         const modalDialog = this.getModalDialogContent();
+        await expect(modalDialog).toBeVisible({ timeout: 30000 });
         const timeFormat = 'MMM D, YYYY HH:mm';
         const dialogTimeFormatted = dialogTime.format(timeFormat);
         const dialogTimeAfterMinuteFormatted = dialogTime.add(1, 'minute').format(timeFormat);
-        await expect(modalDialog.locator('.date').getByText(new RegExp(`(${dialogTimeFormatted}|${dialogTimeAfterMinuteFormatted})`))).toBeVisible();
+        await expect(modalDialog.locator('.date').getByText(new RegExp(`(${dialogTimeFormatted}|${dialogTimeAfterMinuteFormatted})`))).toBeVisible({ timeout: 10000 });
     }
 
     async checkDialogMessage(message: string) {
-        await expect(this.getModalDialogContent().locator('.content').getByText(message)).toBeVisible();
+        await expect(this.getModalDialogContent().locator('.content').getByText(message)).toBeVisible({ timeout: 10000 });
     }
 
     async checkDialogType(type: string) {

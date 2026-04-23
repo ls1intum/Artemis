@@ -1,0 +1,10 @@
+@import '../build-jobs-table.scss';
+
+.detail-link {
+    cursor: pointer;
+    color: var(--bs-link-color);
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

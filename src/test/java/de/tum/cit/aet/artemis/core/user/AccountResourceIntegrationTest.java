@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -17,12 +18,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
+import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
@@ -51,6 +55,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
+
+    @Autowired
+    private OrganizationUtilService organizationUtilService;
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);
@@ -235,6 +242,60 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(account.getAskToSetupPasskey()).isTrue();
         assertThat(account.isLoggedInWithPasskey()).isFalse();
         assertThat(account.isPasskeySuperAdminApproved()).isFalse();
+    }
+
+    /**
+     * Verifies that constructing and serializing a UserDTO does not throw a
+     * {@code LazyInitializationException} when the user has organizations assigned but
+     * the organizations collection was not eagerly loaded.
+     * <p>
+     * The account endpoint loads the user with {@code @EntityGraph({"groups", "authorities"})}
+     * — organizations remain an uninitialized Hibernate proxy. The UserDTO constructor must
+     * guard against this (via {@code Hibernate.isInitialized}) so that serialization succeeds
+     * even when the Jackson Hibernate module is not active (e.g. when Jackson 3 is the
+     * preferred JSON mapper in Spring Boot 4).
+     * <p>
+     * This test serializes the DTO with a plain ObjectMapper (no Hibernate module) to
+     * simulate the Jackson 3 path. Without the guard, serialization triggers lazy loading
+     * on the closed session and fails.
+     */
+    @Test
+    @WithMockUser(AUTHENTICATEDUSER)
+    void getAccountWithOrganizationDoesNotTriggerLazyLoading() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        Organization organization = organizationUtilService.createOrganization();
+        userTestRepository.addOrganizationToUser(user.getId(), organization);
+
+        // Load user exactly as the account endpoint does — organizations are NOT in the entity graph
+        User lazyUser = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
+
+        // Build DTO outside the transaction (session is closed because open-in-view=false)
+        UserDTO dto = new UserDTO(lazyUser);
+
+        // Serialize with a plain ObjectMapper (no Hibernate module) to simulate Jackson 3,
+        // which does not have the Hibernate7Module registered. If the DTO still holds an
+        // uninitialized PersistentSet, this will throw LazyInitializationException.
+        var plainMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        plainMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        assertThatCode(() -> plainMapper.writeValueAsString(dto)).doesNotThrowAnyException();
+    }
+
+    /**
+     * Verifies that the full account endpoint returns 200 (not 500) when the user has
+     * organizations. This tests the complete HTTP serialization stack including the
+     * configured Jackson message converter and Hibernate module.
+     */
+    @Test
+    @WithMockUser(AUTHENTICATEDUSER)
+    void getAccountWithOrganization() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        Organization organization = organizationUtilService.createOrganization();
+        userTestRepository.addOrganizationToUser(user.getId(), organization);
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account).isNotNull();
+        assertThat(account.getLogin()).isEqualTo(AUTHENTICATEDUSER);
     }
 
     @Test
@@ -516,30 +577,30 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void declineExternalLLMUsageSuccessful() throws Exception {
+    void selectNoAIUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
@@ -548,16 +609,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        user.setExternalLLMUsageAcceptedTimestamp(originalTimestamp);
+        user.setSelectedLLMUsageTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
 
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
 
-        ZonedDateTime actualTimestamp = unchangedUser.get().getExternalLLMUsageAcceptedTimestamp();
+        ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }

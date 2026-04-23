@@ -10,11 +10,12 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export interface IAccountService {
     save: (account: User) => Observable<HttpResponse<User>>;
@@ -242,6 +243,10 @@ export class AccountService implements IAccountService {
         return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
     }
 
+    isSuperAdmin(): boolean {
+        return this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN);
+    }
+
     isAtLeastTutor(): boolean {
         return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
     }
@@ -285,7 +290,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Checks whether current user is owner of the participation or whether he is part of the team
+     * Checks whether current user is owner of the participation or whether they are part of the team
      *
      * @param participation - Participation that is checked
      */
@@ -395,16 +400,17 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets externalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
-     * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
+     * Sets LLMSelectionDecisionDate to current timestamp locally if the users accepted the conditions or actively declined,
+     * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
      */
-    setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
+    setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            currentUserIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            currentUserIdentity.selectedLLMUsageTimestamp = dayjs();
+            currentUserIdentity.selectedLLMUsage = accepted;
             return currentUserIdentity;
         });
     }

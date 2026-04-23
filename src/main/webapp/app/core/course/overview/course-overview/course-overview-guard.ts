@@ -1,12 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Injectable({
     providedIn: 'root',
@@ -14,6 +17,7 @@ import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route'
 export class CourseOverviewGuard implements CanActivate {
     private courseStorageService = inject(CourseStorageService);
     private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
     private router = inject(Router);
     private serverDateService = inject(ArtemisServerDateService);
 
@@ -32,20 +36,27 @@ export class CourseOverviewGuard implements CanActivate {
         if (!path) {
             return of(false);
         }
+        // Resolving the current user is only needed for the dashboard fallback; other paths don't depend on it.
+        // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to today's Iris-or-exercises behavior.
+        const user$: Observable<User | undefined> =
+            path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
         //we need to load the course from the server to check if the user has access to the requested route. The course in the cache might not be sufficient (e.g. misses exams or lectures)
-        return this.courseManagementService.findOneForDashboard(courseIdNumber).pipe(
-            switchMap((res) => {
-                if (res.body) {
+        return forkJoin({
+            courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),
+            user: user$,
+        }).pipe(
+            switchMap(({ courseRes, user }) => {
+                if (courseRes.body) {
                     // Store course in cache
-                    this.courseStorageService.updateCourse(res.body);
+                    this.courseStorageService.updateCourse(courseRes.body);
                 }
                 // Flatten the result to return Observable<boolean> directly
-                return this.handleReturn(this.courseStorageService.getCourse(courseIdNumber), path);
+                return this.handleReturn(this.courseStorageService.getCourse(courseIdNumber), path, user);
             }),
         );
     }
 
-    handleReturn = (course?: Course, type?: string): Observable<boolean> => {
+    handleReturn = (course?: Course, type?: string, user?: User): Observable<boolean> => {
         let hasAccess: boolean;
         switch (type) {
             // Should always be accessible
@@ -65,10 +76,13 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = !!course?.numberOfTutorialGroups;
                 break;
             case CourseOverviewRoutePath.DASHBOARD:
-                hasAccess = !!(course?.studentCourseAnalyticsDashboardEnabled || course?.irisEnabledInCourse);
+                hasAccess = !!course?.studentCourseAnalyticsDashboardEnabled;
+                break;
+            case CourseOverviewRoutePath.IRIS:
+                hasAccess = course?.irisEnabledInCourse ?? false;
                 break;
             case CourseOverviewRoutePath.FAQ:
-                hasAccess = course?.faqEnabled ?? false;
+                hasAccess = (course?.numberOfAcceptedFaqs ?? 0) > 0;
                 break;
             case CourseOverviewRoutePath.LEARNING_PATH:
                 hasAccess = course?.learningPathsEnabled ?? false;
@@ -84,8 +98,12 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = false;
         }
         if (!hasAccess) {
-            // Default route, redirect to exercises if the user does not have access to the requested route
-            this.router.navigate([`/courses/${course?.id}/exercises`]);
+            const hasOptedOutOfAI = user?.selectedLLMUsage === LLMSelectionDecision.NO_AI;
+            if (type === CourseOverviewRoutePath.DASHBOARD && course?.irisEnabledInCourse && !hasOptedOutOfAI) {
+                this.router.navigate([`/courses/${course?.id}/iris`]);
+            } else {
+                this.router.navigate([`/courses/${course?.id}/exercises`]);
+            }
         }
         return of(hasAccess);
     };

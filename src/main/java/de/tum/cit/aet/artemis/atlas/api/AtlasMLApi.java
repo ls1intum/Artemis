@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * API for interacting with the AtlasML microservice.
  * Provides methods for saving competencies and exercises to AtlasML for clustering and analysis.
  */
+@Conditional(AtlasMLEnabled.class)
 @Controller
-@Conditional(AtlasEnabled.class)
 @Lazy
 public class AtlasMLApi extends AbstractAtlasApi {
 
@@ -81,5 +81,29 @@ public class AtlasMLApi extends AbstractAtlasApi {
      */
     public SuggestCompetencyRelationsResponseDTO suggestCompetencyRelations(Long courseId) {
         return atlasMLService.suggestCompetencyRelations(courseId);
+    }
+
+    /**
+     * Maps a competency to another competency in AtlasML (bidirectional relationship).
+     *
+     * @param sourceCompetencyId the source competency ID
+     * @param targetCompetencyId the target competency ID
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToCompetency(Long sourceCompetencyId, Long targetCompetencyId) {
+        return atlasMLService.mapCompetencyToCompetency(sourceCompetencyId, targetCompetencyId);
+    }
+
+    /**
+     * Maps a competency to an exercise in AtlasML.
+     * Updates the exercise's competency list in the vector store so the exercise embedding
+     * reflects the newly linked competency.
+     *
+     * @param exerciseId   the exercise ID
+     * @param competencyId the competency ID to link
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToExercise(Long exerciseId, Long competencyId) {
+        return atlasMLService.mapCompetencyToExercise(exerciseId, competencyId);
     }
 }

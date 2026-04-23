@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -321,6 +322,18 @@ public class RepositoryService {
 
                     // Put the path and corresponding file content into the map
                     filesWithContent.put(path, content);
+                }
+                catch (MissingObjectException e) {
+                    // Log diagnostic info to help debug intermittent CI failures where objects
+                    // appear missing despite being flushed to disk moments before
+                    var repoDir = repository.getDirectory();
+                    var objectsDir = repoDir != null ? repoDir.toPath().resolve("objects") : null;
+                    log.error(
+                            "MissingObjectException reading blob {} for file '{}' at commit {} in repo {}. " + "Objects dir exists: {}, pack dir exists: {}, repo isBare: {}. "
+                                    + "This may indicate a JGit object visibility race condition on the CI filesystem.",
+                            objectId.name(), path, commitId.name(), repoDir, objectsDir != null && Files.exists(objectsDir),
+                            objectsDir != null && Files.exists(objectsDir.resolve("pack")), repository.isBare());
+                    throw e;
                 }
             }
         }

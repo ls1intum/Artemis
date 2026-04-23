@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
@@ -25,6 +25,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 interface CombinedOption {
     id: number;
@@ -37,18 +40,18 @@ interface CombinedOption {
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective],
+    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective, FaIconComponent],
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    channels = signal<ChannelDTO[] | []>([]);
+    channels = signal<(ChannelDTO | GroupChatDTO)[] | []>([]);
     users = signal<UserPublicInfoDTO[] | []>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
-    filteredChannels: ChannelDTO[] = [];
+    filteredChannels: (ChannelDTO | GroupChatDTO)[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
-    selectedChannels: ChannelDTO[] = [];
+    selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
@@ -60,7 +63,8 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     showFullForwardedMessage = false;
     isContentLong = false;
 
-    protected activeModal = inject(NgbActiveModal);
+    protected dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
 
@@ -68,7 +72,25 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
 
+    protected readonly faPeopleGroup = faPeopleGroup;
+    protected readonly faHashtag = faHashtag;
+
     ngOnInit(): void {
+        // Populate signals from DynamicDialogConfig data if available
+        if (this.dialogConfig?.data) {
+            if (this.dialogConfig.data.users !== undefined) {
+                this.users.set(this.dialogConfig.data.users);
+            }
+            if (this.dialogConfig.data.channels !== undefined) {
+                this.channels.set(this.dialogConfig.data.channels);
+            }
+            if (this.dialogConfig.data.postToForward !== undefined) {
+                this.postToForward.set(this.dialogConfig.data.postToForward);
+            }
+            if (this.dialogConfig.data.courseId !== undefined) {
+                this.courseId.set(this.dialogConfig.data.courseId);
+            }
+        }
         this.filteredChannels = this.channels() || [];
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
         this.filteredUsers = this.users();
@@ -76,11 +98,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         // Combine users and channels into a single options list
         this.combinedOptions = [
             ...this.channels()
-                .filter((channel: ChannelDTO) => channel.name !== undefined)
+                .filter((channel: ChannelDTO | GroupChatDTO) => channel.name !== undefined)
                 .map((channel) => ({
                     id: channel.id!,
                     name: channel.name!,
-                    type: 'channel',
+                    type: channel.type!,
                     img: '',
                 })),
             ...this.users().map((user) => ({
@@ -105,7 +127,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Checks whether the forwarded message content exceeds its visible container height.
      */
     checkIfContentOverflows(): void {
-        if (this.messageContent) {
+        if (this.messageContent()) {
             const nativeElement = this.messageContent()!.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
@@ -138,7 +160,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         if (this.searchTerm) {
             const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
 
-            if (lowerCaseSearchTerm.length >= 3) {
+            if (lowerCaseSearchTerm.length >= 3 && this.courseId()) {
                 this.courseManagementService
                     .searchUsers(this.courseId()!, lowerCaseSearchTerm, ['students', 'tutors', 'instructors'])
                     .pipe(
@@ -157,7 +179,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                 this.filteredUsers = [];
             }
 
-            this.filteredChannels = this.channels().filter((channel: ChannelDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
+            this.filteredChannels = this.channels().filter((channel: ChannelDTO | GroupChatDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
             this.updateCombinedOptions();
         } else {
             this.filteredUsers = [...this.users()];
@@ -174,7 +196,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
                 name: channel.name!,
-                type: 'channel',
+                type: channel.type!,
                 img: '',
             })),
             ...this.filteredUsers.map((user) => ({
@@ -191,10 +213,10 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Ensures no duplicates.
      */
     selectOption(option: CombinedOption): void {
-        if (option.type === 'channel') {
-            const existing = this.selectedChannels.find((c) => (c as ChannelDTO).id === option.id);
+        if (option.type === 'channel' || option.type === 'groupChat') {
+            const existing = this.selectedChannels.find((c) => c.id === option.id);
             if (!existing) {
-                const channel = this.channels()?.find((c) => (c as ChannelDTO).id === option.id);
+                const channel = this.channels()?.find((c) => c.id === option.id);
                 if (channel) {
                     this.selectedChannels.push(channel);
                 }
@@ -215,7 +237,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     /** Removes selected channel from the list */
-    removeSelectedChannel(channel: ChannelDTO): void {
+    removeSelectedChannel(channel: ChannelDTO | GroupChatDTO): void {
         const index = this.selectedChannels.findIndex((c) => c.id === channel.id);
         if (index > -1) {
             this.selectedChannels.splice(index, 1);
@@ -242,7 +264,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             users: this.selectedUsers,
             messageContent: this.newPost.content,
         };
-        this.activeModal.close(selectedItems);
+        this.dialogRef.close(selectedItems);
     }
 
     /** Returns true if any users or channels are selected */
@@ -264,7 +286,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     /** Programmatically focuses on the search input field */
     focusInput(): void {
-        if (this.searchInput) {
+        if (this.searchInput()) {
             this.renderer.selectRootElement(this.searchInput()!.nativeElement, true).focus();
         }
     }
@@ -274,7 +296,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      */
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (this.searchInput && !this.searchInput()!.nativeElement.contains(event.target)) {
+        if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
             this.showDropdown = false;
         }
     }

@@ -289,15 +289,17 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lectureWithSlides);
         lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithoutSlides));
 
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
+        List<LectureResource.GetLecturesDTO> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK,
+                LectureResource.GetLecturesDTO.class);
 
         final Lecture finalLectureWithSlides = lectureWithSlides;
-        Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
+        LectureResource.GetLecturesDTO filteredLecture = returnedLectures.stream().filter(lecture -> lecture.id().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
 
-        assertThat(filteredLecture.getLectureUnits()).hasSize(2);
-        assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
-        AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
-        assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);
+        assertThat(filteredLecture.lectureUnits()).hasSize(2);
+        assertThat(filteredLecture.lectureUnits().stream().map(LectureResource.AttachmentVideoUnitDTO::id).toList()).contains(attachmentVideoUnitWithSlides.getId());
+        LectureResource.AttachmentVideoUnitDTO attachmentVideoUnitDTO = filteredLecture.lectureUnits().stream()
+                .filter(unit -> unit.id().equals(attachmentVideoUnitWithSlides.getId())).findFirst().orElseThrow();
+        assertThat(attachmentVideoUnitDTO.slides()).hasSize(numberOfSlides);
     }
 
     @Test
@@ -319,6 +321,36 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.videosource.domain.VideoSourceType.YOUTUBE);
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_nonYoutubeUnit_bothFieldsNull() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://live.rbg.tum.de/w/foo/123");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isNull();
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isNull();
     }
 
     private void testGetLecture(Long lectureId) throws Exception {

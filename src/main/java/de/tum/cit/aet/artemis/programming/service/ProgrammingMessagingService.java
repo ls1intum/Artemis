@@ -52,9 +52,7 @@ public class ProgrammingMessagingService {
 
     private final ParticipationRepository participationRepository;
 
-    // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
-    // DeferredEagerInitialization kicks, but not on startup.
-    public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+    public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
             ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
