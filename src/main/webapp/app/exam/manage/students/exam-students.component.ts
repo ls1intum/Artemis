@@ -542,7 +542,6 @@ export class ExamStudentsComponent implements OnDestroy {
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
                 this.reloadExamWithRegisteredUsers();
-                this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.missingStudentExamGenerationError', err);
@@ -612,7 +611,6 @@ export class ExamStudentsComponent implements OnDestroy {
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
                 this.reloadExamWithRegisteredUsers();
-                this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
