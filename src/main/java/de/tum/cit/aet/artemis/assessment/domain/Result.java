@@ -94,19 +94,9 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
-    // @Cache(READ_WRITE) — not NONSTRICT. Two reasons this collection needs strong-consistency caching on a clustered
-    // Hazelcast-backed L2 setup:
-    // 1. Cross-node correctness. #12574 showed that NONSTRICT_READ_WRITE can return partial / stale collections during
-    // its async-invalidation window. READ_WRITE uses soft locks around the write → commit window so concurrent
-    // readers on other nodes see the fully committed list (or block briefly), never a torn one.
-    // 2. @OrderColumn NULL-index robustness. Hibernate 7 aborts collection load with "Illegal null value for list index
-    // encountered while reading" when the position column has a gap (a documented JPA provider quirk with
-    // mappedBy + cascade=ALL + orphanRemoval). A cached list-of-ids bypasses the raw DB reload path that hits
-    // that branch and keeps multi-node assessment flows stable. The @PostLoad scrubber below covers any late
-    // cache-miss reload.
+    // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     private List<Feedback> feedbacks = new ArrayList<>();
 
