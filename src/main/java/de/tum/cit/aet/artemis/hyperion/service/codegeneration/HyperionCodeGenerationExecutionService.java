@@ -62,7 +62,7 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationExecutionService.class);
 
-    private static final int MAX_ITERATIONS = 2;
+    private static final int DEFAULT_MAX_ITERATIONS = 2;
 
     private static final long TIMEOUT = 180_000; // 3 minutes
 
@@ -323,14 +323,16 @@ public class HyperionCodeGenerationExecutionService {
     /**
      * Generates and compiles code with websocket publisher callbacks.
      *
-     * @param exercise       the programming exercise
-     * @param user           the initiating user
-     * @param courseId       the resolved course id for telemetry attribution
-     * @param repositoryType repository type to generate
-     * @param publisher      event publisher for websocket updates
+     * @param exercise              the programming exercise
+     * @param user                  the initiating user
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param repositoryType        repository type to generate
+     * @param initialAutoGeneration whether the request belongs to the initial automatically-triggered generation flow
+     * @param publisher             event publisher for websocket updates
      * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             publisher.error("Repository setup failed");
@@ -343,7 +345,8 @@ public class HyperionCodeGenerationExecutionService {
         GenerationExecutionResult executionResult;
 
         try {
-            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, publisher, setupResult.repository(), repositoryUri, executionProgress);
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, initialAutoGeneration, publisher, setupResult.repository(), repositoryUri,
+                    executionProgress);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -380,14 +383,15 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
-            HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, GenerationExecutionProgress executionProgress)
-            throws Exception {
+            boolean initialAutoGeneration, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri,
+            GenerationExecutionProgress executionProgress) throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
         String buildEnvironmentContext = repositoryStructureService.getBuildEnvironmentContext(repository);
         String lastBuildLogs = null;
+        int maxIterations = resolveMaxIterations(repositoryType, initialAutoGeneration);
 
-        for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
+        for (int attempt = 0; attempt < maxIterations; attempt++) {
             executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
                     lastBuildLogs, buildEnvironmentContext, consistencyIssues, executionProgress);
@@ -405,6 +409,13 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         return executionProgress.snapshot();
+    }
+
+    private int resolveMaxIterations(RepositoryType repositoryType, boolean initialAutoGeneration) {
+        if (initialAutoGeneration && (repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TEMPLATE)) {
+            return 1;
+        }
+        return DEFAULT_MAX_ITERATIONS;
     }
 
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,

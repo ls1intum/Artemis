@@ -903,7 +903,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             (comp as any).maybeAutoStartCodeGenerationFromNavigation();
 
             expect(startCodeGenerationSpy).toHaveBeenCalledOnce();
-            expect(startCodeGenerationSpy).toHaveBeenCalledWith([RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS]);
+            expect(startCodeGenerationSpy).toHaveBeenCalledWith([RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS], true);
+        });
+
+        it('should mark auto-started generation requests as initial auto generation', async () => {
+            const solutionJob$ = new Subject<any>();
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValueOnce(of({ jobId: 'job-solution' }));
+            (ws.subscribeToJob as jest.Mock).mockReturnValueOnce(solutionJob$.asObservable());
+
+            (comp as any).startCodeGeneration([RepositoryType.SOLUTION], true);
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, {
+                repositoryType: RepositoryType.SOLUTION,
+                checkOnly: false,
+                initialAutoGeneration: true,
+            });
         });
 
         it('should wait until the previous job slot is released before starting the next repository', fakeAsync(() => {

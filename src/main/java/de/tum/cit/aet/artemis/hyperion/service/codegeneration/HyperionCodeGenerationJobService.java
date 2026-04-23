@@ -64,10 +64,10 @@ public class HyperionCodeGenerationJobService {
      * @param repositoryType the target repository type
      * @return the created job id
      */
-    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType) {
+    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration) {
         JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
         String jobId = job.jobId();
-        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, () -> clearJob(exercise.getId(), jobId));
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, () -> clearJob(exercise.getId(), jobId));
         return jobId;
     }
 

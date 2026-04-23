@@ -268,6 +268,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private repositoriesWithInFlightCodeGenerationPull = new Set<SupportedCodeGenerationRepositoryType>();
     private queuedCodeGenerationRepositories: SupportedCodeGenerationRepositoryType[] = [];
     private activeCodeGenerationRepository?: SupportedCodeGenerationRepositoryType;
+    private currentCodeGenerationUsesInitialIterationLimit = false;
     private hasCustomCodeGenerationSelection = false;
     readonly supportedCodeGenerationRepositories = SUPPORTED_CODE_GENERATION_REPOSITORIES;
     readonly codeGenerationStatuses = signal<CodeGenerationRepositoryStatus[]>(
@@ -362,8 +363,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Triggers the async generation endpoint and subscribes to job updates.
      */
-    private startCodeGeneration(repositories: SupportedCodeGenerationRepositoryType[]) {
+    private startCodeGeneration(repositories: SupportedCodeGenerationRepositoryType[], initialAutoGeneration = false) {
         this.isGeneratingCode.set(true);
+        this.currentCodeGenerationUsesInitialIterationLimit = initialAutoGeneration;
         this.restoreRequestId += 1;
         this.clearCodeGenerationStatusSubscription();
         this.clearSlotReleasePoll();
@@ -393,7 +395,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             message: undefined,
         }));
 
-        const request = this.createCodeGenerationRequest(repositoryType);
+        const request = this.createCodeGenerationRequest(repositoryType, false, this.currentCodeGenerationUsesInitialIterationLimit);
         const exerciseId = this.exercise.id;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
@@ -464,7 +466,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             },
             '',
         );
-        this.startCodeGeneration([...SUPPORTED_CODE_GENERATION_REPOSITORIES]);
+        this.startCodeGeneration([...SUPPORTED_CODE_GENERATION_REPOSITORIES], true);
     }
 
     /**
@@ -548,8 +550,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param checkOnly whether the request should only query the current generation status
      * @returns a request object matching the backend's runtime contract
      */
-    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false): CodeGenerationRequest {
+    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
         // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
+        if (initialAutoGeneration) {
+            return { repositoryType, checkOnly, initialAutoGeneration: true } as unknown as CodeGenerationRequest;
+        }
         return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
     }
 
@@ -708,6 +713,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (stopSpinner) {
             this.clearCodeGenerationRepositoryPulls();
             this.isGeneratingCode.set(false);
+            this.currentCodeGenerationUsesInitialIterationLimit = false;
         }
         if (this.activeJobId) {
             this.hyperionWs.unsubscribeFromJob(this.activeJobId);
@@ -766,6 +772,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.waitForCodeGenerationSlotRelease();
         } else {
             this.isGeneratingCode.set(false);
+            this.currentCodeGenerationUsesInitialIterationLimit = false;
         }
     }
 
