@@ -378,8 +378,12 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.isLoading.set(true);
-        this.examManagementService.find(this.courseId(), examId, true).subscribe((examResponse: HttpResponse<Exam>) => {
-            this.setUpExamInformation(examResponse.body!);
+        this.examManagementService.find(this.courseId(), examId, true).subscribe({
+            next: (examResponse: HttpResponse<Exam>) => this.setUpExamInformation(examResponse.body!),
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
         });
     }
 
@@ -594,12 +598,16 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationRunning.set(false);
             return;
         }
-        this.exercisePreparationStatus.set(newStatus);
-        const processedExams = (newStatus.finished ?? 0) + (newStatus.failed ?? 0);
+        const failedExams = newStatus.failed ?? 0;
+        const finishedExams = newStatus.finished ?? 0;
+        const processedExams = finishedExams + failedExams;
+        const remainingExams = newStatus.overall - processedExams;
         const exPrepRunning = processedExams < newStatus.overall;
+
+        this.exercisePreparationStatus.set(newStatus);
         this.exercisePreparationRunning.set(exPrepRunning);
         this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
-        const remainingExams = newStatus.overall - processedExams;
+
         if (exPrepRunning && processedExams) {
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
@@ -611,7 +619,7 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
         } else {
             this.exercisePreparationEta.set(undefined);
-            this.isAllExercisesPrepared.set(remainingExams === 0);
+            this.isAllExercisesPrepared.set(remainingExams === 0 && failedExams === 0);
         }
     }
 
