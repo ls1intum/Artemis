@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableItemSchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableItemWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
@@ -546,7 +547,7 @@ public class CourseDeletionService {
 
     /**
      * Deletes all FAQs (Frequently Asked Questions) for the course.
-     * Also notifies Pyris to remove the FAQs from the Weaviate vector database.
+     * Also notifies Pyris and removes FAQs from the global search Weaviate collection.
      *
      * @param courseId the ID of the course whose FAQs should be deleted
      */
@@ -558,6 +559,9 @@ public class CourseDeletionService {
         // See: https://github.com/ls1intum/edutelligence/blob/main/iris/src/iris/pipeline/faq_ingestion_pipeline.py
         var faqs = faqRepository.findAllByCourseId(courseId);
         pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
+        if (searchableItemWeaviateService != null) {
+            faqs.forEach(faq -> searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.FAQ, faq.getId()));
+        }
         faqRepository.deleteAllByCourseId(courseId);
     }
 
