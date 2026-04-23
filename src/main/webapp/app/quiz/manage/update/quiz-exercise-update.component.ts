@@ -598,8 +598,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        // Respect the server-provided isEditable flag (accounts for exam dates), combined with local check
-        this.quizExercise.isEditable = this.quizExercise.isEditable && isQuizEditable(this.quizExercise);
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
