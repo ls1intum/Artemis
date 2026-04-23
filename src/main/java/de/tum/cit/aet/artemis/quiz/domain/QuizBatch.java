@@ -9,7 +9,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,9 +20,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A QuizBatch.
  */
+// No @Cache here on purpose: written every time a student joins a BATCHED quiz. See #12574 / #12584.
 @Entity
 @Table(name = "quiz_batch")
-@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizBatch extends DomainObject {
 

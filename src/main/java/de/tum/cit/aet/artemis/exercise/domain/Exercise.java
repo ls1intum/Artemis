@@ -148,9 +148,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
+    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
+    // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
     // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.

@@ -13,9 +13,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,9 +22,9 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 /**
  * A ShortAnswerSubmittedText.
  */
+// No @Cache here on purpose: written on every live quiz autosave / submission. See #12574 / #12584.
 @Entity
 @Table(name = "short_answer_submitted_text")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedText extends DomainObject {
 

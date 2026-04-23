@@ -32,9 +32,9 @@ public class BuildPlan extends DomainObject {
     @Column(name = "build_plan", table = "build_plan", length = 10_000)
     private String buildPlan;
 
+    // No @Cache here on purpose: mutated when build plans are linked / unlinked from programming exercises. See #12574 / #12584.
     @OneToMany
     @JoinColumn(name = "build_plan_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
     @Nullable
