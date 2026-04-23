@@ -12,8 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -43,11 +41,11 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
-    // Only present if buildFailed == true
+    // Only present if buildFailed == true.
+    // No @Cache: written asynchronously by the CI callback; NONSTRICT caused partial log reads from other nodes, same class of bug as #12574.
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     /**
