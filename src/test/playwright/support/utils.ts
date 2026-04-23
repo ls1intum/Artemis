@@ -195,6 +195,16 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
     // Wait for Monaco to be available on window (exposed by MonacoEditorService)
     await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
 
+    // Identify the target Monaco instance via its DOM node reference rather than
+    // screen coordinates. Bounding-box matching was fragile when hydration
+    // caused layout shifts — coordinates could change mid-observation and
+    // silently fall through to "last editor", which is not necessarily the
+    // right one when multiple editors coexist.
+    const editorHandle = await monacoEditor.elementHandle();
+    if (!editorHandle) {
+        throw new Error('Could not resolve Monaco editor element handle');
+    }
+
     // When called on an /edit page, the Angular component may still be hydrating the
     // form from the server response. A setValue() that races ahead of hydration gets
     // overwritten when the API response arrives (including late arrivals after our
@@ -203,54 +213,35 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
     // clobber it after we return.
     const MAX_ATTEMPTS = 8;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        // Get the bounding box of the target Monaco editor element (re-read each
-        // attempt; layout can shift on hydration)
-        const boundingBox = await monacoEditor.boundingBox();
-        if (!boundingBox) {
-            throw new Error('Could not get bounding box of Monaco editor');
-        }
-
         // Click on the editor to ensure it's initialized + focused
         await monacoEditor.click();
         await page.waitForTimeout(100);
 
         const result = await page.evaluate(
-            ({ newText, targetBox }) => {
+            ({ newText, editorNode }) => {
                 const monaco = (window as any).monaco;
                 if (!monaco || !monaco.editor) {
                     return { success: false, error: 'Monaco not available' };
                 }
-
                 const editors = monaco.editor.getEditors();
                 if (editors.length === 0) {
                     return { success: false, error: 'No Monaco editors registered' };
                 }
-
-                let targetEditor = null;
-                for (const editor of editors) {
-                    const domNode = editor.getDomNode();
-                    if (domNode) {
-                        const rect = domNode.getBoundingClientRect();
-                        if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                            targetEditor = editor;
-                            break;
-                        }
-                    }
-                }
-                if (!targetEditor) {
-                    targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-                }
-                if (!targetEditor) {
-                    targetEditor = editors[editors.length - 1];
-                }
+                // Deterministic match: identical or contained DOM node reference.
+                // No coordinate comparisons — layout shifts don't affect this.
+                const findByNode = () =>
+                    editors.find((e: any) => {
+                        const dom = e.getDomNode();
+                        return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                    });
+                const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
                 if (!targetEditor) {
                     return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
                 }
-
                 targetEditor.setValue(newText);
                 return { success: true };
             },
-            { newText: text, targetBox: boundingBox },
+            { newText: text, editorNode: editorHandle },
         );
 
         if (!result.success) {
@@ -261,21 +252,22 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
         // the value to both (a) match `text` and (b) stay that way — that catches
         // late hydration that would otherwise overwrite after we return. The first
         // 1s covers the textChanged debounce (200ms, with buffer), the rest guards
-        // against deferred form population.
+        // against deferred form population. `readValue` uses the same fallback
+        // chain as `setValue` above so they can never pick different editors.
         const readValue = async () =>
             page.evaluate(
-                ({ targetBox }) => {
+                ({ editorNode }) => {
                     const monaco = (window as any).monaco;
                     const editors = monaco?.editor?.getEditors() || [];
-                    for (const editor of editors) {
-                        const rect = editor.getDomNode()?.getBoundingClientRect();
-                        if (rect && Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                            return editor.getValue();
-                        }
-                    }
-                    return editors[editors.length - 1]?.getValue() ?? null;
+                    const findByNode = () =>
+                        editors.find((e: any) => {
+                            const dom = e.getDomNode();
+                            return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                        });
+                    const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                    return targetEditor?.getValue() ?? null;
                 },
-                { targetBox: boundingBox },
+                { editorNode: editorHandle },
             );
 
         let stable = true;
