@@ -123,10 +123,12 @@ export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-4}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-75}"
 
-if [ "$(uname -m)" = "arm64" ]; then
+# macOS reports `arm64`, Linux reports `aarch64`; either indicates ARM64.
+HOST_ARCH="$(uname -m)"
+if [ "$HOST_ARCH" = "arm64" ] || [ "$HOST_ARCH" = "aarch64" ]; then
     export DOCKER_DEFAULT_PLATFORM="linux/arm64"
     export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
-    echo "Detected ARM64 — using linux/arm64 Artemis build and arm64 exercise images"
+    echo "Detected ARM64 ($HOST_ARCH) — using linux/arm64 Artemis build and arm64 exercise images"
 
     # The env vars above are inherited by docker-compose itself but NOT by the
     # Artemis node containers, because those services use `env_file:` for their
@@ -243,9 +245,13 @@ if [ "$SKIP_UP" = false ]; then
     echo ""
     echo "Verifying Hazelcast cluster size (each node should report 3 members)..."
     for n in 1 2 3; do
+        # `|| true` guards against set -e terminating the script when the log
+        # pattern is absent (e.g., Hazelcast log format changes or a log
+        # truncation race). A "?" is an informational display value, not an
+        # error condition.
         SIZE=$(docker logs "artemis-app-node-$n" 2>&1 \
             | grep -oE "Members (\{size:[0-9]+|\[[0-9]+\])" \
-            | tail -1 | grep -oE "[0-9]+" | tail -1)
+            | tail -1 | grep -oE "[0-9]+" | tail -1 || true)
         echo "  node-$n: cluster size = ${SIZE:-?}"
     done
 
