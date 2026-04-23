@@ -51,7 +51,7 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     List<QuizSubmission> findWithEagerSubmittedAnswersByParticipationId(long participationId);
 
     @Query("""
-            SELECT submission
+            SELECT DISTINCT submission
             FROM QuizSubmission submission
                 LEFT JOIN FETCH submission.submittedAnswers
                 JOIN submission.results r
