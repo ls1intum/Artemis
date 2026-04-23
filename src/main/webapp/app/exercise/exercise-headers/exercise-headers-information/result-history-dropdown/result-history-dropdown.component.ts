@@ -179,20 +179,21 @@ export class ResultHistoryDropdownComponent {
             return this.translateService.instant('artemisApp.result.progressString.buildFailed');
         }
 
-        const score = result.score ?? 0;
-        if (score === 100) {
+        const currentScore = result.score ?? 0;
+        if (currentScore === 100) {
             return this.translateService.instant('artemisApp.result.progressString.goalReached');
         }
 
         const sortedResults = this.sortedHistoryResults();
-        const index = sortedResults.indexOf(result);
-        const previousScore = index > 0 ? sortedResults[index - 1].score : undefined;
-        if (previousScore === undefined) {
-            return this.translateService.instant(score > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
+        const currentResultIndex = sortedResults.indexOf(result);
+
+        if (currentResultIndex === sortedResults.length - 1) {
+            return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
         }
-        if (score > previousScore) {
+        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        if (currentScore > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
-        } else if (score < previousScore) {
+        } else if (currentScore < previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.scoreDrop');
         } else {
             return this.translateService.instant('artemisApp.result.progressString.stuck');
