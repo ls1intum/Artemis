@@ -128,7 +128,8 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true, quizExerciseDTO.competencyLinks());
         exerciseVersionService.createExerciseVersion(result);
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        boolean isEditable = quizExerciseService.isEditable(result);
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result, isEditable);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -168,7 +169,8 @@ public class QuizExerciseCreationUpdateResource {
 
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        boolean isCourseQuizEditable = quizExerciseService.isEditable(result);
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result, isCourseQuizEditable);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -210,7 +212,8 @@ public class QuizExerciseCreationUpdateResource {
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        boolean isUpdatedQuizEditable = quizExerciseService.isEditable(result);
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result, isUpdatedQuizEditable);
 
         return ResponseEntity.ok(resultDTO);
     }
