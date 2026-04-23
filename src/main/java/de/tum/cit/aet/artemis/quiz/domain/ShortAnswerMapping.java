@@ -6,9 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -17,9 +14,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A ShortAnswerMapping.
  */
+// No @Cache here on purpose: part of the quiz-submission merge graph. See #12574 / #12584.
 @Entity
 @Table(name = "short_answer_mapping")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerMapping extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
