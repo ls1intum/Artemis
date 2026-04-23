@@ -98,12 +98,6 @@ public final class SearchableEntitySchema {
          */
         public static final String VISIBLE_DATE = "visible_date";
 
-        /**
-         * For type {@link TypeValues#LECTURE_UNIT} only: pre-computed student visibility, derived at
-         * upsert time from the unit's release date.
-         */
-        public static final String UNIT_VISIBLE = "unit_visible";
-
         public static final String FAQ_STATE = "faq_state";
 
         public static final String CHANNEL_IS_COURSE_WIDE = "channel_is_course_wide";
@@ -172,7 +166,6 @@ public final class SearchableEntitySchema {
             filterable(Properties.TEST_EXAM, BOOLEAN, "Whether this is a test exam (exams and exam exercises)"),
             filterable(Properties.EXAM_ID, INT, "The ID of the parent exam (exam exercises only)"),
             filterable(Properties.VISIBLE_DATE, DATE, "The exam's own visible date (exam rows only)"),
-            filterable(Properties.UNIT_VISIBLE, BOOLEAN, "Pre-computed visibility of a lecture unit to students (lecture_unit rows only)"),
             filterable(Properties.FAQ_STATE, TEXT, "The state of the FAQ: ACCEPTED, REJECTED, or PROPOSED (faq rows only)"),
             filterable(Properties.CHANNEL_IS_COURSE_WIDE, BOOLEAN, "Whether the channel is course-wide (channel rows only)"),
             filterable(Properties.CHANNEL_IS_PUBLIC, BOOLEAN, "Whether the channel is public (channel rows only)"),

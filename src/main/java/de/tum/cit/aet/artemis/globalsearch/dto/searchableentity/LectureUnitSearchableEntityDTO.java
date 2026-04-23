@@ -20,12 +20,11 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
  * units are intentionally skipped because the underlying exercise is already indexed as
  * {@link SearchableEntitySchema.TypeValues#EXERCISE}.
  * <p>
- * {@code unitVisible} is pre-computed at upsert time from {@link LectureUnit#getReleaseDate()} so
- * student visibility can be filtered with a single boolean predicate — no join back to the parent
- * lecture is needed at query time.
+ * Student visibility is determined at query time by filtering on {@code release_date} rather than
+ * storing a pre-computed boolean, so that visibility changes take effect immediately without
+ * re-indexing.
  */
-public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, Long lectureId, String unitName, String description, String unitType, ZonedDateTime releaseDate,
-        boolean unitVisible) {
+public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, Long lectureId, String unitName, String description, String unitType, ZonedDateTime releaseDate) {
 
     /**
      * Extracts all required data from a supported {@link LectureUnit} subtype.
@@ -59,9 +58,7 @@ public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, 
             throw new IllegalArgumentException("Unsupported lecture unit type for Weaviate indexing: " + unit.getClass().getSimpleName());
         }
 
-        boolean unitVisible = unit.getReleaseDate() == null || !unit.getReleaseDate().isAfter(ZonedDateTime.now());
-
-        return new LectureUnitSearchableEntityDTO(unit.getId(), courseId, lectureId, unit.getName(), description, unitType, unit.getReleaseDate(), unitVisible);
+        return new LectureUnitSearchableEntityDTO(unit.getId(), courseId, lectureId, unit.getName(), description, unitType, unit.getReleaseDate());
     }
 
     /**
@@ -88,7 +85,6 @@ public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, 
         properties.put(SearchableEntitySchema.Properties.LECTURE_ID, lectureId);
         properties.put(SearchableEntitySchema.Properties.TITLE, unitName);
         properties.put(SearchableEntitySchema.Properties.UNIT_TYPE, unitType);
-        properties.put(SearchableEntitySchema.Properties.UNIT_VISIBLE, unitVisible);
         if (description != null) {
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }

@@ -339,13 +339,14 @@ public class GlobalSearchResource {
     // -- LectureUnit disjunct --
 
     private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
+        OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
             subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.property(SearchableEntitySchema.Properties.UNIT_VISIBLE).eq(true)));
+                    Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull())));
         }
         Filter combined = combineOr(subBranches);
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);

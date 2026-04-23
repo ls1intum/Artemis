@@ -60,7 +60,6 @@ class ExerciseSchemaTest {
     void schema_containsLectureUnitProperties() {
         assertPropertyExists(SearchableEntitySchema.Properties.LECTURE_ID, WeaviateDataType.INT);
         assertPropertyExists(SearchableEntitySchema.Properties.UNIT_TYPE, WeaviateDataType.TEXT);
-        assertPropertyExists(SearchableEntitySchema.Properties.UNIT_VISIBLE, WeaviateDataType.BOOLEAN);
     }
 
     @Test
