@@ -94,10 +94,10 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
+    // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Feedback> feedbacks = new ArrayList<>();
 
     /**
