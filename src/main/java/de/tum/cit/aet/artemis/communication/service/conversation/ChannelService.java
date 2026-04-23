@@ -314,7 +314,12 @@ public class ChannelService {
         }
         channelRepository.saveAll(channelsToCreate);
         conversationParticipantRepository.saveAll(conversationParticipants);
-        channelsToCreate.forEach(channel -> conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator)));
+        channelsToCreate.forEach(channel -> {
+            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
+            if (searchableItemWeaviateService != null) {
+                searchableItemWeaviateService.upsertChannelAsync(channel);
+            }
+        });
     }
 
     /**
@@ -423,7 +428,11 @@ public class ChannelService {
         if (!newChannelName.equals(channel.getName())) {
             channel.setName(newChannelName);
             this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
-            return channelRepository.save(channel);
+            var updatedChannel = channelRepository.save(channel);
+            if (searchableItemWeaviateService != null) {
+                searchableItemWeaviateService.upsertChannelAsync(updatedChannel);
+            }
+            return updatedChannel;
         }
         else {
             return channel;
@@ -527,6 +536,9 @@ public class ChannelService {
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
+            if (searchableItemWeaviateService != null) {
+                searchableItemWeaviateService.deleteEntityAsync(SearchableItemSchema.TypeValues.CHANNEL, exerciseChannelId);
+            }
             conversationService.deleteConversation(exerciseChannelId);
         }
     }
