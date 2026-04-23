@@ -186,11 +186,10 @@ export class ResultHistoryDropdownComponent {
 
         const sortedResults = this.sortedHistoryResults();
         const index = sortedResults.indexOf(result);
-        if (index <= 0) {
-            return this.translateService.instant('artemisApp.result.progressString.niceProgress');
+        const previousScore = index > 0 ? sortedResults[index - 1].score : undefined;
+        if (previousScore === undefined) {
+            return this.translateService.instant(score > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
         }
-
-        const previousScore = sortedResults[index - 1].score ?? 0;
         if (score > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         } else if (score < previousScore) {

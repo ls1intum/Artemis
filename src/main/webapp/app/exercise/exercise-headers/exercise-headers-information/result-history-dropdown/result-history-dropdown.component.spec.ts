@@ -136,6 +136,14 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.niceProgress');
         });
 
+        it('should return stuck message for first result with score 0', () => {
+            const result = createResult(1, 0);
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.stuck');
+        });
+
         it('should return progress message when score increased', () => {
             const result1 = createResult(1, 50);
             const result2 = createResult(2, 75);
@@ -157,6 +165,24 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should return stuck message when score stayed the same', () => {
             const result1 = createResult(1, 50);
             const result2 = createResult(2, 50);
+            fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.stuck');
+        });
+
+        it('should return progress message when previous result has no score and current score is positive', () => {
+            const result1 = { ...createResult(1, 0), score: undefined } as unknown as Result;
+            const result2 = createResult(2, 50);
+            fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.niceProgress');
+        });
+
+        it('should return stuck message when previous result has no score and current score is 0', () => {
+            const result1 = { ...createResult(1, 0), score: undefined } as unknown as Result;
+            const result2 = createResult(2, 0);
             fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
             fixture.detectChanges();
 
