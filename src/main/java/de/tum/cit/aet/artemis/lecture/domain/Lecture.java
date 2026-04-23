@@ -37,9 +37,14 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * See {@link de.tum.cit.aet.artemis.atlas.config.AtlasEnabled} and {@link de.tum.cit.aet.artemis.core.config.Constants} for more information.
  * Tutorial lectures are a special type of lectures that are not shown in the main lecture list, but in the tutorial section.
  */
+// @Cache(READ_WRITE) — not NONSTRICT. Instructors edit lecture metadata (title, description, dates, …) and the client
+// immediately navigates to the detail page afterwards. Under clustered Hazelcast, NONSTRICT_READ_WRITE's async-invalidation
+// window let the detail GET land on a different node that still served the pre-edit cached entity, so the UI showed the
+// old description (multi-node LectureManagement 'Creates a lecture' E2E flake). READ_WRITE's soft-lock protocol closes
+// that window — same #12574 bug class, same fix as JHipster switched to in PR #11757.
 @Entity
 @Table(name = "lecture")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Lecture extends DomainObject {
 
