@@ -1309,6 +1309,26 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizExercise.isEditable).toBe(true);
             });
 
+            it('should respect a server-provided isEditable=false flag after save (e.g. exam-date-aware)', () => {
+                // When the server authoritatively says the quiz is no longer editable (e.g. exam start date has passed),
+                // the client must not override it to true via the local check.
+                const savedResponse = new QuizExercise(course, undefined);
+                savedResponse.id = 456;
+                savedResponse.title = 'test';
+                savedResponse.duration = 600;
+                savedResponse.quizMode = QuizMode.SYNCHRONIZED;
+                savedResponse.status = QuizStatus.VISIBLE;
+                savedResponse.quizEnded = false;
+                savedResponse.quizBatches = [];
+                savedResponse.isAtLeastEditor = true;
+                savedResponse.isEditable = false;
+                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+
+                saveQuizWithPendingChangesCache();
+
+                expect(comp.quizExercise.isEditable).toBe(false);
+            });
+
             it('should call alert service with specific error title if provided on save error', () => {
                 comp.quizExercise.id = undefined;
                 const mockErrorResponse = {

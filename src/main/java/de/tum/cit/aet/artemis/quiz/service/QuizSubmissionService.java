@@ -388,7 +388,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * downstream Hibernate merge to abort the whole request with {@code ObjectNotFoundException} when it tries to resolve the reference (#12584).
      */
     private void sanitizeSubmittedAnswersAgainstQuestions(QuizSubmission quizSubmission, QuizExercise quizExercise) {
-        if (quizSubmission.getSubmittedAnswers() == null || quizSubmission.getSubmittedAnswers().isEmpty()) {
+        // Normalize a null collection to empty so downstream iterations (e.g. setSubmission on each answer) stay null-safe.
+        if (quizSubmission.getSubmittedAnswers() == null) {
+            quizSubmission.setSubmittedAnswers(new HashSet<>());
+            return;
+        }
+        if (quizSubmission.getSubmittedAnswers().isEmpty()) {
             return;
         }
         Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
@@ -403,17 +408,23 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             if (serverQuestion == null) {
                 continue;
             }
-            submittedAnswer.setQuizQuestion(serverQuestion);
+            // Drop any submitted answer whose runtime subtype does not match the server-side question type — otherwise
+            // we would attach e.g. an MC answer to a ShortAnswer question and pass an inconsistent entity to merge.
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcAnswer && serverQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                submittedAnswer.setQuizQuestion(serverQuestion);
                 sanitizeMultipleChoiceSelectedOptions(mcAnswer, mcQuestion);
+                sanitizedAnswers.add(submittedAnswer);
             }
             else if (submittedAnswer instanceof DragAndDropSubmittedAnswer dndAnswer && serverQuestion instanceof DragAndDropQuestion dndQuestion) {
+                submittedAnswer.setQuizQuestion(serverQuestion);
                 sanitizeDragAndDropMappings(dndAnswer, dndQuestion);
+                sanitizedAnswers.add(submittedAnswer);
             }
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer saAnswer && serverQuestion instanceof ShortAnswerQuestion saQuestion) {
+                submittedAnswer.setQuizQuestion(serverQuestion);
                 sanitizeShortAnswerSubmittedTexts(saAnswer, saQuestion);
+                sanitizedAnswers.add(submittedAnswer);
             }
-            sanitizedAnswers.add(submittedAnswer);
         }
         quizSubmission.setSubmittedAnswers(sanitizedAnswers);
     }
@@ -421,14 +432,17 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     private void sanitizeMultipleChoiceSelectedOptions(MultipleChoiceSubmittedAnswer submittedAnswer, MultipleChoiceQuestion question) {
         Map<Long, AnswerOption> validOptions = question.getAnswerOptions().stream().filter(option -> option.getId() != null)
                 .collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+        Set<AnswerOption> clientOptions = submittedAnswer.getSelectedOptions();
         Set<AnswerOption> sanitized = new HashSet<>();
-        for (AnswerOption clientOption : submittedAnswer.getSelectedOptions()) {
-            if (clientOption == null || clientOption.getId() == null) {
-                continue;
-            }
-            AnswerOption serverOption = validOptions.get(clientOption.getId());
-            if (serverOption != null) {
-                sanitized.add(serverOption);
+        if (clientOptions != null) {
+            for (AnswerOption clientOption : clientOptions) {
+                if (clientOption == null || clientOption.getId() == null) {
+                    continue;
+                }
+                AnswerOption serverOption = validOptions.get(clientOption.getId());
+                if (serverOption != null) {
+                    sanitized.add(serverOption);
+                }
             }
         }
         submittedAnswer.setSelectedOptions(sanitized);
@@ -438,20 +452,23 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         Map<Long, DragItem> validDragItems = question.getDragItems().stream().filter(item -> item.getId() != null).collect(Collectors.toMap(DragItem::getId, Function.identity()));
         Map<Long, DropLocation> validDropLocations = question.getDropLocations().stream().filter(location -> location.getId() != null)
                 .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
+        Set<DragAndDropMapping> clientMappings = submittedAnswer.getMappings();
         Set<DragAndDropMapping> sanitized = new HashSet<>();
-        for (DragAndDropMapping mapping : submittedAnswer.getMappings()) {
-            if (mapping == null || mapping.getDragItem() == null || mapping.getDropLocation() == null || mapping.getDragItem().getId() == null
-                    || mapping.getDropLocation().getId() == null) {
-                continue;
+        if (clientMappings != null) {
+            for (DragAndDropMapping mapping : clientMappings) {
+                if (mapping == null || mapping.getDragItem() == null || mapping.getDropLocation() == null || mapping.getDragItem().getId() == null
+                        || mapping.getDropLocation().getId() == null) {
+                    continue;
+                }
+                DragItem serverDragItem = validDragItems.get(mapping.getDragItem().getId());
+                DropLocation serverDropLocation = validDropLocations.get(mapping.getDropLocation().getId());
+                if (serverDragItem == null || serverDropLocation == null) {
+                    continue;
+                }
+                mapping.setDragItem(serverDragItem);
+                mapping.setDropLocation(serverDropLocation);
+                sanitized.add(mapping);
             }
-            DragItem serverDragItem = validDragItems.get(mapping.getDragItem().getId());
-            DropLocation serverDropLocation = validDropLocations.get(mapping.getDropLocation().getId());
-            if (serverDragItem == null || serverDropLocation == null) {
-                continue;
-            }
-            mapping.setDragItem(serverDragItem);
-            mapping.setDropLocation(serverDropLocation);
-            sanitized.add(mapping);
         }
         submittedAnswer.setMappings(sanitized);
     }
@@ -459,17 +476,20 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     private void sanitizeShortAnswerSubmittedTexts(ShortAnswerSubmittedAnswer submittedAnswer, ShortAnswerQuestion question) {
         Map<Long, ShortAnswerSpot> validSpots = question.getSpots().stream().filter(spot -> spot.getId() != null)
                 .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
+        Set<ShortAnswerSubmittedText> clientTexts = submittedAnswer.getSubmittedTexts();
         Set<ShortAnswerSubmittedText> sanitized = new HashSet<>();
-        for (ShortAnswerSubmittedText submittedText : submittedAnswer.getSubmittedTexts()) {
-            if (submittedText == null || submittedText.getSpot() == null || submittedText.getSpot().getId() == null) {
-                continue;
+        if (clientTexts != null) {
+            for (ShortAnswerSubmittedText submittedText : clientTexts) {
+                if (submittedText == null || submittedText.getSpot() == null || submittedText.getSpot().getId() == null) {
+                    continue;
+                }
+                ShortAnswerSpot serverSpot = validSpots.get(submittedText.getSpot().getId());
+                if (serverSpot == null) {
+                    continue;
+                }
+                submittedText.setSpot(serverSpot);
+                sanitized.add(submittedText);
             }
-            ShortAnswerSpot serverSpot = validSpots.get(submittedText.getSpot().getId());
-            if (serverSpot == null) {
-                continue;
-            }
-            submittedText.setSpot(serverSpot);
-            sanitized.add(submittedText);
         }
         submittedAnswer.setSubmittedTexts(sanitized);
     }
