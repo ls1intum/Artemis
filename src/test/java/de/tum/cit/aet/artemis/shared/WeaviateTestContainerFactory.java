@@ -42,6 +42,18 @@ public final class WeaviateTestContainerFactory {
         return instance;
     }
 
+    /**
+     * Returns {@code true} if the container startup was already attempted but the
+     * container is not running (e.g. Docker image pull failed, version property missing).
+     * This allows tests to distinguish "Docker available but container failed" from
+     * "Docker unavailable".
+     *
+     * @return true if initialization was attempted and the container is null
+     */
+    public static synchronized boolean isStartupFailed() {
+        return initialized && instance == null;
+    }
+
     private static WeaviateContainer tryStart() {
         try {
             if (!DockerClientFactory.instance().isDockerAvailable()) {
