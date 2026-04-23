@@ -242,8 +242,13 @@ export async function setMonacoEditorContent(page: Page, containerSelector: stri
         throw new Error(`Failed to set Monaco editor content: ${success.error}`);
     }
 
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    // Artemis's Monaco wrapper pushes the new value into the Angular form via `textChanged`,
+    // which is debounced (200ms for the markdown editor used on the lecture / programming /
+    // build-plan forms). Under multi-node load the event loop can stretch that debounce well
+    // past the previous 300ms buffer — a subsequent save() then snapshots the stale Angular
+    // form value, which is the root of the LectureManagement "Creates a lecture" flake. Use a
+    // 1s window to make absolutely sure the emit has fired.
+    await page.waitForTimeout(1000);
 }
 
 /**
@@ -323,8 +328,13 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
         throw new Error(`Failed to set Monaco editor content: ${success.error}`);
     }
 
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    // Artemis's Monaco wrapper pushes the new value into the Angular form via `textChanged`,
+    // which is debounced (200ms for the markdown editor used on the lecture / programming /
+    // build-plan forms). Under multi-node load the event loop can stretch that debounce well
+    // past the previous 300ms buffer — a subsequent save() then snapshots the stale Angular
+    // form value, which is the root of the LectureManagement "Creates a lecture" flake. Use a
+    // 1s window to make absolutely sure the emit has fired.
+    await page.waitForTimeout(1000);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
