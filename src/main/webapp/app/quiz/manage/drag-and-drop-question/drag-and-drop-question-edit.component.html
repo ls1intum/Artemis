@@ -286,60 +286,66 @@
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
-                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath }">
-                        @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
-                            <div
-                                id="drop-location"
-                                class="drop-location"
-                                [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                                [ngStyle]="{
-                                    top: dropLocation.posY! / 2 + '%',
-                                    left: dropLocation.posX! / 2 + '%',
-                                    width: dropLocation.width! / 2 + '%',
-                                    height: dropLocation.height! / 2 + '%',
-                                }"
-                                (mousedown)="dropLocationMouseDown(dropLocation)"
-                                (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
-                                cdkDropList
-                            >
-                                <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
-                                <div class="drop-location-buttons">
-                                    @if (reEvaluationInProgress() && !dropLocation.invalid) {
-                                        <div class="re-evaluate-button" title="Set invalid" (click)="dropLocation.invalid = true">
-                                            <fa-icon [icon]="faBan" size="lg" />
+                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady }">
+                        @if (backgroundReady) {
+                            @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
+                                <div
+                                    id="drop-location"
+                                    class="drop-location"
+                                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                                    [ngStyle]="{
+                                        top: dropLocation.posY! / 2 + '%',
+                                        left: dropLocation.posX! / 2 + '%',
+                                        width: dropLocation.width! / 2 + '%',
+                                        height: dropLocation.height! / 2 + '%',
+                                    }"
+                                    (mousedown)="dropLocationMouseDown(dropLocation)"
+                                    (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
+                                    cdkDropList
+                                >
+                                    <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
+                                    <div class="drop-location-buttons">
+                                        @if (reEvaluationInProgress() && !dropLocation.invalid) {
+                                            <div class="re-evaluate-button" title="Set invalid" (click)="dropLocation.invalid = true">
+                                                <fa-icon [icon]="faBan" size="lg" />
+                                            </div>
+                                        }
+                                        @if (reEvaluationInProgress()) {
+                                            <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)">
+                                                <fa-icon [icon]="faUndo" size="lg" />
+                                            </div>
+                                        }
+                                        @if (!reEvaluationInProgress()) {
+                                            <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)">
+                                                <fa-icon [icon]="faCopy" size="lg" />
+                                            </div>
+                                        }
+                                        <div
+                                            [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'"
+                                            title="Delete"
+                                            (click)="deleteDropLocation(dropLocation)"
+                                        >
+                                            <fa-icon [icon]="faTrash" size="lg" />
                                         </div>
-                                    }
-                                    @if (reEvaluationInProgress()) {
-                                        <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)">
-                                            <fa-icon [icon]="faUndo" size="lg" />
-                                        </div>
-                                    }
-                                    @if (!reEvaluationInProgress()) {
-                                        <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)">
-                                            <fa-icon [icon]="faCopy" size="lg" />
-                                        </div>
-                                    }
-                                    <div [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
-                                        <fa-icon [icon]="faTrash" size="lg" />
                                     </div>
+                                    <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                                    <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                                    <div class="resize top right" (mousedown)="resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                                    <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                                    <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                                    <div class="resize bottom left" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                                    <div class="resize bottom center" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                                    <div class="resize bottom right" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
+                                    @if (getMappingsForDropLocation(dropLocation).length) {
+                                        <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)">
+                                            {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
+                                            <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
+                                                <fa-icon [icon]="faUnlink" size="lg" />
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
-                                <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
-                                <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
-                                <div class="resize top right" (mousedown)="resizeMouseDown(dropLocation, 'top', 'right')"></div>
-                                <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
-                                <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
-                                <div class="resize bottom left" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
-                                <div class="resize bottom center" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
-                                <div class="resize bottom right" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
-                                @if (getMappingsForDropLocation(dropLocation).length) {
-                                    <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)">
-                                        {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
-                                        <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
-                                            <fa-icon [icon]="faUnlink" size="lg" />
-                                        </div>
-                                    </div>
-                                }
-                            </div>
+                            }
                         }
                     </div>
                 </div>
