@@ -188,12 +188,12 @@ public class OnlineUnitResource {
         onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
+        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertLectureUnitAsync(persistedUnit);
         }
-
-        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
-        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
