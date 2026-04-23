@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.testcontainers.DockerClientFactory;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -326,6 +327,72 @@ public final class WeaviateTestUtil {
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
+        });
+    }
+
+    // -- Channel utilities --
+
+    /**
+     * Queries Weaviate for the channel with the given ID and returns its properties,
+     * or {@code null} if no channel was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channelId       the ID of the channel to look up
+     * @return the channel properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryChannelProperties(WeaviateService weaviateService, long channelId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(SearchableItemSchema.COLLECTION_NAME);
+        var response = collection.query
+                .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableItemSchema.Properties.TYPE).eq(SearchableItemSchema.TypeValues.CHANNEL),
+                        Filter.property(SearchableItemSchema.Properties.ENTITY_ID).eq(channelId))).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the channel exists in Weaviate and its core properties match the given channel.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channel         the channel whose metadata should be verified in Weaviate
+     */
+    public static void assertChannelExistsInWeaviate(WeaviateService weaviateService, Channel channel) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryChannelProperties(weaviateService, channel.getId());
+            assertThat(properties).as("Channel %d should exist in Weaviate", channel.getId()).isNotNull();
+
+            assertThat(properties.get(SearchableItemSchema.Properties.TITLE)).isEqualTo(channel.getName());
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.ENTITY_ID)).longValue()).isEqualTo(channel.getId());
+
+            Course course = channel.getCourse();
+            assertThat(((Number) properties.get(SearchableItemSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+
+            assertThat(properties.get(SearchableItemSchema.Properties.CHANNEL_IS_COURSE_WIDE)).isEqualTo(channel.getIsCourseWide());
+            assertThat(properties.get(SearchableItemSchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(channel.getIsPublic());
+            assertThat(properties.get(SearchableItemSchema.Properties.CHANNEL_IS_ARCHIVED)).isEqualTo(channel.getIsArchived());
+        });
+    }
+
+    /**
+     * Asserts that no channel with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param channelId       the ID of the channel that should not exist
+     */
+    public static void assertChannelNotInWeaviate(WeaviateService weaviateService, long channelId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryChannelProperties(weaviateService, channelId);
+            assertThat(properties).as("Channel %d should not exist in Weaviate", channelId).isNull();
         });
     }
 }
