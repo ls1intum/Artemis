@@ -533,6 +533,11 @@ public class ChannelService {
         return createdChannel;
     }
 
+    /**
+     * Deletes the channel associated with the given exercise ID, including its Weaviate search index entry.
+     *
+     * @param exerciseId the ID of the exercise whose channel should be deleted
+     */
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
