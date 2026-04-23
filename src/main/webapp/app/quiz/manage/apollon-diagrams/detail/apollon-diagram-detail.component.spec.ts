@@ -25,23 +25,28 @@ import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-gener
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 function setupCanvasAndImageMocks() {
-    const mockContext = {
-        drawImage: vi.fn(),
-        fillStyle: '',
-        fillRect: vi.fn(),
-    };
+    const createMockCanvas = () => {
+        const mockContext = {
+            drawImage: vi.fn(),
+            fillStyle: '',
+            fillRect: vi.fn(),
+            scale: vi.fn(),
+            globalCompositeOperation: 'source-over',
+        };
 
-    const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(mockContext),
-        toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
-        width: 0,
-        height: 0,
-    } as unknown as HTMLCanvasElement;
+        return {
+            style: { width: '', height: '' },
+            getContext: vi.fn().mockReturnValue(mockContext),
+            toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
+            width: 0,
+            height: 0,
+        } as unknown as HTMLCanvasElement;
+    };
 
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'canvas') {
-            return mockCanvas;
+            return createMockCanvas();
         }
         return originalCreateElement(tagName);
     });

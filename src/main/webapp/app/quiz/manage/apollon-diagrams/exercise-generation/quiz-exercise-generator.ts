@@ -9,6 +9,13 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/shared/util/utils';
 import { getQuizRelevantElementIds } from 'app/modeling/shared/apollon-model.util';
 
+interface GeneratedDiagramElement {
+    dragItem: DragItem;
+    dropLocation: DropLocation;
+    image: Blob;
+    imageName: string;
+}
+
 function getInteractiveElements(model: UMLModel): string[] {
     return getQuizRelevantElementIds(model);
 }
@@ -41,6 +48,7 @@ function getModelElements(model: UMLModel): any[] {
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 export const MAX_SIZE_UNIT = 200;
+const BACKGROUND_CUTOUT_PADDING_PIXELS = 4;
 
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
@@ -67,9 +75,10 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
         if (!element) {
             continue;
         }
-        const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, renderedDiagram.clip, files);
-        dragItems.set(element.id, dragItem!);
-        dropLocations.set(element.id, dropLocation!);
+        const generatedElement = await createGeneratedDiagramElement(element, model, renderedDiagram.clip);
+        files.set(generatedElement.imageName, generatedElement.image);
+        dragItems.set(element.id, generatedElement.dragItem);
+        dropLocations.set(element.id, generatedElement.dropLocation);
     }
 
     const diagramBackground = await createBlankedDiagramBackground(renderedDiagram, [...dropLocations.values()]);
@@ -128,7 +137,9 @@ function createDragAndDropQuestion(
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
 async function generateDragAndDropItem(element: ApollonNode, model: UMLModel, svgSize: { width: number; height: number }, files: Map<string, Blob>): Promise<DragAndDropMapping> {
-    return generateDragAndDropItemForNode(element, model, svgSize, files);
+    const generatedElement = await createGeneratedDiagramElement(element, model, svgSize);
+    files.set(generatedElement.imageName, generatedElement.image);
+    return new DragAndDropMapping(generatedElement.dragItem, generatedElement.dropLocation);
 }
 
 /**
@@ -147,16 +158,22 @@ export async function generateDragAndDropItemForNode(
     svgSize: { width: number; height: number },
     files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
+    return generateDragAndDropItem(element, model, svgSize, files);
+}
+
+async function createGeneratedDiagramElement(element: ApollonNode, model: UMLModel, svgSize: { width: number; height: number }): Promise<GeneratedDiagramElement> {
     const renderedElement: SVG = trimRenderedSVGToContent(await ApollonEditor.exportModelAsSvg(model, { include: [element.id], svgMode: 'compat', margin: 0 }));
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageName = `element-${element.id}.png`;
-    files.set(imageName, image);
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageName;
 
-    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
-
-    return new DragAndDropMapping(dragItem, dropLocation);
+    return {
+        dragItem,
+        dropLocation: computeDropLocation(renderedElement.clip, svgSize),
+        image,
+        imageName,
+    };
 }
 
 /**
@@ -202,12 +219,17 @@ async function createBlankedDiagramBackground(renderedDiagram: SVG, dropLocation
         context.fillStyle = 'white';
 
         for (const dropLocation of dropLocations) {
-            context.fillRect(
-                (dropLocation.posX! / MAX_SIZE_UNIT) * canvas.width,
-                (dropLocation.posY! / MAX_SIZE_UNIT) * canvas.height,
-                (dropLocation.width! / MAX_SIZE_UNIT) * canvas.width,
-                (dropLocation.height! / MAX_SIZE_UNIT) * canvas.height,
-            );
+            const x = (dropLocation.posX! / MAX_SIZE_UNIT) * canvas.width;
+            const y = (dropLocation.posY! / MAX_SIZE_UNIT) * canvas.height;
+            const width = (dropLocation.width! / MAX_SIZE_UNIT) * canvas.width;
+            const height = (dropLocation.height! / MAX_SIZE_UNIT) * canvas.height;
+            const paddedX = Math.max(0, Math.floor(x - BACKGROUND_CUTOUT_PADDING_PIXELS));
+            const paddedY = Math.max(0, Math.floor(y - BACKGROUND_CUTOUT_PADDING_PIXELS));
+            const paddedRight = Math.min(canvas.width, Math.ceil(x + width + BACKGROUND_CUTOUT_PADDING_PIXELS));
+            const paddedBottom = Math.min(canvas.height, Math.ceil(y + height + BACKGROUND_CUTOUT_PADDING_PIXELS));
+
+            // Overpaint only the generated background so antialiased Apollon strokes do not remain visible.
+            context.fillRect(paddedX, paddedY, paddedRight - paddedX, paddedBottom - paddedY);
         }
 
         return await canvasToBlob(canvas);

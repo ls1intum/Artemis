@@ -19,23 +19,28 @@ import * as testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/cl
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 
 function setupCanvasAndImageMocks() {
-    const mockContext = {
-        drawImage: vi.fn(),
-        fillStyle: '',
-        fillRect: vi.fn(),
-    };
+    const createMockCanvas = () => {
+        const mockContext = {
+            drawImage: vi.fn(),
+            fillStyle: '',
+            fillRect: vi.fn(),
+            scale: vi.fn(),
+            globalCompositeOperation: 'source-over',
+        };
 
-    const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(mockContext),
-        toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
-        width: 0,
-        height: 0,
-    } as unknown as HTMLCanvasElement;
+        return {
+            style: { width: '', height: '' },
+            getContext: vi.fn().mockReturnValue(mockContext),
+            toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
+            width: 0,
+            height: 0,
+        } as unknown as HTMLCanvasElement;
+    };
 
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'canvas') {
-            return mockCanvas;
+            return createMockCanvas();
         }
         return originalCreateElement(tagName);
     });
@@ -87,12 +92,13 @@ describe('QuizExercise Generator', () => {
 
     const course: Course = { id: 123 } as Course;
     let cleanupCanvasAndImageMocks: (() => void) | undefined;
-
-    // Type-safe mock for ApollonEditor.exportModelAsSvg
-    const mockExportModelAsSvg = vi.fn().mockResolvedValue({
+    const defaultExportModelAsSvgResult = {
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>',
         clip: { x: 0, y: 0, width: 100, height: 100 },
-    });
+    };
+
+    // Type-safe mock for ApollonEditor.exportModelAsSvg
+    const mockExportModelAsSvg = vi.fn().mockResolvedValue(defaultExportModelAsSvgResult);
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -105,6 +111,9 @@ describe('QuizExercise Generator', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
+
+        mockExportModelAsSvg.mockReset();
+        mockExportModelAsSvg.mockResolvedValue(defaultExportModelAsSvgResult);
 
         // Mock static method with proper cleanup
         vi.spyOn(ApollonEditor, 'exportModelAsSvg').mockImplementation(mockExportModelAsSvg);
@@ -151,7 +160,7 @@ describe('QuizExercise Generator', () => {
         it('should generate background image excluding interactive elements', async () => {
             await generateDragAndDropQuizExercise(course, 'Background Test', v3Model);
 
-            // The new renderer exports the full model and blanks the interactive regions afterward.
+            // The renderer exports the full model and blanks the interactive regions afterward.
             expect(mockExportModelAsSvg).toHaveBeenCalledWith(v3Model, expect.objectContaining({ keepOriginalSize: true, svgMode: 'compat' }));
         });
 
