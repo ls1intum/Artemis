@@ -248,6 +248,20 @@ if [ "$SKIP_UP" = false ]; then
             | tail -1 | grep -oE "[0-9]+" | tail -1)
         echo "  node-$n: cluster size = ${SIZE:-?}"
     done
+
+    # nginx upstream DNS is resolved once at nginx startup. When we bring the
+    # stack up, nginx can start before the Artemis node containers have been
+    # assigned their final IPs (or reuse stale IPs from a previous cycle whose
+    # containers were torn down). A stale upstream IP that now belongs to
+    # node-3 (pure build agent, no `core` profile) makes half the auth
+    # requests through the LB return 401 with `WWW-Authenticate: Basic realm`
+    # — the fallback Spring Security challenge when the public endpoint
+    # isn't registered. Restart nginx after nodes are healthy so it
+    # re-resolves `artemis-app-node-{1,2}` against the current IPs.
+    echo ""
+    echo "Restarting nginx to refresh upstream DNS against current node IPs..."
+    docker compose "${COMPOSE_ARGS[@]}" restart nginx >/dev/null
+    sleep 2
 else
     echo ""
     echo -e "${YELLOW}Step 3: Skipping stack startup (--skip-up)${NC}"

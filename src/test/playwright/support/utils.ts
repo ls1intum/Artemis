@@ -174,81 +174,7 @@ export async function clearTextField(textField: Locator, page?: Page) {
  * @param text - The text to set in the editor
  */
 export async function setMonacoEditorContent(page: Page, containerSelector: string, text: string) {
-    // Wait for the Monaco editor to be visible
-    const container = page.locator(containerSelector);
-    await container.waitFor({ state: 'visible' });
-    const monacoEditor = container.locator('.monaco-editor').first();
-    await monacoEditor.waitFor({ state: 'visible' });
-
-    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
-    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
-
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
-    }
-
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
-
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
-
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
-
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
-                    }
-                }
-            }
-
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
-
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
-            }
-
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
-
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
-    }
-
-    // Artemis's Monaco wrapper pushes the new value into the Angular form via `textChanged`,
-    // which is debounced (200ms for the markdown editor used on the lecture / programming /
-    // build-plan forms). Under multi-node load the event loop can stretch that debounce well
-    // past the previous 300ms buffer — a subsequent save() then snapshots the stale Angular
-    // form value, which is the root of the LectureManagement "Creates a lecture" flake. Use a
-    // 1s window to make absolutely sure the emit has fired.
-    await page.waitForTimeout(1000);
+    await setMonacoEditorContentByLocator(page, page.locator(containerSelector), text);
 }
 
 /**
@@ -269,72 +195,94 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
     // Wait for Monaco to be available on window (exposed by MonacoEditorService)
     await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
 
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
-    }
+    // When called on an /edit page, the Angular component may still be hydrating the
+    // form from the server response. A setValue() that races ahead of hydration gets
+    // overwritten when the API response arrives. Retry setValue until the Monaco
+    // value stays put across the debounce window — i.e., no hydration clobbers it.
+    const MAX_ATTEMPTS = 5;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Get the bounding box of the target Monaco editor element (re-read each
+        // attempt; layout can shift on hydration)
+        const boundingBox = await monacoEditor.boundingBox();
+        if (!boundingBox) {
+            throw new Error('Could not get bounding box of Monaco editor');
+        }
 
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
+        // Click on the editor to ensure it's initialized + focused
+        await monacoEditor.click();
+        await page.waitForTimeout(100);
 
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
+        const result = await page.evaluate(
+            ({ newText, targetBox }) => {
+                const monaco = (window as any).monaco;
+                if (!monaco || !monaco.editor) {
+                    return { success: false, error: 'Monaco not available' };
+                }
 
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
+                const editors = monaco.editor.getEditors();
+                if (editors.length === 0) {
+                    return { success: false, error: 'No Monaco editors registered' };
+                }
 
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
+                let targetEditor = null;
+                for (const editor of editors) {
+                    const domNode = editor.getDomNode();
+                    if (domNode) {
+                        const rect = domNode.getBoundingClientRect();
+                        if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
+                            targetEditor = editor;
+                            break;
+                        }
                     }
                 }
-            }
+                if (!targetEditor) {
+                    targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
+                }
+                if (!targetEditor) {
+                    targetEditor = editors[editors.length - 1];
+                }
+                if (!targetEditor) {
+                    return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+                }
 
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
+                targetEditor.setValue(newText);
+                return { success: true };
+            },
+            { newText: text, targetBox: boundingBox },
+        );
 
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
-            }
+        if (!result.success) {
+            throw new Error(`Failed to set Monaco editor content: ${result.error}`);
+        }
 
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
+        // Artemis's Monaco wrapper pushes the new value into the Angular form via
+        // `textChanged`, which is debounced (200ms). Wait 1s so the debounce has
+        // definitely emitted even under multi-node load.
+        await page.waitForTimeout(1000);
 
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
+        // Verify our value survived: if hydration raced past us, Monaco's current
+        // value differs from newText and we try again.
+        const actualValue = await page.evaluate(
+            ({ targetBox }) => {
+                const monaco = (window as any).monaco;
+                const editors = monaco?.editor?.getEditors() || [];
+                for (const editor of editors) {
+                    const rect = editor.getDomNode()?.getBoundingClientRect();
+                    if (rect && Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
+                        return editor.getValue();
+                    }
+                }
+                return editors[editors.length - 1]?.getValue() ?? null;
+            },
+            { targetBox: boundingBox },
+        );
+
+        if (actualValue === text) {
+            return;
+        }
     }
 
-    // Artemis's Monaco wrapper pushes the new value into the Angular form via `textChanged`,
-    // which is debounced (200ms for the markdown editor used on the lecture / programming /
-    // build-plan forms). Under multi-node load the event loop can stretch that debounce well
-    // past the previous 300ms buffer — a subsequent save() then snapshots the stale Angular
-    // form value, which is the root of the LectureManagement "Creates a lecture" flake. Use a
-    // 1s window to make absolutely sure the emit has fired.
-    await page.waitForTimeout(1000);
+    throw new Error(`Monaco editor did not retain the expected text after ${MAX_ATTEMPTS} attempts (likely clobbered by Angular form hydration)`);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
