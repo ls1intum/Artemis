@@ -152,19 +152,23 @@ export class ExamStudentsComponent implements OnDestroy {
 
         return exam.examUsers.map((examUser) => {
             const studentExam = examUser.user?.id ? studentExamsByUserId.get(examUser.user.id) : undefined;
-            if (studentExam) {
-                studentExam.exam = exam;
-            }
-            const progress: ExamProgress = studentExam?.submitted ? 'submitted' : studentExam?.started ? 'started' : studentExam ? 'notStarted' : 'examMissing';
+            const studentExamWithExam = studentExam ? Object.assign({}, studentExam, { exam }) : undefined;
+            const progress: ExamProgress = studentExamWithExam?.submitted
+                ? 'submitted'
+                : studentExamWithExam?.started
+                  ? 'started'
+                  : studentExamWithExam
+                    ? 'notStarted'
+                    : 'examMissing';
 
             return Object.assign({}, examUser, {
-                didExamUserAttendExam: hasExamEnded ? !!studentExam?.started : examUser.didExamUserAttendExam,
-                workingTime: studentExam?.workingTime,
-                studentExam,
+                didExamUserAttendExam: hasExamEnded ? !!studentExamWithExam?.started : examUser.didExamUserAttendExam,
+                workingTime: studentExamWithExam?.workingTime,
+                studentExam: studentExamWithExam,
                 progress,
-                submissionDate: studentExam?.submissionDate,
-                numberOfExamSessions: studentExam?.examSessions?.length ?? 0,
-                studentExamId: studentExam?.id,
+                submissionDate: studentExamWithExam?.submissionDate,
+                numberOfExamSessions: studentExamWithExam?.examSessions?.length ?? 0,
+                studentExamId: studentExamWithExam?.id,
             }) as ExamUserWithExamData;
         });
     });

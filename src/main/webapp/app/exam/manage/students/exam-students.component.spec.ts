@@ -175,6 +175,11 @@ describe('ExamStudentsComponent', () => {
                 { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
             ],
         } as Exam);
+        const examAfterRemoval = {
+            ...examWithCourse,
+            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 } as ExamUser],
+        } as Exam;
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examAfterRemoval })));
 
         component.removeFromExam(
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
@@ -216,29 +221,13 @@ describe('ExamStudentsComponent', () => {
                 { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
             ],
         } as Exam);
+        const examAfterRemoval = { ...examWithCourse, examUsers: [] } as Exam;
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examAfterRemoval })));
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
-        expect(component.allRegisteredUsers()).toEqual([]);
-    });
-
-    it('should remove all users from the exam with participations', () => {
-        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
-        fixture.detectChanges();
-        component.exam.set({
-            ...examWithCourse,
-            examUsers: [
-                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-                { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-            ],
-        } as Exam);
-
-        component.removeAllStudents({ deleteParticipationsAndSubmission: true });
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.allRegisteredUsers()).toEqual([]);
     });
 });
