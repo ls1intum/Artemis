@@ -58,7 +58,7 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
     }
 
     private static ExerciseSearchableEntityDTO buildDto(Exercise exercise, Course course, Exam exam) {
-        return new ExerciseSearchableEntityDTO(exercise.getId(), course.getId(), exercise.getTitle(), exercise.getExerciseType().name(), exercise.getMaxPoints(),
+        return new ExerciseSearchableEntityDTO(exercise.getId(), course.getId(), exercise.getTitle(), exercise.getExerciseType().getValue(), exercise.getMaxPoints(),
                 exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
                 exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(), exam != null ? exam.getId() : null,
                 exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -62,13 +63,13 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
         putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
 
-        if ("programming".equals(exerciseType)) {
+        if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
             putIfNotNull(metadata, "programmingLanguage", getString(properties, SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE));
         }
-        else if ("modeling".equals(exerciseType)) {
+        else if (ExerciseType.MODELING.getValue().equals(exerciseType)) {
             putIfNotNull(metadata, "diagramType", getString(properties, SearchableEntitySchema.Properties.DIAGRAM_TYPE));
         }
-        else if ("quiz".equals(exerciseType)) {
+        else if (ExerciseType.QUIZ.getValue().equals(exerciseType)) {
             putIfNotNull(metadata, "quizDuration", getInteger(properties, SearchableEntitySchema.Properties.QUIZ_DURATION));
         }
 
@@ -161,17 +162,22 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     }
 
     private static String formatExerciseTypeBadge(String exerciseType) {
-        if (exerciseType == null) {
-            return "Exercise";
+        if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
+            return "Programming";
         }
-        return switch (exerciseType.toLowerCase()) {
-            case "programming" -> "Programming";
-            case "modeling" -> "Modeling";
-            case "quiz" -> "Quiz";
-            case "text" -> "Text";
-            case "file-upload", "fileupload" -> "File Upload";
-            default -> "Exercise";
-        };
+        if (ExerciseType.MODELING.getValue().equals(exerciseType)) {
+            return "Modeling";
+        }
+        if (ExerciseType.QUIZ.getValue().equals(exerciseType)) {
+            return "Quiz";
+        }
+        if (ExerciseType.TEXT.getValue().equals(exerciseType)) {
+            return "Text";
+        }
+        if (ExerciseType.FILE_UPLOAD.getValue().equals(exerciseType)) {
+            return "File Upload";
+        }
+        return "Exercise";
     }
 
     private static void putIfNotNull(Map<String, Object> metadata, String key, Object value) {
