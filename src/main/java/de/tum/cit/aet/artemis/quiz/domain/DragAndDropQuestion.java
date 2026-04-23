@@ -19,8 +19,6 @@ import jakarta.persistence.PostRemove;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,12 +51,13 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Column(name = "background_file_path")
     private String backgroundFilePath;
 
+    // No @Cache on the three child collections below: they are the parent collections of DragItem / DropLocation / DragAndDropMapping
+    // references resolved during submission merge cascade. Stale reads under clustered NONSTRICT_READ_WRITE were the root of #12574 / #12584.
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
     // after 6.x upgrade
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
     @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -66,7 +65,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
     @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<DragItem> dragItems = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -74,7 +72,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "question_id")
     @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
     public String getBackgroundFilePath() {
