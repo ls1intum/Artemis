@@ -73,7 +73,7 @@ export default defineConfig({
         outputFile: './build/test-results/vitest/junit.xml',
         server: {
             deps: {
-                inline: [/@ls1intum\/apollon/, /html-diff-ts/, /monaco-editor/],
+                inline: [/@tumaet\/apollon/, /html-diff-ts/, /monaco-editor/],
             },
         },
         coverage: {
