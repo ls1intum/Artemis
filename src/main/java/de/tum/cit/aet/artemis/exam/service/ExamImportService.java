@@ -150,7 +150,15 @@ public class ExamImportService {
         // The Exam is used to ensure the connection ExerciseGroups <-> Exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam);
 
-        return exerciseGroupRepository.findWithExamAndExercisesByExamId(targetExamId);
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
+
+        // Index the imported exercises and update the exam in Weaviate
+        searchableItemWeaviateService.ifPresent(service -> {
+            service.upsertExamAsync(examWithExercises);
+            service.updateExamExercisesAsync(examWithExercises);
+        });
+
+        return examWithExercises.getExerciseGroups();
     }
 
     /**
