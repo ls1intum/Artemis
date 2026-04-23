@@ -37,6 +37,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
+        // Wait for all pending fetches to settle so the edit form is fully
+        // hydrated before we start typing. Without this, Monaco's setValue can
+        // race with Angular form hydration and our new description gets
+        // overwritten by the server-loaded original.
+        await page.waitForLoadState('networkidle');
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
