@@ -75,6 +75,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         }
 
         super.ngOnInit();
+        this.search.next();
     }
 
     private getPagingService(): ExercisePagingService<Exercise> {
