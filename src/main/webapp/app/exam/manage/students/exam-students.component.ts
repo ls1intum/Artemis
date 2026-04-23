@@ -428,9 +428,15 @@ export class ExamStudentsComponent implements OnDestroy {
         const courseId = this.courseId();
         this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe((res) => this.setExercisePreparationStatus(res.body ?? undefined));
 
-        this.studentExamService.findAllForExam(courseId, exam.id).subscribe((res) => {
-            this.studentExams.set(res.body || []);
-            this.isLoading.set(false);
+        this.studentExamService.findAllForExam(courseId, exam.id).subscribe({
+            next: (res) => {
+                this.studentExams.set(res.body || []);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
         });
     }
 
