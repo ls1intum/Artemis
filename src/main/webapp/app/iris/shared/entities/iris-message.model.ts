@@ -11,6 +11,7 @@ export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
     ARTIFACT = 'ARTIFACT',
+    SYSTEM = 'SYSTEM',
 }
 
 export class IrisAssistantMessage implements BaseEntity {
@@ -42,4 +43,13 @@ export class IrisArtifactMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;
+export class IrisSystemMessage implements BaseEntity {
+    id?: number;
+    content: IrisTextMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender: IrisSender.SYSTEM;
+    accessedMemories?: never;
+    createdMemories?: never;
+}
+
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisSystemMessage;

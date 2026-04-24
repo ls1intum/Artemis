@@ -124,6 +124,10 @@ export class IrisChatHttpService {
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions`, null, { observe: 'response', params: { mode, entityId } });
     }
 
+    updateSessionContext(courseId: number, sessionId: number, mode: ChatServiceMode, entityId: number): Response<IrisSession> {
+        return this.httpClient.patch<IrisSession>(`${this.apiPrefix}/chat/${courseId}/sessions/${sessionId}/context`, null, { observe: 'response', params: { mode, entityId } });
+    }
+
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
         return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`);
     }
