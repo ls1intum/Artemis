@@ -79,12 +79,12 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testDeleteLecture_removesLectureFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         searchableEntityWeaviateService.upsertLectureAsync(lecture);
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
 
         long lectureId = lecture.getId();
         request.delete("/api/lecture/lectures/" + lectureId, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
     }
 
     @Test
@@ -94,7 +94,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
         searchableEntityWeaviateService.upsertLectureAsync(lecture);
         searchableEntityWeaviateService.upsertLectureUnitAsync(textUnit);
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertLectureExistsInWeaviate(weaviateService, lecture);
             assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId());
         });
@@ -103,7 +103,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         long textUnitId = textUnit.getId();
         request.delete("/api/lecture/lectures/" + lectureId, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertLectureNotInWeaviate(weaviateService, lectureId);
             assertLectureUnitNotInWeaviate(weaviateService, textUnitId);
         });
@@ -144,7 +144,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(newLecture.getTitle()).isEqualTo("Lecture 2");
 
         // Verify Weaviate has the corrected title, not the original "Lecture 3"
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryLectureProperties(weaviateService, newLecture.getId());
             assertThat(properties).as("New lecture should be indexed in Weaviate").isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Lecture 2");

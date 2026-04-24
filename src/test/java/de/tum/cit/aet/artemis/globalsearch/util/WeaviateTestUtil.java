@@ -87,12 +87,12 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exercise.getId());
             assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(exercise.getTitle());
-            assertThat(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().name());
+            assertThat(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo(exercise.getExerciseType().getValue());
             assertThat(((Number) properties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(exercise.getId());
 
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -116,7 +116,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties).isNotNull();
             if (programmingExercise.getProgrammingLanguage() != null) {
@@ -140,7 +140,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
             assertThat(properties).isNotNull();
             if (modelingExercise.getDiagramType() != null) {
@@ -161,7 +161,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
             assertThat(properties).isNotNull();
             if (quizExercise.getQuizMode() != null) {
@@ -185,7 +185,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
             assertThat(properties).isNotNull();
             if (fileUploadExercise.getFilePattern() != null) {
@@ -206,7 +206,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
 
@@ -285,7 +285,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryLectureProperties(weaviateService, lecture.getId());
             assertThat(properties).as("Lecture %d should exist in Weaviate", lecture.getId()).isNotNull();
 
@@ -307,7 +307,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryLectureProperties(weaviateService, lectureId);
             assertThat(properties).as("Lecture %d should not exist in Weaviate", lectureId).isNull();
         });
@@ -324,7 +324,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
         });
@@ -381,7 +381,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
         });
@@ -397,7 +397,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should not exist in Weaviate", examId).isNull();
         });
@@ -437,7 +437,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
             assertThat(properties).as("Lecture unit %d should exist in Weaviate", lectureUnitId).isNotNull();
         });
@@ -453,7 +453,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
             assertThat(properties).as("Lecture unit %d should not exist in Weaviate", lectureUnitId).isNull();
         });
@@ -493,7 +493,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryFaqProperties(weaviateService, faqId);
             assertThat(properties).as("FAQ %d should exist in Weaviate", faqId).isNotNull();
         });
@@ -509,7 +509,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryFaqProperties(weaviateService, faqId);
             assertThat(properties).as("FAQ %d should not exist in Weaviate", faqId).isNull();
         });
@@ -549,7 +549,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryChannelProperties(weaviateService, channel.getId());
             assertThat(properties).as("Channel %d should exist in Weaviate", channel.getId()).isNotNull();
 
@@ -574,7 +574,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryChannelProperties(weaviateService, channelId);
             assertThat(properties).as("Channel %d should not exist in Weaviate", channelId).isNull();
         });

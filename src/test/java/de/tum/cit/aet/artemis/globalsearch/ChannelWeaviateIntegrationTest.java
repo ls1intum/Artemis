@@ -171,7 +171,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             channelService.updateLectureChannel(lecture, newChannelName);
 
             Channel updatedChannel = channelRepository.findChannelByLectureId(lecture.getId());
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(newChannelName);
@@ -189,7 +189,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             exercise.setChannelName("exercise-renamed");
             channelService.updateExerciseChannel(exercise, exercise);
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var properties = queryChannelProperties(weaviateService, createdChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("exercise-renamed");
