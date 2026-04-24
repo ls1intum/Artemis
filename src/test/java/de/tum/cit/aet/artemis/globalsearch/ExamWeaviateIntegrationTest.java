@@ -143,12 +143,14 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         searchableEntityWeaviateService.updateExamExercisesAsync(exam);
 
         // Verify exercises are initially indexed with original exam dates
-        for (ExerciseGroup group : exam.getExerciseGroups()) {
-            for (Exercise exercise : group.getExercises()) {
-                assertExerciseExistsInWeaviate(weaviateService, exercise);
-                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), exam);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            for (ExerciseGroup group : exam.getExerciseGroups()) {
+                for (Exercise exercise : group.getExercises()) {
+                    assertExerciseExistsInWeaviate(weaviateService, exercise);
+                    assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), exam);
+                }
             }
-        }
+        });
 
         int workingTimeChange = 600; // extend by 10 minutes
 
@@ -156,11 +158,13 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam end date
-        for (ExerciseGroup group : exam.getExerciseGroups()) {
-            for (Exercise exercise : group.getExercises()) {
-                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            for (ExerciseGroup group : exam.getExerciseGroups()) {
+                for (Exercise exercise : group.getExercises()) {
+                    assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+                }
             }
-        }
+        });
     }
 
     @Test
@@ -172,11 +176,13 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         searchableEntityWeaviateService.upsertExamAsync(exam);
         searchableEntityWeaviateService.updateExamExercisesAsync(exam);
 
-        for (ExerciseGroup group : exam.getExerciseGroups()) {
-            for (Exercise exercise : group.getExercises()) {
-                assertExerciseExistsInWeaviate(weaviateService, exercise);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            for (ExerciseGroup group : exam.getExerciseGroups()) {
+                for (Exercise exercise : group.getExercises()) {
+                    assertExerciseExistsInWeaviate(weaviateService, exercise);
+                }
             }
-        }
+        });
 
         // Update exam dates via the update endpoint
         ZonedDateTime newStartDate = exam.getStartDate().plusHours(2);
@@ -187,10 +193,12 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
 
         // Verify exercises now reflect the updated exam dates
-        for (ExerciseGroup group : exam.getExerciseGroups()) {
-            for (Exercise exercise : group.getExercises()) {
-                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            for (ExerciseGroup group : exam.getExerciseGroups()) {
+                for (Exercise exercise : group.getExercises()) {
+                    assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+                }
             }
-        }
+        });
     }
 }

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.communication.FaqFactory;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
-import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -46,9 +44,6 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @MockitoSpyBean
-    private PyrisFaqApi pyrisFaqApi;
 
     private Course course;
 
