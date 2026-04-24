@@ -172,7 +172,8 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should return progress message when previous result has no score and current score is positive', () => {
-            const result1 = { ...createResult(1, 0), score: undefined } as unknown as Result;
+            const result1 = createResult(1, 0);
+            result1.score = undefined;
             const result2 = createResult(2, 50);
             fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
             fixture.detectChanges();
@@ -181,7 +182,8 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should return stuck message when previous result has no score and current score is 0', () => {
-            const result1 = { ...createResult(1, 0), score: undefined } as unknown as Result;
+            const result1 = createResult(1, 0);
+            result1.score = undefined;
             const result2 = createResult(2, 0);
             fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
             fixture.detectChanges();
