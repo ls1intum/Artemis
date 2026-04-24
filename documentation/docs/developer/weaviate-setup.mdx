@@ -9,8 +9,10 @@ Weaviate is a vector database that is used by the EduTelligence suite (Iris/Pyri
 In the future Artemis will also directly communicate with Weaviate to offer a global keyword and semantic search across all entities (lectures, exercises, chats, ...).
 
 <Callout variant={CalloutVariant.info}>
-  <p>Setting up Weaviate is only required when running Pyris locally for Iris functionality or developing the global search feature.
-    If you only need basic Artemis features without AI assistance, you can skip this setup.</p>
+
+  Setting up Weaviate is only required when running Pyris locally for Iris functionality or developing the global search feature.
+If you only need basic Artemis features without AI assistance, you can skip this setup.
+
 </Callout>
 
 ---
@@ -123,20 +125,22 @@ If you have access to a remote GPU server running Ollama, you only need to start
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  <p><strong>Collections must be recreated when changing vectorizer settings.</strong> Weaviate does not update the vectorizer configuration of existing collections.
-  When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`open-ai-base-url`, `open-ai-embedding-model`, `gpu-api-key`),
-  you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.</p>
 
-  <p>On startup, if a collection already exists and its vectorizer configuration differs from the application config, Artemis will log a warning like:<br/>
-  <code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: open-ai-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code></p>
+  <strong>Collections must be recreated when changing vectorizer settings.</strong> Weaviate does not update the vectorizer configuration of existing collections.
+When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`open-ai-base-url`, `open-ai-embedding-model`, `gpu-api-key`),
+you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.
 
-  <p>To delete all Artemis collections:</p>
+  On startup, if a collection already exists and its vectorizer configuration differs from the application config, Artemis will log a warning like:<br/>
+<code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: open-ai-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code>
+
+  To delete all Artemis collections:
 
   ```bash
   curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"
   ```
 
-  <p>Or reset the entire Weaviate volume (see <a href="#resetting-data">Resetting Data</a>).</p>
+  Or reset the entire Weaviate volume (see <a href="#resetting-data">Resetting Data</a>).
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -390,7 +394,9 @@ See the [Weaviate authentication documentation](https://docs.weaviate.io/deploy/
 Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Anonymous access is enabled by default for development convenience. For production deployments, configure API key authentication — see <a href="#authentication">Authentication</a>.</p>
+
+    Anonymous access is enabled by default for development convenience. For production deployments, configure API key authentication — see <a href="#authentication">Authentication</a>.
+
 </Callout>
 
 ---
@@ -567,7 +573,9 @@ docker compose -f weaviate.yml up -d
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    <p>This will delete all stored embeddings and require re-indexing of lecture content.</p>
+
+    This will delete all stored embeddings and require re-indexing of lecture content.
+
 </Callout>
 
 ---
