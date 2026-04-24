@@ -132,6 +132,8 @@ describe('ExamStudentsComponent', () => {
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: {} })));
+
         router = TestBed.inject(Router);
         alertService = TestBed.inject(AlertService);
     });

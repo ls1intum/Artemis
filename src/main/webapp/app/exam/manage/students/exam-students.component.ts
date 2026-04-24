@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, OnDestroy
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { Subject } from 'rxjs';
+import { EMPTY, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -39,7 +39,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
-import { tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
@@ -192,6 +192,8 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
+    private reloadRequest$ = new Subject<void>();
+    private examData$ = new Subject<Exam>();
 
     readonly exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
     readonly exercisePreparationRunning = signal(false);
@@ -290,10 +292,87 @@ export class ExamStudentsComponent implements OnDestroy {
             error: (err) => onError(this.alertService, err),
         });
 
+        this.reloadRequest$
+            .pipe(
+                takeUntilDestroyed(),
+                switchMap(() => {
+                    const examId = this.exam().id;
+                    if (!examId) {
+                        return EMPTY;
+                    }
+                    this.isLoading.set(true);
+                    return this.examManagementService.find(this.courseId(), examId, true).pipe(
+                        catchError((err: HttpErrorResponse) => {
+                            this.isLoading.set(false);
+                            onError(this.alertService, err);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+            )
+            .subscribe((examResponse: HttpResponse<Exam>) => {
+                if (examResponse.body) {
+                    this.examData$.next(examResponse.body);
+                }
+            });
+
+        this.examData$
+            .pipe(
+                takeUntilDestroyed(),
+                tap((exam: Exam) => {
+                    this.exam.set(exam);
+                    const hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
+                    this.hasExamStarted.set(hasExamStarted);
+                    const hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
+                    this.hasExamEnded.set(hasExamEnded);
+                }),
+                switchMap((exam: Exam) => {
+                    const courseId = this.courseId();
+                    const examId = exam.id!;
+
+                    const exercisesPrepared$ = this.examChecklistService.getExamStatistics(exam).pipe(
+                        map((checklist) => !!checklist?.allExamExercisesAllStudentsPrepared),
+                        catchError((err: HttpErrorResponse) => {
+                            onError(this.alertService, err);
+                            return of(false);
+                        }),
+                    );
+
+                    const exercisePreparationStatus$ = this.examManagementService.getExerciseStartStatus(courseId, examId).pipe(
+                        catchError((err: HttpErrorResponse) => {
+                            onError(this.alertService, err);
+                            return of(undefined);
+                        }),
+                        map((res) => res?.body ?? undefined),
+                    );
+
+                    const studentExams$ = this.studentExamService.findAllForExam(courseId, examId).pipe(
+                        catchError((err: HttpErrorResponse) => {
+                            onError(this.alertService, err);
+                            return of(undefined);
+                        }),
+                        map((res) => res?.body ?? undefined),
+                    );
+
+                    return forkJoin({
+                        allExercisesPrepared: exercisesPrepared$,
+                        exercisePreparationStatus: exercisePreparationStatus$,
+                        studentExams: studentExams$,
+                    });
+                }),
+            )
+            .subscribe(({ allExercisesPrepared, exercisePreparationStatus, studentExams }) => {
+                this.isAllExercisesPrepared.set(allExercisesPrepared);
+                this.setExercisePreparationStatus(exercisePreparationStatus);
+                this.studentExams.set(studentExams ?? []);
+                this.isLoading.set(false);
+            });
+
         effect(() => {
-            const exam = this.routeData().exam;
+            const exam: Exam | undefined = this.routeData().exam;
             if (exam) {
-                this.setUpExamInformation(exam);
+                // setup exam information
+                this.examData$.next(exam);
             }
         });
 
@@ -387,61 +466,10 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     reloadExamWithRegisteredUsers() {
-        const examId = this.exam().id;
-        if (!examId) {
+        if (!this.exam().id) {
             return;
         }
-
-        this.isLoading.set(true);
-        this.examManagementService.find(this.courseId(), examId, true).subscribe({
-            next: (examResponse: HttpResponse<Exam>) => this.setUpExamInformation(examResponse.body!),
-            error: (error: HttpErrorResponse) => {
-                this.isLoading.set(false);
-                onError(this.alertService, error);
-            },
-        });
-    }
-
-    private setUpExamInformation(exam: Exam) {
-        this.exam.set(exam);
-
-        const hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-        this.hasExamStarted.set(hasExamStarted);
-        const hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
-        this.hasExamEnded.set(hasExamEnded);
-
-        if (!exam.id) {
-            this.studentExams.set([]);
-            this.isAllExercisesPrepared.set(false);
-            this.isLoading.set(false);
-            return;
-        }
-
-        if (exam.course?.id) {
-            this.examChecklistService.getExamStatistics(exam).subscribe({
-                next: (examChecklist) => this.isAllExercisesPrepared.set(!!examChecklist.allExamExercisesAllStudentsPrepared),
-                error: () => this.isAllExercisesPrepared.set(false),
-            });
-        } else {
-            this.isAllExercisesPrepared.set(false);
-        }
-
-        const courseId = this.courseId();
-        this.examManagementService.getExerciseStartStatus(courseId, exam.id).subscribe({
-            next: (res) => this.setExercisePreparationStatus(res.body ?? undefined),
-            error: (err) => onError(this.alertService, err),
-        });
-
-        this.studentExamService.findAllForExam(courseId, exam.id).subscribe({
-            next: (res) => {
-                this.studentExams.set(res.body || []);
-                this.isLoading.set(false);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.isLoading.set(false);
-                onError(this.alertService, error);
-            },
-        });
+        this.reloadRequest$.next();
     }
 
     private computeProgress(submitted: boolean, hasExam: boolean, started: boolean): ExamProgress {
