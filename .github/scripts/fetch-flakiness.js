@@ -4,7 +4,7 @@ const https = require('https');
 /**
  * Parse JUnit XML to extract unique failed test cases.
  * @param {string} resultsFile - Path to the JUnit XML results file
- * @returns {Array<{testName: string, className: string}>}
+ * @returns {Array<{testName: string, className: string, testSuiteName: string}>}
  */
 function parseFailedTests(resultsFile) {
     const failedTests = [];
@@ -13,7 +13,14 @@ function parseFailedTests(resultsFile) {
         if (!fs.existsSync(resultsFile)) return failedTests;
         const xml = fs.readFileSync(resultsFile, 'utf8');
         const blocks = xml.split('</testcase>');
+        let lastSuiteName = '';
         for (const block of blocks) {
+            // Track the last <testsuite name="..."> seen so far (carries across blocks).
+            // The first testcase in a suite sees the opening tag; later ones inherit it.
+            for (const m of block.matchAll(/<testsuite\s[^>]*>/g)) {
+                const nm = m[0].match(/\bname="([^"]*)"/);
+                if (nm) lastSuiteName = nm[1];
+            }
             if (!block.includes('<failure') && !block.includes('<error')) continue;
             const testcaseMatch = block.match(/<testcase\s[^>]*>/);
             if (!testcaseMatch) continue;
@@ -24,7 +31,12 @@ function parseFailedTests(resultsFile) {
                 const key = `${classMatch[1]}#${nameMatch[1]}`;
                 if (!seen.has(key)) {
                     seen.add(key);
-                    failedTests.push({ testName: nameMatch[1], className: classMatch[1] });
+                    // Helios requires testSuiteName. In Playwright's JUnit output the parent
+                    // <testsuite name> matches classname (both are the spec file path), so
+                    // lastSuiteName and classMatch[1] are equivalent — but we prefer the
+                    // explicit testsuite name in case classname ever diverges.
+                    const testSuiteName = lastSuiteName || classMatch[1];
+                    failedTests.push({ testName: nameMatch[1], className: classMatch[1], testSuiteName });
                 }
             }
         }
