@@ -1589,8 +1589,10 @@ public class ExamService {
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
             searchableItemWeaviateService.ifPresent(service -> {
-                service.upsertExamAsync(examWithExercises);
-                service.updateExamExercisesAsync(examWithExercises);
+                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                    service.upsertExamAsync(reloadedExam);
+                    service.updateExamExercisesAsync(reloadedExam);
+                });
             });
         }
     }
@@ -1602,8 +1604,10 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam exam) {
         searchableItemWeaviateService.ifPresent(service -> {
-            service.upsertExamAsync(exam);
-            service.updateExamExercisesAsync(exam);
+            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(reloadedExam);
+                service.updateExamExercisesAsync(reloadedExam);
+            });
         });
     }
 
