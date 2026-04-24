@@ -330,6 +330,23 @@ public final class WeaviateTestUtil {
         });
     }
 
+    /**
+     * Counts how many rows exist in Weaviate for the given {@code (type, entityId)} pair.
+     * Useful for detecting duplicate rows caused by race conditions.
+     *
+     * @param weaviateService the Weaviate service to query
+     * @param type            the entity type (use constants from {@link SearchableEntitySchema.TypeValues})
+     * @param entityId        the entity id
+     * @return the number of matching rows
+     */
+    public static int countRowsForEntity(WeaviateService weaviateService, String type, long entityId) throws Exception {
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        var response = collection.query.fetchObjects(query -> query
+                .filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)))
+                .limit(100));
+        return response.objects().size();
+    }
+
     // -- Exam utilities --
 
     /**

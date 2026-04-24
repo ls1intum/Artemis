@@ -2,12 +2,17 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -116,6 +121,42 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testConcurrentUpserts_doNotCreateDuplicateRows() throws Exception {
+            int threadCount = 10;
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch doneLatch = new CountDownLatch(threadCount);
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+            // Launch threads that all upsert the same exercise simultaneously
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        searchableEntityWeaviateService.upsertExerciseAsync(programmingExercise);
+                    }
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    finally {
+                        doneLatch.countDown();
+                    }
+                });
+            }
+
+            // Release all threads at once to maximize race window
+            startLatch.countDown();
+            doneLatch.await(30, TimeUnit.SECONDS);
+            executor.shutdown();
+
+            // Wait for all upserts to complete in Weaviate, then verify exactly one row exists
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                int rowCount = countRowsForEntity(weaviateService, SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
+                assertThat(rowCount).as("Concurrent upserts for the same exercise must not create duplicate rows").isEqualTo(1);
+            });
         }
     }
 
