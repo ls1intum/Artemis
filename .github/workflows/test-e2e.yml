@@ -231,7 +231,7 @@ jobs:
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
             if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
             }
             body += `\n`;
             body += `<!-- E2E Test Results -->`;
@@ -427,6 +427,14 @@ jobs:
                 body = body.replace('<!-- OVERALL -->', phase2FlakinessBlock + '<!-- OVERALL -->');
               }
 
+              // Append Phase 2 report link to the footer (idempotent).
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
+              }
+
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -447,7 +455,7 @@ jobs:
               body += `<!-- OVERALL -->\n\n`;
               body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
-                body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
               }
               body += `\n`;
               body += `<!-- E2E Test Results -->`;
