@@ -25,7 +25,7 @@ import { QuizQuestionGenerationResponse } from '../model/quizQuestionGenerationR
 // @ts-ignore
 import { QuizQuestionRefinementRequest } from '../model/quizQuestionRefinementRequest';
 // @ts-ignore
-import { QuizQuestionRefinementSuccess } from '../model/quizQuestionRefinementSuccess';
+import { QuizQuestionRefinementSuccessDTO } from '../model/quizQuestionRefinementSuccessDTO';
 
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
@@ -189,9 +189,9 @@ export class HyperionQuizQuestionGenerationApiService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<QuizQuestionRefinementSuccess>;
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<QuizQuestionRefinementSuccess>>;
-    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<QuizQuestionRefinementSuccess>>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<QuizQuestionRefinementSuccessDTO>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<QuizQuestionRefinementSuccessDTO>>;
+    public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<QuizQuestionRefinementSuccessDTO>>;
     public refineQuizQuestion(courseId: number, quizQuestionRefinementRequest: QuizQuestionRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling refineQuizQuestion.');
@@ -236,7 +236,7 @@ export class HyperionQuizQuestionGenerationApiService extends BaseService {
 
         let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/quiz-exercises/refine-question`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<QuizQuestionRefinementSuccess>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<QuizQuestionRefinementSuccessDTO>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: quizQuestionRefinementRequest,

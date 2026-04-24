@@ -6,7 +6,7 @@ import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementSuccess } from 'app/openapi/model/quizQuestionRefinementSuccess';
+import { QuizQuestionRefinementSuccessDTO } from 'app/openapi/model/quizQuestionRefinementSuccessDTO';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -90,7 +90,7 @@ export class QuizAiGenerationService {
             map((response) => {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
-                    if (refinement.type === QuizQuestionRefinementSuccess.TypeEnum.Success) {
+                    if (refinement.type === QuizQuestionRefinementSuccessDTO.TypeEnum.Success) {
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
                         results.set(questions[index], refinement.reasoning);
                     }

@@ -45,10 +45,10 @@ model/quizQuestionBulkRefinementRequest.ts
 model/quizQuestionBulkRefinementResponse.ts
 model/quizQuestionGenerationRequest.ts
 model/quizQuestionGenerationResponse.ts
-model/quizQuestionRefinementFailure.ts
+model/quizQuestionRefinementFailureDTO.ts
 model/quizQuestionRefinementRequest.ts
 model/quizQuestionRefinementResponse.ts
-model/quizQuestionRefinementSuccess.ts
+model/quizQuestionRefinementSuccessDTO.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts

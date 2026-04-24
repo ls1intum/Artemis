@@ -465,7 +465,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/QuizQuestionRefinementSuccess'}
+              schema: {$ref: '#/components/schemas/QuizQuestionRefinementSuccessDTO'}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-all-questions:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -1079,14 +1079,15 @@ components:
       required: [question, refinementPrompt]
     QuizQuestionRefinementResponse:
       oneOf:
-      - {$ref: '#/components/schemas/QuizQuestionRefinementSuccess'}
-      - {$ref: '#/components/schemas/QuizQuestionRefinementFailure'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementSuccessDTO'}
+      - {$ref: '#/components/schemas/QuizQuestionRefinementFailureDTO'}
       discriminator:
         propertyName: type
-        mapping: {success: '#/components/schemas/QuizQuestionRefinementSuccess', failure: '#/components/schemas/QuizQuestionRefinementFailure'}
+        mapping: {success: '#/components/schemas/QuizQuestionRefinementSuccessDTO',
+          failure: '#/components/schemas/QuizQuestionRefinementFailureDTO'}
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message
-    QuizQuestionRefinementSuccess:
+    QuizQuestionRefinementSuccessDTO:
       type: object
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -1098,7 +1099,7 @@ components:
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
       required: [type, question, reasoning]
-    QuizQuestionRefinementFailure:
+    QuizQuestionRefinementFailureDTO:
       type: object
       description: Failed refinement result containing an error message
       properties:

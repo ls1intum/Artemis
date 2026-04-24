@@ -164,7 +164,7 @@ public class HyperionQuizQuestionGenerationService {
 
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
         String reasoning = sanitizeInput(output.reasoning());
-        return new QuizQuestionRefinementResponseDTO.Success(refinedQuestion, reasoning);
+        return new QuizQuestionRefinementResponseDTO.SuccessDTO(refinedQuestion, reasoning);
     }
 
     /**
@@ -184,7 +184,7 @@ public class HyperionQuizQuestionGenerationService {
             }
             catch (Exception e) {
                 log.warn("Failed to refine quiz question for course [{}]: {}", course.getId(), e.getMessage());
-                return new QuizQuestionRefinementResponseDTO.Failure(e.getMessage());
+                return new QuizQuestionRefinementResponseDTO.FailureDTO(e.getMessage());
             }
         }).toList();
         return new QuizQuestionBulkRefinementResponseDTO(refinements);
