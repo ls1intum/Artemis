@@ -106,6 +106,47 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 expect(selectedOptionIds, `iteration ${iteration}: server must return exactly the answer options the student ticked`).toEqual(expectedSortedOptionIds);
             }
         });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12584: clicking "Set visible" / "Start now"
+         * on a quiz must not regenerate the primary keys of the child rows (answer options, drag items, drop
+         * locations, short-answer spots). Before the fix, the REST handler called {@code saveAndFlush} on the
+         * eagerly-loaded quiz graph and the unowned {@code @OneToMany + @OrderColumn + orphanRemoval} child
+         * collections were DELETE+INSERTed with fresh auto-generated IDs, so any in-flight student submit carrying
+         * the old IDs produced an {@code ObjectNotFoundException}. This test pins the fix by snapshotting the MC
+         * answer-option IDs before and after each lifecycle action and asserting equality.
+         */
+        test('Lifecycle actions preserve answer-option IDs', async ({ login, exerciseAPIRequests, page }) => {
+            await login(admin);
+            const createdQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                releaseDate: dayjs().add(1, 'hour'),
+            });
+
+            // Capture the IDs that the client will send back on submit.
+            const initialOptionIds = (createdQuiz.quizQuestions![0] as any).answerOptions!.map((opt: any) => opt.id).sort((a: number, b: number) => a - b);
+            expect(initialOptionIds.length).toBeGreaterThan(0);
+
+            const readOptionIdsFromServer = async (): Promise<number[]> => {
+                const response = await page.request.get(`/api/quiz/quiz-exercises/${createdQuiz.id}`);
+                expect(response.ok()).toBeTruthy();
+                const body = await response.json();
+                return (body.quizQuestions ?? [])
+                    .filter((q: any) => q.type === 'multiple-choice' || (q.answerOptions ?? []).length > 0)
+                    .flatMap((q: any) => (q.answerOptions ?? []).map((opt: any) => opt.id))
+                    .sort((a: number, b: number) => a - b);
+            };
+
+            // Sanity check: IDs in the creation response match what the server now holds.
+            expect(await readOptionIdsFromServer()).toEqual(initialOptionIds);
+
+            await exerciseAPIRequests.setQuizVisible(createdQuiz.id!);
+            expect(await readOptionIdsFromServer(), 'SET_VISIBLE must not regenerate AnswerOption ids').toEqual(initialOptionIds);
+
+            await exerciseAPIRequests.startQuizNow(createdQuiz.id!);
+            expect(await readOptionIdsFromServer(), 'START_NOW must not regenerate AnswerOption ids').toEqual(initialOptionIds);
+        });
     });
 
     test.describe('Quiz exercise scheduled participation', () => {
