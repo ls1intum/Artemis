@@ -56,6 +56,8 @@ public class WeaviateService {
 
     private final boolean isOpenApiDocsGeneration;
 
+    private final WeaviateMigrationService migrationService;
+
     /**
      * The {@code WeaviateClient} bean is created lazily because the enclosing
      * {@link WeaviateClientConfiguration} and this service are both {@code @Lazy}.
@@ -66,11 +68,12 @@ public class WeaviateService {
      * field access bypasses the proxy and returns {@code null}, which causes a
      * {@link NullPointerException} in {@link #ensureCollectionExists}.
      */
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
+    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment, WeaviateMigrationService migrationService) {
         this.client = client;
         this.properties = properties;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
         this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
+        this.migrationService = migrationService;
     }
 
     /**
@@ -100,6 +103,8 @@ public class WeaviateService {
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
         }
+
+        migrationService.runPendingMigrations();
 
         log.info("Weaviate collection initialization complete");
     }
