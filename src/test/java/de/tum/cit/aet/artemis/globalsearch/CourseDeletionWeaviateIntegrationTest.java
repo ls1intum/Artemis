@@ -13,6 +13,8 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.communication.FaqFactory;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -76,6 +80,9 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
     @Autowired
     private ExamUtilService examUtilService;
 
+    @MockitoSpyBean
+    private PyrisFaqApi pyrisFaqApi;
+
     private Course course;
 
     private User instructor;
@@ -89,6 +96,8 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
+        doNothing().when(pyrisFaqApi).deleteFaq(any());
     }
 
     @Test

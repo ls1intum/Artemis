@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFaqExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFaqNotInWeaviate;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.communication.FaqFactory;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -18,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -43,6 +47,9 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @MockitoSpyBean
+    private PyrisFaqApi pyrisFaqApi;
+
     private Course course;
 
     static boolean isWeaviateEnabled() {
@@ -53,6 +60,8 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
+        doNothing().when(pyrisFaqApi).deleteFaq(any());
     }
 
     @Nested
