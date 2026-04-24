@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Artemis Application Server API 
+  title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
   version: 9.0.0
 servers:
