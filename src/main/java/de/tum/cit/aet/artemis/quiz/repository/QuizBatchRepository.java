@@ -52,22 +52,6 @@ public interface QuizBatchRepository extends ArtemisJpaRepository<QuizBatch, Lon
     Optional<QuizBatch> findByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
 
     /**
-     * Targeted UPDATE of a single batch's startTime. Used by START_NOW instead of {@code save(quizBatch)} to avoid
-     * rippling into the cascaded parent save of the quiz exercise.
-     *
-     * @param id        the id of the batch to update
-     * @param startTime the new start time for the batch
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE QuizBatch b
-            SET b.startTime = :startTime
-            WHERE b.id = :id
-            """)
-    void updateStartTime(@Param("id") Long id, @Param("startTime") ZonedDateTime startTime);
-
-    /**
      * Clamp every batch's startTime so it cannot start later than the last moment compatible with the new dueDate,
      * used by END_NOW. Mirrors {@link de.tum.cit.aet.artemis.quiz.service.QuizBatchService#quizBatchStartDate} but
      * evaluated entirely in the database as a single statement.

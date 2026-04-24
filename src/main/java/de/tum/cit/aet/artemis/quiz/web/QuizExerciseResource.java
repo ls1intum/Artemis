@@ -143,6 +143,12 @@ public class QuizExerciseResource {
         // with fresh primary keys. Any student tab that was loaded before the save then hits ObjectNotFoundException on
         // submit. The targeted UPDATEs below touch only the columns we are changing (releaseDate / dueDate / batch
         // startTime), so existing answer-option / drag-item / spot IDs remain stable across these lifecycle actions.
+        //
+        // Exception: START_NOW additionally calls quizBatchRepository.save(quizBatch) — getOrCreateSynchronizedQuizBatch
+        // returns a transient batch (id == null) for quizzes that have never started, and a JPQL UPDATE on a null id
+        // would silently match no rows. save() handles both INSERT (transient) and UPDATE (existing). The QuizBatch
+        // entity has no @OneToMany child collections with orphanRemoval, so saving it does not cascade into the quiz
+        // question graph and child IDs stay stable.
         switch (action) {
             case START_NOW -> {
                 // only synchronized quiz exercises can be started like this
