@@ -16,8 +16,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,13 +30,14 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 /**
  * A QuizQuestion.
  */
+// No @Cache here on purpose: parent entity of the question hierarchy loaded during quiz-submission merge cascade.
+// Clustered NONSTRICT_READ_WRITE produced the stale-collection behaviour tracked in #12574 / #12584.
 @Entity
 @Table(name = "quiz_question")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "Q")
 @ConcreteProxy
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({

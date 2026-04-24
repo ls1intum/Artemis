@@ -48,7 +48,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
         PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 1, null, 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L,
-                "Course Name", "Course Description", "/example/test.pdf", "");
+                "Course Name", "Course Description", "/example/test.pdf", "", null);
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, 123L, null, List.of());
         assertThatThrownBy(() -> pyrisConnectorService.executeLectureAdditionWebhook(executionDTO)).isInstanceOf(exceptionClass);
     }
