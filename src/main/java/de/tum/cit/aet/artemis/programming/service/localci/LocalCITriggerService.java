@@ -339,6 +339,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                         programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dataFromLegacyFormat.resultPaths(), buildConfig.getTimeoutSeconds(),
                         buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
             }
+            log.error("The build config with id {} has a build script and plan but the legacy exercise was not able to be interpreted", buildConfig.getId());
         }
 
         final boolean isMissingDefaultPhases = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null;

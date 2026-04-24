@@ -133,7 +133,7 @@ public class BuildPhasesTemplateService {
             }
         }
         catch (IOException | IllegalArgumentException e) {
-            log.error("No build plan phases found for key {}", uniqueKey);
+            log.error("No build plan phases found for key {}", uniqueKey, e);
         }
 
         if (yamlString == null) {
