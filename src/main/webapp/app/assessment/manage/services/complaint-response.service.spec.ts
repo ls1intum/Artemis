@@ -6,23 +6,22 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User, UserIdAndLoginDTO } from 'app/core/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { ComplaintAction, ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ComplaintResponseService', () => {
     setupTestBed({ zoneless: true });
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
-    let defaultComplaintResponse: ComplaintResponse;
+    let defaultComplaintResponseDTO: ComplaintResponseDTO;
+    let expectedComplaintResponse: any;
     let complaintResponseResolve: ComplaintResponseUpdateDTO;
     let complaintResponseRefresh: ComplaintResponseUpdateDTO;
     let accountService: AccountService;
-    let expectedComplaintResponse: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,12 +34,15 @@ describe('ComplaintResponseService', () => {
                 httpTestingController = TestBed.inject(HttpTestingController);
                 accountService = TestBed.inject(AccountService);
 
-                defaultComplaintResponse = new ComplaintResponse();
-                defaultComplaintResponse.id = 1;
-                defaultComplaintResponse.lockEndDate = dayjs();
-                defaultComplaintResponse.submittedTime = dayjs();
-                defaultComplaintResponse.complaint = new Complaint();
-                defaultComplaintResponse.complaint.id = 1;
+                defaultComplaintResponseDTO = {
+                    id: 1,
+                    responseText: 'response_text',
+                    submittedTime: dayjs(),
+                    isCurrentlyLocked: true,
+                    lockEndDate: dayjs(),
+                    complaintId: 1,
+                    reviewer: { id: 2, login: 'reviewer1' } as UserIdAndLoginDTO,
+                } as ComplaintResponseDTO;
 
                 complaintResponseResolve = new ComplaintResponseUpdateDTO();
                 complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
@@ -84,14 +86,20 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call refreshLock', async () => {
-        const returnedFromService = { ...complaintResponseResolve };
+        const returnedFromService = { ...defaultComplaintResponseDTO, isCurrentlyLocked: true };
         complaintResponseService
-            .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
+            .refreshLockOrResolveComplaint(complaintResponseRefresh, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'PATCH' });
+        expect(req.request.body).toEqual(complaintResponseRefresh);
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(complaintResponseResolve);
+
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
+        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
     });
 
     it('should call removeLock', async () => {
@@ -105,24 +113,31 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call createLock', async () => {
-        const returnedFromService = { ...defaultComplaintResponse };
+        const returnedFromService = { ...defaultComplaintResponseDTO };
         complaintResponseService
             .createLock(1)
             .pipe(take(1))
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
+        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
     });
 
     it('should call resolveComplaint', async () => {
-        const returnedFromService = { ...complaintResponseRefresh };
+        const returnedFromService = { ...defaultComplaintResponseDTO, isCurrentlyLocked: false, responseText: 'response_text' };
         complaintResponseService
             .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(complaintResponseRefresh);
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(false);
     });
 });

@@ -202,7 +202,10 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
         }
     }
 
-    onPageChange(page: number): void {
+    onPageChange(page: number | undefined): void {
+        if (page === undefined) {
+            return;
+        }
         this.setCurrentPage(page);
         this.postMessageToParent('pageChange', { page });
     }
