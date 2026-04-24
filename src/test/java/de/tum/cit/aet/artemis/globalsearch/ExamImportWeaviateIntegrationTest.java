@@ -82,7 +82,10 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(examProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(importedExam.getTitle());
 
         // Verify all imported exercises are indexed in Weaviate with correct exam dates
+        // Set up the course/exam chain that is not populated in the deserialized response
+        importedExam.setCourse(course);
         for (ExerciseGroup group : importedExam.getExerciseGroups()) {
+            group.setExam(importedExam);
             for (Exercise exercise : group.getExercises()) {
                 assertExerciseExistsInWeaviate(weaviateService, exercise);
                 assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), importedExam);
@@ -128,7 +131,10 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         assertExamExistsInWeaviate(weaviateService, targetExam.getId());
 
         // Verify all imported exercises are indexed in Weaviate
+        // Set up the course/exam chain that is not populated in the deserialized response
+        targetExam.setCourse(course);
         for (ExerciseGroup group : groupsWithExercises) {
+            group.setExam(targetExam);
             for (Exercise exercise : group.getExercises()) {
                 assertExerciseExistsInWeaviate(weaviateService, exercise);
                 assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), targetExam);

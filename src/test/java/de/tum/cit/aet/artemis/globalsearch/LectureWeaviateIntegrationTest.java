@@ -10,6 +10,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -112,9 +113,10 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateLectureSeries_indexesLecturesWithCorrectedTitlesInWeaviate() throws Exception {
-        ZonedDateTime date1 = ZonedDateTime.now().minusDays(10);
-        ZonedDateTime date2 = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime date3 = ZonedDateTime.now();
+        // Truncate to microseconds since PostgreSQL does not preserve nanosecond precision
+        ZonedDateTime date1 = ZonedDateTime.now().minusDays(10).truncatedTo(ChronoUnit.MICROS);
+        ZonedDateTime date2 = ZonedDateTime.now().minusDays(5).truncatedTo(ChronoUnit.MICROS);
+        ZonedDateTime date3 = ZonedDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         // Set up two pre-existing lectures with default names and channels
         Lecture existingLecture1 = new Lecture();

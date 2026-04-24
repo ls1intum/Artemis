@@ -281,7 +281,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCannotSeeNotStartedExamOrUnreleasedExercises() throws Exception {
-            var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).doesNotContain("WeaviateSearchable NotStarted Exam Exercise", "WeaviateSearchable Unreleased Exercise");
@@ -290,7 +290,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testStudentCanSeeStartedExamExercises() throws Exception {
-            var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchable Ongoing Exam Exercise", "WeaviateSearchable Ended Exam Exercise");
@@ -299,7 +299,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void testEditorCanSeeAllExercises() throws Exception {
-            var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise", "WeaviateSearchable NotStarted Exam Exercise",
@@ -308,8 +308,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testEmptyQueryReturnsBadRequest() throws Exception {
-            request.getList("/api/exercises/search?q=&courseId=" + course.getId(), HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
+        void testEmptyQueryReturnsOk() throws Exception {
+            // The global search endpoint accepts empty queries to browse recent items
+            request.getList("/api/search?q=&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
         }
     }
 
@@ -358,7 +359,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
             Channel channel = new Channel();
-            channel.setName("weaviatesearchable-archive-search");
+            channel.setName("weaviate-archive-search");
             channel.setIsPublic(true);
             channel.setIsCourseWide(true);
             channel.setIsAnnouncementChannel(false);
@@ -367,9 +368,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             // Wait for channel to be indexed
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-                var results = request.getList("/api/search?q=weaviatesearchable-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var results = request.getList("/api/search?q=weaviate-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
                 var titles = getResultTitles(results);
-                assertThat(titles).contains("weaviatesearchable-archive-search");
+                assertThat(titles).contains("weaviate-archive-search");
             });
 
             // Archive the channel
@@ -377,9 +378,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             // Verify the archived channel no longer appears in search
             await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-                var results = request.getList("/api/search?q=weaviatesearchable-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var results = request.getList("/api/search?q=weaviate-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
                 var titles = getResultTitles(results);
-                assertThat(titles).doesNotContain("weaviatesearchable-archive-search");
+                assertThat(titles).doesNotContain("weaviate-archive-search");
             });
         }
     }
