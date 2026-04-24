@@ -23,8 +23,6 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -73,14 +71,16 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     private QuizPointStatistic quizPointStatistic;
 
     // TODO: test if we should use mappedBy here as well
+    // No @Cache here on purpose: this collection is mutated on every quiz edit/import and re-read on every student participation.
+    // NONSTRICT_READ_WRITE on a clustered L2 cache produced partial / stale reads that were the #12574 / #12584 bug class.
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "exercise_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
+    // No @Cache here on purpose: quizBatches is mutated on every student join in BATCHED mode, so the cache is actively hot
+    // and NONSTRICT's async-invalidation window is too loose for the multi-node setup. See #12574 / #12584.
     @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<QuizBatch> quizBatches = new HashSet<>();
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)

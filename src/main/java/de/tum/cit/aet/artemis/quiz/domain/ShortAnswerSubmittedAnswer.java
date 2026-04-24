@@ -12,9 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.Valid;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
@@ -27,10 +24,11 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
-    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany
+    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany.
+    // No @Cache here on purpose — same reason as MultipleChoiceSubmittedAnswer.selectedOptions (see #12574): NONSTRICT_READ_WRITE on an
+    // actively-mutated collection produced non-deterministic reads under concurrent autosave / evaluation activity on the clustered setup.
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @Valid
     private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
 

@@ -75,6 +75,15 @@ import collaborativeCodeEditor from './assets/programming/collaborative-editing-
 import collaborativeMetadataModal from './assets/programming/collaborative-editing-metadata-modal.png';
 import collaborativeProblemStatement from './assets/programming/collaborative-editing-problem-statement.gif';
 import collaborativeNewCommitAlert from './assets/programming/collaborative-editing-new-commit-alert.png';
+import hyperionGenerate from './assets/programming/hyperion-generate.png';
+import hyperionRefinement from './assets/programming/hyperion-refinement.png';
+import hyperionTargetedRefinementButton from './assets/programming/hyperion-targeted-refinement-button.png';
+import hyperionTargetedRefinementPrompt from './assets/programming/hyperion-targeted-refinement-prompt.png';
+import hyperionDiffView from './assets/programming/hyperion-diff-view.png';
+import hyperionChecklistQuality from './assets/programming/hyperion-checklist-quality.png';
+import hyperionDifficultyAssessment from './assets/programming/hyperion-difficulty-assessment.png';
+import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
+import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
 import reviewAddButton from './assets/programming/review-add-button.png';
 import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
 import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
@@ -94,13 +103,17 @@ Conducting a programming exercise consists of the following main steps:
 <Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow (detailed student perspective shown in diagram)" />
 
 <Callout variant={CalloutVariant.info}>
-  <p>The workflow diagram above shows the detailed steps from the student perspective.
-    For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.</p>
+
+  The workflow diagram above shows the detailed steps from the student perspective.
+For a complete step-by-step guide on how students participate in programming exercises, see the <a href="/student/exercises/programming-exercise">Programming Exercise Student Guide</a>.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
-    Instructors have significant freedom in defining the test environment.</p>
+
+  Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems.
+Instructors have significant freedom in defining the test environment.
+
 </Callout>
 
 ## Exercise Templates
@@ -206,8 +219,10 @@ Not all templates support the same feature set. The table below provides an over
 | 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI.
-    Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.</p>
+
+  <strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI.
+Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.
+
 </Callout>
 
 <Callout variant={CalloutVariant.success}>
@@ -238,7 +253,9 @@ Click on **Generate new programming exercise**.
 <Image src={courseManagementExerciseDashboard} alt="Exercise Dashboard" size={ImageSize.large} caption="Exercise Dashboard" />
 
 <Callout variant={CalloutVariant.info}>
-  <p>The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.</p>
+
+  The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.
+
 </Callout>
 
 <TumLiveVideo
@@ -267,8 +284,10 @@ Artemis provides various options to customize programming exercises:
 - **Auxiliary Repositories**: Additional repositories with a name, checkout directory, and description. Created and added to the build plan when the exercise is created. **Cannot be changed after exercise creation**
 
 <Callout variant={CalloutVariant.info}>
-  <p>Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
-    This can be used for providing additional resources or overwriting template source code in testing exercises.</p>
+
+  Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set.
+This can be used for providing additional resources or overwriting template source code in testing exercises.
+
 </Callout>
 
 </details>
@@ -295,7 +314,9 @@ Artemis provides various options to customize programming exercises:
 - **Publish Build Plan**: Allow students to access and edit their build plan. Useful for exercises where students configure parts of the build plan themselves
 
 <Callout variant={CalloutVariant.warning}>
-  <p>At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.</p>
+
+  At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.
+
 </Callout>
 
 </details>
@@ -323,8 +344,10 @@ Artemis provides various options to customize programming exercises:
 - **Allow Custom Branches**: Allow students to push to branches other than the default one
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
-    Students are fully responsible for managing their branches. Only activate if absolutely necessary!</p>
+
+  Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions.
+Students are fully responsible for managing their branches. Only activate if absolutely necessary!
+
 </Callout>
 
 - **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression. Pushing is only allowed if it matches
@@ -349,7 +372,9 @@ Artemis provides various options to customize programming exercises:
   See Submission Policy Configuration section for details.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Submission policies can only be edited on the Grading Page after initial exercise generation.</p>
+
+  Submission policies can only be edited on the Grading Page after initial exercise generation.
+
 </Callout>
 
 </details>
@@ -380,7 +405,9 @@ Artemis provides various options to customize programming exercises:
 - **Complaint on Automatic Assessment**: Allow students to complain about automatic assessment after due date. Only available if complaints are enabled in the course or for exam exercises
 
 <Callout variant={CalloutVariant.info}>
-  <p>Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.</p>
+
+  Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.
+
 </Callout>
 
 - **Manual feedback requests**: Enable manual feedback requests, allowing students to request feedback before the deadline. Each student can make one request at a time
@@ -398,7 +425,9 @@ Artemis provides various options to customize programming exercises:
   Maximum points that can be deducted for code quality issues as a percentage (0-100%) of **Points**. Defaults to 100% if empty
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.</p>
+
+  <strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.
+
 </Callout>
 
 </details>
@@ -540,10 +569,10 @@ Open <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', ver
 You can switch between different repositories and <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> the code when done.
 
 <Callout variant={CalloutVariant.info}>
-    <p>
-        The online code editor supports real-time collaborative editing. Multiple instructors or editors can edit the same
-        file simultaneously with automatic conflict resolution and cursor awareness.
-    </p>
+
+    The online code editor supports real-time collaborative editing. Multiple instructors or editors can edit the same
+file simultaneously with automatic conflict resolution and cursor awareness.
+
 </Callout>
 
 ### Collaborative Editing
@@ -574,7 +603,9 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 <Image src={collaborativeMetadataModal} alt="Settings conflict resolution modal" size={ImageSize.large} caption="Resolving conflicting exercise setting changes" />
 
 <Callout variant={CalloutVariant.info}>
-    <p><strong>Tips and Limitations:</strong></p>
+
+    <strong>Tips and Limitations:</strong>
+
     <ul>
         <li>Click <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> frequently to ensure your work is committed to the repository.</li>
         <li>Avoid mixing the online editor and external Git tools at the same time — pick one workflow per editing session to reduce the chance of conflicts.</li>
@@ -585,6 +616,70 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
     </ul>
 </Callout>
 
+### AI-Assisted Problem Statement Authoring
+
+<Callout variant={CalloutVariant.info}>
+
+    This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). All AI-assisted features require at least the <strong>Editor</strong> role within the course.
+
+</Callout>
+
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. The AI assists the process while the instructor retains full control — every AI-generated modification must be reviewed and accepted through a diff view before it is applied.
+
+The AI-assisted authoring features are organized into two areas:
+
+1. **Problem Statement Generation and Refinement** — create and iteratively improve problem statements
+2. **Instructor Checklist** — analyze quality, infer learning goals, and assess difficulty
+
+#### Generate Problem Statement
+
+When creating a new exercise, the **Problem** step provides a requirements input field. Enter a textual prompt describing the desired exercise (up to 1,000 characters) and click **Generate Draft Problem Statement**. The system generates a Markdown draft that includes task annotations for linking tasks to test cases and inserts it directly into the editor.
+
+<Image src={hyperionGenerate} alt="Problem statement generation interface" size={ImageSize.large} caption="AI-assisted problem statement generation with requirements input, character counter, and the generated draft in the Markdown editor" />
+
+#### Refine Problem Statement
+
+Once a problem statement exists in the editor, the same input field accepts a refinement instruction. Click **Refine Problem Statement** to revise the entire document based on the instruction. The system produces a revised version and presents the changes in a diff view.
+
+<Image src={hyperionRefinement} alt="Problem statement refinement interface" size={ImageSize.large} caption="Global refinement mode — the action changes to 'Refine Problem Statement' when the editor already contains content" />
+
+#### Targeted Refinement
+
+To modify a specific portion of the problem statement, select a text region in the Markdown editor. A **Refine Selection** button appears next to the selection. Click it to open an inline instruction field (up to 500 characters), then enter a description of the desired change. The system produces a localized revision affecting only the selected region.
+
+<Image src={hyperionTargetedRefinementButton} alt="Refine Selection button next to selected text" size={ImageSize.large} caption="Targeted refinement entry point — the button appears when text is selected in the editor" />
+
+<Image src={hyperionTargetedRefinementPrompt} alt="Inline instruction field for targeted refinement" size={ImageSize.large} caption="Inline instruction field for describing the desired change to the selected region" />
+
+#### Diff View
+
+All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+
+<Image src={hyperionDiffView} alt="Diff view comparing original and AI suggestion" size={ImageSize.large} caption="Diff view for reviewing AI-suggested modifications — accept or discard before changes are applied" />
+
+#### Instructor Checklist
+
+The instructor checklist analyzes the problem statement across three dimensions concurrently:
+
+- **Quality Assessment** — detects issues in clarity, coherence, and completeness
+- **Learning Goal Estimation** — infers learning goals from the problem statement
+- **Difficulty Assessment** — evaluates exercise complexity relative to the declared level
+
+Click **Analyze Problem Statement** in the checklist panel to run all three analyses. Results appear in collapsible sections. After modifying the problem statement, sections are marked as stale and can be re-analyzed individually.
+
+**Quality Assessment:** Displays a radar chart with percentage scores for clarity, coherence, and completeness. Detected issues appear with category badges, severity levels, descriptions, suggested fixes, and impact assessments. Use **Fix** to apply an AI-generated correction for a single issue, or **Fix All Issues** for batch correction. Both actions present proposed changes in the diff view.
+
+<Image src={hyperionChecklistQuality} alt="Quality assessment panel with radar chart and detected issues" size={ImageSize.large} caption="Quality assessment panel showing scores, detected issues, and controls for individual or batch correction" />
+
+**Difficulty Assessment:** Shows the suggested difficulty level alongside the declared level. When a mismatch exists, an arrow indicator and descriptive text alert you. Task and test counts summarize the exercise structure, and a detailed explanation describes the reasoning. Click an **Adapt to** button (Easy, Medium, or Hard) to generate a revised problem statement adjusted to the target difficulty, presented in the diff view.
+
+<Image src={hyperionDifficultyAssessment} alt="Difficulty assessment panel showing mismatch indicator" size={ImageSize.large} caption="Difficulty assessment with suggested level, mismatch indicator, reasoning, and adaptation controls" />
+
+**Learning Goal Estimation:** Presents estimated learning goals, each tagged with a knowledge area badge (e.g., AL for Algorithms, SE for Software Engineering), a taxonomy level (e.g., APPLY, ANALYZE), and a "Linked" indicator when the goal matches an existing course competency. Each entry includes textual evidence from the problem statement. Select individual goals or use **Select All**, then click **Apply All** to link them to the course's competencies. The system checks whether suitable competencies already exist, links matching ones directly, and creates new competencies only where no match is found.
+
+<Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
+
+<Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
 ### Review Comments
 
 During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.
@@ -619,10 +714,10 @@ Each review comment starts a thread at the selected location. Other instructors 
 Some consistency check comments may include a suggested inline fix. This suggested change is intended for simple, local corrections, such as aligning a name, signature, or small code fragment. Review the suggested change before applying it. For complex or ambiguous issues, Artemis may leave the suggested fix empty and only keep the explanatory review comment.
 
 <Callout variant={CalloutVariant.info}>
-    <p>
-        Review comments stay attached to saved exercise content. If the referenced line changes later, Artemis may mark the
-        thread as outdated. Re-check the referenced location before resolving the thread or applying an AI-suggested fix.
-    </p>
+
+    Review comments stay attached to saved exercise content. If the referenced line changes later, Artemis may mark the
+thread as outdated. Re-check the referenced location before resolving the thread or applying an AI-suggested fix.
+
 </Callout>
 
 ### Testing Frameworks by Language
@@ -658,7 +753,9 @@ Check the build plan results:
 - If the build fails, check build errors in the build plan
 
 <Callout variant={CalloutVariant.warning}>
-  <p><strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.</p>
+
+  <strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.
+
 </Callout>
 
 ### Adapt Build Script (Optional)
@@ -676,7 +773,9 @@ You can also use a custom Docker image. Make sure to:
 - Include all build dependencies to avoid downloading in every build
 
 <Callout variant={CalloutVariant.info}>
-  <p>Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.</p>
+
+  Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.
+
 </Callout>
 
 ### Edit Repositories Checkout Paths (Optional)
@@ -696,7 +795,9 @@ To change checkout paths, click **edit repositories checkout path**:
 Update the build script accordingly (see the [Adapt Build Script](#adapt-build-script-optional) section).
 
 <Callout variant={CalloutVariant.warning}>
-  <p><strong>Important:</strong></p>
+
+  <strong>Important:</strong>
+
   <ul>
     <li>Checkout paths can only be changed during exercise creation, not after</li>
     <li>Depending on language/project type, some paths may be predefined and unchangeable</li>
@@ -837,12 +938,17 @@ On exercise import, configurations are copied from the imported exercise.
 </table>
 
 <Callout variant={CalloutVariant.info}>
-  <p>Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.</p>
+
+  Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the task/script that executes the tools in the build plan.</p>
-  <p><strong>Special case:</strong> PMD and PMD CPD share a common plugin. To disable one or the other, instructors must delete the execution of the specific tool from the build plan.</p>
+
+  Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the task/script that executes the tools in the build plan.
+
+  <strong>Special case:</strong> PMD and PMD CPD share a common plugin. To disable one or the other, instructors must delete the execution of the specific tool from the build plan.
+
 </Callout>
 
 ### Adapt Interactive Problem Statement
@@ -868,7 +974,9 @@ The grading configuration determines how test cases contribute to the overall sc
 - <img src={gradingTriggerAll} alt="Trigger All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Artemis always grades new submissions with the latest configuration, but existing submissions might use outdated configuration. Artemis warns about grading inconsistencies with the <strong>Updated grading</strong> badge.</p>
+
+  Artemis always grades new submissions with the latest configuration, but existing submissions might use outdated configuration. Artemis warns about grading inconsistencies with the <strong>Updated grading</strong> badge.
+
 </Callout>
 
 #### Test Case Configuration
@@ -883,11 +991,15 @@ Adapt test case contribution to the overall score or set grading based on tasks.
 <Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
 
 <Callout variant={CalloutVariant.info}>
-  <p>Artemis registers tasks and test cases from the <strong>Test</strong> repository using results from the <strong>Solution</strong> build plan. Test cases only appear after the first Solution build plan execution.</p>
+
+  Artemis registers tasks and test cases from the <strong>Test</strong> repository using results from the <strong>Solution</strong> build plan. Test cases only appear after the first Solution build plan execution.
+
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  <p>If your problem statement does not contain tasks, task-based grading is not available. You can still configure grading based on individual test cases.</p>
+
+  If your problem statement does not contain tasks, task-based grading is not available. You can still configure grading based on individual test cases.
+
 </Callout>
 
 Left side configuration options:
@@ -903,25 +1015,35 @@ Left side configuration options:
 - **Passed %**: Statistics showing percentage of students passing/failing the test
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Bonus points (score &gt; 100%) are only achievable if at least one bonus multiplier &gt; 1 or bonus points are given for a test case.</p>
+
+  Bonus points (score &gt; 100%) are only achievable if at least one bonus multiplier &gt; 1 or bonus points are given for a test case.
+
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  <p>For manual assessments, all feedback details are visible to students even if the due date hasn't passed for others. Set an appropriate <strong>assessment due date</strong> to prevent information leakage.</p>
+
+  For manual assessments, all feedback details are visible to students even if the due date hasn't passed for others. Set an appropriate <strong>assessment due date</strong> to prevent information leakage.
+
 </Callout>
 
 **Examples:**
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example 1:</strong> Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is 200%. Test Case (TC) A has weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5 points).</p>
+
+  <strong>Example 1:</strong> Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is 200%. Test Case (TC) A has weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5 points).
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases they will receive a score of 150%, which amounts to 10 points and 5 bonus points.</p>
+
+  <strong>Example 2:</strong> Given the configuration of Example 1 with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for (2 × 2) / (2 + 1 + 1) × 100 = 100% of the maximum points (10). Passing TC B or TC C accounts for 1/4 × 100 = 25% of the maximum points (2.5). If the student passes all test cases they will receive a score of 150%, which amounts to 10 points and 5 bonus points.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases they will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.</p>
+
+  <strong>Example 3:</strong> Given the configuration of Example 2 with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases they will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.
+
 </Callout>
 
 The right side displays statistics:
@@ -936,7 +1058,9 @@ Configure visibility and grading of code quality issues by category.
 <Image src={configureGradingCodeAnalysis} alt="Configure Grading Code Analysis" size={ImageSize.large} caption="Code Analysis Grading Configuration" />
 
 <Callout variant={CalloutVariant.info}>
-  <p>The Code Analysis tab is only available if static code analysis is enabled for the exercise.</p>
+
+  The Code Analysis tab is only available if static code analysis is enabled for the exercise.
+
 </Callout>
 
 Issues are grouped into categories. The following table shows the category mappings for Java, Swift, and C:
@@ -956,11 +1080,15 @@ Issues are grouped into categories. The following table shows the category mappi
 | **Miscellaneous**   | Uncategorized rules                                                                                                      | Checkstyle miscellaneous                                                                              |                       | GCC Misc        |
 
 <Callout variant={CalloutVariant.info}>
-  <p>For Swift, only the category <strong>Code Style</strong> can contain code quality issues currently. All other categories displayed on the grading page are dummies.</p>
+
+  For Swift, only the category <strong>Code Style</strong> can contain code quality issues currently. All other categories displayed on the grading page are dummies.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the rules. For details on the default configuration and active rules, see the <a href="#c">GCC - Static Code Analysis Default Configuration</a> section below.</p>
+
+  The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the rules. For details on the default configuration and active rules, see the <a href="#c">GCC - Static Code Analysis Default Configuration</a> section below.
+
 </Callout>
 
 Other languages use categories defined by their static code analysis tool:
@@ -1000,7 +1128,9 @@ Verify:
 - **Solution result**: Score 100% with "X of X passed" (or "X of X passed, 0 issues" with SCA)
 
 <Callout variant={CalloutVariant.info}>
-  <p>If static code analysis finds issues in template/solution, improve the code or disable the problematic rule.</p>
+
+  If static code analysis finds issues in template/solution, improve the code or disable the problematic rule.
+
 </Callout>
 
 #### Review Template/Solution Differences
@@ -1573,7 +1703,9 @@ For a description of the rules/warnings refer to the [GCC Documentation](https:/
 </table>
 
 <Callout variant={CalloutVariant.info}>
-  <p>GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.</p>
+
+  GCC output can still contain normal warnings and compilation errors. These will also be added to the Miscellaneous category. Usually it's best to disable this category, as it contains errors not related to the SCA. Therefore, if the warning/error does not belong to the first four categories above, it is not an SCA issue as of GCC 11.1.0.
+
 </Callout>
 
 ## Exercise Import
@@ -1599,7 +1731,9 @@ Exercise import copies repositories, build plans, interactive problem statement,
    <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
 
    <Callout variant={CalloutVariant.info}>
-     <p>Instructors can import exercises from courses where they are registered as instructors.</p>
+
+     Instructors can import exercises from courses where they are registered as instructors.
+
    </Callout>
 
 3. **Configure Import Options**
@@ -1610,7 +1744,9 @@ Exercise import copies repositories, build plans, interactive problem statement,
    - **Update Template**: Update template files in repositories. Useful for outdated exercises. For Java, replaces JUnit4 with Ares (JUnit5) and updates dependencies. May require test case adaptation
 
    <Callout variant={CalloutVariant.info}>
-     <p>**Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.</p>
+
+     **Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise. The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
+
    </Callout>
 
 4. **Complete Import**
@@ -1618,7 +1754,9 @@ Exercise import copies repositories, build plans, interactive problem statement,
    Fill mandatory values and click <img src={programmingExerciseImportButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
    <Callout variant={CalloutVariant.info}>
-     <p>The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.</p>
+
+     The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.
+
    </Callout>
 
 ## Manual Assessment
@@ -1652,7 +1790,9 @@ Add general feedback (not tied to specific file/line) by scrolling to bottom and
 Save changes with <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> (top right). Finalize assessment with <img src={submitAssessmentButton} alt="Submit Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
 <Callout variant={CalloutVariant.info}>
-  <p>You can save multiple times before submitting. Once submitted, you cannot make changes unless you are an instructor.</p>
+
+  You can save multiple times before submitting. Once submitted, you cannot make changes unless you are an instructor.
+
 </Callout>
 
 ## Repository Access Configuration
@@ -1684,7 +1824,9 @@ The following sections explain repository types and access rights for different 
 | Instructor         | Course instructor |
 
 <Callout variant={CalloutVariant.info}>
-  <p>Editors and instructors have the same access rights in the table below.</p>
+
+  Editors and instructors have the same access rights in the table below.
+
 </Callout>
 
 ### Time Periods
@@ -1694,7 +1836,9 @@ The following sections explain repository types and access rights for different 
 - **After due**: After due/end date
 
 <Callout variant={CalloutVariant.info}>
-  <p>For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).</p>
+
+  For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).
+
 </Callout>
 
 **Read access (R)** includes `git fetch`, `git clone`, `git pull`.
@@ -1754,7 +1898,9 @@ The following sections explain repository types and access rights for different 
 2. Instructors can access Instructor Assignment repository via online editor from Course Management (Edit in editor) or Course Overview (Open code editor). After due date, push only via online editor from Course Management or local Git client. Online editor from Course Overview shows locked repository.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.</p>
+
+  Practice repositories, Teaching Assistant assignment, and instructor assignment repositories only exist for course exercises.
+
 </Callout>
 
 ## Testing with Ares
@@ -1834,7 +1980,9 @@ public void test_LinkedList_add() {
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).</p>
+
+  For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).
+
 </Callout>
 
 </details>
@@ -1855,7 +2003,9 @@ public void testBorrowInBook() {
 Can also be applied to entire test class.
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Remember tests run on CI servers (build agents). Tests execute slower than on local machines.</p>
+
+  Remember tests run on CI servers (build agents). Tests execute slower than on local machines.
+
 </Callout>
 
 </details>
@@ -1972,7 +2122,9 @@ public void testRunServiceInTranslationServer() {
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Handle students making classes/methods final via problem statement or tests to avoid compilation errors.</p>
+
+  Handle students making classes/methods final via problem statement or tests to avoid compilation errors.
+
 </Callout>
 
 </details>
@@ -2063,11 +2215,15 @@ Use Eclipse Java Compiler for partial, best-effort compilation. Useful for exam 
 Compilation errors are transformed into errors thrown where code doesn't compile (method/class level). The body is replaced with `throw new Error("Unresolved compilation problems: ...")`.
 
 <Callout variant={CalloutVariant.warning}>
-  <p><strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.</p>
+
+  <strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.</p>
+
+  The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.
+
 </Callout>
 
 See old documentation for Maven configuration examples.
@@ -2087,7 +2243,9 @@ See old documentation for Maven configuration examples.
 Submission policies define the effect of a submission on participant progress. A programming exercise can have zero or one submission policy (never more than one). Policies are specified during exercise creation and can be adjusted in the grading configuration later.
 
 <Callout variant={CalloutVariant.info}>
-  <p><strong>Definition:</strong> One submission = one push to the exercise repository by the participant that triggers automatic tests resulting in feedback. Automatic test runs triggered by instructors are not counted as submissions.</p>
+
+  <strong>Definition:</strong> One submission = one push to the exercise repository by the participant that triggers automatic tests resulting in feedback. Automatic test runs triggered by instructors are not counted as submissions.
+
 </Callout>
 
 ### Submission Policy Types
@@ -2109,11 +2267,15 @@ Participants can submit a fixed number of times. After reaching the limit, the r
 With the example configuration shown above, participants can submit 5 times. After the 5th submission, Artemis locks the repository, preventing further pushes.
 
 <Callout variant={CalloutVariant.warning}>
-  <p>If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.</p>
+
+  If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
+
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>The participant may still work on their solution locally, but cannot submit it to Artemis to receive feedback.</p>
+
+  The participant may still work on their solution locally, but cannot submit it to Artemis to receive feedback.
+
 </Callout>
 
 #### 3. Submission Penalty

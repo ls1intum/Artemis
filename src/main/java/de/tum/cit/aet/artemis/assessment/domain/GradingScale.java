@@ -83,14 +83,13 @@ public class GradingScale extends DomainObject {
      * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
      * the relation is defined as OneToMany in order to allow applying multiple bonuses.
      */
+    // No @Cache on the two child collections below: mutated during grading-scale edits, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradeStep> gradeSteps = new HashSet<>();
 
     @OneToMany(mappedBy = "bonusToGradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "bonusFrom", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Bonus> bonusFrom = new HashSet<>();
 
     public GradeType getGradeType() {
