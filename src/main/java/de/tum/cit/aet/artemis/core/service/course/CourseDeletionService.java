@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -131,7 +130,7 @@ public class CourseDeletionService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider) {
+            SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
@@ -160,7 +159,7 @@ public class CourseDeletionService {
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**

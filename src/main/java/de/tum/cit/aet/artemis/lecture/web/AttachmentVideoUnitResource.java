@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
@@ -103,7 +102,7 @@ public class AttachmentVideoUnitResource {
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
             FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
-            ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider, YouTubeUrlService youTubeUrlService) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -115,7 +114,7 @@ public class AttachmentVideoUnitResource {
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
         this.youTubeUrlService = youTubeUrlService;
     }
 

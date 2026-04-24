@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -75,12 +74,12 @@ public class FaqResource {
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
-            ObjectProvider<SearchableEntityWeaviateService> searchableEntityWeaviateServiceProvider) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceProvider.getIfAvailable();
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional.orElse(null);
     }
 
     /**
