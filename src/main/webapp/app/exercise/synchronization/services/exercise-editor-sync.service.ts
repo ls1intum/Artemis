@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { concatMap, filter, take, tap } from 'rxjs/operators';
+import { concatMap, distinctUntilChanged, filter, map, pairwise, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -232,6 +232,17 @@ export class ExerciseEditorSyncService {
     private getTopic(exerciseId: number): string {
         return `/topic/exercises/${exerciseId}/synchronization`;
     }
+
+    /**
+     * Emits each time the WebSocket connection transitions from disconnected → connected
+     * after a prior successful connection (i.e. true reconnections only, not the initial connect).
+     */
+    readonly reconnected$: Observable<void> = this.websocketService.connectionState.pipe(
+        distinctUntilChanged((prev, curr) => prev.connected === curr.connected),
+        pairwise(),
+        filter(([prev, curr]) => !prev.connected && curr.connected && prev.wasEverConnectedBefore),
+        map(() => undefined),
+    );
 
     /**
      * The unique session identifier for this browser tab/window.

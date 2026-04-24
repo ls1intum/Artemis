@@ -465,6 +465,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._diffEditor!.layout();
     }
 
+    /**
+     * Sets the content of the LEFT (original/read-only) side of the diff editor.
+     * Use this when you need the original pane to show content different from what
+     * was in the editor when diff mode was entered (e.g., reconnection conflict).
+     */
+    setDiffOriginalContent(content: string): void {
+        if (!this.isDiffMode() || !this.diffSnapshotModel) {
+            return;
+        }
+        this.diffChanged.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
+        this.diffSnapshotModel.setValue(content);
+        this._diffEditor!.layout();
+    }
+
     revertAll(): void {
         if (!this.isDiffMode() || !this.diffSnapshotModel) {
             return;
