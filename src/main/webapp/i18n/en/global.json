@@ -72,7 +72,7 @@
                 "examsDescription": "Search exams across your courses"
             },
             "types": {
-                "filter": "Filter",
+                "filter": "#Filter",
                 "feature": "Feature",
                 "course": "Course"
             },
