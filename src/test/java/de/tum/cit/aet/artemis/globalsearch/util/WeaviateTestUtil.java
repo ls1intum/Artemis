@@ -9,8 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-import org.testcontainers.DockerClientFactory;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -20,6 +18,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -35,19 +34,20 @@ public final class WeaviateTestUtil {
 
     /**
      * Returns {@code true} when Weaviate assertions should be skipped because
-     * Docker is not available on the current machine.
-     * If Docker IS available but the service is {@code null}, this method fails
-     * the test with a descriptive error instead of silently skipping.
+     * the Weaviate Testcontainer is not running (Docker unavailable, image pull
+     * failure, version property not set, etc.).
+     * If the container IS running but the service is {@code null}, this method
+     * fails the test with a descriptive error instead of silently skipping.
      */
     public static boolean shouldSkipWeaviateAssertions(WeaviateService weaviateService) {
         if (weaviateService != null) {
             return false;
         }
-        if (!DockerClientFactory.instance().isDockerAvailable()) {
+        if (WeaviateTestContainerFactory.getContainer() == null) {
             return true;
         }
-        throw new AssertionError("WeaviateService is null even though Docker is available — the Weaviate Testcontainer should be running. "
-                + "Check that the Weaviate container started successfully and that artemis.weaviate.enabled is set to true.");
+        throw new AssertionError(
+                "WeaviateService is null even though the Weaviate Testcontainer is running. " + "Check that artemis.weaviate.enabled is set to true in the test configuration.");
     }
 
     /**
