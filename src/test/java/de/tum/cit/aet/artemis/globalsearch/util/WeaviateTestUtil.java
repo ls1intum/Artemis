@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -44,6 +45,10 @@ public final class WeaviateTestUtil {
             return false;
         }
         if (!DockerClientFactory.instance().isDockerAvailable()) {
+            return true;
+        }
+        // The container may have failed to start (e.g. Docker image pull failure) even when Docker is available
+        if (WeaviateTestContainerFactory.getContainer() == null) {
             return true;
         }
         throw new AssertionError("WeaviateService is null even though Docker is available — the Weaviate Testcontainer should be running. "
