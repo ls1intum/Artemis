@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +62,15 @@ public class SearchableEntityWeaviateService {
      */
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
+
+    /**
+     * UUID v5 namespace used to derive deterministic UUIDs for Weaviate objects from
+     * {@code (type, entityId)} pairs. This eliminates the check-then-insert race in
+     * {@link #upsertRow(String, Long, Map)} — the same entity always gets the same UUID,
+     * so we can directly replace-or-insert without querying first. Uses the DNS namespace
+     * from RFC 4122.
+     */
+    private static final UUID WEAVIATE_UUID_NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     private final WeaviateService weaviateService;
 
@@ -402,22 +413,34 @@ public class SearchableEntityWeaviateService {
     // ----- Internal helpers -----
 
     /**
-     * Shared upsert implementation: looks up an existing row keyed by {@code (type, entity_id)} and
-     * replaces its properties, or inserts a new row otherwise.
+     * Derives a deterministic UUID v5 from the {@code (type, entityId)} pair so that the same
+     * entity always maps to the same Weaviate object UUID, regardless of which node performs
+     * the upsert. The type is included because entity IDs are only unique within a table
+     * (e.g. exercise 42 and FAQ 42 can coexist), so the type prefix prevents UUID collisions
+     * across different entity types in the shared collection.
+     */
+    private static String deterministicUuid(String type, Long entityId) {
+        return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
+    }
+
+    /**
+     * Shared upsert implementation: uses a deterministic UUID derived from {@code (type, entity_id)}
+     * to replace an existing row or insert a new one.
+     * <br>
+     * Because the UUID is stable across nodes, this avoids the check-then-insert race
+     * that would occur if we queried whether the element does already exist in Weaviate.
+     * If two nodes race on the same entity, the worst case is a last-writer-wins replace — no
+     * duplicates can be created because Weaviate enforces UUID uniqueness.
      */
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            var existing = collection.query.fetchObjects(query -> query
-                    .filters(
-                            Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)))
-                    .limit(1));
-            if (!existing.objects().isEmpty()) {
-                String uuid = existing.objects().getFirst().uuid();
+            String uuid = deterministicUuid(type, entityId);
+            if (collection.data.exists(uuid)) {
                 collection.data.replace(uuid, r -> r.properties(properties));
             }
             else {
-                collection.data.insert(properties);
+                collection.data.insert(properties, obj -> obj.uuid(uuid));
             }
         }
         catch (IOException e) {
