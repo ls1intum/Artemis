@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExamDatesInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExamProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,10 +17,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -35,6 +40,9 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
     @Autowired
     private WeaviateService weaviateService;
+
+    @Autowired
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -118,5 +126,66 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         var properties = queryExamProperties(weaviateService, updatedExam.getId());
         assertThat(properties).isNotNull();
         assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(createdExam.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_updatesExerciseExamDatesInWeaviate() throws Exception {
+        // Create an exam with exercises via util and seed them in Weaviate
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
+        examUtilService.addExamChannel(exam, "weaviate-wt-ex-test");
+        searchableEntityWeaviateService.upsertExamAsync(exam);
+        searchableEntityWeaviateService.updateExamExercisesAsync(exam);
+
+        // Verify exercises are initially indexed with original exam dates
+        for (ExerciseGroup group : exam.getExerciseGroups()) {
+            for (Exercise exercise : group.getExercises()) {
+                assertExerciseExistsInWeaviate(weaviateService, exercise);
+                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), exam);
+            }
+        }
+
+        int workingTimeChange = 600; // extend by 10 minutes
+
+        Exam updatedExam = request.patchWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/working-time", workingTimeChange, Exam.class,
+                HttpStatus.OK);
+
+        // Verify exercises now reflect the updated exam end date
+        for (ExerciseGroup group : exam.getExerciseGroups()) {
+            for (Exercise exercise : group.getExercises()) {
+                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamDates_updatesExerciseExamDatesInWeaviate() throws Exception {
+        // Create an exam with exercises via util and seed them in Weaviate
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
+        examUtilService.addExamChannel(exam, "weaviate-upd-ex-test");
+        searchableEntityWeaviateService.upsertExamAsync(exam);
+        searchableEntityWeaviateService.updateExamExercisesAsync(exam);
+
+        for (ExerciseGroup group : exam.getExerciseGroups()) {
+            for (Exercise exercise : group.getExercises()) {
+                assertExerciseExistsInWeaviate(weaviateService, exercise);
+            }
+        }
+
+        // Update exam dates via the update endpoint
+        ZonedDateTime newStartDate = exam.getStartDate().plusHours(2);
+        exam.setStartDate(newStartDate);
+        exam.setEndDate(newStartDate.plusHours(3));
+        exam.setWorkingTime(exam.getDuration());
+
+        Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
+
+        // Verify exercises now reflect the updated exam dates
+        for (ExerciseGroup group : exam.getExerciseGroups()) {
+            for (Exercise exercise : group.getExercises()) {
+                assertExerciseExamDatesInWeaviate(weaviateService, exercise.getId(), updatedExam);
+            }
+        }
     }
 }
