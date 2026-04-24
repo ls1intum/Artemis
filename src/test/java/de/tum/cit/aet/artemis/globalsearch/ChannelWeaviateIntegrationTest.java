@@ -198,7 +198,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testArchiveChannel_updatesWeaviate() throws Exception {
+        void testArchiveChannel_removesFromWeaviate() throws Exception {
             Channel channel = new Channel();
             channel.setName("archive-test");
             channel.setIsPublic(true);
@@ -210,11 +210,27 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
             channelService.archiveChannel(createdChannel.getId());
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-                var properties = queryChannelProperties(weaviateService, createdChannel.getId());
-                assertThat(properties).isNotNull();
-                assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED)).isEqualTo(true);
-            });
+            assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testUnarchiveChannel_reIndexesInWeaviate() throws Exception {
+            Channel channel = new Channel();
+            channel.setName("unarchive-test");
+            channel.setIsPublic(true);
+            channel.setIsCourseWide(true);
+            channel.setIsAnnouncementChannel(false);
+
+            Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+            assertChannelExistsInWeaviate(weaviateService, createdChannel);
+
+            channelService.archiveChannel(createdChannel.getId());
+            assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+
+            channelService.unarchiveChannel(createdChannel.getId());
+            createdChannel.setIsArchived(false);
+            assertChannelExistsInWeaviate(weaviateService, createdChannel);
         }
     }
 

@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * channels (and {@code OneToOneChat} / {@code GroupChat}) are not searchable in this PR. The description
  * is composed from {@link Channel#getTopic() topic} and {@link Channel#getDescription() description}.
  */
-public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic, boolean isArchived) {
+public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic) {
 
     /**
      * Extracts all required data from a {@link Channel} entity.
@@ -25,17 +25,17 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String n
      */
     public static ChannelSearchableEntityDTO fromChannel(Channel channel) {
         return new ChannelSearchableEntityDTO(channel.getId(), channel.getCourse().getId(), channel.getName(), buildDescription(channel), channel.getIsCourseWide(),
-                channel.getIsPublic(), channel.getIsArchived());
+                channel.getIsPublic());
     }
 
     /**
-     * Returns {@code true} iff the supplied channel is eligible for indexing (course-wide or public).
+     * Returns {@code true} iff the supplied channel is eligible for indexing (course-wide or public, and not archived).
      *
      * @param channel the channel to test
      * @return whether the channel should be synchronized to Weaviate
      */
     public static boolean isIndexable(Channel channel) {
-        return channel.getIsCourseWide() || channel.getIsPublic();
+        return !channel.getIsArchived() && (channel.getIsCourseWide() || channel.getIsPublic());
     }
 
     private static String buildDescription(Channel channel) {
@@ -68,7 +68,6 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String n
         properties.put(SearchableEntitySchema.Properties.TITLE, name);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, isCourseWide);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, isPublic);
-        properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED, isArchived);
         if (description != null) {
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }

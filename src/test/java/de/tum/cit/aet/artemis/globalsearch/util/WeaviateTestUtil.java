@@ -561,7 +561,6 @@ public final class WeaviateTestUtil {
 
             assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE)).isEqualTo(channel.getIsCourseWide());
             assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(channel.getIsPublic());
-            assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED)).isEqualTo(channel.getIsArchived());
         });
     }
 

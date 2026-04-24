@@ -104,8 +104,6 @@ public final class SearchableEntitySchema {
 
         public static final String CHANNEL_IS_PUBLIC = "channel_is_public";
 
-        public static final String CHANNEL_IS_ARCHIVED = "channel_is_archived";
-
         // Type-specific display / metadata fields
 
         public static final String SHORT_NAME = "short_name";
@@ -169,7 +167,6 @@ public final class SearchableEntitySchema {
             filterable(Properties.FAQ_STATE, TEXT, "The state of the FAQ: ACCEPTED, REJECTED, or PROPOSED (faq rows only)"),
             filterable(Properties.CHANNEL_IS_COURSE_WIDE, BOOLEAN, "Whether the channel is course-wide (channel rows only)"),
             filterable(Properties.CHANNEL_IS_PUBLIC, BOOLEAN, "Whether the channel is public (channel rows only)"),
-            filterable(Properties.CHANNEL_IS_ARCHIVED, BOOLEAN, "Whether the channel is archived (channel rows only)"),
 
             // Type-specific display / metadata fields
             searchable(Properties.SHORT_NAME, TEXT, "The short name of the exercise (exercises only)"),

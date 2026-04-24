@@ -130,15 +130,11 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         addCourseContext(properties, metadata, courseNameById);
         Boolean isCourseWide = getBoolean(properties, SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE);
         Boolean isPublic = getBoolean(properties, SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC);
-        Boolean isArchived = getBoolean(properties, SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED);
         if (isCourseWide != null) {
             metadata.put("isCourseWide", isCourseWide);
         }
         if (isPublic != null) {
             metadata.put("isPublic", isPublic);
-        }
-        if (isArchived != null) {
-            metadata.put("isArchived", isArchived);
         }
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.CHANNEL, getString(properties, SearchableEntitySchema.Properties.TITLE),

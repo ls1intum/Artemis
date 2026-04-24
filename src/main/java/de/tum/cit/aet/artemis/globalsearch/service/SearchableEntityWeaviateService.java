@@ -359,7 +359,7 @@ public class SearchableEntityWeaviateService {
         try {
             if (!ChannelSearchableEntityDTO.isIndexable(channel)) {
                 deleteEntityInternal(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
-                log.debug("Channel {} is no longer indexable (not course-wide and not public); removed from Weaviate", channel.getId());
+                log.debug("Channel {} is no longer indexable (archived, or not course-wide and not public); removed from Weaviate", channel.getId());
                 return;
             }
             ChannelSearchableEntityDTO dto = ChannelSearchableEntityDTO.fromChannel(channel);

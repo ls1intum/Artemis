@@ -67,7 +67,6 @@ class ExerciseSchemaTest {
         assertPropertyExists(SearchableEntitySchema.Properties.FAQ_STATE, WeaviateDataType.TEXT);
         assertPropertyExists(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, WeaviateDataType.BOOLEAN);
         assertPropertyExists(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, WeaviateDataType.BOOLEAN);
-        assertPropertyExists(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED, WeaviateDataType.BOOLEAN);
     }
 
     @Test
