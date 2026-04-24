@@ -137,10 +137,10 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        if (comp.apollonEditor) {
-            comp.apollonEditor.destroy();
-            comp.apollonEditor = undefined;
-        }
+        // Prevent ngOnDestroy from calling apollonEditor.destroy(), which triggers
+        // async React errors ("window is not defined", "Should not already be working")
+        // in the jsdom test environment.
+        comp.apollonEditor = undefined;
         fixture.destroy();
         vi.restoreAllMocks();
     });
