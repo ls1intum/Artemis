@@ -300,6 +300,8 @@
             "tutorialFreePeriodInvalidOrder": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss vor dem Enddatum liegen.",
             "tutorialFreePeriodOutOfBounds": "Freie Zeiträume der Tutoriengruppe müssen innerhalb des Tutorienzeitraums liegen."
         },
-        "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut."
+        "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+        "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }
 }

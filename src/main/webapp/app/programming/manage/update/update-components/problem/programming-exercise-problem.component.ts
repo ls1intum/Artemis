@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -221,11 +221,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
     }
 
-    problemStatementLength(): number {
-        return this.programmingExercise()?.problemStatement?.length ?? 0;
-    }
+    problemStatementLength = computed(() => this.programmingExercise()?.problemStatement?.length ?? 0);
 
-    isProblemStatementTooLong(): boolean {
-        return this.problemStatementLength() > this.maxProblemStatementLength;
-    }
+    isProblemStatementTooLong = computed(() => this.problemStatementLength() > this.maxProblemStatementLength);
 }

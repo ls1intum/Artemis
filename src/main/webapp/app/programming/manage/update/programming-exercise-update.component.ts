@@ -1657,7 +1657,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.calculateFormStatusSections();
     }
 
-    isProblemStatementTooLong(): boolean {
+    private isProblemStatementTooLong(): boolean {
         return (this.programmingExercise.problemStatement?.length ?? 0) > this.maxProblemStatementLength;
     }
 }

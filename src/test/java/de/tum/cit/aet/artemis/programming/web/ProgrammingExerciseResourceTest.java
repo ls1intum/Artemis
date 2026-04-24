@@ -28,12 +28,17 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -363,6 +368,33 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         request.patchWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement", tooLongProblemStatement, String.class,
                 HttpStatus.BAD_REQUEST, MediaType.TEXT_PLAIN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+
+        var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
+
+        newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
+        newExercise.setProblemStatement("a".repeat(100_001));
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise.setProblemStatement("a".repeat(100_001));
+
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
