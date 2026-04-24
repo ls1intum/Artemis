@@ -323,6 +323,10 @@ public class ExamResource {
             savedExam.setChannelName(examUpdateDTO.channelName());
         }
 
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(savedExam);
+        }
+
         return ResponseEntity.ok(savedExam);
     }
 
@@ -360,6 +364,10 @@ public class ExamResource {
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
         examService.syncExamExercisesMetadata(exam);
+
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExamAsync(exam);
+        }
 
         return ResponseEntity.ok(exam);
     }
