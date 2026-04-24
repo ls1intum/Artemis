@@ -81,9 +81,9 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, exerciseId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableEntitySchema.Properties.TITLE, exerciseTitle);
-        properties.put(SearchableEntitySchema.Properties.EXERCISE_TYPE, exerciseType);
-        properties.put(SearchableEntitySchema.Properties.MAX_POINTS, maxPoints);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.TITLE, exerciseTitle);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE, exerciseType);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.MAX_POINTS, maxPoints);
         properties.put(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE, isExamExercise);
 
         putIfNotNull(properties, SearchableEntitySchema.Properties.SHORT_NAME, shortName);
