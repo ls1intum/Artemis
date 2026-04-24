@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -50,6 +54,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    @Autowired
+    private ChannelService channelService;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -284,6 +291,41 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testEmptyQueryReturnsBadRequest() throws Exception {
             request.getList("/api/exercises/search?q=&courseId=" + course.getId(), HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
+        }
+    }
+
+    @Nested
+    class ArchivedChannelSearchTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testArchivedChannelIsExcludedFromSearch() throws Exception {
+            User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+            Channel channel = new Channel();
+            channel.setName("weaviatesearchable-archive-search");
+            channel.setIsPublic(true);
+            channel.setIsCourseWide(true);
+            channel.setIsAnnouncementChannel(false);
+
+            Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+
+            // Wait for channel to be indexed
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var results = request.getList("/api/search?q=weaviatesearchable-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles = getResultTitles(results);
+                assertThat(titles).contains("weaviatesearchable-archive-search");
+            });
+
+            // Archive the channel
+            channelService.archiveChannel(createdChannel.getId());
+
+            // Verify the archived channel no longer appears in search
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var results = request.getList("/api/search?q=weaviatesearchable-archive-search&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles = getResultTitles(results);
+                assertThat(titles).doesNotContain("weaviatesearchable-archive-search");
+            });
         }
     }
 
