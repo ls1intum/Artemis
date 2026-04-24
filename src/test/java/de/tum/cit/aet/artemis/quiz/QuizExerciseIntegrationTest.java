@@ -1338,10 +1338,16 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         ChildIdSnapshot before = snapshotChildIds(quizExercise.getId());
 
-        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class, OK);
+        QuizExerciseDatesDTO startNowResponse = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", null, QuizExerciseDatesDTO.class,
+                OK);
 
         ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
         assertChildIdsUnchanged(before, after, "START_NOW");
+        // START_NOW must actually start the quiz — the synchronized batch's startTime must be persisted. Without this
+        // assertion, a regression that skipped the batch INSERT (e.g. invoking an UPDATE query on a transient batch
+        // whose id is null) would slip through the child-id-preservation check.
+        assertThat(startNowResponse.startDate()).as("START_NOW must persist a batch startTime").isNotNull();
+        assertThat(ChronoUnit.MILLIS.between(startNowResponse.startDate(), ZonedDateTime.now())).isCloseTo(0L, byLessThan(2000L));
     }
 
     @Test
@@ -1391,11 +1397,15 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     private void assertChildIdsUnchanged(ChildIdSnapshot before, ChildIdSnapshot after, String action) {
+        // isNotEmpty() guards against silent loss of coverage: if the quiz fixture were ever trimmed to a subset of
+        // question types, an empty-equals-empty assertion would pass even though the corresponding bug-class arm is
+        // no longer exercised. We want to know if that happens, since the original incident (#12584) regenerated ids
+        // across all four child collection types.
         assertThat(after.answerOptionIds()).as("%s regenerated AnswerOption ids (see #12584)", action).isEqualTo(before.answerOptionIds()).isNotEmpty();
-        assertThat(after.dragItemIds()).as("%s regenerated DragItem ids", action).isEqualTo(before.dragItemIds());
-        assertThat(after.dropLocationIds()).as("%s regenerated DropLocation ids", action).isEqualTo(before.dropLocationIds());
-        assertThat(after.shortAnswerSpotIds()).as("%s regenerated ShortAnswerSpot ids", action).isEqualTo(before.shortAnswerSpotIds());
-        assertThat(after.shortAnswerSolutionIds()).as("%s regenerated ShortAnswerSolution ids", action).isEqualTo(before.shortAnswerSolutionIds());
+        assertThat(after.dragItemIds()).as("%s regenerated DragItem ids", action).isEqualTo(before.dragItemIds()).isNotEmpty();
+        assertThat(after.dropLocationIds()).as("%s regenerated DropLocation ids", action).isEqualTo(before.dropLocationIds()).isNotEmpty();
+        assertThat(after.shortAnswerSpotIds()).as("%s regenerated ShortAnswerSpot ids", action).isEqualTo(before.shortAnswerSpotIds()).isNotEmpty();
+        assertThat(after.shortAnswerSolutionIds()).as("%s regenerated ShortAnswerSolution ids", action).isEqualTo(before.shortAnswerSolutionIds()).isNotEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

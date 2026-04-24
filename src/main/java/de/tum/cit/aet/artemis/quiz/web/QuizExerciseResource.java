@@ -159,15 +159,28 @@ public class QuizExerciseResource {
                 }
 
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                var newReleaseDate = quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now) ? now : quizExercise.getReleaseDate();
+                var previousReleaseDate = quizExercise.getReleaseDate();
+                var releaseDateNeedsClamping = previousReleaseDate != null && previousReleaseDate.isAfter(now);
+                var newReleaseDate = releaseDateNeedsClamping ? now : previousReleaseDate;
                 var newDueDate = now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
 
-                quizBatchRepository.updateStartTime(quizBatch.getId(), now);
-                quizExerciseRepository.updateReleaseAndDueDate(quizExerciseId, newReleaseDate, newDueDate);
+                // getOrCreateSynchronizedQuizBatch may return a transient (id == null) batch for quizzes that never
+                // started before. save() persists it; for already-existing batches it issues a plain UPDATE. Either
+                // way there is no cascade back into the quizExercise graph (QuizBatch.quizExercise is a @ManyToOne
+                // with no cascade), so child answer-option / drag-item IDs stay stable.
+                quizBatch.setStartTime(now);
+                quizBatchRepository.save(quizBatch);
+                // Only rewrite releaseDate when it actually changes. Avoids a redundant column write in the common
+                // case where the quiz was already visible to students before Start Now.
+                if (releaseDateNeedsClamping) {
+                    quizExerciseRepository.updateReleaseAndDueDate(quizExerciseId, newReleaseDate, newDueDate);
+                }
+                else {
+                    quizExerciseRepository.updateDueDate(quizExerciseId, newDueDate);
+                }
 
                 // Mirror the writes onto the in-memory entity so the downstream DTO, broadcast and version creation
                 // use the new values without needing to reload. The reload below provides an additional safety net.
-                quizBatch.setStartTime(now);
                 quizExercise.setReleaseDate(newReleaseDate);
                 quizExercise.setDueDate(newDueDate);
             }

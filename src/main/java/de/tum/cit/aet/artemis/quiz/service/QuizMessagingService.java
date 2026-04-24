@@ -71,8 +71,9 @@ public class QuizMessagingService {
                 // Create a group notification if actions is 'start-now'. The fan-out to (potentially thousands of)
                 // students runs asynchronously so it does not block the HTTP response of the lifecycle action that
                 // triggered this broadcast (see GroupNotificationService#notifyStudentGroupAboutQuizExerciseStartAsync).
-                // Primitives are resolved here on the caller's session before the async handoff.
-                if (quizChange == QuizAction.START_NOW && !quizExercise.isExamExercise()) {
+                // Primitives are resolved here on the caller's session before the async handoff. The surrounding
+                // isCourseExercise() guard already excludes exam exercises, so no extra exam check is needed here.
+                if (quizChange == QuizAction.START_NOW) {
                     groupNotificationService.notifyStudentGroupAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), course.getStudentGroupName(),
                             quizExercise.getId(), quizExercise.getExerciseNotificationTitle());
                 }

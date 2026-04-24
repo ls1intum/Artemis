@@ -133,7 +133,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                 expect(response.ok()).toBeTruthy();
                 const body = await response.json();
                 return (body.quizQuestions ?? [])
-                    .filter((q: any) => q.type === 'multiple-choice' || (q.answerOptions ?? []).length > 0)
+                    .filter((q: any) => q.type === 'multiple-choice')
                     .flatMap((q: any) => (q.answerOptions ?? []).map((opt: any) => opt.id))
                     .sort((a: number, b: number) => a - b);
             };
@@ -144,7 +144,13 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await exerciseAPIRequests.setQuizVisible(createdQuiz.id!);
             expect(await readOptionIdsFromServer(), 'SET_VISIBLE must not regenerate AnswerOption ids').toEqual(initialOptionIds);
 
-            await exerciseAPIRequests.startQuizNow(createdQuiz.id!);
+            const startNowResponse = await page.request.put(`/api/quiz/quiz-exercises/${createdQuiz.id}/start-now`);
+            expect(startNowResponse.ok()).toBeTruthy();
+            const startNowBody = await startNowResponse.json();
+            // Guard against a regression where START_NOW silently skips persisting the batch startTime (e.g. an UPDATE
+            // on a transient batch whose id is null would match no rows and the quiz would stay in "Waiting for Start"
+            // for students, even though the child-id assertion below still passes).
+            expect(startNowBody.startDate, 'START_NOW must return a persisted batch startTime').toBeTruthy();
             expect(await readOptionIdsFromServer(), 'START_NOW must not regenerate AnswerOption ids').toEqual(initialOptionIds);
         });
     });
