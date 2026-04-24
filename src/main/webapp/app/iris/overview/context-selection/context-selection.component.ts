@@ -132,7 +132,7 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchToNewSession(option.mode, option.entityId);
+            this.chatService.switchContextOfCurrentSession(option.mode, option.entityId);
         }
     }
 }

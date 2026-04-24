@@ -579,6 +579,34 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    /**
+     * Updates the context (mode + entityId) of the currently active session in place via a PATCH request.
+     * Unlike switchToNewSession, this keeps the same session id and websocket subscription alive.
+     * A SYSTEM marker message is appended server-side and reflected in the returned session.
+     */
+    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number): void {
+        const courseId = this.getCourseId();
+        if (!this.sessionId || !courseId) {
+            return;
+        }
+        if (this.sessionContext?.mode === mode && this.sessionContext?.entityId === entityId) {
+            return;
+        }
+        this.irisChatHttpService.updateSessionContext(courseId, this.sessionId, mode, entityId).subscribe({
+            next: (response: HttpResponse<IrisSession>) => {
+                const updatedSession = response.body!;
+                this.sessionContext = { mode, entityId };
+                this.updateCurrentSessionContext(updatedSession);
+                this.messages.next(updatedSession.messages ?? []);
+                this.citationInfo.next(updatedSession.citationInfo ?? []);
+                this.suggestions.next([]);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.handleSendHttpError(error);
+            },
+        });
+    }
+
     switchToNewSession(mode: ChatServiceMode, id?: number): void {
         this.sessionContext = id !== undefined ? { mode, entityId: id } : undefined;
         this.close();
