@@ -1,8 +1,12 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
-        <div #quizHeader class="row module-bg">
-            <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
+        <div #quizHeader class="row module-bg" [ngClass]="{ 'sticky-top': mode === 'preview' || mode === 'solution' }">
+            <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2" [ngClass]="{ 'mt-n3': mode === 'preview' || mode === 'solution' }">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
+                    @if (mode === 'preview' || mode === 'solution') {
+                        {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
+                        - {{ quizExercise.title }}
+                    }
                     @switch (mode) {
                         @case ('practice') {
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }" />
@@ -51,6 +55,16 @@
                                     <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
                                     <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
                                 </div>
+                            }
+                            @if (mode === 'preview') {
+                                <jhi-button
+                                    id="submit-quiz"
+                                    (onClick)="onSubmit()"
+                                    [btnSize]="ButtonSize.SMALL"
+                                    [btnType]="ButtonType.PRIMARY"
+                                    [title]="shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                                    [disabled]="shouldTreatAsSubmittedForUi || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                                />
                             }
                         </div>
                     } @else if (mode !== 'solution') {
