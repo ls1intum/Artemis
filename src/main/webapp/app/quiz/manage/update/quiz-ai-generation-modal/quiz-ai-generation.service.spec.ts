@@ -140,6 +140,7 @@ describe('QuizAiGenerationService', () => {
 
         function flushBulkRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, count: number): void {
             const refinements = Array.from({ length: count }, (_, i) => ({
+                type: 'success',
                 question: { type: 'single-choice', title: `Refined Q${i}`, questionText: `Refined text ${i}?`, options: [{ text: 'A', correct: true }] },
                 reasoning: `Reasoning ${i}`,
             }));
@@ -189,7 +190,7 @@ describe('QuizAiGenerationService', () => {
             q1.title = 'Q1';
             const q2 = buildMultipleChoiceQuestion(false);
             q2.title = 'Q2';
-            let results: { refinedQuestion: MultipleChoiceQuestion; reasoning: string }[] | undefined;
+            let results: Map<MultipleChoiceQuestion, string> | undefined;
 
             service.refineAllMultipleChoiceQuestions(1, [q1, q2], 'improve').subscribe((r) => (results = r));
 
@@ -197,10 +198,12 @@ describe('QuizAiGenerationService', () => {
             req.flush({
                 refinements: [
                     {
+                        type: 'success',
                         question: { type: 'single-choice', title: 'Refined Q1', questionText: 'Refined text 1?', options: [{ text: 'A', correct: true }] },
                         reasoning: 'Reasoning 1',
                     },
                     {
+                        type: 'success',
                         question: {
                             type: 'multiple-choice',
                             title: 'Refined Q2',
@@ -215,16 +218,53 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(results).toHaveLength(2);
-            expect(results![0].refinedQuestion.title).toBe('Refined Q1');
-            expect(results![0].reasoning).toBe('Reasoning 1');
-            expect(results![1].refinedQuestion.title).toBe('Refined Q2');
-            expect(results![1].reasoning).toBe('Reasoning 2');
+            expect(results!.size).toBe(2);
+            expect(q1.title).toBe('Refined Q1');
+            expect(results!.get(q1)).toBe('Reasoning 1');
+            expect(q2.title).toBe('Refined Q2');
+            expect(results!.get(q2)).toBe('Reasoning 2');
+        });
+
+        it('should omit failed refinements and only return successful ones', () => {
+            const q1 = buildMultipleChoiceQuestion(true);
+            q1.title = 'Q1';
+            const q2 = buildMultipleChoiceQuestion(false);
+            q2.title = 'Q2';
+            const q3 = buildMultipleChoiceQuestion(true);
+            q3.title = 'Q3';
+            let results: Map<MultipleChoiceQuestion, string> | undefined;
+
+            service.refineAllMultipleChoiceQuestions(1, [q1, q2, q3], 'improve').subscribe((r) => (results = r));
+
+            const req = expectBulkRefineRequest(1);
+            req.flush({
+                refinements: [
+                    {
+                        type: 'success',
+                        question: { type: 'single-choice', title: 'Refined Q1', questionText: 'Refined text 1?', options: [{ text: 'A', correct: true }] },
+                        reasoning: 'Reasoning 1',
+                    },
+                    { type: 'failure', error: 'LLM Error' },
+                    {
+                        type: 'success',
+                        question: { type: 'single-choice', title: 'Refined Q3', questionText: 'Refined text 3?', options: [{ text: 'A', correct: true }] },
+                        reasoning: 'Reasoning 3',
+                    },
+                ],
+            });
+
+            expect(results!.size).toBe(2);
+            expect(results!.has(q1)).toBe(true);
+            expect(results!.has(q2)).toBe(false);
+            expect(results!.has(q3)).toBe(true);
+            expect(results!.get(q1)).toBe('Reasoning 1');
+            expect(results!.get(q3)).toBe('Reasoning 3');
+            expect(q2.title).toBe('Q2');
         });
 
         it('should apply refined answer options back to the original question objects', () => {
             const q = buildMultipleChoiceQuestion(false);
-            let result: { refinedQuestion: MultipleChoiceQuestion; reasoning: string }[] | undefined;
+            let result: Map<MultipleChoiceQuestion, string> | undefined;
 
             service.refineAllMultipleChoiceQuestions(1, [q], 'improve').subscribe((r) => (result = r));
 
@@ -232,6 +272,7 @@ describe('QuizAiGenerationService', () => {
             req.flush({
                 refinements: [
                     {
+                        type: 'success',
                         question: {
                             type: 'multiple-choice',
                             title: 'New Title',
@@ -247,14 +288,15 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(result![0].refinedQuestion.title).toBe('New Title');
-            expect(result![0].refinedQuestion.text).toBe('New text?');
-            expect(result![0].refinedQuestion.hint).toBe('New hint');
-            expect(result![0].refinedQuestion.answerOptions).toHaveLength(2);
-            expect(result![0].refinedQuestion.answerOptions![0].isCorrect).toBe(true);
-            expect(result![0].refinedQuestion.answerOptions![0].hint).toBe('h');
-            expect(result![0].refinedQuestion.answerOptions![1].isCorrect).toBe(false);
-            expect(result![0].refinedQuestion.hasCorrectOption).toBe(true);
+            expect(result!.get(q)).toBe('Some reasoning.');
+            expect(q.title).toBe('New Title');
+            expect(q.text).toBe('New text?');
+            expect(q.hint).toBe('New hint');
+            expect(q.answerOptions).toHaveLength(2);
+            expect(q.answerOptions![0].isCorrect).toBe(true);
+            expect(q.answerOptions![0].hint).toBe('h');
+            expect(q.answerOptions![1].isCorrect).toBe(false);
+            expect(q.hasCorrectOption).toBe(true);
         });
     });
 });

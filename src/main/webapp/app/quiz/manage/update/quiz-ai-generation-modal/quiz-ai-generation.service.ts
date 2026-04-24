@@ -6,6 +6,7 @@ import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
+import { QuizQuestionRefinementSuccess } from 'app/openapi/model/quizQuestionRefinementSuccess';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -66,13 +67,9 @@ export class QuizAiGenerationService {
      * @param courseId the id of the course the quiz belongs to
      * @param questions the multiple-choice questions to refine
      * @param refinementPrompt user instructions describing how all questions should change
-     * @returns an observable that emits one refined question + reasoning pair per input question, in the same order
+     * @returns an observable that emits a map from each successfully refined question to its reasoning string; failed questions are omitted
      */
-    refineAllMultipleChoiceQuestions(
-        courseId: number,
-        questions: MultipleChoiceQuestion[],
-        refinementPrompt: string,
-    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }[]> {
+    refineAllMultipleChoiceQuestions(courseId: number, questions: MultipleChoiceQuestion[], refinementPrompt: string): Observable<Map<MultipleChoiceQuestion, string>> {
         const request: QuizQuestionBulkRefinementRequest = {
             questions: questions.map((q) => ({
                 type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
@@ -90,12 +87,16 @@ export class QuizAiGenerationService {
             refinementPrompt,
         };
         return this.hyperionQuizQuestionGenerationApiService.refineAllQuizQuestions(courseId, request).pipe(
-            map((response) =>
-                response.refinements.map((refinement, index) => ({
-                    refinedQuestion: this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index)),
-                    reasoning: refinement.reasoning,
-                })),
-            ),
+            map((response) => {
+                const results = new Map<MultipleChoiceQuestion, string>();
+                response.refinements.forEach((refinement, index) => {
+                    if (refinement.type === QuizQuestionRefinementSuccess.TypeEnum.Success) {
+                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
+                        results.set(questions[index], refinement.reasoning);
+                    }
+                });
+                return results;
+            }),
         );
     }
 

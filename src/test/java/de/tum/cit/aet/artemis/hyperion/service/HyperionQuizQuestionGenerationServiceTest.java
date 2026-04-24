@@ -127,7 +127,7 @@ class HyperionQuizQuestionGenerationServiceTest {
                 List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make the question more precise");
 
-        QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);
+        QuizQuestionRefinementResponseDTO.Success response = (QuizQuestionRefinementResponseDTO.Success) service.refineQuizQuestion(course, request);
 
         assertThat(response.question().title()).isEqualTo("HTTP Idempotency");
         assertThat(response.question().questionText()).isEqualTo("Which HTTP method is idempotent?");

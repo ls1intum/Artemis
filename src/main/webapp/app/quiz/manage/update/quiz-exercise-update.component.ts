@@ -392,11 +392,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             )
             .subscribe({
                 next: (results) => {
-                    const reasonings = new Map<QuizQuestion, string>();
-                    results.forEach((result, index) => {
-                        reasonings.set(mcQuestions[index], result.reasoning);
-                    });
-                    this.quizQuestionListEditComponent().applyBulkRefinement(reasonings);
+                    const failedCount = mcQuestions.length - results.size;
+                    if (failedCount > 0) {
+                        this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
+                    }
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },
