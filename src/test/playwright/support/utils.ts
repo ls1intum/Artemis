@@ -174,76 +174,7 @@ export async function clearTextField(textField: Locator, page?: Page) {
  * @param text - The text to set in the editor
  */
 export async function setMonacoEditorContent(page: Page, containerSelector: string, text: string) {
-    // Wait for the Monaco editor to be visible
-    const container = page.locator(containerSelector);
-    await container.waitFor({ state: 'visible' });
-    const monacoEditor = container.locator('.monaco-editor').first();
-    await monacoEditor.waitFor({ state: 'visible' });
-
-    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
-    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
-
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
-    }
-
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
-
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
-
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
-
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
-                    }
-                }
-            }
-
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
-
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
-            }
-
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
-
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
-    }
-
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    await setMonacoEditorContentByLocator(page, page.locator(containerSelector), text);
 }
 
 /**
@@ -264,67 +195,96 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
     // Wait for Monaco to be available on window (exposed by MonacoEditorService)
     await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
 
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
+    // Identify the target Monaco instance via its DOM node reference rather than
+    // screen coordinates. Bounding-box matching was fragile when hydration
+    // caused layout shifts — coordinates could change mid-observation and
+    // silently fall through to "last editor", which is not necessarily the
+    // right one when multiple editors coexist.
+    const editorHandle = await monacoEditor.elementHandle();
+    if (!editorHandle) {
+        throw new Error('Could not resolve Monaco editor element handle');
     }
 
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
+    // When called on an /edit page, the Angular component may still be hydrating the
+    // form from the server response. A setValue() that races ahead of hydration gets
+    // overwritten when the API response arrives (including late arrivals after our
+    // debounce wait). Retry setValue until Monaco holds our text *and keeps holding
+    // it* across a sustained observation window — i.e., no late hydration will
+    // clobber it after we return.
+    const MAX_ATTEMPTS = 8;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Click on the editor to ensure it's initialized + focused
+        await monacoEditor.click();
+        await page.waitForTimeout(100);
 
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
-
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
-
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
-                    }
+        const result = await page.evaluate(
+            ({ newText, editorNode }) => {
+                const monaco = (window as any).monaco;
+                if (!monaco || !monaco.editor) {
+                    return { success: false, error: 'Monaco not available' };
                 }
-            }
+                const editors = monaco.editor.getEditors();
+                if (editors.length === 0) {
+                    return { success: false, error: 'No Monaco editors registered' };
+                }
+                // Deterministic match: identical or contained DOM node reference.
+                // No coordinate comparisons — layout shifts don't affect this.
+                const findByNode = () =>
+                    editors.find((e: any) => {
+                        const dom = e.getDomNode();
+                        return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                    });
+                const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                if (!targetEditor) {
+                    return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+                }
+                targetEditor.setValue(newText);
+                return { success: true };
+            },
+            { newText: text, editorNode: editorHandle },
+        );
 
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
+        if (!result.success) {
+            throw new Error(`Failed to set Monaco editor content: ${result.error}`);
+        }
 
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+        // Sustained-value check: read Monaco's value every 300ms for 2.1s. We need
+        // the value to both (a) match `text` and (b) stay that way — that catches
+        // late hydration that would otherwise overwrite after we return. The first
+        // 1s covers the textChanged debounce (200ms, with buffer), the rest guards
+        // against deferred form population. `readValue` uses the same fallback
+        // chain as `setValue` above so they can never pick different editors.
+        const readValue = async () =>
+            page.evaluate(
+                ({ editorNode }) => {
+                    const monaco = (window as any).monaco;
+                    const editors = monaco?.editor?.getEditors() || [];
+                    const findByNode = () =>
+                        editors.find((e: any) => {
+                            const dom = e.getDomNode();
+                            return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                        });
+                    const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                    return targetEditor?.getValue() ?? null;
+                },
+                { editorNode: editorHandle },
+            );
+
+        let stable = true;
+        for (let i = 0; i < 7; i++) {
+            await page.waitForTimeout(300);
+            const v = await readValue();
+            if (v !== text) {
+                stable = false;
+                break;
             }
-
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
-
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
+        }
+        if (stable) {
+            return;
+        }
     }
 
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    throw new Error(`Monaco editor did not retain the expected text after ${MAX_ATTEMPTS} attempts (likely clobbered by Angular form hydration)`);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {

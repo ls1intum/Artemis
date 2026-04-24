@@ -19,37 +19,40 @@
         "write-translations": "docusaurus write-translations"
     },
     "dependencies": {
-        "@docusaurus/core": "3.9.2",
-        "@docusaurus/preset-classic": "3.9.2",
+        "@docusaurus/core": "3.10.0",
+        "@docusaurus/faster": "3.10.0",
+        "@docusaurus/preset-classic": "3.10.0",
         "@easyops-cn/docusaurus-search-local": "0.55.1",
         "@fortawesome/free-solid-svg-icons": "7.2.0",
-        "@fortawesome/react-fontawesome": "3.3.0",
+        "@fortawesome/react-fontawesome": "3.3.1",
         "@mdx-js/react": "3.1.1",
         "clsx": "2.1.1",
         "prism-react-renderer": "2.4.1",
-        "react": "19.2.4",
-        "react-dom": "19.2.4"
+        "react": "19.2.5",
+        "react-dom": "19.2.5"
     },
     "devDependencies": {
-        "@docusaurus/module-type-aliases": "3.9.2",
-        "@docusaurus/tsconfig": "3.9.2",
-        "@docusaurus/types": "3.9.2",
+        "@docusaurus/module-type-aliases": "3.10.0",
+        "@docusaurus/tsconfig": "3.10.0",
+        "@docusaurus/types": "3.10.0",
         "@eslint/js": "10.0.1",
         "@types/prop-types": "15.7.15",
-        "@typescript-eslint/eslint-plugin": "8.58.0",
-        "@typescript-eslint/parser": "8.58.0",
-        "baseline-browser-mapping": "2.10.13",
-        "eslint": "10.1.0",
+        "@typescript-eslint/eslint-plugin": "8.59.0",
+        "@typescript-eslint/parser": "8.59.0",
+        "baseline-browser-mapping": "2.10.21",
+        "eslint": "10.2.1",
         "patch-package": "8.0.1",
-        "prettier": "3.8.1",
-        "typescript": "6.0.2"
+        "prettier": "3.8.3",
+        "typescript": "6.0.3"
     },
     "overrides": {
+        "follow-redirects": "1.16.0",
         "js-yaml": "4.1.1",
         "minimatch": "10.2.4",
         "qs": "6.15.0",
         "serialize-javascript": "7.0.5",
         "undici": "7.24.3",
+        "uuid": "14.0.0",
         "webpack": "5.105.4"
     },
     "browserslist": {
