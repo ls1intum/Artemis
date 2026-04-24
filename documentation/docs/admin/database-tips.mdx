@@ -23,7 +23,9 @@ where repository_url is not null;
 ## Migrating MySQL Data to PostgreSQL
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Do *not* use <a href="https://pgloader.io/">pgloader</a> to convert the database from MySQL to PostgreSQL. This results in a database schema that is not compatible with future migrations. PgLoader converts constraint names into all-lowercase. The Liquibase migrations assume that they have got their original name which contains the case-sensitive prefix `FK`.</p>
+
+  Do *not* use <a href="https://pgloader.io/">pgloader</a> to convert the database from MySQL to PostgreSQL. This results in a database schema that is not compatible with future migrations. PgLoader converts constraint names into all-lowercase. The Liquibase migrations assume that they have got their original name which contains the case-sensitive prefix `FK`.
+
 </Callout>
 
 1. Start Artemis at least once in version `V` ≧ 6.0.0 or greater to make sure the current database schema is PostgreSQL-compatible.
@@ -94,14 +96,18 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database *in addition to* `-Ox`.</p>
+
+  Alternatively, you could use some temporary database on your PostgreSQL instance that can be deleted afterwards to migrate the data directly from your production MySQL into there. Use this temporary PostgreSQL database to create the `Artemis.pg.sql` dump that can be imported into the production database after merging with the proper schema. In that case the `pgloader` command in the steps above should work similarly without the `--network` flag and adapted database connection URLs. For `pg_dump`, add the necessary flags to connect to your database *in addition to* `-Ox`.
+
 </Callout>
 
 5. Update the Artemis config to connect to an *empty* new PostgreSQL database (see [Connecting Artemis to PostgreSQL](#connecting-artemis-to-postgresql)).
 Start Artemis, wait until it has finished starting up and created the schema, and stop it again.
 
 <Callout variant={CalloutVariant.warning}>
-  <p>Use the same version `V` that was connected to MySQL before.</p>
+
+  Use the same version `V` that was connected to MySQL before.
+
 </Callout>
 
 6. Dump the schema Artemis has created on the PostgreSQL server in the previous step using
@@ -201,7 +207,9 @@ Use the following script like `python3 ./merge.py > merged.pg.sql` to create the
 8. Import the merged database dump `merged.pg.sql` into the production PostgreSQL database using `psql < merged.pg.sql`.
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The schema `public` of the target database will be deleted and completely overwritten when importing.</p>
+
+  The schema `public` of the target database will be deleted and completely overwritten when importing.
+
 </Callout>
 
 ---
