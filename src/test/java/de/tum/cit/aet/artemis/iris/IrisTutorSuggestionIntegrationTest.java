@@ -153,7 +153,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         message.setSender(IrisMessageSender.LLM);
         message.setSession(irisSession);
         irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        var messages = irisMessageRepository.findAllBySessionId(irisSessionDTO.id());
+        var messages = irisMessageRepository.findAllBySessionIdOrderByIdAsc(irisSessionDTO.id());
         assertThat(messages).hasSize(1);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.LLM);
@@ -313,7 +313,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
                 .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("No valid token provided");
 
         // Check if the messages where saved
-        var messages = irisMessageRepository.findAllBySessionId(irisSession.id());
+        var messages = irisMessageRepository.findAllBySessionIdOrderByIdAsc(irisSession.id());
         assertThat(messages).hasSize(2);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test suggestion");
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.ARTIFACT);

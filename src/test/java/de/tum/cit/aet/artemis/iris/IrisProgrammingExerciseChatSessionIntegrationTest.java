@@ -191,7 +191,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
         assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
-        assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderByIdAsc(irisSession.getId())).isEmpty();
     }
 
     @Test
@@ -210,7 +210,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
         assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
-        assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderByIdAsc(irisSession.getId())).isEmpty();
     }
 
     @Test
@@ -238,7 +238,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Assert - Verify the session was processed and messages exist
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
-        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        var messages = irisMessageRepository.findAllBySessionIdOrderByIdAsc(session.getId());
         assertThat(messages).isNotEmpty();
         assertThat(messages).hasSizeGreaterThanOrEqualTo(1);
         // Verify we have the USER message
@@ -268,7 +268,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Assert - Verify the session was processed normally
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
-        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        var messages = irisMessageRepository.findAllBySessionIdOrderByIdAsc(session.getId());
         assertThat(messages).isNotEmpty();
         // Verify we have the USER message
         assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
@@ -293,7 +293,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         // Assert - Verify the session was processed normally
         var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
         assertThat(updatedSession).isNotNull();
-        var messages = irisMessageRepository.findAllBySessionId(session.getId());
+        var messages = irisMessageRepository.findAllBySessionIdOrderByIdAsc(session.getId());
         assertThat(messages).isNotEmpty();
         // Verify we have the USER message
         assertThat(messages.stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();

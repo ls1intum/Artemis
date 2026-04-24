@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 @Conditional(IrisEnabled.class)
 public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
 
-    List<IrisMessage> findAllBySessionId(long sessionId);
+    List<IrisMessage> findAllBySessionIdOrderByIdAsc(long sessionId);
 
     /**
      * Counts the number of LLM responses the user got within the given timeframe.
