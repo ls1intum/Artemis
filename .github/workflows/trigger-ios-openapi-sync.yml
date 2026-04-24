@@ -1,0 +1,15 @@
+name: Trigger syncing OpenAPI spec to artemis-ios
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/development/sync-openapi-to-ios
+    paths:
+      - 'openapi/openapi.yaml'
+
+jobs:
+  call-sync:
+    uses: ls1intum/artemis-ios-core-modules/.github/workflows/sync-openapi.yml@main
+    with:
+      sha: ${{ github.sha }}
