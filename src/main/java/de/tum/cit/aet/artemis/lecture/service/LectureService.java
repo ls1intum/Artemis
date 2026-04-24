@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -198,10 +199,10 @@ public class LectureService {
 
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
 
-        // Clean up Weaviate: remove every lecture unit row that belonged to this lecture so the JPA
-        // cascade delete does not leave orphaned rows in the unified search index. The lecture row
-        // itself is removed by LectureResource.deleteLecture via deleteEntityAsync(LECTURE, ...).
+        // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
+        // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
         if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
             searchableEntityWeaviateService.deleteAllLectureUnitsForLectureAsync(lecture.getId());
         }
 
