@@ -8,8 +8,10 @@ import org.springframework.boot.test.context.TestConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
@@ -58,6 +60,12 @@ public class JacksonDeserializerInitializationConfig {
 
         // Initialize TutorialGroup with nested registrations containing User objects
         initializeTutorialGroup();
+
+        // Initialize User directly to ensure full deserializer resolution
+        initializeUser();
+
+        // Initialize Post with nested PlagiarismCase (uses @JsonIncludeProperties)
+        initializePost();
 
         log.debug("Successfully initialized Jackson deserializers");
     }
@@ -179,6 +187,49 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeUser() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "login": "testuser",
+                        "firstName": "Test",
+                        "lastName": "User",
+                        "email": "test@test.com",
+                        "activated": true,
+                        "langKey": "en",
+                        "imageUrl": null
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, User.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize User deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializePost() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Post",
+                        "content": "Test content",
+                        "visibleForStudents": true,
+                        "plagiarismCase": {
+                            "id": 1
+                        },
+                        "answers": [],
+                        "reactions": []
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, Post.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
         }
     }
 }
