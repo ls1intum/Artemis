@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -68,6 +70,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private LectureTestRepository lectureTestRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -137,20 +142,27 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         endedExamExercise.setTitle("WeaviateSearchable Ended Exam Exercise");
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
-        // Index all exercises in Weaviate
+        // Create a lecture in the same course
+        lecture = lectureUtilService.createLecture(course);
+        lecture.setTitle("WeaviateSearchable Test Lecture");
+        lecture = lectureTestRepository.save(lecture);
+
+        // Index all exercises and the lecture in Weaviate
         searchableEntityWeaviateService.upsertExerciseAsync(releasedExercise);
         searchableEntityWeaviateService.upsertExerciseAsync(unreleasedExercise);
         searchableEntityWeaviateService.upsertExerciseAsync(notStartedExamExercise);
         searchableEntityWeaviateService.upsertExerciseAsync(ongoingExamExercise);
         searchableEntityWeaviateService.upsertExerciseAsync(endedExamExercise);
+        searchableEntityWeaviateService.upsertLectureAsync(lecture);
 
-        // Wait for all exercises to be indexed
+        // Wait for all entities to be indexed
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             assertExerciseExistsInWeaviate(weaviateService, releasedExercise);
             assertExerciseExistsInWeaviate(weaviateService, unreleasedExercise);
             assertExerciseExistsInWeaviate(weaviateService, notStartedExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, ongoingExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, endedExamExercise);
+            assertLectureExistsInWeaviate(weaviateService, lecture);
         });
     }
 
@@ -298,6 +310,42 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testEmptyQueryReturnsBadRequest() throws Exception {
             request.getList("/api/exercises/search?q=&courseId=" + course.getId(), HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
+        }
+    }
+
+    @Nested
+    class AdminTypeFilterTests {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testAdminGlobalSearchWithTypeFilterReturnsOnlyRequestedType() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable&types=exercise&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var types = results.stream().map(GlobalSearchResultDTO::type).toList();
+
+            assertThat(types).isNotEmpty();
+            assertThat(types).allMatch("exercise"::equals);
+            assertThat(getResultTitles(results)).doesNotContain("WeaviateSearchable Test Lecture");
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testAdminGlobalSearchWithLectureTypeFilterReturnsOnlyLectures() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable&types=lecture&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var types = results.stream().map(GlobalSearchResultDTO::type).toList();
+
+            assertThat(types).isNotEmpty();
+            assertThat(types).allMatch("lecture"::equals);
+            assertThat(getResultTitles(results)).contains("WeaviateSearchable Test Lecture");
+            assertThat(getResultTitles(results)).doesNotContain("WeaviateSearchable Released Exercise");
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void testAdminGlobalSearchWithoutTypeFilterReturnsAllTypes() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Test Lecture");
         }
     }
 
