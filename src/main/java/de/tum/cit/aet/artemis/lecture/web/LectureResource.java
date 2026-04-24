@@ -196,9 +196,11 @@ public class LectureResource {
         List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
         channelService.createChannelsForLectures(savedLectures, course, user);
-        savedLectures.forEach(this::indexLectureInWeaviate);
 
         lectureService.correctDefaultLectureAndChannelNames(courseId);
+
+        List<Long> savedLectureIds = savedLectures.stream().map(Lecture::getId).toList();
+        lectureRepository.findAllById(savedLectureIds).forEach(this::indexLectureInWeaviate);
 
         return ResponseEntity.noContent().build();
     }
