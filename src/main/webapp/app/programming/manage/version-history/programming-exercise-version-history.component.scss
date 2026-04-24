@@ -39,3 +39,44 @@ $footer-height: 31px;
     flex-direction: column;
     gap: 0.75rem;
 }
+
+.snapshot-status-message {
+    margin-bottom: 0.75rem;
+}
+
+.snapshot-tab-bar {
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 0 0 0.5rem;
+    background: var(--module-bg);
+}
+
+.snapshot-tabs {
+    width: 100%;
+}
+
+:host ::ng-deep .snapshot-tabs.p-tabs,
+:host ::ng-deep .snapshot-tabs .p-tablist {
+    background: var(--module-bg);
+}
+
+:host ::ng-deep .snapshot-tabs .p-tablist-content {
+    background: var(--module-bg);
+    overflow: visible;
+}
+
+:host ::ng-deep .snapshot-tabs .p-tablist-tab-list,
+:host ::ng-deep .snapshot-tabs .p-tab {
+    background: var(--module-bg);
+    padding-inline: 0.75rem;
+}
+
+.snapshot-skeleton__item {
+    margin-bottom: 0.75rem;
+}
+
+:host ::ng-deep .revert-confirm-dialog {
+    min-width: min(28rem, 90vw);
+}

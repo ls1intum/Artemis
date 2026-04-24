@@ -2,6 +2,7 @@
 
 @include shared.version-metadata-base;
 @include shared.version-meta-panel-overrides;
+@include shared.version-metadata-diff;
 
 .metadata-empty-note {
     margin-bottom: 0.75rem;
@@ -52,6 +53,10 @@
     font-weight: 400;
 }
 
+.metadata-row__content {
+    min-width: 0;
+}
+
 .metadata-subsection {
     margin-top: 0.75rem;
 }
@@ -88,7 +93,7 @@
 .json-block {
     margin: 0.55rem 0 0;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     font-family: var(--artemis-font-family-monospace, monospace);
     font-size: 0.83rem;
 }
@@ -97,4 +102,24 @@
 .markdown-block--empty {
     color: var(--text-color-secondary);
     font-style: italic;
+}
+
+.metadata-line-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.metadata-line-list__item {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+    background: var(--surface-ground);
+    font-family: var(--artemis-font-family-monospace, monospace);
+    font-size: 0.83rem;
+    overflow-wrap: anywhere;
+}
+
+:host ::ng-deep .metadata-diff__header .p-tag {
+    font-size: 0.78rem;
 }

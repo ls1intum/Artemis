@@ -2,11 +2,25 @@
 
 @include shared.version-metadata-base;
 @include shared.version-meta-panel-overrides;
+@include shared.version-metadata-diff;
 
 .category-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
+}
+
+.competency-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.competency-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
 }
 
 .markdown-block {
@@ -33,4 +47,53 @@
     border-radius: 8px;
     padding: 0.75rem;
     background: var(--surface-ground);
+}
+
+.grading-criteria-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 0.85rem;
+}
+
+.grading-criterion {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: var(--surface-ground);
+}
+
+.grading-criterion h5 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.grading-instruction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.grading-instruction {
+    display: grid;
+    gap: 0.25rem;
+    border-top: 1px solid var(--surface-border);
+    padding-top: 0.6rem;
+}
+
+.grading-instruction:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+:host ::ng-deep .competency-pill.p-tag {
+    background: var(--surface-ground);
+    border: 1px solid var(--surface-border);
+    color: var(--text-color);
+    padding: 0.4rem 0.75rem;
+}
+
+:host ::ng-deep .metadata-diff__header .p-tag {
+    font-size: 0.78rem;
 }

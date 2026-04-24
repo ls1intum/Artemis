@@ -1,3 +1,4 @@
+<p-confirmDialog key="revert-field" appendTo="body" styleClass="revert-confirm-dialog" />
 <div class="version-history-page">
     <jhi-exercise-version-history-layout>
         <div version-history-left class="timeline-pane">
@@ -22,8 +23,21 @@
         </div>
 
         <div version-history-right class="snapshot-pane">
+            @if (selectedSnapshot()) {
+                <div class="snapshot-tab-bar">
+                    <p-tabs class="snapshot-tabs" [value]="viewMode()" (valueChange)="onTabValueChange($event)">
+                        <p-tablist>
+                            @if (showDiffTab()) {
+                                <p-tab value="changes"><span jhiTranslate="artemisApp.exercise.versionHistory.tabs.changes"></span></p-tab>
+                            }
+                            <p-tab value="full"><span jhiTranslate="artemisApp.exercise.versionHistory.tabs.fullSnapshot"></span></p-tab>
+                        </p-tablist>
+                    </p-tabs>
+                </div>
+            }
+
             @if (snapshotError(); as snapshotErrorKey) {
-                <p-message severity="error" styleClass="mb-3">
+                <p-message severity="error" styleClass="snapshot-status-message">
                     <ng-template pTemplate>
                         <span [jhiTranslate]="snapshotErrorKey"></span>
                     </ng-template>
@@ -32,14 +46,38 @@
 
             @if (isLoadingSnapshot()) {
                 <div class="snapshot-skeleton">
-                    <p-skeleton width="100%" height="10rem" styleClass="mb-3" />
+                    <p-skeleton width="100%" height="10rem" styleClass="snapshot-skeleton__item" />
                     <p-skeleton width="100%" height="12rem" />
                 </div>
             } @else if (selectedSnapshot(); as snapshot) {
-                <div class="snapshot-panels">
-                    <jhi-exercise-version-shared-snapshot-metadata [snapshot]="snapshot" />
-                    <jhi-programming-exercise-version-programming-metadata [programmingData]="snapshot.programmingData" />
-                </div>
+                @if (viewMode() === 'changes' && showDiffTab() && !canShowDiff()) {
+                    <div class="snapshot-skeleton">
+                        <p-skeleton width="100%" height="8rem" styleClass="snapshot-skeleton__item" />
+                        <p-skeleton width="100%" height="10rem" />
+                    </div>
+                } @else if (viewMode() === 'changes' && diffBaseError(); as diffBaseErrorKey) {
+                    <p-message severity="warn">
+                        <ng-template pTemplate>
+                            <span [jhiTranslate]="diffBaseErrorKey"></span>
+                        </ng-template>
+                    </p-message>
+                } @else {
+                    <div class="snapshot-panels">
+                        <jhi-exercise-version-shared-snapshot-metadata
+                            [snapshot]="snapshot"
+                            [previousSnapshot]="viewMode() === 'changes' ? previousSnapshot() : undefined"
+                            [viewMode]="viewMode()"
+                            (revertField)="onRevertField($event)"
+                        />
+                        <jhi-programming-exercise-version-programming-metadata
+                            [exerciseId]="exerciseId()"
+                            [programmingData]="snapshot.programmingData"
+                            [previousProgrammingData]="viewMode() === 'changes' ? previousSnapshot()?.programmingData : undefined"
+                            [viewMode]="viewMode()"
+                            (revertField)="onRevertField($event)"
+                        />
+                    </div>
+                }
             } @else if (!timelineError() && !snapshotError()) {
                 <p-message severity="info">
                     <ng-template pTemplate>

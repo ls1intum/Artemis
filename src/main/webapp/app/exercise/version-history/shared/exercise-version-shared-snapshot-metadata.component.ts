@@ -1,47 +1,82 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { CompetencyExerciseLinkSnapshotDTO, ExerciseSnapshotDTO, GradingCriterionSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import { normalizeCategoryArray } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { serializeGradingCriteriaToMarkdown } from 'app/exercise/version-history/shared/grading-criteria-markdown.util';
+import { ExerciseVersionMarkdownDiffComponent } from 'app/exercise/version-history/shared/exercise-version-markdown-diff.component';
+import { MetadataFieldRowComponent } from 'app/exercise/version-history/shared/metadata-field-row.component';
+import { VersionHistoryViewMode, booleanLabel, valuesDiffer } from 'app/exercise/version-history/shared/version-history.utils';
+import { isRevertable } from 'app/exercise/version-history/shared/revert-field.registry';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { PanelModule } from 'primeng/panel';
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
+import { PanelModule } from 'primeng/panel';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 
-/** A label/value pair for a plain-text or numeric metadata field. */
 interface MetadataField {
+    id: string;
     label: string;
-    value?: string | number;
-    /** Display-ready value: the raw value or a dash placeholder when missing. */
-    displayValue: string | number;
+    currentDisplay: string | number;
+    previousDisplay: string | number;
+    currentRaw?: string | number | boolean;
+    previousRaw?: string | number | boolean;
+    changed: boolean;
+    currentEmpty: boolean;
+    previousEmpty: boolean;
+    revertable: boolean;
 }
 
-/** A label/value pair for a date metadata field. */
 interface MetadataDateField {
+    id: string;
     label: string;
-    value?: dayjs.Dayjs;
+    currentValue?: dayjs.Dayjs;
+    previousValue?: dayjs.Dayjs;
+    currentRaw?: string;
+    previousRaw?: string;
+    changed: boolean;
+    revertable: boolean;
 }
 
-/**
- * Renders the exercise-type-agnostic portion of a version snapshot:
- * general settings, dates, categories, complaint flags, problem statement,
- * and grading instructions.
- *
- * Markdown sections (problem statement, grading instructions) are rendered
- * with task and PlantUML extension support and injected into the DOM as sanitized HTML.
- */
+interface CompetencyEntry {
+    key: string;
+    label: string;
+    weight: string;
+}
+
 @Component({
     selector: 'jhi-exercise-version-shared-snapshot-metadata',
     templateUrl: './exercise-version-shared-snapshot-metadata.component.html',
     styleUrls: ['./exercise-version-shared-snapshot-metadata.component.scss'],
-    imports: [PanelModule, DividerModule, TagModule, TranslateDirective, ArtemisDatePipe],
+    host: {
+        '[style.display]': 'hostDisplay()',
+    },
+    imports: [
+        PanelModule,
+        DividerModule,
+        TagModule,
+        ButtonModule,
+        TooltipModule,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        CustomExerciseCategoryBadgeComponent,
+        ExerciseVersionMarkdownDiffComponent,
+        MetadataFieldRowComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy {
@@ -54,13 +89,18 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     private readonly injectableContentFoundSubscription: Subscription;
     private plantUmlTimeoutId?: ReturnType<typeof setTimeout>;
 
-    /** The full exercise snapshot to render. Triggers markdown re-rendering on change. */
     readonly snapshot = input.required<ExerciseSnapshotDTO>();
+    readonly previousSnapshot = input<ExerciseSnapshotDTO | undefined>();
+    readonly viewMode = input<VersionHistoryViewMode>('full');
 
-    /** Rendered problem statement HTML (sanitized via DOMPurify). */
     readonly problemStatement = signal<SafeHtml | undefined>(undefined);
-    /** Rendered grading instructions HTML (sanitized via DOMPurify). */
     readonly gradingInstructions = signal<SafeHtml | undefined>(undefined);
+
+    readonly revertField = output<{ fieldId: string; fieldLabel: string; previousRaw: unknown }>();
+
+    protected readonly faRotateLeft = faRotateLeft;
+
+    readonly isDiffView = computed(() => this.viewMode() === 'changes' && !!this.previousSnapshot());
 
     constructor() {
         this.injectableContentFoundSubscription = this.plantUmlWrapper.subscribeForInjectableElementsFound().subscribe((injectableCallback) => {
@@ -68,8 +108,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         });
 
         effect(() => {
-            const snapshot = this.snapshot();
-            this.renderMarkdownSections(snapshot);
+            this.renderMarkdownSections(this.snapshot());
         });
     }
 
@@ -80,61 +119,254 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         }
     }
 
-    /** General exercise properties (title, short name, difficulty, points, etc.). */
     readonly generalFields = computed<MetadataField[]>(() => {
         const snapshot = this.snapshot();
-        return [
-            this.toField('artemisApp.exercise.title', snapshot.title),
-            this.toField('artemisApp.exercise.shortName', snapshot.shortName),
-            this.toField('artemisApp.lecture.channelName', snapshot.channelName),
-            this.toField('artemisApp.assessmentMode', this.translateEnum('artemisApp.AssessmentType', snapshot.assessmentType)),
-            this.toField('artemisApp.exercise.difficulty', this.translateEnum('artemisApp.DifficultyLevel', snapshot.difficulty)),
-            this.toField('artemisApp.exercise.mode', this.humanizeEnum(snapshot.mode)),
-            this.toField('artemisApp.exercise.points', snapshot.maxPoints),
-            this.toField('artemisApp.exercise.bonusPoints', snapshot.bonusPoints),
-            this.toField('artemisApp.exercise.includedInOverallScore', this.getIncludedInScoreLabel(snapshot.includedInOverallScore)),
-        ];
+        const previousSnapshot = this.previousSnapshot();
+        return this.filterFieldsForMode([
+            this.toField('title', 'artemisApp.exercise.title', snapshot.title, previousSnapshot?.title),
+            this.toField('shortName', 'artemisApp.exercise.shortName', snapshot.shortName, previousSnapshot?.shortName),
+            this.toField('channelName', 'artemisApp.lecture.channelName', snapshot.channelName, previousSnapshot?.channelName),
+            this.toField(
+                'assessmentType',
+                'artemisApp.assessmentMode',
+                this.translateEnum('artemisApp.AssessmentType', snapshot.assessmentType),
+                this.translateEnum('artemisApp.AssessmentType', previousSnapshot?.assessmentType),
+            ),
+            this.toField(
+                'difficulty',
+                'artemisApp.exercise.difficulty',
+                this.translateEnum('artemisApp.DifficultyLevel', snapshot.difficulty),
+                this.translateEnum('artemisApp.DifficultyLevel', previousSnapshot?.difficulty),
+            ),
+            this.toField('mode', 'artemisApp.exercise.mode', this.humanizeEnum(snapshot.mode), this.humanizeEnum(previousSnapshot?.mode)),
+            this.toField('maxPoints', 'artemisApp.exercise.points', snapshot.maxPoints, previousSnapshot?.maxPoints),
+            this.toField('bonusPoints', 'artemisApp.exercise.bonusPoints', snapshot.bonusPoints, previousSnapshot?.bonusPoints),
+            this.toField(
+                'includedInOverallScore',
+                'artemisApp.exercise.includedInOverallScore',
+                this.getIncludedInScoreLabel(snapshot.includedInOverallScore),
+                this.getIncludedInScoreLabel(previousSnapshot?.includedInOverallScore),
+            ),
+            this.toField(
+                'presentationScoreEnabled',
+                'artemisApp.exercise.versionHistory.snapshot.presentationScoreEnabled',
+                snapshot.presentationScoreEnabled,
+                previousSnapshot?.presentationScoreEnabled,
+            ),
+            this.toField(
+                'secondCorrectionEnabled',
+                'artemisApp.exercise.versionHistory.snapshot.secondCorrectionEnabled',
+                snapshot.secondCorrectionEnabled,
+                previousSnapshot?.secondCorrectionEnabled,
+            ),
+            this.toField(
+                'feedbackSuggestionModule',
+                'artemisApp.exercise.versionHistory.snapshot.feedbackSuggestionModule',
+                snapshot.feedbackSuggestionModule,
+                previousSnapshot?.feedbackSuggestionModule,
+            ),
+        ]);
     });
 
-    /** Exercise lifecycle dates (release, start, due, assessment due, example solution). */
     readonly dateFields = computed<MetadataDateField[]>(() => {
         const snapshot = this.snapshot();
-        return [
-            { label: 'artemisApp.exercise.releaseDate', value: this.toDate(snapshot.releaseDate) },
-            { label: 'artemisApp.exercise.startDate', value: this.toDate(snapshot.startDate) },
-            { label: 'artemisApp.exercise.dueDate', value: this.toDate(snapshot.dueDate) },
-            { label: 'artemisApp.exercise.assessmentDueDate', value: this.toDate(snapshot.assessmentDueDate) },
-            { label: 'artemisApp.exercise.exampleSolutionPublicationDate', value: this.toDate(snapshot.exampleSolutionPublicationDate) },
-        ];
-    });
-
-    /** Boolean flags for feedback requests and complaint settings. */
-    readonly flagFields = computed<MetadataField[]>(() => {
-        const snapshot = this.snapshot();
-        return [
-            this.toField('artemisApp.programmingExercise.timeline.manualFeedbackRequests', booleanLabel(this.translateService, snapshot.allowFeedbackRequests)),
-            this.toField(
-                'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
-                booleanLabel(this.translateService, snapshot.allowComplaintsForAutomaticAssessments),
+        const previousSnapshot = this.previousSnapshot();
+        return this.filterDateFieldsForMode([
+            this.toDateField('releaseDate', 'artemisApp.exercise.releaseDate', snapshot.releaseDate, previousSnapshot?.releaseDate),
+            this.toDateField('startDate', 'artemisApp.exercise.startDate', snapshot.startDate, previousSnapshot?.startDate),
+            this.toDateField('dueDate', 'artemisApp.exercise.dueDate', snapshot.dueDate, previousSnapshot?.dueDate),
+            this.toDateField('assessmentDueDate', 'artemisApp.exercise.assessmentDueDate', snapshot.assessmentDueDate, previousSnapshot?.assessmentDueDate),
+            this.toDateField(
+                'exampleSolutionPublicationDate',
+                'artemisApp.exercise.exampleSolutionPublicationDate',
+                snapshot.exampleSolutionPublicationDate,
+                previousSnapshot?.exampleSolutionPublicationDate,
             ),
-        ];
+        ]);
     });
 
-    /** Exercise category tags, falling back to an empty array. */
-    readonly categories = computed(() => this.snapshot().categories ?? []);
+    readonly feedbackFields = computed<MetadataField[]>(() => {
+        const snapshot = this.snapshot();
+        const previousSnapshot = this.previousSnapshot();
+        return this.filterFieldsForMode([
+            this.toField(
+                'allowFeedbackRequests',
+                'artemisApp.programmingExercise.timeline.manualFeedbackRequests',
+                snapshot.allowFeedbackRequests,
+                previousSnapshot?.allowFeedbackRequests,
+            ),
+            this.toField(
+                'allowComplaintsForAutomaticAssessments',
+                'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
+                snapshot.allowComplaintsForAutomaticAssessments,
+                previousSnapshot?.allowComplaintsForAutomaticAssessments,
+            ),
+        ]);
+    });
 
-    /** Creates a metadata field with a pre-computed display value. */
-    private toField(label: string, value?: string | number): MetadataField {
-        return { label, value, displayValue: value ?? '-' };
+    readonly teamAssignmentFields = computed<MetadataField[]>(() => {
+        const snapshot = this.snapshot();
+        const previousSnapshot = this.previousSnapshot();
+        return this.filterFieldsForMode([
+            this.toField(
+                'teamAssignment.minTeamSize',
+                'artemisApp.exercise.versionHistory.snapshot.teamAssignmentMinSize',
+                snapshot.teamAssignmentConfig?.minTeamSize,
+                previousSnapshot?.teamAssignmentConfig?.minTeamSize,
+            ),
+            this.toField(
+                'teamAssignment.maxTeamSize',
+                'artemisApp.exercise.versionHistory.snapshot.teamAssignmentMaxSize',
+                snapshot.teamAssignmentConfig?.maxTeamSize,
+                previousSnapshot?.teamAssignmentConfig?.maxTeamSize,
+            ),
+        ]);
+    });
+
+    readonly plagiarismFields = computed<MetadataField[]>(() => {
+        const snapshot = this.snapshot();
+        const previousSnapshot = this.previousSnapshot();
+        return this.filterFieldsForMode([
+            this.toField(
+                'plagiarism.continuousPlagiarismControlEnabled',
+                'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlEnabled',
+                snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled,
+                previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled,
+            ),
+            this.toField(
+                'plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled',
+                'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlPostDueDateChecksEnabled',
+                snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled,
+                previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled,
+            ),
+            this.toField(
+                'plagiarism.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
+                'artemisApp.exercise.versionHistory.snapshot.plagiarismCaseStudentResponsePeriod',
+                snapshot.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
+                previousSnapshot?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
+            ),
+            this.toField(
+                'plagiarism.similarityThreshold',
+                'artemisApp.exercise.versionHistory.snapshot.similarityThreshold',
+                snapshot.plagiarismDetectionConfig?.similarityThreshold,
+                previousSnapshot?.plagiarismDetectionConfig?.similarityThreshold,
+            ),
+            this.toField(
+                'plagiarism.minimumScore',
+                'artemisApp.exercise.versionHistory.snapshot.minimumScore',
+                snapshot.plagiarismDetectionConfig?.minimumScore,
+                previousSnapshot?.plagiarismDetectionConfig?.minimumScore,
+            ),
+            this.toField(
+                'plagiarism.minimumSize',
+                'artemisApp.exercise.versionHistory.snapshot.minimumSize',
+                snapshot.plagiarismDetectionConfig?.minimumSize,
+                previousSnapshot?.plagiarismDetectionConfig?.minimumSize,
+            ),
+        ]);
+    });
+
+    readonly categories = computed(() => normalizeCategoryArray(this.snapshot().categories ?? []));
+    readonly previousCategories = computed(() => normalizeCategoryArray(this.previousSnapshot()?.categories ?? []));
+    readonly categoriesChanged = computed(() =>
+        valuesDiffer(
+            this.categories().map((category) => category.category),
+            this.previousCategories().map((category) => category.category),
+        ),
+    );
+
+    readonly competencyEntries = computed(() => this.toCompetencyEntries(this.snapshot().competencyLinks));
+    readonly previousCompetencyEntries = computed(() => this.toCompetencyEntries(this.previousSnapshot()?.competencyLinks));
+    readonly competenciesChanged = computed(() => valuesDiffer(this.snapshot().competencyLinks, this.previousSnapshot()?.competencyLinks));
+
+    readonly problemStatementChanged = computed(() => valuesDiffer(this.snapshot().problemStatement, this.previousSnapshot()?.problemStatement));
+    readonly problemStatementLabel = computed(() => this.translateLabel('artemisApp.exercise.versionHistory.snapshot.problemStatement'));
+
+    readonly gradingCriteria = computed(() => this.sortGradingCriteria(this.snapshot().gradingCriteria));
+    readonly gradingConfigurationChanged = computed(() =>
+        valuesDiffer(
+            { gradingInstructions: this.snapshot().gradingInstructions, gradingCriteria: this.snapshot().gradingCriteria },
+            { gradingInstructions: this.previousSnapshot()?.gradingInstructions, gradingCriteria: this.previousSnapshot()?.gradingCriteria },
+        ),
+    );
+    readonly previousGradingMarkdown = computed(() => serializeGradingCriteriaToMarkdown(this.previousSnapshot()?.gradingInstructions, this.previousSnapshot()?.gradingCriteria));
+    readonly currentGradingMarkdown = computed(() => serializeGradingCriteriaToMarkdown(this.snapshot().gradingInstructions, this.snapshot().gradingCriteria));
+    readonly hasVisibleContent = computed(() => {
+        if (!this.isDiffView()) {
+            return true;
+        }
+        return (
+            this.generalFields().length > 0 ||
+            this.dateFields().length > 0 ||
+            this.categoriesChanged() ||
+            this.competenciesChanged() ||
+            this.feedbackFields().length > 0 ||
+            this.teamAssignmentFields().length > 0 ||
+            this.plagiarismFields().length > 0 ||
+            this.problemStatementChanged() ||
+            this.gradingConfigurationChanged()
+        );
+    });
+    readonly hostDisplay = computed(() => (this.hasVisibleContent() ? 'block' : 'none'));
+
+    private readonly fallbackLabels: Record<string, string> = {
+        'artemisApp.exercise.versionHistory.snapshot.presentationScoreEnabled': 'Presentation Score Enabled',
+        'artemisApp.exercise.versionHistory.snapshot.secondCorrectionEnabled': 'Second Correction Enabled',
+        'artemisApp.exercise.versionHistory.snapshot.feedbackSuggestionModule': 'Feedback Suggestion Module',
+        'artemisApp.exercise.versionHistory.snapshot.teamAssignment': 'Team Assignment',
+        'artemisApp.exercise.versionHistory.snapshot.teamAssignmentMinSize': 'Minimum Team Size',
+        'artemisApp.exercise.versionHistory.snapshot.teamAssignmentMaxSize': 'Maximum Team Size',
+        'artemisApp.exercise.versionHistory.snapshot.competencies': 'Competencies',
+        'artemisApp.exercise.versionHistory.snapshot.problemStatement': 'Problem Statement',
+        'artemisApp.exercise.versionHistory.snapshot.gradingConfiguration': 'Grading Configuration',
+        'artemisApp.exercise.versionHistory.snapshot.gradingCriteria': 'Grading Criteria',
+        'artemisApp.exercise.versionHistory.snapshot.plagiarismDetection': 'Plagiarism Detection',
+        'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlEnabled': 'Continuous Plagiarism Control',
+        'artemisApp.exercise.versionHistory.snapshot.continuousPlagiarismControlPostDueDateChecksEnabled': 'Post Due Date Checks',
+        'artemisApp.exercise.versionHistory.snapshot.plagiarismCaseStudentResponsePeriod': 'Student Response Period',
+        'artemisApp.exercise.versionHistory.snapshot.similarityThreshold': 'Similarity Threshold',
+        'artemisApp.exercise.versionHistory.snapshot.minimumScore': 'Minimum Score',
+        'artemisApp.exercise.versionHistory.snapshot.minimumSize': 'Minimum Size',
+    };
+
+    private toField(id: string, labelKey: string, currentRaw?: string | number | boolean, previousRaw?: string | number | boolean): MetadataField {
+        return {
+            id,
+            label: this.translateLabel(labelKey),
+            currentDisplay: typeof currentRaw === 'boolean' ? (booleanLabel(this.translateService, currentRaw) ?? '-') : (currentRaw ?? '-'),
+            previousDisplay: typeof previousRaw === 'boolean' ? (booleanLabel(this.translateService, previousRaw) ?? '-') : (previousRaw ?? '-'),
+            currentRaw,
+            previousRaw,
+            changed: valuesDiffer(currentRaw, previousRaw),
+            currentEmpty: currentRaw === undefined || currentRaw === '',
+            previousEmpty: previousRaw === undefined || previousRaw === '',
+            revertable: isRevertable(id),
+        };
     }
 
-    /**
-     * Converts the problem statement and grading instructions to sanitized HTML.
-     *
-     * Callbacks are cleared and exerciseId is reset before each render to
-     * prevent cross-contamination between snapshots. PlantUML injectable
-     * elements are activated on the next microtask.
-     */
+    private toDateField(id: string, labelKey: string, currentValue?: string, previousValue?: string): MetadataDateField {
+        const currentDate = this.toDate(currentValue);
+        const previousDate = this.toDate(previousValue);
+        return {
+            id,
+            label: this.translateLabel(labelKey),
+            currentValue: currentDate,
+            previousValue: previousDate,
+            currentRaw: currentValue,
+            previousRaw: previousValue,
+            changed: valuesDiffer(currentValue, previousValue),
+            revertable: isRevertable(id),
+        };
+    }
+
+    private filterFieldsForMode(fields: MetadataField[]): MetadataField[] {
+        return this.isDiffView() ? fields.filter((field) => field.changed) : fields;
+    }
+
+    private filterDateFieldsForMode(fields: MetadataDateField[]): MetadataDateField[] {
+        return this.isDiffView() ? fields.filter((field) => field.changed) : fields;
+    }
+
     private renderMarkdownSections(snapshot: ExerciseSnapshotDTO): void {
         if (this.plantUmlTimeoutId !== undefined) {
             clearTimeout(this.plantUmlTimeoutId);
@@ -150,7 +382,6 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         }, 0);
     }
 
-    /** Renders markdown to sanitized SafeHtml with task and PlantUML extension support. */
     private renderMarkdown(markdown?: string): SafeHtml | undefined {
         if (!markdown?.trim()) {
             return undefined;
@@ -159,17 +390,14 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         return this.markdownService.safeHtmlForMarkdown(markdown, [this.taskWrapper.getExtension(), this.plantUmlWrapper.getExtension()]);
     }
 
-    /** Parses an ISO date string into a dayjs instance, or returns `undefined`. */
     private toDate(value?: string): dayjs.Dayjs | undefined {
         return value ? dayjs(value) : undefined;
     }
 
-    /** Replaces underscores with spaces (e.g. `SOME_VALUE` → `SOME VALUE`). */
     private humanizeEnum(value?: string): string | undefined {
         return value ? value.replaceAll('_', ' ') : undefined;
     }
 
-    /** Translates an enum value via i18n, falling back to humanized form if no key exists. */
     private translateEnum(prefix: string, value?: string): string | undefined {
         if (!value) {
             return undefined;
@@ -179,7 +407,6 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         return translated === key ? this.humanizeEnum(value) : translated;
     }
 
-    /** Maps an {@link IncludedInOverallScore} enum to a translated display label. */
     private getIncludedInScoreLabel(value?: IncludedInOverallScore): string | undefined {
         if (!value) {
             return undefined;
@@ -195,5 +422,33 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             default:
                 return this.humanizeEnum(value);
         }
+    }
+
+    private translateLabel(key: string): string {
+        const translated = this.translateService.instant(key);
+        if (translated === key || translated.startsWith('translation-not-found[')) {
+            return this.fallbackLabels[key] ?? key;
+        }
+        return translated;
+    }
+
+    private toCompetencyEntries(links?: CompetencyExerciseLinkSnapshotDTO[]): CompetencyEntry[] {
+        return (links ?? [])
+            .filter((link) => link.competencyId?.competencyId !== undefined)
+            .map((link) => ({
+                key: `${link.competencyId?.competencyId}-${link.weight ?? '-'}`,
+                label: this.translateService.instant('artemisApp.exercise.versionHistory.snapshot.competencyLabel', { id: link.competencyId?.competencyId }),
+                weight: String(link.weight ?? '-'),
+            }))
+            .sort((left, right) => left.label.localeCompare(right.label));
+    }
+
+    private sortGradingCriteria(criteria?: GradingCriterionSnapshotDTO[]): GradingCriterionSnapshotDTO[] {
+        return [...(criteria ?? [])].sort((left, right) => {
+            if (left.id !== undefined && right.id !== undefined) {
+                return left.id - right.id;
+            }
+            return (left.title ?? '').localeCompare(right.title ?? '');
+        });
     }
 }

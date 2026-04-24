@@ -48,14 +48,47 @@
                     "loadMore": "Load More",
                     "empty": "No versions available yet."
                 },
+                "tabs": {
+                    "changes": "Changes from previous version",
+                    "fullSnapshot": "Full Snapshot"
+                },
                 "snapshot": {
                     "empty": "Select a version to inspect its metadata.",
-                    "sharedTitle": "Exercise Metadata"
+                    "sharedTitle": "Exercise Metadata",
+                    "previousVersion": "Previous version",
+                    "thisVersion": "This version",
+                    "presentationScoreEnabled": "Presentation Score Enabled",
+                    "secondCorrectionEnabled": "Second Correction Enabled",
+                    "feedbackSuggestionModule": "Feedback Suggestion Module",
+                    "competencies": "Competencies",
+                    "competencyLabel": "Competency #{{ id }}",
+                    "teamAssignment": "Team Assignment",
+                    "teamAssignmentMinSize": "Minimum Team Size",
+                    "teamAssignmentMaxSize": "Maximum Team Size",
+                    "plagiarismDetection": "Plagiarism Detection",
+                    "continuousPlagiarismControlEnabled": "Continuous Plagiarism Control",
+                    "continuousPlagiarismControlPostDueDateChecksEnabled": "Post Due Date Checks",
+                    "plagiarismCaseStudentResponsePeriod": "Student Response Period",
+                    "similarityThreshold": "Similarity Threshold",
+                    "minimumScore": "Minimum Score",
+                    "minimumSize": "Minimum Size",
+                    "problemStatement": "Problem Statement",
+                    "gradingConfiguration": "Grading Configuration",
+                    "gradingCriteria": "Grading Criteria"
                 },
                 "errors": {
                     "invalidExerciseId": "Could not determine exercise id.",
                     "timelineLoadFailed": "Version timeline could not be loaded.",
-                    "snapshotLoadFailed": "Version snapshot could not be loaded."
+                    "snapshotLoadFailed": "Version snapshot could not be loaded.",
+                    "exerciseLoadFailed": "Exercise could not be loaded."
+                },
+                "revert": {
+                    "tooltip": "Revert to: {{ value }}",
+                    "confirmHeader": "Revert confirmation",
+                    "confirmMessage": "Are you sure you want to revert <strong>{{ field }}</strong> from <strong>\"{{ currentValue }}\"</strong> to <strong>\"{{ targetValue }}\"</strong>?",
+                    "confirmMessageProblemStatement": "The <strong>problem statement</strong> will be reverted to the previous version (the part highlighted in red).",
+                    "success": "Successfully reverted {{ field }}.",
+                    "error": "Failed to revert {{ field }}."
                 }
             },
             "import": {

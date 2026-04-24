@@ -1,3 +1,4 @@
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -5,9 +6,59 @@ import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseVersionHistoryComponent } from 'app/programming/manage/version-history/programming-exercise-version-history.component';
 import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
+import { Tab, TabList, Tabs } from 'primeng/tabs';
+
+@Component({
+    selector: 'jhi-exercise-version-history-layout',
+    template: '<ng-content />',
+    standalone: true,
+})
+class MockExerciseVersionHistoryLayoutComponent {}
+
+@Component({
+    selector: 'jhi-exercise-version-history-timeline',
+    template: '',
+    standalone: true,
+})
+class MockExerciseVersionHistoryTimelineComponent {
+    readonly versions = input<any[]>([]);
+    readonly selectedVersionId = input<number | undefined>();
+    readonly hasMore = input(false);
+    readonly loading = input(false);
+    readonly loadingMore = input(false);
+    readonly totalItems = input(0);
+    readonly selectVersion = output<number>();
+    readonly loadMore = output<void>();
+}
+
+@Component({
+    selector: 'jhi-exercise-version-shared-snapshot-metadata',
+    template: '',
+    standalone: true,
+})
+class MockExerciseVersionSharedSnapshotMetadataComponent {
+    readonly snapshot = input.required<any>();
+    readonly previousSnapshot = input<any>();
+    readonly viewMode = input<'full' | 'changes'>('full');
+}
+
+@Component({
+    selector: 'jhi-programming-exercise-version-programming-metadata',
+    template: '',
+    standalone: true,
+})
+class MockProgrammingExerciseVersionProgrammingMetadataComponent {
+    readonly exerciseId = input<number | undefined>();
+    readonly programmingData = input<any>();
+    readonly previousProgrammingData = input<any>();
+    readonly viewMode = input<'full' | 'changes'>('full');
+}
 
 describe('ProgrammingExerciseVersionHistoryComponent', () => {
     setupTestBed({ zoneless: true });
@@ -23,12 +74,17 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
     beforeEach(async () => {
         serviceMock.getVersions.mockReturnValue(
             of({
-                versions: [{ id: 9, author: { login: 'ed1', name: 'Editor One' }, createdDate: dayjs('2026-03-04T11:00:00Z') }],
-                nextPage: 1,
-                totalItems: 30,
+                versions: [
+                    { id: 9, author: { login: 'ed1', name: 'Editor One' }, createdDate: dayjs('2026-03-04T11:00:00Z') },
+                    { id: 8, author: { login: 'ed2', name: 'Editor Two' }, createdDate: dayjs('2026-03-03T11:00:00Z') },
+                ],
+                nextPage: undefined,
+                totalItems: 2,
             }),
         );
-        serviceMock.getSnapshot.mockReturnValue(of({ id: 42, title: 'Snapshot A', programmingData: { programmingLanguage: 'JAVA' as any } }));
+        serviceMock.getSnapshot.mockImplementation((_: number, versionId: number) =>
+            of({ id: versionId, title: `Snapshot ${versionId}`, programmingData: { programmingLanguage: 'JAVA' as any } }),
+        );
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseVersionHistoryComponent],
@@ -46,7 +102,24 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExerciseVersionHistoryService, useValue: serviceMock },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ProgrammingExerciseVersionHistoryComponent, {
+                set: {
+                    imports: [
+                        TranslateDirective,
+                        MessageModule,
+                        SkeletonModule,
+                        Tabs,
+                        TabList,
+                        Tab,
+                        MockExerciseVersionHistoryLayoutComponent,
+                        MockExerciseVersionHistoryTimelineComponent,
+                        MockExerciseVersionSharedSnapshotMetadataComponent,
+                        MockProgrammingExerciseVersionProgrammingMetadataComponent,
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseVersionHistoryComponent);
         component = fixture.componentInstance;
@@ -62,9 +135,20 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         expect(serviceMock.getVersions).toHaveBeenCalledWith(42, 0, 20);
         expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 9);
         expect(component.selectedVersionId()).toBe(9);
+        expect(component.viewMode()).toBe('changes');
     });
 
     it('should load more versions', () => {
+        serviceMock.getVersions.mockReturnValueOnce(
+            of({
+                versions: [
+                    { id: 9, author: { login: 'ed1', name: 'Editor One' }, createdDate: dayjs('2026-03-04T11:00:00Z') },
+                    { id: 8, author: { login: 'ed2', name: 'Editor Two' }, createdDate: dayjs('2026-03-03T11:00:00Z') },
+                ],
+                nextPage: 1,
+                totalItems: 4,
+            }),
+        );
         fixture.detectChanges();
         component.onLoadMoreVersions();
 
@@ -123,6 +207,37 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         expect(serviceMock.getSnapshot).not.toHaveBeenCalled();
     });
 
+    it('should reuse cached snapshots when reselecting a version', () => {
+        fixture.detectChanges();
+        expect(component.selectedSnapshot()).toEqual({ id: 9, title: 'Snapshot 9', programmingData: { programmingLanguage: 'JAVA' } });
+
+        serviceMock.getSnapshot.mockClear();
+        serviceMock.getSnapshot.mockReturnValueOnce(of({ id: 43, title: 'Snapshot B', programmingData: { programmingLanguage: 'KOTLIN' as any } }));
+        component.onSelectVersion(7);
+        expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 7);
+
+        serviceMock.getSnapshot.mockClear();
+        component.onSelectVersion(9);
+        expect(serviceMock.getSnapshot).not.toHaveBeenCalled();
+
+        component.onSelectVersion(7);
+        expect(serviceMock.getSnapshot).not.toHaveBeenCalled();
+    });
+
+    it('should switch back to full view when no predecessor exists', () => {
+        serviceMock.getVersions.mockReturnValueOnce(
+            of({
+                versions: [{ id: 1, author: { login: 'ed1', name: 'Editor' }, createdDate: dayjs() }],
+                nextPage: undefined,
+                totalItems: 1,
+            }),
+        );
+        fixture.detectChanges();
+
+        expect(component.showDiffTab()).toBe(false);
+        expect(component.viewMode()).toBe('full');
+    });
+
     it('should not load more when no next page is available', () => {
         serviceMock.getVersions.mockReturnValueOnce(
             of({
@@ -164,7 +279,21 @@ describe('ProgrammingExerciseVersionHistoryComponent (missing exerciseId)', () =
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExerciseVersionHistoryService, useValue: serviceMock },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ProgrammingExerciseVersionHistoryComponent, {
+                set: {
+                    imports: [
+                        TranslateDirective,
+                        MessageModule,
+                        SkeletonModule,
+                        MockExerciseVersionHistoryLayoutComponent,
+                        MockExerciseVersionHistoryTimelineComponent,
+                        MockExerciseVersionSharedSnapshotMetadataComponent,
+                        MockProgrammingExerciseVersionProgrammingMetadataComponent,
+                    ],
+                },
+            })
+            .compileComponents();
     });
 
     it('should set timeline error when exercise id is missing', () => {

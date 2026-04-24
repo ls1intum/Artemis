@@ -1,75 +1,259 @@
-<p-panel styleClass="version-meta-panel">
-    <section class="metadata-section">
-        <h4 jhiTranslate="artemisApp.exercise.sections.general"></h4>
-        <div class="metadata-list">
-            @for (field of generalFields(); track field.label) {
-                <div class="metadata-row">
-                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
-                    <span class="metadata-row__value">{{ field.displayValue }}</span>
+@if (hasVisibleContent()) {
+    <p-panel styleClass="version-meta-panel">
+        @if (generalFields().length > 0) {
+            <section class="metadata-section">
+                <h4 jhiTranslate="artemisApp.exercise.sections.general"></h4>
+                <div class="metadata-list">
+                    @for (field of generalFields(); track field.id) {
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
+                    }
                 </div>
-            }
-        </div>
-    </section>
+            </section>
+        }
 
-    <p-divider />
-
-    <section class="metadata-section">
-        <h4 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h4>
-        <div class="metadata-list">
-            @for (field of dateFields(); track field.label) {
-                <div class="metadata-row">
-                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
-                    <span class="metadata-row__value">{{ field.value ? (field.value | artemisDate: 'long' : true) : '-' }}</span>
+        @if (dateFields().length > 0) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h4>
+                <div class="metadata-list">
+                    @for (field of dateFields(); track field.id) {
+                        <div class="metadata-row">
+                            <span class="metadata-row__label">{{ field.label }}</span>
+                            @if (isDiffView()) {
+                                <div class="metadata-diff">
+                                    <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="!field.previousValue">
+                                        {{ field.previousValue ? (field.previousValue | artemisDate: 'long' : true) : '-' }}
+                                    </span>
+                                    <span class="metadata-diff__arrow">&rarr;</span>
+                                    <span class="metadata-diff__value metadata-diff__value--new" [class.metadata-diff__value--empty]="!field.currentValue">
+                                        {{ field.currentValue ? (field.currentValue | artemisDate: 'long' : true) : '-' }}
+                                    </span>
+                                </div>
+                            } @else {
+                                <span class="metadata-row__value">{{ field.currentValue ? (field.currentValue | artemisDate: 'long' : true) : '-' }}</span>
+                            }
+                        </div>
+                    }
                 </div>
-            }
-        </div>
-    </section>
+            </section>
+        }
 
-    <p-divider />
-
-    <section class="metadata-section">
-        <h4 jhiTranslate="artemisApp.exercise.categories"></h4>
-        @if (categories().length > 0) {
-            <div class="category-list">
-                @for (category of categories(); track category) {
-                    <p-tag [value]="category" severity="secondary" />
+        @if (!isDiffView() || categoriesChanged()) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4 jhiTranslate="artemisApp.exercise.categories"></h4>
+                @if (isDiffView()) {
+                    <div class="metadata-diff metadata-diff--stacked">
+                        <div class="metadata-diff__box metadata-diff__box--old">
+                            <div class="metadata-diff__header">
+                                <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
+                            </div>
+                            @if (previousCategories().length > 0) {
+                                <div class="category-list">
+                                    @for (category of previousCategories(); track category.category) {
+                                        <jhi-custom-exercise-category-badge [category]="category" />
+                                    }
+                                </div>
+                            } @else {
+                                <span class="metadata-diff__empty">-</span>
+                            }
+                        </div>
+                        <div class="metadata-diff__box metadata-diff__box--new">
+                            <div class="metadata-diff__header">
+                                <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
+                            </div>
+                            @if (categories().length > 0) {
+                                <div class="category-list">
+                                    @for (category of categories(); track category.category) {
+                                        <jhi-custom-exercise-category-badge [category]="category" />
+                                    }
+                                </div>
+                            } @else {
+                                <span class="metadata-diff__empty">-</span>
+                            }
+                        </div>
+                    </div>
+                } @else if (categories().length > 0) {
+                    <div class="category-list">
+                        @for (category of categories(); track category.category) {
+                            <jhi-custom-exercise-category-badge [category]="category" />
+                        }
+                    </div>
+                } @else {
+                    <span class="metadata-row__value">-</span>
                 }
-            </div>
-        } @else {
-            <span class="metadata-row__value">-</span>
+            </section>
         }
-    </section>
 
-    <p-divider />
+        @if (!isDiffView() || competenciesChanged()) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.competencies' | artemisTranslate }}</h4>
+                @if (isDiffView()) {
+                    <div class="metadata-diff metadata-diff--stacked">
+                        <div class="metadata-diff__box metadata-diff__box--old">
+                            <div class="metadata-diff__header">
+                                <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
+                            </div>
+                            @if (previousCompetencyEntries().length > 0) {
+                                <div class="competency-list">
+                                    @for (entry of previousCompetencyEntries(); track entry.key) {
+                                        <p-tag severity="secondary" styleClass="competency-pill">
+                                            <span>{{ entry.label }}</span>
+                                            <strong>{{ entry.weight }}</strong>
+                                        </p-tag>
+                                    }
+                                </div>
+                            } @else {
+                                <span class="metadata-diff__empty">-</span>
+                            }
+                        </div>
+                        <div class="metadata-diff__box metadata-diff__box--new">
+                            <div class="metadata-diff__header">
+                                <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
+                            </div>
+                            @if (competencyEntries().length > 0) {
+                                <div class="competency-list">
+                                    @for (entry of competencyEntries(); track entry.key) {
+                                        <p-tag severity="secondary" styleClass="competency-pill">
+                                            <span>{{ entry.label }}</span>
+                                            <strong>{{ entry.weight }}</strong>
+                                        </p-tag>
+                                    }
+                                </div>
+                            } @else {
+                                <span class="metadata-diff__empty">-</span>
+                            }
+                        </div>
+                    </div>
+                } @else if (competencyEntries().length > 0) {
+                    <div class="competency-list">
+                        @for (entry of competencyEntries(); track entry.key) {
+                            <p-tag severity="secondary" styleClass="competency-pill">
+                                <span>{{ entry.label }}</span>
+                                <strong>{{ entry.weight }}</strong>
+                            </p-tag>
+                        }
+                    </div>
+                } @else {
+                    <span class="metadata-row__value">-</span>
+                }
+            </section>
+        }
 
-    <section class="metadata-section">
-        <h4 jhiTranslate="artemisApp.programmingExercise.timeline.complaintsAllowed"></h4>
-        <div class="metadata-list">
-            @for (field of flagFields(); track field.label) {
-                <div class="metadata-row">
-                    <span class="metadata-row__label" [jhiTranslate]="field.label"></span>
-                    <span class="metadata-row__value">{{ field.displayValue }}</span>
+        @if (feedbackFields().length > 0) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4 jhiTranslate="artemisApp.programmingExercise.timeline.complaintsAllowed"></h4>
+                <div class="metadata-list">
+                    @for (field of feedbackFields(); track field.id) {
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
+                    }
                 </div>
-            }
-        </div>
-    </section>
-
-    <p-divider />
-
-    <section class="metadata-section metadata-section--problem">
-        <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h4>
-        @if (problemStatement(); as problemStatement) {
-            <div class="markdown-block markdown-block--problem markdown-preview" [innerHTML]="problemStatement"></div>
-        } @else {
-            <span class="metadata-row__value">-</span>
+            </section>
         }
-    </section>
 
-    @if (gradingInstructions(); as gradingInstructions) {
-        <p-divider />
-        <section class="metadata-section">
-            <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h4>
-            <div class="markdown-block markdown-preview" [innerHTML]="gradingInstructions"></div>
-        </section>
-    }
-</p-panel>
+        @if (teamAssignmentFields().length > 0) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.teamAssignment' | artemisTranslate }}</h4>
+                <div class="metadata-list">
+                    @for (field of teamAssignmentFields(); track field.id) {
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
+                    }
+                </div>
+            </section>
+        }
+
+        @if (plagiarismFields().length > 0) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.plagiarismDetection' | artemisTranslate }}</h4>
+                <div class="metadata-list">
+                    @for (field of plagiarismFields(); track field.id) {
+                        <jhi-metadata-field-row [field]="field" [isDiffView]="isDiffView()" (revertField)="revertField.emit($event)" />
+                    }
+                </div>
+            </section>
+        }
+
+        @if (!isDiffView() || problemStatementChanged()) {
+            <p-divider />
+            <section class="metadata-section metadata-section--problem">
+                <div class="metadata-section__header">
+                    <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.problemStatement' | artemisTranslate }}</h4>
+                    @if (isDiffView()) {
+                        <button
+                            pButton
+                            type="button"
+                            text
+                            rounded
+                            size="small"
+                            class="metadata-diff__revert"
+                            [attr.aria-label]="
+                                'artemisApp.exercise.versionHistory.revert.tooltip'
+                                    | artemisTranslate: { value: ('artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate) }
+                            "
+                            [pTooltip]="
+                                'artemisApp.exercise.versionHistory.revert.tooltip'
+                                    | artemisTranslate: { value: ('artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate) }
+                            "
+                            tooltipPosition="right"
+                            (click)="revertField.emit({ fieldId: 'problemStatement', fieldLabel: problemStatementLabel(), previousRaw: previousSnapshot()?.problemStatement })"
+                        >
+                            <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
+                        </button>
+                    }
+                </div>
+                @if (isDiffView()) {
+                    <jhi-exercise-version-markdown-diff [original]="previousSnapshot()?.problemStatement" [modified]="snapshot().problemStatement" />
+                } @else if (problemStatement(); as problemStatement) {
+                    <div class="markdown-block markdown-block--problem markdown-preview" [innerHTML]="problemStatement"></div>
+                } @else {
+                    <span class="metadata-row__value">-</span>
+                }
+            </section>
+        }
+
+        @if (!isDiffView() || gradingConfigurationChanged()) {
+            <p-divider />
+            <section class="metadata-section">
+                <h4>{{ 'artemisApp.exercise.versionHistory.snapshot.gradingConfiguration' | artemisTranslate }}</h4>
+                @if (isDiffView()) {
+                    <jhi-exercise-version-markdown-diff [original]="previousGradingMarkdown()" [modified]="currentGradingMarkdown()" />
+                } @else {
+                    @if (gradingInstructions(); as gradingInstructions) {
+                        <div class="markdown-block markdown-preview" [innerHTML]="gradingInstructions"></div>
+                    } @else {
+                        <div class="markdown-block markdown-block--empty">-</div>
+                    }
+
+                    <div class="grading-criteria-list">
+                        @if (gradingCriteria().length > 0) {
+                            @for (criterion of gradingCriteria(); track criterion.id ?? criterion.title ?? $index) {
+                                <div class="grading-criterion">
+                                    <h5>{{ criterion.title || ('artemisApp.exercise.metadataSync.untitledCriterion' | artemisTranslate) }}</h5>
+                                    @if ((criterion.structuredGradingInstructions?.length ?? 0) > 0) {
+                                        <div class="grading-instruction-list">
+                                            @for (instruction of criterion.structuredGradingInstructions ?? []; track instruction.id ?? $index) {
+                                                <div class="grading-instruction">
+                                                    <div><strong jhiTranslate="artemisApp.exercise.credits"></strong>: {{ instruction.credits ?? '-' }}</div>
+                                                    <div><strong jhiTranslate="artemisApp.exercise.gradingScale"></strong>: {{ instruction.gradingScale || '-' }}</div>
+                                                    <div>
+                                                        <strong jhiTranslate="artemisApp.exercise.instructionDescription"></strong>: {{ instruction.instructionDescription || '-' }}
+                                                    </div>
+                                                    <div><strong jhiTranslate="artemisApp.exercise.feedback"></strong>: {{ instruction.feedback || '-' }}</div>
+                                                    <div><strong jhiTranslate="artemisApp.exercise.limit"></strong>: {{ instruction.usageCount ?? '-' }}</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </section>
+        }
+    </p-panel>
+}

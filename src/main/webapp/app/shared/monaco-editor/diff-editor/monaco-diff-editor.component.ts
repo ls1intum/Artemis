@@ -16,6 +16,7 @@ export class MonacoDiffEditorComponent implements OnDestroy {
     monacoDiffEditorContainerElement: HTMLElement;
 
     allowSplitView = input<boolean>(true);
+    languageId = input<string | undefined>();
     onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     /*
@@ -47,6 +48,21 @@ export class MonacoDiffEditorComponent implements OnDestroy {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
             });
+        });
+
+        effect(() => {
+            const languageId = this.languageId();
+            if (!languageId) {
+                return;
+            }
+
+            const model = this._editor.getModel();
+            if (!model) {
+                return;
+            }
+
+            monaco.editor.setModelLanguage(model.original, languageId);
+            monaco.editor.setModelLanguage(model.modified, languageId);
         });
     }
 
@@ -127,8 +143,9 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         originalModel.setValue(original ?? '');
         modifiedModel.setValue(modified ?? '');
 
-        monaco.editor.setModelLanguage(originalModel, originalModel.getLanguageId());
-        monaco.editor.setModelLanguage(modifiedModel, modifiedModel.getLanguageId());
+        const languageId = this.languageId();
+        monaco.editor.setModelLanguage(originalModel, languageId ?? originalModel.getLanguageId());
+        monaco.editor.setModelLanguage(modifiedModel, languageId ?? modifiedModel.getLanguageId());
 
         const newModel = {
             original: originalModel,

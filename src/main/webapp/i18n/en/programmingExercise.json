@@ -63,9 +63,17 @@
                     "assignmentCheckoutPath": "Assignment Checkout Path",
                     "solutionCheckoutPath": "Solution Checkout Path",
                     "testsCheckoutPath": "Tests Checkout Path",
+                    "auxiliaryRepositories": "Auxiliary Repositories",
+                    "staticCodeAnalysisCategories": "Static Code Analysis Categories",
                     "buildPlanConfiguration": "Build Plan Configuration (JSON)",
                     "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
-                    "noBuildScript": "No build script in this snapshot"
+                    "noBuildScript": "No build script in this snapshot",
+                    "repositoryDiffError": "Repository diff could not be loaded.",
+                    "showTestNamesToStudents": "Show Test Names to Students",
+                    "releaseTestsWithExampleSolution": "Release Tests with Example Solution",
+                    "templateBuildPlanId": "Template Build Plan ID",
+                    "solutionBuildPlanId": "Solution Build Plan ID",
+                    "submissionPolicyActive": "Submission Policy Active"
                 }
             },
             "importFromFile": {
