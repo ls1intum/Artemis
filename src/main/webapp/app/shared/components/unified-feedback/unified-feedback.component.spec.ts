@@ -114,7 +114,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { referenceId: 7 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 7: { type: 'Model', name: 'ER Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredReference()).toBe('ER Diagram');
+        expect(component.inferredReference()).toBe('Model ER Diagram');
     });
 
     it('should infer reference from feedback.reference when mapping missing', () => {
@@ -153,10 +153,19 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
-    it('should use default title and not assessmentsNames when feedback.text is set without detailText', () => {
+    it('should fall back to default title for modeling feedback with text but no detailText, even when assessmentsNames maps the referenceId', () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('points', 0);
-        fixture.componentRef.setInput('feedback', { text: 'Override description', referenceId: 42 } as any);
+        fixture.componentRef.setInput('feedback', { text: 'Instructor comment', referenceId: 42 } as any);
+        fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
+    });
+
+    it('should fall back to default title for modeling feedback with text but no detailText, even when referenceId not in assessmentsNames mapping', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('points', 0);
+        fixture.componentRef.setInput('feedback', { text: 'Instructor comment', referenceId: 999 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.needsRevision');
