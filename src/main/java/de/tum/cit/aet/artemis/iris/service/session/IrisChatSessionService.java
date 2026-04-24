@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,6 +35,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -377,6 +380,85 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             case COURSE_CHAT -> createCourseSessionInternal(course, user);
             default -> throw new IllegalStateException("IrisChatSessionService.createSession does not handle chat mode " + mode);
         };
+    }
+
+    /**
+     * Updates the context (chatMode + entityId) of an existing Iris chat session in place.
+     * <p>
+     * Persists a {@link IrisMessageSender#SYSTEM SYSTEM} marker message into the chat history
+     * so the LLM can interpret previous messages against the old context and focus subsequent
+     * replies on the new context. The session is <b>not</b> recreated; its id and websocket
+     * subscription remain valid.
+     * <p>
+     * A context switch across course boundaries is rejected — users should create a new session
+     * in the target course instead.
+     *
+     * @param sessionId   the id of the session to update
+     * @param courseId    the course id the session is expected to belong to (from the URL path)
+     * @param newMode     the new chat mode
+     * @param newEntityId the new entity id (exerciseId / lectureId / courseId depending on mode)
+     * @param user        the requesting user
+     * @return the updated session (with messages, including the new marker)
+     */
+    public IrisChatSession updateSessionContext(long sessionId, long courseId, IrisChatMode newMode, long newEntityId, User user) {
+        user.hasOptedIntoLLMUsageElseThrow();
+
+        var session = (IrisChatSession) irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+
+        if (!Objects.equals(session.getUserId(), user.getId())) {
+            throw new AccessForbiddenException("Iris Session", session.getId());
+        }
+        if (session.getCourseId() != courseId) {
+            throw new ConflictException("Context switch across courses is not supported; create a new session instead.", "Iris", "irisContextSwitchCrossCourse");
+        }
+
+        // Idempotent: nothing to do if context is unchanged
+        if (session.getMode() == newMode && session.getEntityId() != null && session.getEntityId() == newEntityId) {
+            return session;
+        }
+
+        // Validate + authorize the new context (reuses existing validators and role checks)
+        String newEntityName = switch (newMode) {
+            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> {
+                var exercise = exerciseRepository.findByIdElseThrow(newEntityId);
+                validateExerciseMatchesCourseAndMode(exercise, courseId, newMode);
+                if (exercise.isExamExercise()) {
+                    throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+                }
+                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+                yield exercise.getTitle();
+            }
+            case LECTURE_CHAT -> {
+                var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(newEntityId);
+                validateLectureBelongsToCourse(lecture, courseId);
+                authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+                yield lecture.getTitle();
+            }
+            case COURSE_CHAT -> {
+                if (newEntityId != courseId) {
+                    throw new ConflictException("For COURSE_CHAT, entityId must equal courseId", "Iris", "irisCourseEntityMismatch");
+                }
+                var course = courseRepository.findByIdElseThrow(courseId);
+                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+                yield course.getTitle();
+            }
+            default -> throw new IllegalStateException("IrisChatSessionService.updateSessionContext does not handle chat mode " + newMode);
+        };
+
+        session.setMode(newMode);
+        session.setEntityId(newEntityId);
+        irisChatSessionRepository.save(session);
+
+        String langKey = user.getLangKey();
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        Object[] args = { newEntityName };
+        String markerContent = messageSource.getMessage("iris.chat.session.contextSwitch.marker", args, "Context changed to " + newEntityName, locale);
+        IrisMessage markerMessage = new IrisMessage();
+        markerMessage.addContent(new IrisTextMessageContent(markerContent));
+        irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.SYSTEM);
+
+        // Re-fetch with messages to return the up-to-date history (including the marker)
+        return (IrisChatSession) irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
     }
 
     private void validateExerciseMatchesCourseAndMode(Exercise exercise, long courseId, IrisChatMode mode) {
