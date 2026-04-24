@@ -13,11 +13,12 @@ export class StudentExamManagementPage {
         await this.openManageStudentExamsMenu();
         await this.page.locator('.p-menu-item-link', { hasText: 'Generate individual exams' }).last().click();
         await responsePromise;
+        await this.page.keyboard.press('Escape');
     }
 
     async clickRegisterCourseStudents() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/register-course-students`);
-        await this.page.getByRole('button', { name: 'Manage students' }).click();
+        await this.page.getByRole('button', { name: 'Register students' }).click();
         await this.page.locator('.p-menu-item-link', { hasText: 'Register course students' }).last().click();
         return await responsePromise;
     }
@@ -28,11 +29,13 @@ export class StudentExamManagementPage {
     }
 
     async openManageStudentExamsMenu() {
-        await this.page.getByRole('button', { name: 'Manage student exams' }).click();
+        const manageStudentExamsButton = this.page.getByRole('button', { name: 'Manage individual exams' });
+        await expect(manageStudentExamsButton).toBeEnabled();
+        await manageStudentExamsButton.click();
     }
 
     getGenerateMissingStudentExamsButton() {
-        return this.page.locator('.p-menu-item-link', { hasText: 'Generate missing individual exams' }).last();
+        return this.page.locator('.p-menu-item:has(.p-menu-item-link:has-text("Generate missing individual exams"))').last();
     }
 
     getStudentExamRows() {
