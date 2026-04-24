@@ -48,7 +48,7 @@ function parseFailedTests(resultsFile) {
 
 /**
  * Fetch flakiness scores from the Helios API.
- * @param {Array<{testName: string, className: string}>} failedTests
+ * @param {Array<{testName: string, className: string, testSuiteName: string}>} failedTests
  * @param {string} heliosSecret - The Helios repo secret
  * @returns {Promise<Array>}
  */
