@@ -392,7 +392,8 @@ public class GlobalSearchResource {
         Filter courseScope = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
         Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
                 Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
+        Filter notArchived = Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED).eq(false);
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility, notArchived);
     }
 
     // -- Shared helpers --
