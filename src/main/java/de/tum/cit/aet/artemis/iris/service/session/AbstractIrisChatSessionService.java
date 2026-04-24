@@ -42,13 +42,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private static final int MAX_SESSION_TITLE_LENGTH = 255;
 
-    private final IrisSessionRepository irisSessionRepository;
+    protected final IrisSessionRepository irisSessionRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final IrisMessageService irisMessageService;
+    protected final IrisMessageService irisMessageService;
 
     private final IrisMessageRepository irisMessageRepository;
 

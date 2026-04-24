@@ -82,4 +82,8 @@ public class IrisChatSession extends IrisSession {
     public IrisChatMode getMode() {
         return chatMode;
     }
+
+    public void setMode(IrisChatMode chatMode) {
+        this.chatMode = chatMode;
+    }
 }
