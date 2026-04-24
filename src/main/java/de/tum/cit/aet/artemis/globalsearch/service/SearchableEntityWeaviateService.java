@@ -64,11 +64,10 @@ public class SearchableEntityWeaviateService {
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
     /**
-     * UUID v5 namespace used to derive deterministic UUIDs for Weaviate objects from
-     * {@code (type, entityId)} pairs. This eliminates the check-then-insert race in
-     * {@link #upsertRow(String, Long, Map)} — the same entity always gets the same UUID,
-     * so we can directly replace-or-insert without querying first. Uses the DNS namespace
-     * from RFC 4122.
+     * Fixed namespace prefix included in the string passed to
+     * {@link UUID#nameUUIDFromBytes(byte[])} to derive deterministic UUID v3 (MD5-based)
+     * identifiers for Weaviate objects. The full input is {@code "namespace:type:entityId"},
+     * ensuring the same entity always maps to the same Weaviate object UUID across nodes.
      */
     private static final UUID WEAVIATE_UUID_NAMESPACE = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
@@ -413,11 +412,11 @@ public class SearchableEntityWeaviateService {
     // ----- Internal helpers -----
 
     /**
-     * Derives a deterministic UUID v5 from the {@code (type, entityId)} pair so that the same
-     * entity always maps to the same Weaviate object UUID, regardless of which node performs
-     * the upsert. The type is included because entity IDs are only unique within a table
-     * (e.g. exercise 42 and FAQ 42 can coexist), so the type prefix prevents UUID collisions
-     * across different entity types in the shared collection.
+     * Derives a deterministic UUID v3 (MD5-based) from {@code (type, entityId)} via
+     * {@link UUID#nameUUIDFromBytes(byte[])} so the same entity always maps to the same
+     * Weaviate object UUID regardless of which node performs the upsert. The type is
+     * included because entity IDs are only unique within a table (e.g. exercise 42 and
+     * FAQ 42 can coexist).
      */
     private static String deterministicUuid(String type, Long entityId) {
         return UUID.nameUUIDFromBytes((WEAVIATE_UUID_NAMESPACE + ":" + type + ":" + entityId).getBytes(StandardCharsets.UTF_8)).toString();
