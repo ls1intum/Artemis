@@ -1,7 +1,7 @@
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import urlParser from 'js-video-url-parser';
+import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
 import { faArrowLeft, faCircleInfo, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -53,15 +53,13 @@ function videoSourceTransformUrlValidator(control: AbstractControl): ValidationE
     if (!urlValue) {
         return undefined;
     }
-    let parsedUrl, url;
+    let url;
     try {
         url = new URL(urlValue);
-        parsedUrl = urlParser.parse(urlValue);
     } catch {
-        //intentionally empty
+        // intentionally empty
     }
-    // The URL is valid if it's a TUM-Live URL or if it can be parsed by the js-video-url-parser.
-    if ((url && isTumLiveUrl(url)) || parsedUrl) {
+    if ((url && isTumLiveUrl(url)) || parseVideoUrl(urlValue)) {
         return undefined;
     }
     return { invalidVideoUrl: true };
@@ -252,14 +250,11 @@ export class AttachmentVideoUnitFormComponent {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
-        const videoInfo = urlParser.parse(videoUrl);
-        if (!videoInfo) {
+        const parsed = parseVideoUrl(videoUrl);
+        if (!parsed) {
             return videoUrl;
         }
-        return urlParser.create({
-            videoInfo,
-            format: 'embed',
-        });
+        return buildEmbedUrl(parsed);
     }
 
     cancelForm() {
