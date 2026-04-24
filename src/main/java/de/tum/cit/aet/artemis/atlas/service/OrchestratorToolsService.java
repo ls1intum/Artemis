@@ -2,12 +2,13 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -132,18 +133,8 @@ public class OrchestratorToolsService {
     public CompetencyIndexResponseDTO listCompetencyIndex(long courseId) {
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(courseId);
         List<CompetencyIndexDTO> entries = competencies.stream().map(OrchestratorToolsService::toIndexEntry).sorted(Comparator.comparing(CompetencyIndexDTO::id)).toList();
-        Set<Long> linkedExerciseIds = new HashSet<>();
-        for (CourseCompetency competency : competencies) {
-            if (competency.getExerciseLinks() == null) {
-                continue;
-            }
-            for (CompetencyExerciseLink link : competency.getExerciseLinks()) {
-                Exercise exercise = link.getExercise();
-                if (exercise != null && exercise.getId() != null) {
-                    linkedExerciseIds.add(exercise.getId());
-                }
-            }
-        }
+        Set<Long> linkedExerciseIds = competencies.stream().flatMap(c -> c.getExerciseLinks() == null ? Stream.<CompetencyExerciseLink>empty() : c.getExerciseLinks().stream())
+                .map(CompetencyExerciseLink::getExercise).filter(e -> e != null && e.getId() != null).map(Exercise::getId).collect(Collectors.toSet());
         List<CompetencyIndexResponseDTO.UnassignedExerciseRef> unassigned = exerciseRepository.findAllExercisesByCourseId(courseId).stream()
                 .filter(exercise -> exercise.getId() != null && !linkedExerciseIds.contains(exercise.getId()))
                 .map(exercise -> new CompetencyIndexResponseDTO.UnassignedExerciseRef(exercise.getId(), exercise.getTitle(),
@@ -416,8 +407,7 @@ public class OrchestratorToolsService {
             return toJson(Map.of("error", "Exercise " + exerciseId + " does not belong to the current course."));
         }
 
-        CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId).stream()
-                .filter(link -> link.getCompetency() != null && competencyId.equals(link.getCompetency().getId())).findFirst().orElse(null);
+        CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
 
         String detail;
         if (existingLink != null) {
@@ -473,8 +463,7 @@ public class OrchestratorToolsService {
             return toJson(Map.of("error", "Competency " + competencyId + " does not belong to the current course."));
         }
 
-        CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId).stream()
-                .filter(link -> link.getCompetency() != null && competencyId.equals(link.getCompetency().getId())).findFirst().orElse(null);
+        CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
         if (existingLink == null) {
             return toJson(Map.of("status", "noop", "message", "Exercise " + exerciseId + " is not linked to competency " + competencyId + "."));
         }

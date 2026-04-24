@@ -5,7 +5,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/services/competency-orchestration-api.service';
+import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/dto/competency-orchestration-dto';
 
 @Component({
     selector: 'jhi-orchestration-result-dialog',

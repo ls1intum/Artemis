@@ -195,7 +195,7 @@ class OrchestratorToolsServiceTest {
         ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(20L)).thenReturn(List.of());
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.empty());
 
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
@@ -254,7 +254,7 @@ class OrchestratorToolsServiceTest {
         CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(20L)).thenReturn(List.of(existing));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
 
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
@@ -283,7 +283,7 @@ class OrchestratorToolsServiceTest {
         ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
         CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 1.0);
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(20L)).thenReturn(List.of(existing));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
 
         String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
 
@@ -300,7 +300,7 @@ class OrchestratorToolsServiceTest {
     void unassignExerciseFromCompetency_missingLink_returnsNoop() {
         CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
         when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(20L)).thenReturn(List.of());
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.empty());
 
         String result = service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext);
 

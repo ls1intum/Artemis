@@ -13,7 +13,7 @@
 
     @if (hasActions()) {
         <p-table [value]="appliedActions()" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="360px">
-            <ng-template pTemplate="header">
+            <ng-template #header>
                 <tr>
                     <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.action"></th>
                     <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.competency"></th>
@@ -21,7 +21,7 @@
                     <th jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.columns.reason"></th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-action>
+            <ng-template #body let-action>
                 <tr>
                     <td>
                         <p-tag
@@ -59,7 +59,7 @@
         <p class="text-body-secondary mb-0" jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.resultDialog.empty"></p>
     }
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <p-button (onClick)="close()" [label]="'entity.action.close' | artemisTranslate" severity="secondary" />
     </ng-template>
 </p-dialog>
