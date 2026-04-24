@@ -60,7 +60,7 @@ function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
         return false;
     }
     const v = value as any;
-    return Array.isArray(v.phases) && v.phases.every(isBuildPhase) && (v.dockerImage === undefined || typeof v.dockerImage === 'string');
+    return Array.isArray(v.phases) && v.phases.every(isBuildPhase) && (v.dockerImage == null || typeof v.dockerImage === 'string');
 }
 
 function isBuildPhase(value: unknown): value is BuildPhase {
