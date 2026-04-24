@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -30,6 +30,8 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -85,6 +87,8 @@ describe('ExamStudentsComponent', () => {
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
+    let router: Router;
+    let alertService: AlertService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -117,7 +121,10 @@ describe('ExamStudentsComponent', () => {
                             allExamExercisesAllStudentsPrepared: false,
                         }),
                 }),
-                MockProvider(AlertService),
+                MockProvider(AlertService, {
+                    success: vi.fn(),
+                    error: vi.fn(),
+                }),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
@@ -125,6 +132,8 @@ describe('ExamStudentsComponent', () => {
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
+        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -229,5 +238,67 @@ describe('ExamStudentsComponent', () => {
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
         expect(component.allRegisteredUsers()).toEqual([]);
+    });
+
+    it('should navigate to attendance verification when exam started and id exists', () => {
+        fixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        component.hasExamStarted.set(true);
+        component.exam.set({ ...examWithCourse, id: 42 } as Exam);
+
+        component.openVerifyAttendance();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 42, 'students', 'verify-attendance']);
+    });
+
+    it('should not navigate to attendance verification when exam has not started', () => {
+        fixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        component.hasExamStarted.set(false);
+        component.exam.set({ ...examWithCourse, id: 42 } as Exam);
+
+        component.openVerifyAttendance();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should generate missing student exams and reload exam data', () => {
+        fixture.detectChanges();
+        const generateSpy = vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(of(new HttpResponse({ body: [{} as StudentExam] })));
+        const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers').mockImplementation(() => {});
+        const successSpy = vi.spyOn(alertService, 'success');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.generateMissingStudentExams();
+
+        expect(generateSpy).toHaveBeenCalledWith(course.id, 2);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: 1 });
+        expect(reloadSpy).toHaveBeenCalled();
+    });
+
+    it('should handle errors when generating missing student exams', () => {
+        fixture.detectChanges();
+        vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(
+            throwError(() => new HttpErrorResponse({ error: { message: 'generation failed' }, status: 500 })),
+        );
+        const errorSpy = vi.spyOn(alertService, 'error');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.generateMissingStudentExams();
+
+        expect(component.isLoading()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.missingStudentExamGenerationError', { message: 'generation failed' });
+    });
+
+    it('should set loading back to false when starting exercises fails', () => {
+        fixture.detectChanges();
+        vi.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'start failed' }, status: 500 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        component.exam.set({ ...examWithCourse, id: 2 } as Exam);
+
+        component.startExercises();
+
+        expect(component.isLoading()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.startExerciseFailure', { message: 'start failed' });
     });
 });
