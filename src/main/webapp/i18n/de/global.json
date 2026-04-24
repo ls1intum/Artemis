@@ -71,6 +71,11 @@
                 "examsTitle": "Klausuren",
                 "examsDescription": "Klausuren in Ihren Kursen durchsuchen"
             },
+            "types": {
+                "filter": "Filter",
+                "feature": "Feature",
+                "course": "Kurs"
+            },
             "results": {
                 "due": "Fällig: {{ date }}",
                 "point": "Punkt",

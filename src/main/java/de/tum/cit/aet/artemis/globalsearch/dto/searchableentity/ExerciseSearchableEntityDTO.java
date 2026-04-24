@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
- * Snapshot of the data needed to upsert an exercise into the unified {@code SearchableItems}
+ * Snapshot of the data needed to upsert an exercise into the unified {@code SearchableEntities}
  * Weaviate collection.
  * <p>
  * This record is extracted before the async boundary to avoid {@code LazyInitializationException}

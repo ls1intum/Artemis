@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Snapshot of the data needed to upsert an FAQ into the unified {@code SearchableItems} Weaviate
+ * Snapshot of the data needed to upsert an FAQ into the unified {@code SearchableEntities} Weaviate
  * collection. The {@code faqState} is stored as a filterable text property so students (who may only
  * see {@code ACCEPTED} entries) can be filtered out from staff-visible entries in a single query.
  */

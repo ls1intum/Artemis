@@ -26,7 +26,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
     /**
      * Creates a search result DTO from a raw Weaviate property map returned by the unified
-     * {@code SearchableItems} collection. Dispatches on the {@code type} discriminator to decide
+     * {@code SearchableEntities} collection. Dispatches on the {@code type} discriminator to decide
      * which type-specific metadata to surface to the client.
      *
      * @param properties     the property map returned by Weaviate

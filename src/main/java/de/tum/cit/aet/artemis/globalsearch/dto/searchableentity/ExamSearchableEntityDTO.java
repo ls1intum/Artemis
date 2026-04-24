@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Snapshot of the data needed to upsert an exam into the unified {@code SearchableItems} Weaviate collection.
+ * Snapshot of the data needed to upsert an exam into the unified {@code SearchableEntities} Weaviate collection.
  * <p>
  * The {@link Exam} entity has no dedicated description column. {@code description} is composed from
  * {@link Exam#getStartText() startText} and {@link Exam#getEndText() endText} — the texts shown to

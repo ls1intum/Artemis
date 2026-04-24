@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Snapshot of the data needed to upsert a channel into the unified {@code SearchableItems} Weaviate
+ * Snapshot of the data needed to upsert a channel into the unified {@code SearchableEntities} Weaviate
  * collection.
  * <p>
  * Only {@link Channel} instances that are either course-wide or public are indexed; private non-course-wide

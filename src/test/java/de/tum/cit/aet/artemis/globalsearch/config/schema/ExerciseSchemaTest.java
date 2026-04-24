@@ -12,7 +12,7 @@ class ExerciseSchemaTest {
 
     @Test
     void schema_hasCorrectCollectionName() {
-        assertThat(SCHEMA.collectionName()).isEqualTo("SearchableItems");
+        assertThat(SCHEMA.collectionName()).isEqualTo("SearchableEntities");
     }
 
     @Test

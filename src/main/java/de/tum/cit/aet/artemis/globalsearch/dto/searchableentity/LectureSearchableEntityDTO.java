@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
- * Snapshot of the data needed to upsert a lecture into the unified {@code SearchableItems}
+ * Snapshot of the data needed to upsert a lecture into the unified {@code SearchableEntities}
  * Weaviate collection.
  * <p>
  * Extracted before the async boundary so the Weaviate write runs outside the Hibernate session

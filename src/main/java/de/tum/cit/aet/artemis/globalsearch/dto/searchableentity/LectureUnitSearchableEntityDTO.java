@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 /**
- * Snapshot of the data needed to upsert a lecture unit into the unified {@code SearchableItems}
+ * Snapshot of the data needed to upsert a lecture unit into the unified {@code SearchableEntities}
  * Weaviate collection.
  * <p>
  * Only {@link TextUnit}, {@link OnlineUnit} and {@link AttachmentVideoUnit} are indexed; exercise

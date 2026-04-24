@@ -39,10 +39,10 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Unified service for synchronizing and searching every indexable entity type (exercise, lecture,
- * lecture unit, exam, FAQ, channel) in the shared {@code SearchableItems} Weaviate collection.
+ * lecture unit, exam, FAQ, channel) in the shared {@code SearchableEntities} Weaviate collection.
  * <p>
  * The service enforces the single-Weaviate-request invariant for user-facing search: a single
- * {@link #searchSearchableItems(String, Filter, int)} call is issued per HTTP request, with a compound
+ * {@link #searchSearchableEntities(String, Filter, int)} call is issued per HTTP request, with a compound
  * per-type filter built upstream in {@code GlobalSearchResource}.
  * <p>
  * Upsert/delete helpers are thin wrappers around a shared {@link #upsertRow(String, Long, Map)}
@@ -83,7 +83,7 @@ public class SearchableEntityWeaviateService {
     // ----- Search path -----
 
     /**
-     * Performs a single unified search against the {@code SearchableItems} collection.
+     * Performs a single unified search against the {@code SearchableEntities} collection.
      * <p>
      * Uses hybrid (semantic + keyword) search when a vectorizer is available, BM25-only otherwise.
      * The caller is responsible for passing a compound filter that already encodes the user's per-type
@@ -94,7 +94,7 @@ public class SearchableEntityWeaviateService {
      * @param limit  maximum number of results to return
      * @return the raw property maps returned by Weaviate (caller maps them to response DTOs)
      */
-    public List<Map<String, Object>> searchSearchableItems(String query, Filter filter, int limit) {
+    public List<Map<String, Object>> searchSearchableEntities(String query, Filter filter, int limit) {
         try {
             CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             boolean browse = query == null || query.isBlank();
@@ -131,8 +131,8 @@ public class SearchableEntityWeaviateService {
             return result.objects().stream().map(WeaviateObject::properties).toList();
         }
         catch (Exception e) {
-            log.error("Failed to search SearchableItems (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
-            throw new WeaviateException("Failed to search SearchableItems in Weaviate: " + e.getMessage(), e);
+            log.error("Failed to search SearchableEntities (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
+            throw new WeaviateException("Failed to search SearchableEntities in Weaviate: " + e.getMessage(), e);
         }
     }
 

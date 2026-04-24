@@ -41,7 +41,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 /**
  * REST controller for the unified global search endpoint backed by Weaviate.
  * <p>
- * Invokes {@link SearchableEntityWeaviateService#searchSearchableItems(String, Filter, int)} exactly
+ * Invokes {@link SearchableEntityWeaviateService#searchSearchableEntities(String, Filter, int)} exactly
  * once per request with a compound access filter built from the user's per-course roles. Per-type
  * access rules are enforced via {@code OR}-of-{@code AND}s disjuncts gated by the row's {@code type}
  * discriminator, which is why a single request can safely cover every indexable entity type.
@@ -117,7 +117,7 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableItems(query, filterResult.filter(), effectiveLimit);
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
 
         Map<Long, String> courseNameById = resolveCourseNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();

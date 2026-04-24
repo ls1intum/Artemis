@@ -71,6 +71,11 @@
                 "examsTitle": "Exams",
                 "examsDescription": "Search exams across your courses"
             },
+            "types": {
+                "filter": "Filter",
+                "feature": "Feature",
+                "course": "Course"
+            },
             "results": {
                 "due": "Due: {{ date }}",
                 "point": "point",

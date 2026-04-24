@@ -14,7 +14,7 @@ import java.util.List;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
 
 /**
- * Unified schema definition for the {@code SearchableItems} Weaviate collection.
+ * Unified schema definition for the {@code SearchableEntities} Weaviate collection.
  * <p>
  * A single collection backs global search across all entity types (exercises, lectures, lecture units,
  * exams, FAQs, channels). Each row carries a {@link Properties#TYPE} discriminator so per-type access
@@ -35,7 +35,7 @@ public final class SearchableEntitySchema {
     /**
      * Collection name for the unified searchable items collection.
      */
-    public static final String COLLECTION_NAME = "SearchableItems";
+    public static final String COLLECTION_NAME = "SearchableEntities";
 
     /**
      * Canonical string values for the {@code type} discriminator.
@@ -141,7 +141,7 @@ public final class SearchableEntitySchema {
     }
 
     /**
-     * Schema definition for the unified {@code SearchableItems} collection.
+     * Schema definition for the unified {@code SearchableEntities} collection.
      * <p>
      * Only {@link Properties#TITLE}, {@link Properties#SHORT_NAME} and {@link Properties#DESCRIPTION} are
      * BM25-searchable — all other properties are either filterable (used in the compound access filter)
