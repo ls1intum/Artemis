@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -65,6 +67,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -81,6 +86,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     private TextExercise ongoingExamExercise;
 
     private TextExercise endedExamExercise;
+
+    private Lecture lecture;
 
     static boolean isWeaviateEnabled() {
         return weaviateContainer != null && weaviateContainer.isRunning();
