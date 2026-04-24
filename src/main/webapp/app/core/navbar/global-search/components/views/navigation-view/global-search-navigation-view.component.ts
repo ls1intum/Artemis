@@ -3,9 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
-    faCalendarAlt,
     faCalendarCheck,
-    faChartBar,
     faCheckDouble,
     faComments,
     faCube,
@@ -16,8 +14,7 @@ import {
     faKeyboard,
     faProjectDiagram,
     faQuestion,
-    faTrophy,
-    faUsers,
+    faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
@@ -113,7 +110,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faFileUpload = faFileUpload;
     protected readonly faCheckDouble = faCheckDouble;
     protected readonly faQuestion = faQuestion;
-    protected readonly faTrophy = faTrophy;
     protected readonly faCalendarCheck = faCalendarCheck;
 
     // Searchable entities for initial view
@@ -142,39 +138,26 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             description: 'global.search.entities.communicationDescription',
             icon: faComments,
             type: 'page',
-            enabled: false,
+            enabled: true,
+            filterTag: 'channel',
         },
         {
-            id: 'iris',
-            title: 'global.search.entities.irisTitle',
-            description: 'global.search.entities.irisDescription',
-            icon: faHashtag,
+            id: 'faqs',
+            title: 'global.search.entities.faqsTitle',
+            description: 'global.search.entities.faqsDescription',
+            icon: faQuestionCircle,
             type: 'page',
-            enabled: false,
+            enabled: true,
+            filterTag: 'faq',
         },
         {
-            id: 'users',
-            title: 'global.search.entities.usersTitle',
-            description: 'global.search.entities.usersDescription',
-            icon: faUsers,
+            id: 'exams',
+            title: 'global.search.entities.examsTitle',
+            description: 'global.search.entities.examsDescription',
+            icon: faCalendarCheck,
             type: 'page',
-            enabled: false,
-        },
-        {
-            id: 'statistics',
-            title: 'global.search.entities.statisticsTitle',
-            description: 'global.search.entities.statisticsDescription',
-            icon: faChartBar,
-            type: 'feature',
-            enabled: false,
-        },
-        {
-            id: 'calendar',
-            title: 'global.search.entities.calendarTitle',
-            description: 'global.search.entities.calendarDescription',
-            icon: faCalendarAlt,
-            type: 'feature',
-            enabled: false,
+            enabled: true,
+            filterTag: 'exam',
         },
     ];
 
@@ -207,23 +190,42 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (badge === 'Quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
-        if (type === 'lecture') {
+        if (type === 'lecture' || type === 'lecture_unit') {
             return faBook;
+        }
+        if (type === 'channel') {
+            return faHashtag;
+        }
+        if (type === 'faq') {
+            return faQuestionCircle;
+        }
+        if (type === 'exam') {
+            return this.faCalendarCheck;
         }
         return this.faQuestion;
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        const courseId = result.metadata['courseId'];
+        if (!courseId) {
+            this.overlay.close();
+            return;
+        }
         if (result.type === 'exercise' && result.id) {
-            const courseId = result.metadata['courseId'];
-            if (courseId) {
-                this.router.navigate(['/courses', courseId, 'exercises', result.id]);
-            }
+            this.router.navigate(['/courses', courseId, 'exercises', result.id]);
         } else if (result.type === 'lecture' && result.id) {
-            const courseId = result.metadata['courseId'];
-            if (courseId) {
-                this.router.navigate(['/courses', courseId, 'lectures', result.id]);
+            this.router.navigate(['/courses', courseId, 'lectures', result.id]);
+        } else if (result.type === 'lecture_unit' && result.id) {
+            const lectureId = result.metadata['lectureId'];
+            if (lectureId) {
+                this.router.navigate(['/courses', courseId, 'lectures', lectureId]);
             }
+        } else if (result.type === 'exam' && result.id) {
+            this.router.navigate(['/courses', courseId, 'exams', result.id]);
+        } else if (result.type === 'faq') {
+            this.router.navigate(['/courses', courseId, 'faq']);
+        } else if (result.type === 'channel' && result.id) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: result.id } });
         }
         this.overlay.close();
     }

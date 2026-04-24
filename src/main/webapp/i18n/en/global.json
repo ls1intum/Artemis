@@ -65,15 +65,11 @@
                 "lecturesTitle": "Lecture Details",
                 "lecturesDescription": "View lecture content and units",
                 "communicationTitle": "Communication",
-                "communicationDescription": "Chat with classmates and instructors",
-                "irisTitle": "Dashboard with Iris",
-                "irisDescription": "Chat with Iris AI assistant",
-                "usersTitle": "User Management",
-                "usersDescription": "Manage users and permissions",
-                "statisticsTitle": "Statistics",
-                "statisticsDescription": "View course statistics and analytics",
-                "calendarTitle": "Calendar",
-                "calendarDescription": "View your schedule and deadlines"
+                "communicationDescription": "Search communication channels",
+                "faqsTitle": "FAQs",
+                "faqsDescription": "Search frequently asked questions",
+                "examsTitle": "Exams",
+                "examsDescription": "Search exams across your courses"
             },
             "results": {
                 "due": "Due: {{ date }}",
