@@ -7,9 +7,10 @@ on:
       - feature/development/sync-openapi-to-ios
     paths:
       - 'openapi/openapi.yaml'
-
+  workflow_dispatch:
+    
 jobs:
   call-sync:
-    uses: ls1intum/artemis-ios-core-modules/.github/workflows/sync-openapi-spec.yml@main
+    uses: ls1intum/artemis-ios-core-modules/.github/workflows/sync-openapi-spec.yml@development/create-openapi-action
     with:
       sha: ${{ github.sha }}
