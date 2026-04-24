@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExamProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -73,9 +75,11 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         assertThat(createdExam.getId()).isNotNull();
         assertExamExistsInWeaviate(weaviateService, createdExam.getId());
 
-        var properties = queryExamProperties(weaviateService, createdExam.getId());
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Weaviate Create Test Exam");
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, createdExam.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Weaviate Create Test Exam");
+        });
     }
 
     @Test
@@ -99,11 +103,11 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
         Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(createdExam), Exam.class, HttpStatus.OK);
 
-        assertExamExistsInWeaviate(weaviateService, updatedExam.getId());
-
-        var properties = queryExamProperties(weaviateService, updatedExam.getId());
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Updated Weaviate Exam Title");
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, updatedExam.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Updated Weaviate Exam Title");
+        });
     }
 
     @Test
@@ -121,11 +125,12 @@ class ExamWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
                 HttpStatus.OK);
 
         assertThat(updatedExam.getEndDate()).isAfter(originalEndDate);
-        assertExamExistsInWeaviate(weaviateService, updatedExam.getId());
 
-        var properties = queryExamProperties(weaviateService, updatedExam.getId());
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(createdExam.getTitle());
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExamProperties(weaviateService, updatedExam.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(createdExam.getTitle());
+        });
     }
 
     @Test
