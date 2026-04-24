@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -126,6 +127,27 @@ public class IrisChatSessionResource {
         var session = irisChatSessionService.createSession(courseId, mode, entityId, user);
         var uriString = "/api/iris/chat/" + courseId + "/session/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
+    }
+
+    /**
+     * PATCH api/iris/chat/{courseId}/sessions/{sessionId}/context: Update the chat mode and entity id of
+     * the currently active Iris chat session. Appends a SYSTEM marker message to the session history so
+     * the LLM treats previous messages as belonging to the old context.
+     *
+     * @param courseId  the course ID (required for authorization)
+     * @param sessionId the session ID to update
+     * @param mode      the new chat mode
+     * @param entityId  the new entity id (exerciseId / lectureId / courseId depending on the mode)
+     * @return the updated session (with full message history including the context-switch marker)
+     */
+    @PatchMapping("{courseId}/sessions/{sessionId}/context")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<IrisChatSessionResponseDTO> updateSessionContext(@PathVariable Long courseId, @PathVariable Long sessionId, @RequestParam IrisChatMode mode,
+            @RequestParam long entityId) {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var session = irisChatSessionService.updateSessionContext(sessionId, courseId, mode, entityId, user);
+        irisCitationService.enrichSessionWithCitationInfo(session);
+        return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
