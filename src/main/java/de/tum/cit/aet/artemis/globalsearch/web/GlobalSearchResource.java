@@ -191,6 +191,9 @@ public class GlobalSearchResource {
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         if (authCheckService.isAdmin(user) && courseId == null) {
+            if (!VALID_TYPES.equals(requestedTypes)) {
+                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true);
+            }
             return new FilterBuildResult(null, true);
         }
 
@@ -392,11 +395,21 @@ public class GlobalSearchResource {
         Filter courseScope = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
         Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
                 Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
-        Filter notArchived = Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_ARCHIVED).eq(false);
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility, notArchived);
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
     }
 
     // -- Shared helpers --
+
+    private static Filter buildTypeDiscriminatorFilter(Set<String> types) {
+        if (types.size() == 1) {
+            return typeEquals(types.iterator().next());
+        }
+        List<Filter> typeFilters = new ArrayList<>(types.size());
+        for (String type : types) {
+            typeFilters.add(typeEquals(type));
+        }
+        return Filter.or(typeFilters.toArray(new Filter[0]));
+    }
 
     private static Filter typeEquals(String type) {
         return Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type);
