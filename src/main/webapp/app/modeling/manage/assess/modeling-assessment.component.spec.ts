@@ -137,6 +137,11 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
+        if (comp.apollonEditor) {
+            comp.apollonEditor.destroy();
+            comp.apollonEditor = undefined;
+        }
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
