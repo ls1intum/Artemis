@@ -224,6 +224,4 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     problemStatementLength = computed(() => this.aiOps.currentProblemStatement()?.length ?? 0);
 
     isProblemStatementTooLong = computed(() => this.problemStatementLength() > this.maxProblemStatementLength);
-
-    isProblemStatementTooLong = computed(() => this.problemStatementLength() > this.maxProblemStatementLength);
 }
