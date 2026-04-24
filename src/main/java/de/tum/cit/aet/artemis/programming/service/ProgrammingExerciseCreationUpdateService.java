@@ -320,6 +320,7 @@ public class ProgrammingExerciseCreationUpdateService {
         validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
+
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
