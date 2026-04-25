@@ -148,8 +148,9 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
+    // No @Cache on studentExams / examUsers / examRoomExamAssignments: all grow / are mutated during exam registration and prep while conduction monitoring reads
+    // them concurrently; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
 
@@ -157,12 +158,10 @@ public class Exam extends DomainObject {
     private String examArchivePath;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference("examRoomExamAssignments_exam")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 

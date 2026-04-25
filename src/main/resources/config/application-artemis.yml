@@ -95,8 +95,8 @@ artemis:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
   atlas:
-    chat-model: gpt-4o
-    temperature: 0.2
+    chat-model: gpt-5.4-mini
+    temperature: 0.8
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance
