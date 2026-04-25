@@ -170,4 +170,79 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
                 post("/api/hyperion/courses/{courseId}/quiz-exercises/generate-questions", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
     }
+
+    private static final String REFINE_BODY = """
+            {
+              "question": {
+                "type": "single-choice",
+                "title": "REST Basics",
+                "questionText": "What does REST stand for?",
+                "options": [
+                  {"text": "Representational State Transfer", "correct": true},
+                  {"text": "Remote Execution Service Type", "correct": false}
+                ]
+              },
+              "refinementPrompt": "Make the question harder"
+            }
+            """;
+
+    private void mockRefinementSuccess() {
+        String response = """
+                {
+                  "question": {
+                    "type": "single-choice",
+                    "title": "REST Constraints",
+                    "questionText": "Which constraint is NOT part of the REST architectural style?",
+                    "options": [
+                      {"text": "Stateless", "correct": false},
+                      {"text": "Persistent connections", "correct": true}
+                    ]
+                  },
+                  "reasoning": "Changed focus from definition to constraints."
+                }
+                """;
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(response))))).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldRefineQuizQuestionForInstructor() throws Exception {
+        mockRefinementSuccess();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/quiz-exercises/refine-question", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(REFINE_BODY))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.question").exists()).andExpect(jsonPath("$.reasoning").isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldRefineQuizQuestionForEditor() throws Exception {
+        mockRefinementSuccess();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/quiz-exercises/refine-question", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(REFINE_BODY))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForTutorOnRefine() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/quiz-exercises/refine-question", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(REFINE_BODY))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForStudentOnRefine() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/quiz-exercises/refine-question", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(REFINE_BODY))
+                .andExpect(status().isForbidden());
+    }
 }

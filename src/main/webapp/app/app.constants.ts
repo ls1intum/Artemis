@@ -57,8 +57,6 @@ export const MODULE_FEATURE_LECTURE = 'lecture';
 
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
-export const MODULE_FEATURE_NEBULA = 'nebula';
-
 export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
@@ -78,7 +76,6 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_FILEUPLOAD
     | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
-    | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_LTI
     | typeof MODULE_FEATURE_THEIA;

@@ -257,6 +257,7 @@
                         #quizQuestionsEdit
                         [courseId]="courseId!"
                         [quizQuestions]="quizExercise.quizQuestions ?? []"
+                        [hyperionEnabled]="hyperionEnabled"
                         (onQuestionAdded)="handleQuestionChanged()"
                         (onQuestionDeleted)="handleQuestionChanged()"
                         (onQuestionUpdated)="handleQuestionChanged()"

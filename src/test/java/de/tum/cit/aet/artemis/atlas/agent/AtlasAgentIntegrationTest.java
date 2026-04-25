@@ -18,6 +18,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -29,7 +30,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
@@ -42,6 +45,9 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @Autowired
     private AtlasAgentService atlasAgentService;
 
+    @Autowired
+    private AtlasAgentSessionCacheService atlasAgentSessionCacheService;
+
     private Course course;
 
     private Map<String, List<Message>> chatMemoryStorage;
@@ -50,6 +56,9 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     void setupTestScenario() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        // Set up chatClient.mutate() to return a real builder backed by the mock ChatModel
+        when(chatClient.mutate()).thenAnswer(inv -> ChatClient.builder(chatModel));
 
         // Set up stateful mock for ChatMemory to actually store and retrieve messages
         chatMemoryStorage = new HashMap<>();
@@ -260,14 +269,17 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
 
-            // Simulate a message with embedded preview data (testing embedPreviewDataInResponse indirectly)
-            String messageWithPreviewData = "Here are the competencies %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test Competency\",\"description\":\"Test Description\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":false}]}%%PREVIEW_DATA_END%%";
+            // Add clean messages to chat memory (no markers)
             chatMemory.add(sessionId, new UserMessage("Create a competency"));
-            chatMemory.add(sessionId, new AssistantMessage(messageWithPreviewData));
+            chatMemory.add(sessionId, new AssistantMessage("Here are the competencies"));
+
+            // Store preview data in cache for the first assistant message (index 0)
+            var competencyPreviews = List.of(new CompetencyPreviewDTO("Test Competency", "Test Description", "APPLY", null, false));
+            atlasAgentSessionCacheService.storePreviewForMessage(sessionId, 0, new AtlasAgentSessionCacheService.MessagePreviewData(competencyPreviews, null, null, null));
 
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(2))
-                    // Verify the preview data was extracted and the message content was cleaned
+                    // Verify the preview data was retrieved from cache and the message content is clean
                     .andExpect(jsonPath("$[1].content").value("Here are the competencies")).andExpect(jsonPath("$[1].competencyPreviews").isArray())
                     .andExpect(jsonPath("$[1].competencyPreviews[0].title").value("Test Competency")).andExpect(jsonPath("$[1].competencyPreviews[0].taxonomy").value("APPLY"));
         }
@@ -278,7 +290,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
 
-            // Test embedPreviewDataInResponse with null/empty previews (returns response as-is)
+            // Test message without preview data (no cache entry)
             chatMemory.add(sessionId, new UserMessage("Simple question"));
             chatMemory.add(sessionId, new AssistantMessage("Simple response without any preview data"));
 

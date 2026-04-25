@@ -56,6 +56,14 @@
                     "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
                     "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut."
                 },
+                "refinement": {
+                    "promptPlaceholder": "Beschreibe, wie die Frage verfeinert werden soll...",
+                    "changesLabel": "Vorgenommene Änderungen",
+                    "defaultReasoning": "Die Frage wurde entsprechend Ihren Anweisungen verfeinert.",
+                    "errors": {
+                        "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
+                    }
+                },
                 "preview": {
                     "title": "Vorschau",
                     "emptyTitle": "Noch keine Fragen generiert",

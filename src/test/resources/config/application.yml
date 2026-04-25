@@ -111,12 +111,6 @@ artemis:
     iris:
         enabled: false
 
-    # Nebula configuration for tests
-    nebula:
-        enabled: true
-        url: http://localhost:8080 # dummy URL for tests
-        secret-token: test-secret # dummy secret for tests
-
     # Theia configuration for tests
     theia:
         enabled: true

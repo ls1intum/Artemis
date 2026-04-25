@@ -17,19 +17,19 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "com.github.ben-manes.versions" version "0.53.0"
+    id "com.github.ben-manes.versions" version "0.54.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.3"
     id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.2.0"
+    id "org.owasp.dependencycheck" version "12.2.1"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.20.0"
+    id "org.openapi.generator" version "7.21.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.2.2"
+    id "org.cyclonedx.bom" version "3.2.4"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.0.1"
+version = "9.1.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -100,6 +100,12 @@ gitProperties {
         customProperty 'git.commit.id.abbrev', ciCommit.take(7)
     }
 }
+
+// Override Spring Boot BOM versions to patched releases addressing known CVEs
+// thymeleaf 3.1.4.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q
+// tomcat 11.0.21: GHSA-h9fx-5mv3-gmh6, GHSA-6q54-28g2-vpgm, GHSA-55j7-cm8x-wvmh
+ext["thymeleaf.version"] = "3.1.4.RELEASE"
+ext["tomcat.version"] = "11.0.21"
 
 configurations {
     mockitoAgent
@@ -227,8 +233,8 @@ dependencies {
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
     // Override transitive dependencies from spring-ai to fix security vulnerabilities
     // jackson-bom 3.1.1 fixes GHSA-2m67-wjpj-xhg9 (document length constraint bypass)
-    implementation "tools.jackson.core:jackson-core:3.1.1"
-    implementation "tools.jackson.core:jackson-databind:3.1.1"
+    implementation "tools.jackson.core:jackson-core:3.1.2"
+    implementation "tools.jackson.core:jackson-databind:3.1.2"
     constraints {
         implementation("io.modelcontextprotocol.sdk:mcp-core:1.1.1") {
             because("Fix GHSA-hv2w-8mjj-jw22: hardcoded wildcard CORS")
@@ -245,7 +251,7 @@ dependencies {
     }
 
     // Sentry depends on this
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.25.3"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.25.4"
 
     // Used for LTI (e.g. Moodle --> Artemis)
     implementation("uk.ac.ox.ctl:spring-security-lti13:0.3.4") {
@@ -287,7 +293,7 @@ dependencies {
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
 
-    implementation "org.jsoup:jsoup:1.22.1"
+    implementation "org.jsoup:jsoup:1.22.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.21.0"
 
@@ -337,16 +343,21 @@ dependencies {
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    // Required for Hibernate multi node caching via JCache bridge (hazelcast-hibernate53 is incompatible with Hibernate 7)
-    implementation "org.hibernate.orm:hibernate-jcache:7.2.7.Final"
+    // Required for Hibernate multi node caching via JCache bridge (hazelcast-hibernate53 is incompatible with Hibernate 7).
+    // Pinned one minor ahead of the Spring Boot 4.0.5 BOM (7.2.7) to pick up HHH-20209 (race in JavaTypeRegistry
+    // during parallel UNION queries) and HHH-20231 (2L-cached native queries with same SQL but different result
+    // type). Drop this override once Spring Boot's BOM catches up to 7.2.12+.
+    implementation "org.hibernate.orm:hibernate-jcache:7.2.12.Final"
     implementation "javax.cache:cache-api:1.1.1"
     // alternative for Hazelcast
     implementation "org.redisson:redisson:${redisson_version}"
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
 
-    implementation "org.hibernate.orm:hibernate-core:7.2.7.Final"
-    implementation "org.hibernate.orm:hibernate-envers:7.2.7.Final"
+    // Hibernate ORM — pinned to 7.2.12.Final (patch bumps over the 7.2.7 shipped by Spring Boot 4.0.5 BOM).
+    // See the note on hibernate-jcache above for the rationale; keep all four artifacts in lockstep.
+    implementation "org.hibernate.orm:hibernate-core:7.2.12.Final"
+    implementation "org.hibernate.orm:hibernate-envers:7.2.12.Final"
 
     // Required for jdbc connection pooling to databases
     implementation "com.zaxxer:HikariCP:7.0.2"
@@ -378,31 +389,33 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    // Spring Data and LDAP versions from Spring Boot BOM
-    implementation "org.springframework.data:spring-data-jpa:4.0.4"
-    implementation "org.springframework.data:spring-data-ldap:4.0.4"
-    implementation "org.springframework.ldap:spring-ldap-core:4.0.2"
+    // Spring Data and LDAP — versions managed by the Spring Boot BOM.
+    implementation "org.springframework.data:spring-data-jpa"
+    implementation "org.springframework.data:spring-data-ldap"
+    implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.1 (Oakwood) — individual module version is 5.0.1
+    // Spring Cloud 2025.1.1 (Oakwood) — individual module version is 5.0.1. Kept explicit because the
+    // spring-cloud-dependencies BOM does not publish versions for these specific modules.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.1"
     implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.1"
     implementation "org.springframework.cloud:spring-cloud-commons:5.0.1"
 
-    // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.3.4"
+    // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
+    // Version managed by the Spring Boot BOM.
+    implementation "io.projectreactor.netty:reactor-netty-core"
 
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.12"
 
-    // passkey functionality to simplify login
-    implementation "org.springframework.security:spring-security-webauthn:7.0.4"
+    // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
+    implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.1.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.3.RELEASE"
 
-    implementation "org.springframework.security:spring-security-messaging:7.0.4"
-    implementation "org.springframework.security:spring-security-ldap:7.0.4"
+    implementation "org.springframework.security:spring-security-messaging"
+    implementation "org.springframework.security:spring-security-ldap"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.8"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.9"
 
     // Nullable annotations for improved static analysis
     implementation "org.jspecify:jspecify:1.0.0"
@@ -424,16 +437,20 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 
-    // Spring Boot 4 moved SAML2 auto-configuration to a separate module (creates RelyingPartyRegistrationRepository bean)
+    // Spring Boot 4 moved SAML2 autoconfiguration out of spring-boot-autoconfigure into this dedicated starter.
+    // It transitively brings spring-security-saml2-service-provider and registers the
+    // RelyingPartyRegistrationRepository bean from spring.security.saml2.relyingparty.* properties.
     implementation "org.springframework.boot:spring-boot-starter-security-saml2"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
-    // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.83"
+    // required by sshd-git; 1.84 fixes GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.84"
+    // pulled transitively by sshd-git; pin to patched version
+    implementation "org.bouncycastle:bcpg-jdk18on:1.84"
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
@@ -448,7 +465,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:4.0.0-rc-5"
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.27.1"
+    implementation "org.commonmark:commonmark:0.28.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
@@ -464,9 +481,9 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.48.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.49.0"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -476,19 +493,20 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.7.Final"
-    annotationProcessor "org.hibernate.orm:hibernate-core:7.2.7.Final"
+    // Hibernate annotation processors — kept in lockstep with hibernate-core/envers/jcache above.
+    annotationProcessor "org.hibernate.orm:hibernate-processor:7.2.12.Final"
+    annotationProcessor "org.hibernate.orm:hibernate-core:7.2.12.Final"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-    implementation "org.mnode.ical4j:ical4j:4.2.4"
+    implementation "org.mnode.ical4j:ical4j:4.2.5"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
 
     // use newest version of plexus to avoid security issues through outdated dependencies
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
-    checkstyle "org.codehaus.plexus:plexus-classworlds:2.9.0"
+    checkstyle "org.codehaus.plexus:plexus-classworlds:2.10.0"
     // Override plexus-utils to fix Zip Slip vulnerability (GHSA-6fmv-xxpf-w3cw)
     checkstyle "org.codehaus.plexus:plexus-utils:4.0.3"
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
@@ -500,9 +518,9 @@ dependencies {
     // Required for MockMvc + Spring Security integration in Spring Boot 4 (auto-applies springSecurity() to MockMvc)
     testImplementation "org.springframework.boot:spring-boot-security-test:${spring_boot_version}"
     testImplementation "org.springframework.boot:spring-boot-webmvc-test:${spring_boot_version}"
-    testImplementation "org.springframework.security:spring-security-test:7.0.4"
+    testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.springframework:spring-test:7.0.6"
+    testImplementation "org.springframework:spring-test"
     testImplementation "org.assertj:assertj-core:3.27.7"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning
@@ -520,7 +538,7 @@ dependencies {
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.8"
-    testImplementation "com.tngtech.archunit:archunit:1.4.1"
+    testImplementation "com.tngtech.archunit:archunit:1.4.2"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
     // we only need the database present at runtime
@@ -622,8 +640,8 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests (PostgreSQL default, Docker required): ./gradlew test -x webapp
-// 2a) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
+// 2) Execute tests (PostgreSQL, Docker required):  ./gradlew test -x webapp
+// 2a) Execute tests with coverage report:          ./gradlew test jacocoTestReport -x webapp
 // 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
 // 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
@@ -632,7 +650,7 @@ tasks.named("dependencyUpdates").configure {
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
 // 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release -x webapp
-// 6a) Find only minor/patch dependency updates:     ./gradlew dependencyUpdates -Drevision=release -DskipMajorUpdates -x webapp
+// 6a) Find only minor/patch dependency updates:    ./gradlew dependencyUpdates -Drevision=release -DskipMajorUpdates -x webapp
 // 7) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
 // 8) Detects uses of legacy code:                  ./gradlew modernizer -x webapp
 // 9) Check for vulnerabilities in dependencies     ./gradlew dependencyCheckAnalyze -x webapp

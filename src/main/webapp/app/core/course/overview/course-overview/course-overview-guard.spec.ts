@@ -16,6 +16,8 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/core/user/user.model';
 
 describe('CourseOverviewGuard', () => {
     setupTestBed({ zoneless: true });
@@ -23,6 +25,7 @@ describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
     let courseStorageService: CourseStorageService;
     let courseManagementService: CourseManagementService;
+    let accountService: AccountService;
     let router: Router;
 
     const visibleRealExam = {
@@ -45,6 +48,7 @@ describe('CourseOverviewGuard', () => {
         guard = TestBed.inject(CourseOverviewGuard);
         courseStorageService = TestBed.inject(CourseStorageService);
         courseManagementService = TestBed.inject(CourseManagementService);
+        accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
     });
@@ -202,6 +206,34 @@ describe('CourseOverviewGuard', () => {
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
         });
 
+        it('should redirect to iris when dashboard is denied, iris is enabled, and the user accepted cloud AI', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
+        });
+
+        it('should redirect to exercises when dashboard is denied, iris is enabled, but the user opted out of AI', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+        });
+
+        it('should still grant dashboard access to a user who opted out of AI when the dashboard is enabled', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = true;
+            mockCourse.irisEnabledInCourse = true;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            let resultValue = false;
+            guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD, { selectedLLMUsage: LLMSelectionDecision.NO_AI } as User).subscribe((value) => {
+                resultValue = value;
+            });
+            expect(resultValue).toBe(true);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
         it('should redirect to exercises when dashboard is denied and iris is not enabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = false;
             mockCourse.irisEnabledInCourse = false;
@@ -214,6 +246,74 @@ describe('CourseOverviewGuard', () => {
             const navigateSpy = vi.spyOn(router, 'navigate');
             guard.handleReturn(mockCourse, 'unknown');
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+        });
+    });
+
+    describe('canActivate for dashboard path', () => {
+        it('should resolve user identity and redirect opted-out users to exercises on cold start', async () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            let resultValue: boolean | undefined;
+            await new Promise<void>((resolve) => {
+                guard.canActivate(route).subscribe((value) => {
+                    resultValue = value;
+                    resolve();
+                });
+            });
+
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+        });
+
+        it('should redirect to iris for a non-opted-out user even when identity is only resolved asynchronously', async () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            await new Promise<void>((resolve) => {
+                guard.canActivate(route).subscribe(() => resolve());
+            });
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
+        });
+
+        it('should not abort the guard stream when identity() rejects; treat unknown user as not opted out', async () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('network error'));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            let resultValue: boolean | undefined;
+            let errored = false;
+            await new Promise<void>((resolve) => {
+                guard.canActivate(route).subscribe({
+                    next: (value) => {
+                        resultValue = value;
+                    },
+                    error: () => {
+                        errored = true;
+                        resolve();
+                    },
+                    complete: () => resolve(),
+                });
+            });
+
+            expect(errored).toBe(false);
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
         });
     });
 });

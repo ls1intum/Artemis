@@ -24,14 +24,16 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 
 **Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
 
-**Repository**: <a href="https://github.com/ls1intum/edutelligence">https://github.com/ls1intum/edutelligence</a>
+**Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
 
 ---
 
 ## Iris & Pyris Setup Guide
 
 <Callout variant={CalloutVariant.info}>
-  <p>Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.</p>
+
+  Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.
+
 </Callout>
 
 ### Overview
@@ -55,7 +57,9 @@ artemis:
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.</p>
+
+  The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.
+
 </Callout>
 
 #### 1.2 Optional: Configure rate limiting
@@ -107,7 +111,9 @@ env_vars:
 ```
 
 <Callout variant={CalloutVariant.warning}>
-  <p>When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.</p>
+
+  When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.
+
 </Callout>
 
 Edit `llm_config.yml` with your model configurations. Pyris needs **three types of models**:
@@ -117,7 +123,9 @@ Edit `llm_config.yml` with your model configurations. Pyris needs **three types 
 - **Reranker models** (optional) — improves retrieval quality
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.</p>
+
+  The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.
+
 </Callout>
 
 **Azure OpenAI chat model example:**
@@ -166,7 +174,9 @@ See `llm_config.example.yml` for the complete list of model types, including Ope
 - `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
 
 <Callout variant={CalloutVariant.info}>
-  <p>Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.</p>
+
+  Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.
+
 </Callout>
 
 **3. Choose a Docker Compose profile and start**
@@ -199,7 +209,9 @@ docker compose -f docker/pyris-production-internal.yml up -d
 ```
 
 <Callout variant={CalloutVariant.info}>
-  <p>Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.</p>
+
+  Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.
+
 </Callout>
 
 **Environment variable reference:**
@@ -327,7 +339,9 @@ If Iris does not respond, check:
 The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
 
 <Callout variant={CalloutVariant.info}>
-  <p>Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.</p>
+
+  Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+
 </Callout>
 
 ### Enable the athena Spring profile
@@ -351,93 +365,6 @@ artemis:
 ```
 
 The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
-
----
-
-## Nebula Setup Guide
-
-<Callout variant={CalloutVariant.info}>
-  <p>Nebula is part of the EduTelligence suite. For a successful integration, ensure that the versions you deploy remain compatible with your Artemis release by consulting the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">EduTelligence compatibility matrix</a>.</p>
-</Callout>
-
-### Overview
-
-Nebula provides AI-powered processing pipelines for lecture videos. Artemis currently integrates with the **Transcriber** service to automatically generate lecture transcripts (including slide-number alignment) for attachment video units.
-
-### Artemis Configuration
-
-#### Prerequisites
-
-- A running Artemis instance with the `scheduling` Spring profile enabled. The scheduler polls Nebula every 30 seconds for finished jobs.
-- A shared secret that will be used both in Artemis and in the Nebula gateway.
-- A running instance of <a href="https://github.com/TUM-Dev/gocast">GoCast (TUM-Live)</a> where the lecture recordings are hosted in a public course.
-
-#### Enable the Nebula module
-
-Set the Nebula toggle, URL, and shared secret in your Artemis configuration. The secret you specify here must match the API key that Nebula expects in the `Authorization` header.
-```yaml
-artemis:
-  nebula:
-    enabled: true
-    url: https://nebula.example.com
-    secret-token: your-shared-secret
-
-  tum-live:
-    # Ensure this URL points to your GoCast (TUM-Live) instance. Add the /api/v2 suffix.
-    api-base-url: https://api.tum.live.example.com/api/v2
-```
-
-<Callout variant={CalloutVariant.info}>
-  <p>Artemis uses `server.url` internally when contacting Nebula. Make sure the property reflects the external URL of your Artemis instance.</p>
-</Callout>
-
-#### Starting transcriptions inside Artemis
-
-After Nebula is configured, instructors can launch transcriptions from the lecture unit editor. See the lecture management guide for the detailed, instructor-facing workflow.
-
-### Nebula Service Deployment
-
-#### Prerequisites
-
-- **Python 3.12**
-- **Poetry**
-- **FFmpeg** available in `PATH`
-- **Docker** and **Docker Compose** if you plan to run the API gateway or production deployment
-
-#### Local development workflow
-
-The EduTelligence repository provides step-by-step instructions for running Nebula locally. Follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-quick-start-for-developers">Quick Start for Developers</a> section and start only the **Transcriber Service** (skip the FAQ service). When configuring the Nginx gateway, make sure the `map` block includes the same shared secret you configured in Artemis. Once running, the relevant health checks are at:
-```bash
-curl http://localhost:3007/transcribe/health
-curl http://localhost:3007/health
-```
-
-#### Production deployment
-
-For production deployments, follow the <a href="https://github.com/ls1intum/edutelligence/blob/main/nebula/README.md#-production-deployment">Production Deployment guide in the Nebula README</a> and provision only the transcriber container plus the nginx gateway. Use distinct configuration files (`.env`, `llm_config.production.yml`, `nginx.production.conf`), keep Whisper / GPT-5 credentials secure, and omit the FAQ service unless you plan to experiment with rewriting features.
-
-After the stack is up, verify that the gateway responds:
-```bash
-curl https://nebula.example.com/health
-curl -H "Authorization: your-shared-secret" https://nebula.example.com/transcribe/health
-```
-
-#### Connecting Artemis and Nebula
-
-When both sides are configured:
-
-- Artemis sends transcription jobs to `POST /transcribe/start` with the shared secret.
-- Nebula processes the job asynchronously and exposes status updates via `GET /transcribe/status/{jobId}`.
-- The Artemis scheduler polls Nebula every 30 seconds and persists completed transcripts on the associated lecture unit.
-
-If Artemis reports unauthorized or internal errors when starting a job, double-check that:
-
-- `artemis.nebula.enabled=true`
-- The `artemis.nebula.url` matches the Nginx gateway URL (including scheme)
-- The Artemis secret token equals the key configured in Nginx (`map $http_authorization $api_key_valid`)
-- Nebula can reach its configured Whisper and GPT-5 endpoints (inspect the transcriber logs for HTTP 401/429/500 responses)
-
-With those pieces in place, instructors can automatically transcribe lecture recordings stored on TUM-Live without manual copy/paste workflows.
 
 ---
 
@@ -524,7 +451,9 @@ artemis:
 ### Hyperion Service
 
 <Callout variant={CalloutVariant.info}>
-  <p>This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.</p>
+
+  This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+
 </Callout>
 
 ---
@@ -621,8 +550,8 @@ If the health status is not **`up`**, check the error message in the details. If
 
 #### Conclusion
 
-Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} size={ImageSize.inline} /> button in the **Programming Exercise Details** dialog in Artemis.
+Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} inline /> button in the **Programming Exercise Details** dialog in Artemis.
 
-Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} size={ImageSize.inline} /> button should appear on the sharing platform for any programming exercise available there.
+Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} inline /> button should appear on the sharing platform for any programming exercise available there.
 
 Before testing the import and export functionality, refer to the user documentation for further details.

@@ -136,10 +136,18 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.niceProgress');
         });
 
+        it('should return stuck message for first result with score 0', () => {
+            const result = createResult(1, 0);
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.stuck');
+        });
+
         it('should return progress message when score increased', () => {
             const result1 = createResult(1, 50);
             const result2 = createResult(2, 75);
-            fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
+            fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
             fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.niceProgress');
@@ -148,7 +156,7 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should return score dropped message when score decreased', () => {
             const result1 = createResult(1, 75);
             const result2 = createResult(2, 50);
-            fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
+            fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
             fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.scoreDrop');
@@ -157,7 +165,27 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should return stuck message when score stayed the same', () => {
             const result1 = createResult(1, 50);
             const result2 = createResult(2, 50);
-            fixture.componentRef.setInput('sortedHistoryResults', [result1, result2]);
+            fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.stuck');
+        });
+
+        it('should return progress message when previous result has no score and current score is positive', () => {
+            const result1 = createResult(1, 0);
+            result1.score = undefined;
+            const result2 = createResult(2, 50);
+            fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
+            fixture.detectChanges();
+
+            expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.niceProgress');
+        });
+
+        it('should return stuck message when previous result has no score and current score is 0', () => {
+            const result1 = createResult(1, 0);
+            result1.score = undefined;
+            const result2 = createResult(2, 0);
+            fixture.componentRef.setInput('sortedHistoryResults', [result2, result1]);
             fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result2)).toBe('artemisApp.result.progressString.stuck');
