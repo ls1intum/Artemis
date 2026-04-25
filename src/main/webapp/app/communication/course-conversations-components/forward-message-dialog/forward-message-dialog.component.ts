@@ -28,6 +28,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 
 interface CombinedOption {
     id: number;
@@ -67,6 +68,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
+    readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
@@ -270,6 +272,12 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     /** Returns true if any users or channels are selected */
     hasSelections(): boolean {
         return this.selectedChannels.length > 0 || this.selectedUsers.length > 0;
+    }
+
+    /** Returns true if the message content is valid, i.e. does not exceed the max length */
+    isMessageValid(): boolean {
+        const content = this.newPost.content ?? '';
+        return content.length <= this.maxContentLength;
     }
 
     /** Sets input focus and opens dropdown */

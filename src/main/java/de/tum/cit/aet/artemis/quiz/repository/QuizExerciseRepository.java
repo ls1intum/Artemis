@@ -13,9 +13,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -177,4 +179,54 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
+
+    /**
+     * Targeted UPDATE of releaseDate + dueDate, used by START_NOW. Bypasses the full-entity cascade on
+     * {@code saveAndFlush(quizExercise)} so the {@code @OneToMany + @OrderColumn + orphanRemoval} child collections
+     * (answerOptions / dragItems / dropLocations / correctMappings / spots / solutions) are not deleted and re-inserted.
+     * Prevents the {@code ObjectNotFoundException} on {@code AnswerOption} in live-submit merge for in-flight student tabs.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date (may be {@code null})
+     * @param dueDate     the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate,
+                qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseAndDueDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Targeted UPDATE of releaseDate, used by SET_VISIBLE. See {@link #updateReleaseAndDueDate} for why this bypasses the cascade.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate);
+
+    /**
+     * Targeted UPDATE of dueDate, used by END_NOW. See {@link #updateReleaseAndDueDate} for why this bypasses the cascade.
+     *
+     * @param id      the id of the quiz exercise to update
+     * @param dueDate the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateDueDate(@Param("id") Long id, @Param("dueDate") ZonedDateTime dueDate);
 }

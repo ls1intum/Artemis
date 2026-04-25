@@ -182,6 +182,25 @@ public class ExerciseReviewResource {
     }
 
     /**
+     * PUT /exercises/:exerciseId/review-thread-groups/:groupId/resolved : Update the resolved state of all threads in a group.
+     *
+     * @param exerciseId the exercise id
+     * @param groupId    the group id
+     * @param dto        the resolved state
+     * @return updated group threads
+     */
+    @PutMapping("exercises/{exerciseId}/review-thread-groups/{groupId}/resolved")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<List<CommentThreadDTO>> updateThreadGroupResolvedState(@PathVariable long exerciseId, @PathVariable long groupId,
+            @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
+        log.debug("REST request to update resolved state of thread group {} for exercise {}", groupId, exerciseId);
+        List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateGroupResolvedState(exerciseId, groupId, dto).stream()
+                .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
+        updatedThreads.forEach(updatedThread -> exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadUpdated(updatedThread)));
+        return ResponseEntity.ok(updatedThreads);
+    }
+
+    /**
      * PUT /exercises/:exerciseId/review-comments/:commentId : Update a user comment's content.
      *
      * @param exerciseId the exercise id
@@ -198,6 +217,33 @@ public class ExerciseReviewResource {
         CommentDTO updatedComment = new CommentDTO(updated);
         exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(updatedComment));
         return ResponseEntity.ok(updatedComment);
+    }
+
+    /**
+     * PUT /exercises/:exerciseId/review-comments/:commentId/inline-fix/applied : Mark a consistency inline-fix suggestion as applied.
+     * This endpoint only updates the {@code applied} flag of the stored inline fix suggestion.
+     *
+     * @param exerciseId the exercise id
+     * @param commentId  the consistency comment id
+     * @return the updated comment
+     */
+    @PutMapping("exercises/{exerciseId}/review-comments/{commentId}/inline-fix/applied")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<CommentDTO> markConsistencyInlineFixApplied(@PathVariable long exerciseId, @PathVariable long commentId) {
+        log.debug("REST request to mark inline fix as applied for comment {} in exercise {}", commentId, exerciseId);
+        Comment updated = exerciseReviewService.markConsistencyInlineFixApplied(exerciseId, commentId);
+        CommentDTO updatedComment = new CommentDTO(updated);
+        exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(updatedComment));
+        return ResponseEntity.ok(updatedComment);
+    }
+
+    private List<CommentDTO> mapComments(CommentThread thread) {
+        if (thread.getComments() == null || thread.getComments().isEmpty()) {
+            return List.of();
+        }
+
+        return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
+                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
     }
 
 }

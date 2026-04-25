@@ -226,6 +226,38 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
+     *
+     * @param commentId The consistency comment id.
+     * @param onSuccess Callback invoked only after successful backend persistence.
+     */
+    markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.markConsistencyInlineFixApplied(exerciseId, commentId).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedComment = response.body;
+                if (!updatedComment) {
+                    return;
+                }
+                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                onSuccess?.();
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.saveFailed');
+            },
+        });
+    }
+
+    /**
      * Toggles thread resolved state in the active exercise and reconciles local thread state.
      *
      * @param threadId The thread id.
@@ -246,6 +278,37 @@ export class ExerciseReviewCommentService implements OnDestroy {
                     return;
                 }
                 this.threads.update((threads) => this.replaceThreadInThreads(threads, updatedThread));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.resolveFailed');
+            },
+        });
+    }
+
+    /**
+     * Toggles resolved state for all threads in a group in the active exercise and reconciles local thread state.
+     *
+     * @param groupId The thread-group id.
+     * @param resolved The desired resolved state for all group threads.
+     */
+    toggleGroupResolvedInContext(groupId: number, resolved: boolean): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateThreadGroupResolvedState(exerciseId, groupId, resolved).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedThreads = response.body ?? [];
+                if (!updatedThreads.length) {
+                    return;
+                }
+                this.threads.update((threads) => this.replaceThreadsInThreads(threads, updatedThreads));
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
@@ -313,6 +376,19 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
+     * Updates the resolved state of all threads in a group.
+     *
+     * @param exerciseId The exercise that owns the group.
+     * @param groupId The group to update.
+     * @param resolved The new resolved state.
+     * @returns The HTTP response observable containing the updated threads.
+     */
+    updateThreadGroupResolvedState(exerciseId: number, groupId: number, resolved: boolean): Observable<CommentThreadArrayResponseType> {
+        const body: UpdateThreadResolvedState = { resolved };
+        return this.http.put<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-thread-groups/${groupId}/resolved`, body, { observe: 'response' });
+    }
+
+    /**
      * Updates the content of a user comment.
      *
      * @param exerciseId The exercise that owns the comment.
@@ -322,6 +398,17 @@ export class ExerciseReviewCommentService implements OnDestroy {
      */
     updateUserCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
         return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, content, { observe: 'response' });
+    }
+
+    /**
+     * Marks an inline-fix suggestion as applied for a consistency-check comment.
+     *
+     * @param exerciseId The exercise that owns the comment.
+     * @param commentId The consistency comment id.
+     * @returns The HTTP response observable containing the updated comment.
+     */
+    markConsistencyInlineFixApplied(exerciseId: number, commentId: number): Observable<CommentResponseType> {
+        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}/inline-fix/applied`, {}, { observe: 'response' });
     }
 
     /**
@@ -413,6 +500,21 @@ export class ExerciseReviewCommentService implements OnDestroy {
             return threads;
         }
         return threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread));
+    }
+
+    /**
+     * Replaces multiple threads in the list with updated server versions.
+     *
+     * @param threads The current list of threads.
+     * @param updatedThreads Updated threads returned by the server.
+     * @returns The updated thread list.
+     */
+    replaceThreadsInThreads(threads: CommentThread[], updatedThreads: CommentThread[]): CommentThread[] {
+        if (!updatedThreads.length) {
+            return threads;
+        }
+        const updatedById = new Map(updatedThreads.filter((thread) => thread.id !== undefined).map((thread) => [thread.id, thread]));
+        return threads.map((thread) => updatedById.get(thread.id) ?? thread);
     }
 
     /**
