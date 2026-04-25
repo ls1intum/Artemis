@@ -181,12 +181,17 @@ public class ArtemisMetricsEndpoint {
     }
 
     /**
-     * Collects cache metrics for the Hazelcast IMaps that back Spring {@code @Cacheable}.
+     * Collects metrics for all Hazelcast IMaps used as distributed state.
      * <p>
-     * Hibernate L2 cache is disabled cluster-wide; see
-     * {@code documentation/docs/developer/guidelines/caching.mdx}. As a result there are no
-     * JCache / ICache regions to read — only the Spring
-     * {@link com.hazelcast.spring.cache.HazelcastCacheManager} IMaps.
+     * This includes Spring {@code @Cacheable} caches backed by
+     * {@link com.hazelcast.spring.cache.HazelcastCacheManager} as well as application-level
+     * IMaps (rate-limit buckets, atlas session state, course notification cache, etc.).
+     * Hibernate L2 cache is disabled cluster-wide, so there are no JCache / ICache regions
+     * to read — see {@code documentation/docs/developer/guidelines/caching.mdx}.
+     * <p>
+     * Statistics are read from {@code IMap.getLocalMapStats()} (local-only); the entry
+     * count uses {@code stats.getOwnedEntryCount()} rather than {@code map.size()} to
+     * avoid the cluster-wide network round-trip implied by the latter.
      */
     private Map<String, CacheStats> cacheMetrics() {
         Map<String, CacheStats> result = new TreeMap<>();
@@ -201,8 +206,8 @@ public class ArtemisMetricsEndpoint {
                     if (distributedObject instanceof IMap<?, ?> map) {
                         var stats = map.getLocalMapStats();
                         long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
-                        result.put(name,
-                                new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(), map.size()));
+                        result.put(name, new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(),
+                                stats.getOwnedEntryCount()));
                     }
                 }
                 catch (Exception e) {

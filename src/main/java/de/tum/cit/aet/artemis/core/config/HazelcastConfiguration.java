@@ -325,9 +325,11 @@ public class HazelcastConfiguration {
     /**
      * Binds cache and datasource metrics to Micrometer after the application is fully started.
      * <p>
-     * Cache: binds Hazelcast IMap metrics (Spring {@code @Cacheable} caches backed by
-     * {@link HazelcastCacheManager}) to Micrometer. Hibernate L2 cache is disabled cluster-wide,
-     * so no JCache regions exist; see {@code documentation/docs/developer/guidelines/caching.mdx}.
+     * Cache: binds metrics for every Hazelcast IMap used as distributed state to Micrometer —
+     * this covers Spring {@code @Cacheable} caches backed by {@link HazelcastCacheManager} as
+     * well as application-level IMaps (rate-limit buckets, atlas session state, course
+     * notification cache, etc.). Hibernate L2 cache is disabled cluster-wide, so no JCache
+     * regions exist; see {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>
      * Datasource: Binds HikariCP pool gauges (active, idle, min, max, pending connections).
      * Timer metrics (acquire, creation, usage) are registered by {@link #hikariMetricsPostProcessor}.
@@ -339,7 +341,7 @@ public class HazelcastConfiguration {
         }
         var registry = meterRegistry.get();
 
-        // 1. Bind Hazelcast IMap metrics (Spring @Cacheable caches) to Micrometer.
+        // 1. Bind metrics for every Hazelcast IMap used as distributed state.
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelcastInstance != null) {
             int bound = 0;
