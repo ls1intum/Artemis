@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -107,7 +106,7 @@ public abstract class AbstractArtemisBuildAgentTest {
 
         // Mock the startContainerCmd to sleep for 100ms. This is necessary to appropriately test the build agent's behavior when a build job is started.
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClientMock.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClientMock).startContainerCmd(anyString());
         doAnswer(invocation -> {
             Thread.sleep(100);
             return null;

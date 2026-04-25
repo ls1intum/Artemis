@@ -735,6 +735,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreatePostDTO postDTOToSave2 = new CreatePostDTO(postToSave2.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
         Post createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, Post.class, HttpStatus.CREATED);
 
+        // Wait for async unread count increments to complete before proceeding
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
+        });
+
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         String conversationId = createdPost1.getConversation().getId().toString();

@@ -80,12 +80,12 @@ public class DockerClientTestService {
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         InspectImageResponse inspectImageResponse = new InspectImageResponse();
         inspectImageResponse.withArch("amd64");
-        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         when(inspectImageCmd.exec()).thenReturn(inspectImageResponse);
 
         // Mock PullImageCmd
         PullImageCmd pullImageCmd = mock(PullImageCmd.class);
-        when(dockerClient.pullImageCmd(anyString())).thenReturn(pullImageCmd);
+        doReturn(pullImageCmd).when(dockerClient).pullImageCmd(anyString());
         when(pullImageCmd.withPlatform(anyString())).thenReturn(pullImageCmd);
         BuildAgentDockerService.MyPullImageResultCallback callback1 = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
         when(pullImageCmd.exec(any(BuildAgentDockerService.MyPullImageResultCallback.class))).thenReturn(callback1);
@@ -97,11 +97,11 @@ public class DockerClientTestService {
 
         // Mock dockerClient.startContainerCmd(String containerId)
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
 
         // Mock dockerClient.copyArchiveToContainer(String containerId).withRemotePath(String path).withTarInputStream(InputStream uploadStream).exec()
         CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
-        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(copyArchiveToContainerCmd);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
         when(copyArchiveToContainerCmd.withRemotePath(anyString())).thenReturn(copyArchiveToContainerCmd);
         when(copyArchiveToContainerCmd.withTarInputStream(any())).thenReturn(copyArchiveToContainerCmd);
         doNothing().when(copyArchiveToContainerCmd).exec();
@@ -109,7 +109,7 @@ public class DockerClientTestService {
         // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
         ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
-        when(dockerClient.execCreateCmd(anyString())).thenReturn(execCreateCmd);
+        doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
         when(execCreateCmd.withCmd(any(String[].class))).thenReturn(execCreateCmd);
         when(execCreateCmd.withUser(anyString())).thenReturn(execCreateCmd);
         when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
@@ -120,7 +120,7 @@ public class DockerClientTestService {
 
         // Mock dockerClient.execStartCmd(String execId).exec(T resultCallback)
         ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
-        when(dockerClient.execStartCmd(anyString())).thenReturn(execStartCmd);
+        doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
         when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
         when(execStartCmd.exec(any())).thenAnswer(invocation -> {
             // Stub the 'exec' method of the 'ExecStartCmd' to call the 'onComplete' method of the provided 'ResultCallback.Adapter', which simulates the command completing
@@ -133,13 +133,13 @@ public class DockerClientTestService {
         // Mock dockerClient.inspectExecCmd(String execId).exec() to return exit code 0 by default
         InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
         InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
-        when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+        doReturn(inspectExecCmd).when(dockerClient).inspectExecCmd(anyString());
         when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
         when(inspectExecResponse.getExitCodeLong()).thenReturn(0L);
 
         // Mock listContainerCmd() method.
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
         when(listContainersCmd.withShowAll(anyBoolean())).thenReturn(listContainersCmd);
 
         // Mock container class
@@ -150,7 +150,7 @@ public class DockerClientTestService {
 
         // Mock listImagesCmd() method.
         ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
-        when(dockerClient.listImagesCmd()).thenReturn(listImagesCmd);
+        doReturn(listImagesCmd).when(dockerClient).listImagesCmd();
         Image image = mock(Image.class);
         when(image.getId()).thenReturn("test-image-id");
         when(image.getRepoTags()).thenReturn(new String[] { "test-image-name" });
@@ -158,26 +158,26 @@ public class DockerClientTestService {
 
         // Mock removeImageCmd method.
         RemoveImageCmd removeImageCmd = mock(RemoveImageCmd.class);
-        when(dockerClient.removeImageCmd(anyString())).thenReturn(removeImageCmd);
+        doReturn(removeImageCmd).when(dockerClient).removeImageCmd(anyString());
         doNothing().when(removeImageCmd).exec();
 
         // Mock removeContainerCmd
         RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
-        when(dockerClient.removeContainerCmd(anyString())).thenReturn(removeContainerCmd);
+        doReturn(removeContainerCmd).when(dockerClient).removeContainerCmd(anyString());
         when(removeContainerCmd.withForce(true)).thenReturn(removeContainerCmd);
 
         // Mock stopContainerCmd
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
-        when(dockerClient.stopContainerCmd(anyString())).thenReturn(stopContainerCmd);
+        doReturn(stopContainerCmd).when(dockerClient).stopContainerCmd(anyString());
         when(stopContainerCmd.withTimeout(any())).thenReturn(stopContainerCmd);
 
         // Mock killContainerCmd
         KillContainerCmd killContainerCmd = mock(KillContainerCmd.class);
-        when(dockerClient.killContainerCmd(anyString())).thenReturn(killContainerCmd);
+        doReturn(killContainerCmd).when(dockerClient).killContainerCmd(anyString());
 
         // Mock DisconnectFromNetworkCmd
         DisconnectFromNetworkCmd disconnectFromNetworkCmd = mock(DisconnectFromNetworkCmd.class);
-        when(dockerClient.disconnectFromNetworkCmd()).thenReturn(disconnectFromNetworkCmd);
+        doReturn(disconnectFromNetworkCmd).when(dockerClient).disconnectFromNetworkCmd();
         when(disconnectFromNetworkCmd.withContainerId(anyString())).thenReturn(disconnectFromNetworkCmd);
         when(disconnectFromNetworkCmd.withNetworkId(anyString())).thenReturn(disconnectFromNetworkCmd);
 
@@ -196,7 +196,7 @@ public class DockerClientTestService {
     public static void mockVersionCmd(DockerClient dockerClient, String versionString) {
         VersionCmd versionCmd = mock(VersionCmd.class);
         Version version = mock(Version.class);
-        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        doReturn(versionCmd).when(dockerClient).versionCmd();
         when(versionCmd.exec()).thenReturn(version);
         when(version.getVersion()).thenReturn(versionString);
     }
@@ -214,10 +214,10 @@ public class DockerClientTestService {
         CreateContainerResponse createContainerResponse = new CreateContainerResponse();
         createContainerResponse.setId(dummyContainerId);
         if (image != null) {
-            when(dockerClient.createContainerCmd(eq(image))).thenReturn(createContainerCmd);
+            doReturn(createContainerCmd).when(dockerClient).createContainerCmd(eq(image));
         }
         else {
-            when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
+            doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
         }
         when(createContainerCmd.withName(anyString())).thenReturn(createContainerCmd);
         when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);

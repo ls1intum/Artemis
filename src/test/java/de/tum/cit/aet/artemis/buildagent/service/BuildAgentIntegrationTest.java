@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -155,7 +156,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testBuildAgentConcurrentBuilds() throws IOException {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         doAnswer(invocation -> {
             Thread.sleep(1000);
             return null;
@@ -208,7 +209,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testBuildAgentErrorFlow() {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
 
         var queueItem = createBaseBuildJobQueueItemForTrigger();
@@ -224,7 +225,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Test
     void testBuildAgentTimeoutFlow() {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         doAnswer(invocation -> {
             Thread.sleep(5000);
             return null;
@@ -258,7 +259,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentJobCancelled() {
         // High timeout to ensure that the job is not finished before it is canceled. This will not affect the test runtime since the job is canceled.
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         doAnswer(invocation -> {
             Thread.sleep(5000);
             return null;
@@ -289,7 +290,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         InspectImageResponse inspectImageResponse = new InspectImageResponse();
         inspectImageResponse.withArch("amd64");
 
-        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
 
         AtomicInteger callCount = new AtomicInteger(0);
         doAnswer(invocation -> {
@@ -349,7 +350,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         CountDownLatch buildStarted = new CountDownLatch(1);
 
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         doAnswer(invocation -> {
             buildStarted.countDown();
             // Sleep longer than the pause grace period (2s in test config) so the build is still
@@ -397,7 +398,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         var inspectImageCmd = mock(InspectImageCmd.class);
         var inspectImageResponse = new InspectImageResponse().withArch("amd64");
 
-        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         AtomicInteger fails = new AtomicInteger(0);
         doAnswer(invocation -> {
             if (fails.incrementAndGet() <= 2) {
@@ -431,7 +432,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         // then 5 failings jobs
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
         when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
 
         for (int i = 0; i < pauseAfterConsecutiveFailures; i++) {
@@ -479,7 +480,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentRetryOnTarArchiveFailure() {
         // Mock copyArchiveToContainerCmd to fail on first 2 attempts, then succeed on 3rd attempt
         CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
-        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(copyArchiveToContainerCmd);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
         when(copyArchiveToContainerCmd.withRemotePath(anyString())).thenReturn(copyArchiveToContainerCmd);
         when(copyArchiveToContainerCmd.withTarInputStream(any())).thenReturn(copyArchiveToContainerCmd);
 
@@ -519,7 +520,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentFailsAfterAllTarArchiveRetriesExhausted() {
         // Mock copyArchiveToContainerCmd to always fail (simulating persistent I/O failure)
         CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
-        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(copyArchiveToContainerCmd);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
         when(copyArchiveToContainerCmd.withRemotePath(anyString())).thenReturn(copyArchiveToContainerCmd);
         when(copyArchiveToContainerCmd.withTarInputStream(any())).thenReturn(copyArchiveToContainerCmd);
 
@@ -547,7 +548,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentRetryOnGetArchiveFromContainerFailure() throws IOException {
         // Mock copyArchiveFromContainerCmd to fail on first attempt, then succeed
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), anyString());
 
         AtomicInteger getArchiveAttempts = new AtomicInteger(0);
         doAnswer(invocation -> {
@@ -582,7 +583,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentHandlesNullInputStreamFromContainer() throws IOException {
         // Mock copyArchiveFromContainerCmd to return null on first attempt, then return valid stream
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), anyString());
 
         AtomicInteger attempts = new AtomicInteger(0);
         doAnswer(invocation -> {
@@ -617,7 +618,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testBuildAgentFailsAfterGetArchiveFromContainerRetriesExhausted() {
         // Mock copyArchiveFromContainerCmd to always fail
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        when(dockerClient.copyArchiveFromContainerCmd(anyString(), anyString())).thenReturn(copyArchiveFromContainerCmd);
+        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), anyString());
 
         doAnswer(invocation -> {
             throw new RuntimeException("Simulated persistent failure retrieving archive from container");
@@ -692,7 +693,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         // Mock versionCmd to throw an exception
         VersionCmd versionCmd = mock(VersionCmd.class);
-        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        doReturn(versionCmd).when(dockerClient).versionCmd();
         doThrow(new RuntimeException("Docker daemon unavailable")).when(versionCmd).exec();
 
         // Trigger the update - should not throw

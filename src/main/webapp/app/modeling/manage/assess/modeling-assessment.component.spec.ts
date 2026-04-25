@@ -1,4 +1,65 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    /** Ensure the model has v4-format nodes/edges arrays so component iteration works. */
+    const ensureV4Shape = (model: any): any => {
+        if (!model.nodes) model.nodes = [];
+        if (!model.edges) model.edges = [];
+        if (!model.assessments) model.assessments = {};
+        return model;
+    };
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptionCounter = 0;
+        _destroyed = false;
+
+        subscribeToModelChange = vi.fn((_callback: (model: any) => void) => {
+            return ++this._subscriptionCounter;
+        });
+
+        subscribeToAssessmentSelection = vi.fn((_callback: (selections: string[]) => void) => {
+            return ++this._subscriptionCounter;
+        });
+
+        addOrUpdateAssessment = vi.fn();
+
+        unsubscribe = vi.fn();
+
+        destroy = vi.fn(() => {
+            this._destroyed = true;
+        });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._model = options?.model ? ensureV4Shape(deepClone(options.model)) : { nodes: [], edges: [], assessments: {} };
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = ensureV4Shape(value);
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: MockApollonEditor,
+    };
+});
+
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
