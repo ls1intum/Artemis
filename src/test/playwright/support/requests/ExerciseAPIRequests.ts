@@ -510,6 +510,7 @@ export class ExerciseAPIRequests {
         quizQuestions: any[];
         title?: string;
         releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
@@ -520,6 +521,7 @@ export class ExerciseAPIRequests {
             quizQuestions,
             title = 'Quiz ' + generateUUID(),
             releaseDate = dayjs().add(1, 'year'),
+            dueDate,
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
@@ -540,9 +542,14 @@ export class ExerciseAPIRequests {
         let quizBatches: any[] = [];
         if ('course' in body) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
-            const dates = {
+            const dates: { releaseDate: string; dueDate?: string } = {
                 releaseDate: dayjsToString(releaseDate),
             };
+            if (dueDate) {
+                // Allow tests to mark a quiz as already-ended (dueDate in the past) so the practice / training
+                // submission paths become reachable without driving the instructor-end-quiz UI flow.
+                dates.dueDate = dayjsToString(dueDate);
+            }
             if (startOfWorkingTime) {
                 quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
             }
