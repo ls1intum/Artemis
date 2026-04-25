@@ -117,7 +117,7 @@ export class LectureUnitComponent implements OnDestroy {
 
                     // Scroll to video player if timestamp is provided (deeplinking)
                     if (timestamp !== undefined) {
-                        const videoPlayer = this.elementRef.nativeElement.querySelector('jhi-video-player');
+                        const videoPlayer = this.elementRef.nativeElement.querySelector('jhi-video-player') ?? this.elementRef.nativeElement.querySelector('jhi-youtube-player');
                         if (videoPlayer) {
                             videoPlayer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             return;

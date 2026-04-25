@@ -5,6 +5,7 @@
             [disableCookies]="true"
             [disablePlaceholder]="true"
             [playerVars]="playerVars"
+            [startSeconds]="startSeconds()"
             (ready)="onPlayerReady($event)"
             (stateChange)="onStateChange($event)"
             (error)="onPlayerError($event)"

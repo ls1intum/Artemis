@@ -110,12 +110,41 @@ describe('YouTubePlayerComponent', () => {
 
     it('applies initialTimestamp on ready and updates segment immediately', () => {
         fixture.componentRef.setInput('initialTimestamp', 25);
-        const seekSpy = vi.fn();
-        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: seekSpy };
         const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
         component.onPlayerReady({} as any);
-        expect(seekSpy).toHaveBeenCalledWith(25, true);
         expect(updateSpy).toHaveBeenCalledWith(25);
+    });
+
+    it('seeks when initialTimestamp arrives after the player component exists', async () => {
+        const seekSpy = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
+
+        fixture.componentRef.setInput('initialTimestamp', 60);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(seekSpy).toHaveBeenCalledWith(60, true);
+    });
+
+    it('seeks again when the deeplink timestamp changes', async () => {
+        const seekSpy = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
+
+        fixture.componentRef.setInput('initialTimestamp', 30);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.componentRef.setInput('initialTimestamp', 60);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(seekSpy).toHaveBeenNthCalledWith(1, 30, true);
+        expect(seekSpy).toHaveBeenNthCalledWith(2, 60, true);
     });
 
     it('resyncs segment index when transcriptSegments arrives after player is ready', async () => {
@@ -125,7 +154,7 @@ describe('YouTubePlayerComponent', () => {
         await fixture.whenStable();
 
         // Player becomes ready at t=15
-        (component as any).youtubePlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        (component as any).playerComponent = () => ({ getCurrentTime: () => 15, seekTo: vi.fn() }) as any;
         component.onPlayerReady({} as any);
         expect(component['currentSegmentIndex']()).toBe(-1); // no segments yet
 

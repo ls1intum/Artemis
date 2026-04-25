@@ -197,6 +197,27 @@ describe('LectureUnitComponent', () => {
             });
         });
 
+        it('should scroll to YouTube player when no video player is present', async () => {
+            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
+            fixture.componentRef.setInput('initiallyExpanded', true);
+
+            const mockYoutubePlayer = document.createElement('div');
+            mockYoutubePlayer.scrollIntoView = vi.fn();
+            const youtubeScrollSpy = mockYoutubePlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
+                if (selector === 'jhi-video-player') return null;
+                if (selector === 'jhi-youtube-player') return mockYoutubePlayer;
+                return null;
+            });
+
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(youtubeScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
         it('should ignore deeplink parameters when manually expanding (toggle)', async () => {
             mockActivatedRoute.snapshot.queryParams = { timestamp: '30', page: '5' };
             fixture.componentRef.setInput('initiallyExpanded', false);
