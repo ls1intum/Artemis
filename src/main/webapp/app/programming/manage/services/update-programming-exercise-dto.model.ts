@@ -111,7 +111,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
     const bonusPoints = exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (exercise.bonusPoints ?? 0);
 
     // Convert competency links to DTOs
-    const competencyLinkDTOs: CompetencyLinkDTO[] = (exercise.competencyLinks ?? []).map((link) => ({
+    const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = exercise.competencyLinks?.map((link) => ({
         competency: { id: link.competency!.id! },
         weight: link.weight,
     }));

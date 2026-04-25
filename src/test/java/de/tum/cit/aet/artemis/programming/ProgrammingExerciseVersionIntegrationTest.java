@@ -100,6 +100,13 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Assert: Verify operation succeeded
         assertThat(programmingExercise).isNotNull();
         assertThat(programmingExercise.getId()).isNotNull();
+
+        // The test environment's Aeolus template may produce empty build phases.
+        // Set a valid build plan so that update-endpoint validation (validateBuildPhaseNames) passes.
+        if (programmingExercise.getBuildConfig() != null) {
+            programmingExercise.getBuildConfig()
+                    .setBuildPlanConfiguration("{\"phases\":[{\"name\":\"build\",\"script\":\"echo build\",\"condition\":\"ALWAYS\",\"forceRun\":false,\"resultPaths\":[]}]}");
+        }
         // wait for solution/template/test to build and generate git commits
         await().untilAsserted(() -> {
             ExerciseVersion exerciseVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

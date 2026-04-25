@@ -1054,7 +1054,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+    void updateModelingExercise_invalidPlagiarismDetectionConfig_doesNotAffectUpdate() throws Exception {
+        // With the DTO approach, PlagiarismDetectionConfig is not included in the UpdateModelingExerciseDTO.
+        // Invalid config set on the local object is never sent to the server, so the update succeeds.
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
@@ -1065,12 +1067,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         modelingExercise.setPlagiarismDetectionConfig(config);
 
-        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
-
-        // Test invalid response period lower bound
-        config.setSimilarityThreshold(50);
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
-        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        // The DTO does not include plagiarism config, so the server validates the stored (valid) config
+        request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExercise.class, HttpStatus.OK);
     }
 
     @Test

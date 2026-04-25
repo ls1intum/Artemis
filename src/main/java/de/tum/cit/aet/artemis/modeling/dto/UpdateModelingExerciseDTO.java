@@ -37,7 +37,11 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
         if (exercise == null) {
             throw new BadRequestAlertException("No modeling exercise was provided.", "modelingExercise", "modelingExercise.isNull");
         }
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        // For course exercises: set courseId, leave exerciseGroupId null
+        // For exam exercises: set exerciseGroupId, leave courseId null
+        // This matches the conflict check in ModelingExerciseResource
+        Long courseId = exercise.isCourseExercise() && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterionDTO> gradingCriterionDTOs;

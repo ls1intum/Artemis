@@ -26,13 +26,13 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -90,7 +90,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final ObjectMapper objectMapper;
+    private final ObjectProvider<ObjectMapper> objectMapperProvider;
 
     private final TokenProvider tokenProvider;
 
@@ -98,11 +98,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
+    private final ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
+    private final ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -114,16 +114,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+    public WebsocketConfiguration(ObjectProvider<ObjectMapper> objectMapperProvider, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+            StudentParticipationRepository studentParticipationRepository, ObjectProvider<AuthorizationCheckService> authorizationCheckServiceProvider,
+            ExerciseRepository exerciseRepository, ObjectProvider<ExamRepositoryApi> examRepositoryApiProvider) {
+        this.objectMapperProvider = objectMapperProvider;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.authorizationCheckService = authorizationCheckService;
+        this.authorizationCheckServiceProvider = authorizationCheckServiceProvider;
         this.exerciseRepository = exerciseRepository;
-        this.examRepositoryApi = examRepositoryApi;
+        this.examRepositoryApiProvider = examRepositoryApiProvider;
     }
 
     @Override
@@ -168,7 +168,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     protected boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapper);
+        GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(objectMapperProvider.getObject());
         messageConverters.add(gzipMessageConverter);
         return false;
     }
@@ -267,8 +267,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @NonNull
     @Override
+    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration
     protected MappingJackson2MessageConverter createJacksonConverter() {
-        return new GzipMessageConverter(objectMapper);
+        return new GzipMessageConverter(objectMapperProvider.getObject());
     }
 
     /**
@@ -383,17 +384,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                return authorizationCheckService.isAdmin(login);
+                return authorizationCheckServiceProvider.getObject().isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, courseId.get());
             }
 
             Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
             if (buildJobCourseId.isPresent()) {
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, buildJobCourseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {
@@ -405,23 +406,26 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
+                    return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInExercise(login, exerciseId);
                 }
                 else {
-                    return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                    return authorizationCheckServiceProvider.getObject().isAtLeastTeachingAssistantInExercise(login, exerciseId);
                 }
             }
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
-                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+                ExamRepositoryApi api = examRepositoryApiProvider.getIfAvailable();
+                if (api == null) {
+                    throw new ExamApiNotPresentException(ExamRepositoryApi.class);
+                }
                 var exam = api.findByIdElseThrow(examId.get());
-                return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
+                return authorizationCheckServiceProvider.getObject().isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
 
             var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
             if (synchronizationExerciseId.isPresent()) {
-                return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
+                return authorizationCheckServiceProvider.getObject().isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
             }
 
             return true;

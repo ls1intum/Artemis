@@ -54,8 +54,11 @@ public class JacksonConfiguration {
 
     /**
      * Exposes a MappingJackson2HttpMessageConverter bean using the auto-configured ObjectMapper.
-     * In Spring Boot 4, this converter is no longer directly injectable as a named bean — it's only registered
-     * in the converter list. Several Artemis services inject it directly, so we provide it here.
+     * <p>
+     * This bean ensures Spring Boot registers a Jackson 2.x HTTP message converter that uses the
+     * Hibernate7Module-aware ObjectMapper. Without it, Spring Framework 7 may default to a Jackson 3.x
+     * converter that does not support Hibernate7Module, causing LazyInitializationException when
+     * serializing entities with uninitialized lazy collections.
      *
      * @param objectMapper the auto-configured Jackson ObjectMapper
      * @return the HTTP message converter

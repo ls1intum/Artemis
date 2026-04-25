@@ -191,6 +191,7 @@ public class SecurityConfiguration {
      *         in securing methods based on security expressions.
      */
     // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
+    @SuppressWarnings("deprecation") // setRoleHierarchy is deprecated in Spring Security 7, but required when providing a custom bean
     @Bean
     public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();

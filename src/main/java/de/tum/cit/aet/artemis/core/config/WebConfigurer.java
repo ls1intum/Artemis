@@ -158,6 +158,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
      * so that String responses are written as plain text by default, matching the behavior
      * expected by the client and tests.
      */
+    @SuppressWarnings({ "deprecation", "removal" }) // extendMessageConverters is deprecated for removal in Spring Framework 7, but the configureMessageConverters replacement
+                                                    // causes converter registration issues
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // Collect all StringHttpMessageConverters and remove them from their current positions
