@@ -244,8 +244,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
+        Course course = classExercise.getCourseViaExerciseGroupOrCourseMember();
+        courseUtilService.enableMessagingForCourse(course);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(course.getId());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         // Create exercise first without competency links (competency is set up in @BeforeEach but may not
         // be visible to the POST handler due to Zonky per-test database isolation)

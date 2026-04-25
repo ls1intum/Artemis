@@ -149,15 +149,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     }
 
     /**
-     * In Spring Framework 7, the default message converter ordering causes ResponseEntity&lt;String&gt;
-     * responses to be serialized as JSON strings (wrapped in quotes) instead of plain text.
-     * This happens because MappingJackson2HttpMessageConverter is tried before StringHttpMessageConverter
-     * and both support String types.
-     * <p>
-     * This method moves all StringHttpMessageConverter instances before the Jackson converter
-     * so that String responses are written as plain text by default, matching the behavior
-     * expected by the client and tests.
+     * Ensures StringHttpMessageConverter takes priority over Jackson for String responses.
+     * Without this, ResponseEntity&lt;String&gt; would be serialized as JSON strings (wrapped in quotes).
      */
+    @SuppressWarnings("deprecation") // extendMessageConverters is deprecated in Spring Framework 7 but still functional
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // Collect all StringHttpMessageConverters and remove them from their current positions

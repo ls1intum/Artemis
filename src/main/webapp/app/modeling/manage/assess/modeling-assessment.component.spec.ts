@@ -1,4 +1,76 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { vi } from 'vitest';
+
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptions = new Map<number, (model: any) => void>();
+        _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _subscriptionCounter = 0;
+        _destroyed = false;
+
+        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._subscriptions.set(id, callback);
+            return id;
+        });
+
+        subscribeToAssessmentSelection = vi.fn((callback: (selections: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._assessmentSelectionSubscriptions.set(id, callback);
+            return id;
+        });
+
+        unsubscribe = vi.fn((id: number) => {
+            this._subscriptions.delete(id);
+            this._assessmentSelectionSubscriptions.delete(id);
+        });
+
+        addOrUpdateAssessment = vi.fn();
+
+        destroy = vi.fn(() => {
+            this._destroyed = true;
+            this._subscriptions.clear();
+            this._assessmentSelectionSubscriptions.clear();
+        });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            const cloned = options?.model ? deepClone(options.model) : {};
+            // Ensure v4 model format with nodes/edges arrays (real ApollonEditor converts v3 to v4 internally)
+            if (!cloned.nodes) cloned.nodes = [];
+            if (!cloned.edges) cloned.edges = [];
+            if (!cloned.assessments) cloned.assessments = {};
+            this._model = cloned;
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = value;
+            // Note: real ApollonEditor triggers subscribeToModelChange callbacks asynchronously
+            // via React rendering, not synchronously in the setter.
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: MockApollonEditor,
+    };
+});
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';

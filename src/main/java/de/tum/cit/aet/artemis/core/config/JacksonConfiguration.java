@@ -53,13 +53,15 @@ public class JacksonConfiguration {
     }
 
     /**
-     * Exposes a MappingJackson2HttpMessageConverter bean using the auto-configured ObjectMapper.
-     * In Spring Boot 4, this converter is no longer directly injectable as a named bean — it's only registered
-     * in the converter list. Several Artemis services inject it directly, so we provide it here.
+     * Provides a MappingJackson2HttpMessageConverter that uses the auto-configured ObjectMapper
+     * (which includes Hibernate7Module and JavaTimeModule). Without this explicit bean, the
+     * default converter may not properly handle Hibernate lazy-loaded collections, causing
+     * HttpMessageNotWritableException during JSON serialization.
      *
      * @param objectMapper the auto-configured Jackson ObjectMapper
      * @return the HTTP message converter
      */
+    @SuppressWarnings("removal") // Blocked by Jackson 2→3 migration; requires JacksonJsonHttpMessageConverter + JsonMapper
     @Bean
     public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
         return new MappingJackson2HttpMessageConverter(objectMapper);
