@@ -42,9 +42,9 @@ Cross-node cache invalidation propagates asynchronously through Hazelcast. Under
 
 The project removed L2 caches in stages after concrete production bugs:
 
-* **`#12574` — cross-node stale `selectedOptions` in multiple-choice quiz submissions.** A `@ManyToMany(fetch = EAGER)` collection cached with `NONSTRICT_READ_WRITE` returned partial subsets of options on different nodes during the async-invalidation window. Users saw their submitted answers "lose" selections on refresh.
-* **`#12584` — `ObjectNotFoundException` from stale entity-cache hits** during quiz-submission merge. Hibernate's `internalLoad` resolved a reference from the L2 region that pointed at an entity already deleted on another node.
-* **PR `#12579` (`e5c547a6df`) — Remove non-strict-read-write cache on actively-mutated collections.** Stripped `@Cache` from collections that change at runtime (quiz options, submissions, build logs, gradings, exam student lists, course exercise lists, etc.).
+* **Issue [#12574](https://github.com/ls1intum/Artemis/issues/12574) — cross-node stale `selectedOptions` in multiple-choice quiz submissions.** A `@ManyToMany(fetch = EAGER)` collection cached with `NONSTRICT_READ_WRITE` returned partial subsets of options on different nodes during the async-invalidation window. Users saw their submitted answers "lose" selections on refresh.
+* **`ObjectNotFoundException` from stale entity-cache hits** during quiz-submission merge. Hibernate's `internalLoad` resolved a reference from the L2 region that pointed at an entity already deleted on another node. Both this and #12574 above were bundled and fixed in PR [#12578](https://github.com/ls1intum/Artemis/pull/12578).
+* **PR [#12579](https://github.com/ls1intum/Artemis/pull/12579) (`e5c547a6df`) — Remove non-strict-read-write cache on actively-mutated collections.** Stripped `@Cache` from collections that change at runtime (quiz options, submissions, build logs, gradings, exam student lists, course exercise lists, etc.).
 * **Extended sweep `0de9bdac67`, `a2fd873a38`.** Extended the removal to the rest of the quiz graph and a handful of additional grading / lecture / tutorial-group / build-plan collections that matched the same bug class.
 * **READ_WRITE experiments — both reverted.** Two attempts to *strengthen* the cache strategy instead of removing it (`Result.feedbacks` `99ac90a8ca` → `f571cfaa04`; `Lecture` entity `3ecde55e5c` → `0aeccb54d7`) were rolled back. The rollback rationale captured in `f571cfaa04`:
 
@@ -54,7 +54,7 @@ The project removed L2 caches in stages after concrete production bugs:
 
 ## Why `READ_WRITE` was not adopted
 
-`READ_WRITE` uses soft locks around the write→commit window so concurrent readers on other nodes either see the fully-committed state or briefly block, rather than observing a partial collection. It closes the cross-node-staleness subset of the bug class in `#12574`. It does not, however:
+`READ_WRITE` uses soft locks around the write→commit window so concurrent readers on other nodes either see the fully-committed state or briefly block, rather than observing a partial collection. It closes the cross-node-staleness subset of the bug class in #12574. It does not, however:
 
 * fix the `@Modifying @Query` bypass (point 3 above);
 * save the per-access cost — every cached read pays a soft-lock round-trip to Hazelcast that is on the same order as a database lookup for an indexed entity, so the realised latency benefit on the read side is small;
@@ -162,6 +162,15 @@ The L2 ban does **not** apply to:
 
 The rule is specifically about Hibernate's *entity / association* second-level cache.
 
+## Mixed-version cluster during rollout
+
+A rolling deployment that crosses an L2-on/L2-off boundary (e.g. one node still on the old build with `use_second_level_cache: true`, another on the new build with `false`) degrades gracefully:
+
+* Hibernate L2 is process-local per JVM even when JCache-bridged through Hazelcast — only invalidation events propagate across the cluster, not the cached values themselves. The new node has no L2 region populated and never reads stale data; the old node continues to use its own L2 until restart, scoped to writes that originate on its own JVM.
+* Spring `@Cacheable` paths use Hazelcast IMaps that are coherent across nodes regardless of L2 state, so the title/notification/file caches behave identically on both sides.
+
+This means the disable-L2 change can be rolled out as a normal canary deploy without a cluster-wide restart.
+
 ## Multi-node testing
 
 Any change to caching — adding a `@Cacheable`, refactoring an eviction listener, modifying `HazelcastConfiguration` — must pass the multi-node E2E suite before merge:
@@ -170,7 +179,7 @@ Any change to caching — adding a `@Cacheable`, refactoring an eviction listene
 ./run-e2e-tests-local-multinode.sh
 ```
 
-This boots the production-faithful stack (Postgres, JHipster Registry / Eureka, ActiveMQ, three Artemis nodes, nginx load balancer, containerised Playwright) and is the canonical reproduction surface for cache-coherence regressions. Bug `#12574` was originally surfaced by this kind of multi-node exercise; do not skip it for cache-related changes.
+This boots the production-faithful stack (Postgres, JHipster Registry / Eureka, ActiveMQ, three Artemis nodes, nginx load balancer, containerised Playwright) and is the canonical reproduction surface for cache-coherence regressions. Issue #12574 was originally surfaced by this kind of multi-node exercise; do not skip it for cache-related changes.
 
 ## Related guidelines
 

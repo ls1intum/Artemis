@@ -68,8 +68,6 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    String USERS_CACHE = "users";
-
     String FILTER_INTERNAL = "INTERNAL";
 
     String FILTER_EXTERNAL = "EXTERNAL";

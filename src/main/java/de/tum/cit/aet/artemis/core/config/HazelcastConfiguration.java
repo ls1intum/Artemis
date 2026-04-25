@@ -267,13 +267,18 @@ public class HazelcastConfiguration {
      *
      * <p>
      * <strong>Rationale:</strong> Using Hazelcast as the cache backend (vs. local caches like Caffeine)
-     * provides distributed caching across all Artemis nodes. When one node caches data, all other
-     * nodes can access it without hitting the database. This is critical for:
+     * provides distributed coherence across all Artemis nodes via Hazelcast IMaps. This is the
+     * caching layer for {@code @Cacheable} on read-heavy lookups with explicit eviction:
      * <ul>
-     * <li>User authentication data - avoids repeated database lookups</li>
-     * <li>Course/exercise metadata - frequently accessed, rarely changed</li>
-     * <li>Rate limiting state - must be consistent across all nodes</li>
+     * <li>Title caches for breadcrumbs/navigation ({@code courseTitle}, {@code exerciseTitle},
+     * {@code lectureTitle}, {@code examTitle}, etc.) — evicted by {@code TitleCacheEvictionService}</li>
+     * <li>File content for static assets ({@code files}) — evicted on file write</li>
+     * <li>Computed previews ({@code linkPreview}, {@code plantUmlPng}, {@code plantUmlSvg})</li>
+     * <li>Notification settings and saved-post lookups — evicted via {@code @CacheEvict} on writers</li>
      * </ul>
+     * Hibernate L2 entity cache is disabled cluster-wide; see
+     * {@code documentation/docs/developer/guidelines/caching.mdx} for the full policy. Do not
+     * add {@code @Cache} annotations on entities — an ArchUnit rule enforces this.
      *
      * <p>
      * The {@code @Qualifier} ensures we get the correct HazelcastInstance when multiple beans exist.
@@ -1334,6 +1339,9 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-pending-relations:</strong> Long-lived session state for relation operations</li>
      * <li><strong>atlas-execution-plan:</strong> Long-lived session state for multi-step execution plans</li>
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
+     * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
+     * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
      *
      * @param config            the Hazelcast configuration to modify
