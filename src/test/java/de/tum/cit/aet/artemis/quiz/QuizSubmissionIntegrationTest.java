@@ -1122,7 +1122,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
-            assertThat(updatedSubmission.getSubmittedAnswers()).hasSize(validAnswerCount);
+            // Specifically the multiple-choice answer must be dropped (the one whose runtime type didn't match its
+            // re-pointed question); the drag-and-drop and short-answer answers must remain.
+            assertThat(updatedSubmission.getSubmittedAnswers()).hasSize(validAnswerCount).noneMatch(MultipleChoiceSubmittedAnswer.class::isInstance)
+                    .anyMatch(DragAndDropSubmittedAnswer.class::isInstance).anyMatch(ShortAnswerSubmittedAnswer.class::isInstance);
         }
 
         /**

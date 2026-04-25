@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
-import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
@@ -278,13 +278,12 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining() throws Exception {
-        Course course = courseUtilService.createCourse();
-
-        MultipleChoiceQuestion mcQuestion = new MultipleChoiceQuestion();
-        mcQuestion.setTitle("Test Question");
-        mcQuestion.setPoints(1.0);
-        mcQuestion.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mcQuestion = quizQuestionRepository.save(mcQuestion);
+        // Use a quiz exercise attached to the course so the training-submit endpoint can resolve the question
+        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdElseThrow).
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
+                .orElseThrow();
         QuizQuestionProgressData dataExisting = new QuizQuestionProgressData();
         dataExisting.setEasinessFactor(2.5);
         dataExisting.setInterval(1);
@@ -297,7 +296,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
-        submittedAnswer.setSelectedOptions(Set.of());
+        // Select exactly the correct answer options so the ALL_OR_NOTHING scoring yields a full score (lastScore = 1.0).
+        submittedAnswer.setSelectedOptions(mcQuestion.getAnswerOptions().stream().filter(option -> Boolean.TRUE.equals(option.isIsCorrect())).collect(Collectors.toSet()));
 
         quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true);
 

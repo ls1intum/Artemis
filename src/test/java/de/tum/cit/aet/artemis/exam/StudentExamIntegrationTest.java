@@ -1621,9 +1621,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(versionTree.isArray()).as("version content must be a JSON array of submitted answers").isTrue();
                     var quizSubmission = (QuizSubmission) submission;
                     assertThat(versionTree.size()).as("version must contain one entry per submitted answer").isEqualTo(quizSubmission.getSubmittedAnswers().size());
-                    var versionedTypes = new HashSet<String>();
-                    versionTree.forEach(node -> versionedTypes.add(node.path("quizQuestion").path("type").asText()));
-                    var submittedTypes = quizSubmission.getSubmittedAnswers().stream().map(answer -> {
+                    Map<String, Long> versionedTypeCounts = new HashMap<>();
+                    versionTree.forEach(node -> versionedTypeCounts.merge(node.path("quizQuestion").path("type").asText(), 1L, Long::sum));
+                    Map<String, Long> submittedTypeCounts = quizSubmission.getSubmittedAnswers().stream().collect(Collectors.groupingBy(answer -> {
                         var question = answer.getQuizQuestion();
                         if (question instanceof MultipleChoiceQuestion) {
                             return "multiple-choice";
@@ -1635,8 +1635,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                             return "short-answer";
                         }
                         return "unknown";
-                    }).collect(Collectors.toSet());
-                    assertThat(versionedTypes).as("version must reference the same set of question types as the submission").isEqualTo(submittedTypes);
+                    }, Collectors.counting()));
+                    assertThat(versionedTypeCounts).as("version must reference the same per-type count of question types as the submission").isEqualTo(submittedTypeCounts);
                 }
                 catch (JsonProcessingException e) {
                     fail("Exception thrown while parsing versioned submission content", e);
