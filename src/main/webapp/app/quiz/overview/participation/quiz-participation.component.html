@@ -3,6 +3,7 @@
         <div #quizHeader class="row module-bg">
             <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
+                    <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
                     @if (mode === 'preview' || mode === 'solution') {
                         {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
                         - {{ quizExercise.title }}
