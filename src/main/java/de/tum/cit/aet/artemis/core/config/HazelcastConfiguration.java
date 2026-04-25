@@ -1388,6 +1388,7 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-execution-plan", createAtlasSessionMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-exercise-preview", createAtlasSessionMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-relation-preview", createAtlasSessionMapConfig(artemisProperties));
+        config.getMapConfigs().put("atlas-session-preview-history", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
 
