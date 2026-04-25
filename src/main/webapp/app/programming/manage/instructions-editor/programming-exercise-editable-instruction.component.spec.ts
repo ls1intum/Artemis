@@ -493,9 +493,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getText: jest.fn().mockReturnValue('live editor value'),
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
@@ -677,9 +677,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getText: jest.fn().mockReturnValue('live editor value'),
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
         (exerciseReviewCommentService.threads as any).set([
             {
@@ -720,9 +720,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.markdownEditorMonaco = {
             applyRefinedContent,
             revertAll,
-            monacoEditor: {
+            monacoEditor: () => ({
                 getText: jest.fn().mockReturnValue('reverted content'),
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.applyRefinedContent('refined content');
