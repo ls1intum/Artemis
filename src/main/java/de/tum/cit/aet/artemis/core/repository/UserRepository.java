@@ -68,8 +68,6 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    String USERS_CACHE = "users";
-
     String FILTER_INTERNAL = "INTERNAL";
 
     String FILTER_EXTERNAL = "EXTERNAL";
@@ -1500,25 +1498,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 
     /**
-     * Finds logins of all non-deleted users who belong to the specified group.
-     * This is useful for cache eviction when performing bulk group removal.
-     *
-     * @param groupName the name of the group
-     * @return set of user logins in the group
-     */
-    @Query("""
-            SELECT u.login
-            FROM User u
-            WHERE u.deleted = FALSE
-                AND :groupName MEMBER OF u.groups
-            """)
-    Set<String> findLoginsByGroupName(@Param("groupName") String groupName);
-
-    /**
      * Removes the specified group from all users in a single database operation.
      * This is more efficient than loading each user, modifying, and saving individually.
-     * <p>
-     * Note: This bypasses JPA entity management, so cache eviction must be handled separately.
      *
      * @param groupName the name of the group to remove from all users
      * @return the number of rows deleted

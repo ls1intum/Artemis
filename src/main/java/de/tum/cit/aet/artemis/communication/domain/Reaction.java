@@ -8,8 +8,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @ReactionConstraints
 @Table(name = "reaction", uniqueConstraints = { @UniqueConstraint(columnNames = { "emoji_id", "user_id", "post_id" }),
         @UniqueConstraint(columnNames = { "emoji_id", "user_id", "answer_post_id" }) })
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Reaction extends DomainObject {
 

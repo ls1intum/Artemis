@@ -181,22 +181,20 @@ public class ArtemisMetricsEndpoint {
     }
 
     /**
-     * Collects cache metrics from all Hazelcast distributed objects and JCache caches.
+     * Collects metrics for all Hazelcast IMaps used as distributed state.
      * <p>
-     * IMap caches come from Spring CacheManager ({@code @Cacheable}).
-     * ICache caches come from Hibernate L2 (JCacheRegionFactory).
+     * This includes Spring {@code @Cacheable} caches backed by
+     * {@link com.hazelcast.spring.cache.HazelcastCacheManager} as well as application-level
+     * IMaps (rate-limit buckets, atlas session state, course notification cache, etc.).
+     * Hibernate L2 cache is disabled cluster-wide, so there are no JCache / ICache regions
+     * to read — see {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>
-     * The method uses two sources to ensure completeness:
-     * <ol>
-     * <li>Hazelcast {@code getDistributedObjects()} — captures IMaps and any ICaches already registered</li>
-     * <li>JCache {@code CacheManager.getCacheNames()} — captures Hibernate L2 entity caches that
-     * are created lazily and may not yet appear in the distributed objects list</li>
-     * </ol>
+     * Statistics are read from {@code IMap.getLocalMapStats()} (local-only); the entry
+     * count uses {@code stats.getOwnedEntryCount()} rather than {@code map.size()} to
+     * avoid the cluster-wide network round-trip implied by the latter.
      */
     private Map<String, CacheStats> cacheMetrics() {
         Map<String, CacheStats> result = new TreeMap<>();
-
-        // 1. Collect IMap metrics (Spring @Cacheable caches)
         try {
             var hazelcast = applicationContext.getBean(HazelcastInstance.class);
             for (var distributedObject : hazelcast.getDistributedObjects()) {
@@ -208,8 +206,8 @@ public class ArtemisMetricsEndpoint {
                     if (distributedObject instanceof IMap<?, ?> map) {
                         var stats = map.getLocalMapStats();
                         long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
-                        result.put(name,
-                                new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(), map.size()));
+                        result.put(name, new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(),
+                                stats.getOwnedEntryCount()));
                     }
                 }
                 catch (Exception e) {
@@ -220,36 +218,6 @@ public class ArtemisMetricsEndpoint {
         catch (Exception e) {
             log.debug("Could not access HazelcastInstance for cache metrics: {}", e.getMessage());
         }
-
-        // 2. Collect ICache metrics (Hibernate L2 entity/collection caches) via JCache API.
-        // This is more reliable than getDistributedObjects() for JCache caches because
-        // Hibernate creates them lazily and the JCache CacheManager is authoritative.
-        try {
-            var cachingProvider = javax.cache.Caching.getCachingProvider("com.hazelcast.cache.HazelcastMemberCachingProvider");
-            var cacheManager = cachingProvider.getCacheManager();
-            for (String cacheName : cacheManager.getCacheNames()) {
-                if (result.containsKey(cacheName)) {
-                    continue;
-                }
-                try {
-                    // Enable statistics for caches created after the ApplicationReadyEvent hook
-                    cacheManager.enableStatistics(cacheName, true);
-                    var cache = cacheManager.getCache(cacheName);
-                    if (cache != null && cache.unwrap(com.hazelcast.cache.ICache.class) instanceof com.hazelcast.cache.ICache<?, ?> iCache) {
-                        var stats = iCache.getLocalCacheStatistics();
-                        result.put(cacheName, new CacheStats(stats.getCacheHits(), stats.getCacheMisses(), stats.getCachePuts(), stats.getCacheEvictions(),
-                                stats.getCacheRemovals(), iCache.size()));
-                    }
-                }
-                catch (Exception e) {
-                    log.debug("Could not collect JCache metrics for '{}': {}", cacheName, e.getMessage());
-                }
-            }
-        }
-        catch (Exception e) {
-            log.debug("Could not access JCache CacheManager: {}", e.getMessage());
-        }
-
         return result;
     }
 

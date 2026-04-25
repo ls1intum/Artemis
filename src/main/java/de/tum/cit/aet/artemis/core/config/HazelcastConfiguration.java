@@ -52,7 +52,6 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientConnectionStrategyConfig;
 import com.hazelcast.client.config.RoutingMode;
-import com.hazelcast.config.CacheSimpleConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DiscoveryConfig;
 import com.hazelcast.config.DiscoveryStrategyConfig;
@@ -78,7 +77,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
-import io.micrometer.core.instrument.binder.cache.JCacheMetrics;
 
 /**
  * Configures and initializes the Hazelcast distributed data grid for Artemis.
@@ -269,13 +267,18 @@ public class HazelcastConfiguration {
      *
      * <p>
      * <strong>Rationale:</strong> Using Hazelcast as the cache backend (vs. local caches like Caffeine)
-     * provides distributed caching across all Artemis nodes. When one node caches data, all other
-     * nodes can access it without hitting the database. This is critical for:
+     * provides distributed coherence across all Artemis nodes via Hazelcast IMaps. This is the
+     * caching layer for {@code @Cacheable} on read-heavy lookups with explicit eviction:
      * <ul>
-     * <li>User authentication data - avoids repeated database lookups</li>
-     * <li>Course/exercise metadata - frequently accessed, rarely changed</li>
-     * <li>Rate limiting state - must be consistent across all nodes</li>
+     * <li>Title caches for breadcrumbs/navigation ({@code courseTitle}, {@code exerciseTitle},
+     * {@code lectureTitle}, {@code examTitle}, etc.) — evicted by {@code TitleCacheEvictionService}</li>
+     * <li>File content for static assets ({@code files}) — evicted on file write</li>
+     * <li>Computed previews ({@code linkPreview}, {@code plantUmlPng}, {@code plantUmlSvg})</li>
+     * <li>Notification settings and saved-post lookups — evicted via {@code @CacheEvict} on writers</li>
      * </ul>
+     * Hibernate L2 entity cache is disabled cluster-wide; see
+     * {@code documentation/docs/developer/guidelines/caching.mdx} for the full policy. Do not
+     * add {@code @Cache} annotations on entities — an ArchUnit rule enforces this.
      *
      * <p>
      * The {@code @Qualifier} ensures we get the correct HazelcastInstance when multiple beans exist.
@@ -327,8 +330,11 @@ public class HazelcastConfiguration {
     /**
      * Binds cache and datasource metrics to Micrometer after the application is fully started.
      * <p>
-     * Cache: Enables JCache statistics on all Hibernate L2 entity caches (created by JCacheRegionFactory)
-     * and binds both IMap (Spring CacheManager) and ICache metrics to Micrometer.
+     * Cache: binds metrics for every Hazelcast IMap used as distributed state to Micrometer —
+     * this covers Spring {@code @Cacheable} caches backed by {@link HazelcastCacheManager} as
+     * well as application-level IMaps (rate-limit buckets, atlas session state, course
+     * notification cache, etc.). Hibernate L2 cache is disabled cluster-wide, so no JCache
+     * regions exist; see {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>
      * Datasource: Binds HikariCP pool gauges (active, idle, min, max, pending connections).
      * Timer metrics (acquire, creation, usage) are registered by {@link #hikariMetricsPostProcessor}.
@@ -340,12 +346,7 @@ public class HazelcastConfiguration {
         }
         var registry = meterRegistry.get();
 
-        // 1. Enable JCache statistics for all Hibernate L2 entity/collection caches.
-        // JCacheRegionFactory creates caches with statistics disabled by default.
-        // Without this, ICache.getLocalCacheStatistics() returns zeros.
-        enableJCacheStatistics();
-
-        // 2. Bind Hazelcast distributed object metrics to Micrometer
+        // 1. Bind metrics for every Hazelcast IMap used as distributed state.
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         if (hazelcastInstance != null) {
             int bound = 0;
@@ -355,11 +356,7 @@ public class HazelcastConfiguration {
                     continue;
                 }
                 try {
-                    if (distributedObject instanceof javax.cache.Cache<?, ?> cache) {
-                        new JCacheMetrics<>(cache, List.of()).bindTo(registry);
-                        bound++;
-                    }
-                    else if (distributedObject instanceof IMap<?, ?> map) {
+                    if (distributedObject instanceof IMap<?, ?> map) {
                         new HazelcastCacheMetrics(map, List.of()).bindTo(registry);
                         bound++;
                     }
@@ -371,7 +368,7 @@ public class HazelcastConfiguration {
             log.info("Bound {} cache metrics to Micrometer", bound);
         }
 
-        // 3. Bind HikariCP datasource pool gauges (active, idle, min, max, pending connections).
+        // 2. Bind HikariCP datasource pool gauges (active, idle, min, max, pending connections).
         try {
             var dataSource = applicationContext.getBean(DataSource.class);
             if (dataSource instanceof HikariDataSource hikariDataSource) {
@@ -382,27 +379,6 @@ public class HazelcastConfiguration {
         }
         catch (Exception e) {
             log.warn("Could not bind datasource pool metrics: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Enables JCache statistics on all caches managed by the Hazelcast JCache CacheManager.
-     * This is required because Hibernate's JCacheRegionFactory creates caches with statistics
-     * disabled by default, making {@code ICache.getLocalCacheStatistics()} return zeros.
-     */
-    private void enableJCacheStatistics() {
-        try {
-            var cachingProvider = javax.cache.Caching.getCachingProvider("com.hazelcast.cache.HazelcastMemberCachingProvider");
-            var cacheManager = cachingProvider.getCacheManager();
-            int enabled = 0;
-            for (String cacheName : cacheManager.getCacheNames()) {
-                cacheManager.enableStatistics(cacheName, true);
-                enabled++;
-            }
-            log.info("Enabled JCache statistics on {} Hibernate L2 caches", enabled);
-        }
-        catch (Exception e) {
-            log.debug("Could not enable JCache statistics (expected on build agents): {}", e.getMessage());
         }
     }
 
@@ -454,9 +430,9 @@ public class HazelcastConfiguration {
      * </ul>
      *
      * <p>
-     * <strong>Bean Naming:</strong> The explicit bean name "hazelcastInstance" is required
-     * because other components (especially JCache/Hibernate integration) look up the
-     * HazelcastInstance by this specific name.
+     * <strong>Bean Naming:</strong> The explicit bean name "hazelcastInstance" is required so
+     * Spring components (notably the {@link HazelcastCacheManager} backing {@code @Cacheable})
+     * can look up the HazelcastInstance by this specific name.
      *
      * @param artemisProperties the Artemis properties containing cache configuration
      *                              (TTL, backup count, etc.)
@@ -1358,19 +1334,15 @@ public class HazelcastConfiguration {
      * <ul>
      * <li><strong>default:</strong> Fallback for any map not explicitly configured</li>
      * <li><strong>files:</strong> Cached file content with TTL for staleness prevention</li>
-     * <li><strong>domain entities:</strong> Hibernate second-level cache entries</li>
      * <li><strong>rate-limit-buckets:</strong> API rate limiting state</li>
      * <li><strong>atlas-session-pending-operations:</strong> Long-lived session state for competency operations</li>
      * <li><strong>atlas-session-pending-relations:</strong> Long-lived session state for relation operations</li>
      * <li><strong>atlas-execution-plan:</strong> Long-lived session state for multi-step execution plans</li>
-     * ° *
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
+     * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
+     * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
-     *
-     * <p>
-     * <strong>Wildcard Patterns:</strong> Map names can use wildcards (e.g.,
-     * {@code de.tum.cit.aet.artemis.*.domain.*}) to apply configuration to all matching maps.
-     * This is used for Hibernate entity caches which are named after their class names.
      *
      * @param config            the Hazelcast configuration to modify
      * @param artemisProperties configuration for TTL and backup count
@@ -1378,10 +1350,6 @@ public class HazelcastConfiguration {
     private void configureCacheMaps(Config config, ArtemisProperties artemisProperties) {
         config.getMapConfigs().put("default", createDefaultMapConfig(artemisProperties));
         config.getMapConfigs().put("files", createFilesMapConfig(artemisProperties));
-        // MapConfig for any IMap-based domain caches (e.g., from @Cacheable on repositories).
-        // Note: Hibernate L2 entity caches use JCache (ICache), not IMap — they are configured
-        // via CacheSimpleConfig below.
-        config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(artemisProperties));
         config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(artemisProperties));
         config.getMapConfigs().put("atlas-session-pending-relations", createAtlasSessionMapConfig(artemisProperties));
@@ -1391,12 +1359,6 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-session-preview-history", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
-
-        // JCache (ICache) configuration for Hibernate L2 entity/collection caches.
-        // JCacheRegionFactory creates ICaches (not IMaps) — CacheSimpleConfig is the Hazelcast
-        // configuration that applies to these. Statistics must be enabled for the admin metrics page.
-        var entityCacheConfig = new CacheSimpleConfig().setName("de.tum.cit.aet.artemis.*").setStatisticsEnabled(true);
-        config.getCacheConfigs().put(entityCacheConfig.getName(), entityCacheConfig);
     }
 
     /**
@@ -1454,31 +1416,6 @@ public class HazelcastConfiguration {
         return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
                 .setTimeToLiveSeconds(artemisProperties.getCache().getHazelcast().getTimeToLiveSeconds());
-    }
-
-    /**
-     * Creates configuration for Hibernate second-level cache (domain entities).
-     *
-     * <p>
-     * <strong>Purpose:</strong> Caches JPA/Hibernate entities to reduce database queries.
-     * The wildcard pattern {@code de.tum.cit.aet.artemis.*.domain.*} matches all entity
-     * classes in domain packages (e.g., {@code Course}, {@code Exercise}, {@code User}).
-     *
-     * <p>
-     * <strong>TTL Only (No Eviction):</strong> Entity caches use TTL for cache invalidation
-     * but don't configure explicit eviction. Hibernate manages cache entries based on its
-     * own cache region strategy. The TTL ensures stale entities are eventually refreshed.
-     *
-     * <p>
-     * <strong>No Backup Count:</strong> Inherits from Hazelcast defaults. Entity caches
-     * can be reconstructed from the database, so durability is less critical than for
-     * session or rate-limit data.
-     *
-     * @param artemisProperties configuration for TTL
-     * @return the domain entity cache map configuration
-     */
-    private MapConfig createDomainMapConfig(ArtemisProperties artemisProperties) {
-        return new MapConfig().setTimeToLiveSeconds(artemisProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     /**

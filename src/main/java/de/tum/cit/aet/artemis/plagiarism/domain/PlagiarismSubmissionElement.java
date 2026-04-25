@@ -7,9 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Token;
@@ -19,7 +16,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Entity
 @Table(name = "plagiarism_submission_element")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismSubmissionElement extends DomainObject {
 

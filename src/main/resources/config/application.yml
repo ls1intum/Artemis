@@ -269,15 +269,11 @@ spring: #disabled by default, you must enable it
             hibernate.order_updates: true
             hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
-            hibernate.cache.use_second_level_cache: true
+            # Hibernate L2 cache is intentionally disabled cluster-wide. See documentation/docs/developer/guidelines/caching.mdx.
+            # Spring @Cacheable continues to use HazelcastCacheManager directly, independent of L2.
+            hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
-            # Use JCache bridge since hazelcast-hibernate53 is incompatible with Hibernate 7.x
-            hibernate.cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
-            hibernate.cache.use_minimal_puts: true
-            hibernate.javax.cache.provider: com.hazelcast.cache.HazelcastMemberCachingProvider
-            # Auto-create missing cache regions instead of warning for each @Cache entity
-            hibernate.javax.cache.missing_cache_strategy: create
-            # Still needed by HazelcastConfiguration for the Hazelcast instance name
+            # Still consumed by HazelcastConfiguration for the Hazelcast instance name.
             hibernate.cache.hazelcast.instance_name: Artemis
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25

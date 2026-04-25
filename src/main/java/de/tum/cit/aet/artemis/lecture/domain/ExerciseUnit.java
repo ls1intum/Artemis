@@ -13,9 +13,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -31,7 +28,6 @@ public class ExerciseUnit extends LectureUnit {
     // Note: Name, release date and competencies will always be taken from associated exercise
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "exercise_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Exercise exercise;
 
     // Competency links are not persisted in this entity but only in the exercise itself

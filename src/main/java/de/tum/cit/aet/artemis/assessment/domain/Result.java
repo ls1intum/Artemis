@@ -30,8 +30,6 @@ import jakarta.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -61,7 +59,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 @Entity
 @Table(name = "result")
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject implements Comparable<Result> {
 

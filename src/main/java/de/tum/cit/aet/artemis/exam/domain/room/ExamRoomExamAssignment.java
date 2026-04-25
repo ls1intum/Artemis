@@ -6,8 +6,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 
@@ -21,7 +19,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_room_exam_assignment")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamRoomExamAssignment extends DomainObject {
 

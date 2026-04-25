@@ -7,6 +7,10 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
   <strong>Important:</strong> For REST API design and Data Transfer Objects (DTOs), see the <a href="/developer/guidelines/rest-api">REST API Guidelines</a>. Entities must never be used directly in REST API request or response bodies.
 </Callout>
 
+<Callout variant={CalloutVariant.warning}>
+  Hibernate second-level cache (<code>@Cache</code>) is disabled cluster-wide in Artemis. Do not add <code>@Cache</code> annotations on entities or associations — an ArchUnit rule fails the build if you do. See <a href="/developer/guidelines/caching">Caching Guidelines</a> for the rationale and the canonical Spring <code>@Cacheable</code> eviction pattern.
+</Callout>
+
 ## Structural Migration with Liquibase
 
 To prevent accidental irreversible database modifications, we use [Liquibase](https://docs.liquibase.com/home.html) to prepare changes when developing that can be confirmed in the review process.
@@ -168,7 +172,6 @@ For ordered OneToMany relations see the [ordered collections section](#choosing-
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
 @OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
@@ -229,7 +232,6 @@ Propagates all operations mentioned below from the parent object to the child ob
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
 @OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
@@ -277,8 +279,7 @@ If the source entity is refreshed, it cascades the refresh to the target of the 
 
 ## Saving and Deleting Entities with Cascade and OrphanRemoval
 
-When using `CascadeType.REMOVE` and `orphanRemoval = true` on `@OneToMany` relationships, special care must be taken
-to properly save new child entities and delete parent entities, especially when Hibernate L2 cache is enabled.
+When using `CascadeType.REMOVE` and `orphanRemoval = true` on `@OneToMany` relationships, special care is needed when saving new child entities and when explicitly deleting children before their parent.
 
 ### Saving New Child Entities
 
@@ -297,23 +298,9 @@ submission = submissionRepository.save(submission);
 participation.addSubmission(submission);  // For in-memory consistency only
 ```
 
-### Deleting Parent Entities with Cached Collections
+### Deleting Parent Entities After Explicit Child Deletion
 
-When explicitly deleting child entities before deleting a parent entity, you must reload the parent
-with its collection to refresh the L2 cache. Without this step, Hibernate's cascade mechanism will
-load stale references from the L2 cache and throw `EntityNotFoundException`.
-
-**The Problem:**
-
-1. You explicitly delete child entities (e.g., via `childRepository.deleteById()`)
-2. The L2 cache still contains the old collection with references to deleted children
-3. When you delete the parent, cascade tries to process the collection
-4. Hibernate loads the collection from L2 cache (stale data)
-5. `EntityNotFoundException` is thrown for already-deleted children
-
-**The Solution:**
-
-After deleting children explicitly, reload the parent entity with its collection before deleting:
+When you delete child entities explicitly (for example, to run extra cleanup the cascade does not cover) and then delete the parent, reload the parent with its collection before issuing the delete. This guarantees that the cascade processes the post-deletion collection state rather than a stale in-memory or persistence-context view that still references the children you just removed.
 
 ```java
 // Example: Deleting a participation with its submissions
@@ -321,25 +308,24 @@ public void delete(long participationId) {
     // Step 1: Delete children explicitly (for special cleanup like build logs)
     deleteSubmissionsOfParticipation(participationId);
 
-    // Step 2: Reload parent WITH the collection to refresh L2 cache
-    // The collection will now be empty since children were deleted
+    // Step 2: Reload parent WITH the collection so cascade sees the post-deletion state
+    // The collection is now empty because the children were deleted in step 1.
     var participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
 
-    // Step 3: Delete the parent - cascade has nothing to do
+    // Step 3: Delete the parent — cascade has nothing to do
     participationRepository.delete(participation);
 }
 ```
 
 This pattern is used in several places in Artemis:
 
-* `ParticipationDeletionService.delete()` - reloads participation with submissions
-* `ExampleParticipationService.deleteById()` - reloads example participation with submissions
-* `ExerciseDeletionService` - reloads exercise with participations
-* `ProgrammingExerciseDeletionService` - reloads exercise with participations
+* `ParticipationDeletionService.delete()` — reloads participation with submissions
+* `ExampleParticipationService.deleteById()` — reloads example participation with submissions
+* `ExerciseDeletionService` — reloads exercise with participations
+* `ProgrammingExerciseDeletionService` — reloads exercise with participations
 
-<Callout variant={CalloutVariant.danger}>
-  Do NOT skip the reload step when using <code>CascadeType.REMOVE</code> with L2 cache. The stale cache
-  references will cause <code>EntityNotFoundException</code> during cascade processing.
+<Callout variant={CalloutVariant.info}>
+  Hibernate second-level cache is disabled cluster-wide in Artemis (see <a href="/developer/guidelines/caching">Caching Guidelines</a>), so the historic <code>EntityNotFoundException</code>-during-cascade failure caused by stale L2 collections no longer applies. The explicit-reload pattern remains good practice because it makes the post-deletion collection state explicit at the call site and avoids confusion in the persistence context.
 </Callout>
 
 ## Dynamic Fetching
@@ -505,7 +491,6 @@ A `Set` comes with certain advantages such as ensuring that there are no duplica
 ```java
 // Course.java
 @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonIgnoreProperties("course")
 private Set<Exercise> exercises = new HashSet<>();
 ```
@@ -540,7 +525,6 @@ When you want to order the collection of (potentially duplicated) objects of the
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
 @OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
@@ -617,7 +601,6 @@ There are `null` values in your ordered collection: You must annotate the ordere
 @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
 @OrderColumn
 @JsonIgnoreProperties(value = "result", allowSetters = true)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 private List<Feedback> feedbacks = new ArrayList<>();
 ```
 
