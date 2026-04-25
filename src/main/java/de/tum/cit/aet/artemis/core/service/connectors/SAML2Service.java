@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.SAML2Properties;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -123,6 +124,7 @@ public class SAML2Service {
      * @param request      the HTTP request, used to extract the client environment
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
+    @SuppressWarnings("deprecation") // Saml2AuthenticatedPrincipal is deprecated; migrate to Saml2ResponseAssertionAccessor when API stabilizes
     public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
         Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
 
@@ -143,7 +145,7 @@ public class SAML2Service {
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
                 if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(user.get());
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.of(user.get()));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
@@ -166,6 +168,7 @@ public class SAML2Service {
         return auth;
     }
 
+    @SuppressWarnings("deprecation")
     private void syncUserDataFromSaml2(Saml2AuthenticatedPrincipal principal, User user) {
         log.debug("SAML2 sync user data enabled and will be performed for user {}", user.getLogin());
         // We assume that only the name of the user might change
@@ -190,6 +193,7 @@ public class SAML2Service {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
         ManagedUserVM newUser = new ManagedUserVM();
         // Fill in User information using the patterns and the SAML2 attributes.
@@ -214,6 +218,7 @@ public class SAML2Service {
         return authorities.stream().map(Authority::getName).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
 
+    @SuppressWarnings("deprecation")
     private String substituteAttributes(final String input, final Saml2AuthenticatedPrincipal principal) {
         String output = input;
         for (String key : principal.getAttributes().keySet()) {
@@ -231,6 +236,7 @@ public class SAML2Service {
      * @param key       of the attribute that should be extracted.
      * @return the value associated with the given key.
      */
+    @SuppressWarnings("deprecation")
     private String getAttributeValue(final Saml2AuthenticatedPrincipal principal, final String key) {
         final String value = principal.getFirstAttribute(key);
         if (value == null) {

@@ -181,34 +181,44 @@ public class MailSendingService {
     }
 
     /**
-     * Executes sending an e-mail to the specified sender
+     * Sends an e-mail to the specified email address asynchronously.
+     * This overload accepts a plain email address string instead of a User entity.
      *
-     * @param recipient   who should be contacted.
-     * @param subject     The mail subject
-     * @param content     The content of the mail. Can be enriched with HTML tags
-     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
-     * @param isHtml      Whether the mail should support HTML tags
+     * @param recipientEmail the email address to send to
+     * @param subject        The mail subject
+     * @param content        The content of the mail. Can be enriched with HTML tags
+     * @param isMultipart    Whether to create a multipart that supports alternative texts, inline elements
+     * @param isHtml         Whether the mail should support HTML tags
      */
+    @Async
+    public void sendEmail(String recipientEmail, String subject, String content, boolean isMultipart, boolean isHtml) {
+        executeSend(recipientEmail, subject, content, isMultipart, isHtml);
+    }
+
     private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        executeSend(recipient.getEmail(), subject, content, isMultipart, isHtml);
+    }
+
+    private void executeSend(String recipientEmail, String subject, String content, boolean isMultipart, boolean isHtml) {
         if (!mailConfigured) {
-            log.debug("Skipping email to '{}' - mail not configured", recipient.getEmail());
+            log.debug("Skipping email to '{}' - mail not configured", recipientEmail);
             return;
         }
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipientEmail, subject);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(recipient.getEmail());
+            message.setTo(recipientEmail);
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
             javaMailSender.send(mimeMessage);
-            log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
+            log.info("Sent email with subject '{}' to '{}'", subject, recipientEmail);
         }
         catch (MailException | MessagingException e) {
-            log.error("Email could not be sent to user '{}'", recipient, e);
+            log.error("Email could not be sent to '{}'", recipientEmail, e);
             // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
         }
     }

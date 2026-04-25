@@ -13,18 +13,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 
 class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "ootest";
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @BeforeEach
     @Override
@@ -38,6 +43,9 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
+        // Delete answer posts first to avoid FK constraint violations when conversations
+        // cascade-delete their posts. Use course-scoped deletion to maintain test isolation.
+        answerPostRepository.deleteAllByCourseId(exampleCourseId);
         // Do not use conversationMessageRepository.deleteAll() here:
         // In Hibernate 6.6, loading all Post entities and removing them directly causes
         // TransientObjectException during flush, because the parent Conversation entities

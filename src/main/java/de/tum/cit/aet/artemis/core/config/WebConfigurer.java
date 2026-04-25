@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.List;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
@@ -15,6 +14,7 @@ import jakarta.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -52,12 +52,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ArtemisProperties jHipsterProperties;
 
-    private final ToolsInterceptor toolsInterceptor;
+    // ToolsInterceptor is only needed at runtime (during request handling in addInterceptors),
+    // not during startup configuration. Using ObjectProvider defers its instantiation to reduce
+    // the startup bean dependency edge count.
+    private final ObjectProvider<ToolsInterceptor> toolsInterceptorProvider;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ObjectProvider<ToolsInterceptor> toolsInterceptorProvider) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
-        this.toolsInterceptor = toolsInterceptor;
+        this.toolsInterceptorProvider = toolsInterceptorProvider;
     }
 
     @Override
@@ -145,25 +148,19 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
+        registry.addInterceptor(toolsInterceptorProvider.getObject()).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
     }
 
     /**
-     * In Spring Framework 7, the default message converter ordering causes ResponseEntity&lt;String&gt;
-     * responses to be serialized as JSON strings (wrapped in quotes) instead of plain text.
-     * This happens because MappingJackson2HttpMessageConverter is tried before StringHttpMessageConverter
-     * and both support String types.
-     * <p>
-     * This method moves all StringHttpMessageConverter instances before the Jackson converter
-     * so that String responses are written as plain text by default, matching the behavior
-     * expected by the client and tests.
+     * Ensures StringHttpMessageConverter takes priority over Jackson for String responses.
+     * Without this, ResponseEntity&lt;String&gt; would be serialized as JSON strings (wrapped in quotes).
      */
     @Override
-    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-        // Collect all StringHttpMessageConverters and remove them from their current positions
-        var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
-        converters.removeAll(stringConverters);
-        // Re-add them at the beginning so they take priority over Jackson for String responses
-        converters.addAll(0, stringConverters);
+    public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
+        builder.configureMessageConvertersList(converters -> {
+            var stringConverters = converters.stream().filter(StringHttpMessageConverter.class::isInstance).toList();
+            converters.removeAll(stringConverters);
+            converters.addAll(0, stringConverters);
+        });
     }
 }

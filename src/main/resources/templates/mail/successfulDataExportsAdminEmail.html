@@ -12,7 +12,7 @@
     <p th:text="#{email.successfulDataExportCreationsAdmin.text}">Successful data exports</p>
     <div th:each="dataExport: ${dataExports}">
 
-    <p th:text="#{email.successfulDataExportCreationsAdmin.userLogin(${dataExport.getUser().login})}" ></p>
+    <p th:text="#{email.successfulDataExportCreationsAdmin.userLogin(${dataExport.user.login})}" ></p>
     </div>
 
 

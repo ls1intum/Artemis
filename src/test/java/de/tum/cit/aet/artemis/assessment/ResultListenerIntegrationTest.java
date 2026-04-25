@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -423,7 +424,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // Retrying ensures subsequent scheduler cycles pick it up.
         await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             participantScoreScheduleService.executeScheduledTasks();
-            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            // Catch ConditionTimeoutException and convert to AssertionError so the outer
+            // untilAsserted can retry (it only catches AssertionError, not RuntimeException)
+            try {
+                await().atMost(30, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            }
+            catch (org.awaitility.core.ConditionTimeoutException e) {
+                fail("Scheduler did not become idle in time: " + e.getMessage());
+            }
             var scores = participantScoreRepository.findAllByExercise(exercise);
             assertThat(scores).isNotEmpty();
         });

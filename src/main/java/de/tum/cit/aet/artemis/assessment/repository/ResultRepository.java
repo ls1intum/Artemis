@@ -51,6 +51,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
+     * Deletes assessment notes associated with a result using native SQL because the
+     * AssessmentNote entity has a unidirectional @OneToMany from Result (no result field on AssessmentNote).
+     *
+     * @param resultId the id of the result whose assessment notes should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query(value = "DELETE FROM assessment_note WHERE result_id = :resultId", nativeQuery = true)
+    void deleteAssessmentNotesByResultId(@Param("resultId") long resultId);
+
+    /**
      * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
      * All child entities must be deleted first.
      * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
