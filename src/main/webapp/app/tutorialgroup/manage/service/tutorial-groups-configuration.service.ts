@@ -6,6 +6,17 @@ import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities
 
 type DtoResponseType = HttpResponse<TutorialGroupConfigurationDTO>;
 
+/**
+ * DTO for creating and updating tutorial groups configuration.
+ */
+export interface TutorialGroupsConfigurationDTO {
+    id?: number;
+    tutorialPeriodStartInclusive: string;
+    tutorialPeriodEndInclusive: string;
+    useTutorialGroupChannels: boolean;
+    usePublicTutorialGroupChannels: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsConfigurationService {
     private httpClient = inject(HttpClient);

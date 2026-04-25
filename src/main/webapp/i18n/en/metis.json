@@ -96,6 +96,7 @@
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",
+                "filterToExcludeDirectMessages": "Hide DMs",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",

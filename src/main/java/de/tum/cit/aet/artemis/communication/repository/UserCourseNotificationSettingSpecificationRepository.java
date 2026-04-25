@@ -79,6 +79,11 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      */
     List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 
+    @CacheEvict(key = "'setting_specifications_' + #userId + '_' + #courseId")
+    @Transactional // OK because of delete
+    @Modifying
+    void deleteAllByUserIdAndCourseId(Long userId, Long courseId);
+
     // NOTE: we need to clear all cached entries because we don't know which users had a specification for the course
     @CacheEvict(allEntries = true)
     @Transactional // OK because of delete

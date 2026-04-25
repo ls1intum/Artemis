@@ -89,6 +89,7 @@
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
+                "filterToExcludeDirectMessages": "DMs ausblenden",
                 "courseFilterExplanation": "{{ title }} (Alle Beiträge)",
                 "filterOptGroups": {
                     "general": "Allgemein",

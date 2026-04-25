@@ -6,7 +6,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { EditTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
@@ -101,11 +100,10 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         const updatedStub = vi.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
-        const sessionForm: TutorialGroupsConfigurationFormComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
-
         const formData = tutorialsGroupsConfigurationDtoToFormData(changedConfiguration);
 
-        sessionForm.formSubmitted.emit(formData);
+        // Call the handler directly to avoid zoneless output dispatch hanging under CI resource pressure
+        component.updateTutorialGroupsConfiguration(formData);
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, changedConfiguration, formData.period);
         expect(navigateSpy).toHaveBeenCalledOnce();

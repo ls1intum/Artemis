@@ -125,17 +125,13 @@ class CourseNotificationSettingServiceTest {
         UserCourseNotificationSettingPreset existingPreset = new UserCourseNotificationSettingPreset();
         existingPreset.setSettingPreset(customPresetId);
 
-        List<UserCourseNotificationSettingSpecification> existingSpecs = new ArrayList<>();
-        existingSpecs.add(new UserCourseNotificationSettingSpecification());
-
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(existingPreset);
-        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId)).thenReturn(existingSpecs);
         when(courseNotificationSettingPresetRegistryService.getPresetById(anyShort())).thenReturn(mockPreset);
 
         courseNotificationSettingService.applyPreset((short) 2, userId, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
-        verify(userCourseNotificationSettingSpecificationRepository).deleteAll(existingSpecs);
+        verify(userCourseNotificationSettingSpecificationRepository).deleteAllByUserIdAndCourseId(userId, courseId);
         verify(courseNotificationCacheService).invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
     }
 

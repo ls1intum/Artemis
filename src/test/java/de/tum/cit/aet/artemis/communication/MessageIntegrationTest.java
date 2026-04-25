@@ -916,6 +916,27 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExcludeDirectMessagesWhenFilterIsEnabled() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        directPost.setContent("SearchTestDirect");
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+
+        // include the newly created conversation into all course-wide conversations
+        long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).mapToLong(Long::longValue).toArray();
+
+        // Use the full constructor with filterToExcludeDirectMessages=true
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, "SearchTest", false, false, false, PostSortCriterion.CREATION_DATE,
+                SortingOrder.DESCENDING, false, true);
+
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
+        List<Post> resultPosts = searchResults.getContent();
+
+        assertThat(resultPosts).extracting(Post::getContent).doesNotContain("SearchTestDirect");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldIncludeDirectMessagesWhenFindingMessagesUsingGetRequest() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");

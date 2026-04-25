@@ -77,6 +77,9 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.filterToAnsweredOrReacted) {
             params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
         }
+        if (postContextFilter.filterToExcludeDirectMessages) {
+            params = params.set('filterToExcludeDirectMessages', postContextFilter.filterToExcludeDirectMessages);
+        }
         if (postContextFilter.pagingEnabled) {
             params = params.set('pagingEnabled', postContextFilter.pagingEnabled);
             params = params.set('page', postContextFilter.page!);

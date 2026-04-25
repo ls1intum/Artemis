@@ -47,6 +47,7 @@ export interface PostContextFilter {
     filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
     filterToAnsweredOrReacted?: boolean;
+    filterToExcludeDirectMessages?: boolean;
     postSortCriterion?: PostSortCriterion;
     sortingOrder?: SortDirection;
     pagingEnabled?: boolean;

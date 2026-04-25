@@ -106,9 +106,7 @@ public class CourseNotificationSettingService {
             userCourseNotificationSettingSpecificationRepository.saveAll(specifications);
         }
         else {
-            var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
-
-            userCourseNotificationSettingSpecificationRepository.deleteAll(specifications);
+            userCourseNotificationSettingSpecificationRepository.deleteAllByUserIdAndCourseId(userId, courseId);
         }
 
         courseNotificationCacheService.invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
