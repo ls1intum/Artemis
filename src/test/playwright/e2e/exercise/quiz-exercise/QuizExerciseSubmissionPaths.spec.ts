@@ -152,8 +152,11 @@ test.describe('Quiz Exercise Submission Paths', { tag: '@fast' }, () => {
 
             const responseBody = await submitResponse.json();
             expect(responseBody.scoreInPoints, 'all-correct training answer must score full per-question points').toBe(question.points);
-            expect(responseBody.multipleChoiceSubmittedAnswer, 'response must contain the multiple-choice answer payload').toBeDefined();
-            const persistedSelectedIds = (responseBody.multipleChoiceSubmittedAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b);
+            // SubmittedAnswerAfterEvaluationDTO uses @JsonUnwrapped on its inner subtype DTOs, so the MC-specific fields
+            // (selectedOptions, type) are inlined onto the top-level response object — not nested under a wrapper key.
+            expect(responseBody.type, 'training response must carry the discriminator for the submitted answer type').toBe('multiple-choice');
+            expect(responseBody.selectedOptions, 'training response must include the persisted selected options inlined at the top level').toBeDefined();
+            const persistedSelectedIds = (responseBody.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b);
             expect(persistedSelectedIds, 'training response must echo back the selected option ids the student submitted').toEqual([...correctOptionIds].sort((a, b) => a - b));
         });
 
