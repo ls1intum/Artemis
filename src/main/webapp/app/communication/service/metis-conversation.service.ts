@@ -13,7 +13,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
@@ -137,6 +137,9 @@ export class MetisConversationService implements OnDestroy {
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
+        // Re-emit so the filtered list reflects the new active conversation
+        // (empty one-to-one chats are only visible when they are active)
+        this.emitConversationsOfUser();
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
         this.isMarkedAsUnread = false;
@@ -162,7 +165,7 @@ export class MetisConversationService implements OnDestroy {
         if (indexOfCachedConversation !== -1) {
             this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
             this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
-            this._conversationsOfUser$.next(this.conversationsOfUser);
+            this.emitConversationsOfUser();
         }
         this.hasUnreadMessagesCheck();
     }
@@ -179,7 +182,7 @@ export class MetisConversationService implements OnDestroy {
             this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = lastReadDate;
             this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = unreadMessagesCount;
             this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
-            this._conversationsOfUser$.next(this.conversationsOfUser);
+            this.emitConversationsOfUser();
         }
     }
 
@@ -194,9 +197,25 @@ export class MetisConversationService implements OnDestroy {
                 this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
                 this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
                 this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
-                this._conversationsOfUser$.next(this.conversationsOfUser);
+                this.emitConversationsOfUser();
             }
         }
+    }
+
+    /**
+     * Emits the conversations list to subscribers, filtering out empty one-to-one chats
+     * (no messages sent yet) unless they are the currently active conversation.
+     * This ensures empty DMs don't clutter the sidebar while still being accessible
+     * when the user is actively viewing them.
+     */
+    private emitConversationsOfUser() {
+        const visible = this.conversationsOfUser.filter((c) => {
+            if (isOneToOneChatDTO(c) && !c.lastMessageDate) {
+                return c.id === this.activeConversation?.id;
+            }
+            return true;
+        });
+        this._conversationsOfUser$.next(visible);
     }
 
     public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
@@ -216,7 +235,7 @@ export class MetisConversationService implements OnDestroy {
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
                 this.hasUnreadMessagesCheck();
-                this._conversationsOfUser$.next(this.conversationsOfUser);
+                this.emitConversationsOfUser();
 
                 // we check if the active conversation still is part of the conversations of the user, otherwise we reset it
                 if (this.activeConversation) {
@@ -228,7 +247,7 @@ export class MetisConversationService implements OnDestroy {
                     }
                 }
                 if (notifyConversationsSubscribers) {
-                    this._conversationsOfUser$.next(this.conversationsOfUser);
+                    this.emitConversationsOfUser();
                 }
                 if (notifyActiveConversationSubscribers) {
                     this._activeConversation$.next(this.activeConversation);
@@ -251,9 +270,11 @@ export class MetisConversationService implements OnDestroy {
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
     public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
+        let createdConversation: ConversationDTO | undefined;
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDTO>) => {
-                this.activeConversation = conversation.body!;
+                createdConversation = conversation.body!;
+                this.activeConversation = createdConversation;
             }),
             catchError((res: HttpErrorResponse) => {
                 if (!res.error?.skipAlert) {
@@ -270,7 +291,21 @@ export class MetisConversationService implements OnDestroy {
                 return of(null);
             }),
             switchMap(() => {
-                return this.forceRefresh();
+                return this.forceRefresh().pipe(
+                    finalize(() => {
+                        // After refresh, if the newly created conversation is not in the server response
+                        // (e.g., an empty one-to-one chat with no messages yet), add it temporarily so
+                        // the user can see and interact with it until they navigate away.
+                        if (createdConversation && !this.activeConversation) {
+                            this.activeConversation = createdConversation;
+                            if (!this.conversationsOfUser.some((c) => c.id === createdConversation!.id)) {
+                                this.conversationsOfUser = [...this.conversationsOfUser, createdConversation];
+                                this.emitConversationsOfUser();
+                            }
+                            this._activeConversation$.next(this.activeConversation);
+                        }
+                    }),
+                );
             }),
         );
     };
@@ -299,7 +334,7 @@ export class MetisConversationService implements OnDestroy {
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
                 this.hasUnreadMessagesCheck();
-                this._conversationsOfUser$.next(this.conversationsOfUser);
+                this.emitConversationsOfUser();
                 this.activeConversation = undefined;
                 this._activeConversation$.next(this.activeConversation);
                 this.subscribeToConversationMembershipTopic(course.id!, this.userId);
@@ -383,7 +418,7 @@ export class MetisConversationService implements OnDestroy {
 
     private updateUnread() {
         this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = !!conversation.unreadMessagesCount && conversation.unreadMessagesCount > 0));
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        this.emitConversationsOfUser();
     }
 
     private setIsLoading(value: boolean) {
@@ -448,7 +483,7 @@ export class MetisConversationService implements OnDestroy {
                 this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
                 break;
         }
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        this.emitConversationsOfUser();
     }
 
     private handleCreateConversation(createdConversation: ConversationDTO) {
@@ -506,7 +541,7 @@ export class MetisConversationService implements OnDestroy {
             }
         }
         this.conversationsOfUser = conversationsCopy;
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        this.emitConversationsOfUser();
     }
 
     static getQueryParamsForConversation(conversationId: number): Params {
@@ -530,7 +565,7 @@ export class MetisConversationService implements OnDestroy {
             return conversation;
         });
 
-        this._conversationsOfUser$.next(this.conversationsOfUser);
+        this.emitConversationsOfUser();
 
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             catchError((errorResponse: HttpErrorResponse) => {

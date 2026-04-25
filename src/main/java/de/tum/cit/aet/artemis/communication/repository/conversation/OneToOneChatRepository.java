@@ -22,6 +22,10 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     /**
      * Find all active one-to-one chats of a given user in a given course.
      * <p>
+     * Returns chats that have at least one message (lastMessageDate IS NOT NULL) or were created by the requesting user.
+     * Empty conversations created by the user are included so the client can find them when navigating by conversation ID;
+     * the client-side service filters them from the visible list when the user is not actively viewing them.
+     * <p>
      * We join the conversionParticipants twice, because the first time we use it for filtering the chats and binding it to the user ID. The second time, we fetch all participants;
      * as it's a one-to-one chat, two.
      *
