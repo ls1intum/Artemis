@@ -422,6 +422,67 @@ describe('ExerciseReviewCommentService', () => {
         expect(threadIds).toEqual([1]);
     });
 
+    it('toggleGroupResolvedInContext should replace all updated group threads', () => {
+        service.setExercise(3);
+        service.threads.set([
+            { id: 7, groupId: 50, resolved: false },
+            { id: 8, groupId: 50, resolved: false },
+            { id: 9, resolved: false },
+        ] as any);
+
+        service.toggleGroupResolvedInContext(50, true);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-thread-groups/50/resolved');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ resolved: true });
+        req.flush([
+            { id: 7, groupId: 50, resolved: true },
+            { id: 8, groupId: 50, resolved: true },
+        ]);
+
+        expect(service.threads()).toEqual([
+            { id: 7, groupId: 50, resolved: true },
+            { id: 8, groupId: 50, resolved: true },
+            { id: 9, resolved: false },
+        ] as any);
+    });
+
+    it('markInlineFixAppliedInContext should update matching consistency comment', () => {
+        service.setExercise(3);
+        service.threads.set([
+            {
+                id: 7,
+                comments: [
+                    {
+                        id: 12,
+                        threadId: 7,
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                            suggestedFix: { applied: false },
+                        },
+                    },
+                ],
+            },
+        ] as any);
+
+        service.markInlineFixAppliedInContext(12);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-comments/12/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        req.flush({
+            id: 12,
+            threadId: 7,
+            content: {
+                contentType: CommentContentType.CONSISTENCY_CHECK,
+                text: 'issue',
+                suggestedFix: { applied: true },
+            },
+        });
+
+        expect((service.threads() as any)[0].comments[0].content.suggestedFix.applied).toBe(true);
+    });
+
     it('createThread should send POST request', () => {
         const payload = {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
@@ -477,6 +538,15 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
+    it('updateThreadGroupResolvedState should send PUT request', () => {
+        service.updateThreadGroupResolvedState(4, 15, true).subscribe();
+
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-thread-groups/15/resolved');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ resolved: true });
+        req.flush([]);
+    });
+
     it('updateUserCommentContent should send PUT request', () => {
         const payload = { contentType: CommentContentType.USER, text: 'update' } as any;
 
@@ -485,6 +555,15 @@ describe('ExerciseReviewCommentService', () => {
         const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9');
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual(payload);
+        req.flush({});
+    });
+
+    it('markConsistencyInlineFixApplied should send PUT request', () => {
+        service.markConsistencyInlineFixApplied(8, 9).subscribe();
+
+        const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({});
         req.flush({});
     });
 
@@ -537,6 +616,26 @@ describe('ExerciseReviewCommentService', () => {
         const result = service.replaceThreadInThreads(threads, updatedThread);
 
         expect(result.find((t: any) => t.id === 2)?.resolved).toBe(true);
+    });
+
+    it('replaceThreadsInThreads should replace matching threads and keep others', () => {
+        const threads = [
+            { id: 1, resolved: false },
+            { id: 2, resolved: false },
+            { id: 3, resolved: false },
+        ] as any;
+        const updatedThreads = [
+            { id: 1, resolved: true },
+            { id: 3, resolved: true },
+        ] as any;
+
+        const result = service.replaceThreadsInThreads(threads, updatedThreads);
+
+        expect(result).toEqual([
+            { id: 1, resolved: true },
+            { id: 2, resolved: false },
+            { id: 3, resolved: true },
+        ] as any);
     });
 
     it('appendThreadToThreads should append new thread', () => {

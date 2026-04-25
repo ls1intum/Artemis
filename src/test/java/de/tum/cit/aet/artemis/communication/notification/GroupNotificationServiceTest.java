@@ -364,7 +364,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateQuizExerciseStartedNotificationWhenCourseSpecificNotificationsEnabled() {
-        groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
+        groupNotificationService.notifyStudentGroupAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), course.getStudentGroupName(),
+                quizExercise.getId(), quizExercise.getExerciseNotificationTitle());
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();

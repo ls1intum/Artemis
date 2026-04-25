@@ -1,4 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output, signal, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -7,15 +22,17 @@ import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -30,7 +47,7 @@ interface RelatedThreadLocation {
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent],
+    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
     providers: [ConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
@@ -41,6 +58,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
+    readonly onApplyInlineFix = output<InlineCodeChange>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -48,6 +66,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faChevronDown = faChevronDown;
     readonly showThreadBody = signal(true);
     readonly languageVersion = signal(0);
     readonly editingCommentId = signal<number | undefined>(undefined);
@@ -55,7 +74,10 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly editText = signal('');
     userCommentMenuItems: MenuItem[] = [];
     nonUserCommentMenuItems: MenuItem[] = [];
+    resolveGroupMenuItems: MenuItem[] = [];
     readonly commentMenus = viewChildren<Menu>('commentMenu');
+    readonly resolveGroupMenu = viewChild<Menu>('resolveGroupMenu');
+    readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
@@ -86,6 +108,22 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         return content;
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
+    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
+    readonly showInlineFixOutdatedWarning = signal(false);
+    readonly canResolveGroup = computed(() => {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return false;
+        }
+        return this.reviewCommentService.threads().some((thread) => thread.groupId === groupId && !thread.resolved);
+    });
+    readonly canUnresolveGroup = computed(() => {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return false;
+        }
+        return this.reviewCommentService.threads().some((thread) => thread.groupId === groupId && thread.resolved);
+    });
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
         // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
@@ -112,6 +150,32 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
         return Array.from(distinctLocations.values()).sort((a, b) => a.locationLabel.localeCompare(b.locationLabel));
     });
+
+    constructor() {
+        effect(() => {
+            const inlineFix = this.consistencySuggestedInlineFix();
+            const diffEditor = this.suggestedInlineFixDiffEditor();
+            const thread = this.thread();
+            if (!inlineFix || !diffEditor) {
+                return;
+            }
+
+            diffEditor.setFileContents(
+                inlineFix.expectedCode,
+                inlineFix.replacementCode,
+                this.getInlineFixDiffFileName(thread),
+                this.getInlineFixDiffFileName(thread),
+                this.getInlineFixDiffLanguageId(thread),
+            );
+        });
+
+        effect(() => {
+            this.canResolveGroup();
+            this.canUnresolveGroup();
+            this.languageVersion();
+            this.updateMenuItems();
+        });
+    }
 
     /**
      * Deletes the given comment via the review comment service.
@@ -197,6 +261,27 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return;
         }
         this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
+     * Resolves all threads in the current thread group.
+     */
+    resolveGroup(): void {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return;
+        }
+        this.reviewCommentService.toggleGroupResolvedInContext(groupId, true);
+        this.showThreadBody.set(false);
+        this.onToggleCollapse.emit(true);
+    }
+
+    /**
+     * Reopens all threads in the current thread group.
+     */
+    unresolveGroup(): void {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return;
+        }
+        this.reviewCommentService.toggleGroupResolvedInContext(groupId, false);
     }
 
     /**
@@ -208,9 +293,29 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.onToggleCollapse.emit(!nextVisibleState);
     }
 
+    /**
+     * Emits a request to apply the suggested inline fix in the active editor context.
+     *
+     * @param inlineFix The inline fix payload to apply.
+     */
+    applySuggestedInlineFix(inlineFix: InlineCodeChange): void {
+        this.showInlineFixOutdatedWarning.set(false);
+        this.onApplyInlineFix.emit(inlineFix);
+    }
+
+    /**
+     * Sets whether the inline fix cannot be applied because the current editor code is out of date.
+     *
+     * @param showWarning Whether to show the warning next to the apply button.
+     */
+    setInlineFixOutdatedWarning(showWarning: boolean): void {
+        this.showInlineFixOutdatedWarning.set(showWarning);
+    }
+
     ngOnInit(): void {
         this.showThreadBody.set(!this.initialCollapsed());
         this.updateMenuItems();
+        document.addEventListener('scroll', this.hideOpenMenus, true);
         this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => {
             this.updateMenuItems();
             this.languageVersion.update((version) => version + 1);
@@ -219,6 +324,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        document.removeEventListener('scroll', this.hideOpenMenus, true);
         this.destroyed$.next();
         this.destroyed$.complete();
     }
@@ -282,6 +388,21 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Handles a selected resolve-group menu action.
+     *
+     * @param actionId The selected menu action identifier.
+     */
+    handleResolveGroupMenuAction(actionId: string | undefined): void {
+        if (actionId === 'resolve-group') {
+            this.resolveGroup();
+            return;
+        }
+        if (actionId === 'unresolve-group') {
+            this.unresolveGroup();
+        }
+    }
+
+    /**
      * Checks whether a comment was authored by a user.
      *
      * @param comment The comment to check.
@@ -308,6 +429,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         for (const menu of this.commentMenus()) {
             menu.hide();
         }
+        this.resolveGroupMenu()?.hide();
     }
 
     /**
@@ -336,7 +458,19 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ];
         this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
+        const resolveGroupMenuItems: MenuItem[] = [];
+        if (this.canResolveGroup()) {
+            resolveGroupMenuItems.push({ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') });
+        }
+        if (this.canUnresolveGroup()) {
+            resolveGroupMenuItems.push({ id: 'unresolve-group', label: this.translateService.instant('artemisApp.review.unresolveThreadGroup') });
+        }
+        this.resolveGroupMenuItems = resolveGroupMenuItems;
     }
+
+    private readonly hideOpenMenus = (): void => {
+        this.hideAllCommentMenus();
+    };
 
     private getThreadLocationLabel(thread: CommentThread): string | undefined {
         const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
@@ -372,5 +506,31 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             default:
                 return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
         }
+    }
+
+    private getInlineFixDiffFileName(thread: CommentThread): string {
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return 'problem_statement.md';
+        }
+
+        return thread.filePath ?? thread.initialFilePath ?? 'inline-fix.txt';
+    }
+
+    private getInlineFixDiffLanguageId(thread: CommentThread): string | undefined {
+        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return CUSTOM_MARKDOWN_LANGUAGE_ID;
+        }
+
+        return undefined;
+    }
+
+    private getValidSuggestedInlineFix(inlineFix: InlineCodeChange | null | undefined): InlineCodeChange | undefined {
+        if (!inlineFix || inlineFix.expectedCode == null || inlineFix.replacementCode == null || inlineFix.applied == null) {
+            return undefined;
+        }
+        if (inlineFix.startLine == null || inlineFix.endLine == null || inlineFix.startLine < 1 || inlineFix.endLine < inlineFix.startLine) {
+            return undefined;
+        }
+        return inlineFix;
     }
 }

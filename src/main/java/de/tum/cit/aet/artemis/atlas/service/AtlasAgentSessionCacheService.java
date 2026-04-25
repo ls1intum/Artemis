@@ -1,16 +1,27 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
@@ -44,10 +55,27 @@ public class AtlasAgentSessionCacheService {
      */
     public static final String ATLAS_SESSION_EXERCISE_PREVIEW_CACHE = "atlas-session-exercise-preview";
 
+    /**
+     * Cache name for per-message preview data history.
+     * Stores a map of assistant message index to preview data for each session,
+     * enabling history reconstruction without embedding markers in chat memory.
+     */
+    public static final String ATLAS_SESSION_PREVIEW_HISTORY_CACHE = "atlas-session-preview-history";
+
+    /**
+     * Preview data associated with a single assistant message.
+     */
+    public record MessagePreviewData(@Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
+            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) implements Serializable {
+    }
+
     private final CacheManager cacheManager;
 
-    public AtlasAgentSessionCacheService(CacheManager cacheManager) {
+    private final HazelcastInstance hazelcastInstance;
+
+    public AtlasAgentSessionCacheService(CacheManager cacheManager, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.cacheManager = cacheManager;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -174,5 +202,53 @@ public class AtlasAgentSessionCacheService {
         if (cache != null) {
             cache.evict(sessionId);
         }
+    }
+
+    /**
+     * Store preview data for a specific assistant message in the session's preview history.
+     *
+     * @param sessionId    the session ID
+     * @param messageIndex the 0-based index of the assistant message
+     * @param previewData  the preview data to store
+     */
+    public void storePreviewForMessage(String sessionId, int messageIndex, MessagePreviewData previewData) {
+        // Serialize per-session read-modify-write across the Hazelcast cluster: IMap.lock(key) is a
+        // distributed per-key lock, so concurrent writers on any node observe a consistent history
+        // map and neither one's messageIndex entry is dropped by the final put.
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        history.lock(sessionId);
+        try {
+            Map<Integer, MessagePreviewData> entries = history.get(sessionId);
+            if (entries == null) {
+                entries = new HashMap<>();
+            }
+            entries.put(messageIndex, previewData);
+            history.put(sessionId, entries);
+        }
+        finally {
+            history.unlock(sessionId);
+        }
+    }
+
+    /**
+     * Retrieve the full preview history for a session.
+     *
+     * @param sessionId the session ID
+     * @return map of assistant message index to preview data, or empty map if none exist
+     */
+    public Map<Integer, MessagePreviewData> getPreviewHistory(String sessionId) {
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        Map<Integer, MessagePreviewData> entries = history.get(sessionId);
+        return entries != null ? entries : Map.of();
+    }
+
+    /**
+     * Clear the preview history for a session.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearPreviewHistory(String sessionId) {
+        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        history.delete(sessionId);
     }
 }

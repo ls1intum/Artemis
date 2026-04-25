@@ -195,6 +195,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly sortedIssues = computed(() =>
         this.exerciseReviewCommentService
             .threads()
+            .filter((thread) => thread.resolved !== true)
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
             .sort(
@@ -1635,6 +1636,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.lineJumpOnFileLoad = undefined;
                 this.fileToJumpOn = undefined;
+            // File already loaded, no file-load event will fire.
+            // Jump directly without re-running file-sync load/rebind.
+            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+                this.performDeferredLineJump(this.fileToJumpOn);
                 return;
             }
 
@@ -1651,6 +1656,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onFileLoad(fileName: string) {
         this.onFileSyncLoad(fileName);
+        this.performDeferredLineJump(fileName);
+    }
+
+    /**
+     * Performs the pending line jump when the target file is currently active.
+     *
+     * @param fileName The file that is currently active/loaded.
+     */
+    private performDeferredLineJump(fileName: string): void {
         if (this.fileToJumpOn === fileName) {
             if (this.lineJumpOnFileLoad !== undefined) {
                 this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);

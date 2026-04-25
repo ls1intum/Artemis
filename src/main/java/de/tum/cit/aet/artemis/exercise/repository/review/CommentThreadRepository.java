@@ -98,6 +98,21 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
     List<CommentThread> findByGroupId(long groupId);
 
     /**
+     * Find all comment threads for a given group with their comments loaded.
+     *
+     * @param groupId the group id
+     * @return list of comment threads with comments
+     */
+    @Query("""
+            SELECT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.comments c
+                LEFT JOIN FETCH c.author
+            WHERE ct.group.id = :groupId
+            """)
+    List<CommentThread> findWithCommentsByGroupId(@Param("groupId") long groupId);
+
+    /**
      * Count comment threads for a given group.
      *
      * @param groupId the group id
