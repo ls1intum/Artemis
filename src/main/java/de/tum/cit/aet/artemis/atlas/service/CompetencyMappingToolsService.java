@@ -312,7 +312,9 @@ public class CompetencyMappingToolsService {
                     continue;
                 }
 
-                if (rel.id() == null) {
+                // Treat both null and 0 as "no existing relation -> create new". LLMs frequently emit
+                // 0 instead of omitting the field when signalling "no id", so we accept either form.
+                if (rel.id() == null || rel.id() == 0L) {
                     competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     createCount++;
 
