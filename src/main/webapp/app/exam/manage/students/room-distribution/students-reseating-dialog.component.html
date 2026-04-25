@@ -1,4 +1,14 @@
-<p-dialog [(visible)]="dialogVisible" [modal]="false" [closable]="true" [dismissableMask]="true" [closeOnEscape]="false" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+<p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    [closeOnEscape]="false"
+    (onHide)="closeDialog()"
+    [style]="{ width: '45dvw' }"
+    [draggable]="false"
+    appendTo="body"
+>
     <ng-template pTemplate="header">
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.dialogTitle"></span>
@@ -35,7 +45,6 @@
             class="form-control"
             placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examRoomSearchPlaceholder' | artemisTranslate }}"
             [ngbTypeahead]="roomSearch"
-            container="body"
             [value]="selectedRoomNumber()"
             [resultFormatter]="roomFormatter"
             [inputFormatter]="roomRoomNumberFormatter"
@@ -49,7 +58,6 @@
             class="form-control"
             placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
             [ngbTypeahead]="examSeatSearch"
-            container="body"
             [value]="selectedSeat()"
             [resultFormatter]="examSeatFormatter"
             [inputFormatter]="examSeatFormatter"

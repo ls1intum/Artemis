@@ -58,12 +58,6 @@
     }
 }
 
-ngb-typeahead-window.dropdown-menu.show {
-    max-height: calc(100vh - 380px);
-    overflow-y: auto !important;
-    will-change: unset !important;
-}
-
 .dropdown-item.selected {
     background-color: var(--data-table-dropdown-item-selected-background-color);
 }

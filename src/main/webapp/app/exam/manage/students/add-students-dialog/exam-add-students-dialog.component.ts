@@ -29,7 +29,7 @@ export class ExamAddStudentsDialogComponent {
     readonly courseId: InputSignal<number> = input.required();
     readonly exam: InputSignal<Exam> = input.required();
 
-    readonly dialogVisible = model(false);
+    dialogVisible = model(false);
     readonly studentsChanged = output<void>();
 
     readonly searchText = signal('');

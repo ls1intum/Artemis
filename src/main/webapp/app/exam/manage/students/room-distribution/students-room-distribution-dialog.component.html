@@ -1,4 +1,13 @@
-<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" styleClass="distribution-dialog-width">
+<p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    (onHide)="closeDialog()"
+    styleClass="distribution-dialog-width"
+    [draggable]="false"
+    appendTo="body"
+>
     <ng-template pTemplate="header">
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
@@ -31,7 +40,6 @@
             class="form-control"
             placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
             [ngbTypeahead]="search"
-            container="body"
             [resultFormatter]="formatter"
             [inputFormatter]="emptyStringFormatter"
             (selectItem)="pickSelectedRoom($event)"
