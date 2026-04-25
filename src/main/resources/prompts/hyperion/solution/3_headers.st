@@ -13,6 +13,9 @@ Your task is to generate the boilerplate code for each file based on the solutio
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Build Environment Context:**
+{{buildEnvironmentContext}}
+
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 

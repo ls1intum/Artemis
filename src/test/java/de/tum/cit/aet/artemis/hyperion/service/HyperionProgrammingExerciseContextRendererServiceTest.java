@@ -1,14 +1,24 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -22,6 +32,9 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
     @Mock
     private GitService gitService;
+
+    @TempDir
+    Path tempDir;
 
     private HyperionProgrammingExerciseContextRendererService contextRendererService;
 
@@ -85,5 +98,26 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
         String result = contextRendererService.renderContext(exercise);
 
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    void getBuildEnvironmentContext_withRelevantFiles_returnsFormattedContext() throws IOException {
+        FileUtils.writeStringToFile(tempDir.resolve("pom.xml").toFile(), "<project>JUnit Jupiter</project>", StandardCharsets.UTF_8);
+        Files.createDirectories(tempDir.resolve("module"));
+        FileUtils.writeStringToFile(tempDir.resolve("module/build.gradle").toFile(), "dependencies { testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' }",
+                StandardCharsets.UTF_8);
+        Files.createDirectories(tempDir.resolve("target"));
+        FileUtils.writeStringToFile(tempDir.resolve("target/ignored.gradle").toFile(), "ignored", StandardCharsets.UTF_8);
+
+        Repository repository = mock(Repository.class);
+        when(repository.getLocalPath()).thenReturn(tempDir);
+
+        String result = contextRendererService.getBuildEnvironmentContext(repository);
+
+        assertThat(result).contains("Build Environment Files");
+        assertThat(result).contains("pom.xml");
+        assertThat(result).contains("module/build.gradle");
+        assertThat(result).contains("JUnit Jupiter");
+        assertThat(result).doesNotContain("ignored.gradle");
     }
 }

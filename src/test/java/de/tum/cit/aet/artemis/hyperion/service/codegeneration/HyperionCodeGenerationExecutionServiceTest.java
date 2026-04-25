@@ -160,7 +160,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     void generateAndCompileCode_withNullRepositoryUri_returnsNull() {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isNull();
         verify(publisher, times(1)).error(anyString());
@@ -184,7 +184,9 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -196,9 +198,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(buildResult.isSuccessful()).thenReturn(true);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any());
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository.");
@@ -218,10 +221,11 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of());
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(List.of());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isNull();
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
@@ -248,7 +252,9 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -260,12 +266,65 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(buildResult.isSuccessful()).thenReturn(false);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isEqualTo(buildResult);
-        verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
+        verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
                 "Solution files were generated and committed to the solution repository, but the build failed.");
+    }
+
+    @Test
+    void generateAndCompileCode_withInitialAutoGeneration_limitsSolutionToSingleAttempt() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        doNothing().when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(false);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, true, publisher);
+
+        assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 1,
+                "Solution files were generated and committed to the solution repository, but the build failed.");
+    }
+
+    @Test
+    void resolveMaxIterations_withInitialAutoGeneration_limitsSolutionAndTemplateOnly() {
+        int solutionIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.SOLUTION, true);
+        int templateIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.TEMPLATE, true);
+        int testIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.TESTS, true);
+        int manualSolutionIterations = ReflectionTestUtils.invokeMethod(service, "resolveMaxIterations", RepositoryType.SOLUTION, false);
+
+        assertThat(solutionIterations).isEqualTo(1);
+        assertThat(templateIterations).isEqualTo(1);
+        assertThat(testIterations).isEqualTo(2);
+        assertThat(manualSolutionIterations).isEqualTo(2);
     }
 
     @Test
@@ -286,16 +345,18 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isNull();
-        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.PARTICIPATION_NOT_FOUND, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
     }
@@ -318,7 +379,9 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -328,7 +391,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         try {
             Thread.currentThread().interrupt();
 
-            Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+            Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
             assertThat(result).isNull();
             verify(publisher).error("sleep interrupted");
@@ -359,17 +422,19 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
         assertThat(result).isNull();
         verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
         verify(resultRepository, never()).findLatestResultWithFeedbacksAndTestcasesForSubmission(anyLong());
-        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
         verify(exerciseVersionService).createExerciseVersion(exercise, user);

@@ -42,12 +42,10 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionCodeGenerationServiceTest {
 
-    @Mock
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+    private static final String BUILD_ENVIRONMENT_CONTEXT = "pom.xml:\n<project></project>";
 
     @Mock
     private ChatModel chatModel;
@@ -68,7 +66,7 @@ class HyperionCodeGenerationServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
-        this.strategy = new TestCodeGenerationStrategy(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        this.strategy = new TestCodeGenerationStrategy(chatClient, templates, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -85,7 +83,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -102,7 +100,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -110,14 +108,20 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("repositoryStructure must not be null");
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("repositoryStructure must not be null");
     }
 
     @Test
     void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("consistencyIssues must not be null");
+    }
+
+    @Test
+    void generateCode_withNullBuildEnvironmentContext_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("buildEnvironmentContext must not be null");
     }
 
     @Test
@@ -365,35 +369,34 @@ class HyperionCodeGenerationServiceTest {
 
     private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
 
-        public TestCodeGenerationStrategy(ProgrammingExerciseTestRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-                LLMTokenUsageService llmTokenUsageService) {
-            super(programmingExerciseRepository, chatClient, templates, llmTokenUsageService);
+        public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
+            super(chatClient, templates, llmTokenUsageService);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }

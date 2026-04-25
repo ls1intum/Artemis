@@ -59,6 +59,8 @@ jest.mock('y-monaco', () => ({
     })),
 }));
 
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
@@ -370,15 +372,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith([
-                'course-management',
-                courseId,
-                'programming-exercises',
-                savedEntity.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                savedEntity.templateParticipation!.id,
-            ]);
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
             expect(comp.isGeneratingWithAi()).toBeFalse();
         });
 

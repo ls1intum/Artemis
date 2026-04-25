@@ -64,6 +64,7 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -1044,22 +1045,29 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.onSaveSuccess(exercise);
             return;
         }
+        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate([
-                'course-management',
-                courseId,
-                'exams',
-                exercise.exerciseGroup.exam.id,
-                'exercise-groups',
-                exercise.exerciseGroup.id,
-                'programming-exercises',
-                exercise.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                exercise.templateParticipation.id,
-            ]);
+            this.router.navigate(
+                [
+                    'course-management',
+                    courseId,
+                    'exams',
+                    exercise.exerciseGroup.exam.id,
+                    'exercise-groups',
+                    exercise.exerciseGroup.id,
+                    'programming-exercises',
+                    exercise.id,
+                    'code-editor',
+                    RepositoryType.TEMPLATE,
+                    exercise.templateParticipation.id,
+                ],
+                navigationExtras,
+            );
         } else {
-            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id]);
+            this.router.navigate(
+                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
+                navigationExtras,
+            );
         }
     }
 
